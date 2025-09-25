@@ -15,11 +15,11 @@ export default function Footer() {
               <span className="text-xl font-bold">DenTeeth</span>
             </div>
             <p className="text-gray-400 mb-4">
-              123 ABC Street, District 1<br />
+              FPT University, District 9<br />
               Ho Chi Minh City
             </p>
             <p className="text-gray-400 mb-4">contact@denteeth.com</p>
-            <p className="text-gray-400">(+84) 123 567 890</p>
+            <p className="text-gray-400">0123 45678</p>
           </div>
           
           <div>
