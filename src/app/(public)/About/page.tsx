@@ -53,7 +53,7 @@ export default function AboutPage() {
           >
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
               <FontAwesomeIcon icon={faTooth} className="h-4 w-4" />
-              About DentalCare
+              About DenTeeth
             </span>
             <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Caring for smiles with modern technology and heart

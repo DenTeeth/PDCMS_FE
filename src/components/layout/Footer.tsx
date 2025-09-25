@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFacebook, faTwitter, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
 export default function Footer() {
   return (
@@ -44,23 +46,23 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-6">Follow Us</h3>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="text-2xl">📘</span>
+                <FontAwesomeIcon icon={faFacebook} className="h-6 w-6" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="text-2xl">🐦</span>
+                <FontAwesomeIcon icon={faTwitter} className="h-6 w-6" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="text-2xl">📷</span>
+                <FontAwesomeIcon icon={faInstagram} className="h-6 w-6" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <span className="text-2xl">▶️</span>
+                <FontAwesomeIcon icon={faYoutube} className="h-6 w-6" />
               </Link>
             </div>
           </div>
         </div>
         
         <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 DenTeeth. All rights reserved.</p>
+          <p>&copy; 2025 DenTeeth. All rights reserved.</p>
         </div>
       </div>
     </footer>

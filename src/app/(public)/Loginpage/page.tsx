@@ -46,7 +46,7 @@ export default function Page() {
                 <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
               </svg>
             </div>
-            <h2 className="mb-3 text-3xl font-bold tracking-tight text-sky-800">DentalCare</h2>
+            <h2 className="mb-3 text-3xl font-bold tracking-tight text-sky-800">DenTeeth</h2>
             <p className="mx-auto max-w-sm text-sky-900/70">
               A modern solution for scheduling and managing dental clinics. Caring for smiles from the very first login.
             </p>
@@ -73,7 +73,7 @@ export default function Page() {
                     <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold tracking-wide text-slate-700">DentalCare</span>
+                <span className="text-sm font-semibold tracking-wide text-slate-700">DenTeeth</span>
               </div>
             </div>
 
@@ -119,7 +119,7 @@ export default function Page() {
                     id="email"
                     type="email"
                     required
-                    placeholder="you@dentalcare.com"
+                    placeholder="you@denTeeth.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
@@ -178,7 +178,7 @@ export default function Page() {
 
             <div className="mt-10 text-center text-xs text-slate-400">
               {/* TODO (Security): Add reCAPTCHA if needed; verify server-side in your API */}
-              © {new Date().getFullYear()} DentalCare. Privacy & HIPAA/GDPR compliant.
+              © {new Date().getFullYear()} DenTeeth. Privacy & HIPAA/GDPR compliant.
             </div>
           </div>
         </section>
