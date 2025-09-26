@@ -45,9 +45,9 @@ export default function BlogsPage() {
 
   const getStatusText = (status: string) => {
     const texts = {
-      published: 'Đã xuất bản',
-      draft: 'Bản nháp',
-      archived: 'Đã lưu trữ',
+      published: 'Published',
+      draft: 'Draft',
+      archived: 'Archived',
     };
     return texts[status as keyof typeof texts] || status;
   };
@@ -57,12 +57,12 @@ export default function BlogsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý blog</h1>
-          <p className="text-gray-600">Quản lý nội dung bài viết và tin tức</p>
+          <h1 className="text-3xl font-bold text-gray-900">Blog Management</h1>
+          <p className="text-gray-600">Manage blog posts and news content</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Viết bài mới
+          New Post
         </Button>
       </div>
 
@@ -182,7 +182,7 @@ export default function BlogsPage() {
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    {new Date(blog.createdAt).toLocaleDateString('vi-VN')}
+                    {new Date(blog.createdAt).toLocaleDateString('en-US')}
                   </div>
                 </div>
 
@@ -244,3 +244,4 @@ export default function BlogsPage() {
     </div>
   );
 }
+

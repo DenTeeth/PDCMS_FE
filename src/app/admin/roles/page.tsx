@@ -48,12 +48,12 @@ export default function RolesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý vai trò</h1>
-          <p className="text-gray-600">Quản lý vai trò và quyền truy cập hệ thống</p>
+          <h1 className="text-3xl font-bold text-gray-900">Role Management</h1>
+          <p className="text-gray-600">Manage system roles and access permissions</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
-          Tạo vai trò mới
+          Create New Role
         </Button>
       </div>
 
@@ -64,7 +64,7 @@ export default function RolesPage() {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng vai trò</p>
+                <p className="text-sm font-medium text-gray-600">Total Roles</p>
                 <p className="text-2xl font-bold">{roles.length}</p>
               </div>
             </div>
@@ -77,7 +77,7 @@ export default function RolesPage() {
                 <Check className="h-4 w-4 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đang hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Active</p>
                 <p className="text-2xl font-bold">{roles.filter(r => r.isActive).length}</p>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function RolesPage() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng quyền</p>
+                <p className="text-sm font-medium text-gray-600">Total Permissions</p>
                 <p className="text-2xl font-bold">{permissions.length}</p>
               </div>
             </div>
@@ -114,12 +114,12 @@ export default function RolesPage() {
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Tìm kiếm</Label>
+              <Label htmlFor="search">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Tìm theo tên vai trò hoặc mô tả..."
+                  placeholder="Search by role name or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -149,7 +149,7 @@ export default function RolesPage() {
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                    {role.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
               </div>
@@ -160,17 +160,17 @@ export default function RolesPage() {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center text-gray-600">
                     <Users className="h-4 w-4 mr-1" />
-                    <span>{role.userCount} người dùng</span>
+                    <span>{role.userCount} users</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Settings className="h-4 w-4 mr-1" />
-                    <span>{role.permissions.length} quyền</span>
+                    <span>{role.permissions.length} permissions</span>
                   </div>
                 </div>
 
                 {/* Permissions Preview */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Quyền được cấp:</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Permissions granted:</p>
                   <div className="flex flex-wrap gap-1">
                     {getRolePermissions(role.permissions).slice(0, 3).map((permission) => (
                       <span
@@ -182,7 +182,7 @@ export default function RolesPage() {
                     ))}
                     {role.permissions.length > 3 && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                        +{role.permissions.length - 3} khác
+                        +{role.permissions.length - 3} more
                       </span>
                     )}
                   </div>
@@ -223,7 +223,7 @@ export default function RolesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Chi tiết quyền: {selectedRole.name}</h2>
+              <h2 className="text-2xl font-bold">Permission Details: {selectedRole.name}</h2>
               <Button variant="ghost" onClick={() => setShowPermissions(false)}>
                 <X className="h-4 w-4" />
               </Button>
@@ -240,7 +240,7 @@ export default function RolesPage() {
                     <CardHeader>
                       <CardTitle className="text-lg capitalize">{module}</CardTitle>
                       <CardDescription>
-                        {moduleRolePermissions.length} / {modulePermissions.length} quyền được cấp
+                        {moduleRolePermissions.length} / {modulePermissions.length} permissions granted
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -279,11 +279,11 @@ export default function RolesPage() {
 
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
               <Button variant="outline" onClick={() => setShowPermissions(false)}>
-                Đóng
+                Close
               </Button>
               <Button>
                 <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa quyền
+                Edit Permissions
               </Button>
             </div>
           </div>
@@ -295,16 +295,16 @@ export default function RolesPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy vai trò</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No roles found</h3>
             <p className="text-gray-500 mb-4">
               {searchTerm 
-                ? 'Thử thay đổi từ khóa tìm kiếm'
-                : 'Bắt đầu tạo vai trò đầu tiên'
+                ? 'Try changing search keywords'
+                : 'Start creating your first role'
               }
             </p>
             <Button onClick={() => setShowAddModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Tạo vai trò mới
+              Create New Role
             </Button>
           </CardContent>
         </Card>
@@ -312,3 +312,4 @@ export default function RolesPage() {
     </div>
   );
 }
+

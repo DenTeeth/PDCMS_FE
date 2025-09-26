@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
+    "dev:fast": "next dev --turbo --experimental-https",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "analyze": "node scripts/analyze-bundle.js",
+    "perf": "next build && next start"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "7.0.1",

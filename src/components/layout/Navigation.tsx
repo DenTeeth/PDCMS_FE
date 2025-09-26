@@ -9,7 +9,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex items-center gap-2">
-              <div className="h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <div className="h-10 w-10 bg-purple-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">D</span>
               </div>
               <span className="text-xl font-bold text-gray-900">DenTeeth</span>
@@ -17,17 +17,17 @@ export default function Navigation() {
           </div>
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-500">Home</Link>
-              <Link href="/Services" className="text-gray-700 hover:text-blue-500">Services</Link>
-              <Link href="/Doctors" className="text-gray-700 hover:text-blue-500">Doctors</Link>
-              <Link href="/About" className="text-gray-700 hover:text-blue-500">About</Link>
-              <Link href="/Contact" className="text-gray-700 hover:text-blue-500">Contact</Link>
+              <Link href="/" className="text-gray-700 hover:text-purple-500">Home</Link>
+              <Link href="/Services" className="text-gray-700 hover:text-purple-500">Services</Link>
+              <Link href="/Doctors" className="text-gray-700 hover:text-purple-500">Doctors</Link>
+              <Link href="/About" className="text-gray-700 hover:text-purple-500">About</Link>
+              <Link href="/Contact" className="text-gray-700 hover:text-purple-500">Contact</Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <Link
               href="/Loginpage"
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition-colors"
             >
               Login
             </Link>

@@ -3,7 +3,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - PDCMS',
-  description: 'Quản lý hệ thống phòng khám nha khoa',
+  description: 'Dental clinic management system',
 };
 
 export default function AdminLayout({
@@ -12,17 +12,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="flex">
         <AdminSidebar />
-        <main className="flex-1 ml-64 min-h-screen">
-          <div className="p-8 bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+        <main className="flex-1 ml-64">
+          <div className="p-6">
+            {children}
           </div>
         </main>
       </div>
     </div>
   );
 }
+

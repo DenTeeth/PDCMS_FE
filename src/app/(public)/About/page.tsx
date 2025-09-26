@@ -27,10 +27,10 @@ const fadeUp = {
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50 text-slate-800">
+    <main className="min-h-screen bg-gradient-to-b from-accent via-white to-accent text-foreground">
         <Navigation />
       {/* Header (match Services) */}
-      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-10">
+      <section className="bg-gradient-to-r from-accent to-secondary py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <DynamicBreadcrumb />
 
@@ -41,7 +41,7 @@ export default function AboutPage() {
 
       {/* Intro */}
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent via-transparent to-transparent" />
         <div className="mx-auto max-w-7xl px-6 py-16">
           <motion.div
             initial="hidden"
@@ -51,7 +51,7 @@ export default function AboutPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+            <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary ring-1 ring-secondary">
               <FontAwesomeIcon icon={faTooth} className="h-4 w-4" />
               About DenTeeth
             </span>
@@ -63,13 +63,13 @@ export default function AboutPage() {
             </p>
             <div className="mt-8 inline-flex gap-4">
               <Link href="/" className="inline-flex items-center">
-                <Button className="bg-blue-500 hover:bg-blue-600">
+                <Button className="bg-primary hover:bg-primary/90">
                   Book an appointment
                   <FontAwesomeIcon icon={faArrowRight} className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/services" className="inline-flex items-center">
-                <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">Explore services</Button>
+                <Button variant="outline" className="border-primary text-primary hover:bg-accent">Explore services</Button>
               </Link>
             </div>
           </motion.div>
@@ -94,7 +94,7 @@ export default function AboutPage() {
             >
               <Card>
                 <CardContent className="flex items-center gap-3 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600/10 text-cyan-700">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <FontAwesomeIcon icon={s.icon} className="h-5 w-5" />
                   </div>
                   <div>
@@ -161,7 +161,7 @@ export default function AboutPage() {
               >
                 <Card className="h-full">
                   <CardHeader className="flex-row items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/10 text-blue-700">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <FontAwesomeIcon icon={f.icon} className="h-5 w-5" />
                     </div>
                     <CardTitle className="text-base">{f.title}</CardTitle>
@@ -220,18 +220,18 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-6 pb-20">
-        <Card className="overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-500 text-white">
+        <Card className="overflow-hidden bg-gradient-to-r from-primary to-secondary text-primary-foreground">
           <CardContent className="relative p-8 sm:p-10">
             <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-xl font-semibold">Ready for a brighter smile?</h3>
-                <p className="text-white/80">
+                <p className="text-primary-foreground/80">
                   Book an appointment today and experience the best in dental care.
                 </p>
               </div>
               <Link href="/">
-                <Button variant="secondary" className="text-blue-700">
+                <Button variant="secondary" className="text-primary">
                   Book now
                 </Button>
               </Link>

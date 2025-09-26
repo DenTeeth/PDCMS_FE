@@ -72,7 +72,7 @@ export default function ServicesSection() {
                   <p className="text-gray-600 mb-6">
                     {service.description}
                   </p>
-                  <Link href={service.link} className="text-blue-500 font-medium hover:underline">
+                  <Link href={service.link} className="text-primary font-medium hover:underline">
                     Details →
                   </Link>
                 </div>

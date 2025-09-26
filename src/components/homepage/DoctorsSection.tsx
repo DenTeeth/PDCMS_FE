@@ -19,7 +19,7 @@ const doctors: Doctor[] = [
     experience: "15+ years of experience",
     description: "Leading specialist in orthodontics with many years of experience treating complex cases.",
     avatar: "👨‍⚕️",
-    bgColor: "bg-blue-200"
+    bgColor: "bg-secondary"
   },
   {
     id: 2,
@@ -71,7 +71,7 @@ export default function DoctorsSection() {
                   <span className="text-3xl">{doctor.avatar}</span>
                 </div>
                 <CardTitle className="text-lg text-gray-900">{doctor.name}</CardTitle>
-                <CardDescription className="text-blue-600 font-semibold">
+                <CardDescription className="text-primary font-semibold">
                   {doctor.specialty}
                 </CardDescription>
               </CardHeader>
@@ -82,7 +82,7 @@ export default function DoctorsSection() {
                 </p>
                 <Link 
                   href={`/appointment?doctor=${doctor.id}`}
-                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm"
                 >
                   Book Appointment
                 </Link>
@@ -95,7 +95,7 @@ export default function DoctorsSection() {
         <div className="text-center">
           <Link 
             href="/Doctors"
-            className="inline-flex items-center bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            className="inline-flex items-center bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold"
           >
             View All Doctors
             <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
