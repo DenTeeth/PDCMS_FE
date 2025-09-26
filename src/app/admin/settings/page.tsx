@@ -49,25 +49,25 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Cài đặt hệ thống</h1>
-        <p className="text-gray-600">Cấu hình các thông số của phòng khám</p>
+        <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+        <p className="text-gray-600">Configure clinic system parameters</p>
       </div>
 
       {/* General Settings */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Thông tin phòng khám
-          </CardTitle>
-          <CardDescription>
-            Cấu hình thông tin cơ bản của phòng khám
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Clinic Information
+            </CardTitle>
+            <CardDescription>
+              Configure basic clinic information
+            </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="clinicName">Tên phòng khám</Label>
+              <Label htmlFor="clinicName">Clinic Name</Label>
               <Input
                 id="clinicName"
                 value={settings.clinicName}
@@ -75,7 +75,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="clinicPhone">Số điện thoại</Label>
+              <Label htmlFor="clinicPhone">Phone Number</Label>
               <div className="flex">
                 <Phone className="h-4 w-4 m-3 text-gray-400" />
                 <Input
@@ -87,7 +87,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <Label htmlFor="clinicAddress">Địa chỉ</Label>
+              <Label htmlFor="clinicAddress">Address</Label>
             <div className="flex">
               <MapPin className="h-4 w-4 m-3 text-gray-400" />
               <Input
@@ -115,30 +115,30 @@ export default function SettingsPage() {
       {/* System Settings */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Cài đặt hệ thống
-          </CardTitle>
-          <CardDescription>
-            Cấu hình ngôn ngữ, múi giờ và giao diện
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              System Settings
+            </CardTitle>
+            <CardDescription>
+              Configure language, timezone and interface
+            </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="language">Ngôn ngữ</Label>
+              <Label htmlFor="language">Language</Label>
               <select
                 id="language"
                 value={settings.language}
                 onChange={(e) => setSettings({...settings, language: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="vi">Tiếng Việt</option>
+                <option value="vi">Vietnamese</option>
                 <option value="en">English</option>
               </select>
             </div>
             <div>
-              <Label htmlFor="timezone">Múi giờ</Label>
+              <Label htmlFor="timezone">Timezone</Label>
               <select
                 id="timezone"
                 value={settings.timezone}
@@ -150,16 +150,16 @@ export default function SettingsPage() {
               </select>
             </div>
             <div>
-              <Label htmlFor="theme">Giao diện</Label>
+              <Label htmlFor="theme">Theme</Label>
               <select
                 id="theme"
                 value={settings.theme}
                 onChange={(e) => setSettings({...settings, theme: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="light">Sáng</option>
-                <option value="dark">Tối</option>
-                <option value="auto">Tự động</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
               </select>
             </div>
           </div>
@@ -169,20 +169,20 @@ export default function SettingsPage() {
       {/* Notifications */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Thông báo
-          </CardTitle>
-          <CardDescription>
-            Cấu hình các loại thông báo
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notifications
+            </CardTitle>
+            <CardDescription>
+              Configure notification types
+            </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="email-notifications">Thông báo qua email</Label>
-                <p className="text-sm text-gray-500">Nhận thông báo qua email</p>
+                <Label htmlFor="email-notifications">Email Notifications</Label>
+                <p className="text-sm text-gray-500">Receive notifications via email</p>
               </div>
               <input
                 id="email-notifications"
@@ -197,8 +197,8 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="sms-notifications">Thông báo qua SMS</Label>
-                <p className="text-sm text-gray-500">Nhận thông báo qua tin nhắn</p>
+                <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                <p className="text-sm text-gray-500">Receive notifications via SMS</p>
               </div>
               <input
                 id="sms-notifications"
@@ -213,8 +213,8 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="push-notifications">Thông báo đẩy</Label>
-                <p className="text-sm text-gray-500">Nhận thông báo trên trình duyệt</p>
+                <Label htmlFor="push-notifications">Push Notifications</Label>
+                <p className="text-sm text-gray-500">Receive browser notifications</p>
               </div>
               <input
                 id="push-notifications"
@@ -234,20 +234,20 @@ export default function SettingsPage() {
       {/* Security */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Bảo mật
-          </CardTitle>
-          <CardDescription>
-            Cấu hình các tùy chọn bảo mật
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security
+            </CardTitle>
+            <CardDescription>
+              Configure security options
+            </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="two-factor">Xác thực 2 yếu tố</Label>
-                <p className="text-sm text-gray-500">Bảo mật tài khoản với 2FA</p>
+                <Label htmlFor="two-factor">Two-Factor Authentication</Label>
+                <p className="text-sm text-gray-500">Secure account with 2FA</p>
               </div>
               <input
                 id="two-factor"
@@ -261,7 +261,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="session-timeout">Thời gian hết phiên (phút)</Label>
+              <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
               <Input
                 id="session-timeout"
                 type="number"
@@ -274,7 +274,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="password-policy">Chính sách mật khẩu</Label>
+              <Label htmlFor="password-policy">Password Policy</Label>
               <select
                 id="password-policy"
                 value={settings.security.passwordPolicy}
@@ -284,9 +284,9 @@ export default function SettingsPage() {
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="weak">Yếu</option>
-                <option value="medium">Trung bình</option>
-                <option value="strong">Mạnh</option>
+                <option value="weak">Weak</option>
+                <option value="medium">Medium</option>
+                <option value="strong">Strong</option>
               </select>
             </div>
           </div>
@@ -297,9 +297,10 @@ export default function SettingsPage() {
       <div className="flex justify-end">
         <Button onClick={handleSave} className="flex items-center gap-2">
           <Save className="h-4 w-4" />
-          Lưu cài đặt
+          Save Settings
         </Button>
       </div>
     </div>
   );
 }
+

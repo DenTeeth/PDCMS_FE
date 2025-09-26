@@ -90,7 +90,7 @@ export default function DoctorsPage() {
 		<>
 			<main className="min-h-screen bg-white">
 				<Navigation />
-				<section className="bg-gradient-to-r from-blue-50 to-blue-100 py-10">
+				<section className="bg-gradient-to-r from-accent to-secondary py-10">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 						<DynamicBreadcrumb />
 						<h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-4">Our Medical Team</h1>
@@ -106,13 +106,13 @@ export default function DoctorsPage() {
 							{doctors.map((doctor) => (
 								<Card key={doctor.id} className="hover:shadow-lg transition-shadow duration-300">
 									<CardHeader className="text-center">
-										<div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+												<div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
 											<span className="text-4xl text-white font-bold">
 												{doctor.name.split(' ').pop()?.charAt(0)}
 											</span>
 										</div>
 										<CardTitle className="text-xl text-gray-900">{doctor.name}</CardTitle>
-										<CardDescription className="text-blue-600 font-semibold">
+												<CardDescription className="text-primary font-semibold">
 											{doctor.specialty}
 										</CardDescription>
 									</CardHeader>
@@ -147,7 +147,7 @@ export default function DoctorsPage() {
 												{doctor.languages.map((lang, index) => (
 													<span 
 														key={index}
-														className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+																		className="px-2 py-1 bg-accent text-primary rounded-full text-xs"
 													>
 														{lang}
 													</span>
@@ -158,7 +158,7 @@ export default function DoctorsPage() {
 										<div className="pt-4">
 											<Link 
 												href={`/appointment?doctor=${doctor.id}`}
-												className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block text-center"
+																className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-block text-center"
 											>
 												Book Appointment
 											</Link>
@@ -180,19 +180,19 @@ export default function DoctorsPage() {
 						</div>
 						<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 							<div className="text-center">
-								<div className="text-3xl font-bold text-blue-600 mb-2">15+</div>
+										<div className="text-3xl font-bold text-primary mb-2">15+</div>
 								<p className="text-gray-600">Years average experience</p>
 							</div>
 							<div className="text-center">
-								<div className="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
+										<div className="text-3xl font-bold text-primary mb-2">10,000+</div>
 								<p className="text-gray-600">Patients treated</p>
 							</div>
 							<div className="text-center">
-								<div className="text-3xl font-bold text-blue-600 mb-2">98%</div>
+										<div className="text-3xl font-bold text-primary mb-2">98%</div>
 								<p className="text-gray-600">Customer satisfaction rate</p>
 							</div>
 							<div className="text-center">
-								<div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
+										<div className="text-3xl font-bold text-primary mb-2">24/7</div>
 								<p className="text-gray-600">Emergency support</p>
 							</div>
 						</div>

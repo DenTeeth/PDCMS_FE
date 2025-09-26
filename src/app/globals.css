@@ -44,79 +44,223 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  /* Softer, warmer background colors */
+  --background: #fdfcff;
+  --foreground: #1e1928;
+  --card: #ffffff;
+  --card-foreground: #1e1928;
+  --popover: #ffffff;
+  --popover-foreground: #1e1928;
+  
+  /* More vibrant but gentle primary colors */
+  --primary: #8b5fbf;
+  --primary-foreground: #ffffff;
+  --secondary: #b794f6;
+  --secondary-foreground: #ffffff;
+  --muted: #f3f0ff;
+  --muted-foreground: #64748b;
+  --accent: #e9d5ff;
+  --accent-foreground: #581c87;
+  
+  /* Better contrast for accessibility */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  
+  /* Softer borders and inputs */
+  --border: #e2e8f0;
+  --input: #f8fafc;
+  --ring: #8b5fbf;
+  
+  /* Chart colors with better contrast */
+  --chart-1: #8b5fbf;
+  --chart-2: #b794f6;
+  --chart-3: #ddd6fe;
+  --chart-4: #a78bfa;
+  --chart-5: #c084fc;
+  
+  /* Sidebar with subtle gradients */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e1928;
+  --sidebar-primary: #8b5fbf;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3f0ff;
+  --sidebar-accent-foreground: #581c87;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #8b5fbf;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Softer dark backgrounds - less strain on eyes */
+  --background: #0f0a1a;
+  --foreground: #f1f5f9;
+  --card: #1e1b31;
+  --card-foreground: #f1f5f9;
+  --popover: #1e1b31;
+  --popover-foreground: #f1f5f9;
+  
+  /* Gentle primary colors for dark mode */
+  --primary: #a78bfa;
+  --primary-foreground: #0f0a1a;
+  --secondary: #8b5fbf;
+  --secondary-foreground: #f1f5f9;
+  --muted: #2d2543;
+  --muted-foreground: #94a3b8;
+  --accent: #3730a3;
+  --accent-foreground: #ddd6fe;
+  
+  /* Dark mode status colors */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --warning: #fbbf24;
+  --warning-foreground: #0f0a1a;
+  --success: #34d399;
+  --success-foreground: #0f0a1a;
+  
+  /* Subtle borders and inputs for dark mode */
+  --border: #3730a3;
+  --input: #2d2543;
+  --ring: #a78bfa;
+  
+  /* Dark mode chart colors */
+  --chart-1: #a78bfa;
+  --chart-2: #c084fc;
+  --chart-3: #ddd6fe;
+  --chart-4: #e879f9;
+  --chart-5: #f0abfc;
+  
+  /* Dark sidebar with better contrast */
+  --sidebar: #1e1b31;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #a78bfa;
+  --sidebar-primary-foreground: #0f0a1a;
+  --sidebar-accent: #2d2543;
+  --sidebar-accent-foreground: #ddd6fe;
+  --sidebar-border: #3730a3;
+  --sidebar-ring: #a78bfa;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Better focus states for accessibility */
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  /* Smooth transitions for interactive elements */
+  button,
+  input,
+  textarea,
+  select,
+  a {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Better selection colors */
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  
+  ::-moz-selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+  }
+  
+  /* Better form elements */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    background-color: var(--input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px var(--ring);
+    outline: none;
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

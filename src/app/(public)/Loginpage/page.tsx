@@ -35,7 +35,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-slate-800">
+    <main className="min-h-screen bg-gradient-to-br from-accent via-white to-secondary text-foreground">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 md:grid-cols-2">
         {/* Visual / Brand Panel (static, no effects) */}
         <section className="relative hidden items-center justify-center p-10 md:flex">

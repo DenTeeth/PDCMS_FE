@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       <Navigation />
 
       {/* Header */}
-      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-10">
+      <section className="bg-gradient-to-r from-accent to-secondary py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <DynamicBreadcrumb />
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Contact</h1>
@@ -88,7 +88,7 @@ export default function ContactPage() {
                       id="message"
                       name="message"
                       rows={6}
-                      className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Describe your needs..."
                     />
                   </div>

@@ -53,12 +53,12 @@ export default function AccountsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý tài khoản</h1>
-          <p className="text-gray-600">Quản lý thông tin nhân viên phòng khám</p>
+          <h1 className="text-3xl font-bold text-gray-900">Account Management</h1>
+          <p className="text-gray-600">Manage clinic staff information</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
-          Thêm tài khoản
+          Add Account
         </Button>
       </div>
 
@@ -69,7 +69,7 @@ export default function AccountsPage() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng nhân viên</p>
+                <p className="text-sm font-medium text-gray-600">Total Staff</p>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
             </div>
@@ -82,7 +82,7 @@ export default function AccountsPage() {
                 <span className="text-green-600 font-bold">A</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đang hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Active</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.status === 'active').length}</p>
               </div>
             </div>
@@ -95,7 +95,7 @@ export default function AccountsPage() {
                 <span className="text-red-600 font-bold">I</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Không hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Inactive</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.status === 'inactive').length}</p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function AccountsPage() {
                 <span className="text-purple-600 font-bold">D</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Bác sĩ</p>
+                <p className="text-sm font-medium text-gray-600">Doctors</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.role === 'doctor').length}</p>
               </div>
             </div>
@@ -121,12 +121,12 @@ export default function AccountsPage() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Tìm kiếm</Label>
+              <Label htmlFor="search">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Tìm theo tên hoặc email..."
+                  placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -134,19 +134,19 @@ export default function AccountsPage() {
               </div>
             </div>
             <div className="md:w-48">
-              <Label htmlFor="role">Vai trò</Label>
+              <Label htmlFor="role">Role</Label>
               <select
                 id="role"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">Tất cả vai trò</option>
-                <option value="doctor">Bác sĩ</option>
-                <option value="nurse">Y tá</option>
-                <option value="technician">Kỹ thuật viên</option>
-                <option value="receptionist">Lễ tân</option>
-                <option value="manager">Quản lý</option>
+                <option value="all">All Roles</option>
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="technician">Technician</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="manager">Manager</option>
               </select>
             </div>
           </div>
@@ -156,9 +156,9 @@ export default function AccountsPage() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách nhân viên</CardTitle>
+          <CardTitle>Staff List</CardTitle>
           <CardDescription>
-            Quản lý thông tin và quyền truy cập của nhân viên
+            Manage staff information and access permissions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -166,12 +166,12 @@ export default function AccountsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Nhân viên</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Vai trò</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Phòng ban</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Đăng nhập cuối</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Thao tác</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Staff</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Role</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Department</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Last Login</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -196,11 +196,11 @@ export default function AccountsPage() {
                     <td className="py-4 px-4 text-gray-600">{user.department}</td>
                     <td className="py-4 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(user.status)}`}>
-                        {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                        {user.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-500">
-                      {user.lastLogin ? new Date(user.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}
+                      {user.lastLogin ? new Date(user.lastLogin).toLocaleString('en-US') : 'Never logged in'}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
@@ -225,3 +225,4 @@ export default function AccountsPage() {
     </div>
   );
 }
+

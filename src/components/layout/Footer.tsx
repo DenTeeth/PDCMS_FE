@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-6">
-              <div className="h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <div className="h-10 w-10 bg-purple-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">D</span>
               </div>
               <span className="text-xl font-bold">DenTeeth</span>

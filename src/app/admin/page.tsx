@@ -4,30 +4,30 @@ import { Users, Calendar, FileText, Settings, Activity } from 'lucide-react';
 export default function AdminDashboard() {
   const stats = [
     {
-      title: 'Tổng nhân viên',
+      title: 'Total Staff',
       value: '24',
-      description: '+2 từ tháng trước',
+      description: '+2 from last month',
       icon: Users,
       color: 'text-blue-600',
     },
     {
-      title: 'Lịch hẹn hôm nay',
+      title: 'Today\'s Appointments',
       value: '12',
-      description: '8 đã xác nhận',
+      description: '8 confirmed',
       icon: Calendar,
       color: 'text-green-600',
     },
     {
-      title: 'Bài viết blog',
+      title: 'Blog Posts',
       value: '18',
-      description: '3 bài mới tuần này',
+      description: '3 new this week',
       icon: FileText,
       color: 'text-purple-600',
     },
     {
-      title: 'Vai trò hệ thống',
+      title: 'System Roles',
       value: '5',
-      description: '4 vai trò đang hoạt động',
+      description: '4 active roles',
       icon: Settings,
       color: 'text-orange-600',
     },
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Tổng quan hệ thống quản lý phòng khám nha khoa</p>
+        <p className="text-gray-600">Dental clinic management system overview</p>
       </div>
 
       {/* Stats Grid */}
@@ -62,30 +62,30 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-            <CardDescription>Những thay đổi mới nhất trong hệ thống</CardDescription>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>Latest changes in the system</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Bác sĩ Nguyễn Văn A đã đăng nhập</p>
-                  <p className="text-xs text-gray-500">2 phút trước</p>
+                  <p className="text-sm font-medium">Dr. Nguyen Van A logged in</p>
+                  <p className="text-xs text-gray-500">2 minutes ago</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Lịch hẹn mới được tạo</p>
-                  <p className="text-xs text-gray-500">15 phút trước</p>
+                  <p className="text-sm font-medium">New appointment created</p>
+                  <p className="text-xs text-gray-500">15 minutes ago</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Bài viết blog mới được xuất bản</p>
-                  <p className="text-xs text-gray-500">1 giờ trước</p>
+                  <p className="text-sm font-medium">New blog post published</p>
+                  <p className="text-xs text-gray-500">1 hour ago</p>
                 </div>
               </div>
             </div>
@@ -94,29 +94,29 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lịch hẹn sắp tới</CardTitle>
-            <CardDescription>Những lịch hẹn trong ngày</CardDescription>
+            <CardTitle>Upcoming Appointments</CardTitle>
+            <CardDescription>Today's scheduled appointments</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Nguyễn Thị B</p>
-                  <p className="text-xs text-gray-500">Khám răng định kỳ</p>
+                  <p className="text-sm font-medium">Nguyen Thi B</p>
+                  <p className="text-xs text-gray-500">Regular dental checkup</p>
                 </div>
                 <span className="text-sm text-blue-600">09:00</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Trần Văn C</p>
-                  <p className="text-xs text-gray-500">Nhổ răng khôn</p>
+                  <p className="text-sm font-medium">Tran Van C</p>
+                  <p className="text-xs text-gray-500">Wisdom tooth extraction</p>
                 </div>
                 <span className="text-sm text-blue-600">10:30</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Lê Thị D</p>
-                  <p className="text-xs text-gray-500">Niềng răng</p>
+                  <p className="text-sm font-medium">Le Thi D</p>
+                  <p className="text-xs text-gray-500">Braces treatment</p>
                 </div>
                 <span className="text-sm text-blue-600">14:00</span>
               </div>
@@ -127,3 +127,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

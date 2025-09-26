@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,10 +52,10 @@ export default function AppointmentsPage() {
 
   const getStatusText = (status: string) => {
     const texts = {
-      pending: 'Chờ xác nhận',
-      confirmed: 'Đã xác nhận',
-      completed: 'Hoàn thành',
-      cancelled: 'Đã hủy',
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
     };
     return texts[status as keyof typeof texts] || status;
   };
@@ -74,8 +75,8 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý lịch hẹn</h1>
-          <p className="text-gray-600">Xem và quản lý lịch hẹn của bệnh nhân</p>
+          <h1 className="text-3xl font-bold text-gray-900">Appointment Management</h1>
+          <p className="text-gray-600">View and manage patient appointments</p>
         </div>
       </div>
 
@@ -86,7 +87,7 @@ export default function AppointmentsPage() {
             <div className="flex items-center">
               <Calendar className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng lịch hẹn</p>
+                <p className="text-sm font-medium text-gray-600">Total Appointments</p>
                 <p className="text-2xl font-bold">{appointments.length}</p>
               </div>
             </div>
@@ -99,7 +100,7 @@ export default function AppointmentsPage() {
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Chờ xác nhận</p>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
                 <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'pending').length}</p>
               </div>
             </div>
@@ -112,7 +113,7 @@ export default function AppointmentsPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đã xác nhận</p>
+                <p className="text-sm font-medium text-gray-600">Confirmed</p>
                 <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'confirmed').length}</p>
               </div>
             </div>
@@ -125,7 +126,7 @@ export default function AppointmentsPage() {
                 <CheckCircle className="h-4 w-4 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
+                <p className="text-sm font-medium text-gray-600">Completed</p>
                 <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'completed').length}</p>
               </div>
             </div>
@@ -138,12 +139,12 @@ export default function AppointmentsPage() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Tìm kiếm</Label>
+              <Label htmlFor="search">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Tìm theo tên bệnh nhân, bác sĩ hoặc dịch vụ..."
+                  placeholder="Search by patient name, doctor or service..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -151,22 +152,22 @@ export default function AppointmentsPage() {
               </div>
             </div>
             <div className="md:w-48">
-              <Label htmlFor="status">Trạng thái</Label>
+              <Label htmlFor="status">Status</Label>
               <select
                 id="status"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="pending">Chờ xác nhận</option>
-                <option value="confirmed">Đã xác nhận</option>
-                <option value="completed">Hoàn thành</option>
-                <option value="cancelled">Đã hủy</option>
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <div className="md:w-48">
-              <Label htmlFor="date">Ngày</Label>
+              <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="date"
@@ -201,22 +202,22 @@ export default function AppointmentsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                       <div className="flex items-center text-sm text-gray-600">
                         <User className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Bác sĩ:</span>
+                        <span className="font-medium">Doctor:</span>
                         <span className="ml-1">{appointment.doctorName}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Phone className="h-4 w-4 mr-2" />
-                        <span className="font-medium">SĐT:</span>
+                        <span className="font-medium">Phone:</span>
                         <span className="ml-1">{appointment.patientPhone}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Ngày:</span>
-                        <span className="ml-1">{new Date(appointment.date).toLocaleDateString('vi-VN')}</span>
+                        <span className="font-medium">Date:</span>
+                        <span className="ml-1">{new Date(appointment.date).toLocaleDateString('en-US')}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Clock className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Giờ:</span>
+                        <span className="font-medium">Time:</span>
                         <span className="ml-1">{appointment.time}</span>
                       </div>
                     </div>
@@ -224,7 +225,7 @@ export default function AppointmentsPage() {
                     {appointment.notes && (
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-sm text-gray-700">
-                          <span className="font-medium">Ghi chú:</span> {appointment.notes}
+                          <span className="font-medium">Notes:</span> {appointment.notes}
                         </p>
                       </div>
                     )}
@@ -256,11 +257,11 @@ export default function AppointmentsPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy lịch hẹn</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
             <p className="text-gray-500">
               {searchTerm || filterStatus !== 'all' || filterDate
-                ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
-                : 'Chưa có lịch hẹn nào được đặt'
+                ? 'Try changing filters or search keywords'
+                : 'No appointments have been scheduled yet'
               }
             </p>
           </CardContent>

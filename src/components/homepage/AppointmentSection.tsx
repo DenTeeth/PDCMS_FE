@@ -26,7 +26,7 @@ export default function AppointmentSection() {
   };
 
   return (
-    <section id="appointment" className="py-20 bg-blue-50">
+    <section id="appointment" className="py-20 bg-accent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
@@ -48,7 +48,7 @@ export default function AppointmentSection() {
                   required
                   value={appointmentForm.fullName}
                   onChange={(e) => setAppointmentForm(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -63,7 +63,7 @@ export default function AppointmentSection() {
                   required
                   value={appointmentForm.phone}
                   onChange={(e) => setAppointmentForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -77,7 +77,7 @@ export default function AppointmentSection() {
                   required
                   value={appointmentForm.service}
                   onChange={(e) => setAppointmentForm(prev => ({ ...prev, service: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
                 >
                   <option value="">Select a service</option>
                   <option value="pediatric">Pediatric Dentistry</option>
@@ -97,13 +97,13 @@ export default function AppointmentSection() {
                   required
                   value={appointmentForm.time}
                   onChange={(e) => setAppointmentForm(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary bg-white"
                 />
               </div>
               
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                className="w-full bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium"
               >
                 BOOK APPOINTMENT
               </button>
@@ -113,7 +113,7 @@ export default function AppointmentSection() {
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold mb-6">OR CALL NOW</h3>
             <div className="text-center mb-8">
-              <div className="text-4xl font-bold text-blue-500 mb-2">(+84) 123 567 890</div>
+              <div className="text-4xl font-bold text-primary mb-2">(+84) 123 567 890</div>
               <p className="text-gray-600">
                 Call us for online consultation or to book an appointment at the clinic as soon as possible.
               </p>

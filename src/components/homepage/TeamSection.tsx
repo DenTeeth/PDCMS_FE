@@ -12,7 +12,7 @@ const teamMembers: TeamMember[] = [
     position: "Head of Department",
     description: "The most experienced doctor in the team. Patients love him for his carefulness and wisdom.",
     avatar: "👨‍⚕️",
-    bgColor: "bg-blue-200"
+    bgColor: "bg-secondary"
   },
   {
     name: "Dr. Tran Thi Binh", 
@@ -57,7 +57,7 @@ export default function TeamSection() {
                 <span className="text-2xl">{member.avatar}</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">{member.name}</h3>
-              <p className="text-blue-500 text-sm mb-2">{member.position}</p>
+              <p className="text-primary text-sm mb-2">{member.position}</p>
               <p className="text-gray-600 text-sm">
                 {member.description}
               </p>

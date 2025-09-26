@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import Navigation from "@/components/layout/Navigation";
 import DynamicBreadcrumb from "@/components/ui/DynamicBreadcrumb";
+import Footer from "@/components/layout/Footer";
 
 interface Service {
 	title: string;
@@ -22,9 +23,9 @@ const services: Service[] = [
 export default function ServicesPage() {
 	return (
 		<>
-		<main className="min-h-screen bg-white">
+		<main className="min-h-screen bg-background">
 		<Navigation />
-			<section className="bg-gradient-to-r from-blue-50 to-blue-100 py-10">
+			<section className="bg-gradient-to-r from-accent to-secondary py-10">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<DynamicBreadcrumb />
 
@@ -41,12 +42,13 @@ export default function ServicesPage() {
 								<div className="text-4xl mb-4">{s.icon}</div>
 								<h3 className="text-xl font-semibold mb-2">{s.title}</h3>
 								<p className="text-gray-600 mb-4">{s.description}</p>
-								<Link href={s.link} className="text-blue-600 font-medium hover:underline">More Details →</Link>
+								<Link href={s.link} className="text-primary font-medium hover:underline">More Details →</Link>
 							</div>
 						))}
 					</div>
 				</div>
 			</section>
+			<Footer />
 		</main>
 		</>
 	);
