@@ -67,6 +67,32 @@ export const users: User[] = [
     createdAt: '2024-01-05',
     lastLogin: '2024-01-20 10:30:00',
   },
+  {
+    id: '6',
+    name: 'Warehouse Staff',
+    email: 'warehouse@example.com',
+    phone: '0123987654',
+    position: 'Warehouse Manager',
+    department: 'Inventory Department',
+    role: 'warehouse_staff',
+    status: 'active',
+    avatar: '/avatars/warehouse1.jpg',
+    createdAt: '2024-01-03',
+    lastLogin: '2024-01-20 08:00:00',
+  },
+  {
+    id: '7',
+    name: 'Financial Accountant',
+    email: 'accountant@example.com',
+    phone: '0987123456',
+    position: 'Senior Accountant',
+    department: 'Finance Department',
+    role: 'accountant',
+    status: 'active',
+    avatar: '/avatars/accountant1.jpg',
+    createdAt: '2024-01-02',
+    lastLogin: '2024-01-20 09:30:00',
+  },
 ];
 
 // Sample blogs data
