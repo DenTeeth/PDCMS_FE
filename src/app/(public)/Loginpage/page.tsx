@@ -40,7 +40,7 @@ export default function Page() {
         {/* Visual / Brand Panel (static, no effects) */}
         <section className="relative hidden items-center justify-center p-10 md:flex">
           <div className="relative z-10 max-w-md text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500 text-white shadow-lg">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500 text-white shadow-lg">
               {/* Tooth icon */}
               <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
@@ -68,7 +68,7 @@ export default function Page() {
                 Back
               </Link>
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/15 text-purple-600">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
                   </svg>
@@ -156,7 +156,7 @@ export default function Page() {
                 <Link href="/forgot-password" className="text-sm text-cyan-700 hover:text-cyan-800">Forgot password?</Link>
               </div>
 
-              <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-600 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-500 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-white-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black-500/20 transition hover:from-purple-500 hover:to-white -500 disabled:cursor-not-allowed disabled:opacity-60">
                 <span>{loading ? "Signing in..." : "Sign in"}</span>
                 <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" />
@@ -172,7 +172,8 @@ export default function Page() {
 
               <p className="text-center text-sm text-slate-500">
                 Don&apos;t have an account? {""}
-                <Link href="/register" className="font-medium text-cyan-700 hover:text-cyan-800">Create account</Link>
+                <br/>
+                Please contact: <span className="text-purple-700 font-bold">01234568</span>
               </p>
             </form>
 

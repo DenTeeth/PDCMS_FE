@@ -268,3 +268,176 @@ export interface FinancialSummary {
   }[];
 }
 
+// Dentist/Patient Management types
+export interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  dateOfBirth: string;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  phone: string;
+  email: string;
+  address: string;
+  emergencyContact: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
+  insuranceInfo?: {
+    provider: string;
+    policyNumber: string;
+    groupNumber: string;
+    expiryDate: string;
+  };
+  medicalHistory: {
+    allergies: string[];
+    medications: string[];
+    conditions: string[];
+    previousSurgeries: string[];
+    familyHistory: string[];
+  };
+  dentalHistory: {
+    previousDentist: string;
+    lastVisit: string;
+    cleaningFrequency: string;
+    oralHygiene: 'excellent' | 'good' | 'fair' | 'poor';
+    habits: string[]; // smoking, grinding, etc.
+  };
+  assignedDoctorId: string;
+  status: 'active' | 'inactive' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+  lastVisit?: string;
+  nextAppointment?: string;
+}
+
+export interface TreatmentStage {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+  estimatedDuration: number; // days
+  checklist: {
+    id: string;
+    task: string;
+    description: string;
+    isRequired: boolean;
+    isCompleted: boolean;
+    completedAt?: string;
+    completedBy?: string;
+    notes?: string;
+  }[];
+  prerequisites: string[]; // stage IDs that must be completed first
+  isCompleted: boolean;
+  completedAt?: string;
+  startedAt?: string;
+}
+
+export interface Treatment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  type: string; // Root Canal, Crown, Cleaning, etc.
+  category: 'preventive' | 'restorative' | 'surgical' | 'orthodontic' | 'cosmetic';
+  description: string;
+  tooth: string[]; // tooth numbers
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  stages: TreatmentStage[];
+  currentStageId?: string;
+  startDate: string;
+  expectedEndDate: string;
+  actualEndDate?: string;
+  totalCost: number;
+  paidAmount: number;
+  notes: string;
+  assignedDoctorId: string;
+  assignedDoctorName: string;
+  xrays: {
+    id: string;
+    url: string;
+    type: string;
+    date: string;
+    notes: string;
+  }[];
+  images: {
+    id: string;
+    url: string;
+    type: 'before' | 'progress' | 'after';
+    date: string;
+    notes: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DentistAppointment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientPhone: string;
+  doctorId: string;
+  doctorName: string;
+  treatmentId?: string;
+  treatmentType?: string;
+  date: string;
+  time: string;
+  duration: number; // minutes
+  type: 'checkup' | 'consultation' | 'treatment' | 'follow_up' | 'emergency';
+  status: 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+  priority: 'normal' | 'urgent';
+  room: string;
+  notes: string;
+  reminderSent: boolean;
+  createdAt: string;
+  updatedAt: string;
+  symptoms?: string[];
+  diagnosis?: string;
+  treatmentPlan?: string;
+  nextAppointment?: {
+    suggestedDate: string;
+    reason: string;
+    urgency: 'routine' | 'soon' | 'urgent';
+  };
+}
+
+export interface FollowUpSchedule {
+  id: string;
+  patientId: string;
+  patientName: string;
+  treatmentId: string;
+  treatmentType: string;
+  currentStage: string;
+  reason: string;
+  suggestedDate: string;
+  urgency: 'routine' | 'soon' | 'urgent';
+  status: 'pending' | 'scheduled' | 'completed' | 'overdue';
+  instructions: string;
+  assignedDoctorId: string;
+  createdAt: string;
+  remindersSent: number;
+  lastReminderDate?: string;
+}
+
+export interface DentistStats {
+  todayAppointments: DentistAppointment[];
+  weeklySchedule: {
+    date: string;
+    appointments: DentistAppointment[];
+  }[];
+  activePatients: number;
+  activeTreatments: number;
+  completedTreatmentsThisMonth: number;
+  pendingFollowUps: number;
+  upcomingDeadlines: {
+    patientName: string;
+    treatmentType: string;
+    deadline: string;
+    urgency: string;
+  }[];
+  patientSatisfactionAvg: number;
+  treatmentSuccessRate: number;
+}
+

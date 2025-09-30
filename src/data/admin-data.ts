@@ -93,6 +93,19 @@ export const users: User[] = [
     createdAt: '2024-01-02',
     lastLogin: '2024-01-20 09:30:00',
   },
+  {
+    id: '8',
+    name: 'Dr. Nguyen Van A',
+    email: 'dr.nguyen@example.com',
+    phone: '0456789123',
+    position: 'Senior Dentist',
+    department: 'Dental Department',
+    role: 'dentist',
+    status: 'active',
+    avatar: '/avatars/dentist1.jpg',
+    createdAt: '2024-01-01',
+    lastLogin: '2024-01-21 08:30:00',
+  },
 ];
 
 // Sample blogs data
