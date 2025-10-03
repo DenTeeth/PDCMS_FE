@@ -3,61 +3,62 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  Users, 
-  DollarSign,
-  Receipt,
-  PieChart,
-  FileText,
-  CreditCard,
-  Calculator,
-  Menu,
-  X,
-  ChevronRight
-} from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faTachometerAlt,
+  faChartLine,
+  faUsers,
+  faDollarSign,
+  faReceipt,
+  faChartPie,
+  faFileAlt,
+  faCreditCard,
+  faCalculator,
+  faBars,
+  faTimes,
+  faChevronRight
+} from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
   {
     name: 'Financial Dashboard',
     href: '/accountant',
-    icon: LayoutDashboard,
+    icon: faTachometerAlt,
   },
   {
     name: 'Doctor Performance',
     href: '/accountant/performance',
-    icon: Users,
+    icon: faUsers,
   },
   {
     name: 'Revenue Analysis',
     href: '/accountant/revenue',
-    icon: TrendingUp,
+    icon: faChartLine,
   },
   {
     name: 'Expense Tracking',
     href: '/accountant/expenses',
-    icon: Receipt,
+    icon: faReceipt,
   },
   {
     name: 'Inventory Costs',
     href: '/accountant/inventory-costs',
-    icon: PieChart,
+    icon: faChartPie,
   },
   {
     name: 'Patient Billing',
     href: '/accountant/billing',
-    icon: CreditCard,
+    icon: faCreditCard,
   },
   {
     name: 'Financial Reports',
     href: '/accountant/reports',
-    icon: FileText,
+    icon: faFileAlt,
   },
   {
     name: 'Budget Planning',
     href: '/accountant/budget',
-    icon: Calculator,
+    icon: faCalculator,
   },
 ];
 
@@ -74,9 +75,9 @@ export default function AccountantSidebar() {
           className="p-3 rounded-xl bg-card shadow-lg border border-border hover:shadow-xl transition-all duration-200"
         >
           {isOpen ? (
-            <X className="h-5 w-5 text-foreground" />
+            <FontAwesomeIcon icon={faTimes} className="h-5 w-5 text-foreground" />
           ) : (
-            <Menu className="h-5 w-5 text-foreground" />
+            <FontAwesomeIcon icon={faBars} className="h-5 w-5 text-foreground" />
           )}
         </button>
       </div>
@@ -110,12 +111,12 @@ export default function AccountantSidebar() {
                   `}
                   onClick={() => setIsOpen(false)}
                 >
-                  <item.icon className={`mr-3 h-5 w-5 transition-all duration-200 ${
+                  <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${
                     isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
                   }`} />
                   <span className="flex-1">{item.name}</span>
                   {isActive && (
-                    <ChevronRight className="h-4 w-4 text-sidebar-primary-foreground/80" />
+                    <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4 text-sidebar-primary-foreground/80" />
                   )}
                   {!isActive && (
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-10 transition-opacity duration-200" />
@@ -129,7 +130,7 @@ export default function AccountantSidebar() {
           <div className="p-4 border-t border-sidebar-border bg-sidebar-accent">
             <div className="flex items-center p-3 rounded-lg bg-card shadow-sm border border-border">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                <DollarSign className="text-primary-foreground text-sm" />
+                <FontAwesomeIcon icon={faDollarSign} className="text-primary-foreground text-sm" />
               </div>
                <div className="ml-3 flex-1">
                  <p className="text-sm font-semibold text-card-foreground">Financial Accountant</p>

@@ -6,74 +6,68 @@ import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTachometerAlt,
+  faUser,
   faCalendarAlt,
-  faUsers,
-  faStethoscope,
-  faClipboardList,
-  faUserCheck,
-  faClock,
-  faChartLine,
   faFileAlt,
-  faCamera,
+  faCreditCard,
+  faCog,
   faBars,
   faTimes,
-  faChevronRight
+  faChevronRight,
+  faBell,
+  faHistory,
+  faHeart
 } from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/dentist',
+    href: '/user',
     icon: faTachometerAlt,
   },
   {
-    name: 'Appointment Schedule',
-    href: '/dentist/schedule',
+    name: 'My Profile',
+    href: '/user/profile',
+    icon: faUser,
+  },
+  {
+    name: 'Appointments',
+    href: '/user/appointments',
     icon: faCalendarAlt,
   },
   {
-    name: 'Patient Records',
-    href: '/dentist/patients',
-    icon: faUsers,
-  },
-  {
-    name: 'Active Treatments',
-    href: '/dentist/treatments',
-    icon: faStethoscope,
-  },
-  {
-    name: 'Treatment Stages',
-    href: '/dentist/stages',
-    icon: faClipboardList,
-  },
-  {
-    name: 'Follow-up Schedule',
-    href: '/dentist/followups',
-    icon: faClock,
-  },
-  {
-    name: 'Patient Check-in',
-    href: '/dentist/checkin',
-    icon: faUserCheck,
-  },
-  {
-    name: 'Treatment History',
-    href: '/dentist/history',
-    icon: faChartLine,
-  },
-  {
-    name: 'Clinical Notes',
-    href: '/dentist/notes',
+    name: 'Medical Records',
+    href: '/user/records',
     icon: faFileAlt,
   },
   {
-    name: 'X-Ray & Images',
-    href: '/dentist/imaging',
-    icon: faCamera,
+    name: 'Billing & Payments',
+    href: '/user/billing',
+    icon: faCreditCard,
+  },
+  {
+    name: 'Notifications',
+    href: '/user/notifications',
+    icon: faBell,
+  },
+  {
+    name: 'Appointment History',
+    href: '/user/history',
+    icon: faHistory,
+  },
+  {
+    name: 'Health Tips',
+    href: '/user/health-tips',
+    icon: faHeart,
+  },
+  {
+    name: 'Settings',
+    href: '/user/settings',
+    icon: faCog,
   },
 ];
 
-export default function DentistSidebar() {
+export default function UserSidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const pathname = usePathname();
 
@@ -102,7 +96,7 @@ export default function DentistSidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 border-b border-sidebar-border bg-gradient-to-r from-primary to-secondary">
-            <h1 className="text-xl font-bold text-primary-foreground">DenTeeth</h1>
+            <h1 className="text-xl font-bold text-primary-foreground">My Account</h1>
           </div>
 
           {/* Navigation */}
@@ -141,11 +135,11 @@ export default function DentistSidebar() {
           <div className="p-4 border-t border-sidebar-border bg-sidebar-accent">
             <div className="flex items-center p-3 rounded-lg bg-card shadow-sm border border-border">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                <FontAwesomeIcon icon={faStethoscope} className="text-primary-foreground text-sm" />
+                <FontAwesomeIcon icon={faUser} className="text-primary-foreground text-sm" />
               </div>
                <div className="ml-3 flex-1">
-                 <p className="text-sm font-semibold text-card-foreground">Dr. Nguyen Van A</p>
-                 <p className="text-xs text-muted-foreground">Senior Dentist</p>
+                 <p className="text-sm font-semibold text-card-foreground">John Doe</p>
+                 <p className="text-xs text-muted-foreground">Patient</p>
                </div>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
             </div>

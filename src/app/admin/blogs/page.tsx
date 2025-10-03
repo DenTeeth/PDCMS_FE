@@ -124,21 +124,9 @@ export default function BlogsPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Label htmlFor="search">Tìm kiếm</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  id="search"
-                  placeholder="Tìm theo tiêu đề hoặc tác giả..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="md:w-48">
-              <Label htmlFor="status">Trạng thái</Label>
+
+          <div className="md:w-48">
+              <Label htmlFor="status" className="mb-2">Trạng thái</Label>
               <select
                 id="status"
                 value={filterStatus}
@@ -151,6 +139,20 @@ export default function BlogsPage() {
                 <option value="archived">Đã lưu trữ</option>
               </select>
             </div>
+            <div className="flex-1">
+              <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="search"
+                  placeholder="Tìm theo tiêu đề hoặc tác giả..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
           </div>
         </CardContent>
       </Card>

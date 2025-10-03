@@ -211,6 +211,48 @@ export const appointments: Appointment[] = [
     notes: 'Completed',
     createdAt: '2024-01-18 09:45:00',
   },
+  {
+    id: '5',
+    patientName: 'Hoàng Thị M',
+    patientPhone: '0456123789',
+    patientEmail: 'hoangthim@example.com',
+    doctorName: 'Trần Thị B',
+    doctorId: '2',
+    service: 'Dental cleaning',
+    date: new Date().toISOString().split('T')[0], // Today
+    time: '11:00',
+    status: 'confirmed',
+    notes: 'Regular cleaning appointment',
+    createdAt: '2024-01-19 14:30:00',
+  },
+  {
+    id: '6',
+    patientName: 'Vũ Văn N',
+    patientPhone: '0789456123',
+    patientEmail: 'vuvann@example.com',
+    doctorName: 'Lê Văn C',
+    doctorId: '3',
+    service: 'Root canal treatment',
+    date: new Date().toISOString().split('T')[0], // Today
+    time: '15:30',
+    status: 'pending',
+    notes: 'Second session',
+    createdAt: '2024-01-20 16:45:00',
+  },
+  {
+    id: '7',
+    patientName: 'Đỗ Thị O',
+    patientPhone: '0321654987',
+    patientEmail: 'dothio@example.com',
+    doctorName: 'Phạm Thị D',
+    doctorId: '4',
+    service: 'Consultation',
+    date: new Date().toISOString().split('T')[0], // Today
+    time: '16:00',
+    status: 'cancelled',
+    notes: 'Patient cancelled',
+    createdAt: '2024-01-20 12:00:00',
+  },
 ];
 
 // Permissions data

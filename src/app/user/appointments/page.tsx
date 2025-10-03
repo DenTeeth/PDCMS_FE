@@ -1,9 +1,9 @@
 'use client';
 
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
@@ -26,22 +26,96 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { appointments } from '@/data/admin-data';
-import { Appointment } from '@/types/admin';
 
-export default function AppointmentsPage() {
+// Sample appointments data
+const appointments = [
+  {
+    id: '1',
+    date: '2024-01-25',
+    time: '10:00',
+    doctor: 'Dr. Nguyen Van A',
+    department: 'General Medicine',
+    type: 'General Checkup',
+    status: 'confirmed',
+    location: 'Room 101',
+    notes: 'Annual physical examination',
+    duration: 60
+  },
+  {
+    id: '2',
+    date: '2024-01-30',
+    time: '14:00',
+    doctor: 'Dr. Le Thi B',
+    department: 'Dentistry',
+    type: 'Dental Cleaning',
+    status: 'pending',
+    location: 'Room 205',
+    notes: 'Regular dental cleaning and checkup',
+    duration: 45
+  },
+  {
+    id: '3',
+    date: '2024-02-05',
+    time: '09:30',
+    doctor: 'Dr. Tran Van C',
+    department: 'Cardiology',
+    type: 'Cardiac Consultation',
+    status: 'scheduled',
+    location: 'Room 301',
+    notes: 'Follow-up consultation for heart condition',
+    duration: 90
+  },
+  {
+    id: '4',
+    date: '2024-01-20',
+    time: '15:15',
+    doctor: 'Dr. Pham Thi D',
+    department: 'Dermatology',
+    type: 'Skin Examination',
+    status: 'completed',
+    location: 'Room 102',
+    notes: 'Annual skin check for moles and lesions',
+    duration: 30
+  },
+  {
+    id: '5',
+    date: new Date().toISOString().split('T')[0], // Today
+    time: '11:00',
+    doctor: 'Dr. Hoang Van E',
+    department: 'Orthopedics',
+    type: 'Joint Consultation',
+    status: 'confirmed',
+    location: 'Room 203',
+    notes: 'Knee pain evaluation',
+    duration: 60
+  },
+  {
+    id: '6',
+    date: new Date().toISOString().split('T')[0], // Today
+    time: '14:30',
+    doctor: 'Dr. Nguyen Thi F',
+    department: 'Neurology',
+    type: 'Neurological Exam',
+    status: 'scheduled',
+    location: 'Room 305',
+    notes: 'Headache assessment',
+    duration: 45
+  }
+];
+
+export default function UserAppointments() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const filteredAppointments = appointments.filter(appointment => {
-    const matchesSearch = appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || appointment.status === filterStatus;
+    const matchesSearch = appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         appointment.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         appointment.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter;
     const matchesDate = !filterDate || appointment.date === filterDate;
     return matchesSearch && matchesStatus && matchesDate;
   });
@@ -50,7 +124,8 @@ export default function AppointmentsPage() {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
       confirmed: 'bg-green-100 text-green-800',
-      completed: 'bg-blue-100 text-blue-800',
+      scheduled: 'bg-blue-100 text-blue-800',
+      completed: 'bg-gray-100 text-gray-800',
       cancelled: 'bg-red-100 text-red-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
@@ -60,6 +135,7 @@ export default function AppointmentsPage() {
     const texts = {
       pending: 'Pending',
       confirmed: 'Confirmed',
+      scheduled: 'Scheduled',
       completed: 'Completed',
       cancelled: 'Cancelled',
     };
@@ -70,6 +146,7 @@ export default function AppointmentsPage() {
     const icons = {
       pending: AlertCircle,
       confirmed: CheckCircle,
+      scheduled: Calendar,
       completed: CheckCircle,
       cancelled: XCircle,
     };
@@ -132,12 +209,14 @@ export default function AppointmentsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'confirmed':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'cancelled':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -165,8 +244,8 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Appointment Management</h1>
-          <p className="text-gray-600">View and manage patient appointments</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
+          <p className="text-gray-600">Manage your medical appointments</p>
         </div>
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
@@ -187,7 +266,7 @@ export default function AppointmentsPage() {
           </div>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Appointment
+            Book New Appointment
           </Button>
         </div>
       </div>
@@ -246,18 +325,17 @@ export default function AppointmentsPage() {
         </Card>
       </div>
 
-      {/* Combined Filters and Calendar Controls */}
+      {/* Filters */}
       <Card>
         <CardContent className="p-6">
-          {/* Search and Filters Row */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <Label htmlFor="search">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Search by patient name, doctor or service..."
+                  placeholder="Search by doctor, type or department..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -268,13 +346,14 @@ export default function AppointmentsPage() {
               <Label htmlFor="status">Status</Label>
               <select
                 id="status"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -289,40 +368,42 @@ export default function AppointmentsPage() {
               />
             </div>
           </div>
-
-          {/* Calendar View Controls */}
-          {viewMode === 'calendar' && (
-            <div className="flex items-center justify-between border-t pt-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigateWeek('prev')}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigateWeek('next')}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="text-lg font-semibold text-gray-900">
-                  {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </div>
-              </div>
-
-              <Button variant="outline" onClick={goToToday}>
-                Today
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Calendar View Controls */}
+      {viewMode === 'calendar' && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateWeek('prev')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateWeek('next')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="text-lg font-semibold text-gray-900">
+                {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+
+            <Button variant="outline" onClick={goToToday}>
+              Today
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Schedule Grid */}
       {viewMode === 'calendar' && (
@@ -382,38 +463,43 @@ export default function AppointmentsPage() {
                         >
                           {appointment && (
                             <div 
-                              className="p-2 rounded-lg border cursor-pointer hover:shadow-md transition-all duration-200"
+                              className={`p-2 rounded-lg border cursor-pointer hover:shadow-md transition-all duration-200 ${
+                                appointment.duration > 30 ? 'row-span-2' : ''
+                              }`}
                               style={{
-                                backgroundColor: appointment.status === 'completed' ? '#dbeafe' : 
+                                backgroundColor: appointment.status === 'completed' ? '#f3f4f6' : 
                                                appointment.status === 'confirmed' ? '#dcfce7' : 
-                                               appointment.status === 'pending' ? '#fef3c7' : 
-                                               appointment.status === 'cancelled' ? '#fee2e2' : '#f3f4f6'
+                                               appointment.status === 'scheduled' ? '#dbeafe' : 
+                                               appointment.status === 'cancelled' ? '#fee2e2' : '#fef3c7'
                               }}
                             >
                               <div className="flex items-center justify-between mb-1">
                                 <h4 className="text-xs font-semibold text-gray-900 truncate">
-                                  {appointment.patientName}
+                                  {appointment.type}
                                 </h4>
-                                <span className={`${getStatusColor(appointment.status)} border text-xs px-1 py-0 rounded`}>
+                                <Badge className={`${getStatusColor(appointment.status)} border text-xs px-1 py-0`}>
                                   {appointment.status}
-                                </span>
+                                </Badge>
                               </div>
                               
                               <p className="text-xs text-gray-600 truncate mb-1">
-                                {appointment.service}
+                                {appointment.doctor}
                               </p>
                               
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <span className="flex items-center">
-                                  <User className="h-3 w-3 mr-1" />
-                                  {appointment.doctorName}
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {appointment.duration}m
+                                </span>
+                                <span className="flex items-center">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  {appointment.location}
                                 </span>
                               </div>
                               
                               <div className="flex items-center justify-between mt-2">
-                                <span className="flex items-center text-xs text-gray-500">
-                                  <Phone className="h-3 w-3 mr-1" />
-                                  {appointment.patientPhone}
+                                <span className="text-xs text-gray-500">
+                                  {appointment.department}
                                 </span>
                                 <Button variant="outline" size="sm" className="h-5 px-2 text-xs">
                                   <Eye className="h-3 w-3" />
@@ -445,8 +531,8 @@ export default function AppointmentsPage() {
                     <div className="flex items-center gap-3 mb-4">
                       <StatusIcon className="h-5 w-5 text-gray-400" />
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{appointment.patientName}</h3>
-                        <p className="text-sm text-gray-500">{appointment.service}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">{appointment.type}</h3>
+                        <p className="text-sm text-gray-500">{appointment.department}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(appointment.status)}`}>
                         {getStatusText(appointment.status)}
@@ -457,12 +543,12 @@ export default function AppointmentsPage() {
                       <div className="flex items-center text-sm text-gray-600">
                         <User className="h-4 w-4 mr-2" />
                         <span className="font-medium">Doctor:</span>
-                        <span className="ml-1">{appointment.doctorName}</span>
+                        <span className="ml-1">{appointment.doctor}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Phone:</span>
-                        <span className="ml-1">{appointment.patientPhone}</span>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span className="font-medium">Location:</span>
+                        <span className="ml-1">{appointment.location}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="h-4 w-4 mr-2" />
@@ -472,7 +558,7 @@ export default function AppointmentsPage() {
                       <div className="flex items-center text-sm text-gray-600">
                         <Clock className="h-4 w-4 mr-2" />
                         <span className="font-medium">Time:</span>
-                        <span className="ml-1">{appointment.time}</span>
+                        <span className="ml-1">{formatTime(appointment.time)} ({appointment.duration} min)</span>
                       </div>
                     </div>
 
@@ -513,7 +599,7 @@ export default function AppointmentsPage() {
           {weekDates.slice(0, 4).map((date) => {
             const dayAppointments = getAppointmentsForDate(date);
             const completedCount = dayAppointments.filter(apt => apt.status === 'completed').length;
-            const pendingCount = dayAppointments.filter(apt => apt.status === 'pending' || apt.status === 'confirmed').length;
+            const pendingCount = dayAppointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed').length;
             
             return (
               <Card key={date.toISOString()} className="p-4">
@@ -522,7 +608,7 @@ export default function AppointmentsPage() {
                     {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </h3>
                   {isToday(date) && (
-                    <span className="bg-blue-100 text-blue-800 border-blue-200 text-xs px-2 py-1 rounded">Today</span>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">Today</Badge>
                   )}
                 </div>
                 
@@ -550,7 +636,7 @@ export default function AppointmentsPage() {
                 {dayAppointments.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <div className="text-xs text-gray-500">
-                      Next: {dayAppointments.find(apt => apt.status === 'pending' || apt.status === 'confirmed')?.patientName || 'None'}
+                      Next: {dayAppointments.find(apt => apt.status === 'scheduled' || apt.status === 'confirmed')?.type || 'None'}
                     </div>
                   </div>
                 )}
@@ -566,15 +652,19 @@ export default function AppointmentsPage() {
           <h3 className="font-medium text-gray-900 mb-3">Status Legend</h3>
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div>
-              <span>Pending</span>
+              <div className="w-4 h-4 bg-blue-100 border border-blue-200 rounded"></div>
+              <span>Scheduled</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div>
               <span>Confirmed</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-100 border border-blue-200 rounded"></div>
+              <div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div>
+              <span>Pending</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-gray-100 border border-gray-200 rounded"></div>
               <span>Completed</span>
             </div>
             <div className="flex items-center space-x-2">
@@ -592,9 +682,9 @@ export default function AppointmentsPage() {
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
             <p className="text-gray-500">
-              {searchTerm || filterStatus !== 'all' || filterDate
+              {searchTerm || statusFilter !== 'all' || filterDate
                 ? 'Try changing filters or search keywords'
-                : 'No appointments have been scheduled yet'
+                : 'You don\'t have any appointments yet'
               }
             </p>
           </CardContent>
@@ -603,3 +693,4 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
