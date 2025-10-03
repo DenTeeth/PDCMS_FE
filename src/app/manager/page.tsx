@@ -55,10 +55,6 @@ export default function ManagerDashboard() {
             {/* Page Title */}
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg hover:from-blue-700 hover:to-teal-600 transition-all duration-200">
-                    <FontAwesomeIcon icon={faCalendarCheck} className="w-5 h-5 mr-2" />
-                    New Appointment
-                </button>
             </div>
 
             {/* Stats Grid */}
