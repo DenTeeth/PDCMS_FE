@@ -1,50 +1,115 @@
 'use client'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons'
+import { useState } from 'react'
+import SearchBar from '@/components/ui/search-bar'
+
+interface Appointment {
+    id: string
+    patientName: string
+    patientId: string
+    date: string
+    time: string
+    service: string
+    doctor: string
+    status: 'confirmed' | 'pending' | 'cancelled'
+}
+
+const mockAppointments: Appointment[] = [
+    {
+        id: 'APT-001',
+        patientName: 'Sarah Johnson',
+        patientId: 'PAT-001',
+        date: '2025-09-28',
+        time: '09:00 AM',
+        service: 'Dental Cleaning',
+        doctor: 'Dr. Smith',
+        status: 'confirmed'
+    },
+    {
+        id: 'APT-002',
+        patientName: 'Michael Brown',
+        patientId: 'PAT-002',
+        date: '2025-09-28',
+        time: '10:30 AM',
+        service: 'Root Canal',
+        doctor: 'Dr. Johnson',
+        status: 'pending'
+    },
+    {
+        id: 'APT-003',
+        patientName: 'Emma Wilson',
+        patientId: 'PAT-003',
+        date: '2025-09-28',
+        time: '02:00 PM',
+        service: 'Tooth Extraction',
+        doctor: 'Dr. Williams',
+        status: 'cancelled'
+    }
+]
 
 export default function AppointmentsPage() {
+    const [searchTerm, setSearchTerm] = useState('')
+    const [selectedDate, setSelectedDate] = useState('')
+    const [statusFilter, setStatusFilter] = useState('all')
+    const [doctorFilter, setDoctorFilter] = useState('all')
+
+    const filteredAppointments = mockAppointments.filter(appointment => {
+        const matchesSearch =
+            appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            appointment.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            appointment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesDate = !selectedDate || appointment.date === selectedDate
+        const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter
+        const matchesDoctor = doctorFilter === 'all' || appointment.doctor === doctorFilter
+
+        return matchesSearch && matchesDate && matchesStatus && matchesDoctor
+    })
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
-                <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg hover:from-blue-700 hover:to-teal-600 transition-all duration-200">
-                    + New Appointment
-                </button>
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                        <FontAwesomeIcon icon={faSearch} className="w-5 h-5" />
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Search appointments..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
+                <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Search appointments..."
+                />
                 <div>
                     <input
                         type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
                 <div>
-                    <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>All Status</option>
-                        <option>Confirmed</option>
-                        <option>Pending</option>
-                        <option>Cancelled</option>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
                     </select>
                 </div>
                 <div>
-                    <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>All Doctors</option>
-                        <option>Dr. Smith</option>
-                        <option>Dr. Johnson</option>
-                        <option>Dr. Williams</option>
+                    <select
+                        value={doctorFilter}
+                        onChange={(e) => setDoctorFilter(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="all">All Doctors</option>
+                        <option value="Dr. Smith">Dr. Smith</option>
+                        <option value="Dr. Johnson">Dr. Johnson</option>
+                        <option value="Dr. Williams">Dr. Williams</option>
                     </select>
                 </div>
             </div>
@@ -76,33 +141,42 @@ export default function AppointmentsPage() {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {[1, 2, 3].map((_, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
+                            {filteredAppointments.map((appointment) => (
+                                <tr key={appointment.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div>
-                                                <div className="text-sm font-medium text-gray-900">Sarah Johnson</div>
-                                                <div className="text-sm text-gray-500">#PAT-0{index + 1}</div>
+                                                <div className="text-sm font-medium text-gray-900">{appointment.patientName}</div>
+                                                <div className="text-sm text-gray-500">#{appointment.patientId}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">Sep 28, 2025</div>
-                                        <div className="text-sm text-gray-500">09:00 AM</div>
+                                        <div className="text-sm text-gray-900">
+                                            {new Date(appointment.date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </div>
+                                        <div className="text-sm text-gray-500">{appointment.time}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">Dental Cleaning</div>
+                                        <div className="text-sm text-gray-900">{appointment.service}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">Dr. Smith</div>
+                                        <div className="text-sm text-gray-900">{appointment.doctor}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full bg-green-100 text-green-800">
-                                            Confirmed
+                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full ${appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                            appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                        <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
                                         <button className="text-red-600 hover:text-red-900">Cancel</button>
                                     </td>
                                 </tr>
