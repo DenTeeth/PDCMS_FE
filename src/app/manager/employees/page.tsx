@@ -2,6 +2,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faFilter, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface Employee {
     id: string;
@@ -55,11 +56,11 @@ export default function EmployeesPage() {
     const filteredEmployees = mockEmployees
         .filter(employee => {
             const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                employee.id.toLowerCase().includes(searchTerm.toLowerCase())
-
+                               employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                               employee.id.toLowerCase().includes(searchTerm.toLowerCase())
+            
             const matchesStatus = statusFilter === 'all' || employee.status === statusFilter
-
+            
             return matchesSearch && matchesStatus
         })
         .sort((a, b) => {
@@ -80,12 +81,12 @@ export default function EmployeesPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Employee Management</h1>
-                <a
+                <Link 
                     href="/manager/employees/newEmployee"
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg hover:from-blue-700 hover:to-teal-600 transition-all duration-200"
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg hover:from-blue-700 hover:to-teal-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                    + Add New Employee
-                </a>
+                    <span className="mr-1">+</span> Add New Employee
+                </Link>
             </div>
 
             {/* Search and Filters */}
@@ -103,7 +104,7 @@ export default function EmployeesPage() {
                     />
                 </div>
                 <div>
-                    <select
+                    <select 
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -115,7 +116,7 @@ export default function EmployeesPage() {
                     </select>
                 </div>
                 <div>
-                    <select
+                    <select 
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -183,9 +184,9 @@ export default function EmployeesPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full
-                                            ${employee.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                employee.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'}`}>
+                                            ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                              employee.status === 'inactive' ? 'bg-red-100 text-red-800' :
+                                              'bg-yellow-100 text-yellow-800'}`}>
                                             {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
                                         </span>
                                     </td>
