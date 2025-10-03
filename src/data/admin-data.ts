@@ -257,15 +257,57 @@ export const appointments: Appointment[] = [
 
 // Permissions data
 export const permissions: Permission[] = [
-  { id: '1', name: 'View Dashboard', description: 'View overview page', module: 'dashboard' },
-  { id: '2', name: 'Manage Accounts', description: 'CRUD user accounts', module: 'accounts' },
-  { id: '3', name: 'View Accounts', description: 'View account information only', module: 'accounts' },
-  { id: '4', name: 'Manage Blog', description: 'CRUD blog posts', module: 'blogs' },
-  { id: '5', name: 'View Blog', description: 'View blog posts only', module: 'blogs' },
-  { id: '6', name: 'Manage Appointments', description: 'CRUD appointments', module: 'appointments' },
-  { id: '7', name: 'View Appointments', description: 'View appointments only', module: 'appointments' },
-  { id: '8', name: 'Manage Roles', description: 'CRUD roles and permissions', module: 'roles' },
-  { id: '9', name: 'System Settings', description: 'Configure system', module: 'settings' },
+  // Dashboard
+  { id: '1', name: 'View Dashboard', description: 'View overview page and statistics', module: 'dashboard' },
+  
+  // User Management
+  { id: '2', name: 'Manage Users', description: 'Create, edit, delete user accounts', module: 'users' },
+  { id: '3', name: 'View Users', description: 'View user information only', module: 'users' },
+  { id: '4', name: 'Manage Employees', description: 'Create, edit, delete employee records', module: 'employees' },
+  { id: '5', name: 'View Employees', description: 'View employee information only', module: 'employees' },
+  
+  // Patient Management
+  { id: '6', name: 'Manage Patients', description: 'Create, edit, delete patient records', module: 'patients' },
+  { id: '7', name: 'View Patients', description: 'View patient information only', module: 'patients' },
+  { id: '8', name: 'View Patient History', description: 'View patient treatment history', module: 'patients' },
+  
+  // Appointment Management
+  { id: '9', name: 'Manage Appointments', description: 'Create, edit, delete appointments', module: 'appointments' },
+  { id: '10', name: 'View Appointments', description: 'View appointments only', module: 'appointments' },
+  { id: '11', name: 'Schedule Appointments', description: 'Schedule new appointments', module: 'appointments' },
+  { id: '12', name: 'Cancel Appointments', description: 'Cancel or reschedule appointments', module: 'appointments' },
+  
+  // Treatment Management
+  { id: '13', name: 'Manage Treatments', description: 'Create, edit, delete treatment plans', module: 'treatments' },
+  { id: '14', name: 'View Treatments', description: 'View treatment information only', module: 'treatments' },
+  { id: '15', name: 'Record Treatment', description: 'Record treatment procedures', module: 'treatments' },
+  
+  // Inventory Management
+  { id: '16', name: 'Manage Inventory', description: 'Manage dental supplies and equipment', module: 'inventory' },
+  { id: '17', name: 'View Inventory', description: 'View inventory levels only', module: 'inventory' },
+  { id: '18', name: 'Update Stock', description: 'Update stock levels', module: 'inventory' },
+  
+  // Financial Management
+  { id: '19', name: 'Manage Billing', description: 'Create and manage invoices', module: 'billing' },
+  { id: '20', name: 'View Billing', description: 'View billing information only', module: 'billing' },
+  { id: '21', name: 'Process Payments', description: 'Process patient payments', module: 'billing' },
+  { id: '22', name: 'View Reports', description: 'View financial reports', module: 'billing' },
+  
+  // Content Management
+  { id: '23', name: 'Manage Blogs', description: 'Create, edit, delete blog posts', module: 'blogs' },
+  { id: '24', name: 'View Blogs', description: 'View blog posts only', module: 'blogs' },
+  { id: '25', name: 'Manage Services', description: 'Manage dental services offered', module: 'services' },
+  { id: '26', name: 'View Services', description: 'View services information only', module: 'services' },
+  
+  // System Administration
+  { id: '27', name: 'Manage Roles', description: 'Create, edit, delete roles and permissions', module: 'roles' },
+  { id: '28', name: 'View Roles', description: 'View roles information only', module: 'roles' },
+  { id: '29', name: 'System Settings', description: 'Configure system settings', module: 'settings' },
+  { id: '30', name: 'View Settings', description: 'View system settings only', module: 'settings' },
+  
+  // Analytics & Reports
+  { id: '31', name: 'View Analytics', description: 'View system analytics and reports', module: 'analytics' },
+  { id: '32', name: 'Export Data', description: 'Export data to external formats', module: 'analytics' },
 ];
 
 // Roles data
@@ -273,35 +315,35 @@ export const roles: Role[] = [
   {
     id: '1',
     name: 'Super Admin',
-    description: 'Full system access',
-    permissions: ['1', '2', '4', '6', '8', '9'],
+    description: 'Full system access with all permissions',
+    permissions: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32'],
     isActive: true,
     createdAt: '2024-01-01',
     userCount: 1,
   },
   {
     id: '2',
-    name: 'Manager',
-    description: 'Clinic management',
-    permissions: ['1', '3', '5', '7'],
+    name: 'Clinic Manager',
+    description: 'Manage clinic operations and staff',
+    permissions: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '28', '30', '31'],
     isActive: true,
     createdAt: '2024-01-01',
     userCount: 2,
   },
   {
     id: '3',
-    name: 'Doctor',
-    description: 'Dentist',
-    permissions: ['1', '7'],
+    name: 'Dentist',
+    description: 'Dental treatment and patient care',
+    permissions: ['1', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '20', '25', '26', '31'],
     isActive: true,
     createdAt: '2024-01-01',
     userCount: 5,
   },
   {
     id: '4',
-    name: 'Nurse',
-    description: 'Support nurse',
-    permissions: ['1', '7'],
+    name: 'Dental Nurse',
+    description: 'Support dental procedures and patient care',
+    permissions: ['1', '6', '7', '8', '9', '10', '11', '13', '14', '15', '16', '17', '20', '25', '26', '31'],
     isActive: true,
     createdAt: '2024-01-01',
     userCount: 8,
@@ -309,11 +351,38 @@ export const roles: Role[] = [
   {
     id: '5',
     name: 'Receptionist',
-    description: 'Reception staff',
-    permissions: ['1', '6', '7'],
+    description: 'Front desk and appointment management',
+    permissions: ['1', '6', '7', '9', '10', '11', '12', '20', '21', '25', '26', '31'],
     isActive: true,
     createdAt: '2024-01-01',
     userCount: 3,
+  },
+  {
+    id: '6',
+    name: 'Accountant',
+    description: 'Financial management and billing',
+    permissions: ['1', '6', '7', '9', '10', '19', '20', '21', '22', '31', '32'],
+    isActive: true,
+    createdAt: '2024-01-01',
+    userCount: 2,
+  },
+  {
+    id: '7',
+    name: 'Inventory Manager',
+    description: 'Manage dental supplies and equipment',
+    permissions: ['1', '16', '17', '18', '31'],
+    isActive: true,
+    createdAt: '2024-01-01',
+    userCount: 1,
+  },
+  {
+    id: '8',
+    name: 'Content Manager',
+    description: 'Manage website content and blogs',
+    permissions: ['1', '23', '24', '25', '26', '31'],
+    isActive: true,
+    createdAt: '2024-01-01',
+    userCount: 1,
   },
 ];
 
