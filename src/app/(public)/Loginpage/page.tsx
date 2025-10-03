@@ -80,30 +80,6 @@ export default function Page() {
             <h1 className="mb-2 text-2xl font-semibold text-slate-800">Sign in</h1>
             <p className="mb-8 text-sm text-slate-500">Access the dental clinic management system</p>
 
-            {/* Social (optional) */}
-            {/* TODO (OAuth): Wire to your OAuth flow (e.g., NextAuth signIn('google')) */}
-            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button type="button" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.7 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.6 2.8 14.5 2 12 2 6.9 2 2.8 6.1 2.8 11.2S6.9 20.4 12 20.4c7.2 0 8.9-5 8.3-8.1H12z" />
-                </svg>
-                Google
-              </button>
-              <button type="button" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#1877F2" d="M22 12.06C22 6.53 17.52 2 12 2S2 6.53 2 12.06c0 5 3.66 9.14 8.44 9.94v-7.03H7.9v-2.9h2.55V9.41c0-2.52 1.5-3.92 3.8-3.92 1.1 0 2.25.2 2.25.2v2.49h-1.27c-1.25 0-1.64.78-1.64 1.58v1.9h2.79l-.45 2.9h-2.34V22c4.78-.8 8.44-4.93 8.44-9.94z" />
-                </svg>
-                Facebook
-              </button>
-            </div>
-
-            {/* Separator */}
-            <div className="mb-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs uppercase tracking-wider text-slate-400">or</span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
-
             {/* Form */}
             <form className="space-y-4" onSubmit={onSubmit}>
               <div>
@@ -153,7 +129,7 @@ export default function Page() {
                   <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-300" />
                   Remember me
                 </label>
-                <Link href="/forgot-password" className="text-sm text-cyan-700 hover:text-cyan-800">Forgot password?</Link>
+                <Link href="/forgot-password" className="text-sm text-purple-700 hover:text-purple-800 font-">Forgot password?</Link>
               </div>
 
               <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-white-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black-500/20 transition hover:from-purple-500 hover:to-white -500 disabled:cursor-not-allowed disabled:opacity-60">

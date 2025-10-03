@@ -119,9 +119,9 @@ export default function AccountsPage() {
       <Card>
 
       <CardHeader>
-          <CardTitle>Staff List</CardTitle>
+          <CardTitle>Patient List</CardTitle>
           <CardDescription>
-            Manage staff information and access permissions
+            Manage patient information and access permissions
           </CardDescription>
         </CardHeader>
 

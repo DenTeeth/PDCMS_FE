@@ -108,7 +108,7 @@ export default function InventoryListPage() {
           </p>
         </div>
         <Link href="/warehouse/add-product">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4 mr-2" />
             Add New Product
           </Button>
@@ -159,127 +159,114 @@ export default function InventoryListPage() {
         </div>
       </Card>
 
-      {/* Inventory Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="p-6 hover:shadow-lg transition-all duration-200 border border-gray-200">
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-lg mb-1">{item.name}</h3>
-                  <p className="text-sm text-gray-600">{item.supplier}</p>
-                </div>
-                <div className="flex space-x-1">
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Badges */}
-              <div className="flex space-x-2">
-                <Badge className={`${getCategoryColor(item.category)} border`}>
-                  {item.category}
-                </Badge>
-                <Badge className={`${getStatusColor(item.status)} border`}>
-                  {item.status.replace('_', ' ')}
-                </Badge>
-              </div>
-
-              {/* Purpose */}
-              <div>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  <span className="font-medium">Purpose:</span> {item.dentalPurpose}
-                </p>
-              </div>
-
-              {/* Stock Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Quantity</p>
-                  <p className="font-semibold text-gray-900">
-                    {item.quantity} 
-                    {item.quantity <= item.minQuantity && (
-                      <AlertTriangle className="inline h-4 w-4 text-red-500 ml-1" />
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Min. Stock</p>
-                  <p className="font-semibold text-gray-900">{item.minQuantity}</p>
-                </div>
-              </div>
-
-              {/* Price & Value */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Unit Price</p>
-                  <p className="font-semibold text-green-600">{formatCurrency(item.unitPrice)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Total Value</p>
-                  <p className="font-semibold text-green-600">{formatCurrency(item.totalValue)}</p>
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600 flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    Mfg. Date
-                  </p>
-                  <p className="font-medium text-gray-900">{formatDate(item.manufacturingDate)}</p>
-                </div>
-                {item.expiryDate && (
-                  <div>
-                    <p className="text-gray-600 flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Exp. Date
-                    </p>
-                    <p className={`font-medium ${
-                      item.status === 'expired' ? 'text-red-600' : 'text-gray-900'
+      {/* Inventory Table */}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Quantity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Unit Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Expiry Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredItems.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                      <div className="text-sm text-gray-500">{item.supplier}</div>
+                      <div className="text-xs text-gray-400 font-mono mt-1">
+                        Batch: {item.batchNumber}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Badge className={`${getCategoryColor(item.category)} border text-xs`}>
+                      {item.category}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Badge className={`${getStatusColor(item.status)} border text-xs`}>
+                      {item.status.replace('_', ' ')}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-900">
+                        {item.quantity}
+                      </span>
+                      {item.quantity <= item.minQuantity && (
+                        <AlertTriangle className="h-4 w-4 text-red-500 ml-2" />
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Min: {item.minQuantity}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-green-600">
+                      {formatCurrency(item.unitPrice)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-green-600">
+                      {formatCurrency(item.totalValue)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`text-sm ${
+                      item.status === 'expired' ? 'text-red-600 font-medium' : 'text-gray-900'
                     }`}>
                       {formatDate(item.expiryDate)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Batch Number */}
-              <div className="pt-2 border-t border-gray-100">
-                <p className="text-xs text-gray-500">
-                  Batch: <span className="font-mono">{item.batchNumber}</span>
-                </p>
-              </div>
-
-              {/* Storage Conditions */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-600">
-                  <span className="font-medium">Storage:</span> {item.storageConditions}
-                </p>
-              </div>
-
-              {/* Warranty Info */}
-              {item.warranty && (
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                  <p className="text-xs text-blue-600">
-                    <span className="font-medium">Warranty:</span> {item.warranty}
-                    {item.warrantyPeriod && ` (${item.warrantyPeriod} months)`}
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+                    </div>
+                    {item.manufacturingDate && (
+                      <div className="text-xs text-gray-500">
+                        Mfg: {formatDate(item.manufacturingDate)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {/* Empty State */}
       {filteredItems.length === 0 && (

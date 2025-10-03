@@ -3,54 +3,55 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Plus, 
-  BarChart3,
-  Menu,
-  X,
-  ChevronRight,
-  AlertTriangle,
-  History,
-  Truck
-} from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faTachometerAlt,
+  faBox,
+  faPlus,
+  faChartBar,
+  faBars,
+  faTimes,
+  faChevronRight,
+  faExclamationTriangle,
+  faHistory,
+  faTruck
+} from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
   {
     name: 'Dashboard',
     href: '/warehouse',
-    icon: LayoutDashboard,
+    icon: faTachometerAlt,
   },
   {
     name: 'Inventory List',
     href: '/warehouse/inventory',
-    icon: Package,
+    icon: faBox,
   },
   {
     name: 'Add New Product',
     href: '/warehouse/add-product',
-    icon: Plus,
+    icon: faPlus,
   },
   {
     name: 'Statistics',
     href: '/warehouse/statistics',
-    icon: BarChart3,
+    icon: faChartBar,
   },
   {
     name: 'Low Stock Alerts',
     href: '/warehouse/alerts',
-    icon: AlertTriangle,
+    icon: faExclamationTriangle,
   },
   {
     name: 'Transaction History',
     href: '/warehouse/transactions',
-    icon: History,
+    icon: faHistory,
   },
   {
     name: 'Suppliers',
     href: '/warehouse/suppliers',
-    icon: Truck,
+    icon: faTruck,
   },
 ];
 
@@ -67,9 +68,9 @@ export default function WarehouseSidebar() {
           className="p-3 rounded-xl bg-card shadow-lg border border-border hover:shadow-xl transition-all duration-200"
         >
           {isOpen ? (
-            <X className="h-5 w-5 text-foreground" />
+            <FontAwesomeIcon icon={faTimes} className="h-5 w-5 text-foreground" />
           ) : (
-            <Menu className="h-5 w-5 text-foreground" />
+            <FontAwesomeIcon icon={faBars} className="h-5 w-5 text-foreground" />
           )}
         </button>
       </div>
@@ -103,12 +104,12 @@ export default function WarehouseSidebar() {
                   `}
                   onClick={() => setIsOpen(false)}
                 >
-                  <item.icon className={`mr-3 h-5 w-5 transition-all duration-200 ${
+                  <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${
                     isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
                   }`} />
                   <span className="flex-1">{item.name}</span>
                   {isActive && (
-                    <ChevronRight className="h-4 w-4 text-sidebar-primary-foreground/80" />
+                    <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4 text-sidebar-primary-foreground/80" />
                   )}
                   {!isActive && (
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-10 transition-opacity duration-200" />
@@ -122,7 +123,7 @@ export default function WarehouseSidebar() {
           <div className="p-4 border-t border-sidebar-border bg-sidebar-accent">
             <div className="flex items-center p-3 rounded-lg bg-card shadow-sm border border-border">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                <Package className="text-primary-foreground text-sm" />
+                <FontAwesomeIcon icon={faBox} className="text-primary-foreground text-sm" />
               </div>
                <div className="ml-3 flex-1">
                  <p className="text-sm font-semibold text-card-foreground">Warehouse Staff</p>
