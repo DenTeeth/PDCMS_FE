@@ -96,8 +96,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                         )}
                                         <div>
                                             <span className={`block truncate font-medium ${selectedOption?.value === option.value
-                                                    ? 'text-blue-600'
-                                                    : 'text-gray-900'
+                                                ? 'text-blue-600'
+                                                : 'text-gray-900'
                                                 }`}>
                                                 {option.label}
                                             </span>
