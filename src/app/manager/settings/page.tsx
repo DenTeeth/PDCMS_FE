@@ -34,12 +34,11 @@ export default function SettingsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Settings</h1>
         <div className="flex items-center gap-2">
-          <div className={`h-3 w-3 rounded-full ${
-            userStatus === 'online' ? 'bg-green-500' :
+          <div className={`h-3 w-3 rounded-full ${userStatus === 'online' ? 'bg-green-500' :
             userStatus === 'away' ? 'bg-yellow-500' :
-            'bg-red-500'
-          }`}></div>
-          <select 
+              'bg-red-500'
+            }`}></div>
+          <select
             value={userStatus}
             onChange={(e) => setUserStatus(e.target.value)}
             className="text-sm border rounded-md px-2 py-1"
@@ -74,7 +73,7 @@ export default function SettingsPage() {
               defaultValue="dr.smith@example.com"
             />
           </div>
-          <button className="bg-[#6366F1] text-white px-4 py-2 rounded-md hover:bg-[#5355D0] transition-colors">
+          <button className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 flex items-center gap-2">
             Update Profile
           </button>
         </div>
@@ -108,7 +107,7 @@ export default function SettingsPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
             />
           </div>
-          <button className="bg-[#6366F1] text-white px-4 py-2 rounded-md hover:bg-[#5355D0] transition-colors">
+          <button className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 flex items-center gap-2">
             Change Password
           </button>
         </div>
@@ -124,45 +123,39 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Email Notifications</span>
             <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications.email ? 'bg-[#6366F1]' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications.email ? 'bg-[#6366F1]' : 'bg-gray-200'
+                }`}
               onClick={() => handleNotificationChange('email')}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notifications.email ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications.email ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Push Notifications</span>
             <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications.push ? 'bg-[#6366F1]' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications.push ? 'bg-[#6366F1]' : 'bg-gray-200'
+                }`}
               onClick={() => handleNotificationChange('push')}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notifications.push ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications.push ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">SMS Notifications</span>
             <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications.sms ? 'bg-[#6366F1]' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications.sms ? 'bg-[#6366F1]' : 'bg-gray-200'
+                }`}
               onClick={() => handleNotificationChange('sms')}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notifications.sms ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications.sms ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
@@ -179,15 +172,13 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Dark Mode</span>
             <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                darkMode ? 'bg-[#6366F1]' : 'bg-gray-200'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-[#6366F1]' : 'bg-gray-200'
+                }`}
               onClick={() => setDarkMode(!darkMode)}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  darkMode ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               >
                 <FontAwesomeIcon
                   icon={darkMode ? faMoon : faSun}

@@ -124,7 +124,7 @@ export default function AccountsPage() {
   });
 
   const getGenderBadgeColor = (gender: string) => {
-    return gender === 'male' 
+    return gender === 'male'
       ? 'bg-blue-100 text-blue-800'
       : 'bg-pink-100 text-pink-800';
   };
@@ -143,7 +143,7 @@ export default function AccountsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
           <p className="text-gray-600">Manage patient information and medical records</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+        <Button onClick={() => setShowAddModal(true)} className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
           Add Patient
         </Button>
@@ -205,7 +205,7 @@ export default function AccountsPage() {
 
       <Card>
 
-      <CardHeader>
+        <CardHeader>
           <CardTitle>Patient List</CardTitle>
           <CardDescription>
             Manage patient information and medical records
