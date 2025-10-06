@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 import {
   faTachometerAlt,
   faBox,
@@ -130,6 +131,9 @@ export default function WarehouseSidebar() {
                  <p className="text-xs text-muted-foreground">Inventory Manager</p>
                </div>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            </div>
+            <div className="mt-3">
+              <LogoutButton variant="button" className="w-full" />
             </div>
           </div>
         </div>

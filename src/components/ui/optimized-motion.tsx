@@ -3,11 +3,11 @@
 import dynamic from 'next/dynamic';
 import { ComponentProps } from 'react';
 
-// Lazy load Framer Motion để giảm initial bundle size
+// Lazy load Framer Motion to reduce initial bundle size
 const MotionDiv = dynamic(
   () => import('framer-motion').then(mod => ({ default: mod.motion.div })),
   {
-    ssr: false, // Disable SSR cho animations
+    ssr: false, // Disable SSR for animations
     loading: () => <div />, // Fallback component
   }
 );
@@ -20,7 +20,7 @@ const MotionSection = dynamic(
   }
 );
 
-// Optimized motion variants với reduced motion support
+// Optimized motion variants with reduced motion support
 export const fadeUpVariants = {
   hidden: { 
     opacity: 0, 
@@ -48,7 +48,7 @@ export const staggerVariants = {
   },
 };
 
-// Optimized components với fallbacks
+// Optimized components with fallbacks
 interface OptimizedMotionProps {
   variants?: any;
   initial?: string;
@@ -125,7 +125,7 @@ export function OptimizedMotionSection({
   );
 }
 
-// Hook để check reduced motion
+// Hook to check reduced motion
 export function useReducedMotion() {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -61,19 +61,19 @@ export default function EmployeesPage() {
   };
 
   const modules = [
-    { name: 'dashboard', label: 'TRANG CHỦ', icon: BarChart3 },
-    { name: 'users', label: 'QUẢN LÝ NGƯỜI DÙNG', icon: Users },
-    { name: 'employees', label: 'QUẢN LÝ NHÂN VIÊN', icon: User },
-    { name: 'patients', label: 'QUẢN LÝ BỆNH NHÂN', icon: Users },
-    { name: 'appointments', label: 'QUẢN LÝ LỊCH HẸN', icon: Calendar },
-    { name: 'treatments', label: 'QUẢN LÝ ĐIỀU TRỊ', icon: Shield },
-    { name: 'inventory', label: 'QUẢN LÝ KHO', icon: Package },
-    { name: 'billing', label: 'QUẢN LÝ THU/CHI', icon: DollarSign },
-    { name: 'blogs', label: 'QUẢN LÝ BLOG', icon: FileText },
-    { name: 'services', label: 'QUẢN LÝ DỊCH VỤ', icon: Settings },
-    { name: 'roles', label: 'QUẢN LÝ VAI TRÒ', icon: Shield },
-    { name: 'settings', label: 'CÀI ĐẶT HỆ THỐNG', icon: Settings },
-    { name: 'analytics', label: 'BÁO CÁO & THỐNG KÊ', icon: BarChart3 }
+    { name: 'dashboard', label: 'DASHBOARD', icon: BarChart3 },
+    { name: 'users', label: 'USER MANAGEMENT', icon: Users },
+    { name: 'employees', label: 'EMPLOYEE MANAGEMENT', icon: User },
+    { name: 'patients', label: 'PATIENT MANAGEMENT', icon: Users },
+    { name: 'appointments', label: 'APPOINTMENT MANAGEMENT', icon: Calendar },
+    { name: 'treatments', label: 'TREATMENT MANAGEMENT', icon: Shield },
+    { name: 'inventory', label: 'INVENTORY MANAGEMENT', icon: Package },
+    { name: 'billing', label: 'BILLING MANAGEMENT', icon: DollarSign },
+    { name: 'blogs', label: 'BLOG MANAGEMENT', icon: FileText },
+    { name: 'services', label: 'SERVICE MANAGEMENT', icon: Settings },
+    { name: 'roles', label: 'ROLE MANAGEMENT', icon: Shield },
+    { name: 'settings', label: 'SYSTEM SETTINGS', icon: Settings },
+    { name: 'analytics', label: 'REPORTS & ANALYTICS', icon: BarChart3 }
   ];
 
   const getRoleBadgeColor = (role: string) => {
@@ -103,12 +103,12 @@ export default function EmployeesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý nhân viên</h1>
-          <p className="text-gray-600">Quản lý thông tin nhân viên và phân quyền</p>
+          <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+          <p className="text-gray-600">Manage employee information and permissions</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
-          Thêm nhân viên mới
+          Add New Employee
         </Button>
       </div>
 
@@ -119,7 +119,7 @@ export default function EmployeesPage() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng nhân viên</p>
+                <p className="text-sm font-medium text-gray-600">Total Employees</p>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function EmployeesPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đang hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Active</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.status === 'active').length}</p>
               </div>
             </div>
@@ -145,7 +145,7 @@ export default function EmployeesPage() {
                 <Shield className="h-4 w-4 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Bác sĩ</p>
+                <p className="text-sm font-medium text-gray-600">Doctors</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.role === 'doctor').length}</p>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function EmployeesPage() {
                 <User className="h-4 w-4 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Y tá</p>
+                <p className="text-sm font-medium text-gray-600">Nurses</p>
                 <p className="text-2xl font-bold">{users.filter(u => u.role === 'nurse').length}</p>
               </div>
             </div>
@@ -171,12 +171,12 @@ export default function EmployeesPage() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
+              <Label htmlFor="search" className="mb-2">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Tìm kiếm theo tên hoặc email..."
+                  placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -184,19 +184,19 @@ export default function EmployeesPage() {
               </div>
             </div>
             <div className="md:w-48">
-              <Label htmlFor="role" className="mb-2">Vai trò</Label>
+              <Label htmlFor="role" className="mb-2">Role</Label>
               <select
                 id="role"
                 value={filterRole}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterRole(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">Tất cả vai trò</option>
-                <option value="doctor">Bác sĩ</option>
-                <option value="nurse">Y tá</option>
-                <option value="technician">Kỹ thuật viên</option>
-                <option value="receptionist">Lễ tân</option>
-                <option value="manager">Quản lý</option>
+                <option value="all">All Roles</option>
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="technician">Technician</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="manager">Manager</option>
               </select>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function EmployeesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className={getStatusBadgeColor(employee.status)}>
-                      {employee.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                      {employee.status === 'active' ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ export default function EmployeesPage() {
                   {/* Role Information */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Vai trò:</span>
+                      <span className="text-sm font-medium text-gray-700">Role:</span>
                       <Badge className={getRoleBadgeColor(employee.role)}>
                         {employee.role}
                       </Badge>
@@ -259,17 +259,17 @@ export default function EmployeesPage() {
                     {roleInfo && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Mô tả vai trò:</span>
+                          <span className="text-gray-600">Role Description:</span>
                           <span className="text-xs text-gray-500">{roleInfo.description}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Số quyền:</span>
-                          <span className="font-medium text-blue-600">{roleInfo.permissions.length} quyền</span>
+                          <span className="text-gray-600">Permissions:</span>
+                          <span className="font-medium text-blue-600">{roleInfo.permissions.length} permissions</span>
                         </div>
                         
                         {/* Permission Preview */}
                         <div>
-                          <p className="text-xs font-medium text-gray-700 mb-1">Quyền được cấp:</p>
+                          <p className="text-xs font-medium text-gray-700 mb-1">Granted Permissions:</p>
                           <div className="flex flex-wrap gap-1">
                             {rolePermissions.slice(0, 3).map((permission) => (
                               <span
@@ -281,7 +281,7 @@ export default function EmployeesPage() {
                             ))}
                             {rolePermissions.length > 3 && (
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                +{rolePermissions.length - 3} khác
+                                +{rolePermissions.length - 3} more
                               </span>
                             )}
                           </div>
@@ -323,7 +323,7 @@ export default function EmployeesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Chi tiết nhân viên: {selectedEmployee.name}</h2>
+              <h2 className="text-2xl font-bold">Employee Details: {selectedEmployee.name}</h2>
               <Button variant="ghost" onClick={() => setShowDetailsModal(false)}>
                 <XCircle className="h-4 w-4" />
               </Button>
@@ -334,7 +334,7 @@ export default function EmployeesPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Thông tin cá nhân</CardTitle>
+                    <CardTitle className="text-lg">Personal Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -358,11 +358,11 @@ export default function EmployeesPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Calendar className="h-5 w-5 text-gray-600" />
-                      <span className="text-sm">Ngày tạo: {selectedEmployee.createdAt}</span>
+                      <span className="text-sm">Created: {selectedEmployee.createdAt}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <AlertCircle className="h-5 w-5 text-gray-600" />
-                      <span className="text-sm">Lần đăng nhập cuối: {selectedEmployee.lastLogin}</span>
+                      <span className="text-sm">Last Login: {selectedEmployee.lastLogin}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -370,28 +370,28 @@ export default function EmployeesPage() {
                 {/* Role Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Thông tin vai trò</CardTitle>
+                    <CardTitle className="text-lg">Role Information</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {(() => {
                       const roleInfo = getRoleInfo(selectedEmployee.role);
-                      if (!roleInfo) return <p className="text-gray-500">Không có thông tin vai trò</p>;
+                      if (!roleInfo) return <p className="text-gray-500">No role information available</p>;
                       
                       return (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="font-medium">Vai trò:</span>
+                            <span className="font-medium">Role:</span>
                             <Badge className={getRoleBadgeColor(selectedEmployee.role)}>
                               {selectedEmployee.role}
                             </Badge>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-700 mb-1">Mô tả:</p>
+                            <p className="text-sm font-medium text-gray-700 mb-1">Description:</p>
                             <p className="text-sm text-gray-600">{roleInfo.description}</p>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Số quyền:</span>
-                            <span className="font-medium text-blue-600">{roleInfo.permissions.length} quyền</span>
+                            <span className="text-sm text-gray-600">Permissions:</span>
+                            <span className="font-medium text-blue-600">{roleInfo.permissions.length} permissions</span>
                           </div>
                         </div>
                       );
@@ -404,15 +404,15 @@ export default function EmployeesPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Chi tiết quyền hạn</CardTitle>
+                    <CardTitle className="text-lg">Permission Details</CardTitle>
                     <CardDescription>
-                      Danh sách các quyền được cấp cho nhân viên này
+                      List of permissions granted to this employee
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {(() => {
                       const roleInfo = getRoleInfo(selectedEmployee.role);
-                      if (!roleInfo) return <p className="text-gray-500">Không có thông tin quyền hạn</p>;
+                      if (!roleInfo) return <p className="text-gray-500">No permission information available</p>;
                       
                       const rolePermissions = getRolePermissions(roleInfo.permissions);
                       
@@ -461,14 +461,14 @@ export default function EmployeesPage() {
 
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
               <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
-                Đóng
+                Close
               </Button>
               <Button onClick={() => {
                 setShowDetailsModal(false);
                 // Navigate to edit employee
               }}>
                 <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa nhân viên
+                Edit Employee
               </Button>
             </div>
           </div>
@@ -480,16 +480,16 @@ export default function EmployeesPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy nhân viên</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No employees found</h3>
             <p className="text-gray-500 mb-4">
               {searchTerm || filterRole !== 'all'
-                ? 'Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc'
-                : 'Bắt đầu thêm nhân viên đầu tiên'
+                ? 'Try changing search keywords or filters'
+                : 'Start adding your first employee'
               }
             </p>
             <Button onClick={() => setShowAddModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Thêm nhân viên mới
+              Add New Employee
             </Button>
         </CardContent>
       </Card>

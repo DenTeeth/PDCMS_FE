@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Select from '@/components/ui/select';
 import { 
   Plus, 
   Search, 
@@ -29,7 +29,8 @@ import {
   DollarSign,
   Package,
   FileText,
-  BarChart3
+  BarChart3,
+  CheckCircle
 } from 'lucide-react';
 import { roles, permissions } from '@/data/admin-data';
 import { Role, Permission } from '@/types/admin';
@@ -64,19 +65,19 @@ export default function RolesPage() {
   };
 
   const modules = [
-    { name: 'dashboard', label: 'TRANG CHỦ', icon: BarChart3 },
-    { name: 'users', label: 'QUẢN LÝ NGƯỜI DÙNG', icon: Users },
-    { name: 'employees', label: 'QUẢN LÝ NHÂN VIÊN', icon: User },
-    { name: 'patients', label: 'QUẢN LÝ BỆNH NHÂN', icon: Users },
-    { name: 'appointments', label: 'QUẢN LÝ LỊCH HẸN', icon: Calendar },
-    { name: 'treatments', label: 'QUẢN LÝ ĐIỀU TRỊ', icon: Shield },
-    { name: 'inventory', label: 'QUẢN LÝ KHO', icon: Package },
-    { name: 'billing', label: 'QUẢN LÝ THU/CHI', icon: DollarSign },
-    { name: 'blogs', label: 'QUẢN LÝ BLOG', icon: FileText },
-    { name: 'services', label: 'QUẢN LÝ DỊCH VỤ', icon: Settings },
-    { name: 'roles', label: 'QUẢN LÝ VAI TRÒ', icon: Shield },
-    { name: 'settings', label: 'CÀI ĐẶT HỆ THỐNG', icon: Settings },
-    { name: 'analytics', label: 'BÁO CÁO & THỐNG KÊ', icon: BarChart3 }
+    { name: 'dashboard', label: 'DASHBOARD', icon: BarChart3 },
+    { name: 'users', label: 'USER MANAGEMENT', icon: Users },
+    { name: 'employees', label: 'EMPLOYEE MANAGEMENT', icon: User },
+    { name: 'patients', label: 'PATIENT MANAGEMENT', icon: Users },
+    { name: 'appointments', label: 'APPOINTMENT MANAGEMENT', icon: Calendar },
+    { name: 'treatments', label: 'TREATMENT MANAGEMENT', icon: Shield },
+    { name: 'inventory', label: 'INVENTORY MANAGEMENT', icon: Package },
+    { name: 'billing', label: 'BILLING MANAGEMENT', icon: DollarSign },
+    { name: 'blogs', label: 'BLOG MANAGEMENT', icon: FileText },
+    { name: 'services', label: 'SERVICE MANAGEMENT', icon: Settings },
+    { name: 'roles', label: 'ROLE MANAGEMENT', icon: Shield },
+    { name: 'settings', label: 'SYSTEM SETTINGS', icon: Settings },
+    { name: 'analytics', label: 'REPORTS & ANALYTICS', icon: BarChart3 }
   ];
 
   const resetForm = () => {
@@ -358,33 +359,26 @@ export default function RolesPage() {
                             <ChevronRight className="h-4 w-4 text-gray-400" />
                           </div>
                           
-                          {/* Permission details - Dropdown */}
+                          {/* Permission details - List */}
                           <div className="mt-3">
-                            <Select>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select permissions to view details" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {modulePermissions.map((permission) => {
-                                  const hasPermission = selectedRole.permissions.includes(permission.id);
-                                  return (
-                                    <SelectItem key={permission.id} value={permission.id}>
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                          hasPermission ? 'bg-green-500' : 'bg-gray-300'
-                                        }`} />
-                                        <span className={hasPermission ? 'text-green-700 font-medium' : 'text-gray-600'}>
-                                          {permission.name}
-                                        </span>
-                                        {hasPermission && (
-                                          <CheckCircle className="h-3 w-3 text-green-600 ml-auto" />
-                                        )}
-                                      </div>
-                                    </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
+                            <div className="space-y-2">
+                              {modulePermissions.map((permission) => {
+                                const hasPermission = selectedRole.permissions.includes(permission.id);
+                                return (
+                                  <div key={permission.id} className="flex items-center gap-2 p-2 rounded-lg border">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      hasPermission ? 'bg-green-500' : 'bg-gray-300'
+                                    }`} />
+                                    <span className={hasPermission ? 'text-green-700 font-medium' : 'text-gray-600'}>
+                                      {permission.name}
+                                    </span>
+                                    {hasPermission && (
+                                      <CheckCircle className="h-3 w-3 text-green-600 ml-auto" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
                             
                             {/* Permission summary */}
                             <div className="mt-2 flex flex-wrap gap-1">
@@ -563,12 +557,12 @@ export default function RolesPage() {
               {/* Basic Information */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="editRoleName">Tên vai trò *</Label>
+                  <Label htmlFor="editRoleName">Role Name *</Label>
                   <Input
                     id="editRoleName"
                     value={roleName}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoleName(e.target.value)}
-                    placeholder="Nhập tên vai trò"
+                    placeholder="Enter role name"
                     className={formErrors.name ? 'border-red-500' : ''}
                   />
                   {formErrors.name && (
@@ -577,12 +571,12 @@ export default function RolesPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="editRoleDescription">Mô tả *</Label>
+                  <Label htmlFor="editRoleDescription">Description *</Label>
                   <Textarea
                     id="editRoleDescription"
                     value={roleDescription}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRoleDescription(e.target.value)}
-                    placeholder="Nhập mô tả vai trò"
+                    placeholder="Enter role description"
                     rows={3}
                     className={formErrors.description ? 'border-red-500' : ''}
                   />
@@ -597,7 +591,7 @@ export default function RolesPage() {
                     checked={isActive}
                     onCheckedChange={(checked: boolean) => setIsActive(checked)}
                   />
-                  <Label htmlFor="editIsActive">Kích hoạt</Label>
+                  <Label htmlFor="editIsActive">Active</Label>
                 </div>
               </div>
 
