@@ -1,37 +1,82 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function Page() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [type, setType] = useState<"success" | "error" | null>(null);
+  
+  const { login, isAuthenticated, user, error, clearError } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check user role and redirect accordingly
+      if (user.roles.includes('ADMIN')) {
+        router.push('/admin');
+      } else if (user.roles.includes('RECEPTIONIST')) {
+        router.push('/receptionist');
+      } else if (user.roles.includes('DENTIST')) {
+        router.push('/dentist');
+      } else if (user.roles.includes('MANAGER')) {
+        router.push('/manager');
+      } else if (user.roles.includes('ACCOUNTANT')) {
+        router.push('/accountant');
+      } else if (user.roles.includes('WAREHOUSE')) {
+        router.push('/warehouse');
+      } else {
+        router.push('/');
+      }
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setNotice(null);
     setType(null);
+    clearError();
 
-    // TODO (API): Replace with your real login call
-    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      await login({
+        username: username.trim(),
+        password: password,
+      });
 
-    const demoEmail = "patient@clinic.com";
-    const demoPassword = "Smile123";
+      // Show success toast with username
+      toast.success(
+        <div>
+          <div>Login successfully</div>
+          <div>Welcome, {username}</div>
+        </div>
+      );
 
-    if (email.trim().toLowerCase() === demoEmail && password === demoPassword) {
       setType("success");
-      setNotice("Login successful (demo). Redirecting to dashboard...");
-      // TODO (API): set auth state/cookie then navigate
-    } else {
+      setNotice("Login successful! Redirecting...");
+      
+      // The redirect will be handled by the useEffect above
+    } catch (error) {
+      // Show error toast
+      toast.error(error instanceof Error ? error.message : "Login failed. Please try again.");
+      
       setType("error");
-      setNotice("Invalid email or password (demo). Try patient@clinic.com / Smile123");
+      setNotice(error instanceof Error ? error.message : "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
@@ -83,21 +128,21 @@ export default function Page() {
             {/* Form */}
             <form className="space-y-4" onSubmit={onSubmit}>
               <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+                <label htmlFor="username" className="mb-2 block text-sm font-medium text-slate-700">Username</label>
                 <div className="group relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center justify-center text-slate-400">
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16v16H4z" />
-                      <path d="M22 6l-10 7L2 6" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
                     </svg>
                   </div>
                   <input
-                    id="email"
-                    type="email"
+                    id="username"
+                    type="text"
                     required
-                    placeholder="you@denTeeth.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
                   />
                 </div>

@@ -20,93 +20,93 @@ import {
 const patients = [
   {
     id: '1',
-    name: 'Nguyễn Thị H',
-    email: 'nguyenthih@example.com',
+    name: 'Sarah Johnson',
+    email: 'sarah.johnson@example.com',
     phone: '0123456789',
     age: 28,
     gender: 'female',
-    address: '123 Đường ABC, Quận 1, TP.HCM',
-    medicalHistory: 'Không có tiền sử bệnh lý',
-    allergies: 'Không có dị ứng',
-    emergencyContact: 'Nguyễn Văn H (Chồng) - 0987654321',
+    address: '123 Main Street, District 1, City',
+    medicalHistory: 'No medical history',
+    allergies: 'No allergies',
+    emergencyContact: 'John Johnson (Husband) - 0987654321',
     lastVisit: '2024-01-15',
     nextAppointment: '2024-02-15',
     status: 'active',
-    insurance: 'Bảo hiểm y tế',
+    insurance: 'Health Insurance',
     bloodType: 'A+',
-    notes: 'Bệnh nhân thường xuyên'
+    notes: 'Regular patient'
   },
   {
     id: '2',
-    name: 'Trần Văn I',
-    email: 'tranvani@example.com',
+    name: 'Michael Brown',
+    email: 'michael.brown@example.com',
     phone: '0987654321',
     age: 35,
     gender: 'male',
-    address: '456 Đường XYZ, Quận 2, TP.HCM',
-    medicalHistory: 'Tiền sử sâu răng',
-    allergies: 'Dị ứng penicillin',
-    emergencyContact: 'Trần Thị I (Vợ) - 0123456789',
+    address: '456 Oak Avenue, District 2, City',
+    medicalHistory: 'Previous tooth decay',
+    allergies: 'Penicillin allergy',
+    emergencyContact: 'Lisa Brown (Wife) - 0123456789',
     lastVisit: '2024-01-10',
     nextAppointment: '2024-01-25',
     status: 'active',
-    insurance: 'Bảo hiểm tư nhân',
+    insurance: 'Private Insurance',
     bloodType: 'O+',
-    notes: 'Cần theo dõi định kỳ'
+    notes: 'Needs regular monitoring'
   },
   {
     id: '3',
-    name: 'Lê Thị K',
-    email: 'lethik@example.com',
+    name: 'Emma Davis',
+    email: 'emma.davis@example.com',
     phone: '0369852147',
     age: 22,
     gender: 'female',
-    address: '789 Đường DEF, Quận 3, TP.HCM',
-    medicalHistory: 'Đang niềng răng',
-    allergies: 'Không có dị ứng',
-    emergencyContact: 'Lê Văn K (Bố) - 0741258963',
+    address: '789 Pine Street, District 3, City',
+    medicalHistory: 'Currently wearing braces',
+    allergies: 'No allergies',
+    emergencyContact: 'Robert Davis (Father) - 0741258963',
     lastVisit: '2024-01-20',
     nextAppointment: '2024-02-20',
     status: 'active',
-    insurance: 'Bảo hiểm y tế',
+    insurance: 'Health Insurance',
     bloodType: 'B+',
-    notes: 'Đang điều trị niềng răng'
+    notes: 'Currently undergoing orthodontic treatment'
   },
   {
     id: '4',
-    name: 'Phạm Văn L',
-    email: 'phamvanl@example.com',
+    name: 'David Wilson',
+    email: 'david.wilson@example.com',
     phone: '0741258963',
     age: 45,
     gender: 'male',
-    address: '321 Đường GHI, Quận 4, TP.HCM',
-    medicalHistory: 'Tiền sử viêm nướu',
-    allergies: 'Không có dị ứng',
-    emergencyContact: 'Phạm Thị L (Vợ) - 0852147369',
+    address: '321 Elm Avenue, District 4, City',
+    medicalHistory: 'Previous gum inflammation',
+    allergies: 'No allergies',
+    emergencyContact: 'Mary Wilson (Wife) - 0852147369',
     lastVisit: '2024-01-18',
     nextAppointment: null,
     status: 'inactive',
-    insurance: 'Bảo hiểm y tế',
+    insurance: 'Health Insurance',
     bloodType: 'AB+',
-    notes: 'Bệnh nhân cũ, ít đến khám'
+    notes: 'Old patient, rarely visits'
   },
   {
     id: '5',
-    name: 'Hoàng Thị M',
-    email: 'hoangthim@example.com',
+    name: 'Jennifer Taylor',
+    email: 'jennifer.taylor@example.com',
     phone: '0456123789',
     age: 30,
     gender: 'female',
-    address: '654 Đường JKL, Quận 5, TP.HCM',
-    medicalHistory: 'Không có tiền sử bệnh lý',
-    allergies: 'Dị ứng latex',
-    emergencyContact: 'Hoàng Văn M (Chồng) - 0321654987',
+    address: '654 Maple Drive, District 5, City',
+    medicalHistory: 'No medical history',
+    allergies: 'Latex allergy',
+    emergencyContact: 'James Taylor (Husband) - 0321654987',
     lastVisit: '2024-01-21',
     nextAppointment: '2024-01-28',
     status: 'active',
-    insurance: 'Bảo hiểm tư nhân',
+    insurance: 'Private Insurance',
     bloodType: 'A-',
-    notes: 'Bệnh nhân mới'
+    notes: 'New patient'
   }
 ];
 
@@ -252,12 +252,12 @@ export default function AccountsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">STT</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Tên</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Số điện thoại</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Lịch hẹn tiếp theo</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Thao tác</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">#</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Next Appointment</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -281,21 +281,21 @@ export default function AccountsPage() {
                     </td>
                     <td className="py-4 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(patient.status)}`}>
-                        {patient.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                        {patient.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-500">
-                      {patient.nextAppointment ? new Date(patient.nextAppointment).toLocaleDateString('vi-VN') : 'Chưa đặt lịch'}
+                      {patient.nextAppointment ? new Date(patient.nextAppointment).toLocaleDateString('en-US') : 'No appointment scheduled'}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" title="Xem chi tiết">
+                        <Button variant="outline" size="sm" title="View details">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" title="Chỉnh sửa">
+                        <Button variant="outline" size="sm" title="Edit">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" title="Xóa">
+                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" title="Delete">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

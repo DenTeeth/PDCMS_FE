@@ -41,32 +41,32 @@ export default function NewEmployeePage() {
     const roles: { value: Role; label: string; description: string; icon: React.ReactNode }[] = [
         {
             value: 'doctor',
-            label: 'Bác sĩ',
-            description: 'Khám và điều trị bệnh nhân',
+            label: 'Doctor',
+            description: 'Examine and treat patients',
             icon: <Stethoscope className="h-5 w-5" />
         },
         {
             value: 'receptionist',
-            label: 'Lễ tân',
-            description: 'Tiếp đón và sắp xếp lịch hẹn',
+            label: 'Receptionist',
+            description: 'Welcome and schedule appointments',
             icon: <UserCircle className="h-5 w-5" />
         },
         {
             value: 'cashier',
-            label: 'Thu ngân',
-            description: 'Xử lý thanh toán và hóa đơn',
+            label: 'Cashier',
+            description: 'Handle payments and invoices',
             icon: <Receipt className="h-5 w-5" />
         },
         {
             value: 'inventory',
-            label: 'Quản lý kho',
-            description: 'Quản lý vật tư và thiết bị',
+            label: 'Inventory Manager',
+            description: 'Manage supplies and equipment',
             icon: <Package className="h-5 w-5" />
         },
         {
             value: 'patient',
-            label: 'Bệnh nhân',
-            description: 'Tài khoản dành cho bệnh nhân',
+            label: 'Patient',
+            description: 'Account for patients',
             icon: <HeartPulse className="h-5 w-5" />
         }
     ]
@@ -75,7 +75,7 @@ export default function NewEmployeePage() {
         e.preventDefault()
         // Validate passwords match
         if (formData.password !== formData.confirmPassword) {
-            alert('Mật khẩu không khớp')
+            alert('Passwords do not match')
             return
         }
         // TODO: Call API to create employee
@@ -100,17 +100,17 @@ export default function NewEmployeePage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Thêm nhân viên mới</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Add New Employee</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8 divide-y divide-gray-200">
                 <div className="space-y-6 pt-8">
                     <div className="space-y-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Thông tin cá nhân</h3>
+                        <h3 className="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
                         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                             <div className="sm:col-span-3">
                                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                    Họ và tên
+                                    Full Name
                                 </label>
                                 <div className="mt-1">
                                     <input
@@ -144,7 +144,7 @@ export default function NewEmployeePage() {
 
                             <div className="sm:col-span-3">
                                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                                    Số điện thoại
+                                    Phone Number
                                 </label>
                                 <div className="mt-1">
                                     <input
@@ -161,7 +161,7 @@ export default function NewEmployeePage() {
 
                             <div className="sm:col-span-3">
                                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
-                                    Ngày bắt đầu
+                                    Start Date
                                 </label>
                                 <div className="mt-1">
                                     <input
@@ -179,10 +179,10 @@ export default function NewEmployeePage() {
                     </div>
 
                     <div className="space-y-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Phân quyền</h3>
+                        <h3 className="text-lg font-medium leading-6 text-gray-900">Role Assignment</h3>
                         <div className="space-y-4">
                             <Select
-                                label="Chọn vai trò"
+                                label="Select Role"
                                 options={roles}
                                 value={formData.role}
                                 onChange={(value) => handleChange(value, 'role')}
@@ -192,11 +192,11 @@ export default function NewEmployeePage() {
                     </div>
 
                     <div className="space-y-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Tài khoản</h3>
+                        <h3 className="text-lg font-medium leading-6 text-gray-900">Account</h3>
                         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                             <div className="sm:col-span-3">
                                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                    Mật khẩu
+                                    Password
                                 </label>
                                 <div className="mt-1">
                                     <input
@@ -213,7 +213,7 @@ export default function NewEmployeePage() {
 
                             <div className="sm:col-span-3">
                                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                                    Xác nhận mật khẩu
+                                    Confirm Password
                                 </label>
                                 <div className="mt-1">
                                     <input
@@ -238,13 +238,13 @@ export default function NewEmployeePage() {
                             className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Quay lại
+                            Back
                         </Link>
                         <button
                             type="submit"
                             className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 flex items-center gap-2"
                         >
-                            Lưu
+                            Save
                         </button>
                     </div>
                 </div>
