@@ -1,4 +1,5 @@
 import UserSidebar from '@/components/user/UserSidebar';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function UserLayout({
   children,
@@ -6,14 +7,16 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <UserSidebar />
-      <div className="lg:pl-64">
-        <main className="p-6">
-          {children}
-        </main>
+    <ProtectedRoute requiredRoles={['USER']}>
+      <div className="min-h-screen bg-background">
+        <UserSidebar />
+        <div className="lg:pl-64">
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
 

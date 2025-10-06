@@ -21,12 +21,12 @@ import {
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
-    clinicName: 'Phòng khám nha khoa PDCMS',
-    clinicAddress: '123 Đường ABC, Quận 1, TP.HCM',
+    clinicName: 'PDCMS Dental Clinic',
+    clinicAddress: '123 Main Street, District 1, City',
     clinicPhone: '0123456789',
     clinicEmail: 'info@pdms.com',
     timezone: 'Asia/Ho_Chi_Minh',
-    language: 'vi',
+    language: 'en',
     theme: 'light',
     notifications: {
       email: true,
