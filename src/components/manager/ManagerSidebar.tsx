@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 
 import {
   LayoutDashboard,
@@ -148,6 +149,9 @@ export default function ManagerSidebar() {
                 <p className="text-xs text-muted-foreground">Manager</p>
               </div>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            </div>
+            <div className="mt-3">
+              <LogoutButton variant="button" className="w-full" />
             </div>
           </div>
         </div>

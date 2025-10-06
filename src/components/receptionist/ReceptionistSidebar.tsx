@@ -7,68 +7,83 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 import {
   faTachometerAlt,
-  faUsers,
-  faFileAlt,
+  faUserPlus,
+  faFileMedical,
   faCalendarAlt,
+  faUsers,
   faCog,
-  faShieldAlt,
   faBars,
   faTimes,
   faChevronRight,
   faChevronDown,
   faUser,
-  faUserTie
+  faTable,
+  faChartLine
 } from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/admin',
+    href: '/receptionist',
     icon: faTachometerAlt,
   },
   {
     name: 'Account Management',
-    icon: faUsers,
+    icon: faUserPlus,
     hasSubmenu: true,
     submenu: [
       {
-        name: 'User Accounts',
-        href: '/admin/accounts/users',
-        icon: faUser,
-        description: 'Manage patient accounts'
+        name: 'Create Account',
+        href: '/receptionist/create-account',
+        icon: faUserPlus,
+        description: 'Create new customer accounts'
       },
       {
-        name: 'Employee Accounts',
-        href: '/admin/accounts/employees',
-        icon: faUserTie,
-        description: 'Manage staff accounts'
+        name: 'Patient Records',
+        href: '/receptionist/patient-records',
+        icon: faFileMedical,
+        description: 'Manage patient records'
       }
     ]
   },
   {
-    name: 'Blog Management',
-    href: '/admin/blogs',
-    icon: faFileAlt,
-  },
-  {
     name: 'Appointments',
-    href: '/admin/appointments',
     icon: faCalendarAlt,
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: 'Calendar View',
+        href: '/receptionist/appointments/calendar',
+        icon: faCalendarAlt,
+        description: 'View appointments in calendar'
+      },
+      {
+        name: 'Table View',
+        href: '/receptionist/appointments/table',
+        icon: faTable,
+        description: 'View appointments in table'
+      }
+    ]
   },
   {
-    name: 'Role Management',
-    href: '/admin/roles',
-    icon: faShieldAlt,
+    name: 'Customer Management',
+    href: '/receptionist/customers',
+    icon: faUsers,
+  },
+  {
+    name: 'KPI Dashboard',
+    href: '/receptionist/kpi',
+    icon: faChartLine,
   },
   {
     name: 'Settings',
-    href: '/admin/settings',
+    href: '/receptionist/settings',
     icon: faCog,
   },
 ];
 
-export default function AdminSidebar() {
-  const [isOpen, setIsOpen] = useState(true); // Default sidebar visible
+export default function ReceptionistSidebar() {
+  const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const pathname = usePathname();
 
@@ -113,7 +128,7 @@ export default function AdminSidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 border-b border-sidebar-border bg-gradient-to-r from-primary to-secondary">
-            <h1 className="text-xl font-bold text-primary-foreground">PDCMS Admin</h1>
+            <h1 className="text-xl font-bold text-primary-foreground">PDCMS Receptionist</h1>
           </div>
 
           {/* Navigation */}
@@ -231,11 +246,11 @@ export default function AdminSidebar() {
           <div className="p-4 border-t border-sidebar-border bg-sidebar-accent">
             <div className="flex items-center p-3 rounded-lg bg-card shadow-sm border border-border">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                <span className="text-primary-foreground text-sm font-bold">A</span>
+                <span className="text-primary-foreground text-sm font-bold">R</span>
               </div>
                <div className="ml-3 flex-1">
-                 <p className="text-sm font-semibold text-card-foreground">Admin</p>
-                 <p className="text-xs text-muted-foreground">Administrator</p>
+                 <p className="text-sm font-semibold text-card-foreground">Receptionist</p>
+                 <p className="text-xs text-muted-foreground">Front Desk</p>
                </div>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
             </div>
@@ -256,4 +271,3 @@ export default function AdminSidebar() {
     </>
   );
 }
-

@@ -73,7 +73,7 @@ export default function BlogsPage() {
             <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng bài viết</p>
+                <p className="text-sm font-medium text-gray-600">Total Posts</p>
                 <p className="text-2xl font-bold">{blogs.length}</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function BlogsPage() {
                 <span className="text-green-600 font-bold">P</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đã xuất bản</p>
+                <p className="text-sm font-medium text-gray-600">Published</p>
                 <p className="text-2xl font-bold">{blogs.filter(b => b.status === 'published').length}</p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function BlogsPage() {
                 <span className="text-yellow-600 font-bold">D</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Bản nháp</p>
+                <p className="text-sm font-medium text-gray-600">Drafts</p>
                 <p className="text-2xl font-bold">{blogs.filter(b => b.status === 'draft').length}</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function BlogsPage() {
                 <span className="text-purple-600 font-bold">A</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tác giả</p>
+                <p className="text-sm font-medium text-gray-600">Authors</p>
                 <p className="text-2xl font-bold">{new Set(blogs.map(b => b.authorId)).size}</p>
               </div>
             </div>
@@ -126,26 +126,26 @@ export default function BlogsPage() {
           <div className="flex flex-col md:flex-row gap-4">
 
           <div className="md:w-48">
-              <Label htmlFor="status" className="mb-2">Trạng thái</Label>
+              <Label htmlFor="status" className="mb-2">Status</Label>
               <select
                 id="status"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="published">Đã xuất bản</option>
-                <option value="draft">Bản nháp</option>
-                <option value="archived">Đã lưu trữ</option>
+                <option value="all">All Status</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
               </select>
             </div>
             <div className="flex-1">
-              <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
+              <Label htmlFor="search" className="mb-2">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Tìm theo tiêu đề hoặc tác giả..."
+                  placeholder="Search by title or author..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -229,16 +229,16 @@ export default function BlogsPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy bài viết</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
             <p className="text-gray-500 mb-4">
               {searchTerm || filterStatus !== 'all' 
-                ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
-                : 'Bắt đầu viết bài đầu tiên của bạn'
+                ? 'Try changing filters or search keywords'
+                : 'Start writing your first post'
               }
             </p>
             <Button onClick={() => setShowAddModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Viết bài mới
+              Write New Post
             </Button>
           </CardContent>
         </Card>

@@ -253,7 +253,7 @@ export default function AppointmentsPage() {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
               <Label htmlFor="search">Search</Label>
-              <div className="relative">
+              <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
@@ -270,7 +270,7 @@ export default function AppointmentsPage() {
                 id="status"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -286,6 +286,7 @@ export default function AppointmentsPage() {
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
+                className="mt-2"
               />
             </div>
           </div>
