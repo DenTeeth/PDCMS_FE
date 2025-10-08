@@ -9,13 +9,30 @@ export interface LoginResponse {
   error: string | null;
   message: string;
   data: {
-    token: string;
-    tokenExpiresAt: number;
-    refreshTokenExpiresAt: number;
+    token: string; // accessToken
+    refreshToken: string;
+    accessTokenExpiresAt: number; // Unix timestamp in seconds
+    refreshTokenExpiresAt: number; // Unix timestamp in seconds
     username: string;
     email: string;
     roles: string[];
     permissions: string[];
+    // Legacy fields for backward compatibility
+    tokenExpiresAt?: number;
+  };
+}
+
+export interface RefreshTokenResponse {
+  statusCode: number;
+  error: string | null;
+  message: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiresAt?: number; // Unix timestamp in seconds
+    refreshTokenExpiresAt?: number; // Unix timestamp in seconds
+    // Legacy fields for backward compatibility
+    tokenExpiresAt?: number;
   };
 }
 
@@ -25,7 +42,17 @@ export interface User {
   roles: string[];
   permissions: string[];
   token: string;
-  tokenExpiresAt: number;
+  // Note: refreshToken is stored in HTTP-Only Cookie by backend, not accessible from JS
+  refreshToken?: string; // Optional, for backward compatibility
+  tokenExpiresAt?: number; // Optional, for backward compatibility
+  refreshTokenExpiresAt?: number; // Optional, for backward compatibility
+}
+
+export interface UserProfile {
+  username: string;
+  email: string;
+  roles: string[];
+  permissions: string[];
 }
 
 export interface AuthState {
@@ -39,4 +66,13 @@ export interface ApiError {
   statusCode: number;
   error: string;
   message: string;
+}
+
+export class ApiError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode: number = 500) {
+    super(message);
+    this.name = 'ApiError';
+    this.statusCode = statusCode;
+  }
 }
