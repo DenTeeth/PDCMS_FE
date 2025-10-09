@@ -17,7 +17,8 @@ import {
   faChevronRight,
   faChevronDown,
   faUser,
-  faUserTie
+  faUserTie,
+  faKey
 } from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
@@ -59,6 +60,11 @@ const navigation = [
     name: 'Role Management',
     href: '/admin/roles',
     icon: faShieldAlt,
+  },
+  {
+    name: 'Permission Management',
+    href: '/admin/permissions',
+    icon: faKey,
   },
   {
     name: 'Settings',

@@ -47,10 +47,13 @@ export interface Appointment {
 
 // Role and Permission types
 export interface Permission {
-  id: string;
-  name: string;
-  description: string;
+  permissionId: string;
+  permissionName: string;
   module: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  roleNames: string[];
 }
 
 export interface Role {
