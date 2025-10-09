@@ -13,7 +13,7 @@ export default function DentistLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['DENTIST']}>
+    <ProtectedRoute requiredRoles={['ROLE_DOCTOR']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <DentistSidebar />

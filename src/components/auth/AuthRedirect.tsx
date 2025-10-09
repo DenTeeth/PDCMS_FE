@@ -19,21 +19,26 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
       if (redirectTo) {
         router.push(redirectTo);
       } else {
-        // Redirect based on user role
-        if (user.roles.includes('ADMIN')) {
+        // Redirect based on user role (với prefix ROLE_)
+        if (user.roles.includes('ROLE_ADMIN')) {
           router.push('/admin');
-        } else if (user.roles.includes('RECEPTIONIST')) {
+        } else if (user.roles.includes('ROLE_RECEPTIONIST')) {
           router.push('/receptionist');
-        } else if (user.roles.includes('DENTIST')) {
+        } else if (user.roles.includes('ROLE_DOCTOR')) {
           router.push('/dentist');
-        } else if (user.roles.includes('MANAGER')) {
+        } else if (user.roles.includes('ROLE_INVENTORY_MANAGER')) {
           router.push('/manager');
-        } else if (user.roles.includes('ACCOUNTANT')) {
+        } else if (user.roles.includes('ROLE_ACCOUNTANT')) {
           router.push('/accountant');
-        } else if (user.roles.includes('WAREHOUSE')) {
+        } else if (user.roles.includes('ROLE_NURSE')) {
+          router.push('/nurse');
+        } else if (user.roles.includes('ROLE_PATIENT')) {
+          router.push('/user');
+        } else if (user.roles.includes('ROLE_WAREHOUSE_MANAGER')) {
           router.push('/warehouse');
         } else {
-          router.push('/user');
+          // Fallback nếu role không khớp
+          router.push('/unauthorized');
         }
       }
     }

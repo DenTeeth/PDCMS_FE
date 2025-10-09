@@ -6,13 +6,17 @@ import { useEffect, ReactNode } from 'react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRoles?: string[];
+  requiredRoles?: string[];           // ⚠️ DEPRECATED: Dùng requiredPermissions thay thế
+  requiredPermissions?: string[];     // ✅ NEW: Check theo permissions (RBAC)
+  requireAll?: boolean;               // ✅ NEW: true = cần ALL permissions, false = cần ANY permission
   fallbackPath?: string;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRoles = [],
+  requiredPermissions = [],
+  requireAll = false,
   fallbackPath = '/login',
 }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -25,20 +29,32 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
 
-      // Check if user has required roles
-      if (requiredRoles.length > 0 && user) {
+      // ✅ Priority 1: Check permissions (RBAC - Recommended)
+      if (requiredPermissions.length > 0 && user?.permissions) {
+        const hasPermission = requireAll
+          ? requiredPermissions.every(permission => user.permissions.includes(permission))
+          : requiredPermissions.some(permission => user.permissions.includes(permission));
+        
+        if (!hasPermission) {
+          console.warn(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
+          router.push('/unauthorized');
+          return;
+        }
+      }
+      // ⚠️ Priority 2: Fallback to roles check (Legacy support)
+      else if (requiredRoles.length > 0 && user?.roles) {
         const hasRequiredRole = requiredRoles.some(role => 
           user.roles.includes(role)
         );
         
         if (!hasRequiredRole) {
-          // Redirect to unauthorized page or dashboard
+          console.warn(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
           router.push('/unauthorized');
           return;
         }
       }
     }
-  }, [isAuthenticated, user, isLoading, requiredRoles, router, fallbackPath]);
+  }, [isAuthenticated, user, isLoading, requiredRoles, requiredPermissions, requireAll, router, fallbackPath]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -54,14 +70,40 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // Check roles if required
-  if (requiredRoles.length > 0 && user) {
+  // ✅ Check permissions (RBAC - Recommended)
+  if (requiredPermissions.length > 0 && user?.permissions) {
+    const hasPermission = requireAll
+      ? requiredPermissions.every(permission => user.permissions.includes(permission))
+      : requiredPermissions.some(permission => user.permissions.includes(permission));
+    
+    if (!hasPermission) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+            <p className="text-sm text-gray-500">Required: {requiredPermissions.join(', ')}</p>
+          </div>
+        </div>
+      );
+    }
+  }
+  // ⚠️ Fallback: Check roles (Legacy support)
+  else if (requiredRoles.length > 0 && user?.roles) {
     const hasRequiredRole = requiredRoles.some(role => 
       user.roles.includes(role)
     );
     
     if (!hasRequiredRole) {
-      return null;
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-4">You don't have the required role to access this page.</p>
+            <p className="text-sm text-gray-500">Required role: {requiredRoles.join(', ')}</p>
+          </div>
+        </div>
+      );
     }
   }
 

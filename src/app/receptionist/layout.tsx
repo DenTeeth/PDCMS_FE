@@ -13,7 +13,7 @@ export default function ReceptionistLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['RECEPTIONIST']}>
+    <ProtectedRoute requiredRoles={['ROLE_RECEPTIONIST']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <ReceptionistSidebar />

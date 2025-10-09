@@ -1,155 +1,140 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
-  Plus,
   Search,
-  Filter,
-  Edit,
-  Trash2,
   Eye,
-  MoreHorizontal,
-  UserPlus,
-  Users
+  Users,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  AlertCircle,
+  UserCheck,
+  Grid3x3,
+  List,
+  Filter,
+  X,
 } from 'lucide-react';
-// Sample patient data
-const patients = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '0123456789',
-    age: 28,
-    gender: 'female',
-    address: '123 Main Street, District 1, City',
-    medicalHistory: 'No medical history',
-    allergies: 'No allergies',
-    emergencyContact: 'John Johnson (Husband) - 0987654321',
-    lastVisit: '2024-01-15',
-    nextAppointment: '2024-02-15',
-    status: 'active',
-    insurance: 'Health Insurance',
-    bloodType: 'A+',
-    notes: 'Regular patient'
-  },
-  {
-    id: '2',
-    name: 'Michael Brown',
-    email: 'michael.brown@example.com',
-    phone: '0987654321',
-    age: 35,
-    gender: 'male',
-    address: '456 Oak Avenue, District 2, City',
-    medicalHistory: 'Previous tooth decay',
-    allergies: 'Penicillin allergy',
-    emergencyContact: 'Lisa Brown (Wife) - 0123456789',
-    lastVisit: '2024-01-10',
-    nextAppointment: '2024-01-25',
-    status: 'active',
-    insurance: 'Private Insurance',
-    bloodType: 'O+',
-    notes: 'Needs regular monitoring'
-  },
-  {
-    id: '3',
-    name: 'Emma Davis',
-    email: 'emma.davis@example.com',
-    phone: '0369852147',
-    age: 22,
-    gender: 'female',
-    address: '789 Pine Street, District 3, City',
-    medicalHistory: 'Currently wearing braces',
-    allergies: 'No allergies',
-    emergencyContact: 'Robert Davis (Father) - 0741258963',
-    lastVisit: '2024-01-20',
-    nextAppointment: '2024-02-20',
-    status: 'active',
-    insurance: 'Health Insurance',
-    bloodType: 'B+',
-    notes: 'Currently undergoing orthodontic treatment'
-  },
-  {
-    id: '4',
-    name: 'David Wilson',
-    email: 'david.wilson@example.com',
-    phone: '0741258963',
-    age: 45,
-    gender: 'male',
-    address: '321 Elm Avenue, District 4, City',
-    medicalHistory: 'Previous gum inflammation',
-    allergies: 'No allergies',
-    emergencyContact: 'Mary Wilson (Wife) - 0852147369',
-    lastVisit: '2024-01-18',
-    nextAppointment: null,
-    status: 'inactive',
-    insurance: 'Health Insurance',
-    bloodType: 'AB+',
-    notes: 'Old patient, rarely visits'
-  },
-  {
-    id: '5',
-    name: 'Jennifer Taylor',
-    email: 'jennifer.taylor@example.com',
-    phone: '0456123789',
-    age: 30,
-    gender: 'female',
-    address: '654 Maple Drive, District 5, City',
-    medicalHistory: 'No medical history',
-    allergies: 'Latex allergy',
-    emergencyContact: 'James Taylor (Husband) - 0321654987',
-    lastVisit: '2024-01-21',
-    nextAppointment: '2024-01-28',
-    status: 'active',
-    insurance: 'Private Insurance',
-    bloodType: 'A-',
-    notes: 'New patient'
-  }
-];
+import { Patient } from '@/types/patient';
+import { patientService } from '@/services/patientService';
 
-export default function AccountsPage() {
+// ==================== TYPES ====================
+
+interface PatientStats {
+  total: number;
+  active: number;
+  male: number;
+  female: number;
+}
+
+// ==================== MAIN COMPONENT ====================
+export default function PatientsPage() {
+  const router = useRouter();
+  
+  // State management
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [filterGender, setFilterGender] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.includes(searchTerm);
-    const matchesStatus = filterStatus === 'all' || patient.status === filterStatus;
-    return matchesSearch && matchesStatus;
+  // ==================== FETCH PATIENTS ====================
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      const response = await patientService.getPatients({ page: 0, size: 100 });
+      setPatients(response.content);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================== FILTERING ====================
+  const filteredPatients = patients.filter((patient) => {
+    const matchesSearch =
+      searchTerm === '' ||
+      patient.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.phone?.includes(searchTerm) ||
+      patient.patientCode?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesGender =
+      filterGender === 'all' || patient.gender === filterGender;
+
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'active' && patient.isActive) ||
+      (filterStatus === 'inactive' && !patient.isActive);
+
+    return matchesSearch && matchesGender && matchesStatus;
   });
 
-  const getGenderBadgeColor = (gender: string) => {
-    return gender === 'male'
-      ? 'bg-blue-100 text-blue-800'
-      : 'bg-pink-100 text-pink-800';
+  // ==================== STATS ====================
+  const stats: PatientStats = {
+    total: filteredPatients.length,
+    active: filteredPatients.filter((p) => p.isActive).length,
+    male: filteredPatients.filter((p) => p.gender === 'MALE').length,
+    female: filteredPatients.filter((p) => p.gender === 'FEMALE').length,
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    return status === 'active'
-      ? 'bg-green-100 text-green-800'
-      : 'bg-red-100 text-red-800';
+  // ==================== HANDLERS ====================
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN');
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
-          <p className="text-gray-600">Manage patient information and medical records</p>
+  const getGenderLabel = (gender?: string) => {
+    switch (gender) {
+      case 'MALE':
+        return 'Nam';
+      case 'FEMALE':
+        return 'Nữ';
+      case 'OTHER':
+        return 'Khác';
+      default:
+        return gender || 'N/A';
+    }
+  };
+
+  // ==================== LOADING STATE ====================
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add Patient
-        </Button>
+      </div>
+    );
+  }
+
+  // ==================== RENDER ====================
+  return (
+    <div className="space-y-6 p-6">
+      {/* ==================== HEADER ==================== */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
+        <p className="text-gray-600">View and manage patient information</p>
       </div>
 
-      {/* Stats */}
+      {/* ==================== STATS ==================== */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -157,7 +142,7 @@ export default function AccountsPage() {
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Patients</p>
-                <p className="text-2xl font-bold">{patients.length}</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -165,12 +150,10 @@ export default function AccountsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-bold">A</span>
-              </div>
+              <UserCheck className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold">{patients.filter(p => p.status === 'active').length}</p>
+                <p className="text-2xl font-bold">{stats.active}</p>
               </div>
             </div>
           </CardContent>
@@ -178,12 +161,10 @@ export default function AccountsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 font-bold">I</span>
-              </div>
+              <User className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold">{patients.filter(p => p.status === 'inactive').length}</p>
+                <p className="text-sm font-medium text-gray-600">Male</p>
+                <p className="text-2xl font-bold">{stats.male}</p>
               </div>
             </div>
           </CardContent>
@@ -191,123 +172,285 @@ export default function AccountsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 font-bold">D</span>
-              </div>
+              <User className="h-8 w-8 text-pink-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">New This Month</p>
-                <p className="text-2xl font-bold">{patients.filter(p => new Date(p.lastVisit) > new Date('2024-01-01')).length}</p>
+                <p className="text-sm font-medium text-gray-600">Female</p>
+                <p className="text-2xl font-bold">{stats.female}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Search and Filters */}
       <Card>
-
-        <CardHeader>
-          <CardTitle>Patient List</CardTitle>
-          <CardDescription>
-            Manage patient information and medical records
-          </CardDescription>
-        </CardHeader>
-
-        {/* Filters */}
-
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-
-            <div className="md:w-48">
-              <Label htmlFor="status" className="mb-2">Status</Label>
-              <select
-                id="status"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="search" className="mb-2">Search</Label>
-              <div className="relative">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <Label htmlFor="search">Search</Label>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Search by name, email or phone..."
+                  placeholder="Search by name, email, phone, or code..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filter
+                  {(filterGender !== 'all' || filterStatus !== 'all') && (
+                    <Badge variant="secondary" className="ml-1">
+                      {(filterGender !== 'all' ? 1 : 0) + (filterStatus !== 'all' ? 1 : 0)}
+                    </Badge>
+                  )}
+                </Button>
+                <div className="flex border rounded-md">
+                  <Button
+                    variant={viewMode === 'card' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('card')}
+                  >
+                    <Grid3x3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
 
-        {/* Users Table */}
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">#</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Next Appointment</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPatients.map((patient, index) => (
-                  <tr key={patient.id} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4 text-center text-gray-600 font-medium">
-                      {index + 1}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
-                          {patient.name.charAt(0)}
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium text-gray-900">{patient.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-gray-600">
-                      {patient.phone}
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(patient.status)}`}>
-                        {patient.status === 'active' ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-gray-500">
-                      {patient.nextAppointment ? new Date(patient.nextAppointment).toLocaleDateString('en-US') : 'No appointment scheduled'}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" title="View details">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" title="Edit">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Filter Section */}
+            {showFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label>Gender</Label>
+                  <select
+                    value={filterGender}
+                    onChange={(e) => setFilterGender(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Genders</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                {(filterGender !== 'all' || filterStatus !== 'all') && (
+                  <div className="md:col-span-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilterGender('all');
+                        setFilterStatus('all');
+                      }}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* ==================== PATIENT LIST ==================== */}
+      {filteredPatients.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center text-gray-500">
+              <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium">No patients found</p>
+              <p className="text-sm mt-1">Try adjusting your search or filters</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : viewMode === 'card' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredPatients.map((patient) => (
+            <Card
+              key={patient.patientId}
+              className="hover:shadow-lg transition-shadow"
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg">{patient.fullName}</CardTitle>
+                    <p className="text-sm text-gray-500">Code: {patient.patientCode}</p>
+                  </div>
+                  <Badge
+                    variant={patient.isActive ? 'default' : 'secondary'}
+                    className={
+                      patient.isActive
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }
+                  >
+                    {patient.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <User className="h-4 w-4" />
+                      <span>{getGenderLabel(patient.gender)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(patient.dateOfBirth)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Mail className="h-4 w-4" />
+                      <span className="truncate">{patient.email || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Phone className="h-4 w-4" />
+                      <span>{patient.phone || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="h-4 w-4" />
+                      <span className="truncate">{patient.address || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/admin/accounts/users/${patient.patientCode}`);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Table View */
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Code
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Full Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gender
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date of Birth
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Phone
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredPatients.map((patient) => (
+                    <tr
+                      key={patient.patientId}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {patient.patientCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {patient.fullName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {getGenderLabel(patient.gender)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {formatDate(patient.dateOfBirth)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {patient.phone || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {patient.email || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          variant={patient.isActive ? 'default' : 'secondary'}
+                          className={
+                            patient.isActive
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }
+                        >
+                          {patient.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
-
