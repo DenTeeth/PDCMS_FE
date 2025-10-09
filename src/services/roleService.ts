@@ -25,12 +25,23 @@ class RoleService {
 
   /**
    * Fetch role by ID
-   * @param roleId Role UUID
-   * @returns Role details with permissions
+   * @param roleId Role ID (e.g., "ROLE_ADMIN")
+   * @returns Role details
    */
   async getRoleById(roleId: string): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: Role }>(`/roles/${roleId}`);
+    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Role }>(`/roles/${roleId}`);
+    return response.data.data;
+  }
+
+  /**
+   * Fetch permissions for a specific role
+   * @param roleId Role ID (e.g., "ROLE_ADMIN")
+   * @returns Array of permissions for the role
+   */
+  async getRolePermissions(roleId: string): Promise<Permission[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Permission[] }>(`/roles/${roleId}/permissions`);
     return response.data.data;
   }
 
@@ -63,6 +74,40 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<{ data: Specialization }>(`/specializations/${specializationId}`);
     return response.data.data;
+  }
+
+  /**
+   * Create a new role
+   * @param data Role creation data (roleId, roleName, description)
+   * @returns Created role
+   */
+  async createRole(data: { roleId: string; roleName: string; description: string }): Promise<Role> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.post<{ statusCode: number; message: string; data: Role }>('/roles', data);
+    return response.data.data;
+  }
+
+  /**
+   * Update role by ID
+   * @param roleId Role ID (e.g., "ROLE_ADMIN")
+   * @param data Update data (roleName, description)
+   * @returns Updated role
+   */
+  async updateRole(roleId: string, data: { roleName: string; description: string }): Promise<Role> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.put<{ statusCode: number; message: string; data: Role }>(`/roles/${roleId}`, data);
+    return response.data.data;
+  }
+
+  /**
+   * Assign permissions to role
+   * @param roleId Role ID (e.g., "ROLE_ADMIN")
+   * @param permissionIds Array of permission IDs to assign
+   * @returns Success response
+   */
+  async assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<void> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    await axiosInstance.post(`/roles/${roleId}/permissions`, permissionIds);
   }
 }
 
