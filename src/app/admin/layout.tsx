@@ -13,7 +13,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['ADMIN']}>
+    <ProtectedRoute requiredRoles={['ROLE_ADMIN']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <AdminSidebar />

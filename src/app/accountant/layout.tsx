@@ -13,7 +13,7 @@ export default function AccountantLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['ACCOUNTANT']}>
+    <ProtectedRoute requiredRoles={['ROLE_ACCOUNTANT']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <AccountantSidebar />

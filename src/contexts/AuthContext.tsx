@@ -10,6 +10,10 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   refreshAuth: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
+  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -228,6 +232,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
   };
 
+  // ✅ Permission helper functions
+  const hasPermission = useCallback((permission: string): boolean => {
+    if (!user?.permissions) return false;
+    return user.permissions.includes(permission);
+  }, [user]);
+
+  const hasAnyPermission = useCallback((permissions: string[]): boolean => {
+    if (!user?.permissions || permissions.length === 0) return false;
+    return permissions.some(permission => user.permissions.includes(permission));
+  }, [user]);
+
+  const hasAllPermissions = useCallback((permissions: string[]): boolean => {
+    if (!user?.permissions || permissions.length === 0) return false;
+    return permissions.every(permission => user.permissions.includes(permission));
+  }, [user]);
+
+  const hasRole = useCallback((role: string): boolean => {
+    if (!user?.roles) return false;
+    return user.roles.includes(role);
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -237,6 +262,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     clearError,
     refreshAuth,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
   };
 
   return (

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Search,
   Shield,
+  Users,
   CheckCircle,
   XCircle,
   Loader2,

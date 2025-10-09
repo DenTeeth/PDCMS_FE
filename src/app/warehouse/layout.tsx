@@ -13,7 +13,7 @@ export default function WarehouseLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['WAREHOUSE']}>
+    <ProtectedRoute requiredRoles={['ROLE_NURSE']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <WarehouseSidebar />

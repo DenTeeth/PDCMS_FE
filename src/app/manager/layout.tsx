@@ -13,7 +13,7 @@ export default function ManagerLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRoles={['MANAGER']}>
+    <ProtectedRoute requiredRoles={['ROLE_INVENTORY_MANAGER']}>
       <div className="min-h-screen bg-background">
         <div className="flex">
           <ManagerSidebar />
