@@ -21,11 +21,12 @@ import {
   List,
   Filter,
   X,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Import types and services
-import { Employee } from '@/types/employee';
+import { Employee, CreateEmployeeRequest, Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
 
@@ -46,7 +47,23 @@ export default function EmployeesPage() {
   const [totalElements, setTotalElements] = useState(0);
   
   // Roles list
-  const [roles, setRoles] = useState<Array<{roleId: string; roleName: string}>>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  // Create employee modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState<CreateEmployeeRequest>({
+    username: '',
+    email: '',
+    password: '',
+    roleId: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    specializationIds: [],
+  });
 
   // ==================== FETCH ROLES ====================
   useEffect(() => {
@@ -93,6 +110,82 @@ export default function EmployeesPage() {
     }
   };
 
+  // ==================== CREATE EMPLOYEE ====================
+  const handleCreateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.username || !formData.email || !formData.password || 
+        !formData.roleId || !formData.firstName || !formData.lastName) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      
+      // Prepare payload based on role
+      const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+      
+      let payload: CreateEmployeeRequest;
+      
+      if (isDoctorOrNurse) {
+        // For DOCTOR/NURSE: exclude username, email, password
+        payload = {
+          roleId: formData.roleId,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
+          address: formData.address,
+          specializationIds: formData.specializationIds || [],
+        } as any; // Cast because CreateEmployeeRequest requires username/email/password
+      } else {
+        // For other roles: include username, email, password (no specializationIds)
+        payload = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          roleId: formData.roleId,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
+          address: formData.address,
+        };
+      }
+      
+      await employeeService.createEmployee(payload);
+      toast.success('Employee created successfully');
+      setShowCreateModal(false);
+      // Reset form
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        roleId: '',
+        firstName: '',
+        lastName: '',
+        phone: '',
+        dateOfBirth: '',
+        address: '',
+        specializationIds: [],
+      });
+      fetchEmployees(); // Refresh list
+    } catch (error: any) {
+      console.error('Failed to create employee:', error);
+      toast.error(error.response?.data?.message || 'Failed to create employee');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRoleChange = (roleId: string) => {
+    setFormData({ ...formData, roleId });
+  };
+
+  const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+
   // ==================== FILTER EMPLOYEES (ALL ON FE) ====================
   const filteredEmployees = (employees || []).filter(emp => {
     // Filter by search term
@@ -136,9 +229,15 @@ export default function EmployeesPage() {
   return (
     <div className="space-y-6 p-6">
       {/* ==================== HEADER ==================== */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-        <p className="text-gray-600">View and manage employee information</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+          <p className="text-gray-600">View and manage employee information</p>
+        </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Employee
+        </Button>
       </div>
 
       {/* ==================== STATS ==================== */}
@@ -457,6 +556,239 @@ export default function EmployeesPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <Card className="w-full max-w-2xl my-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Create New Employee
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateEmployee} className="space-y-4">
+                {/* Role Selection - Always shown first */}
+                <div>
+                  <Label htmlFor="roleId">
+                    Role <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="roleId"
+                    value={formData.roleId}
+                    onChange={(e) => handleRoleChange(e.target.value)}
+                    disabled={creating}
+                    required
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a role</option>
+                    {roles.map((role) => (
+                      <option key={role.roleId} value={role.roleId}>
+                        {role.roleName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Conditional Fields based on Role */}
+                {formData.roleId && (
+                  <>
+                    {/* Account Information - Only for non-Doctor/Nurse roles */}
+                    {!isDoctorOrNurse && (
+                      <div className="border-t pt-4">
+                        <h3 className="font-semibold mb-3">Account Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="username">
+                              Username <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              id="username"
+                              placeholder="e.g., john.doe"
+                              value={formData.username}
+                              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                              disabled={creating}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="email">
+                              Email <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="e.g., john@example.com"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              disabled={creating}
+                              required
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label htmlFor="password">
+                              Password <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="Enter password"
+                              value={formData.password}
+                              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                              disabled={creating}
+                              required
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Minimum 6 characters
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Personal Information - Always shown */}
+                    <div className="border-t pt-4">
+                      <h3 className="font-semibold mb-3">Personal Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="firstName">
+                            First Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="firstName"
+                            placeholder="e.g., John"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            disabled={creating}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lastName">
+                            Last Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="lastName"
+                            placeholder="e.g., Doe"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            disabled={creating}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Phone</Label>
+                          <Input
+                            id="phone"
+                            placeholder="e.g., 0123456789"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            disabled={creating}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                          <Input
+                            id="dateOfBirth"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                            disabled={creating}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label htmlFor="address">Address</Label>
+                          <textarea
+                            id="address"
+                            placeholder="Enter full address"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            disabled={creating}
+                            rows={3}
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Specialization - Only for Doctor/Nurse */}
+                    {isDoctorOrNurse && (
+                      <div className="border-t pt-4">
+                        <h3 className="font-semibold mb-3">Specialization</h3>
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <p className="text-sm text-yellow-800">
+                            ⚠️ <strong>Note:</strong> Specialization API is not yet available. 
+                            This field will be enabled once the API is ready.
+                          </p>
+                          {/* TODO: Add specialization selection when API is available */}
+                          {/* <div>
+                            <Label htmlFor="specializationIds">
+                              Specializations <span className="text-red-500">*</span>
+                            </Label>
+                            <select
+                              id="specializationIds"
+                              multiple
+                              value={formData.specializationIds || []}
+                              onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                setFormData({ ...formData, specializationIds: selected });
+                              }}
+                              disabled={creating}
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="SPEC001">Nha khoa tổng quát</option>
+                            </select>
+                          </div> */}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Form Actions */}
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setFormData({
+                        username: '',
+                        email: '',
+                        password: '',
+                        roleId: '',
+                        firstName: '',
+                        lastName: '',
+                        phone: '',
+                        dateOfBirth: '',
+                        address: '',
+                        specializationIds: [],
+                      });
+                    }}
+                    disabled={creating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creating || !formData.roleId}>
+                    {creating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Employee
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
