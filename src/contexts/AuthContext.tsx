@@ -25,11 +25,20 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // TEMPORARILY MODIFIED FOR UI DEVELOPMENT: Setting default authenticated state
+  const [user, setUser] = useState<User | null>({
+    username: 'dev_user',
+    email: 'dev@example.com',
+    roles: ['ADMIN', 'MANAGER', 'DENTIST', 'RECEPTIONIST', 'ACCOUNTANT', 'WAREHOUSE'],
+    permissions: ['*'],
+    token: 'fake-token-for-development',
+    tokenExpiresAt: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Always authenticated for UI development
+  const [isLoading, setIsLoading] = useState(false); // No loading state
   const [error, setError] = useState<string | null>(null);
 
+  /* ORIGINAL CODE - TEMPORARILY DISABLED
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = () => {
@@ -62,12 +71,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
+  */
+  
+  // For UI development - no initialization needed
+  useEffect(() => {
+    console.log('Authentication context initialized with fake user for UI development');
+  }, []);
 
   const login = async (credentials: LoginRequest) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // TEMPORARILY MODIFIED FOR UI DEVELOPMENT: Bypass actual login API call
+      console.log('Login bypassed for UI development:', credentials);
+      
+      // Mock successful login
+      const mockUserData: User = {
+        username: credentials.username,
+        email: `${credentials.username}@example.com`,
+        roles: ['ADMIN', 'MANAGER', 'DENTIST', 'RECEPTIONIST', 'ACCOUNTANT', 'WAREHOUSE'],
+        permissions: ['*'],
+        token: 'fake-token-for-development',
+        tokenExpiresAt: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+      };
+      
+      // Store fake data in localStorage
+      localStorage.setItem('auth_token', mockUserData.token);
+      localStorage.setItem('user_data', JSON.stringify(mockUserData));
+      
+      setUser(mockUserData);
+      setIsAuthenticated(true);
+      
+      /* ORIGINAL CODE - TEMPORARILY DISABLED
       const response = await apiClient.login(credentials);
       
       if (response.statusCode === 200 && response.data) {
@@ -89,6 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error(response.message || 'Login failed');
       }
+      */
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setError(errorMessage);
@@ -100,15 +137,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
+      // TEMPORARILY MODIFIED FOR UI DEVELOPMENT: Bypass actual logout API call
+      console.log('Logout intercepted for UI development - maintaining authenticated state');
+      
+      /* ORIGINAL CODE - TEMPORARILY DISABLED
       // Call API logout
       await apiClient.logout();
+      */
     } catch (error) {
       console.warn('Logout API call failed:', error);
     } finally {
+      // For UI development - re-initialize fake user instead of clearing
+      const mockUserData: User = {
+        username: 'dev_user',
+        email: 'dev@example.com',
+        roles: ['ADMIN', 'MANAGER', 'DENTIST', 'RECEPTIONIST', 'ACCOUNTANT', 'WAREHOUSE'],
+        permissions: ['*'],
+        token: 'fake-token-for-development',
+        tokenExpiresAt: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+      };
+      setUser(mockUserData);
+      
+      /* ORIGINAL CODE - TEMPORARILY DISABLED
       // Always clear local state
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      */
     }
   };
 

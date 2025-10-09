@@ -19,6 +19,10 @@ export default function Page() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
+      // For UI development - ask where to redirect
+      console.log('UI Development Mode: Redirecting with all roles available.');
+      console.log('Available roles:', user.roles);
+      
       // Check user role and redirect accordingly
       if (user.roles.includes('ADMIN')) {
         router.push('/admin');

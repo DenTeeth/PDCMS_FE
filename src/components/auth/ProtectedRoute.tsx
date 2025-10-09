@@ -18,6 +18,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
 
+  /* TEMPORARILY DISABLED FOR UI DEVELOPMENT
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
@@ -64,6 +65,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return null;
     }
   }
+  */
+  
+  // TEMPORARY FOR UI DEVELOPMENT: Bypass all authentication and role checks
+  console.log('Authentication bypassed for UI development');
 
   return <>{children}</>;
 };
