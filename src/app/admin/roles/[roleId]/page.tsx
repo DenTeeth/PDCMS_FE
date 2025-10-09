@@ -16,6 +16,7 @@ import {
   Edit,
   Key,
   Lock,
+  Trash2,
 } from 'lucide-react';
 import { Role, Permission } from '@/types/employee';
 import { roleService } from '@/services/roleService';
@@ -38,6 +39,10 @@ export default function RoleDetailPage() {
     roleName: '',
     description: '',
   });
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (roleId) {
@@ -106,6 +111,23 @@ export default function RoleDetailPage() {
     }
   };
 
+  // ==================== DELETE ROLE ====================
+  const handleDeleteRole = async () => {
+    if (!role) return;
+
+    try {
+      setDeleting(true);
+      await roleService.deleteRole(role.roleId);
+      toast.success(`Role "${role.roleName}" deleted successfully`);
+      router.push('/admin/roles'); // Navigate back to list
+    } catch (error: any) {
+      console.error('Failed to delete role:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete role');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Group permissions by resource
   const groupedPermissions = permissions.reduce((acc, permission) => {
     const resource = permission.resource;
@@ -159,10 +181,20 @@ export default function RoleDetailPage() {
             <p className="text-gray-600">View detailed information about role</p>
           </div>
         </div>
-        <Button variant="outline" onClick={openEditModal}>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={openEditModal}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowDeleteModal(true)}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       {/* Role Overview */}
@@ -428,6 +460,72 @@ export default function RoleDetailPage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
+      {showDeleteModal && role && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Delete Role
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> This will soft delete the role "{role.roleName}". 
+                  The role will be marked as inactive and cannot be assigned to new employees.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-gray-700">
+                  <strong>Role ID:</strong> <span className="font-mono">{role.roleId}</span>
+                </p>
+                <p className="text-sm text-gray-700">
+                  <strong>Role Name:</strong> {role.roleName}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <strong>Description:</strong> {role.description}
+                </p>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Are you sure you want to delete this role? You will be redirected to the roles list.
+              </p>
+
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleDeleteRole}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Role
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -109,6 +109,17 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     await axiosInstance.post(`/roles/${roleId}/permissions`, permissionIds);
   }
+
+  /**
+   * Delete role by ID (soft delete - marks as inactive)
+   * @param roleId Role ID (e.g., "ROLE_CUSTOM")
+   * @returns Success message
+   */
+  async deleteRole(roleId: string): Promise<{ message: string }> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.delete<{ statusCode: number; message: string }>(`/roles/${roleId}`);
+    return { message: response.data.message };
+  }
 }
 
 // Export singleton instance
