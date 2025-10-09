@@ -47,6 +47,11 @@ const routes: Route[] = [
     href: '/manager/employees',
   },
   {
+    icon: BarChart3,
+    label: 'Feedback & Ratings',
+    href: '/manager/feedback',
+  },
+  {
     icon: Settings,
     label: 'Settings',
     href: '/manager/settings',
