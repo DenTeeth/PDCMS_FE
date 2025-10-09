@@ -57,26 +57,51 @@ class ApiClient {
 
   // Authentication endpoints
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    /* TEMPORARILY DISABLED FOR UI DEVELOPMENT
     return this.request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
+    });
+    */
+    
+    // Mock response for UI development
+    console.log('API login call intercepted for UI development:', credentials);
+    return Promise.resolve({
+      statusCode: 200,
+      error: null,
+      message: 'Login successful',
+      data: {
+        username: credentials.username,
+        email: `${credentials.username}@example.com`,
+        roles: ['ADMIN', 'MANAGER', 'DENTIST', 'RECEPTIONIST', 'ACCOUNTANT', 'WAREHOUSE'],
+        permissions: ['*'],
+        token: 'fake-token-for-development',
+        tokenExpiresAt: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+        refreshTokenExpiresAt: Math.floor(Date.now() / 1000) + 604800, // 7 days from now
+      }
     });
   }
 
   async logout(): Promise<void> {
     try {
+      /* TEMPORARILY DISABLED FOR UI DEVELOPMENT
       // Call logout API endpoint
       await this.request('/auth/logout', {
         method: 'POST',
       });
+      */
+      console.log('API logout call intercepted for UI development');
     } catch (error) {
       // Even if API call fails, we should still clear local storage
       console.warn('Logout API call failed:', error);
     } finally {
       // Always clear local storage
       if (typeof window !== 'undefined') {
+        /* TEMPORARILY DISABLED FOR UI DEVELOPMENT
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
+        */
+        console.log('Local storage clear bypassed for UI development');
       }
     }
   }
