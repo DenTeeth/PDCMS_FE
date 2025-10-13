@@ -67,6 +67,11 @@ const navigation = [
     icon: faKey,
   },
   {
+    name: 'Specializations Management',
+    href: '/admin/specializations',
+    icon: faCog,
+  },
+  {
     name: 'Settings',
     href: '/admin/settings',
     icon: faCog,

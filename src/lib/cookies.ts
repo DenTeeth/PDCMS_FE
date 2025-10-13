@@ -86,6 +86,11 @@ export const clearAuthData = () => {
   removeToken();
   removeUserData();
   console.log('🗑️ All auth data cleared from localStorage');
+  
+  // Debug: Check if refreshToken cookie exists
+  if (typeof document !== 'undefined') {
+    console.log('🍪 Current cookies:', document.cookie);
+  }
 };
 
 /**
