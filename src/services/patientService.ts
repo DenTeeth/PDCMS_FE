@@ -70,8 +70,8 @@ class PatientService {
    */
   async createPatient(data: CreatePatientRequest): Promise<Patient> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post<Patient>(this.endpoint, data);
-    return response.data;
+    const response = await axiosInstance.post<{ statusCode: number; message: string; data: Patient }>(this.endpoint, data);
+    return response.data.data;
   }
 
   /**

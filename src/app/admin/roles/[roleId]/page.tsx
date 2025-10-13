@@ -118,11 +118,11 @@ export default function RoleDetailPage() {
     try {
       setDeleting(true);
       await roleService.deleteRole(role.roleId);
-      toast.success(`Role "${role.roleName}" deleted successfully`);
+      toast.success(`Role "${role.roleName}" deactivated successfully`);
       router.push('/admin/roles'); // Navigate back to list
     } catch (error: any) {
       console.error('Failed to delete role:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete role');
+      toast.error(error.response?.data?.message || 'Failed to deactivate role');
     } finally {
       setDeleting(false);
     }
@@ -476,10 +476,10 @@ export default function RoleDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-red-800">
-                  <strong>Warning:</strong> This will soft delete the role "{role.roleName}". 
-                  The role will be marked as inactive and cannot be assigned to new employees.
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> This will soft delete the role "{role.roleName}". 
+                  The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
                 </p>
               </div>
 
@@ -496,7 +496,7 @@ export default function RoleDetailPage() {
               </div>
 
               <p className="text-sm text-gray-600">
-                Are you sure you want to delete this role? You will be redirected to the roles list.
+                Are you sure you want to deactivate this role? You will be redirected to the roles list.
               </p>
 
               <div className="flex gap-3 justify-end pt-4 border-t">
@@ -516,12 +516,12 @@ export default function RoleDetailPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
+                      Deactivating...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Role
+                      Deactivate Role
                     </>
                   )}
                 </Button>

@@ -76,18 +76,21 @@ export type CreatePatientRequest = CreatePatientWithAccountRequest | CreatePatie
 
 /**
  * Request payload for updating patient (PATCH - partial update)
+ * All fields are optional for partial updates
  */
 export interface UpdatePatientRequest {
   firstName?: string;
   lastName?: string;
+  email?: string;
   phone?: string;
-  address?: string;
   dateOfBirth?: string;
+  address?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   medicalHistory?: string;
   allergies?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  isActive?: boolean;
 }
 
 /**
