@@ -97,6 +97,7 @@ export interface UpdateEmployeeRequest {
   phone?: string;
   address?: string;
   dateOfBirth?: string;
+  roleId?: string;
   specializationIds?: string[];
 }
 

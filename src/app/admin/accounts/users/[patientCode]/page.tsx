@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   User,
@@ -22,7 +23,7 @@ import {
   Users,
   Trash2,
 } from 'lucide-react';
-import { Patient } from '@/types/patient';
+import { Patient, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
 import { toast } from 'sonner';
 
@@ -35,6 +36,24 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [editFormData, setEditFormData] = useState<UpdatePatientRequest>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    gender: undefined,
+    medicalHistory: '',
+    allergies: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    isActive: true,
+  });
 
   useEffect(() => {
     if (patientCode) {
@@ -68,6 +87,94 @@ export default function PatientDetailPage() {
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  // ==================== EDIT PATIENT ====================
+  const openEditModal = () => {
+    if (!patient) return;
+    
+    setEditFormData({
+      firstName: patient.firstName || '',
+      lastName: patient.lastName || '',
+      email: patient.email || '',
+      phone: patient.phone || '',
+      dateOfBirth: patient.dateOfBirth || '',
+      address: patient.address || '',
+      gender: patient.gender,
+      medicalHistory: patient.medicalHistory || '',
+      allergies: patient.allergies || '',
+      emergencyContactName: patient.emergencyContactName || '',
+      emergencyContactPhone: patient.emergencyContactPhone || '',
+      isActive: patient.isActive,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePatient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!patient) return;
+
+    try {
+      setUpdating(true);
+      
+      // Build partial update payload (only send fields that have values and changed)
+      const payload: UpdatePatientRequest = {};
+      
+      if (editFormData.firstName && editFormData.firstName !== patient.firstName) {
+        payload.firstName = editFormData.firstName;
+      }
+      if (editFormData.lastName && editFormData.lastName !== patient.lastName) {
+        payload.lastName = editFormData.lastName;
+      }
+      if (editFormData.email && editFormData.email !== patient.email) {
+        payload.email = editFormData.email;
+      }
+      if (editFormData.phone && editFormData.phone !== patient.phone) {
+        payload.phone = editFormData.phone;
+      }
+      if (editFormData.dateOfBirth && editFormData.dateOfBirth !== patient.dateOfBirth) {
+        payload.dateOfBirth = editFormData.dateOfBirth;
+      }
+      if (editFormData.address && editFormData.address !== patient.address) {
+        payload.address = editFormData.address;
+      }
+      if (editFormData.gender && editFormData.gender !== patient.gender) {
+        payload.gender = editFormData.gender;
+      }
+      if (editFormData.medicalHistory && editFormData.medicalHistory !== patient.medicalHistory) {
+        payload.medicalHistory = editFormData.medicalHistory;
+      }
+      if (editFormData.allergies && editFormData.allergies !== patient.allergies) {
+        payload.allergies = editFormData.allergies;
+      }
+      if (editFormData.emergencyContactName && editFormData.emergencyContactName !== patient.emergencyContactName) {
+        payload.emergencyContactName = editFormData.emergencyContactName;
+      }
+      if (editFormData.emergencyContactPhone && editFormData.emergencyContactPhone !== patient.emergencyContactPhone) {
+        payload.emergencyContactPhone = editFormData.emergencyContactPhone;
+      }
+      if (editFormData.isActive !== undefined && editFormData.isActive !== patient.isActive) {
+        payload.isActive = editFormData.isActive;
+      }
+
+      // Only update if there are changes
+      if (Object.keys(payload).length === 0) {
+        toast.info('No changes to update');
+        setShowEditModal(false);
+        return;
+      }
+
+      await patientService.updatePatient(patientCode, payload);
+      toast.success('Patient updated successfully');
+      setShowEditModal(false);
+      fetchPatientDetails(); // Refresh patient details
+    } catch (error: any) {
+      console.error('Failed to update patient:', error);
+      toast.error(error.response?.data?.message || 'Failed to update patient');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -134,7 +241,7 @@ export default function PatientDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.info('Edit feature coming soon')}>
+          <Button variant="outline" onClick={openEditModal}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
@@ -410,6 +517,232 @@ export default function PatientDetailPage() {
                   )}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ==================== EDIT PATIENT MODAL ==================== */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Edit Patient - {patient?.patientCode}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdatePatient} className="space-y-6">
+                {/* Basic Information */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Input
+                        id="edit-firstName"
+                        value={editFormData.firstName}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, firstName: e.target.value })
+                        }
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Input
+                        id="edit-lastName"
+                        value={editFormData.lastName}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, lastName: e.target.value })
+                        }
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-gender">Gender</Label>
+                      <select
+                        id="edit-gender"
+                        value={editFormData.gender || ''}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            gender: e.target.value as 'MALE' | 'FEMALE' | 'OTHER',
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select gender</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                      <Input
+                        id="edit-dateOfBirth"
+                        type="date"
+                        value={editFormData.dateOfBirth}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, dateOfBirth: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editFormData.email}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, email: e.target.value })
+                        }
+                        placeholder="Enter email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-phone">Phone Number</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editFormData.phone}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, phone: e.target.value })
+                        }
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="edit-address">Address</Label>
+                      <Input
+                        id="edit-address"
+                        value={editFormData.address}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, address: e.target.value })
+                        }
+                        placeholder="Enter address"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medical Information */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Medical Information</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-medicalHistory">Medical History</Label>
+                      <textarea
+                        id="edit-medicalHistory"
+                        value={editFormData.medicalHistory}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, medicalHistory: e.target.value })
+                        }
+                        placeholder="Enter medical history"
+                        rows={3}
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-allergies">Allergies</Label>
+                      <textarea
+                        id="edit-allergies"
+                        value={editFormData.allergies}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, allergies: e.target.value })
+                        }
+                        placeholder="Enter allergies"
+                        rows={2}
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Emergency Contact */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-emergencyContactName">Contact Name</Label>
+                      <Input
+                        id="edit-emergencyContactName"
+                        value={editFormData.emergencyContactName}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            emergencyContactName: e.target.value,
+                          })
+                        }
+                        placeholder="Enter emergency contact name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-emergencyContactPhone">Contact Phone</Label>
+                      <Input
+                        id="edit-emergencyContactPhone"
+                        value={editFormData.emergencyContactPhone}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            emergencyContactPhone: e.target.value,
+                          })
+                        }
+                        placeholder="Enter emergency contact phone"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Status</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-isActive">Active Status</Label>
+                    <select
+                      id="edit-isActive"
+                      value={editFormData.isActive ? 'true' : 'false'}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
+                      }
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex gap-3 justify-end pt-3 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditModal(false)}
+                    disabled={updating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updating}>
+                    {updating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Update Patient
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </div>

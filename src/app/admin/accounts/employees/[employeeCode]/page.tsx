@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import Select from '@/components/ui/select';
 import {
   ArrowLeft,
   User,
@@ -20,8 +22,10 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react';
-import { Employee } from '@/types/employee';
+import { Employee, UpdateEmployeeRequest } from '@/types/employee';
+import { Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
+import { roleService } from '@/services/roleService';
 import { toast } from 'sonner';
 
 export default function EmployeeDetailPage() {
@@ -34,9 +38,23 @@ export default function EmployeeDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [editFormData, setEditFormData] = useState<UpdateEmployeeRequest>({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    roleId: '',
+  });
+
   useEffect(() => {
     if (employeeCode) {
       fetchEmployeeDetails();
+      fetchRoles();
     }
   }, [employeeCode]);
 
@@ -51,6 +69,80 @@ export default function EmployeeDetailPage() {
       router.push('/admin/accounts/employees');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const data = await roleService.getRoles();
+      setRoles(data);
+    } catch (error: any) {
+      console.error('Failed to fetch roles:', error);
+      toast.error('Failed to load roles');
+    }
+  };
+
+  const openEditModal = () => {
+    if (employee) {
+      setEditFormData({
+        firstName: employee.firstName || '',
+        lastName: employee.lastName || '',
+        phone: employee.phone || '',
+        dateOfBirth: employee.dateOfBirth || '',
+        address: employee.address || '',
+        roleId: employee.roleId || '',
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employee) return;
+
+    try {
+      setUpdating(true);
+
+      // Build partial update payload
+      const payload: UpdateEmployeeRequest = {};
+      
+      if (editFormData.firstName && editFormData.firstName !== employee.firstName) {
+        payload.firstName = editFormData.firstName;
+      }
+      if (editFormData.lastName && editFormData.lastName !== employee.lastName) {
+        payload.lastName = editFormData.lastName;
+      }
+      if (editFormData.phone && editFormData.phone !== employee.phone) {
+        payload.phone = editFormData.phone;
+      }
+      if (editFormData.dateOfBirth && editFormData.dateOfBirth !== employee.dateOfBirth) {
+        payload.dateOfBirth = editFormData.dateOfBirth;
+      }
+      if (editFormData.address && editFormData.address !== employee.address) {
+        payload.address = editFormData.address;
+      }
+      if (editFormData.roleId && editFormData.roleId !== employee.roleId) {
+        payload.roleId = editFormData.roleId;
+      }
+
+      // Only update if there are changes
+      if (Object.keys(payload).length === 0) {
+        toast.info('No changes to update');
+        setShowEditModal(false);
+        return;
+      }
+
+      await employeeService.updateEmployee(employee.employeeCode, payload);
+      toast.success('Employee updated successfully');
+      setShowEditModal(false);
+      
+      // Refresh employee details
+      await fetchEmployeeDetails();
+    } catch (error: any) {
+      console.error('Failed to update employee:', error);
+      toast.error(error.response?.data?.message || 'Failed to update employee');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -119,7 +211,7 @@ export default function EmployeeDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.info('Edit feature coming soon')}>
+          <Button variant="outline" onClick={openEditModal}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
@@ -372,6 +464,143 @@ export default function EmployeeDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Employee Modal */}
+      {showEditModal && employee && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Edit Employee</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateEmployee} className="space-y-6">
+                {/* Employee Info */}
+                <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Employee Code</p>
+                      <p className="font-semibold">{employee.employeeCode}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Role</p>
+                      <Badge>{employee.roleName}</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Role</Label>
+                  <Select
+                    options={roles.map((role) => ({
+                      value: role.roleId,
+                      label: role.roleName,
+                      description: role.description,
+                    }))}
+                    value={editFormData.roleId}
+                    onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                    placeholder="Select role"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Change employee role if needed
+                  </p>
+                </div>
+
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Input
+                        id="edit-firstName"
+                        value={editFormData.firstName}
+                        onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                        placeholder="Enter first name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Input
+                        id="edit-lastName"
+                        value={editFormData.lastName}
+                        onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-phone">Phone</Label>
+                    <Input
+                      id="edit-phone"
+                      value={editFormData.phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="edit-dateOfBirth"
+                      type="date"
+                      value={editFormData.dateOfBirth}
+                      onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-address">Address</Label>
+                    <Input
+                      id="edit-address"
+                      value={editFormData.address}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      placeholder="Enter address"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditFormData({
+                        firstName: '',
+                        lastName: '',
+                        phone: '',
+                        dateOfBirth: '',
+                        address: '',
+                        roleId: '',
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updating}>
+                    {updating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Update Employee
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

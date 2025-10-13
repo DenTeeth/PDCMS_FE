@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import Select from '@/components/ui/select';
 import {
   Search,
   Eye,
@@ -22,11 +23,16 @@ import {
   Filter,
   X,
   Plus,
+  Edit,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Import types and services
-import { Employee, CreateEmployeeRequest, Role } from '@/types/employee';
+import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
 
@@ -38,6 +44,7 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
@@ -65,6 +72,29 @@ export default function EmployeesPage() {
     specializationIds: [],
   });
 
+  // Edit employee modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [editFormData, setEditFormData] = useState<UpdateEmployeeRequest>({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    specializationIds: [],
+  });
+
+  // ==================== DEBOUNCE SEARCH ====================
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(0); // Reset to first page when search changes
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // ==================== FETCH ROLES ====================
   useEffect(() => {
     fetchRoles();
@@ -82,18 +112,34 @@ export default function EmployeesPage() {
   // ==================== FETCH EMPLOYEES ====================
   useEffect(() => {
     fetchEmployees();
-  }, [page]);
+  }, [page, debouncedSearchTerm, filterRole, filterStatus]); // Re-fetch when filters change
 
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const params = {
+      
+      // Build query params - BE supports pagination and filters
+      const params: any = {
         page,
-        size: 100, // Fetch nhiều hơn để filter trên FE
+        size: 12, // Items per page (BE handles filtering, so this is exact)
         sortBy: 'employeeCode' as const,
         sortDirection: 'ASC' as const,
-        // Không filter theo role/status ở BE nữa
       };
+
+      // Add search if present (use debounced value) - BE filter
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
+
+      // Add role filter if not 'all' - BE filter
+      if (filterRole && filterRole !== 'all') {
+        params.roleId = filterRole;
+      }
+
+      // Add status filter if not 'all' - BE filter
+      if (filterStatus && filterStatus !== 'all') {
+        params.isActive = filterStatus === 'active';
+      }
       
       console.log('Fetching employees with params:', params);
       const response = await employeeService.getEmployees(params);
@@ -186,25 +232,53 @@ export default function EmployeesPage() {
 
   const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
 
-  // ==================== FILTER EMPLOYEES (ALL ON FE) ====================
-  const filteredEmployees = (employees || []).filter(emp => {
-    // Filter by search term
-    const matchesSearch = searchTerm === '' || 
-                         emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.account.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.employeeCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (emp.phone && emp.phone.toLowerCase().includes(searchTerm.toLowerCase()));
+  // ==================== EDIT EMPLOYEE ====================
+  const openEditModal = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setEditFormData({
+      firstName: employee.firstName || '',
+      lastName: employee.lastName || '',
+      phone: employee.phone || '',
+      dateOfBirth: employee.dateOfBirth || '',
+      address: employee.address || '',
+      roleId: employee.roleId || '',
+      specializationIds: employee.specializations?.map(s => s.specializationId) || [],
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Filter by role on FE
-    const matchesRole = filterRole === 'all' || emp.roleId === filterRole;
-    
-    // Filter by status on FE
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && emp.isActive) ||
-                         (filterStatus === 'inactive' && !emp.isActive);
-    
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+    if (!editingEmployee) return;
+
+    try {
+      setUpdating(true);
+      
+      // Only include fields that have values (partial update)
+      const payload: UpdateEmployeeRequest = {};
+      if (editFormData.firstName) payload.firstName = editFormData.firstName;
+      if (editFormData.lastName) payload.lastName = editFormData.lastName;
+      if (editFormData.phone) payload.phone = editFormData.phone;
+      if (editFormData.dateOfBirth) payload.dateOfBirth = editFormData.dateOfBirth;
+      if (editFormData.address) payload.address = editFormData.address;
+      if (editFormData.roleId) payload.roleId = editFormData.roleId;
+      if (editFormData.specializationIds && editFormData.specializationIds.length > 0) {
+        payload.specializationIds = editFormData.specializationIds;
+      }
+      
+      await employeeService.updateEmployee(editingEmployee.employeeCode, payload);
+      toast.success('Employee updated successfully');
+      setShowEditModal(false);
+      setEditingEmployee(null);
+      fetchEmployees(); // Refresh list
+    } catch (error: any) {
+      console.error('Failed to update employee:', error);
+      toast.error(error.response?.data?.message || 'Failed to update employee');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   // ==================== STATS ====================
   const stats = {
@@ -387,7 +461,7 @@ export default function EmployeesPage() {
       </Card>
 
       {/* ==================== EMPLOYEE LIST ==================== */}
-      {filteredEmployees.length === 0 ? (
+      {employees.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
@@ -400,7 +474,7 @@ export default function EmployeesPage() {
       ) : viewMode === 'card' ? (
         /* Card View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEmployees.map((employee) => (
+            {employees.map((employee) => (
               <Card key={employee.employeeCode} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -447,6 +521,17 @@ export default function EmployeesPage() {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(employee);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -479,7 +564,7 @@ export default function EmployeesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEmployees.map((employee) => (
+                  {employees.map((employee) => (
                     <tr key={employee.employeeCode} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -513,14 +598,27 @@ export default function EmployeesPage() {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(employee);
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -532,27 +630,94 @@ export default function EmployeesPage() {
       )}
 
       {/* Pagination */}
-      {filteredEmployees.length > 0 && totalPages > 1 && (
+      {totalPages > 1 && (
         <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0 || loading}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-gray-600">
-                Page {page + 1} of {totalPages} ({totalElements} total)
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page === totalPages - 1 || loading}
-              >
-                Next
-              </Button>
+          <CardContent className="p-4">
+            {/* Centered Pagination controls */}
+            <div className="flex justify-center items-center">
+              <div className="flex items-center gap-2">
+                {/* First page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(0)}
+                  disabled={page === 0 || loading}
+                  className="h-9 w-9 p-0"
+                  title="First page"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Previous page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0 || loading}
+                  className="h-9 px-3"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const pageNumbers = [];
+                    const maxVisible = 5;
+                    let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
+                    let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+                    
+                    if (endPage - startPage < maxVisible - 1) {
+                      startPage = Math.max(0, endPage - maxVisible + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                      pageNumbers.push(
+                        <Button
+                          key={i}
+                          variant={i === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setPage(i)}
+                          disabled={loading}
+                          className={`h-9 w-9 p-0 ${
+                            i === page 
+                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                              : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          {i + 1}
+                        </Button>
+                      );
+                    }
+                    return pageNumbers;
+                  })()}
+                </div>
+
+                {/* Next page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1 || loading}
+                  className="h-9 px-3"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+
+                {/* Last page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(totalPages - 1)}
+                  disabled={page >= totalPages - 1 || loading}
+                  className="h-9 w-9 p-0"
+                  title="Last page"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -781,6 +946,182 @@ export default function EmployeesPage() {
                       <>
                         <Plus className="h-4 w-4 mr-2" />
                         Create Employee
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Employee Modal */}
+      {showEditModal && editingEmployee && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Edit Employee</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateEmployee} className="space-y-6">
+                {/* Employee Info */}
+                <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Employee Code</p>
+                      <p className="font-semibold">{editingEmployee.employeeCode}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Role</p>
+                      <Badge>{editingEmployee.roleName}</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Change Role</Label>
+                  <Select
+                    options={roles.map((role) => ({
+                      value: role.roleId,
+                      label: role.roleName,
+                      description: role.description,
+                    }))}
+                    value={editFormData.roleId}
+                    onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                    placeholder="Select a role"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Update employee role if needed
+                  </p>
+                </div>
+
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Input
+                        id="edit-firstName"
+                        value={editFormData.firstName}
+                        onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                        placeholder="Enter first name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Input
+                        id="edit-lastName"
+                        value={editFormData.lastName}
+                        onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-phone">Phone</Label>
+                    <Input
+                      id="edit-phone"
+                      value={editFormData.phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="edit-dateOfBirth"
+                      type="date"
+                      value={editFormData.dateOfBirth}
+                      onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-address">Address</Label>
+                    <Input
+                      id="edit-address"
+                      value={editFormData.address}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      placeholder="Enter address"
+                    />
+                  </div>
+                </div>
+
+                {/* Specializations - commented out until API available */}
+                {/* 
+                {(editingEmployee.roleName === 'ROLE_DOCTOR' || editingEmployee.roleName === 'ROLE_NURSE') && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Specializations</h3>
+                    <div className="space-y-2">
+                      {specializations.map((spec) => (
+                        <div key={spec.specializationId} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`edit-spec-${spec.specializationId}`}
+                            checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
+                            onChange={(e) => {
+                              const ids = editFormData.specializationIds || [];
+                              if (e.target.checked) {
+                                setEditFormData({
+                                  ...editFormData,
+                                  specializationIds: [...ids, spec.specializationId],
+                                });
+                              } else {
+                                setEditFormData({
+                                  ...editFormData,
+                                  specializationIds: ids.filter((id) => id !== spec.specializationId),
+                                });
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                          <label htmlFor={`edit-spec-${spec.specializationId}`} className="text-sm">
+                            {spec.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                */}
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingEmployee(null);
+                      setEditFormData({
+                        firstName: '',
+                        lastName: '',
+                        phone: '',
+                        dateOfBirth: '',
+                        address: '',
+                        specializationIds: [],
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updating}>
+                    {updating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Update Employee
                       </>
                     )}
                   </Button>
