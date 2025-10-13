@@ -246,7 +246,6 @@ class ApiClient {
     return this.axiosInstance;
   }
 }
-
 // Create and export API client instance
 export const apiClient = new ApiClient(API_BASE_URL);
 
