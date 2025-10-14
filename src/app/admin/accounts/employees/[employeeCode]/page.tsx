@@ -21,11 +21,14 @@ import {
   Loader2,
   Edit,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Employee, UpdateEmployeeRequest } from '@/types/employee';
 import { Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
+import { Specialization } from '@/types/specialization';
+import { specializationService } from '@/services/specializationService';
 import { toast } from 'sonner';
 
 export default function EmployeeDetailPage() {
@@ -42,6 +45,8 @@ export default function EmployeeDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [specializations, setSpecializations] = useState<Specialization[]>([]);
+  const [loadingSpecializations, setLoadingSpecializations] = useState(false);
   const [editFormData, setEditFormData] = useState<UpdateEmployeeRequest>({
     firstName: '',
     lastName: '',
@@ -49,12 +54,14 @@ export default function EmployeeDetailPage() {
     dateOfBirth: '',
     address: '',
     roleId: '',
+    specializationIds: [],
   });
 
   useEffect(() => {
     if (employeeCode) {
       fetchEmployeeDetails();
       fetchRoles();
+      fetchSpecializations();
     }
   }, [employeeCode]);
 
@@ -82,6 +89,21 @@ export default function EmployeeDetailPage() {
     }
   };
 
+  const fetchSpecializations = async () => {
+    try {
+      setLoadingSpecializations(true);
+      const data = await specializationService.getAll();
+      // Filter only active specializations
+      const activeSpecializations = (data || []).filter(s => s.isActive);
+      setSpecializations(activeSpecializations);
+    } catch (error: any) {
+      console.error('Failed to fetch specializations:', error);
+      toast.error('Failed to load specializations');
+    } finally {
+      setLoadingSpecializations(false);
+    }
+  };
+
   const openEditModal = () => {
     if (employee) {
       setEditFormData({
@@ -91,6 +113,7 @@ export default function EmployeeDetailPage() {
         dateOfBirth: employee.dateOfBirth || '',
         address: employee.address || '',
         roleId: employee.roleId || '',
+        specializationIds: employee.specializations?.map((s: any) => s.specializationId) || [],
       });
       setShowEditModal(true);
     }
@@ -123,6 +146,15 @@ export default function EmployeeDetailPage() {
       }
       if (editFormData.roleId && editFormData.roleId !== employee.roleId) {
         payload.roleId = editFormData.roleId;
+      }
+
+      // Check if specializations changed (for Doctor/Nurse)
+      const currentSpecIds = employee.specializations?.map((s: any) => s.specializationId).sort() || [];
+      const newSpecIds = editFormData.specializationIds?.sort() || [];
+      const specializationsChanged = JSON.stringify(currentSpecIds) !== JSON.stringify(newSpecIds);
+      
+      if (specializationsChanged && editFormData.specializationIds) {
+        payload.specializationIds = editFormData.specializationIds;
       }
 
       // Only update if there are changes
@@ -404,9 +436,9 @@ export default function EmployeeDetailPage() {
               <Label className="text-gray-600">Specializations</Label>
               {employee.specializations && employee.specializations.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {employee.specializations.map((spec) => (
-                    <Badge key={spec.specializationId} variant="secondary">
-                      {spec.specializationName}
+                  {employee.specializations.map((spec: any) => (
+                    <Badge key={spec.specializationId} variant="default">
+                      {spec.name || spec.specializationName}
                     </Badge>
                   ))}
                 </div>
@@ -563,6 +595,107 @@ export default function EmployeeDetailPage() {
                   </div>
                 </div>
 
+                {/* Specializations - Only for Doctor/Nurse */}
+                {(employee.roleName === 'ROLE_DOCTOR' || employee.roleName === 'ROLE_NURSE') && (
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-lg font-semibold">Specializations</h3>
+                    {loadingSpecializations ? (
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Loading specializations...</span>
+                      </div>
+                    ) : specializations.length === 0 ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800">
+                          ⚠️ No active specializations available.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Update Specializations</Label>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Modify employee specializations
+                          </p>
+                        </div>
+
+                        {/* Selected Specializations Badges */}
+                        {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
+                          <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            {editFormData.specializationIds.map((specId) => {
+                              const spec = specializations.find(s => s.specializationId === specId);
+                              return spec ? (
+                                <Badge
+                                  key={specId}
+                                  className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
+                                >
+                                  <span>{spec.specializationCode}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditFormData({
+                                        ...editFormData,
+                                        specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
+                                      });
+                                    }}
+                                    className="hover:bg-blue-700 rounded-full p-0.5"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+
+                        {/* Checkbox List */}
+                        <div className="border rounded-lg max-h-60 overflow-y-auto">
+                          {specializations.map((spec) => (
+                            <label
+                              key={spec.specializationId}
+                              className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
+                                onChange={(e) => {
+                                  const currentIds = editFormData.specializationIds || [];
+                                  if (e.target.checked) {
+                                    setEditFormData({
+                                      ...editFormData,
+                                      specializationIds: [...currentIds, spec.specializationId]
+                                    });
+                                  } else {
+                                    setEditFormData({
+                                      ...editFormData,
+                                      specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                    });
+                                  }
+                                }}
+                                disabled={updating}
+                                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-sm text-gray-900">
+                                  {spec.specializationCode}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {spec.specializationName}
+                                </div>
+                                {spec.description && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {spec.description}
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4">
                   <Button
@@ -577,6 +710,7 @@ export default function EmployeeDetailPage() {
                         dateOfBirth: '',
                         address: '',
                         roleId: '',
+                        specializationIds: [],
                       });
                     }}
                   >

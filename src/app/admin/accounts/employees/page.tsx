@@ -35,6 +35,8 @@ import { toast } from 'sonner';
 import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
+import { Specialization } from '@/types/specialization';
+import { specializationService } from '@/services/specializationService';
 
 // ==================== MAIN COMPONENT ====================
 export default function EmployeesPage() {
@@ -55,6 +57,10 @@ export default function EmployeesPage() {
   
   // Roles list
   const [roles, setRoles] = useState<Role[]>([]);
+  
+  // Specializations list
+  const [specializations, setSpecializations] = useState<Specialization[]>([]);
+  const [loadingSpecializations, setLoadingSpecializations] = useState(false);
 
   // Create employee modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -98,6 +104,7 @@ export default function EmployeesPage() {
   // ==================== FETCH ROLES ====================
   useEffect(() => {
     fetchRoles();
+    fetchSpecializations();
   }, []);
 
   const fetchRoles = async () => {
@@ -106,6 +113,22 @@ export default function EmployeesPage() {
       setRoles(response || []);
     } catch (error: any) {
       console.error('Failed to fetch roles:', error);
+    }
+  };
+
+  // ==================== FETCH SPECIALIZATIONS ====================
+  const fetchSpecializations = async () => {
+    try {
+      setLoadingSpecializations(true);
+      const data = await specializationService.getAll();
+      // Filter only active specializations
+      const activeSpecializations = (data || []).filter(s => s.isActive);
+      setSpecializations(activeSpecializations);
+    } catch (error: any) {
+      console.error('Failed to fetch specializations:', error);
+      toast.error('Failed to load specializations');
+    } finally {
+      setLoadingSpecializations(false);
     }
   };
 
@@ -160,24 +183,35 @@ export default function EmployeesPage() {
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.username || !formData.email || !formData.password || 
-        !formData.roleId || !formData.firstName || !formData.lastName) {
+    // Prepare payload based on role
+    const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+    
+    // Validation - All roles need basic fields + account credentials
+    if (!formData.roleId || !formData.firstName || !formData.lastName ||
+        !formData.username || !formData.email || !formData.password) {
       toast.error('Please fill in all required fields');
       return;
+    }
+
+    // Additional validation for Doctor/Nurse: must have specializations
+    if (isDoctorOrNurse) {
+      if (!formData.specializationIds || formData.specializationIds.length === 0) {
+        toast.error('Please select at least one specialization for Doctor/Nurse');
+        return;
+      }
     }
 
     try {
       setCreating(true);
       
-      // Prepare payload based on role
-      const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
-      
-      let payload: CreateEmployeeRequest;
+      let payload: any;
       
       if (isDoctorOrNurse) {
-        // For DOCTOR/NURSE: exclude username, email, password
+        // For DOCTOR/NURSE: include all fields + specializationIds
         payload = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
           roleId: formData.roleId,
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -185,9 +219,9 @@ export default function EmployeesPage() {
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
           specializationIds: formData.specializationIds || [],
-        } as any; // Cast because CreateEmployeeRequest requires username/email/password
+        };
       } else {
-        // For other roles: include username, email, password (no specializationIds)
+        // For other roles: include all fields (no specializationIds)
         payload = {
           username: formData.username,
           email: formData.email,
@@ -200,6 +234,8 @@ export default function EmployeesPage() {
           address: formData.address,
         };
       }
+
+      console.log('📤 Creating employee with payload:', payload);
       
       await employeeService.createEmployee(payload);
       toast.success('Employee created successfully');
@@ -726,7 +762,7 @@ export default function EmployeesPage() {
       {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <Card className="w-full max-w-2xl my-8">
+          <Card className="w-full max-w-5xl my-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-600" />
@@ -759,12 +795,13 @@ export default function EmployeesPage() {
 
                 {/* Conditional Fields based on Role */}
                 {formData.roleId && (
-                  <>
-                    {/* Account Information - Only for non-Doctor/Nurse roles */}
-                    {!isDoctorOrNurse && (
-                      <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Account Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-4">
+                    {/* LEFT COLUMN: Account & Personal Information */}
+                    <div className="space-y-6">
+                      {/* Account Information - Always shown */}
+                      <div>
+                        <h3 className="font-semibold mb-3 text-lg">Account Information</h3>
+                        <div className="space-y-4">
                           <div>
                             <Label htmlFor="username">
                               Username <span className="text-red-500">*</span>
@@ -792,7 +829,7 @@ export default function EmployeesPage() {
                               required
                             />
                           </div>
-                          <div className="md:col-span-2">
+                          <div>
                             <Label htmlFor="password">
                               Password <span className="text-red-500">*</span>
                             </Label>
@@ -811,105 +848,185 @@ export default function EmployeesPage() {
                           </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Personal Information - Always shown */}
-                    <div className="border-t pt-4">
-                      <h3 className="font-semibold mb-3">Personal Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="firstName">
-                            First Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="firstName"
-                            placeholder="e.g., John"
-                            value={formData.firstName}
-                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            disabled={creating}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="lastName">
-                            Last Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="lastName"
-                            placeholder="e.g., Doe"
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            disabled={creating}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input
-                            id="phone"
-                            placeholder="e.g., 0123456789"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            disabled={creating}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                          <Input
-                            id="dateOfBirth"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            disabled={creating}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label htmlFor="address">Address</Label>
-                          <textarea
-                            id="address"
-                            placeholder="Enter full address"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            disabled={creating}
-                            rows={3}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
+                      {/* Personal Information */}
+                      <div className="border-t pt-6">
+                        <h3 className="font-semibold mb-3 text-lg">Personal Information</h3>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label htmlFor="firstName">
+                                First Name <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="firstName"
+                                placeholder="e.g., John"
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                disabled={creating}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="lastName">
+                                Last Name <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="lastName"
+                                placeholder="e.g., Doe"
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                disabled={creating}
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input
+                              id="phone"
+                              placeholder="e.g., 0123456789"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              disabled={creating}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                            <Input
+                              id="dateOfBirth"
+                              type="date"
+                              value={formData.dateOfBirth}
+                              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                              disabled={creating}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="address">Address</Label>
+                            <textarea
+                              id="address"
+                              placeholder="Enter full address"
+                              value={formData.address}
+                              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                              disabled={creating}
+                              rows={3}
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Specialization - Only for Doctor/Nurse */}
+                    {/* RIGHT COLUMN: Specialization (Only for Doctor/Nurse) */}
                     {isDoctorOrNurse && (
-                      <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Specialization</h3>
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <p className="text-sm text-yellow-800">
-                            ⚠️ <strong>Note:</strong> Specialization API is not yet available. 
-                            This field will be enabled once the API is ready.
-                          </p>
-                          {/* TODO: Add specialization selection when API is available */}
-                          {/* <div>
-                            <Label htmlFor="specializationIds">
-                              Specializations <span className="text-red-500">*</span>
-                            </Label>
-                            <select
-                              id="specializationIds"
-                              multiple
-                              value={formData.specializationIds || []}
-                              onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setFormData({ ...formData, specializationIds: selected });
-                              }}
-                              disabled={creating}
-                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="SPEC001">Nha khoa tổng quát</option>
-                            </select>
-                          </div> */}
-                        </div>
+                      <div className="lg:border-l lg:pl-6">
+                        <h3 className="font-semibold mb-3 text-lg">Specialization</h3>
+                        {loadingSpecializations ? (
+                          <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">Loading specializations...</span>
+                          </div>
+                        ) : specializations.length === 0 ? (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p className="text-sm text-yellow-800">
+                              ⚠️ <strong>Note:</strong> No active specializations available.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div>
+                              <Label>
+                                Select Specializations <span className="text-red-500">*</span>
+                              </Label>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Choose one or more specializations for this employee
+                              </p>
+                            </div>
+
+                            {/* Selected Specializations Badges */}
+                            {formData.specializationIds && formData.specializationIds.length > 0 && (
+                              <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                {formData.specializationIds.map((specId) => {
+                                  const spec = specializations.find(s => s.specializationId === specId);
+                                  return spec ? (
+                                    <Badge
+                                      key={specId}
+                                      className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
+                                    >
+                                      <span>{spec.specializationCode}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setFormData({
+                                            ...formData,
+                                            specializationIds: formData.specializationIds?.filter(id => id !== specId)
+                                          });
+                                        }}
+                                        className="hover:bg-blue-700 rounded-full p-0.5"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </Badge>
+                                  ) : null;
+                                })}
+                              </div>
+                            )}
+
+                            {/* Checkbox List */}
+                            <div className="border rounded-lg max-h-96 overflow-y-auto">
+                              {specializations.map((spec) => (
+                                <label
+                                  key={spec.specializationId}
+                                  className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.specializationIds?.includes(spec.specializationId) || false}
+                                    onChange={(e) => {
+                                      const currentIds = formData.specializationIds || [];
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          specializationIds: [...currentIds, spec.specializationId]
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                        });
+                                      }
+                                    }}
+                                    disabled={creating}
+                                    className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm text-gray-900">
+                                      {spec.specializationCode}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {spec.specializationName}
+                                    </div>
+                                    {spec.description && (
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        {spec.description}
+                                      </div>
+                                    )}
+                                  </div>
+                                </label>
+                              ))}
+                            </div>
+
+                            {/* Validation message */}
+                            {formData.specializationIds?.length === 0 && (
+                              <p className="text-xs text-red-500">
+                                Please select at least one specialization
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
 
                 {/* Form Actions */}
@@ -959,7 +1076,7 @@ export default function EmployeesPage() {
       {/* Edit Employee Modal */}
       {showEditModal && editingEmployee && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle>Edit Employee</CardTitle>
             </CardHeader>
@@ -997,100 +1114,168 @@ export default function EmployeesPage() {
                   </p>
                 </div>
 
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Personal Information</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">First Name</Label>
-                      <Input
-                        id="edit-firstName"
-                        value={editFormData.firstName}
-                        onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        placeholder="Enter first name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Last Name</Label>
-                      <Input
-                        id="edit-lastName"
-                        value={editFormData.lastName}
-                        onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        placeholder="Enter last name"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-phone">Phone</Label>
-                    <Input
-                      id="edit-phone"
-                      value={editFormData.phone}
-                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
-                    <Input
-                      id="edit-dateOfBirth"
-                      type="date"
-                      value={editFormData.dateOfBirth}
-                      onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-address">Address</Label>
-                    <Input
-                      id="edit-address"
-                      value={editFormData.address}
-                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                      placeholder="Enter address"
-                    />
-                  </div>
-                </div>
-
-                {/* Specializations - commented out until API available */}
-                {/* 
-                {(editingEmployee.roleName === 'ROLE_DOCTOR' || editingEmployee.roleName === 'ROLE_NURSE') && (
+                {/* Two Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* LEFT COLUMN: Personal Information */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Specializations</h3>
+                    <h3 className="text-lg font-semibold">Personal Information</h3>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-firstName">First Name</Label>
+                        <Input
+                          id="edit-firstName"
+                          value={editFormData.firstName}
+                          onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                          placeholder="Enter first name"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-lastName">Last Name</Label>
+                        <Input
+                          id="edit-lastName"
+                          value={editFormData.lastName}
+                          onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      {specializations.map((spec) => (
-                        <div key={spec.specializationId} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`edit-spec-${spec.specializationId}`}
-                            checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
-                            onChange={(e) => {
-                              const ids = editFormData.specializationIds || [];
-                              if (e.target.checked) {
-                                setEditFormData({
-                                  ...editFormData,
-                                  specializationIds: [...ids, spec.specializationId],
-                                });
-                              } else {
-                                setEditFormData({
-                                  ...editFormData,
-                                  specializationIds: ids.filter((id) => id !== spec.specializationId),
-                                });
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={`edit-spec-${spec.specializationId}`} className="text-sm">
-                            {spec.name}
-                          </label>
-                        </div>
-                      ))}
+                      <Label htmlFor="edit-phone">Phone</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editFormData.phone}
+                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                      <Input
+                        id="edit-dateOfBirth"
+                        type="date"
+                        value={editFormData.dateOfBirth}
+                        onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-address">Address</Label>
+                      <textarea
+                        id="edit-address"
+                        value={editFormData.address}
+                        onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                        placeholder="Enter address"
+                        rows={3}
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
-                )}
-                */}
+
+                  {/* RIGHT COLUMN: Specializations (Only for Doctor/Nurse) */}
+                  {(editingEmployee.roleName === 'ROLE_DOCTOR' || editingEmployee.roleName === 'ROLE_NURSE') && (
+                    <div className="lg:border-l lg:pl-6">
+                      <h3 className="text-lg font-semibold mb-4">Specializations</h3>
+                      {loadingSpecializations ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Loading specializations...</span>
+                        </div>
+                      ) : specializations.length === 0 ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <p className="text-sm text-yellow-800">
+                            ⚠️ No active specializations available.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <Label>Update Specializations</Label>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Modify employee specializations
+                            </p>
+                          </div>
+
+                          {/* Selected Specializations Badges */}
+                          {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
+                            <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              {editFormData.specializationIds.map((specId) => {
+                                const spec = specializations.find(s => s.specializationId === specId);
+                                return spec ? (
+                                  <Badge
+                                    key={specId}
+                                    className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
+                                  >
+                                    <span>{spec.specializationCode}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditFormData({
+                                          ...editFormData,
+                                          specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
+                                        });
+                                      }}
+                                      className="hover:bg-blue-700 rounded-full p-0.5"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+
+                          {/* Checkbox List */}
+                          <div className="border rounded-lg max-h-96 overflow-y-auto">
+                            {specializations.map((spec) => (
+                              <label
+                                key={spec.specializationId}
+                                className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
+                                  onChange={(e) => {
+                                    const currentIds = editFormData.specializationIds || [];
+                                    if (e.target.checked) {
+                                      setEditFormData({
+                                        ...editFormData,
+                                        specializationIds: [...currentIds, spec.specializationId]
+                                      });
+                                    } else {
+                                      setEditFormData({
+                                        ...editFormData,
+                                        specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                      });
+                                    }
+                                  }}
+                                  disabled={updating}
+                                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm text-gray-900">
+                                    {spec.specializationCode}
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    {spec.specializationName}
+                                  </div>
+                                  {spec.description && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {spec.description}
+                                    </div>
+                                  )}
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4">
