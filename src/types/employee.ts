@@ -20,8 +20,9 @@ export interface EmployeeAccount {
  */
 export interface Specialization {
   specializationId: string;
-  specializationCode: string;
-  specializationName: string;
+  specializationCode?: string;
+  specializationName?: string; // From frontend specialization management
+  name?: string; // From API employee response
   description?: string;
   isActive?: boolean;
 }
