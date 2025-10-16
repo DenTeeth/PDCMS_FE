@@ -26,7 +26,7 @@ class ApiClient {
     this.axiosInstance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const accessToken = getToken();
-        
+
         if (accessToken && config.headers) {
           config.headers.Authorization = `Bearer ${accessToken}`;
         }
@@ -45,10 +45,15 @@ class ApiClient {
         };
 
         // Check if token expired
-        // Backend may return 401 or 500 when token expired
-        const isTokenExpired = 
-          error.response?.status === 401 ||
-          error.response?.status === 500; // Backend trả về 500 khi token expired
+        // Prefer refreshing on 401. Some backends incorrectly return 500 for many reasons —
+        // only treat 500 as token-expired when the response message clearly indicates a token problem.
+        const status = error.response?.status;
+        const respMsg = (error.response?.data?.message || error.response?.data || '') as string;
+        const respMsgLower = typeof respMsg === 'string' ? respMsg.toLowerCase() : JSON.stringify(respMsg).toLowerCase();
+
+        const isTokenExpired =
+          status === 401 ||
+          (status === 500 && /token|expired|jwt|authorization|unauthorized/.test(respMsgLower));
 
         // If token expired and not already retrying and not the refresh endpoint
         if (
@@ -80,12 +85,12 @@ class ApiClient {
           try {
             console.log('🔄 Access token expired, refreshing...');
             console.log('📤 Calling refresh endpoint with credentials...');
-            
+
             // Debug: check if cookies exist (only in browser)
             if (typeof document !== 'undefined') {
               console.log('🍪 Document cookies:', document.cookie);
             }
-            
+
             // Call refresh token endpoint (refreshToken sent via HTTP-Only Cookie)
             // Use a fresh axios instance to avoid interceptor loop
             const refreshAxios = axios.create({
@@ -129,14 +134,14 @@ class ApiClient {
             console.error('❌ Token refresh failed:', refreshError.response?.data || refreshError.message);
             this.failedQueue.forEach((prom) => prom.reject(refreshError));
             this.failedQueue = [];
-            
+
             clearAuthData();
-            
+
             if (typeof window !== 'undefined') {
               console.log('🚪 Redirecting to login...');
               window.location.href = '/login';
             }
-            
+
             return Promise.reject(refreshError);
           } finally {
             this.isRefreshing = false;
@@ -198,7 +203,7 @@ class ApiClient {
   async refreshToken(): Promise<RefreshTokenResponse> {
     try {
       console.log('🔄 Refreshing access token...');
-      
+
       // POST to refresh endpoint - refreshToken sent automatically via cookie
       const response = await this.axiosInstance.post<RefreshTokenResponse>(
         '/auth/refresh-token'

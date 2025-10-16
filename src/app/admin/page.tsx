@@ -124,6 +124,14 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-medium">Quick Actions</h2>
+        <div className="mt-3 flex items-center gap-3">
+          <a href="/admin/customer-contacts/new" className="btn btn-primary">Create Customer Contact (Temp)</a>
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "sonner";
+import Providers from '@/components/Providers';
 
 // Prevent Font Awesome from adding its CSS automatically since we import it above
 config.autoAddCss = false;
@@ -39,10 +38,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AuthProvider>
+        <Providers>
           {children}
-        </AuthProvider>
-        <Toaster />
+        </Providers>
       </body>
     </html>
   );
