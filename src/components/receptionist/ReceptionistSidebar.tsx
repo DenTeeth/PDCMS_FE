@@ -88,8 +88,8 @@ export default function ReceptionistSidebar() {
   const pathname = usePathname();
 
   const toggleSubmenu = (menuName: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(menuName) 
+    setExpandedMenus(prev =>
+      prev.includes(menuName)
         ? prev.filter(name => name !== menuName)
         : [...prev, menuName]
     );
@@ -137,7 +137,7 @@ export default function ReceptionistSidebar() {
               if (item.hasSubmenu) {
                 const isExpanded = isSubmenuExpanded(item.name);
                 const hasActiveSubmenu = isSubmenuItemActive(item.submenu || []);
-                
+
                 return (
                   <div key={item.name}>
                     {/* Main menu item with submenu */}
@@ -145,21 +145,19 @@ export default function ReceptionistSidebar() {
                       onClick={() => toggleSubmenu(item.name)}
                       className={`
                         group relative flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out
-                        ${hasActiveSubmenu 
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25' 
+                        ${hasActiveSubmenu
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25'
                           : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary hover:transform hover:scale-[1.01]'
                         }
                       `}
                     >
-                      <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${
-                        hasActiveSubmenu ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
-                      }`} />
+                      <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${hasActiveSubmenu ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
+                        }`} />
                       <span className="flex-1 text-left">{item.name}</span>
-                      <FontAwesomeIcon 
-                        icon={isExpanded ? faChevronDown : faChevronRight} 
-                        className={`h-4 w-4 transition-transform duration-200 ${
-                          hasActiveSubmenu ? 'text-sidebar-primary-foreground/80' : 'text-muted-foreground group-hover:text-primary'
-                        }`} 
+                      <FontAwesomeIcon
+                        icon={isExpanded ? faChevronDown : faChevronRight}
+                        className={`h-4 w-4 transition-transform duration-200 ${hasActiveSubmenu ? 'text-sidebar-primary-foreground/80' : 'text-muted-foreground group-hover:text-primary'
+                          }`}
                       />
                       {!hasActiveSubmenu && (
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-10 transition-opacity duration-200" />
@@ -167,9 +165,8 @@ export default function ReceptionistSidebar() {
                     </button>
 
                     {/* Submenu items */}
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                    }`}>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                      }`}>
                       <div className="ml-4 mt-1 space-y-1">
                         {item.submenu?.map((subItem) => {
                           const isSubActive = pathname === subItem.href;
@@ -179,21 +176,19 @@ export default function ReceptionistSidebar() {
                               href={subItem.href}
                               className={`
                                 group relative flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 ease-in-out
-                                ${isSubActive 
-                                  ? 'bg-primary text-primary-foreground shadow-md transform scale-[1.02]' 
+                                ${isSubActive
+                                  ? 'bg-primary text-primary-foreground shadow-md transform scale-[1.02]'
                                   : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary hover:transform hover:scale-[1.01]'
                                 }
                               `}
                               onClick={() => setIsOpen(false)}
                             >
-                              <FontAwesomeIcon icon={subItem.icon} className={`mr-3 h-4 w-4 transition-all duration-200 ${
-                                isSubActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
-                              }`} />
+                              <FontAwesomeIcon icon={subItem.icon} className={`mr-3 h-4 w-4 transition-all duration-200 ${isSubActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
+                                }`} />
                               <div className="flex-1">
                                 <div className="font-medium">{subItem.name}</div>
-                                <div className={`text-xs ${
-                                  isSubActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                                }`}>
+                                <div className={`text-xs ${isSubActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                                  }`}>
                                   {subItem.description}
                                 </div>
                               </div>
@@ -219,16 +214,15 @@ export default function ReceptionistSidebar() {
                     href={item.href!}
                     className={`
                        group relative flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out
-                       ${isActive 
-                         ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 transform scale-[1.02]' 
-                         : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary hover:transform hover:scale-[1.01]'
-                       }
+                       ${isActive
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 transform scale-[1.02]'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary hover:transform hover:scale-[1.01]'
+                      }
                     `}
                     onClick={() => setIsOpen(false)}
                   >
-                    <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${
-                      isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
-                    }`} />
+                    <FontAwesomeIcon icon={item.icon} className={`mr-3 h-5 w-5 transition-all duration-200 ${isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-primary'
+                      }`} />
                     <span className="flex-1">{item.name}</span>
                     {isActive && (
                       <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4 text-sidebar-primary-foreground/80" />
@@ -248,10 +242,10 @@ export default function ReceptionistSidebar() {
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
                 <span className="text-primary-foreground text-sm font-bold">R</span>
               </div>
-               <div className="ml-3 flex-1">
-                 <p className="text-sm font-semibold text-card-foreground">Receptionist</p>
-                 <p className="text-xs text-muted-foreground">Front Desk</p>
-               </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-semibold text-card-foreground">Receptionist</p>
+                <p className="text-xs text-muted-foreground">Front Desk</p>
+              </div>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
             </div>
             <div className="mt-3">
@@ -263,7 +257,7 @@ export default function ReceptionistSidebar() {
 
       {/* Overlay for mobile */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
