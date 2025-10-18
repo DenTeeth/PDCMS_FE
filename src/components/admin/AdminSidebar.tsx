@@ -18,7 +18,10 @@ import {
   faChevronDown,
   faUser,
   faUserTie,
-  faKey
+  faKey,
+  faCalendarCheck,
+  faUserMd,
+  faClock
 } from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
@@ -55,6 +58,16 @@ const navigation = [
     name: 'Appointments',
     href: '/admin/appointments',
     icon: faCalendarAlt,
+  },
+  {
+    name: 'Dentist Schedules',
+    href: '/admin/dentist-schedules',
+    icon: faCalendarCheck,
+  },
+  {
+    name: 'Work Shifts',
+    href: '/admin/work-shifts',
+    icon: faClock,
   },
   {
     name: 'Role Management',

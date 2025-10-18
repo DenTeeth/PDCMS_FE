@@ -4,36 +4,24 @@ export interface LoginRequest {
   password: string;
 }
 
+// Response từ /api/v1/auth/login
 export interface LoginResponse {
-  statusCode: number;
-  error: string | null;
-  message: string;
-  data: {
-    token: string; // accessToken
-    refreshToken: string;
-    accessTokenExpiresAt: number; // Unix timestamp in seconds
-    refreshTokenExpiresAt: number; // Unix timestamp in seconds
-    username: string;
-    email: string;
-    roles: string[];
-    permissions: string[];
-    // Legacy fields for backward compatibility
-    tokenExpiresAt?: number;
-  };
+  token: string; // JWT access token
+  refreshToken: string;
+  tokenExpiresAt: number; // Unix timestamp in seconds
+  refreshTokenExpiresAt: number; // Unix timestamp in seconds
+  username: string;
+  email: string;
+  roles: string[];
+  permissions: string[];
 }
 
+// Response từ /api/v1/auth/refresh-token
 export interface RefreshTokenResponse {
-  statusCode: number;
-  error: string | null;
-  message: string;
-  data: {
-    accessToken: string;
-    refreshToken: string;
-    accessTokenExpiresAt?: number; // Unix timestamp in seconds
-    refreshTokenExpiresAt?: number; // Unix timestamp in seconds
-    // Legacy fields for backward compatibility
-    tokenExpiresAt?: number;
-  };
+  accessToken: string;
+  accessTokenExpiresAt: number; // Unix timestamp in seconds
+  refreshToken: string;
+  refreshTokenExpiresAt: number; // Unix timestamp in seconds
 }
 
 export interface User {
@@ -42,10 +30,8 @@ export interface User {
   roles: string[];
   permissions: string[];
   token: string;
-  // Note: refreshToken is stored in HTTP-Only Cookie by backend, not accessible from JS
-  refreshToken?: string; // Optional, for backward compatibility
-  tokenExpiresAt?: number; // Optional, for backward compatibility
-  refreshTokenExpiresAt?: number; // Optional, for backward compatibility
+  tokenExpiresAt?: number;
+  refreshTokenExpiresAt?: number;
 }
 
 export interface UserProfile {
