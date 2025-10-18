@@ -150,10 +150,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      // Refresh 5 MINUTES BEFORE expiration (not 5 seconds)
-      const refreshDelay = Math.max((timeUntilExpiry - 5 * 60) * 1000, 60000); // Convert to ms, min 1 minute
+      // Refresh 5 seconds before token expires
+      const refreshBeforeExpiry = 5; // seconds
+      const refreshDelay = Math.max((timeUntilExpiry - refreshBeforeExpiry) * 1000, 1000); // Convert to ms, min 1 second
 
-      console.log(`⏰ Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes, will refresh in ${Math.floor(refreshDelay / 60000)} minutes`);
+      console.log(`⏰ Token expires in ${timeUntilExpiry}s, will refresh in ${Math.floor(refreshDelay / 1000)}s (${refreshBeforeExpiry}s before expiry)`);
       
       return refreshDelay;
     };
