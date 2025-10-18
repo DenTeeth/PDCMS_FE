@@ -19,8 +19,13 @@ class RoleService {
    */
   async getRoles(): Promise<Role[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Role[] }>('/roles');
-    return response.data.data; // data is directly an array of roles
+    const response = await axiosInstance.get('/roles');
+    
+    // BE có thể trả về wrapped hoặc trực tiếp
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -30,8 +35,12 @@ class RoleService {
    */
   async getRoleById(roleId: string): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Role }>(`/roles/${roleId}`);
-    return response.data.data;
+    const response = await axiosInstance.get(`/roles/${roleId}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -41,8 +50,12 @@ class RoleService {
    */
   async getRolePermissions(roleId: string): Promise<Permission[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Permission[] }>(`/roles/${roleId}/permissions`);
-    return response.data.data;
+    const response = await axiosInstance.get(`/roles/${roleId}/permissions`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -51,8 +64,12 @@ class RoleService {
    */
   async getPermissions(): Promise<Permission[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: Permission[] }>('/permissions');
-    return response.data.data;
+    const response = await axiosInstance.get('/permissions');
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -61,8 +78,12 @@ class RoleService {
    */
   async getSpecializations(): Promise<Specialization[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: Specialization[] }>('/specializations');
-    return response.data.data;
+    const response = await axiosInstance.get('/specializations');
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -72,8 +93,12 @@ class RoleService {
    */
   async getSpecializationById(specializationId: string): Promise<Specialization> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: Specialization }>(`/specializations/${specializationId}`);
-    return response.data.data;
+    const response = await axiosInstance.get(`/specializations/${specializationId}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -83,8 +108,12 @@ class RoleService {
    */
   async createRole(data: { roleId: string; roleName: string; description: string }): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post<{ statusCode: number; message: string; data: Role }>('/roles', data);
-    return response.data.data;
+    const response = await axiosInstance.post('/roles', data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -95,8 +124,12 @@ class RoleService {
    */
   async updateRole(roleId: string, data: { roleName: string; description: string }): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.put<{ statusCode: number; message: string; data: Role }>(`/roles/${roleId}`, data);
-    return response.data.data;
+    const response = await axiosInstance.put(`/roles/${roleId}`, data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -117,8 +150,12 @@ class RoleService {
    */
   async deleteRole(roleId: string): Promise<{ message: string }> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.delete<{ statusCode: number; message: string }>(`/roles/${roleId}`);
-    return { message: response.data.message };
+    const response = await axiosInstance.delete(`/roles/${roleId}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 }
 

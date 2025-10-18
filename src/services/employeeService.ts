@@ -36,7 +36,7 @@ class EmployeeService {
     } = params;
 
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: PaginatedResponse<Employee> }>(`${this.endpoint}/admin/all`, {
+    const response = await axiosInstance.get(`${this.endpoint}/admin/all`, {
       params: {
         page,
         size,
@@ -46,8 +46,13 @@ class EmployeeService {
       }
     });
 
-    // API returns: { statusCode, message, data: { content, pageable, ... } }
-    return response.data.data;
+    // BE có thể trả về trực tiếp hoặc wrapped trong { data }
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    
+    // Nếu BE trả về trực tiếp pagination object
+    return response.data;
   }
 
   /**
@@ -57,8 +62,12 @@ class EmployeeService {
    */
   async getEmployeeByCode(employeeCode: string): Promise<Employee> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ data: Employee }>(`${this.endpoint}/admin/${employeeCode}`);
-    return response.data.data;
+    const response = await axiosInstance.get(`${this.endpoint}/admin/${employeeCode}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -68,8 +77,12 @@ class EmployeeService {
    */
   async createEmployee(data: CreateEmployeeRequest): Promise<Employee> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post<{ data: Employee }>(this.endpoint, data);
-    return response.data.data;
+    const response = await axiosInstance.post(this.endpoint, data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -80,8 +93,12 @@ class EmployeeService {
    */
   async updateEmployee(employeeCode: string, data: UpdateEmployeeRequest): Promise<Employee> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.patch<{ data: Employee }>(`${this.endpoint}/${employeeCode}`, data);
-    return response.data.data;
+    const response = await axiosInstance.patch(`${this.endpoint}/${employeeCode}`, data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -91,8 +108,12 @@ class EmployeeService {
    */
   async deleteEmployee(employeeCode: string): Promise<{ message: string }> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.delete<{ data?: any; message: string }>(`${this.endpoint}/${employeeCode}`);
-    return { message: response.data.message };
+    const response = await axiosInstance.delete(`${this.endpoint}/${employeeCode}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 }
 
