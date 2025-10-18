@@ -19,8 +19,13 @@ class PermissionService {
    */
   async getPermissions(): Promise<Permission[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Permission[] }>('/permissions');
-    return response.data.data;
+    const response = await axiosInstance.get('/permissions');
+    
+    // BE có thể trả về wrapped hoặc trực tiếp
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 }
 

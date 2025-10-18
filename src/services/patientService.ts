@@ -36,7 +36,7 @@ class PatientService {
     } = params;
 
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: PaginatedPatientResponse }>(`${this.endpoint}/admin/all`, {
+    const response = await axiosInstance.get(`${this.endpoint}/admin/all`, {
       params: {
         page,
         size,
@@ -46,7 +46,14 @@ class PatientService {
       }
     });
 
-    return response.data.data; // Extract data from nested response
+    // BE có thể trả về trực tiếp hoặc wrapped trong { data }
+    // Check if response has nested structure
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    
+    // Nếu BE trả về trực tiếp pagination object
+    return response.data;
   }
 
   /**
@@ -56,8 +63,12 @@ class PatientService {
    */
   async getPatientByCode(patientCode: string): Promise<Patient> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<{ statusCode: number; message: string; data: Patient }>(`${this.endpoint}/admin/${patientCode}`);
-    return response.data.data;
+    const response = await axiosInstance.get(`${this.endpoint}/admin/${patientCode}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -70,8 +81,12 @@ class PatientService {
    */
   async createPatient(data: CreatePatientRequest): Promise<Patient> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post<{ statusCode: number; message: string; data: Patient }>(this.endpoint, data);
-    return response.data.data;
+    const response = await axiosInstance.post(this.endpoint, data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
   }
 
   /**
@@ -82,7 +97,11 @@ class PatientService {
    */
   async updatePatient(patientCode: string, data: UpdatePatientRequest): Promise<Patient> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.patch<Patient>(`${this.endpoint}/${patientCode}`, data);
+    const response = await axiosInstance.patch(`${this.endpoint}/${patientCode}`, data);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
     return response.data;
   }
 
@@ -93,7 +112,11 @@ class PatientService {
    */
   async deletePatient(patientCode: string): Promise<{ message: string }> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.delete<{ message: string }>(`${this.endpoint}/${patientCode}`);
+    const response = await axiosInstance.delete(`${this.endpoint}/${patientCode}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
     return response.data;
   }
 }
