@@ -134,6 +134,13 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_TREATMENT],
     },
     {
+      name: 'CustomerContact',
+      href: '/employee/customer-contacts',
+      icon: faCalendarAlt,
+      description: 'Manage customer contacts',
+      requiredPermissions: [Permission.VIEW_CONTACT_HISTORY],
+    },
+    {
       name: 'Follow-ups',
       href: '/employee/followups',
       icon: faClipboardList,
