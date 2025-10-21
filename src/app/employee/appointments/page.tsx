@@ -4,7 +4,7 @@
  * Employee Appointments Page
  * Requires: VIEW_APPOINTMENT permission
  * 
- * TODO: Di chuyển logic từ src/app/receptionist/appointments/page.tsx vào đây
+ * TODO: Di chuyển logic từ src/app/employee/appointments/page.tsx vào đây
  */
 
 import { Card } from '@/components/ui/card';

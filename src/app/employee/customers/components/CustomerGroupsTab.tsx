@@ -18,7 +18,10 @@ import {
     faDollarSign,
     faStar
 } from '@fortawesome/free-solid-svg-icons';
-import { patients, customerGroups } from '@/data/receptionist-data';
+
+// TODO: Replace with API calls
+const patients: any[] = [];
+const customerGroups: any[] = [];
 
 export default function CustomerGroupsTab() {
     const [searchTerm, setSearchTerm] = useState('');

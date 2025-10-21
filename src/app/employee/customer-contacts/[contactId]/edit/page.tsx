@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import ContactForm from '@/components/receptionist/ContactForm';
+import ContactForm from '@/app/employee/customers/components/ContactForm';
 import { useContact, useUpdateContact, useSoftDeleteContact } from '@/hooks/contactHooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';

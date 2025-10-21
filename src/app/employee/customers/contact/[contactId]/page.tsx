@@ -100,13 +100,13 @@ export default function ViewContactPage() {
         );
     }
 
-    const displayName = contact.fullName || contact.name || contact.displayName || '-';
+    const displayName = contact.fullName || '-';
     const phone = contact.phone || '-';
     const email = contact.email || '-';
     const source = contact.source || contact._raw?.source || '-';
     const status = contact.status || contact._raw?.status || '-';
-    const serviceInterested = contact._raw?.serviceInterested || contact.serviceInterested || '-';
-    const message = contact._raw?.message || contact.message || '-';
+    const serviceInterested = contact._raw?.serviceInterested || '-';
+    const message = contact._raw?.message || '-';
     const createdAt = contact.createdAt ? new Date(contact.createdAt).toLocaleString() : '-';
     const updatedAt = contact.updatedAt ? new Date(contact.updatedAt).toLocaleString() : '-';
 
@@ -147,7 +147,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="default"
                         size="sm"
-                        onClick={() => router.push(`/receptionist/customers/contact/${contactId}/edit`)}
+                        onClick={() => router.push(`/employee/customers/contact/${contactId}/edit`)}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
