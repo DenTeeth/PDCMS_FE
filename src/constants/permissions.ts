@@ -29,6 +29,7 @@ import {
   faClockRotateLeft,
   faMoneyBillWave,
   faUserCheck,
+  faClock,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -97,6 +98,12 @@ export const ADMIN_NAVIGATION: NavigationConfig = {
       description: 'Define work shift templates',
     },
     {
+      name: 'Part-Time Management',
+      href: '/admin/part_time_management',
+      icon: faClock,
+      description: 'Manage part-time employee shift registrations',
+    },
+    {
       name: 'Settings',
       href: '/admin/settings',
       icon: faCog,
@@ -161,6 +168,14 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       icon: faCalendarAlt,
       description: 'View my work schedule',
       requiredPermissions: [Permission.VIEW_WORK_SHIFTS],
+    },
+    {
+      name: 'My Shift Registrations',
+      href: '/employee/part_time_management',
+      icon: faClock,
+      description: 'Manage my part-time shift registrations',
+      requiredPermissions: [Permission.VIEW_REGISTRATION_OWN, Permission.CREATE_REGISTRATION],
+      requireAll: false, // Chỉ cần 1 trong 2 permissions
     },
     
     // Receptionist features
