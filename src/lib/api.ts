@@ -184,8 +184,8 @@ class ApiClient {
       );
 
       // Store access token in localStorage
-      if (response.data.data?.token) {
-        setToken(response.data.data.token);
+      if (response.data.token) {
+        setToken(response.data.token);
         console.log('✅ Access token stored in localStorage');
       }
 
@@ -210,13 +210,13 @@ class ApiClient {
       );
 
       // Store new access token in localStorage
-      if (response.data.data?.accessToken) {
-        setToken(response.data.data.accessToken);
+      if (response.data.accessToken) {
+        setToken(response.data.accessToken);
         console.log('✅ New access token stored in localStorage');
       }
 
       // Note: Backend automatically rotates refreshToken in HTTP-Only Cookie
-      console.log('🍪 Refresh token rotated by backend in HTTP-Only Cookie');
+      console.log('🍪 Refresh token rotated by backend');
 
       return response.data;
     } catch (error: any) {

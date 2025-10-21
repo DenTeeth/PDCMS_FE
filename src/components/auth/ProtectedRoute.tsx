@@ -3,12 +3,13 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
+import { Role } from '@/types/permission';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRoles?: string[];           // ⚠️ DEPRECATED: Dùng requiredPermissions thay thế
-  requiredPermissions?: string[];     // ✅ NEW: Check theo permissions (RBAC)
-  requireAll?: boolean;               // ✅ NEW: true = cần ALL permissions, false = cần ANY permission
+  requiredRoles?: (string | Role)[];      // Support both string and Role enum
+  requiredPermissions?: string[];         // ✅ NEW: Check theo permissions (RBAC)
+  requireAll?: boolean;                   // ✅ NEW: true = cần ALL permissions, false = cần ANY permission
   fallbackPath?: string;
 }
 
@@ -44,7 +45,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       // ⚠️ Priority 2: Fallback to roles check (Legacy support)
       else if (requiredRoles.length > 0 && user?.roles) {
         const hasRequiredRole = requiredRoles.some(role => 
-          user.roles.includes(role)
+          user.roles.includes(role as string)
         );
         
         if (!hasRequiredRole) {
@@ -60,7 +61,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -91,7 +92,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // ⚠️ Fallback: Check roles (Legacy support)
   else if (requiredRoles.length > 0 && user?.roles) {
     const hasRequiredRole = requiredRoles.some(role => 
-      user.roles.includes(role)
+      user.roles.includes(role as string)
     );
     
     if (!hasRequiredRole) {
