@@ -30,10 +30,13 @@ export const getContacts = async (params?: Record<string, any>) => {
   } catch (e) {
     // ignore
   }
-  // Backend returns { data: { content: [...], pageable, totalElements, ... } }
+  
+  // Backend returns { content: [...], pageable, totalElements, ... } directly
+  // OR wrapped as { data: { content: [...] } }
   const payload = res.data;
-  const content = payload?.data?.content || [];
-  const pageable = payload?.data || {};
+  const isWrapped = payload?.data?.content !== undefined;
+  const content = isWrapped ? payload.data.content : (payload?.content || []);
+  const pageData = isWrapped ? payload.data : payload;
 
   // Normalize items so UI can rely on `items` array and `id` property
   const items = content.map((c: any) => ({
@@ -52,10 +55,10 @@ export const getContacts = async (params?: Record<string, any>) => {
   return {
     items,
     meta: {
-      totalElements: payload?.data?.totalElements,
-      totalPages: payload?.data?.totalPages,
-      pageNumber: payload?.data?.number,
-      pageSize: payload?.data?.size,
+      totalElements: pageData?.totalElements,
+      totalPages: pageData?.totalPages,
+      pageNumber: pageData?.number,
+      pageSize: pageData?.size,
     },
     raw: payload,
   };

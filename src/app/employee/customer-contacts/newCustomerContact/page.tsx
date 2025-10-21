@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import ContactForm from '@/components/receptionist/ContactForm';
+import ContactForm from '@/app/employee/customers/components/ContactForm';
 import { useCreateContact } from '@/hooks/contactHooks';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,7 @@ export default function NewCustomerContactPage() {
     try {
       await create.mutateAsync(values);
       toast.success('Customer contact created');
-      router.push('/receptionist/customer-contacts');
+      router.push('/employee/customer-contacts');
     } catch (err: any) {
       toast.error(err.message || 'Create failed');
     }
@@ -30,7 +30,7 @@ export default function NewCustomerContactPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push('/receptionist/customer-contacts')}
+          onClick={() => router.push('/employee/customer-contacts')}
           className="flex items-center space-x-2"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />

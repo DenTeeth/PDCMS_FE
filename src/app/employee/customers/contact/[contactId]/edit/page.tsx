@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import ContactForm from '@/components/receptionist/ContactForm';
+import ContactForm from '@/app/employee/customers/components/ContactForm';
 import { useContact, useUpdateContact, useSoftDeleteContact } from '@/hooks/contactHooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -56,7 +56,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -90,7 +90,7 @@ export default function EditContactPage() {
         try {
             await update.mutateAsync({ id: contactId, payload: values });
             toast.success('Contact updated successfully');
-            router.push('/receptionist/customers');
+            router.push('/employee/customers');
         } catch (err: any) {
             console.error('Update failed', err);
             toast.error(err?.message || 'Failed to update contact');
@@ -102,7 +102,7 @@ export default function EditContactPage() {
         try {
             await del.mutateAsync(contact.id);
             toast.success('Contact deleted successfully');
-            router.push('/receptionist/customers');
+            router.push('/employee/customers');
         } catch (err: any) {
             console.error('Delete failed', err);
             toast.error(err?.message || 'Failed to delete contact');
@@ -117,7 +117,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
