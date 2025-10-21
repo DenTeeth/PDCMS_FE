@@ -20,8 +20,9 @@ export interface EmployeeAccount {
  */
 export interface Specialization {
   specializationId: string;
-  specializationCode: string;
-  specializationName: string;
+  specializationCode?: string;
+  specializationName?: string; // From frontend specialization management
+  name?: string; // From API employee response
   description?: string;
   isActive?: boolean;
 }
@@ -49,6 +50,14 @@ export interface Role {
 }
 
 /**
+ * Employment Type enum
+ */
+export enum EmploymentType {
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME'
+}
+
+/**
  * Employee entity returned from API
  */
 export interface Employee {
@@ -62,6 +71,7 @@ export interface Employee {
   address?: string;
   roleId: string;
   roleName: string;
+  employmentType: EmploymentType;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -81,6 +91,7 @@ export interface CreateEmployeeRequest {
   roleId: string;
   firstName: string;
   lastName: string;
+  employmentType: EmploymentType;
   phone?: string;
   dateOfBirth?: string;
   address?: string;
@@ -98,6 +109,7 @@ export interface UpdateEmployeeRequest {
   address?: string;
   dateOfBirth?: string;
   roleId?: string;
+  employmentType?: EmploymentType;
   specializationIds?: string[];
 }
 

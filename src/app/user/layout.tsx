@@ -1,5 +1,7 @@
-import UserSidebar from '@/components/user/UserSidebar';
+import DynamicSidebar from '@/components/layout/DynamicSidebar';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { PATIENT_NAVIGATION } from '@/constants/permissions';
+import { Role } from '@/types/permission';
 
 export default function UserLayout({
   children,
@@ -7,12 +9,14 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={['ROLE_PATIENT']}>
+    <ProtectedRoute requiredRoles={[Role.PATIENT]}>
       <div className="min-h-screen bg-background">
-        <UserSidebar />
-        <div className="lg:pl-64">
-          <main className="p-6">
-            {children}
+        <div className="flex">
+          <DynamicSidebar navigationConfig={PATIENT_NAVIGATION} />
+          <main className="flex-1 ml-64">
+            <div className="p-6">
+              {children}
+            </div>
           </main>
         </div>
       </div>

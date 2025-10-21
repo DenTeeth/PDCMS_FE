@@ -74,31 +74,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔄 Attempting to refresh token...');
       const response = await apiClient.refreshToken();
       
-      if (response.data && response.data.accessToken) {
+      if (response.accessToken) {
         // Update access token in localStorage (already done in apiClient)
-        setToken(response.data.accessToken);
+        setToken(response.accessToken);
         
         // Update user data with new token and expiration time
         const currentUser = getUserData();
         if (currentUser) {
           const updatedUser: User = {
             ...currentUser,
-            token: response.data.accessToken,
-            tokenExpiresAt: response.data.accessTokenExpiresAt,
-            refreshTokenExpiresAt: response.data.refreshTokenExpiresAt,
+            token: response.accessToken,
+            tokenExpiresAt: response.accessTokenExpiresAt,
+            refreshTokenExpiresAt: response.refreshTokenExpiresAt,
           };
           
           setUserData(updatedUser);
           setUser(updatedUser);
           setIsAuthenticated(true);
           
-          const expiresIn = response.data.accessTokenExpiresAt 
-            ? response.data.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
+          const expiresIn = response.accessTokenExpiresAt 
+            ? response.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
             : 'unknown';
           
           console.log('✅ Token refreshed successfully');
           console.log(`⏰ New token expires in: ${expiresIn} seconds`);
-          console.log('🍪 Refresh token rotated by backend in HTTP-Only Cookie');
+          console.log('🍪 Refresh token rotated by backend');
         }
       } else {
         throw new Error('No access token received from refresh');
@@ -120,32 +120,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const calculateRefreshDelay = () => {
       const userData = getUserData();
       if (!userData?.tokenExpiresAt) {
-        // Fallback: refresh every 10 seconds if no expiration info
-        console.log('⚠️ No token expiration info, using fallback 10s refresh');
-        return 10000;
+        // Fallback: DISABLE auto-refresh if no expiration info
+        console.log('⚠️ No token expiration info, auto-refresh disabled');
+        return null; // Disable auto-refresh
       }
 
       const now = Math.floor(Date.now() / 1000); // Current time in seconds
       const expiresAt = userData.tokenExpiresAt; // Backend timestamp in seconds
       const timeUntilExpiry = expiresAt - now; // Seconds until expiration
 
-      // ⚠️ If token already expired, refresh immediately but only once
-      if (timeUntilExpiry <= 0) {
-        console.warn('⚠️ Token already expired! Refreshing immediately...');
-        return 100; // 100ms to avoid infinite loop, will fail and logout
+      console.log(`📊 Token expiration debug:`, {
+        now,
+        expiresAt,
+        timeUntilExpiry,
+        expiresAtDate: new Date(expiresAt * 1000).toISOString(),
+        nowDate: new Date(now * 1000).toISOString()
+      });
+
+      // ⚠️ If token expires in more than 6 hours, something is wrong
+      if (timeUntilExpiry > 6 * 60 * 60) {
+        console.warn('⚠️ Token expiration time seems too far in future, disabling auto-refresh');
+        return null;
       }
 
-      // Refresh 5 seconds BEFORE expiration
-      const refreshDelay = Math.max((timeUntilExpiry - 5) * 1000, 1000); // Convert to ms, min 1s
+      // ⚠️ If token already expired, logout immediately
+      if (timeUntilExpiry <= 0) {
+        console.warn('⚠️ Token already expired! Logging out...');
+        logout();
+        return null;
+      }
 
-      console.log(`⏰ Token expires in ${timeUntilExpiry}s, will refresh in ${Math.floor(refreshDelay / 1000)}s`);
+      // Refresh 5 seconds before token expires
+      const refreshBeforeExpiry = 5; // seconds
+      const refreshDelay = Math.max((timeUntilExpiry - refreshBeforeExpiry) * 1000, 1000); // Convert to ms, min 1 second
+
+      console.log(`⏰ Token expires in ${timeUntilExpiry}s, will refresh in ${Math.floor(refreshDelay / 1000)}s (${refreshBeforeExpiry}s before expiry)`);
       
       return refreshDelay;
     };
 
     const delay = calculateRefreshDelay();
 
-    console.log(`⏰ Setting up auto-refresh timer (${Math.floor(delay / 1000)} seconds)`);
+    // If delay is null, don't set up timer
+    if (delay === null) {
+      console.log('⏰ Auto-refresh disabled');
+      return;
+    }
+
+    console.log(`⏰ Setting up auto-refresh timer (${Math.floor(delay / 60000)} minutes)`);
 
     const refreshTimeout = setTimeout(async () => {
       try {
@@ -170,24 +192,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      console.log('🔐 Starting login process...');
       const response = await apiClient.login(credentials);
       
-      if (response.statusCode === 200 && response.data) {
+      console.log('📥 Login response received:', response);
+      
+      // Response now directly contains the data (no statusCode wrapper)
+      if (response.token) {
         const userData: User = {
-          username: response.data.username,
-          email: response.data.email,
-          roles: response.data.roles,
-          permissions: response.data.permissions,
-          token: response.data.token,
-          tokenExpiresAt: response.data.accessTokenExpiresAt,
-          refreshTokenExpiresAt: response.data.refreshTokenExpiresAt,
+          username: response.username,
+          email: response.email,
+          roles: response.roles,
+          permissions: response.permissions,
+          token: response.token,
+          tokenExpiresAt: response.tokenExpiresAt,
+          refreshTokenExpiresAt: response.refreshTokenExpiresAt,
         };
+
+        console.log('👤 User data prepared:', userData);
 
         // Store user data in localStorage
         setUserData(userData);
         
-        const expiresIn = response.data.accessTokenExpiresAt 
-          ? response.data.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
+        const expiresIn = response.tokenExpiresAt 
+          ? response.tokenExpiresAt - Math.floor(Date.now() / 1000)
           : 'unknown';
         
         // Note: accessToken already stored in apiClient.login()
@@ -197,17 +225,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log(`⏰ Token expires in: ${expiresIn} seconds`);
         console.log('🍪 Refresh token stored in HTTP-Only Cookie by backend');
 
+        // Update state IMMEDIATELY
         setUser(userData);
         setIsAuthenticated(true);
+        
+        console.log('✅ Auth state updated - isAuthenticated: true');
       } else {
-        throw new Error(response.message || 'Login failed');
+        throw new Error('Login failed - no token received');
       }
     } catch (error) {
+      console.error('❌ Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
+      console.log('🏁 Login process completed');
     }
   };
 
