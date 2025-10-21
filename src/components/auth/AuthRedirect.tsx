@@ -21,20 +21,17 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
         router.push(redirectTo);
       } else {
         // Redirect based on user role (3 roles chính)
-        // Priority: Admin > Employee > Patient
+        // Priority: Admin > Patient > Employee (default)
         if (user.roles.includes(Role.ADMIN)) {
           console.log('🔄 Redirecting to admin dashboard...');
           router.push('/admin');
-        } else if (user.roles.includes(Role.EMPLOYEE)) {
-          console.log('🔄 Redirecting to employee dashboard...');
-          router.push('/employee');
         } else if (user.roles.includes(Role.PATIENT)) {
           console.log('🔄 Redirecting to patient dashboard...');
           router.push('/user');
         } else {
-          // Fallback if role doesn't match
-          console.warn('⚠️ Unknown role, redirecting to unauthorized...');
-          router.push('/unauthorized');
+          // Default: Tất cả roles khác (ROLE_DOCTOR, ROLE_RECEPTIONIST, etc.) → Employee
+          console.log('🔄 Redirecting to employee dashboard (default for staff)...');
+          router.push('/employee');
         }
       }
     }
@@ -60,16 +57,16 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
 
 /**
  * Helper function: Get redirect path based on user roles
+ * Logic: Admin → /admin, Patient → /user, Others → /employee (default)
  */
 export const getRedirectPath = (roles: string[]): string => {
   if (roles.includes(Role.ADMIN)) {
     return '/admin';
-  } else if (roles.includes(Role.EMPLOYEE)) {
-    return '/employee';
   } else if (roles.includes(Role.PATIENT)) {
     return '/user';
   } else {
-    return '/unauthorized';
+    // Default: Tất cả roles khác đều là employee (ROLE_DOCTOR, ROLE_RECEPTIONIST, ROLE_MANAGER, etc.)
+    return '/employee';
   }
 };
 
