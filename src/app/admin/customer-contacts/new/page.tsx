@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import ContactForm from '@/components/receptionist/ContactForm';
 import { useCreateContact } from '@/hooks/contactHooks';
 import { toast } from 'sonner';
 
@@ -31,8 +30,6 @@ export default function AdminCreateCustomerContact() {
                         <button className="btn-outline" onClick={() => router.push('/admin')}>Back</button>
                     </div>
                 </div>
-
-                <ContactForm onSubmit={onSubmit} />
             </div>
         </div>
     );

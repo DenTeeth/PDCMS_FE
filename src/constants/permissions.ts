@@ -286,43 +286,43 @@ export const PATIENT_NAVIGATION: NavigationConfig = {
   menuItems: [
     {
       name: 'Dashboard',
-      href: '/user',
+      href: '/patient',
       icon: faTachometerAlt,
       requiredRoles: [Role.PATIENT],
     },
     {
       name: 'My Appointments',
-      href: '/user/appointments',
+      href: '/patient/appointments',
       icon: faCalendarAlt,
       description: 'View and manage appointments',
     },
     {
       name: 'Medical Records',
-      href: '/user/records',
+      href: '/patient/records',
       icon: faFolderOpen,
       description: 'Your treatment history',
     },
     {
       name: 'Billing',
-      href: '/user/billing',
+      href: '/patient/billing',
       icon: faReceipt,
       description: 'Invoices and payments',
     },
     {
       name: 'Notifications',
-      href: '/user/notifications',
+      href: '/patient/notifications',
       icon: faBell,
       description: 'Important updates',
     },
     {
       name: 'Profile',
-      href: '/user/profile',
+      href: '/patient/profile',
       icon: faUserCircle,
       description: 'Personal information',
     },
     {
       name: 'Settings',
-      href: '/user/settings',
+      href: '/patient/settings',
       icon: faCog,
       description: 'Account settings',
     },
@@ -355,8 +355,8 @@ export const getBasePathByRole = (role: Role): string => {
     case Role.EMPLOYEE:
       return '/employee';
     case Role.PATIENT:
-      return '/user';
+      return '/patient';
     default:
-      return '/user';
+      return '/patient';
   }
 };

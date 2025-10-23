@@ -71,7 +71,7 @@ export interface Employee {
   address?: string;
   roleId: string;
   roleName: string;
-  employmentType: EmploymentType;
+  employeeType: EmploymentType; // Changed from employmentType to employeeType to match API
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -91,7 +91,7 @@ export interface CreateEmployeeRequest {
   roleId: string;
   firstName: string;
   lastName: string;
-  employmentType: EmploymentType;
+  employeeType: EmploymentType; // Changed from employmentType to employeeType to match API
   phone?: string;
   dateOfBirth?: string;
   address?: string;
@@ -109,7 +109,7 @@ export interface UpdateEmployeeRequest {
   address?: string;
   dateOfBirth?: string;
   roleId?: string;
-  employmentType?: EmploymentType;
+  employeeType?: EmploymentType; // Changed from employmentType to employeeType to match API
   specializationIds?: string[];
 }
 
@@ -149,5 +149,6 @@ export interface EmployeeQueryParams {
   sortDirection?: 'ASC' | 'DESC';
   search?: string;
   roleId?: string;
+  employeeType?: EmploymentType; // Added employeeType filter
   isActive?: boolean;
 }

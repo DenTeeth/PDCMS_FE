@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { User, AuthState, LoginRequest } from '@/types/auth';
 import { apiClient } from '@/lib/api';
 import { getToken, getUserData, setUserData, setToken, clearAuthData } from '@/lib/cookies';
+import { NavigationService } from '@/services/pathMappingService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
@@ -14,6 +15,14 @@ interface AuthContextType extends AuthState {
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
   hasRole: (role: string) => boolean;
+  hasPermissionInGroup: (group: string, permission: string) => boolean;
+  getPermissionsByGroup: (group: string) => string[];
+  getSidebarItems: () => any;
+  getRoleBasedSidebar: () => any;
+  getHomePath: () => string;
+  getLayoutType: () => 'admin' | 'employee' | 'patient';
+  isEmployee: () => boolean;
+  isPartTimeEmployee: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -204,6 +213,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: response.email,
           roles: response.roles,
           permissions: response.permissions,
+          groupedPermissions: response.groupedPermissions,
+          baseRole: response.baseRole,
+          homePath: response.homePath,
+          sidebar: response.sidebar,
+          employmentType: response.employmentType,
           token: response.token,
           tokenExpiresAt: response.tokenExpiresAt,
           refreshTokenExpiresAt: response.refreshTokenExpiresAt,
@@ -286,6 +300,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user.roles.includes(role);
   }, [user]);
 
+  // ✅ New RBAC helper functions
+  const hasPermissionInGroup = useCallback((group: string, permission: string): boolean => {
+    if (!user?.groupedPermissions?.[group]) return false;
+    return user.groupedPermissions[group].includes(permission);
+  }, [user]);
+
+  const getPermissionsByGroup = useCallback((group: string): string[] => {
+    return user?.groupedPermissions?.[group] || [];
+  }, [user]);
+
+  const getSidebarItems = useCallback(() => {
+    return user?.sidebar || {};
+  }, [user]);
+
+  const getRoleBasedSidebar = useCallback(() => {
+    if (!user?.permissions || !user?.baseRole) return {};
+    // ✅ NEW APPROACH: Generate navigation based on baseRole + permissions
+    return NavigationService.getNavigationForUser(user.baseRole, user.permissions);
+  }, [user]);
+
+  const getHomePath = useCallback((): string => {
+    if (!user?.baseRole) return '/';
+    return NavigationService.getHomePath(user.baseRole);
+  }, [user]);
+
+  const getLayoutType = useCallback((): 'admin' | 'employee' | 'patient' => {
+    if (!user?.baseRole) return 'patient';
+    return NavigationService.getLayoutType(user.baseRole);
+  }, [user]);
+
+  const isEmployee = useCallback((): boolean => {
+    return user?.baseRole === 'employee' || user?.roles?.includes('ROLE_EMPLOYEE') || false;
+  }, [user]);
+
+  const isPartTimeEmployee = useCallback((): boolean => {
+    return user?.employmentType === 'PART_TIME';
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -299,6 +351,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasAnyPermission,
     hasAllPermissions,
     hasRole,
+    hasPermissionInGroup,
+    getPermissionsByGroup,
+    getSidebarItems,
+    getRoleBasedSidebar,
+    getHomePath,
+    getLayoutType,
+    isEmployee,
+    isPartTimeEmployee,
   };
 
   return (

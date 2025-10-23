@@ -19,7 +19,7 @@ import {
   faEnvelope
 } from '@fortawesome/free-solid-svg-icons';
 
-// Sample data for user dashboard
+// Sample data for patient dashboard
 const upcomingAppointments = [
   {
     id: '1',
@@ -73,7 +73,7 @@ const notifications = [
   }
 ];
 
-export default function UserDashboard() {
+export default function PatientDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
@@ -82,7 +82,7 @@ export default function UserDashboard() {
       <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-primary-foreground">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Welcome back, John!</h1>
+            <h1 className="text-3xl font-bold">Welcome back, Patient!</h1>
             <p className="text-primary-foreground/80 mt-2">
               Here's what's happening with your health today
             </p>
@@ -299,4 +299,3 @@ export default function UserDashboard() {
     </div>
   );
 }
-
