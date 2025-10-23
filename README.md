@@ -145,7 +145,7 @@ src/
 │   ├── receptionist/      # Receptionist dashboard
 │   ├── accountant/        # Accountant dashboard
 │   ├── warehouse/         # Warehouse dashboard
-│   └── user/              # User dashboard
+│   └── patient/           # Patient dashboard
 ├── components/            # React components
 │   ├── accountant/        # Accountant-specific components
 │   ├── admin/             # Admin-specific components
@@ -156,7 +156,7 @@ src/
 │   ├── manager/           # Manager-specific components
 │   ├── receptionist/      # Receptionist-specific components
 │   ├── ui/                # Reusable UI components
-│   ├── user/              # User-specific components
+│   ├── patient/           # Patient-specific components
 │   └── warehouse/         # Warehouse-specific components
 ├── contexts/              # React contexts
 │   ├── AuthContext.tsx    # Authentication state

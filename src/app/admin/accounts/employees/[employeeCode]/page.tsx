@@ -23,7 +23,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { Employee, UpdateEmployeeRequest } from '@/types/employee';
+import { Employee, UpdateEmployeeRequest, EmploymentType } from '@/types/employee';
 import { Role } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
@@ -269,7 +269,14 @@ export default function EmployeeDetailPage() {
               <div>
                 <CardTitle className="text-2xl">{employee.fullName}</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  {employee.employeeCode} • {employee.roleName}
+                  {employee.employeeCode} • {employee.roleName} • 
+                  <span className={`ml-1 px-2 py-1 rounded-full text-xs ${
+                    employee.employeeType === EmploymentType.FULL_TIME 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                  </span>
                 </p>
               </div>
             </div>
@@ -430,6 +437,19 @@ export default function EmployeeDetailPage() {
               <Label className="text-gray-600">Role Name</Label>
               <Badge variant="outline" className="text-base px-3 py-1">
                 {employee.roleName}
+              </Badge>
+            </div>
+            <div>
+              <Label className="text-gray-600">Employment Type</Label>
+              <Badge 
+                variant="outline" 
+                className={`text-base px-3 py-1 ${
+                  employee.employeeType === EmploymentType.FULL_TIME 
+                    ? 'border-blue-200 text-blue-800' 
+                    : 'border-orange-200 text-orange-800'
+                }`}
+              >
+                {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
               </Badge>
             </div>
             <div>

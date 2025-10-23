@@ -32,7 +32,7 @@ import {
 import { toast } from 'sonner';
 
 // Import types and services
-import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, Role } from '@/types/employee';
+import { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, Role, EmploymentType } from '@/types/employee';
 import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
 import { Specialization } from '@/types/specialization';
@@ -72,6 +72,7 @@ export default function EmployeesPage() {
     roleId: '',
     firstName: '',
     lastName: '',
+    employeeType: EmploymentType.FULL_TIME, // Default to FULL_TIME
     phone: '',
     dateOfBirth: '',
     address: '',
@@ -88,6 +89,7 @@ export default function EmployeesPage() {
     phone: '',
     dateOfBirth: '',
     address: '',
+    employeeType: EmploymentType.FULL_TIME,
     specializationIds: [],
   });
 
@@ -215,6 +217,7 @@ export default function EmployeesPage() {
           roleId: formData.roleId,
           firstName: formData.firstName,
           lastName: formData.lastName,
+          employeeType: formData.employeeType,
           phone: formData.phone,
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
@@ -229,6 +232,7 @@ export default function EmployeesPage() {
           roleId: formData.roleId,
           firstName: formData.firstName,
           lastName: formData.lastName,
+          employeeType: formData.employeeType,
           phone: formData.phone,
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
@@ -248,6 +252,7 @@ export default function EmployeesPage() {
         roleId: '',
         firstName: '',
         lastName: '',
+        employeeType: EmploymentType.FULL_TIME,
         phone: '',
         dateOfBirth: '',
         address: '',
@@ -278,6 +283,7 @@ export default function EmployeesPage() {
       dateOfBirth: employee.dateOfBirth || '',
       address: employee.address || '',
       roleId: employee.roleId || '',
+      employeeType: employee.employeeType || EmploymentType.FULL_TIME,
       specializationIds: employee.specializations?.map(s => s.specializationId) || [],
     });
     setShowEditModal(true);
@@ -299,6 +305,7 @@ export default function EmployeesPage() {
       if (editFormData.dateOfBirth) payload.dateOfBirth = editFormData.dateOfBirth;
       if (editFormData.address) payload.address = editFormData.address;
       if (editFormData.roleId) payload.roleId = editFormData.roleId;
+      if (editFormData.employeeType) payload.employeeType = editFormData.employeeType;
       if (editFormData.specializationIds && editFormData.specializationIds.length > 0) {
         payload.specializationIds = editFormData.specializationIds;
       }
@@ -521,6 +528,15 @@ export default function EmployeesPage() {
                       </CardTitle>
                       <p className="text-sm text-gray-600 mt-2">{employee.roleName}</p>
                       <p className="text-xs text-gray-500 mt-1">Code: {employee.employeeCode}</p>
+                      <p className="text-xs text-gray-500">
+                        Type: <span className={`px-2 py-1 rounded-full text-xs ${
+                          employee.employeeType === EmploymentType.FULL_TIME 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                        </span>
+                      </p>
                     </div>
                     <Badge className={employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                       {employee.isActive ? 'Active' : 'Inactive'}
@@ -589,6 +605,9 @@ export default function EmployeesPage() {
                       Role
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Contact
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -621,6 +640,15 @@ export default function EmployeesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{employee.roleName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          employee.employeeType === EmploymentType.FULL_TIME 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{employee.account.email}</div>
@@ -790,6 +818,24 @@ export default function EmployeesPage() {
                         {role.roleName}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                {/* Employment Type Selection */}
+                <div>
+                  <Label htmlFor="employeeType">
+                    Employment Type <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="employeeType"
+                    value={formData.employeeType}
+                    onChange={(e) => setFormData({ ...formData, employeeType: e.target.value as EmploymentType })}
+                    disabled={creating}
+                    required
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={EmploymentType.FULL_TIME}>Full Time</option>
+                    <option value={EmploymentType.PART_TIME}>Part Time</option>
                   </select>
                 </div>
 
@@ -1043,6 +1089,7 @@ export default function EmployeesPage() {
                         roleId: '',
                         firstName: '',
                         lastName: '',
+                        employeeType: EmploymentType.FULL_TIME,
                         phone: '',
                         dateOfBirth: '',
                         address: '',
@@ -1111,6 +1158,24 @@ export default function EmployeesPage() {
                   />
                   <p className="text-sm text-muted-foreground">
                     Update employee role if needed
+                  </p>
+                </div>
+
+                {/* Employment Type */}
+                <div>
+                  <Label htmlFor="editEmployeeType">Employment Type</Label>
+                  <select
+                    id="editEmployeeType"
+                    value={editFormData.employeeType}
+                    onChange={(e) => setEditFormData({ ...editFormData, employeeType: e.target.value as EmploymentType })}
+                    disabled={updating}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={EmploymentType.FULL_TIME}>Full Time</option>
+                    <option value={EmploymentType.PART_TIME}>Part Time</option>
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Update employment type if needed
                   </p>
                 </div>
 
