@@ -11,12 +11,8 @@ import {
   faComments,
   faBrain,
   faRefresh,
-  faUsers,
-  faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import CustomerContactsTab from './components/CustomerContactsTab';
-import CustomerGroupsTab from './components/CustomerGroupsTab';
 import { feedbackService } from '@/services/feedbackService';
 import {
   RatingsOverview as RatingsOverviewType,
@@ -26,11 +22,11 @@ import {
   FeedbackAnalytics as FeedbackAnalyticsType,
   ReviewFilters,
 } from '@/types/feedback';
-import RatingsOverview from './feedback/components/RatingsOverview';
-import DentistRatings from './feedback/components/DentistRatings';
-import ServiceRatings from './feedback/components/ServiceRatings';
-import ReviewsList from './feedback/components/ReviewsList';
-import FeedbackAnalytics from './feedback/components/FeedbackAnalytics';
+import RatingsOverview from './components/RatingsOverview';
+import DentistRatings from './components/DentistRatings';
+import ServiceRatings from './components/ServiceRatings';
+import ReviewsList from './components/ReviewsList';
+import FeedbackAnalytics from './components/FeedbackAnalytics';
 
 // Mock data generator (remove when backend is ready)
 const generateMockData = () => {
@@ -184,9 +180,8 @@ const generateMockData = () => {
   return { overview, dentists, services, reviews, analytics };
 };
 
-export default function CustomersPage() {
-  const [activeTab, setActiveTab] = useState('contacts');
-  const [loading, setLoading] = useState(false);
+export default function FeedbackPage() {
+  const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<RatingsOverviewType | null>(null);
   const [dentists, setDentists] = useState<DentistRating[]>([]);
   const [services, setServices] = useState<ServiceRating[]>([]);
@@ -196,20 +191,11 @@ export default function CustomersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<ReviewFilters>({});
 
-  // Load feedback data when switching to feedback tabs
   useEffect(() => {
-    if (
-      activeTab === 'feedback-overview' ||
-      activeTab === 'feedback-dentists' ||
-      activeTab === 'feedback-services' ||
-      activeTab === 'feedback-reviews' ||
-      activeTab === 'feedback-analytics'
-    ) {
-      loadFeedbackData();
-    }
-  }, [activeTab]);
+    loadData();
+  }, []);
 
-  const loadFeedbackData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
 
@@ -251,13 +237,11 @@ export default function CustomersPage() {
 
   const handleViewDentistReviews = (dentistCode: string) => {
     setFilters({ ...filters, dentistCode });
-    setActiveTab('feedback-reviews');
     toast.info(`Filtering reviews for dentist: ${dentistCode}`);
   };
 
   const handleViewServiceReviews = (serviceCode: string) => {
     setFilters({ ...filters, serviceCode });
-    setActiveTab('feedback-reviews');
     toast.info(`Filtering reviews for service: ${serviceCode}`);
   };
 
@@ -265,141 +249,88 @@ export default function CustomersPage() {
     setFilters({ ...filters, ...newFilters });
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <FontAwesomeIcon
+          icon={faRefresh}
+          className="text-4xl text-gray-400 animate-spin"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Quản lý khách hàng</h1>
-          <p className="text-muted-foreground mt-1">
-            Quản lý thông tin liên hệ, nhóm khách hàng và feedback
+          <h1 className="text-3xl font-bold">Feedback & Reviews</h1>
+          <p className="text-gray-600 mt-1">
+            Analyze patient feedback and service ratings
           </p>
         </div>
-        {(activeTab.startsWith('feedback-')) && (
-          <Button onClick={loadFeedbackData} variant="outline">
-            <FontAwesomeIcon icon={faRefresh} className="mr-2" />
-            Refresh Data
-          </Button>
-        )}
+        <Button onClick={loadData} variant="outline">
+          <FontAwesomeIcon icon={faRefresh} className="mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="contacts">
-            <FontAwesomeIcon icon={faUsers} className="mr-2" />
-            Danh bạ
-          </TabsTrigger>
-          <TabsTrigger value="groups">
-            <FontAwesomeIcon icon={faLayerGroup} className="mr-2" />
-            Nhóm
-          </TabsTrigger>
-          <TabsTrigger value="feedback-overview">
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">
             <FontAwesomeIcon icon={faChartLine} className="mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="feedback-dentists">
+          <TabsTrigger value="dentists">
             <FontAwesomeIcon icon={faUserMd} className="mr-2" />
             Dentists
           </TabsTrigger>
-          <TabsTrigger value="feedback-services">
+          <TabsTrigger value="services">
             <FontAwesomeIcon icon={faTooth} className="mr-2" />
             Services
           </TabsTrigger>
-          <TabsTrigger value="feedback-reviews">
+          <TabsTrigger value="reviews">
             <FontAwesomeIcon icon={faComments} className="mr-2" />
             Reviews
           </TabsTrigger>
-          <TabsTrigger value="feedback-analytics">
+          <TabsTrigger value="analytics">
             <FontAwesomeIcon icon={faBrain} className="mr-2" />
             Analytics
           </TabsTrigger>
         </TabsList>
 
-        {/* Customer Contacts Tab */}
-        <TabsContent value="contacts" className="space-y-4">
-          <CustomerContactsTab />
+        <TabsContent value="overview">
+          {overview && <RatingsOverview data={overview} />}
         </TabsContent>
 
-        {/* Customer Groups Tab */}
-        <TabsContent value="groups" className="space-y-4">
-          <CustomerGroupsTab />
+        <TabsContent value="dentists">
+          <DentistRatings
+            data={dentists}
+            onViewReviews={handleViewDentistReviews}
+          />
         </TabsContent>
 
-        {/* Feedback Overview Tab */}
-        <TabsContent value="feedback-overview">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <FontAwesomeIcon
-                icon={faRefresh}
-                className="text-4xl text-gray-400 animate-spin"
-              />
-            </div>
-          ) : (
-            overview && <RatingsOverview data={overview} />
-          )}
+        <TabsContent value="services">
+          <ServiceRatings
+            data={services}
+            onViewReviews={handleViewServiceReviews}
+          />
         </TabsContent>
 
-        {/* Feedback Dentists Tab */}
-        <TabsContent value="feedback-dentists">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <FontAwesomeIcon
-                icon={faRefresh}
-                className="text-4xl text-gray-400 animate-spin"
-              />
-            </div>
-          ) : (
-            <DentistRatings data={dentists} onViewReviews={handleViewDentistReviews} />
-          )}
+        <TabsContent value="reviews">
+          <ReviewsList
+            reviews={reviews}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            onFilterChange={handleFilterChange}
+          />
         </TabsContent>
 
-        {/* Feedback Services Tab */}
-        <TabsContent value="feedback-services">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <FontAwesomeIcon
-                icon={faRefresh}
-                className="text-4xl text-gray-400 animate-spin"
-              />
-            </div>
-          ) : (
-            <ServiceRatings data={services} onViewReviews={handleViewServiceReviews} />
-          )}
-        </TabsContent>
-
-        {/* Feedback Reviews Tab */}
-        <TabsContent value="feedback-reviews">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <FontAwesomeIcon
-                icon={faRefresh}
-                className="text-4xl text-gray-400 animate-spin"
-              />
-            </div>
-          ) : (
-            <ReviewsList
-              reviews={reviews}
-              totalPages={totalPages}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-              onFilterChange={handleFilterChange}
-            />
-          )}
-        </TabsContent>
-
-        {/* Feedback Analytics Tab */}
-        <TabsContent value="feedback-analytics">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <FontAwesomeIcon
-                icon={faRefresh}
-                className="text-4xl text-gray-400 animate-spin"
-              />
-            </div>
-          ) : (
-            analytics && <FeedbackAnalytics data={analytics} />
-          )}
+        <TabsContent value="analytics">
+          {analytics && <FeedbackAnalytics data={analytics} />}
         </TabsContent>
       </Tabs>
     </div>
