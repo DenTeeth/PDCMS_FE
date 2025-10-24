@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { RoutingService } from '@/services/routingService';
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -20,9 +19,10 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
       if (redirectTo) {
         router.push(redirectTo);
       } else if (user.baseRole) {
-        // Redirect based on baseRole using RoutingService
+        // Redirect based on baseRole
         console.log(`🔄 Redirecting ${user.baseRole} to appropriate layout...`);
-        RoutingService.redirectToLayout(user.baseRole, router);
+        const redirectPath = getRedirectPath(user.baseRole);
+        router.push(redirectPath);
       } else {
         // Fallback to patient layout if no baseRole
         console.log('🔄 No baseRole found, redirecting to patient layout...');
@@ -51,9 +51,17 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
 
 /**
  * Helper function: Get redirect path based on baseRole
- * Uses NavigationService to determine the correct layout path
  */
 export const getRedirectPath = (baseRole: string): string => {
-  return RoutingService.redirectToLayout(baseRole, { push: () => {} }) || '/patient';
+  switch (baseRole) {
+    case 'admin':
+      return '/admin';
+    case 'employee':
+      return '/employee';
+    case 'patient':
+      return '/patient';
+    default:
+      return '/patient';
+  }
 };
 

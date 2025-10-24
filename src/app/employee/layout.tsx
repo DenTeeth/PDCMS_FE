@@ -1,7 +1,8 @@
 'use client';
 
-import DynamicSidebar from '@/components/layout/DynamicSidebar';
+import DynamicSidebar from '@/components/layout/NewDynamicSidebar';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Role } from '@/types/permission';
 
 export default function EmployeeLayout({
   children,
@@ -9,10 +10,10 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredPermissions={['VIEW_REGISTRATION_OWN', 'VIEW_TIME_OFF_OWN']} requireAll={false}>
+    <ProtectedRoute requiredBaseRole="employee">
       <div className="min-h-screen bg-background">
         <div className="flex">
-          <DynamicSidebar title="Employee Portal" />
+          <DynamicSidebar />
           <main className="flex-1 ml-64">
             <div className="p-6">
               {children}

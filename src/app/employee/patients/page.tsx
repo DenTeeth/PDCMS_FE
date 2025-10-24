@@ -7,13 +7,15 @@
  * TODO: Di chuyển logic từ src/app/dentist/patients/page.tsx vào đây
  */
 
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 
 export default function EmployeePatientsPage() {
   return (
-    <div className="space-y-6">
+    <ProtectedRoute requiredBaseRole="employee">
+      <div className="space-y-6">
       <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl font-bold text-primary-foreground mb-2">
           <FontAwesomeIcon icon={faUsers} className="mr-3" />
@@ -33,6 +35,7 @@ export default function EmployeePatientsPage() {
           Content from <code className="bg-gray-100 px-2 py-1 rounded">dentist/patients</code> will be migrated here.
         </p>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
