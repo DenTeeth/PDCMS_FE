@@ -18,7 +18,7 @@ import {
  * Employee Service Class
  * Handles all employee-related API operations
  */
-class EmployeeService {
+export class EmployeeService {
   private readonly endpoint = '/employees';
 
   /**

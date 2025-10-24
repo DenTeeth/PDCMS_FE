@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import ContactForm from '@/components/employee/ContactForm';
+import ContactForm from '@/app/employee/customers/components/ContactForm';
 import { useCreateContact } from '@/hooks/contactHooks';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

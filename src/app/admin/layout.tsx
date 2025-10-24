@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
-import DynamicSidebar from '@/components/layout/DynamicSidebar';
+import DynamicSidebar from '@/components/layout/NewDynamicSidebar';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Role } from '@/types/permission';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - PDCMS',
@@ -13,10 +14,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredPermissions={['VIEW_ACCOUNT', 'VIEW_EMPLOYEE']} requireAll={false}>
+    <ProtectedRoute requiredBaseRole="admin">
       <div className="min-h-screen bg-background">
         <div className="flex">
-          <DynamicSidebar title="Admin Dashboard" />
+          <DynamicSidebar />
           <main className="flex-1 ml-64">
             <div className="p-6">
               {children}

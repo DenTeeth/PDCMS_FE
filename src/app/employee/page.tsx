@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -51,7 +52,8 @@ export default function EmployeeDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute requiredBaseRole="employee">
+      <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl font-bold text-primary-foreground mb-2">
@@ -184,6 +186,7 @@ export default function EmployeeDashboard() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

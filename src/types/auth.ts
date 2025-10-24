@@ -31,10 +31,9 @@ export interface LoginResponse {
   roles: string[];
   permissions: string[];
   groupedPermissions: GroupedPermissions;
-  baseRole: string;
-  homePath: string;
-  sidebar: SidebarNavigation;
-  employmentType: string;
+  baseRole: string; // BE now provides baseRole directly
+  employmentType: string | null;
+  mustChangePassword: boolean;
 }
 
 // Response từ /api/v1/auth/refresh-token
@@ -51,10 +50,9 @@ export interface User {
   roles: string[];
   permissions: string[];
   groupedPermissions: GroupedPermissions;
-  baseRole: string;
-  homePath: string;
-  sidebar: SidebarNavigation;
-  employmentType: string;
+  baseRole: string; // 'admin' | 'employee' | 'patient'
+  employmentType: string | null;
+  mustChangePassword: boolean;
   token: string;
   tokenExpiresAt?: number;
   refreshTokenExpiresAt?: number;

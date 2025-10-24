@@ -51,7 +51,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -79,7 +79,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -115,7 +115,7 @@ export default function ViewContactPage() {
         try {
             await del.mutateAsync(contact.id);
             toast.success('Contact deleted successfully');
-            router.push('/receptionist/customers');
+            router.push('/employee/customers');
         } catch (err: any) {
             console.error('Delete failed', err);
             toast.error(err?.message || 'Failed to delete contact');
@@ -130,7 +130,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/receptionist/customers')}
+                        onClick={() => router.push('/employee/customers')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />

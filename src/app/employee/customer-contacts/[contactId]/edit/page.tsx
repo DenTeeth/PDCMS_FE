@@ -28,7 +28,7 @@ export default function EditContactPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push('/receptionist/customer-contacts')}
+            onClick={() => router.push('/employee/customer-contacts')}
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -56,7 +56,7 @@ export default function EditContactPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push('/receptionist/customer-contacts')}
+            onClick={() => router.push('/employee/customer-contacts')}
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -90,7 +90,7 @@ export default function EditContactPage() {
     try {
       await update.mutateAsync({ id: contactId, payload: values });
       toast.success('Contact updated');
-      router.push('/receptionist/customer-contacts');
+      router.push('/employee/customer-contacts');
     } catch (err: any) {
       console.error('Update failed', err);
       toast.error(err?.message || 'Update failed');
@@ -102,7 +102,7 @@ export default function EditContactPage() {
     try {
       await del.mutateAsync(contact.id);
       toast.success('Contact deleted');
-      router.push('/receptionist/customer-contacts');
+      router.push('/employee/customer-contacts');
     } catch (err: any) {
       console.error('Delete failed', err);
       toast.error(err?.message || 'Delete failed');
@@ -117,7 +117,7 @@ export default function EditContactPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push('/receptionist/customer-contacts')}
+            onClick={() => router.push('/employee/customer-contacts')}
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
