@@ -30,6 +30,9 @@ import {
   faMoneyBillWave,
   faUserCheck,
   faClock,
+  faComments,
+  faBrain,
+  faDollarSign,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -177,7 +180,7 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_REGISTRATION_OWN, Permission.CREATE_REGISTRATION],
       requireAll: false, // Chỉ cần 1 trong 2 permissions
     },
-    
+
     // Receptionist features
     {
       name: 'Appointments',
@@ -215,7 +218,7 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_APPOINTMENT, Permission.VIEW_PATIENT],
       requireAll: false,
     },
-    
+
     // Manager features
     {
       name: 'Analytics',
@@ -232,7 +235,7 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       description: 'Staff management',
       requiredPermissions: [Permission.VIEW_EMPLOYEE],
     },
-    
+
     // Accountant features
     {
       name: 'Performance',
@@ -241,7 +244,7 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       description: 'Financial performance',
       requiredPermissions: [Permission.VIEW_ACCOUNT],
     },
-    
+
     // Warehouse features
     {
       name: 'Inventory',
@@ -264,7 +267,7 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       description: 'Warehouse statistics',
       requiredPermissions: [Permission.VIEW_EMPLOYEE],
     },
-    
+
     // Common features
     {
       name: 'Settings',
@@ -325,6 +328,65 @@ export const PATIENT_NAVIGATION: NavigationConfig = {
       href: '/user/settings',
       icon: faCog,
       description: 'Account settings',
+    },
+  ],
+};
+
+/**
+ * MANAGER NAVIGATION
+ * Dành cho Manager role - quản lý feedback, analytics, staff
+ */
+export const MANAGER_NAVIGATION: NavigationConfig = {
+  role: Role.EMPLOYEE, // Dùng EMPLOYEE role vì sidebar động không phân quyền manager riêng
+  title: 'PDCMS Manager',
+  menuItems: [
+    {
+      name: 'Dashboard',
+      href: '/employee',
+      icon: faTachometerAlt,
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Feedback & Reviews',
+      href: '/employee/customers/feedback',
+      icon: faComments,
+      description: 'Patient feedback analytics',
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Analytics',
+      href: '/employee/analytics',
+      icon: faChartLine,
+      description: 'Business analytics',
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Staff Management',
+      href: '/employee/staff',
+      icon: faUsersCog,
+      description: 'Manage staff assignments',
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Appointments',
+      href: '/employee/appointments',
+      icon: faCalendarAlt,
+      description: 'Manage appointments',
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Financial Reports',
+      href: '/employee/financial',
+      icon: faDollarSign,
+      description: 'Revenue and financial metrics',
+      requiredRoles: [Role.EMPLOYEE],
+    },
+    {
+      name: 'Settings',
+      href: '/employee/settings',
+      icon: faCog,
+      description: 'Manager settings',
+      requiredRoles: [Role.EMPLOYEE],
     },
   ],
 };
