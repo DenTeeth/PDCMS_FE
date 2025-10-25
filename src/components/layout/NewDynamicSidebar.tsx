@@ -14,6 +14,7 @@ import { LogoutButton } from '@/components/auth/LogoutButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   getNavigationConfigByRole, 
+  generateNavigationConfig,
   filterNavigationItems,
   NavigationItem 
 } from '@/constants/navigationConfig';
@@ -28,8 +29,9 @@ export default function NewDynamicSidebar({ title = "PDCMS" }: NewDynamicSidebar
   const pathname = usePathname();
   const { user } = useAuth();
 
-  // Get navigation config based on user role
-  const navigationConfig = user ? getNavigationConfigByRole(user.roles) : null;
+  // Generate navigation config based on user role and groupedPermissions
+  const navigationConfig = user ? 
+    generateNavigationConfig(user.baseRole, user.groupedPermissions) : null;
   
   // Filter navigation items based on user permissions
   const filteredItems = navigationConfig && user ? 

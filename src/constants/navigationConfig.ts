@@ -149,32 +149,40 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissions: ['VIEW_REGISTRATION_ALL'],
         },
         {
+          name: 'Employee Shifts',
+          href: '/admin/employee-shifts',
+          icon: faCalendarDays,
+          description: 'View all employee shifts',
+          requiredPermissions: ['VIEW_EMPLOYEE_SHIFT_ALL'],
+        },
+      ],
+    },
+    {
+      name: 'Leave Management',
+      icon: faUmbrellaBeach,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
+        {
           name: 'Overtime Requests',
           href: '/admin/overtime-requests',
           icon: faClockFour,
           description: 'Manage overtime requests',
-          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          requiredPermissions: ['VIEW_OT_ALL'],
         },
         {
           name: 'Time Off Requests',
           href: '/admin/time-off-requests',
           icon: faUmbrellaBeach,
           description: 'Manage time off requests',
-          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
         {
           name: 'Time Off Types',
           href: '/admin/time-off-types',
           icon: faListCheck,
           description: 'Manage time off types',
-          requiredPermissions: ['VIEW_TIME_OFF_TYPE'],
-        },
-        {
-          name: 'Employee Shifts',
-          href: '/admin/employee-shifts',
-          icon: faCalendarDays,
-          description: 'View all employee shifts',
-          requiredPermissions: ['VIEW_EMPLOYEE_SHIFT_ALL'],
+          requiredPermissions: ['VIEW_TIMEOFF_TYPE_ALL'],
         },
       ],
     },
@@ -419,6 +427,34 @@ export const getNavigationConfigByRole = (roles: string[]): NavigationConfig => 
   }
   
   return PATIENT_NAVIGATION_CONFIG; // Default fallback
+};
+
+/**
+ * Generate dynamic navigation config based on groupedPermissions
+ */
+export const generateNavigationConfig = (
+  baseRole: string,
+  groupedPermissions: GroupedPermissions | undefined
+): NavigationConfig => {
+  const baseConfig = getNavigationConfigByRole([`ROLE_${baseRole.toUpperCase()}`]);
+  
+  if (!groupedPermissions) {
+    return baseConfig;
+  }
+
+  // Filter items based on groupedPermissions
+  const filteredItems = baseConfig.items.filter(item => {
+    if (!item.requiredPermissionGroup) {
+      return true; // Always show items without permission requirements
+    }
+    
+    return hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup);
+  });
+
+  return {
+    ...baseConfig,
+    items: filteredItems
+  };
 };
 
 /**
