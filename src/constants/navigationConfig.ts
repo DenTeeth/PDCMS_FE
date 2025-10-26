@@ -27,6 +27,7 @@ import {
   faUserCircle,
   faClockRotateLeft,
   faMoneyBillWave,
+  faListAlt,
   faUserCheck,
   faClock,
   faPhone,
@@ -180,9 +181,9 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
         {
           name: 'Time Off Types',
           href: '/admin/time-off-types',
-          icon: faListCheck,
+          icon: faListAlt,
           description: 'Manage time off types',
-          requiredPermissions: ['VIEW_TIMEOFF_TYPE_ALL'],
+          requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
         },
       ],
     },
@@ -251,7 +252,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Schedule Management
     {
-      name: 'My Schedule',
+      name: 'My Work Schedule',
       href: '/employee/schedule',
       icon: faCalendarAlt,
       description: 'View my work schedule',
@@ -286,10 +287,17 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
     },
     {
-      name: 'My Shifts',
-      href: '/employee/my-shifts',
+      name: 'My Schedule',
+      href: '/employee/my-schedule',
       icon: faCalendarDays,
-      description: 'View my work shifts',
+      description: 'View my work schedule based on registrations',
+      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+    },
+    {
+      name: 'My Work Shifts',
+      href: '/employee/my-shifts',
+      icon: faClockFour,
+      description: 'View my actual work shifts',
       requiredPermissions: ['VIEW_EMPLOYEE_SHIFT_OWN'],
     },
     // Settings

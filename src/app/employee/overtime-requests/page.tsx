@@ -11,6 +11,10 @@ import {
   faCalendarAlt,
   faUser,
   faClock,
+  faCheck,
+  faTimes,
+  faSearch,
+  faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -48,11 +52,24 @@ export default function EmployeeOvertimeRequestsPage() {
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<OvertimeRequest | null>(null);
-  const [cancelReason, setCancelReason] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OvertimeStatus | 'ALL'>('ALL');
+  
+  // Modal states for manager functions
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<OvertimeRequest | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  // Permission checking
+  const canViewAll = user?.permissions?.includes('VIEW_OT_ALL') || user?.permissions?.includes('VIEW_OVERTIME_ALL');
+  const canApprove = user?.permissions?.includes('APPROVE_OT') || user?.permissions?.includes('APPROVE_OVERTIME');
+  const canReject = user?.permissions?.includes('REJECT_OT') || user?.permissions?.includes('REJECT_OVERTIME');
+  const canCancel = user?.permissions?.includes('CANCEL_OT_PENDING') || user?.permissions?.includes('CANCEL_OVERTIME_PENDING');
+  const isManager = canViewAll && (canApprove || canReject);
 
   const [formData, setFormData] = useState<OvertimeRequestFormData>({
     employeeId: Number(user?.employeeId) || 0,
@@ -105,36 +122,39 @@ export default function EmployeeOvertimeRequestsPage() {
   const handleCreateOvertimeRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Ensure employeeId is set
-      if (!user?.employeeId) {
-        alert('Không thể xác định thông tin nhân viên. Vui lòng đăng nhập lại.');
-        return;
-      }
-
-      // Update formData with current user's employeeId
+      // Employee tạo cho chính mình - KHÔNG gửi employeeId (backend tự lấy từ JWT)
       const requestData = {
-        ...formData,
-        employeeId: Number(user.employeeId)
+        employeeId: undefined, // ❌ KHÔNG gửi employeeId - backend sẽ tự lấy từ JWT token
+        workDate: formData.workDate,
+        workShiftId: formData.workShiftId,
+        reason: formData.reason
       };
 
-      // Validate form data
+      // Validate form data (không cần employeeId)
       const validationError = validateOvertimeForm(requestData);
       if (validationError) {
         alert(validationError);
         return;
       }
 
-      console.log('Employee creating overtime request:', requestData);
-      await OvertimeService.createOvertimeRequest(requestData);
+      console.log('🔍 Employee creating overtime request (self):', {
+        requestData,
+        user: {
+          employeeId: user?.employeeId,
+          username: user?.username,
+          fullName: 'N/A' // User type doesn't have firstName/lastName
+        }
+      });
+      const response = await OvertimeService.createOvertimeRequest(requestData);
       setShowCreateForm(false);
       setFormData({
-        employeeId: Number(user?.employeeId) || 0,
+        employeeId: 0,
         workDate: '',
         workShiftId: '',
         reason: '',
       });
       loadOvertimeRequests();
-      alert('Tạo yêu cầu làm thêm giờ thành công!');
+      alert(`Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nTrạng thái: ${response.status}`);
     } catch (error: any) {
       console.error('Error creating overtime request:', error);
       showOvertimeError(error);
@@ -158,6 +178,60 @@ export default function EmployeeOvertimeRequestsPage() {
     setSelectedRequest(request);
     setCancelReason('');
     setShowCancelModal(true);
+  };
+
+  // Manager action handlers
+  const handleApprove = async () => {
+    if (!selectedRequest) return;
+
+    try {
+      setProcessing(true);
+      await OvertimeService.approveOvertimeRequest(selectedRequest.requestId);
+      
+      setShowApproveModal(false);
+      setSelectedRequest(null);
+      loadOvertimeRequests();
+      alert('Đã duyệt yêu cầu làm thêm giờ thành công!');
+    } catch (error: any) {
+      console.error('Error approving request:', error);
+      showOvertimeError(error);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedRequest || !rejectReason.trim()) {
+      alert('Vui lòng nhập lý do từ chối');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      await OvertimeService.rejectOvertimeRequest(selectedRequest.requestId, rejectReason);
+      
+      setShowRejectModal(false);
+      setSelectedRequest(null);
+      setRejectReason('');
+      loadOvertimeRequests();
+      alert('Đã từ chối yêu cầu làm thêm giờ!');
+    } catch (error: any) {
+      console.error('Error rejecting request:', error);
+      showOvertimeError(error);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const openApproveModal = (request: OvertimeRequest) => {
+    setSelectedRequest(request);
+    setShowApproveModal(true);
+  };
+
+  const openRejectModal = (request: OvertimeRequest) => {
+    setSelectedRequest(request);
+    setRejectReason('');
+    setShowRejectModal(true);
   };
 
   const filteredRequests = overtimeRequests.filter((request) => {
@@ -188,8 +262,15 @@ export default function EmployeeOvertimeRequestsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Yêu cầu làm thêm giờ</h1>
-          <p className="text-gray-600 mt-2">Xem và tạo yêu cầu làm thêm giờ của bạn</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isManager ? 'Quản Lý Yêu Cầu Làm Thêm Giờ' : 'Yêu Cầu Làm Thêm Giờ'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {isManager 
+              ? 'Duyệt và quản lý yêu cầu làm thêm giờ của nhân viên'
+              : 'Xem và tạo yêu cầu làm thêm giờ của bạn'
+            }
+          </p>
         </div>
         {canCreate && (
           <Button
@@ -201,6 +282,25 @@ export default function EmployeeOvertimeRequestsPage() {
           </Button>
         )}
       </div>
+
+      {/* Permission Info for Manager */}
+      {isManager && (
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-4">
+              <div className="text-sm">
+                <p className="font-semibold text-blue-800">Quyền của bạn:</p>
+                <div className="flex space-x-4 mt-1">
+                  {canViewAll && <Badge className="bg-blue-100 text-blue-800">Xem tất cả</Badge>}
+                  {canApprove && <Badge className="bg-green-100 text-green-800">Duyệt</Badge>}
+                  {canReject && <Badge className="bg-red-100 text-red-800">Từ chối</Badge>}
+                  {canCancel && <Badge className="bg-orange-100 text-orange-800">Hủy</Badge>}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card className="mb-6">
@@ -291,7 +391,49 @@ export default function EmployeeOvertimeRequestsPage() {
                       Chi tiết
                     </Button>
                     
-                    {request.status === OvertimeStatus.PENDING && canCancelOwn && (
+                    {/* Manager actions for PENDING requests */}
+                    {request.status === OvertimeStatus.PENDING && isManager && (
+                      <>
+                        {canApprove && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => openApproveModal(request)}
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="mr-1" />
+                            Duyệt
+                          </Button>
+                        )}
+                        
+                        {canReject && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            onClick={() => openRejectModal(request)}
+                          >
+                            <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                            Từ chối
+                          </Button>
+                        )}
+                        
+                        {canCancel && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                            onClick={() => openCancelModal(request)}
+                          >
+                            <FontAwesomeIcon icon={faBan} className="mr-1" />
+                            Hủy
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    
+                    {/* Employee cancel own PENDING requests */}
+                    {request.status === OvertimeStatus.PENDING && !isManager && canCancelOwn && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -435,6 +577,70 @@ export default function EmployeeOvertimeRequestsPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Approve Modal */}
+      {showApproveModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Xác nhận duyệt</h2>
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn duyệt yêu cầu làm thêm giờ này không?
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowApproveModal(false)}
+                className="flex-1"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={processing}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {processing ? 'Đang xử lý...' : 'Duyệt'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Từ chối yêu cầu</h2>
+            <div className="mb-4">
+              <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+              <Textarea
+                id="rejectReason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Nhập lý do từ chối..."
+                rows={3}
+                required
+              />
+            </div>
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowRejectModal(false)}
+                className="flex-1"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={processing || !rejectReason.trim()}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {processing ? 'Đang xử lý...' : 'Từ chối'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

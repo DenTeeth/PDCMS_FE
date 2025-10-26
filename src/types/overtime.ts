@@ -62,7 +62,7 @@ export interface OvertimeRequestDetail {
 }
 
 export interface CreateOvertimeRequestDto {
-  employeeId: number;
+  employeeId?: number; // Optional - backend sẽ tự lấy từ JWT nếu không có
   workDate: string;
   workShiftId: string;
   reason: string;
