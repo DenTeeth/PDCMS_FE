@@ -1,21 +1,32 @@
 /**
- * Time Off Type Management Service
- * Based on Time_Off_Type.md specification (BE-306)
+ * Time Off Type Service
+ * Handles all API interactions for Time Off Types
+ * Based on Time_Off_Type.md specification - READ ONLY
  */
 
 import { apiClient } from '@/lib/api';
 import {
   TimeOffType,
-  CreateTimeOffTypeDto,
-  UpdateTimeOffTypeDto,
   TimeOffTypeListResponse,
-} from '@/types/timeOffType';
+} from '@/types/timeOff';
 
 export class TimeOffTypeService {
   private static readonly BASE_URL = '/time-off-types';
 
   /**
    * Lấy danh sách loại nghỉ phép
+   * 
+   * Requires: VIEW_TIME_OFF_TYPE permission
+   * 
+   * Query parameters:
+   * - isActive: Filter by active status (true/false)
+   * - requiresBalance: Filter by balance requirement (true/false)
+   * - isPaid: Filter by payment status (true/false)
+   * - page: Page number (default: 0)
+   * - size: Page size (default: 20)
+   * 
+   * Possible errors:
+   * - 403: Access Denied (missing VIEW_TIME_OFF_TYPE permission)
    */
   static async getTimeOffTypes(params?: {
     isActive?: boolean;
@@ -24,90 +35,41 @@ export class TimeOffTypeService {
     page?: number;
     size?: number;
   }): Promise<TimeOffTypeListResponse> {
-    const queryParams = new URLSearchParams();
-    
-    if (params?.isActive !== undefined) {
-      queryParams.append('isActive', params.isActive.toString());
-    }
-    if (params?.requiresBalance !== undefined) {
-      queryParams.append('requiresBalance', params.requiresBalance.toString());
-    }
-    if (params?.isPaid !== undefined) {
-      queryParams.append('isPaid', params.isPaid.toString());
-    }
-    if (params?.page !== undefined) {
-      queryParams.append('page', params.page.toString());
-    }
-    if (params?.size !== undefined) {
-      queryParams.append('size', params.size.toString());
-    }
-
-    const url = queryParams.toString() 
-      ? `${this.BASE_URL}?${queryParams.toString()}`
-      : this.BASE_URL;
-
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<TimeOffTypeListResponse>(url);
-    return response.data;
-  }
-
-  /**
-   * Lấy chi tiết loại nghỉ phép
-   */
-  static async getTimeOffTypeById(typeId: string): Promise<TimeOffType> {
-    const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<TimeOffType>(`${this.BASE_URL}/${typeId}`);
-    return response.data;
-  }
-
-  /**
-   * Tạo loại nghỉ phép mới
-   */
-  static async createTimeOffType(data: CreateTimeOffTypeDto): Promise<TimeOffType> {
-    const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<TimeOffType>(this.BASE_URL, data);
-    return response.data;
-  }
-
-  /**
-   * Cập nhật loại nghỉ phép
-   */
-  static async updateTimeOffType(
-    typeId: string,
-    data: UpdateTimeOffTypeDto
-  ): Promise<TimeOffType> {
-    const axios = apiClient.getAxiosInstance();
-    const response = await axios.put<TimeOffType>(`${this.BASE_URL}/${typeId}`, data);
-    return response.data;
-  }
-
-  /**
-   * Xóa (deactivate) loại nghỉ phép
-   */
-  static async deleteTimeOffType(typeId: string): Promise<{ message: string; typeId: string; isActive: boolean }> {
-    const axios = apiClient.getAxiosInstance();
-    const response = await axios.delete<{ message: string; typeId: string; isActive: boolean }>(
-      `${this.BASE_URL}/${typeId}`
+    const response = await axios.get<TimeOffTypeListResponse>(
+      this.BASE_URL,
+      { params }
     );
     return response.data;
   }
 
   /**
-   * Kích hoạt lại loại nghỉ phép
+   * Lấy danh sách loại nghỉ phép cho dropdown (chỉ active types)
+   * 
+   * Requires: VIEW_TIME_OFF_TYPE permission
    */
-  static async reactivateTimeOffType(typeId: string): Promise<TimeOffType> {
-    const axios = apiClient.getAxiosInstance();
-    const response = await axios.patch<TimeOffType>(`${this.BASE_URL}/${typeId}/reactivate`);
-    return response.data;
+  static async getActiveTimeOffTypes(): Promise<TimeOffType[]> {
+    const response = await this.getTimeOffTypes({
+      isActive: true,
+      size: 100 // Get all active types
+    });
+    return response.content;
   }
 
   /**
-   * Lấy danh sách loại nghỉ phép active (cho dropdown)
+   * Lấy danh sách loại nghỉ phép yêu cầu balance
+   * 
+   * Requires: VIEW_TIME_OFF_TYPE permission
    */
-  static async getActiveTimeOffTypes(): Promise<TimeOffType[]> {
-    const response = await this.getTimeOffTypes({ isActive: true });
+  static async getBalanceRequiredTypes(): Promise<TimeOffType[]> {
+    const response = await this.getTimeOffTypes({
+      isActive: true,
+      requiresBalance: true,
+      size: 100
+    });
     return response.content;
   }
 }
 
-export default TimeOffTypeService;
+// Export singleton instance
+export const timeOffTypeService = new TimeOffTypeService();

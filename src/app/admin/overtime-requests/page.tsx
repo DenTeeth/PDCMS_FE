@@ -129,7 +129,7 @@ export default function AdminOvertimeRequestsPage() {
       }
 
       console.log('Admin creating overtime request:', formData);
-      await OvertimeService.createOvertimeRequest(formData);
+      const response = await OvertimeService.createOvertimeRequest(formData);
       setShowCreateForm(false);
       setFormData({
         employeeId: 0,
@@ -138,7 +138,7 @@ export default function AdminOvertimeRequestsPage() {
         reason: '',
       });
       loadOvertimeRequests();
-      alert('Tạo yêu cầu làm thêm giờ thành công!');
+      alert(`Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nNhân viên: ${response.employee.fullName}\nTrạng thái: ${response.status}`);
     } catch (error: any) {
       console.error('Error creating overtime request:', error);
       showOvertimeError(error);

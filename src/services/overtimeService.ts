@@ -27,13 +27,32 @@ export class OvertimeService {
    */
   static async createOvertimeRequest(
     data: CreateOvertimeRequestDto
-  ): Promise<OvertimeRequest> {
+  ): Promise<OvertimeRequestDetail> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<OvertimeRequest>(
-      this.BASE_URL,
-      data
-    );
-    return response.data;
+    
+    console.log('🔍 OvertimeService.createOvertimeRequest called with:', {
+      url: this.BASE_URL,
+      data: data,
+      hasEmployeeId: data.employeeId !== undefined,
+      employeeId: data.employeeId
+    });
+    
+    try {
+      const response = await axios.post<OvertimeRequestDetail>(
+        this.BASE_URL,
+        data
+      );
+      console.log('✅ OvertimeService.createOvertimeRequest success:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ OvertimeService.createOvertimeRequest error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
   }
 
   /**
