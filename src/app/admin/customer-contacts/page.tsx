@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useContacts, useSoftDeleteContact } from '@/hooks/contactHooks';
 import Link from 'next/link';
-import ContactRow from '@/components/receptionist/ContactRow';
+import ContactRow from '@/app/employee/customers/components/ContactRow';
 import { toast } from 'sonner';
 
 export default function AdminContactsList() {

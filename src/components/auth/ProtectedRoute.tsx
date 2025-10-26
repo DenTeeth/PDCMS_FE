@@ -8,6 +8,7 @@ import { Role } from '@/types/permission';
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRoles?: (string | Role)[];      // Support both string and Role enum
+  requiredBaseRole?: string;              // ✅ NEW: Check theo baseRole (admin, employee, patient)
   requiredPermissions?: string[];         // ✅ NEW: Check theo permissions (RBAC)
   requireAll?: boolean;                   // ✅ NEW: true = cần ALL permissions, false = cần ANY permission
   fallbackPath?: string;
@@ -16,11 +17,21 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRoles = [],
+  requiredBaseRole,
   requiredPermissions = [],
   requireAll = false,
   fallbackPath = '/login',
 }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { 
+    isAuthenticated, 
+    user, 
+    isLoading, 
+    hasPermission, 
+    hasAnyPermission, 
+    hasAllPermissions, 
+    hasRole,
+    getHomePath 
+  } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,23 +41,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
 
-      // ✅ Priority 1: Check permissions (RBAC - Recommended)
-      if (requiredPermissions.length > 0 && user?.permissions) {
-        const hasPermission = requireAll
-          ? requiredPermissions.every(permission => user.permissions.includes(permission))
-          : requiredPermissions.some(permission => user.permissions.includes(permission));
+      // ✅ Priority 1: Check baseRole (Recommended for layout protection)
+      if (requiredBaseRole) {
+        if (user?.baseRole !== requiredBaseRole) {
+          console.warn(`Access denied. Required baseRole: ${requiredBaseRole}, current: ${user?.baseRole}`);
+          router.push('/unauthorized');
+          return;
+        }
+      }
+      // ✅ Priority 2: Check permissions (RBAC - Recommended for feature protection)
+      else if (requiredPermissions.length > 0) {
+        const hasRequiredPermission = requireAll
+          ? hasAllPermissions(requiredPermissions)
+          : hasAnyPermission(requiredPermissions);
         
-        if (!hasPermission) {
+        if (!hasRequiredPermission) {
           console.warn(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
           router.push('/unauthorized');
           return;
         }
       }
-      // ⚠️ Priority 2: Fallback to roles check (Legacy support)
-      else if (requiredRoles.length > 0 && user?.roles) {
-        const hasRequiredRole = requiredRoles.some(role => 
-          user.roles.includes(role as string)
-        );
+      // ⚠️ Priority 3: Fallback to roles check (Legacy support)
+      else if (requiredRoles.length > 0) {
+        const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
         
         if (!hasRequiredRole) {
           console.warn(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
@@ -55,7 +72,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         }
       }
     }
-  }, [isAuthenticated, user, isLoading, requiredRoles, requiredPermissions, requireAll, router, fallbackPath]);
+  }, [isAuthenticated, user, isLoading, requiredRoles, requiredBaseRole, requiredPermissions, requireAll, router, fallbackPath]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -71,29 +88,53 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // ✅ Check permissions (RBAC - Recommended)
-  if (requiredPermissions.length > 0 && user?.permissions) {
-    const hasPermission = requireAll
-      ? requiredPermissions.every(permission => user.permissions.includes(permission))
-      : requiredPermissions.some(permission => user.permissions.includes(permission));
+  // ✅ Check baseRole (Recommended for layout protection)
+  if (requiredBaseRole) {
+    if (user?.baseRole !== requiredBaseRole) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+            <p className="text-sm text-gray-500">Required baseRole: {requiredBaseRole}</p>
+            <button 
+              onClick={() => router.push(getHomePath())}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+  // ✅ Check permissions (RBAC - Recommended for feature protection)
+  else if (requiredPermissions.length > 0) {
+    const hasRequiredPermission = requireAll
+      ? hasAllPermissions(requiredPermissions)
+      : hasAnyPermission(requiredPermissions);
     
-    if (!hasPermission) {
+    if (!hasRequiredPermission) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
             <p className="text-sm text-gray-500">Required: {requiredPermissions.join(', ')}</p>
+            <button 
+              onClick={() => router.push(getHomePath())}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Dashboard
+            </button>
           </div>
         </div>
       );
     }
   }
   // ⚠️ Fallback: Check roles (Legacy support)
-  else if (requiredRoles.length > 0 && user?.roles) {
-    const hasRequiredRole = requiredRoles.some(role => 
-      user.roles.includes(role as string)
-    );
+  else if (requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
     
     if (!hasRequiredRole) {
       return (
@@ -102,6 +143,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600 mb-4">You don't have the required role to access this page.</p>
             <p className="text-sm text-gray-500">Required role: {requiredRoles.join(', ')}</p>
+            <button 
+              onClick={() => router.push(getHomePath())}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Dashboard
+            </button>
           </div>
         </div>
       );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import ContactForm from '@/components/receptionist/ContactForm';
 import { useCreateContact } from '@/hooks/contactHooks';
 import { toast } from 'sonner';
 
@@ -13,7 +12,7 @@ export default function AdminCreateCustomerContact() {
         try {
             await create.mutateAsync(values);
             toast.success('Customer contact created (admin test)');
-            router.push('/admin');
+            router.push('/admin/customer-contacts');
         } catch (err: any) {
             toast.error(err.message || 'Create failed');
         }
@@ -28,11 +27,9 @@ export default function AdminCreateCustomerContact() {
                         <p className="text-sm text-muted-foreground">Temporary page to test contact creation from admin area</p>
                     </div>
                     <div>
-                        <button className="btn-outline" onClick={() => router.push('/admin')}>Back</button>
+                        <button className="btn-outline" onClick={() => router.push('/admin/customer-contacts')}>Back</button>
                     </div>
                 </div>
-
-                <ContactForm onSubmit={onSubmit} />
             </div>
         </div>
     );

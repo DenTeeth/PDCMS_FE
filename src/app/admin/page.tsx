@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Users, Calendar, FileText, Settings, Activity } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -34,7 +35,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute requiredBaseRole="admin">
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600">Dental clinic management system overview</p>
@@ -124,15 +126,8 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-lg font-medium">Quick Actions</h2>
-        <div className="mt-3 flex items-center gap-3">
-          <a href="/admin/customer-contacts/new" className="btn btn-primary">Create Customer Contact (Temp)</a>
-        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
 

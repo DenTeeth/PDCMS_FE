@@ -80,15 +80,29 @@ class ShiftRegistrationService {
    * @param data Registration data
    * @returns Created shift registration
    */
-  async createRegistration(data: CreateShiftRegistrationRequest): Promise<ShiftRegistration> {
+  async createRegistration(data: CreateShiftRegistrationRequest | any): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post<ShiftRegistrationResponse>(this.endpoint, data);
     
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
+    try {
+      const response = await axiosInstance.post<ShiftRegistrationResponse>(this.endpoint, data);
+      
+      // Handle both response structures
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data as unknown as ShiftRegistration;
+    } catch (error: any) {
+      // Re-throw with more specific error message
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Failed to create shift registration');
+      }
     }
-    return response.data as unknown as ShiftRegistration;
   }
 
   /**
@@ -99,13 +113,26 @@ class ShiftRegistrationService {
    */
   async updateRegistration(registrationId: string, data: UpdateShiftRegistrationRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
     
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
+    try {
+      const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
+      
+      // Handle both response structures
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data as unknown as ShiftRegistration;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Failed to update shift registration');
+      }
     }
-    return response.data as unknown as ShiftRegistration;
   }
 
   /**
@@ -131,7 +158,16 @@ class ShiftRegistrationService {
    */
   async deleteRegistration(registrationId: string): Promise<void> {
     const axiosInstance = apiClient.getAxiosInstance();
-    await axiosInstance.delete(`${this.endpoint}/${registrationId}`);
+    
+    try {
+      await axiosInstance.delete(`${this.endpoint}/${registrationId}`);
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else {
+        throw new Error('Failed to delete shift registration');
+      }
+    }
   }
 
   /**

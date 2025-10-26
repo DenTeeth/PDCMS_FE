@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+/**
+ * Employee Patients Page
+ * Requires: VIEW_PATIENT permission
+ * 
+ * TODO: Di chuyển logic từ src/app/dentist/patients/page.tsx vào đây
+ */
+
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Card } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUserPlus,
@@ -110,23 +115,16 @@ export default function EmployeePatientsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Patient Records</h1>
-          <p className="text-gray-600 mt-1">
-            View and manage patient information
-          </p>
-        </div>
-        <Button
-          size="lg"
-          onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-primary to-secondary"
-        >
-          <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-          Add New Patient
-        </Button>
+    <ProtectedRoute requiredBaseRole="employee">
+      <div className="space-y-6">
+      <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
+        <h1 className="text-3xl font-bold text-primary-foreground mb-2">
+          <FontAwesomeIcon icon={faUsers} className="mr-3" />
+          Patient Management
+        </h1>
+        <p className="text-primary-foreground/80">
+          View and manage patient records
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -211,34 +209,7 @@ export default function EmployeePatientsPage() {
           </CardContent>
         )}
       </Card>
-
-      {/* Patient Table */}
-      <Card>
-        <CardContent className="p-6">
-          <PatientTable
-            patients={patients}
-            loading={loading}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setCurrentPage(0);
-            }}
-            onViewDetails={handleViewDetails}
-            onRefresh={loadPatients}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Create Patient Modal */}
-      <CreatePatientModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onSuccess={handlePatientCreated}
-      />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

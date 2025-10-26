@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import {
   Search,
   Clock,
@@ -42,10 +41,12 @@ import { WorkShift } from '@/types/workShift';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 import { employeeService } from '@/services/employeeService';
 import { workShiftService } from '@/services/workShiftService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ==================== MAIN COMPONENT ====================
 export default function PartTimeManagementPage() {
   const router = useRouter();
+  const { user, hasPermission } = useAuth();
   
   // State management
   const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
@@ -63,12 +64,12 @@ export default function PartTimeManagementPage() {
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [createFormData, setCreateFormData] = useState<CreateShiftRegistrationRequest>({
+  const [createFormData, setCreateFormData] = useState({
     employeeId: 0,
     workShiftId: '',
-    daysOfWeek: [],
+    daysOfWeek: [] as DayOfWeek[],
     effectiveFrom: '',
-    effectiveTo: ''
+    effectiveTo: '' // Use empty string for form input
   });
 
   // Edit modal states
@@ -77,9 +78,7 @@ export default function PartTimeManagementPage() {
   const [updating, setUpdating] = useState(false);
   const [editFormData, setEditFormData] = useState<UpdateShiftRegistrationRequest>({});
 
-  // Delete modal states
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingRegistration, setDeletingRegistration] = useState<ShiftRegistration | null>(null);
+  // Delete state
   const [deleting, setDeleting] = useState(false);
 
   // Dropdown data
@@ -91,7 +90,14 @@ export default function PartTimeManagementPage() {
   useEffect(() => {
     fetchRegistrations();
     fetchDropdownData();
-  }, [currentPage, filterEmployeeId, filterWorkShiftId, filterIsActive]);
+    
+    // Debug: Log user permissions
+    console.log('🔍 Current user:', user);
+    console.log('🔍 User permissions:', user?.permissions);
+    console.log('🔍 Has CREATE_REGISTRATION:', hasPermission(Permission.CREATE_REGISTRATION));
+    console.log('🔍 Has UPDATE_REGISTRATION_ALL:', hasPermission(Permission.UPDATE_REGISTRATION_ALL));
+    console.log('🔍 Has DELETE_REGISTRATION_ALL:', hasPermission(Permission.DELETE_REGISTRATION_ALL));
+  }, [currentPage, filterEmployeeId, filterWorkShiftId, filterIsActive, user, hasPermission]);
 
   const fetchRegistrations = async () => {
     try {
@@ -108,6 +114,10 @@ export default function PartTimeManagementPage() {
       if (filterIsActive) params.isActive = filterIsActive === 'true';
 
       const response = await shiftRegistrationService.getRegistrations(params);
+        
+      console.log('📋 Fetched registrations response:', response);
+      console.log('📋 Registration IDs available:', response.content?.map(r => r.registrationId));
+      
       setRegistrations(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
@@ -126,20 +136,17 @@ export default function PartTimeManagementPage() {
       // Fetch part-time employees only
       const employeesResponse = await employeeService.getEmployees({
         size: 1000, // Get all part-time employees
-        isActive: true
+        isActive: true,
+        employeeType: EmploymentType.PART_TIME // Filter part-time employees at API level
       });
       
-      // Filter for part-time employees
-      const partTimeEmps = employeesResponse.content.filter(
-        emp => emp.employmentType === EmploymentType.PART_TIME
-      );
-      setPartTimeEmployees(partTimeEmps);
+      setPartTimeEmployees(employeesResponse.content);
 
       // Fetch active work shifts
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
     } catch (error: any) {
-      console.error('Failed to fetch dropdown data:', error);
+      console.error('❌ Failed to fetch dropdown data:', error);
       toast.error('Failed to load employees and work shifts');
     } finally {
       setLoadingDropdowns(false);
@@ -150,22 +157,81 @@ export default function PartTimeManagementPage() {
   const handleCreateRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!createFormData.employeeId || !createFormData.workShiftId || 
-        !createFormData.effectiveFrom || createFormData.daysOfWeek.length === 0) {
-      toast.error('Please fill in all required fields');
+    // Check permission first
+    if (!hasPermission(Permission.CREATE_REGISTRATION)) {
+      toast.error('You do not have permission to create shift registrations');
       return;
+    }
+    
+    // Validate required fields
+    if (!createFormData.employeeId || createFormData.employeeId === 0) {
+      toast.error('Please select an employee');
+      return;
+    }
+    
+    if (!createFormData.workShiftId) {
+      toast.error('Please select a work shift');
+      return;
+    }
+    
+    if (!createFormData.effectiveFrom) {
+      toast.error('Please select effective from date');
+      return;
+    }
+    
+    if (createFormData.daysOfWeek.length === 0) {
+      toast.error('Please select at least one day of week');
+      return;
+    }
+
+    // Validate dates
+    if (createFormData.effectiveTo) {
+      const fromDate = new Date(createFormData.effectiveFrom);
+      const toDate = new Date(createFormData.effectiveTo);
+      if (toDate <= fromDate) {
+        toast.error('Effective To date must be after Effective From date');
+        return;
+      }
     }
 
     try {
       setCreating(true);
-      await shiftRegistrationService.createRegistration(createFormData);
+      
+      // Prepare payload exactly as API expects (based on provided body)
+      const payload: any = {
+        employeeId: Number(createFormData.employeeId),
+        workShiftId: createFormData.workShiftId,
+        daysOfWeek: createFormData.daysOfWeek,
+        effectiveFrom: createFormData.effectiveFrom
+      };
+
+      // Only include effectiveTo if it has a value
+      if (createFormData.effectiveTo && createFormData.effectiveTo.trim() !== '') {
+        payload.effectiveTo = createFormData.effectiveTo;
+      }
+      
+      console.log('📤 Submitting shift registration payload:', payload);
+      console.log('🔍 Expected result: Registration should be created with isActive: true');
+      
+      await shiftRegistrationService.createRegistration(payload);
       toast.success('Shift registration created successfully');
       setShowCreateModal(false);
       resetCreateForm();
-      fetchRegistrations();
+      
+      // Refresh the registrations list to show new data
+      await fetchRegistrations();
     } catch (error: any) {
-      console.error('Failed to create registration:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to create shift registration';
+      console.error('❌ Failed to create registration:', error);
+      
+      let errorMessage = 'Failed to create shift registration';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setCreating(false);
@@ -178,7 +244,7 @@ export default function PartTimeManagementPage() {
       workShiftId: '',
       daysOfWeek: [],
       effectiveFrom: '',
-      effectiveTo: ''
+      effectiveTo: '' // Use empty string for form input
     });
   };
 
@@ -189,10 +255,44 @@ export default function PartTimeManagementPage() {
       workShiftId: registration.slotId,
       daysOfWeek: registration.daysOfWeek,
       effectiveFrom: registration.effectiveFrom,
-      effectiveTo: registration.effectiveTo,
-      isActive: registration.isActive
+      effectiveTo: registration.effectiveTo || '',
+      isActive: registration.active // Map from 'active' to 'isActive' for form
     });
     setShowEditModal(true);
+  };
+
+  // ==================== DELETE REGISTRATION ====================
+  const handleDeleteRegistration = async (registration: ShiftRegistration) => {
+    // Check permission first
+    if (!hasPermission(Permission.DELETE_REGISTRATION_ALL)) {
+      toast.error('You do not have permission to delete shift registrations');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete this shift registration for Employee ID ${registration.employeeId}?`)) {
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting registration:', registration.registrationId);
+      
+      await shiftRegistrationService.deleteRegistration(registration.registrationId);
+      toast.success('Shift registration deleted successfully');
+      await fetchRegistrations();
+    } catch (error: any) {
+      console.error('❌ Failed to delete registration:', error);
+      
+      let errorMessage = 'Failed to delete shift registration';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+    }
   };
 
   const handleUpdateRegistration = async (e: React.FormEvent) => {
@@ -200,49 +300,84 @@ export default function PartTimeManagementPage() {
     
     if (!editingRegistration) return;
 
+    // Check permission first
+    if (!hasPermission(Permission.UPDATE_REGISTRATION_ALL)) {
+      toast.error('You do not have permission to update shift registrations');
+      return;
+    }
+
+    // Validate required fields
+    if (!editFormData.workShiftId) {
+      toast.error('Please select a work shift');
+      return;
+    }
+    
+    if (!editFormData.effectiveFrom) {
+      toast.error('Please select effective from date');
+      return;
+    }
+    
+    if (!editFormData.daysOfWeek || editFormData.daysOfWeek.length === 0) {
+      toast.error('Please select at least one day of week');
+      return;
+    }
+
+    // Validate dates
+    if (editFormData.effectiveTo && editFormData.effectiveTo.trim() !== '') {
+      const fromDate = new Date(editFormData.effectiveFrom);
+      const toDate = new Date(editFormData.effectiveTo);
+      if (toDate <= fromDate) {
+        toast.error('Effective To date must be after Effective From date');
+        return;
+      }
+    }
+
     try {
       setUpdating(true);
+      
+      // Prepare payload exactly as API expects (similar to create payload)
+      const payload: any = {
+        workShiftId: editFormData.workShiftId,
+        daysOfWeek: editFormData.daysOfWeek,
+        effectiveFrom: editFormData.effectiveFrom,
+        isActive: editFormData.isActive
+      };
+
+      // Only include effectiveTo if it has a value
+      if (editFormData.effectiveTo && editFormData.effectiveTo.trim() !== '') {
+        payload.effectiveTo = editFormData.effectiveTo;
+      }
+      
+      console.log('📤 Updating shift registration payload:', payload);
+      console.log('📤 Registration ID:', editingRegistration.registrationId);
+      
       await shiftRegistrationService.updateRegistration(
         editingRegistration.registrationId, 
-        editFormData
+        payload
       );
       toast.success('Shift registration updated successfully');
       setShowEditModal(false);
       setEditingRegistration(null);
-      fetchRegistrations();
+      await fetchRegistrations();
     } catch (error: any) {
-      console.error('Failed to update registration:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to update shift registration';
+      console.error('❌ Failed to update registration:', error);
+      
+      let errorMessage = 'Failed to update shift registration';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setUpdating(false);
     }
   };
 
-  // ==================== DELETE REGISTRATION ====================
-  const handleDeleteRegistration = (registration: ShiftRegistration) => {
-    setDeletingRegistration(registration);
-    setShowDeleteModal(true);
-  };
 
-  const confirmDeleteRegistration = async () => {
-    if (!deletingRegistration) return;
-
-    try {
-      setDeleting(true);
-      await shiftRegistrationService.deleteRegistration(deletingRegistration.registrationId);
-      toast.success('Shift registration deleted successfully');
-      setShowDeleteModal(false);
-      setDeletingRegistration(null);
-      fetchRegistrations();
-    } catch (error: any) {
-      console.error('Failed to delete registration:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to delete shift registration';
-      toast.error(errorMessage);
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   // ==================== REACTIVATE REGISTRATION ====================
   const handleReactivateRegistration = async (registration: ShiftRegistration) => {
@@ -433,8 +568,8 @@ export default function PartTimeManagementPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge variant={registration.isActive ? "default" : "secondary"}>
-                          {registration.isActive ? (
+                        <Badge variant={registration.active ? "default" : "secondary"}>
+                          {registration.active ? (
                             <>
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Active
@@ -457,7 +592,7 @@ export default function PartTimeManagementPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           
-                          {registration.isActive ? (
+                          {registration.active ? (
                             <Button
                               variant="outline"
                               size="sm"
@@ -769,43 +904,6 @@ export default function PartTimeManagementPage() {
         </div>
       )}
 
-      {/* Delete Modal */}
-      {showDeleteModal && deletingRegistration && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-red-600">Delete Shift Registration</h2>
-            <p className="mb-4">
-              Are you sure you want to delete registration <strong>{deletingRegistration.registrationId}</strong>?
-              This action will deactivate the registration but preserve the data for audit purposes.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeletingRegistration(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDeleteRegistration}
-                disabled={deleting}
-              >
-                {deleting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete Registration'
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
       </div>
     </ProtectedRoute>
   );
