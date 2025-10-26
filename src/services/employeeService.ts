@@ -18,7 +18,7 @@ import {
  * Employee Service Class
  * Handles all employee-related API operations
  */
-class EmployeeService {
+export class EmployeeService {
   private readonly endpoint = '/employees';
 
   /**
@@ -32,18 +32,26 @@ class EmployeeService {
       size = 12,
       sortBy = 'employeeCode',
       sortDirection = 'ASC',
+      employeeType,
       ...filters
     } = params;
 
+    // Map employeeType to employmentType for backend compatibility
+    const queryParams: any = {
+      page,
+      size,
+      sortBy,
+      sortDirection,
+      ...filters
+    };
+    
+    if (employeeType) {
+      queryParams.employmentType = employeeType; // Backend expects employmentType
+    }
+
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`${this.endpoint}/admin/all`, {
-      params: {
-        page,
-        size,
-        sortBy,
-        sortDirection,
-        ...filters
-      }
+      params: queryParams
     });
 
     // BE có thể trả về trực tiếp hoặc wrapped trong { data }
@@ -77,7 +85,15 @@ class EmployeeService {
    */
   async createEmployee(data: CreateEmployeeRequest): Promise<Employee> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post(this.endpoint, data);
+    
+    // Map employeeType to employmentType for backend compatibility
+    const payload = {
+      ...data,
+      employmentType: data.employeeType, // Backend expects employmentType
+    };
+    delete (payload as any).employeeType; // Remove frontend field
+    
+    const response = await axiosInstance.post(this.endpoint, payload);
     
     if (response.data?.data) {
       return response.data.data;
@@ -93,7 +109,15 @@ class EmployeeService {
    */
   async updateEmployee(employeeCode: string, data: UpdateEmployeeRequest): Promise<Employee> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.patch(`${this.endpoint}/${employeeCode}`, data);
+    
+    // Map employeeType to employmentType for backend compatibility if present
+    const payload = { ...data };
+    if (data.employeeType) {
+      (payload as any).employmentType = data.employeeType;
+      delete (payload as any).employeeType;
+    }
+    
+    const response = await axiosInstance.patch(`${this.endpoint}/${employeeCode}`, payload);
     
     if (response.data?.data) {
       return response.data.data;

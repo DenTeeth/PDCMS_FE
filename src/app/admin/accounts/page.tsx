@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +50,8 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute requiredBaseRole="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -224,7 +226,8 @@ export default function AccountsPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

@@ -27,8 +27,8 @@ export interface ShiftRegistration {
   slotId: string;
   daysOfWeek: DayOfWeek[];
   effectiveFrom: string; // YYYY-MM-DD format
-  effectiveTo?: string; // YYYY-MM-DD format, nullable
-  isActive: boolean;
+  effectiveTo?: string | null; // YYYY-MM-DD format, nullable
+  active: boolean; // API returns 'active', not 'isActive'
 }
 
 /**
@@ -40,6 +40,7 @@ export interface CreateShiftRegistrationRequest {
   daysOfWeek: DayOfWeek[];
   effectiveFrom: string; // YYYY-MM-DD format
   effectiveTo?: string; // YYYY-MM-DD format, optional
+  active?: boolean; // Active status, defaults to true
 }
 
 /**
@@ -49,7 +50,7 @@ export interface UpdateShiftRegistrationRequest {
   workShiftId?: string;
   daysOfWeek?: DayOfWeek[];
   effectiveFrom?: string;
-  effectiveTo?: string;
+  effectiveTo?: string | null; // Can be null
   isActive?: boolean;
 }
 
