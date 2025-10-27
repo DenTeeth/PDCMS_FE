@@ -37,17 +37,6 @@ const HeroSection = memo(function HeroSection() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5 }}
-              className="mb-6"
-            >
-              <span className="inline-block px-6 py-3 bg-primary/10 backdrop-blur-sm text-primary rounded-full text-sm font-medium border border-primary/20">
-                ✨ Introducing Dentia
-              </span>
-            </motion.div>
-
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -55,7 +44,8 @@ const HeroSection = memo(function HeroSection() {
               className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight"
             >
               Elevating Smiles with
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary mt-3">
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary">
                 Expert Care and a Gentle Touch
               </span>
             </motion.h1>
@@ -79,33 +69,14 @@ const HeroSection = memo(function HeroSection() {
                 href="#appointment"
                 className="inline-block bg-primary text-primary-foreground px-10 py-4 rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl font-semibold text-base transform hover:scale-105"
               >
-                📅 Book Appointment
+                Book Appointment
               </Link>
               <Link
                 href="#services"
                 className="inline-block bg-white/90 backdrop-blur-sm border-2 border-primary/30 text-foreground px-10 py-4 rounded-lg hover:bg-white transition-all font-semibold text-base transform hover:scale-105 shadow-lg"
               >
-                🔍 Our Services
+                Our Services
               </Link>
-            </motion.div>
-
-            {/* Google Rating */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/80 backdrop-blur-md rounded-2xl px-8 py-5 shadow-xl border border-white/50 max-w-2xl mx-auto"
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-foreground text-lg">Google Rating</span>
-                <span className="font-bold text-3xl text-foreground">5.0</span>
-              </div>
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-2xl">⭐</span>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground font-medium">Based on 23k Reviews</span>
             </motion.div>
           </motion.div>
         </div>
