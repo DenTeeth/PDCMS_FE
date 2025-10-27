@@ -138,9 +138,6 @@ export default function AboutSection() {
                   transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
                   className="flex items-start space-x-4"
                 >
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
-                    {feature.icon}
-                  </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">
                       {feature.title}
