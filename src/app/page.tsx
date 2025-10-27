@@ -1,4 +1,4 @@
-import dynamic from "next/dynamic";
+﻿import dynamic from "next/dynamic";
 import Navigation from "@/components/layout/Navigation";
 import HeroSection from "@/components/homepage/HeroSection";
 import StatsSection from "@/components/homepage/StatsSection";
@@ -40,11 +40,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      {/* Critical above-the-fold content loaded immediately */}
       <HeroSection />
       <StatsSection />
-
-      {/* Below-the-fold content lazy loaded for better performance */}
       <AboutSection />
       <FeaturesSection />
       <ServicesSection />
