@@ -21,7 +21,7 @@ const doctors: Doctor[] = [
     specialty: "General Dentistry",
     experience: "15+ years of experience",
     description: "Leading specialist in general dentistry with extensive experience in comprehensive oral care.",
-    avatar: "/images/doctors/doctor1.jpg", // Place your doctor images in public/images/doctors/
+    avatar: "/images/dentist1.webp",
   },
   {
     id: 2,
@@ -29,7 +29,7 @@ const doctors: Doctor[] = [
     specialty: "Cosmetic Dentistry",
     experience: "12+ years of experience",
     description: "Expert in smile makeovers, veneers, and advanced cosmetic procedures.",
-    avatar: "/images/doctors/doctor2.jpg",
+    avatar: "/images/dentist2.webp",
   },
   {
     id: 3,
@@ -37,7 +37,7 @@ const doctors: Doctor[] = [
     specialty: "Orthodontics",
     experience: "18+ years of experience",
     description: "Specialist in braces and aligners with cutting-edge orthodontic techniques.",
-    avatar: "/images/doctors/doctor3.jpg",
+    avatar: "/images/dentist3.webp",
   },
   {
     id: 4,
@@ -45,7 +45,7 @@ const doctors: Doctor[] = [
     specialty: "Pediatric Dentistry",
     experience: "10+ years of experience",
     description: "Gentle care specialist for children with a fun, compassionate approach.",
-    avatar: "/images/doctors/doctor4.jpg",
+    avatar: "/images/dentist4.webp",
   }
 ];
 
@@ -93,44 +93,94 @@ export default function DoctorsSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -10, transition: { duration: 0.3 } }}
-              className="bg-card rounded-2xl shadow-lg hover:shadow-2xl transition-all border border-border overflow-hidden group"
+              className="relative group"
             >
-              <div className="relative">
-                <div className="relative w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20">
-                  <Image
-                    src={doctor.avatar}
-                    alt={doctor.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    quality={85}
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-
-              <div className="p-6 text-center space-y-3">
-                <h3 className="text-lg font-bold text-foreground">{doctor.name}</h3>
-                <p className="text-primary font-semibold text-sm">
-                  {doctor.specialty}
-                </p>
-                <p className="text-xs text-muted-foreground font-medium">{doctor.experience}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {doctor.description}
-                </p>
+              <Link
+                href={`/Doctors/${doctor.id}`}
+                className="block"
+              >
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{
+                    y: -8,
+                    transition: {
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 10
+                    }
+                  }}
+                  className="bg-card rounded-2xl shadow-lg hover:shadow-2xl transition-all border border-border overflow-hidden cursor-pointer relative h-full flex flex-col"
                 >
-                  <Link
-                    href={`#appointment`}
-                    className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm mt-2"
-                  >
-                    Book Appointment
-                  </Link>
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
+
+                  <div className="relative flex flex-col flex-grow">
+                    <div className="relative w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
+                      <Image
+                        src={doctor.avatar}
+                        alt={doctor.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        quality={85}
+                      />
+                      {/* Medical cross badge */}
+                      <div className="absolute top-4 right-4 w-16 h-16 flex items-center justify-center">
+                        <Image
+                          src="/logo1.png"
+                          alt="DenTeeth Logo"
+                          width={64}
+                          height={64}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-6 text-center space-y-3 relative flex flex-col">
+                      {/* Decorative line */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-r from-primary to-secondary rounded-full" />
+
+                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors pt-2">{doctor.name}</h3>
+                      <p className="text-primary font-semibold text-sm bg-primary/10 rounded-full px-3 py-1 inline-block">
+                        {doctor.specialty}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {doctor.experience}
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed h-16 overflow-hidden">
+                        {doctor.description}
+                      </p>
+
+                      {/* Specialization tags */}
+                      <div className="flex flex-wrap gap-2 justify-center pt-2">
+                        {doctor.id === 1 && (
+                          <>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Checkups</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Cleanings</span>
+                          </>
+                        )}
+                        {doctor.id === 2 && (
+                          <>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Whitening</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Veneers</span>
+                          </>
+                        )}
+                        {doctor.id === 3 && (
+                          <>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Braces</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Invisalign</span>
+                          </>
+                        )}
+                        {doctor.id === 4 && (
+                          <>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Kids Care</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Prevention</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
-              </div>
+              </Link>
             </motion.div>
           ))}
         </div>

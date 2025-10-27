@@ -7,12 +7,12 @@ import Link from "next/link";
 
 const features = [
   {
-    icon: "📋",
+    icon: "�",
     title: "Personalized Treatment Plans",
     description: "Customized care tailored to your unique dental needs",
   },
   {
-    icon: "🤝",
+    icon: "🩺",
     title: "Gentle Care for Kids and Adults",
     description: "Compassionate approach for patients of all ages",
   },
@@ -52,7 +52,7 @@ export default function AboutSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Placeholder for images - can be replaced with real images later */}
+          {/* Images Grid */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -62,15 +62,53 @@ export default function AboutSection() {
             <div className="grid grid-cols-2 gap-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5"
+                className="relative h-64 rounded-2xl overflow-hidden shadow-lg"
               >
-                <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10" />
+                <Image
+                  src="/images/dentist1.webp"
+                  alt="Dental Professional"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="relative h-64 rounded-2xl overflow-hidden shadow-lg mt-8 bg-gradient-to-br from-secondary/5 to-accent/5"
+                className="relative h-64 rounded-2xl overflow-hidden shadow-lg mt-8"
               >
-                <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10" />
+                <Image
+                  src="/images/dentist2.webp"
+                  alt="Expert Dentist"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              </motion.div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
+              >
+                <Image
+                  src="/images/dentist3.webp"
+                  alt="Dental Care Specialist"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
+              >
+                <Image
+                  src="/images/dentist4.webp"
+                  alt="Dental Expert"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
               </motion.div>
             </div>
           </motion.div>
