@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import DynamicSidebar from '@/components/layout/DynamicSidebar';
+import DynamicSidebar from '@/components/layout/NewDynamicSidebar';
 import { MANAGER_NAVIGATION } from '@/constants/permissions';
 
 export default function ManagerLayout({ children }: { children: ReactNode }) {
