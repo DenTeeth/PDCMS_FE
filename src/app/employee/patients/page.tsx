@@ -115,7 +115,10 @@ export default function EmployeePatientsPage() {
   };
 
   return (
-    <ProtectedRoute requiredBaseRole="employee">
+    <ProtectedRoute 
+      requiredBaseRole="employee" 
+      requiredPermissions={['VIEW_PATIENT']}
+    >
       <div className="space-y-6">
       <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl font-bold text-primary-foreground mb-2">

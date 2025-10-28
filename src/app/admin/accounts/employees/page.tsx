@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import Select from '@/components/ui/select';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
   Eye,
@@ -37,10 +38,18 @@ import { employeeService } from '@/services/employeeService';
 import { roleService } from '@/services/roleService';
 import { Specialization } from '@/types/specialization';
 import { specializationService } from '@/services/specializationService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ==================== MAIN COMPONENT ====================
 export default function EmployeesPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  
+  // Permission checks
+  const canCreate = user?.permissions?.includes('CREATE_EMPLOYEE') || false;
+  const canUpdate = user?.permissions?.includes('UPDATE_EMPLOYEE') || false;
+  const canDelete = user?.permissions?.includes('DELETE_EMPLOYEE') || false;
+  const canView = user?.permissions?.includes('VIEW_EMPLOYEE') || false;
   
   // State management
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -344,14 +353,22 @@ export default function EmployeesPage() {
 
   // ==================== RENDER ====================
   return (
-    <div className="space-y-6 p-6">
+    <ProtectedRoute 
+      requiredBaseRole="admin" 
+      requiredPermissions={['VIEW_EMPLOYEE']}
+    >
+      <div className="space-y-6 p-6">
       {/* ==================== HEADER ==================== */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
           <p className="text-gray-600">View and manage employee information</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
+        <Button 
+          onClick={() => setShowCreateModal(true)}
+          disabled={!canCreate}
+          title={!canCreate ? "Bạn không có quyền tạo nhân viên mới" : ""}
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Employee
         </Button>
@@ -569,6 +586,8 @@ export default function EmployeesPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
+                        disabled={!canView}
+                        title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
@@ -580,6 +599,8 @@ export default function EmployeesPage() {
                           e.stopPropagation();
                           openEditModal(employee);
                         }}
+                        disabled={!canUpdate}
+                        title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
@@ -667,6 +688,8 @@ export default function EmployeesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
+                            disabled={!canView}
+                            title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
@@ -678,6 +701,8 @@ export default function EmployeesPage() {
                               e.stopPropagation();
                               openEditModal(employee);
                             }}
+                            disabled={!canUpdate}
+                            title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
@@ -1362,7 +1387,11 @@ export default function EmployeesPage() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={updating}>
+                  <Button 
+                    type="submit" 
+                    disabled={updating || !canUpdate}
+                    title={!canUpdate ? "Bạn không có quyền cập nhật nhân viên" : ""}
+                  >
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1381,6 +1410,7 @@ export default function EmployeesPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

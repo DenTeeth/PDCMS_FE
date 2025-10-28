@@ -126,13 +126,10 @@ export interface TimeOffType {
   typeId: string;
   typeName: string;
   typeCode: string;
-  description: string;
-  requiresBalance: boolean;
-  defaultDaysPerYear?: number | null;
+  description: string | null;
+  requiresApproval: boolean;
   isPaid: boolean;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 

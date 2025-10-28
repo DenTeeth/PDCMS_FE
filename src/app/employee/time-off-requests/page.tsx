@@ -38,10 +38,13 @@ import {
 } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
+import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 
 export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { is403Error, handleError, clearError } = useApiErrorHandler();
   
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
@@ -86,14 +89,16 @@ export default function EmployeeTimeOffRequestsPage() {
 
   const loadTimeOffRequests = async () => {
     try {
+      clearError(); // Clear any previous errors
       const response = await TimeOffRequestService.getTimeOffRequests({
         page: 0,
         size: 50,
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
       setTimeOffRequests(response.content || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading time off requests:', error);
+      handleError(error, 'Không thể tải danh sách yêu cầu nghỉ phép. Vui lòng kiểm tra quyền truy cập.');
     }
   };
 
@@ -189,6 +194,17 @@ export default function EmployeeTimeOffRequestsPage() {
           <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
         </div>
       </div>
+    );
+  }
+
+  // Show unauthorized message if 403 error
+  if (is403Error) {
+    return (
+      <UnauthorizedMessage
+        title="Không có quyền truy cập"
+        message="Tài khoản của bạn chưa được cấp quyền để xem yêu cầu nghỉ phép. Vui lòng liên hệ quản trị viên để được cấp quyền."
+        onRefresh={loadData}
+      />
     );
   }
 
@@ -346,9 +362,25 @@ export default function EmployeeTimeOffRequestsPage() {
                   onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
                   options={timeOffTypes?.map(type => ({
                     value: type.typeId,
-                    label: type.typeName
+                    label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
                   })) || []}
                 />
+                {createForm.timeOffTypeId && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {(() => {
+                      const selectedType = timeOffTypes?.find(t => t.typeId === createForm.timeOffTypeId);
+                      return selectedType ? (
+                        <div>
+                          <p><strong>Mã:</strong> {selectedType.typeCode}</p>
+                          <p><strong>Yêu cầu phê duyệt:</strong> {selectedType.requiresApproval ? 'Có' : 'Không'}</p>
+                          {selectedType.description && (
+                            <p><strong>Mô tả:</strong> {selectedType.description}</p>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
               </div>
               
               <div>

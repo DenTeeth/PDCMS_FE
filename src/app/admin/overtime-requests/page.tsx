@@ -251,109 +251,107 @@ export default function AdminOvertimeRequestsPage() {
       </Card>
 
       {/* Overtime Requests List */}
-      <div className="grid gap-4">
-        {filteredRequests.map((request) => {
-          const statusConfig = OVERTIME_STATUS_CONFIG[request.status];
-          return (
-            <Card key={request.requestId} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {request.requestId}
-                      </h3>
-                      <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faUser} className="text-gray-400" />
-                        <span>{request.employeeName}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
-                        <span>{format(new Date(request.workDate), 'dd/MM/yyyy', { locale: vi })}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faClock} className="text-gray-400" />
-                        <span>{request.workShiftName}</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-700 mt-3">{request.reason}</p>
-                    
-                    {request.rejectedReason && (
-                      <p className="text-red-600 mt-2">
-                        <strong>Lý do từ chối:</strong> {request.rejectedReason}
-                      </p>
-                    )}
-                    
-                    {request.cancellationReason && (
-                      <p className="text-gray-600 mt-2">
-                        <strong>Lý do hủy:</strong> {request.cancellationReason}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/admin/overtime-requests/${request.requestId}`)}
-                    >
-                      <FontAwesomeIcon icon={faEye} className="mr-1" />
-                      Chi tiết
-                    </Button>
-                    
-                    {request.status === OvertimeStatus.PENDING && (
-                      <>
-                        {canApprove && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách yêu cầu làm thêm giờ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Mã yêu cầu</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Trạng thái</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Nhân viên</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Ngày làm việc</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRequests.map((request) => {
+                  const statusConfig = OVERTIME_STATUS_CONFIG[request.status];
+                  return (
+                    <tr key={request.requestId} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-gray-900">{request.requestId}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                          {statusConfig.label}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon icon={faUser} className="text-gray-400" />
+                          <span>{request.employeeName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
+                          <span>{format(new Date(request.workDate), 'dd/MM/yyyy', { locale: vi })}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-green-600 border-green-600 hover:bg-green-50"
-                            onClick={() => openStatusModal(request, 'approve')}
+                            onClick={() => router.push(`/admin/overtime-requests/${request.requestId}`)}
                           >
-                            <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                            Duyệt
+                            <FontAwesomeIcon icon={faEye} className="mr-1" />
+                            Chi tiết
                           </Button>
-                        )}
-                        
-                        {canReject && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => openStatusModal(request, 'reject')}
-                          >
-                            <FontAwesomeIcon icon={faTimes} className="mr-1" />
-                            Từ chối
-                          </Button>
-                        )}
-                        
-                        {canCancel && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-gray-600 border-gray-600 hover:bg-gray-50"
-                            onClick={() => openStatusModal(request, 'cancel')}
-                          >
-                            <FontAwesomeIcon icon={faBan} className="mr-1" />
-                            Hủy
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                          
+                          {request.status === OvertimeStatus.PENDING && (
+                            <>
+                              {canApprove && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  onClick={() => openStatusModal(request, 'approve')}
+                                >
+                                  <FontAwesomeIcon icon={faCheck} className="mr-1" />
+                                  Duyệt
+                                </Button>
+                              )}
+                              
+                              {canReject && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => openStatusModal(request, 'reject')}
+                                >
+                                  <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                                  Từ chối
+                                </Button>
+                              )}
+                              
+                              {canCancel && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-gray-600 border-gray-600 hover:bg-gray-50"
+                                  onClick={() => openStatusModal(request, 'cancel')}
+                                >
+                                  <FontAwesomeIcon icon={faBan} className="mr-1" />
+                                  Hủy
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {filteredRequests.length === 0 && (
         <Card>
