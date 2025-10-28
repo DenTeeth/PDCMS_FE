@@ -45,7 +45,6 @@ export interface NavigationItem {
   name: string;
   href?: string; // Optional for submenu parents
   icon: IconDefinition;
-  description?: string;
   requiredPermissionGroup?: string; // Tên nhóm permission
   requiredPermissions?: string[]; // Specific permissions cần thiết
   requireAll?: boolean; // true = cần tất cả permissions, false = chỉ cần 1
@@ -80,14 +79,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'User Accounts',
           href: '/admin/accounts/users',
           icon: faUser,
-          description: 'Manage patient accounts',
           requiredPermissions: ['VIEW_ACCOUNT'],
         },
         {
           name: 'Employee Accounts',
           href: '/admin/accounts/employees',
           icon: faUserTie,
-          description: 'Manage staff accounts',
           requiredPermissionGroup: 'EMPLOYEE',
         },
       ],
@@ -139,21 +136,18 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Work Shifts',
           href: '/admin/work-shifts',
           icon: faBusinessTime,
-          description: 'Define work shift templates',
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
           name: 'Part-Time Management',
           href: '/admin/part_time_management',
           icon: faClock,
-          description: 'Manage part-time employee shift registrations',
           requiredPermissions: ['VIEW_REGISTRATION_ALL'],
         },
         {
           name: 'Employee Shifts',
           href: '/admin/employee-shifts',
           icon: faCalendarDays,
-          description: 'View all employee shifts',
           requiredPermissions: ['VIEW_EMPLOYEE_SHIFT_ALL'],
         },
       ],
@@ -168,21 +162,18 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Overtime Requests',
           href: '/admin/overtime-requests',
           icon: faClockFour,
-          description: 'Manage overtime requests',
           requiredPermissions: ['VIEW_OT_ALL'],
         },
         {
           name: 'Time Off Requests',
           href: '/admin/time-off-requests',
           icon: faUmbrellaBeach,
-          description: 'Manage time off requests',
           requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
         {
           name: 'Time Off Types',
           href: '/admin/time-off-types',
           icon: faListAlt,
-          description: 'Manage time off types',
           requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
         },
       ],
@@ -218,28 +209,24 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Patients',
       href: '/employee/patients',
       icon: faHospitalUser,
-      description: 'Manage patient records',
       requiredPermissionGroup: 'PATIENT',
     },
     {
       name: 'Treatments',
       href: '/employee/treatments',
       icon: faStethoscope,
-      description: 'Manage treatments',
       requiredPermissionGroup: 'TREATMENT',
     },
     {
       name: 'Customer Contacts',
       href: '/employee/customer-contacts',
       icon: faPhone,
-      description: 'Manage customer contacts',
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
     },
     {
       name: 'Customers',
       href: '/employee/customers',
       icon: faUsers,
-      description: 'Customer management',
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
     },
     // Appointments

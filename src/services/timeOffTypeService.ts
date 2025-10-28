@@ -20,7 +20,7 @@ export class TimeOffTypeService {
    * 
    * Query parameters:
    * - isActive: Filter by active status (true/false)
-   * - requiresBalance: Filter by balance requirement (true/false)
+   * - requiresApproval: Filter by approval requirement (true/false)
    * - isPaid: Filter by payment status (true/false)
    * - page: Page number (default: 0)
    * - size: Page size (default: 20)
@@ -30,13 +30,13 @@ export class TimeOffTypeService {
    */
   static async getTimeOffTypes(params?: {
     isActive?: boolean;
-    requiresBalance?: boolean;
+    requiresApproval?: boolean;
     isPaid?: boolean;
     page?: number;
     size?: number;
-  }): Promise<TimeOffTypeListResponse> {
+  }): Promise<TimeOffType[]> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<TimeOffTypeListResponse>(
+    const response = await axios.get<TimeOffType[]>(
       this.BASE_URL,
       { params }
     );
@@ -50,24 +50,22 @@ export class TimeOffTypeService {
    */
   static async getActiveTimeOffTypes(): Promise<TimeOffType[]> {
     const response = await this.getTimeOffTypes({
-      isActive: true,
-      size: 100 // Get all active types
+      isActive: true
     });
-    return response.content;
+    return response;
   }
 
   /**
-   * Lấy danh sách loại nghỉ phép yêu cầu balance
+   * Lấy danh sách loại nghỉ phép yêu cầu phê duyệt
    * 
    * Requires: VIEW_TIME_OFF_TYPE permission
    */
-  static async getBalanceRequiredTypes(): Promise<TimeOffType[]> {
+  static async getApprovalRequiredTypes(): Promise<TimeOffType[]> {
     const response = await this.getTimeOffTypes({
       isActive: true,
-      requiresBalance: true,
-      size: 100
+      requiresApproval: true
     });
-    return response.content;
+    return response;
   }
 }
 

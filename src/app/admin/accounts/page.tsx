@@ -50,7 +50,10 @@ export default function AccountsPage() {
   };
 
   return (
-    <ProtectedRoute requiredBaseRole="admin">
+    <ProtectedRoute 
+      requiredBaseRole="admin" 
+      requiredPermissions={['VIEW_ACCOUNT']}
+    >
       <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">

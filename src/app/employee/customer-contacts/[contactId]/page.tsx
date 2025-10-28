@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faPhone, faEnvelope, faInfoCircle, faArrowLeft, faEdit, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 // Helper function to get status badge color
 const getStatusBadge = (status: string) => {
@@ -41,6 +42,7 @@ export default function ViewContactPage() {
     const del = useSoftDeleteContact();
     const { user } = useAuth();
     const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
+    const canEdit = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.update');
 
     if (isLoading) return <div className="p-6 text-center">Loading...</div>;
 
@@ -149,6 +151,8 @@ export default function ViewContactPage() {
                         size="sm"
                         onClick={() => router.push(`/employee/customer-contacts/${contactId}/edit`)}
                         className="flex items-center space-x-2"
+                        disabled={!canEdit}
+                        title={!canEdit ? "Bạn không có quyền chỉnh sửa liên hệ" : ""}
                     >
                         <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
                         <span>Edit</span>
