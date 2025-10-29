@@ -109,6 +109,12 @@ export const ADMIN_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_ROOM],
     },
     {
+      name: 'Service Management',
+      href: '/admin/services',
+      icon: faTeeth,
+      requiredPermissions: [Permission.VIEW_SERVICE],
+    },
+    {
       name: 'Settings',
       href: '/admin/settings',
       icon: faCog,

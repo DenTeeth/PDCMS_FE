@@ -53,6 +53,12 @@ export enum Permission {
   UPDATE_ROOM = 'UPDATE_ROOM',
   DELETE_ROOM = 'DELETE_ROOM',
   
+  // Service management permissions (Booking P2)
+  VIEW_SERVICE = 'VIEW_SERVICE',
+  CREATE_SERVICE = 'CREATE_SERVICE',
+  UPDATE_SERVICE = 'UPDATE_SERVICE',
+  DELETE_SERVICE = 'DELETE_SERVICE',
+  
   // Contact permissions
   CREATE_CONTACT = 'CREATE_CONTACT',
   VIEW_CONTACT = 'VIEW_CONTACT',
