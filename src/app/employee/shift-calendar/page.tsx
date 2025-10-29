@@ -101,17 +101,8 @@ export default function ShiftCalendarPage() {
   // Load data
   useEffect(() => {
     loadData();
-    if (canViewSummary) {
-      loadSummary();
-    }
+    // Không tự động load summary, chờ user nhập đủ thông tin
   }, []);
-
-  // Load summary when date range or selected employee changes
-  useEffect(() => {
-    if (canViewSummary) {
-      loadSummary();
-    }
-  }, [summaryDateRange, selectedEmployee, canViewSummary]);
 
   // Sync currentDate with FullCalendar when it mounts
   useEffect(() => {
@@ -203,6 +194,12 @@ export default function ShiftCalendarPage() {
 
   // Load summary data
   const loadSummary = async () => {
+    // Validation: Kiểm tra có đủ thông tin không
+    if (!summaryDateRange.startDate || !summaryDateRange.endDate) {
+      setSummaryError('Vui lòng chọn khoảng thời gian trước khi xem thống kê');
+      return;
+    }
+
     try {
       setSummaryLoading(true);
       setSummaryError(null);
@@ -650,6 +647,11 @@ export default function ShiftCalendarPage() {
               <div className="mt-6 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                 <FontAwesomeIcon icon={faChartBar} className="text-2xl mb-2 text-gray-400" />
                 <p className="text-gray-500">Không có dữ liệu trong khoảng thời gian đã chọn</p>
+              </div>
+            ) : !summaryData ? (
+              <div className="mt-6 text-center py-8 bg-blue-50 rounded-lg border border-blue-200">
+                <FontAwesomeIcon icon={faChartBar} className="text-2xl mb-2 text-blue-400" />
+                <p className="text-blue-600 font-medium">Chọn nhân viên và khoảng thời gian, sau đó click "Xem thống kê"</p>
               </div>
             ) : null}
           </div>
