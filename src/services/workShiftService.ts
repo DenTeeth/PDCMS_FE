@@ -83,4 +83,14 @@ export const workShiftService = {
   delete: async (workShiftId: string): Promise<void> => {
     await api.delete(`/work-shifts/${workShiftId}`);
   },
+
+  // Reactivate work shift
+  reactivate: async (workShiftId: string): Promise<WorkShift> => {
+    const response = await api.put<WorkShiftResponse>(`/work-shifts/${workShiftId}/reactivate`);
+    // Handle both response structures
+    if ('data' in response.data) {
+      return response.data.data;
+    }
+    return response.data as unknown as WorkShift;
+  },
 };
