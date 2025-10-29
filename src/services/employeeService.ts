@@ -50,7 +50,7 @@ export class EmployeeService {
     }
 
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/admin/all`, {
+    const response = await axiosInstance.get(`${this.endpoint}`, {
       params: queryParams
     });
 
