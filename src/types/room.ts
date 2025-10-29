@@ -2,7 +2,7 @@
 
 export enum RoomType {
   STANDARD = 'STANDARD',
-  SURGERY = 'SURGERY',
+  IMPLANT = 'IMPLANT',
 }
 
 export interface Room {
@@ -98,7 +98,7 @@ export interface RoomFormData {
 // Room Type Labels
 export const ROOM_TYPE_LABELS = {
   [RoomType.STANDARD]: 'Phòng tiêu chuẩn',
-  [RoomType.SURGERY]: 'Phòng phẫu thuật',
+  [RoomType.IMPLANT]: 'Phòng implant',
 } as const;
 
 // Status Labels
