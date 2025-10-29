@@ -191,6 +191,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
     },
     {
+      name: 'Room Management',
+      href: '/admin/rooms',
+      icon: faHospitalUser,
+      requiredPermissionGroup: 'ROOM_MANAGEMENT',
+    },
+    {
       name: 'Settings',
       href: '/admin/settings',
       icon: faCog,
