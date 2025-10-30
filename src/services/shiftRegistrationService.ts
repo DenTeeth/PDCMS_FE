@@ -1,8 +1,8 @@
 /**
  * Shift Registration Service
  * 
- * Based on Part-time-registration.md - Complete API Implementation
- * Last updated: October 21, 2025
+ * Based on Part-time-registration.md - Quota-based Part-Time Slot System
+ * Last updated: January 2025
  */
 
 import { apiClient } from '@/lib/api';
@@ -10,12 +10,13 @@ import {
   ShiftRegistration,
   CreateShiftRegistrationRequest,
   UpdateShiftRegistrationRequest,
-  ReplaceShiftRegistrationRequest,
+  UpdateEffectiveToRequest,
   ShiftRegistrationQueryParams,
   PaginatedShiftRegistrationResponse,
   ShiftRegistrationResponse,
   ShiftRegistrationListResponse
 } from '@/types/shiftRegistration';
+import { AvailableSlot } from '@/types/workSlot';
 
 /**
  * Shift Registration Service Class
@@ -76,11 +77,11 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Create a new shift registration
-   * @param data Registration data
+   * Create a new shift registration (Employee claims a slot)
+   * @param data Registration data (partTimeSlotId, effectiveFrom)
    * @returns Created shift registration
    */
-  async createRegistration(data: CreateShiftRegistrationRequest | any): Promise<ShiftRegistration> {
+  async createRegistration(data: CreateShiftRegistrationRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
@@ -106,7 +107,7 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Partially update a shift registration (PATCH)
+   * Partially update a shift registration (PATCH) - Admin only
    * @param registrationId Registration ID to update
    * @param data Partial update data
    * @returns Updated shift registration
@@ -136,20 +137,49 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Fully replace a shift registration (PUT)
-   * @param registrationId Registration ID to replace
-   * @param data Complete replacement data
-   * @returns Replaced shift registration
+   * Update effectiveTo date (Admin only)
+   * @param registrationId Registration ID to update
+   * @param data EffectiveTo update data
+   * @returns Updated shift registration
    */
-  async replaceRegistration(registrationId: string, data: ReplaceShiftRegistrationRequest): Promise<ShiftRegistration> {
+  async updateEffectiveTo(registrationId: string, data: UpdateEffectiveToRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.put<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
+    
+    try {
+      const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}/effective-to`, data);
+      
+      // Handle both response structures
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data as unknown as ShiftRegistration;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Failed to update effective date');
+      }
+    }
+  }
+
+  /**
+   * Get available slots for employee registration
+   * @returns List of available slots with remaining quota
+   */
+  async getAvailableSlots(): Promise<AvailableSlot[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get('/registrations/available-slots');
     
     // Handle both response structures
     if (response.data?.data) {
       return response.data.data;
     }
-    return response.data as unknown as ShiftRegistration;
+    
+    return response.data;
   }
 
   /**
@@ -182,7 +212,7 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Reactivate a soft-deleted registration
+   * Reactivate a soft-deleted registration (Admin only)
    * @param registrationId Registration ID to reactivate
    * @returns Reactivated shift registration
    */

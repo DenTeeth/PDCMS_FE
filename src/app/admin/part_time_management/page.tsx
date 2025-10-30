@@ -9,38 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  Clock,
-  Users,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Eye,
-  Plus,
-  Edit,
-  Trash2,
-  Filter,
-  RotateCcw,
-  CalendarDays,
-} from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Loader2, Eye, Edit, Trash2, RotateCcw, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 // Import types and services
 import { 
   ShiftRegistration, 
-  CreateShiftRegistrationRequest,
   UpdateShiftRegistrationRequest,
   ShiftRegistrationQueryParams,
   DayOfWeek 
 } from '@/types/shiftRegistration';
-import { Employee, EmploymentType } from '@/types/employee';
-import { WorkShift } from '@/types/workShift';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
-import { employeeService } from '@/services/employeeService';
-import { workShiftService } from '@/services/workShiftService';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ==================== MAIN COMPONENT ====================
@@ -51,26 +31,13 @@ export default function PartTimeManagementPage() {
   // State management
   const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   
   // Filter states
   const [filterEmployeeId, setFilterEmployeeId] = useState<string>('');
-  const [filterWorkShiftId, setFilterWorkShiftId] = useState<string>('');
   const [filterIsActive, setFilterIsActive] = useState<string>('');
-  
-  // Create modal states
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [createFormData, setCreateFormData] = useState({
-    employeeId: 0,
-    workShiftId: '',
-    daysOfWeek: [] as DayOfWeek[],
-    effectiveFrom: '',
-    effectiveTo: '' // Use empty string for form input
-  });
 
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -81,15 +48,15 @@ export default function PartTimeManagementPage() {
   // Delete state
   const [deleting, setDeleting] = useState(false);
 
-  // Dropdown data
-  const [partTimeEmployees, setPartTimeEmployees] = useState<Employee[]>([]);
-  const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
+  // Dropdown data (not used with new response, kept for compatibility)
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsRegistration, setDetailsRegistration] = useState<ShiftRegistration | null>(null);
+ 
 
   // ==================== FETCH DATA ====================
   useEffect(() => {
     fetchRegistrations();
-    fetchDropdownData();
     
     // Debug: Log user permissions
     console.log('🔍 Current user:', user);
@@ -97,7 +64,7 @@ export default function PartTimeManagementPage() {
     console.log('🔍 Has CREATE_REGISTRATION:', hasPermission(Permission.CREATE_REGISTRATION));
     console.log('🔍 Has UPDATE_REGISTRATION_ALL:', hasPermission(Permission.UPDATE_REGISTRATION_ALL));
     console.log('🔍 Has DELETE_REGISTRATION_ALL:', hasPermission(Permission.DELETE_REGISTRATION_ALL));
-  }, [currentPage, filterEmployeeId, filterWorkShiftId, filterIsActive, user, hasPermission]);
+  }, [currentPage]);
 
   const fetchRegistrations = async () => {
     try {
@@ -109,18 +76,21 @@ export default function PartTimeManagementPage() {
         sortDirection: 'DESC'
       };
 
-      if (filterEmployeeId) params.employeeId = parseInt(filterEmployeeId);
-      if (filterWorkShiftId) params.workShiftId = filterWorkShiftId;
-      if (filterIsActive) params.isActive = filterIsActive === 'true';
-
       const response = await shiftRegistrationService.getRegistrations(params);
-        
-      console.log('📋 Fetched registrations response:', response);
-      console.log('📋 Registration IDs available:', response.content?.map(r => r.registrationId));
       
-      setRegistrations(response.content || []);
-      setTotalPages(response.totalPages || 0);
-      setTotalElements(response.totalElements || 0);
+      console.log('📋 Fetched registrations response:', response);
+      
+      // Support both array and paginated response formats
+      if (Array.isArray(response)) {
+        setRegistrations(response);
+        setTotalPages(1);
+        setTotalElements(response.length);
+      } else {
+        console.log('📋 Registration IDs available:', response.content?.map(r => r.registrationId));
+        setRegistrations(response.content || []);
+        setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || 0);
+      }
     } catch (error: any) {
       console.error('Failed to fetch registrations:', error);
       toast.error(error.response?.data?.detail || 'Failed to fetch shift registrations');
@@ -130,27 +100,7 @@ export default function PartTimeManagementPage() {
   };
 
   const fetchDropdownData = async () => {
-    try {
-      setLoadingDropdowns(true);
-      
-      // Fetch part-time employees only
-      const employeesResponse = await employeeService.getEmployees({
-        size: 1000, // Get all part-time employees
-        isActive: true,
-        employeeType: EmploymentType.PART_TIME // Filter part-time employees at API level
-      });
-      
-      setPartTimeEmployees(employeesResponse.content);
-
-      // Fetch active work shifts
-      const shiftsResponse = await workShiftService.getAll(true);
-      setWorkShifts(shiftsResponse || []);
-    } catch (error: any) {
-      console.error('❌ Failed to fetch dropdown data:', error);
-      toast.error('Failed to load employees and work shifts');
-    } finally {
-      setLoadingDropdowns(false);
-    }
+    // No-op in simplified version (data already provided in list response)
   };
 
   // ==================== CREATE REGISTRATION ====================
@@ -397,12 +347,9 @@ export default function PartTimeManagementPage() {
     return employee ? `${employee.fullName} (${employee.employeeCode})` : `Employee ID: ${employeeId}`;
   };
 
-  const getWorkShiftName = (slotId: string) => {
-    const shift = workShifts.find(shift => shift.workShiftId === slotId);
-    return shift ? `${shift.shiftName} (${shift.startTime}-${shift.endTime})` : slotId;
-  };
+  // No need to map shift by id; registration already includes shiftName
 
-  const formatDaysOfWeek = (days: DayOfWeek[]) => {
+  const getDayOfWeekLabel = (day: DayOfWeek) => {
     const dayMap = {
       [DayOfWeek.MONDAY]: 'T2',
       [DayOfWeek.TUESDAY]: 'T3', 
@@ -412,7 +359,7 @@ export default function PartTimeManagementPage() {
       [DayOfWeek.SATURDAY]: 'T7',
       [DayOfWeek.SUNDAY]: 'CN'
     };
-    return days.map(day => dayMap[day]).join(', ');
+    return dayMap[day] || day;
   };
 
   const formatDate = (dateString: string) => {
@@ -428,92 +375,18 @@ export default function PartTimeManagementPage() {
     <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_ALL]}>
       <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Part-Time Management</h1>
-          <p className="text-gray-600 mt-1">Manage shift registrations for part-time employees</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Create Registration
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="filterEmployee">Employee</Label>
-              <select
-                id="filterEmployee"
-                value={filterEmployeeId}
-                onChange={(e) => setFilterEmployeeId(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Employees</option>
-                {partTimeEmployees.map(emp => (
-                  <option key={emp.employeeId} value={emp.employeeId}>
-                    {emp.fullName} ({emp.employeeCode})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <Label htmlFor="filterWorkShift">Work Shift</Label>
-              <select
-                id="filterWorkShift"
-                value={filterWorkShiftId}
-                onChange={(e) => setFilterWorkShiftId(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Shifts</option>
-                {workShifts.map(shift => (
-                  <option key={shift.workShiftId} value={shift.workShiftId}>
-                    {shift.shiftName} ({shift.startTime}-{shift.endTime})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <Label htmlFor="filterStatus">Status</Label>
-              <select
-                id="filterStatus"
-                value={filterIsActive}
-                onChange={(e) => setFilterIsActive(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Status</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </div>
-            
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setFilterEmployeeId('');
-                  setFilterWorkShiftId('');
-                  setFilterIsActive('');
-                  setCurrentPage(0);
-                }}
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
-            </div>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Part-Time Registration Management</h1>
+            <p className="text-gray-600 mt-1">View and manage part-time employee registrations</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button onClick={() => { fetchRegistrations(); fetchDropdownData(); }} className="flex items-center gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
+
+      {/* Filters temporarily hidden */}
 
       {/* Registrations Table */}
       <Card>
@@ -540,9 +413,7 @@ export default function PartTimeManagementPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 font-medium">Registration ID</th>
-                    <th className="text-left p-3 font-medium">Employee</th>
-                    <th className="text-left p-3 font-medium">Work Shift</th>
-                    <th className="text-left p-3 font-medium">Days</th>
+                    <th className="text-left p-3 font-medium">Day</th>
                     <th className="text-left p-3 font-medium">Effective Period</th>
                     <th className="text-left p-3 font-medium">Status</th>
                     <th className="text-left p-3 font-medium">Actions</th>
@@ -552,12 +423,8 @@ export default function PartTimeManagementPage() {
                   {registrations.map((registration) => (
                     <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
                       <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
-                      <td className="p-3">{getEmployeeName(registration.employeeId)}</td>
-                      <td className="p-3">{getWorkShiftName(registration.slotId)}</td>
                       <td className="p-3">
-                        <Badge variant="outline">
-                          {formatDaysOfWeek(registration.daysOfWeek)}
-                        </Badge>
+                        <Badge variant="outline">{getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}</Badge>
                       </td>
                       <td className="p-3">
                         <div className="text-sm">
@@ -568,8 +435,8 @@ export default function PartTimeManagementPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge variant={registration.active ? "default" : "secondary"}>
-                          {registration.active ? (
+                        <Badge variant={registration.isActive ? "default" : "secondary"}>
+                          {registration.isActive ? (
                             <>
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Active
@@ -587,28 +454,14 @@ export default function PartTimeManagementPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEditRegistration(registration)}
+                            onClick={() => {
+                              setDetailsRegistration(registration);
+                              setShowDetailsModal(true);
+                            }}
+                            title="View Details"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                          
-                          {registration.active ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteRegistration(registration)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReactivateRegistration(registration)}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -647,135 +500,7 @@ export default function PartTimeManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Create Shift Registration</h2>
-            <form onSubmit={handleCreateRegistration} className="space-y-4">
-              <div>
-                <Label htmlFor="createEmployee">Employee *</Label>
-                <select
-                  id="createEmployee"
-                  value={createFormData.employeeId}
-                  onChange={(e) => setCreateFormData(prev => ({
-                    ...prev,
-                    employeeId: parseInt(e.target.value) || 0
-                  }))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select Employee</option>
-                  {partTimeEmployees.map(emp => (
-                    <option key={emp.employeeId} value={emp.employeeId}>
-                      {emp.fullName} ({emp.employeeCode})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label htmlFor="createWorkShift">Work Shift *</Label>
-                <select
-                  id="createWorkShift"
-                  value={createFormData.workShiftId}
-                  onChange={(e) => setCreateFormData(prev => ({
-                    ...prev,
-                    workShiftId: e.target.value
-                  }))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select Work Shift</option>
-                  {workShifts.map(shift => (
-                    <option key={shift.workShiftId} value={shift.workShiftId}>
-                      {shift.shiftName} ({shift.startTime}-{shift.endTime})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label>Days of Week *</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {Object.values(DayOfWeek).map(day => (
-                    <label key={day} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={createFormData.daysOfWeek.includes(day)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setCreateFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: [...prev.daysOfWeek, day]
-                            }));
-                          } else {
-                            setCreateFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: prev.daysOfWeek.filter(d => d !== day)
-                            }));
-                          }
-                        }}
-                      />
-                      <span className="text-sm">{day}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="createEffectiveFrom">Effective From *</Label>
-                <Input
-                  id="createEffectiveFrom"
-                  type="date"
-                  value={createFormData.effectiveFrom}
-                  onChange={(e) => setCreateFormData(prev => ({
-                    ...prev,
-                    effectiveFrom: e.target.value
-                  }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="createEffectiveTo">Effective To (Optional)</Label>
-                <Input
-                  id="createEffectiveTo"
-                  type="date"
-                  value={createFormData.effectiveTo}
-                  onChange={(e) => setCreateFormData(prev => ({
-                    ...prev,
-                    effectiveTo: e.target.value
-                  }))}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    resetCreateForm();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={creating}>
-                  {creating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Registration'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Create Modal temporarily removed */}
 
       {/* Edit Modal */}
       {showEditModal && editingRegistration && (
@@ -900,6 +625,58 @@ export default function PartTimeManagementPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Details Modal */}
+      {showDetailsModal && detailsRegistration && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">Registration Details</h2>
+            <div className="space-y-3">
+              <div>
+                <Label>Registration ID</Label>
+                <Input value={detailsRegistration.registrationId} disabled />
+              </div>
+              <div>
+                <Label>Employee</Label>
+                <Input value={detailsRegistration.employeeName} disabled />
+              </div>
+              <div>
+                <Label>Work Shift</Label>
+                <Input value={detailsRegistration.shiftName} disabled />
+              </div>
+              <div>
+                <Label>Day</Label>
+                <Input value={getDayOfWeekLabel(detailsRegistration.dayOfWeek as DayOfWeek)} disabled />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Effective From</Label>
+                  <Input value={formatDate(detailsRegistration.effectiveFrom)} disabled />
+                </div>
+                <div>
+                  <Label>Effective To</Label>
+                  <Input value={detailsRegistration.effectiveTo ? formatDate(detailsRegistration.effectiveTo) : ''} disabled />
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Input value={detailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setDetailsRegistration(null);
+                }}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}
