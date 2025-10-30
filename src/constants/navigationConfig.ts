@@ -139,9 +139,15 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Part-Time Management',
-          href: '/admin/part_time_management',
+          name: 'Work Slots',
+          href: '/admin/work-slots',
           icon: faClock,
+          requiredPermissions: ['VIEW_WORK_SHIFTS'],
+        },
+        {
+          name: 'Part-Time Registrations',
+          href: '/admin/part_time_management',
+          icon: faListCheck,
           requiredPermissions: ['VIEW_REGISTRATION_ALL'],
         },
         {
@@ -250,10 +256,10 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissions: ['VIEW_WORK_SHIFTS'],
     },
     {
-      name: 'My Shift Registrations',
-      href: '/employee/part_time_management',
+      name: 'Slot Registration',
+      href: '/employee/slot-registration',
       icon: faClock,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+      requiredPermissions: ['VIEW_REGISTRATION_OWN'],
     },
     {
       name: 'Overtime Requests',
