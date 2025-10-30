@@ -16,7 +16,7 @@ import {
   RotateCcw,
   ChevronDown,
   Search,
-  ArrowUpDown,
+  Filter,
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
@@ -157,7 +157,7 @@ export default function WorkShiftsPage() {
 
   // Filter & Sort states
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'time' | 'duration'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'time' | 'duration' | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
@@ -333,24 +333,26 @@ export default function WorkShiftsPage() {
       );
     }
 
-    // Sort
-    filtered.sort((a, b) => {
-      let compareResult = 0;
+    // Sort - chỉ sort nếu đã chọn sortBy
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        let compareResult = 0;
 
-      switch (sortBy) {
-        case 'name':
-          compareResult = a.shiftName.localeCompare(b.shiftName);
-          break;
-        case 'time':
-          compareResult = a.startTime.localeCompare(b.startTime);
-          break;
-        case 'duration':
-          compareResult = a.durationHours - b.durationHours;
-          break;
-      }
+        switch (sortBy) {
+          case 'name':
+            compareResult = a.shiftName.localeCompare(b.shiftName);
+            break;
+          case 'time':
+            compareResult = a.startTime.localeCompare(b.startTime);
+            break;
+          case 'duration':
+            compareResult = a.durationHours - b.durationHours;
+            break;
+        }
 
-      return sortOrder === 'asc' ? compareResult : -compareResult;
-    });
+        return sortOrder === 'asc' ? compareResult : -compareResult;
+      });
+    }
 
     return filtered;
   };
@@ -358,8 +360,9 @@ export default function WorkShiftsPage() {
   const displayedShifts = filteredAndSortedShifts();
 
   const getSortLabel = () => {
+    if (!sortBy) return 'Sắp xếp';
     const labels = {
-      name: 'Tên ca làm',
+      name: 'Tên',
       time: 'Thời gian',
       duration: 'Số giờ'
     };
@@ -476,7 +479,7 @@ export default function WorkShiftsPage() {
       <Card className="shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
         <CardContent className="p-3 sm:p-4">
           <div className="flex flex-col sm:flex-row gap-3 items-center">
-            {/* Search Box */}
+            {/* Search Box - Dài hơn */}
             <div className="w-full sm:flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -489,48 +492,82 @@ export default function WorkShiftsPage() {
               </div>
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Sort Dropdown với Direction gộp chung */}
             <div ref={sortDropdownRef} className="flex-shrink-0">
               <div className="relative">
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white min-w-[130px] sm:min-w-[160px] justify-between whitespace-nowrap"
+                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap min-w-[140px] justify-between"
                 >
-                  <span className="truncate">{getSortLabel()}</span>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 flex-shrink-0" />
+                    <span>{getSortLabel()}</span>
+                  </div>
+                  {sortBy && (
+                    <div className="flex items-center gap-1 text-xs text-[#8b5fbf]">
+                      {sortOrder === 'asc' ? (
+                        <>
+                          <ArrowUp className="h-3 w-3" />
+                          <span className="hidden sm:inline">Tăng</span>
+                        </>
+                      ) : (
+                        <>
+                          <ArrowDown className="h-3 w-3" />
+                          <span className="hidden sm:inline">Giảm</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </button>
 
                 {isSortDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
                     <div className="p-2">
                       <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
                         Sắp xếp theo
                       </div>
 
                       {[
-                        { value: 'name', label: 'Tên ca làm' },
+                        { value: 'name', label: 'Tên' },
                         { value: 'time', label: 'Thời gian' },
                         { value: 'duration', label: 'Số giờ' }
                       ].map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => {
-                            setSortBy(option.value as 'name' | 'time' | 'duration');
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                            setIsSortDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${sortBy === option.value
+                        <div key={option.value}>
+                          <button
+                            onClick={() => {
+                              if (sortBy === option.value) {
+                                // Nếu đã chọn rồi thì toggle direction
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                // Chọn mới thì set mặc định ASC
+                                setSortBy(option.value as 'name' | 'time' | 'duration');
+                                setSortOrder('asc');
+                              }
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${sortBy === option.value
                               ? 'bg-[#8b5fbf] text-white'
                               : 'text-gray-700 hover:bg-[#f3f0ff]'
-                            }`}
-                        >
-                          <span className="flex-1 text-left font-medium">{option.label}</span>
-                          {sortBy === option.value && (
-                            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </button>
+                              }`}
+                          >
+                            <span className="flex-1 text-left font-medium">{option.label}</span>
+                            {sortBy === option.value && (
+                              <div className="flex items-center gap-2">
+                                {sortOrder === 'asc' ? (
+                                  <>
+                                    <ArrowUp className="h-4 w-4" />
+                                    <span className="text-xs">Tăng dần</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ArrowDown className="h-4 w-4" />
+                                    <span className="text-xs">Giảm dần</span>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -538,13 +575,13 @@ export default function WorkShiftsPage() {
               </div>
             </div>
 
-            {/* Toggle Buttons - Compact */}
-            <div className="flex gap-2">
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => setActiveTab('active')}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'active'
-                    ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-gray-300'
@@ -555,8 +592,8 @@ export default function WorkShiftsPage() {
                 </div>
                 <span className="hidden sm:inline">Hoạt động</span>
                 <Badge className={`text-xs ${activeTab === 'active'
-                    ? 'bg-white/20 text-white border border-white/30'
-                    : 'bg-green-100 text-green-800'
+                  ? 'bg-white/20 text-white border border-white/30'
+                  : 'bg-green-100 text-green-800'
                   }`}>
                   {stats.active}
                 </Badge>
@@ -565,8 +602,8 @@ export default function WorkShiftsPage() {
               <button
                 onClick={() => setActiveTab('inactive')}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'inactive'
-                    ? 'bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'inactive' ? 'bg-white/20' : 'bg-gray-300'
@@ -575,10 +612,10 @@ export default function WorkShiftsPage() {
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="hidden sm:inline">Tắt</span>
+                <span className="hidden sm:inline">Không hoạt động</span>
                 <Badge className={`text-xs ${activeTab === 'inactive'
-                    ? 'bg-white/20 text-white border border-white/30'
-                    : 'bg-gray-200 text-gray-700'
+                  ? 'bg-white/20 text-white border border-white/30'
+                  : 'bg-gray-200 text-gray-700'
                   }`}>
                   {stats.inactive}
                 </Badge>
