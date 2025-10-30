@@ -1,8 +1,8 @@
 /**
  * Shift Registration Type Definitions
  * 
- * Based on Part-time-registration.md - Complete API Implementation
- * Last updated: October 21, 2025
+ * Based on Part-time-registration.md - Quota-based Part-Time Slot System
+ * Last updated: January 2025
  */
 
 /**
@@ -19,47 +19,50 @@ export enum DayOfWeek {
 }
 
 /**
- * Shift Registration entity returned from API
+ * Shift Registration entity returned from API (New Quota-based System)
  */
 export interface ShiftRegistration {
-  registrationId: string;
+  registrationId: string; // Format: REG{YYYYMMDD}_{employeeId}_{slotId}
   employeeId: number;
-  slotId: string;
-  daysOfWeek: DayOfWeek[];
+  employeeName: string;
+  partTimeSlotId: number; // Changed from slotId to partTimeSlotId
+  shiftName: string;
+  dayOfWeek: DayOfWeek; // Single day instead of array
   effectiveFrom: string; // YYYY-MM-DD format
-  effectiveTo?: string | null; // YYYY-MM-DD format, nullable
-  active: boolean; // API returns 'active', not 'isActive'
+  effectiveTo: string; // YYYY-MM-DD format (calculated: effectiveFrom + 3 months)
+  isActive: boolean; // Changed from 'active' to 'isActive'
 }
 
 /**
- * Request payload for creating a new shift registration
+ * Request payload for creating a new shift registration (New Quota-based System)
  */
 export interface CreateShiftRegistrationRequest {
-  employeeId: number;
-  workShiftId: string;
-  daysOfWeek: DayOfWeek[];
+  partTimeSlotId: number; // Changed from workShiftId + daysOfWeek to partTimeSlotId
   effectiveFrom: string; // YYYY-MM-DD format
-  effectiveTo?: string; // YYYY-MM-DD format, optional
-  active?: boolean; // Active status, defaults to true
+  // effectiveTo is calculated automatically (effectiveFrom + 3 months)
+  // employeeId is determined from JWT token
 }
 
 /**
- * Request payload for partial update (PATCH)
+ * Request payload for partial update (PATCH) - Admin only
  */
 export interface UpdateShiftRegistrationRequest {
-  workShiftId?: string;
-  daysOfWeek?: DayOfWeek[];
-  effectiveFrom?: string;
-  effectiveTo?: string | null; // Can be null
+  effectiveTo?: string; // Admin can update effectiveTo
   isActive?: boolean;
 }
 
 /**
- * Request payload for full replacement (PUT)
+ * Request payload for updating effectiveTo (Admin only)
+ */
+export interface UpdateEffectiveToRequest {
+  effectiveTo: string; // YYYY-MM-DD format
+}
+
+/**
+ * Request payload for full replacement (PUT) - Deprecated in new system
  */
 export interface ReplaceShiftRegistrationRequest {
-  workShiftId: string;
-  daysOfWeek: DayOfWeek[];
+  partTimeSlotId: number;
   effectiveFrom: string;
   effectiveTo?: string;
   isActive: boolean;
@@ -71,10 +74,9 @@ export interface ReplaceShiftRegistrationRequest {
 export interface ShiftRegistrationQueryParams {
   page?: number;
   size?: number;
-  sortBy?: 'registrationId' | 'effectiveFrom' | 'employeeId';
+  sortBy?: 'registrationId' | 'effectiveFrom' | 'employeeId' | 'partTimeSlotId';
   sortDirection?: 'ASC' | 'DESC';
-  employeeId?: number;
-  workShiftId?: string;
+  employeeId?: number; // Admin can filter by employeeId
   isActive?: boolean;
 }
 
@@ -133,4 +135,14 @@ export interface ShiftRegistrationWithDetails extends ShiftRegistration {
     endTime: string;
     category: string;
   };
+}
+
+/**
+ * Error codes for registration operations
+ */
+export enum RegistrationErrorCode {
+  REGISTRATION_CONFLICT = 'REGISTRATION_CONFLICT',
+  REGISTRATION_NOT_FOUND = 'REGISTRATION_NOT_FOUND',
+  SLOT_IS_FULL = 'SLOT_IS_FULL',
+  SLOT_NOT_FOUND = 'SLOT_NOT_FOUND'
 }
