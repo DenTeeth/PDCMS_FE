@@ -382,7 +382,7 @@ export default function RoomManagementPage() {
                 >
                   <option value="">Tất cả loại phòng</option>
                   <option value={RoomType.STANDARD}>{ROOM_TYPE_LABELS[RoomType.STANDARD]}</option>
-                  <option value={RoomType.SURGERY}>{ROOM_TYPE_LABELS[RoomType.SURGERY]}</option>
+                  <option value={RoomType.IMPLANT}>{ROOM_TYPE_LABELS[RoomType.IMPLANT]}</option>
                 </select>
               </div>
 
@@ -499,7 +499,7 @@ export default function RoomManagementPage() {
                         </td>
                         <td className="py-3 px-4">
                           <Badge 
-                            variant={room.roomType === RoomType.SURGERY ? 'destructive' : 'default'}
+                            variant={room.roomType === RoomType.IMPLANT ? 'destructive' : 'default'}
                             className="text-xs"
                           >
                             {ROOM_TYPE_LABELS[room.roomType]}
@@ -652,7 +652,7 @@ export default function RoomManagementPage() {
                 >
                   <option value="">Chọn loại phòng</option>
                   <option value={RoomType.STANDARD}>{ROOM_TYPE_LABELS[RoomType.STANDARD]}</option>
-                  <option value={RoomType.SURGERY}>{ROOM_TYPE_LABELS[RoomType.SURGERY]}</option>
+                  <option value={RoomType.IMPLANT}>{ROOM_TYPE_LABELS[RoomType.IMPLANT]}</option>
                 </select>
               </div>
 
@@ -737,7 +737,7 @@ export default function RoomManagementPage() {
                 >
                   <option value="">Chọn loại phòng</option>
                   <option value={RoomType.STANDARD}>{ROOM_TYPE_LABELS[RoomType.STANDARD]}</option>
-                  <option value={RoomType.SURGERY}>{ROOM_TYPE_LABELS[RoomType.SURGERY]}</option>
+                  <option value={RoomType.IMPLANT}>{ROOM_TYPE_LABELS[RoomType.IMPLANT]}</option>
                 </select>
               </div>
 
