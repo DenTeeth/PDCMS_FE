@@ -59,6 +59,9 @@ export default function AdminOvertimeRequestsPage() {
   const [statusReason, setStatusReason] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OvertimeStatus | 'ALL'>('ALL');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const [formData, setFormData] = useState<OvertimeRequestFormData>({
     employeeId: 0,
@@ -176,19 +179,34 @@ export default function AdminOvertimeRequestsPage() {
   };
 
   const filteredRequests = overtimeRequests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+
+    const matchesEmployee = employeeFilter === 'ALL' ||
+      request.employeeId?.toString() === employeeFilter;
+
+    const requestDate = new Date(request.workDate);
+    const matchesDateFrom = !dateFrom || requestDate >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || requestDate <= new Date(dateTo);
+
+    return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
   });
 
   const canApprove = user?.permissions?.includes('APPROVE_OT');
   const canReject = user?.permissions?.includes('REJECT_OT');
-  const canCancel = user?.permissions?.includes('CANCEL_OT_PENDING');
+  const canCancelPending = user?.permissions?.includes('CANCEL_OT_PENDING');
+  const canCancelOwn = user?.permissions?.includes('CANCEL_OT_OWN');
   const canCreate = user?.permissions?.includes('CREATE_OT') || user?.permissions?.includes('CREATE_OVERTIME');
+
+  // Helper function to check if user can cancel a specific request
+  const canCancelRequest = (request: OvertimeRequest) => {
+    if (canCancelPending) return true;
+    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    return false;
+  };
 
   if (loading) {
     return (
@@ -219,10 +237,77 @@ export default function AdminOvertimeRequestsPage() {
         )}
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Tổng yêu cầu</p>
+                <p className="text-2xl font-bold text-gray-900">{overtimeRequests.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Chờ duyệt</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {overtimeRequests.filter(r => r.status === OvertimeStatus.PENDING).length}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon icon={faClock} className="text-orange-600 text-xl" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Đã duyệt</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {overtimeRequests.filter(r => r.status === OvertimeStatus.APPROVED).length}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xl" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Từ chối/Hủy</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {overtimeRequests.filter(r =>
+                    r.status === OvertimeStatus.REJECTED || r.status === OvertimeStatus.CANCELLED
+                  ).length}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xl" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="search">Tìm kiếm</Label>
               <Input
@@ -232,6 +317,22 @@ export default function AdminOvertimeRequestsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            <div>
+              <Select
+                label="Nhân viên"
+                value={employeeFilter}
+                onChange={(value) => setEmployeeFilter(value)}
+                options={[
+                  { value: 'ALL', label: 'Tất cả nhân viên' },
+                  ...employees.map((emp) => ({
+                    value: emp.employeeId.toString(),
+                    label: `${emp.fullName} (${emp.employeeCode})`,
+                  })),
+                ]}
+              />
+            </div>
+
             <div>
               <Select
                 label="Trạng thái"
@@ -244,6 +345,26 @@ export default function AdminOvertimeRequestsPage() {
                   { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
                   { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
                 ]}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="dateFrom">Từ ngày</Label>
+              <Input
+                id="dateFrom"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="dateTo">Đến ngày</Label>
+              <Input
+                id="dateTo"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
               />
             </div>
           </div>
@@ -302,7 +423,7 @@ export default function AdminOvertimeRequestsPage() {
                             <FontAwesomeIcon icon={faEye} className="mr-1" />
                             Chi tiết
                           </Button>
-                          
+
                           {request.status === OvertimeStatus.PENDING && (
                             <>
                               {canApprove && (
@@ -316,7 +437,7 @@ export default function AdminOvertimeRequestsPage() {
                                   Duyệt
                                 </Button>
                               )}
-                              
+
                               {canReject && (
                                 <Button
                                   variant="outline"
@@ -328,8 +449,8 @@ export default function AdminOvertimeRequestsPage() {
                                   Từ chối
                                 </Button>
                               )}
-                              
-                              {canCancel && (
+
+                              {canCancelRequest(request) && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -384,7 +505,7 @@ export default function AdminOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="workDate">Ngày làm việc</Label>
                   <Input
@@ -395,7 +516,7 @@ export default function AdminOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="workShiftId">Ca làm việc</Label>
                   <Select
@@ -410,7 +531,7 @@ export default function AdminOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="reason">Lý do</Label>
                   <Textarea
@@ -421,7 +542,7 @@ export default function AdminOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1">
                     Tạo yêu cầu
@@ -457,7 +578,7 @@ export default function AdminOvertimeRequestsPage() {
                 <p className="text-sm text-gray-600">
                   Yêu cầu: <strong>{selectedRequest.requestId}</strong>
                 </p>
-                
+
                 {(statusAction === 'reject' || statusAction === 'cancel') && (
                   <div>
                     <Label htmlFor="reason">
@@ -472,7 +593,7 @@ export default function AdminOvertimeRequestsPage() {
                     />
                   </div>
                 )}
-                
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     onClick={handleStatusUpdate}
