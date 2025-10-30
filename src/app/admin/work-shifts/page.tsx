@@ -152,18 +152,15 @@ export default function WorkShiftsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Tab state - phân trang theo trạng thái
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+
   // Filter & Sort states
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'time' | 'duration'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'NORMAL' | 'NIGHT'>('all');
   const sortDropdownRef = useRef<HTMLDivElement>(null);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -187,12 +184,6 @@ export default function WorkShiftsPage() {
     const handleClickOutside = (event: MouseEvent) => {
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
         setIsSortDropdownOpen(false);
-      }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
-        setIsStatusDropdownOpen(false);
-      }
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
-        setIsCategoryDropdownOpen(false);
       }
     };
 
@@ -326,6 +317,11 @@ export default function WorkShiftsPage() {
   const filteredAndSortedShifts = () => {
     let filtered = workShifts;
 
+    // Filter by active tab (trạng thái)
+    filtered = filtered.filter(shift =>
+      activeTab === 'active' ? shift.isActive : !shift.isActive
+    );
+
     // Filter by search query (tên ca > ID > thời gian)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -335,18 +331,6 @@ export default function WorkShiftsPage() {
         formatTime(shift.startTime).includes(query) ||
         formatTime(shift.endTime).includes(query)
       );
-    }
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(shift =>
-        statusFilter === 'active' ? shift.isActive : !shift.isActive
-      );
-    }
-
-    // Filter by category
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(shift => shift.category === categoryFilter);
     }
 
     // Sort
@@ -382,24 +366,6 @@ export default function WorkShiftsPage() {
     return labels[sortBy];
   };
 
-  const getStatusLabel = () => {
-    const labels = {
-      all: 'Tất cả trạng thái',
-      active: 'Đang hoạt động',
-      inactive: 'Không hoạt động'
-    };
-    return labels[statusFilter];
-  };
-
-  const getCategoryLabel = () => {
-    const labels = {
-      all: 'Tất cả loại',
-      NORMAL: 'Ca thường',
-      NIGHT: 'Ca đêm'
-    };
-    return labels[categoryFilter];
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -433,6 +399,7 @@ export default function WorkShiftsPage() {
   const stats = {
     total: workShifts.length,
     active: workShifts.filter(s => s.isActive).length,
+    inactive: workShifts.filter(s => !s.isActive).length,
     normal: workShifts.filter(s => s.category === 'NORMAL').length,
     night: workShifts.filter(s => s.category === 'NIGHT').length,
   };
@@ -508,7 +475,7 @@ export default function WorkShiftsPage() {
       {/* ==================== SEARCH & FILTER BAR ==================== */}
       <Card className="shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
         <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
             {/* Search Box */}
             <div className="w-full sm:flex-1">
               <div className="relative">
@@ -522,163 +489,115 @@ export default function WorkShiftsPage() {
               </div>
             </div>
 
-            {/* Filters Row - No scroll, just wrap */}
-            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-              {/* Status Filter Dropdown */}
-              <div ref={statusDropdownRef} className="flex-shrink-0">
-                <div className="relative">
-                  <button
-                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white min-w-[130px] sm:min-w-[160px] justify-between whitespace-nowrap"
-                  >
-                    <span className="truncate">{getStatusLabel()}</span>
-                    <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
+            {/* Sort Dropdown */}
+            <div ref={sortDropdownRef} className="flex-shrink-0">
+              <div className="relative">
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white min-w-[130px] sm:min-w-[160px] justify-between whitespace-nowrap"
+                >
+                  <span className="truncate">{getSortLabel()}</span>
+                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  {isStatusDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
-                          Trạng thái
-                        </div>
-
-                        {[
-                          { value: 'all', label: 'Tất cả trạng thái' },
-                          { value: 'active', label: 'Đang hoạt động' },
-                          { value: 'inactive', label: 'Không hoạt động' }
-                        ].map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setStatusFilter(option.value as 'all' | 'active' | 'inactive');
-                              setIsStatusDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${statusFilter === option.value
-                                ? 'bg-[#8b5fbf] text-white'
-                                : 'text-gray-700 hover:bg-[#f3f0ff]'
-                              }`}
-                          >
-                            <span className="flex-1 text-left font-medium">{option.label}</span>
-                            {statusFilter === option.value && (
-                              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
+                {isSortDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                    <div className="p-2">
+                      <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
+                        Sắp xếp theo
                       </div>
+
+                      {[
+                        { value: 'name', label: 'Tên ca làm' },
+                        { value: 'time', label: 'Thời gian' },
+                        { value: 'duration', label: 'Số giờ' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value as 'name' | 'time' | 'duration');
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${sortBy === option.value
+                              ? 'bg-[#8b5fbf] text-white'
+                              : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            }`}
+                        >
+                          <span className="flex-1 text-left font-medium">{option.label}</span>
+                          {sortBy === option.value && (
+                            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Category Filter Dropdown */}
-              <div ref={categoryDropdownRef} className="flex-shrink-0">
-                <div className="relative">
-                  <button
-                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white min-w-[130px] sm:min-w-[160px] justify-between whitespace-nowrap"
-                  >
-                    <span className="truncate">{getCategoryLabel()}</span>
-                    <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {isCategoryDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
-                          Loại ca
-                        </div>
-
-                        {[
-                          { value: 'all', label: 'Tất cả loại' },
-                          { value: 'NORMAL', label: 'Ca thường' },
-                          { value: 'NIGHT', label: 'Ca đêm' }
-                        ].map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setCategoryFilter(option.value as 'all' | 'NORMAL' | 'NIGHT');
-                              setIsCategoryDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${categoryFilter === option.value
-                                ? 'bg-[#8b5fbf] text-white'
-                                : 'text-gray-700 hover:bg-[#f3f0ff]'
-                              }`}
-                          >
-                            <span className="flex-1 text-left font-medium">{option.label}</span>
-                            {categoryFilter === option.value && (
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sort Dropdown */}
-              <div ref={sortDropdownRef} className="flex-shrink-0">
-                <div className="relative">
-                  <button
-                    onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white min-w-[130px] sm:min-w-[160px] justify-between whitespace-nowrap"
-                  >
-                    <span className="truncate">{getSortLabel()}</span>
-                    <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {isSortDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
-                          Sắp xếp theo
-                        </div>
-
-                        {[
-                          { value: 'name', label: 'Tên ca làm' },
-                          { value: 'time', label: 'Thời gian' },
-                          { value: 'duration', label: 'Số giờ' }
-                        ].map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setSortBy(option.value as 'name' | 'time' | 'duration');
-                              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              setIsSortDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${sortBy === option.value
-                                ? 'bg-[#8b5fbf] text-white'
-                                : 'text-gray-700 hover:bg-[#f3f0ff]'
-                              }`}
-                          >
-                            <span className="flex-1 text-left font-medium">{option.label}</span>
-                            {sortBy === option.value && (
-                              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Search Results Info */}
-            {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all') && (
-              <div className="text-xs sm:text-sm text-gray-600 pt-1">
-                Tìm thấy <span className="font-semibold text-[#8b5fbf]">{displayedShifts.length}</span> kết quả
-              </div>
-            )}
+            {/* Toggle Buttons - Compact */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'active'
+                    ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-gray-300'
+                  }`}>
+                  <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="hidden sm:inline">Hoạt động</span>
+                <Badge className={`text-xs ${activeTab === 'active'
+                    ? 'bg-white/20 text-white border border-white/30'
+                    : 'bg-green-100 text-green-800'
+                  }`}>
+                  {stats.active}
+                </Badge>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('inactive')}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'inactive'
+                    ? 'bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'inactive' ? 'bg-white/20' : 'bg-gray-300'
+                  }`}>
+                  <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="hidden sm:inline">Tắt</span>
+                <Badge className={`text-xs ${activeTab === 'inactive'
+                    ? 'bg-white/20 text-white border border-white/30'
+                    : 'bg-gray-200 text-gray-700'
+                  }`}>
+                  {stats.inactive}
+                </Badge>
+              </button>
+            </div>
           </div>
+
+          {/* Search Results Info */}
+          {searchQuery && (
+            <div className="text-xs sm:text-sm text-gray-600 mt-2">
+              Tìm thấy <span className="font-semibold text-[#8b5fbf]">{displayedShifts.length}</span> kết quả
+            </div>
+          )}
         </CardContent>
-      </Card>      {/* ==================== WORK SHIFTS TABLE ==================== */}
+      </Card>
+
+      {/* ==================== WORK SHIFTS TABLE ==================== */}
+
+      {/* ==================== WORK SHIFTS TABLE ==================== */}
       {displayedShifts.length > 0 ? (
         <Card>
           <CardContent className="p-0">
