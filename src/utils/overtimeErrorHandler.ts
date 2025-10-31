@@ -27,10 +27,10 @@ export const getOvertimeErrorMessage = (error: OvertimeError): string => {
   switch (error.status) {
     case 400:
       return `Dữ liệu không hợp lệ: ${error.message}`;
-    
+
     case 403:
       return 'Bạn không có quyền thực hiện hành động này';
-    
+
     case 404:
       if (error.code === OvertimeErrorCode.OT_REQUEST_NOT_FOUND) {
         return 'Không tìm thấy yêu cầu làm thêm giờ';
@@ -38,18 +38,20 @@ export const getOvertimeErrorMessage = (error: OvertimeError): string => {
         return 'Nhân viên hoặc ca làm việc không tồn tại';
       }
       return 'Không tìm thấy tài nguyên';
-    
+
     case 409:
-      if (error.code === OvertimeErrorCode.DUPLICATE_OT_REQUEST) {
+      if (error.code === OvertimeErrorCode.SLOT_CONFLICT) {
+        return 'Nhân viên đã có lịch làm việc trùng giờ với ca này';
+      } else if (error.code === OvertimeErrorCode.DUPLICATE_OT_REQUEST) {
         return 'Nhân viên đã đăng ký tăng ca cho ca làm việc này';
       } else if (error.code === OvertimeErrorCode.INVALID_STATE_TRANSITION) {
         return 'Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING';
       }
       return 'Xung đột dữ liệu';
-    
+
     case 500:
       return 'Lỗi máy chủ. Vui lòng thử lại sau';
-    
+
     default:
       return error.message || 'Có lỗi xảy ra';
   }
@@ -58,6 +60,16 @@ export const getOvertimeErrorMessage = (error: OvertimeError): string => {
 export const showOvertimeError = (error: any): void => {
   const overtimeError = handleOvertimeError(error);
   const message = getOvertimeErrorMessage(overtimeError);
+  
+  // Log chi tiết error để debug
+  console.error('🔴 Overtime Error Details:', {
+    status: overtimeError.status,
+    code: overtimeError.code,
+    message: overtimeError.message,
+    fullError: error.response?.data,
+    userMessage: message
+  });
+  
   alert(message);
 };
 
@@ -81,7 +93,7 @@ export const validateOvertimeForm = (formData: {
   const workDate = new Date(formData.workDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   if (workDate < today) {
     return 'Ngày làm việc không được ở quá khứ';
   }

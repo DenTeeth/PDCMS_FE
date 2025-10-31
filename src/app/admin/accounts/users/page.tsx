@@ -46,7 +46,7 @@ interface PatientStats {
 // ==================== MAIN COMPONENT ====================
 export default function PatientsPage() {
   const router = useRouter();
-  
+
   // State management
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +116,7 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      
+
       // Build query params - BE only supports page, size, sortBy, sortDirection
       // Note: Search, status, gender filters will be applied on FE
       // DEMO: size=1 to see pagination clearly
@@ -131,11 +131,11 @@ export default function PatientsPage() {
       // if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       // if (filterStatus !== 'all') params.isActive = filterStatus === 'active';
       // if (filterGender !== 'all') params.gender = filterGender;
-      
+
       console.log('Fetching patients with params:', params);
       const response = await patientService.getPatients(params);
       console.log('Received patients:', response.content.length, 'items, totalPages:', response.totalPages);
-      
+
       setPatients(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
@@ -150,17 +150,17 @@ export default function PatientsPage() {
   // ==================== CREATE PATIENT ====================
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
-    if (!formData.username || !formData.password || !formData.email || 
-        !formData.firstName || !formData.lastName) {
+    if (!formData.username || !formData.password || !formData.email ||
+      !formData.firstName || !formData.lastName) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
       setCreating(true);
-      
+
       // Prepare payload - only include fields that have values
       const payload: CreatePatientWithAccountRequest = {
         username: formData.username,
@@ -179,7 +179,7 @@ export default function PatientsPage() {
       if (formData.allergies) payload.allergies = formData.allergies;
       if (formData.emergencyContactName) payload.emergencyContactName = formData.emergencyContactName;
       if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
-      
+
       await patientService.createPatient(payload);
       toast.success('Patient created successfully');
       setShowCreateModal(false);
@@ -230,15 +230,15 @@ export default function PatientsPage() {
 
   const handleUpdatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingPatient) return;
 
     try {
       setUpdating(true);
-      
+
       // Build partial update payload (only send fields that have values)
       const payload: UpdatePatientRequest = {};
-      
+
       if (editFormData.firstName && editFormData.firstName !== editingPatient.firstName) {
         payload.firstName = editFormData.firstName;
       }
@@ -299,7 +299,7 @@ export default function PatientsPage() {
   // ==================== FILTERING (All filters on FE until BE supports them) ====================
   const filteredPatients = patients.filter((patient) => {
     // Search filter (FE)
-    const matchesSearch = !debouncedSearchTerm || 
+    const matchesSearch = !debouncedSearchTerm ||
       patient.fullName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       patient.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       patient.phone?.includes(debouncedSearchTerm) ||
@@ -531,7 +531,7 @@ export default function PatientsPage() {
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
               <p className="text-lg font-medium">No patients found on this page</p>
               <p className="text-sm mt-1">
-                {patients.length > 0 
+                {patients.length > 0
                   ? 'Try adjusting your filters or navigate to another page'
                   : 'No patients available'}
               </p>
@@ -760,7 +760,7 @@ export default function PatientsPage() {
                     const maxVisible = 5;
                     let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
                     let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-                    
+
                     if (endPage - startPage < maxVisible - 1) {
                       startPage = Math.max(0, endPage - maxVisible + 1);
                     }
@@ -773,11 +773,10 @@ export default function PatientsPage() {
                           size="sm"
                           onClick={() => setPage(i)}
                           disabled={loading}
-                          className={`h-9 w-9 p-0 ${
-                            i === page 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          className={`h-9 w-9 p-0 ${i === page
+                              ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
                               : 'hover:bg-gray-100'
-                          }`}
+                            }`}
                         >
                           {i + 1}
                         </Button>
