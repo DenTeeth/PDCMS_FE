@@ -44,14 +44,26 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function AdminTimeOffRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
-  
+  const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  // Permissions
+  const canViewAll = user?.permissions?.includes('VIEW_TIMEOFF_ALL');
+  const canViewOwn = user?.permissions?.includes('VIEW_TIMEOFF_OWN');
+  const canCreate = user?.permissions?.includes('CREATE_TIMEOFF');
+  const canApprove = user?.permissions?.includes('APPROVE_TIMEOFF');
+  const canReject = user?.permissions?.includes('REJECT_TIMEOFF');
+  const canCancelPending = user?.permissions?.includes('CANCEL_TIMEOFF_PENDING');
+  const canCancelOwn = user?.permissions?.includes('CANCEL_TIMEOFF_OWN');
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -126,15 +138,27 @@ export default function AdminTimeOffRequestsPage() {
   };
 
   const handleCreateTimeOffRequest = async () => {
-    if (!createForm.employeeId || !createForm.timeOffTypeId || !createForm.startDate || !createForm.endDate || !createForm.reason.trim()) {
-      alert('Vui lòng điền đầy đủ thông tin');
+    // Auto-fill employeeId if user doesn't have VIEW_ALL permission
+    const finalEmployeeId = canViewAll ? createForm.employeeId : Number(user?.employeeId);
+
+    if (!finalEmployeeId || !createForm.timeOffTypeId || !createForm.startDate || !createForm.endDate || !createForm.reason.trim()) {
+      alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    // Validation: If slot is selected, startDate must equal endDate
+    if (createForm.slotId && createForm.startDate !== createForm.endDate) {
+      alert('Khi nghỉ theo ca, ngày bắt đầu và ngày kết thúc phải giống nhau');
       return;
     }
 
     try {
       setProcessing(true);
-      const response = await TimeOffRequestService.createTimeOffRequest(createForm);
-      
+      const response = await TimeOffRequestService.createTimeOffRequest({
+        ...createForm,
+        employeeId: finalEmployeeId
+      });
+
       setShowCreateModal(false);
       setCreateForm({
         employeeId: undefined,
@@ -148,7 +172,18 @@ export default function AdminTimeOffRequestsPage() {
       alert(`Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
       console.error('Error creating time off request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể tạo yêu cầu nghỉ phép'}`);
+      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+      // Handle specific errors
+      if (errorMsg?.includes('INSUFFICIENT_LEAVE_BALANCE')) {
+        alert('Lỗi: Bạn không đủ số ngày phép cho loại phép này');
+      } else if (errorMsg?.includes('INVALID_DATE_RANGE')) {
+        alert('Lỗi: Khoảng thời gian nghỉ không hợp lệ. Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau.');
+      } else if (errorMsg?.includes('DUPLICATE_TIMEOFF_REQUEST')) {
+        alert('Lỗi: Đã tồn tại yêu cầu nghỉ phép trùng với khoảng thời gian này');
+      } else {
+        alert(`Lỗi: ${errorMsg || 'Không thể tạo yêu cầu nghỉ phép'}`);
+      }
     } finally {
       setProcessing(false);
     }
@@ -160,14 +195,26 @@ export default function AdminTimeOffRequestsPage() {
     try {
       setProcessing(true);
       await TimeOffRequestService.approveTimeOffRequest(selectedRequest.requestId);
-      
+
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadTimeOffRequests();
       alert('Đã duyệt yêu cầu nghỉ phép thành công!');
     } catch (error: any) {
       console.error('Error approving request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể duyệt yêu cầu'}`);
+      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+        loadTimeOffRequests();
+      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
+        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
+        alert('Lỗi: Không tìm thấy yêu cầu này');
+        loadTimeOffRequests();
+      } else {
+        alert(`Lỗi: ${errorMsg || 'Không thể duyệt yêu cầu'}`);
+      }
     } finally {
       setProcessing(false);
     }
@@ -184,7 +231,7 @@ export default function AdminTimeOffRequestsPage() {
       await TimeOffRequestService.rejectTimeOffRequest(selectedRequest.requestId, {
         rejectedReason: rejectReason
       });
-      
+
       setShowRejectModal(false);
       setSelectedRequest(null);
       setRejectReason('');
@@ -192,7 +239,19 @@ export default function AdminTimeOffRequestsPage() {
       alert('Đã từ chối yêu cầu nghỉ phép!');
     } catch (error: any) {
       console.error('Error rejecting request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể từ chối yêu cầu'}`);
+      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+        loadTimeOffRequests();
+      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
+        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
+        alert('Lỗi: Không tìm thấy yêu cầu này');
+        loadTimeOffRequests();
+      } else {
+        alert(`Lỗi: ${errorMsg || 'Không thể từ chối yêu cầu'}`);
+      }
     } finally {
       setProcessing(false);
     }
@@ -209,7 +268,7 @@ export default function AdminTimeOffRequestsPage() {
       await TimeOffRequestService.cancelTimeOffRequest(selectedRequest.requestId, {
         cancellationReason: cancelReason
       });
-      
+
       setShowCancelModal(false);
       setSelectedRequest(null);
       setCancelReason('');
@@ -217,7 +276,19 @@ export default function AdminTimeOffRequestsPage() {
       alert('Đã hủy yêu cầu nghỉ phép!');
     } catch (error: any) {
       console.error('Error cancelling request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể hủy yêu cầu'}`);
+      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+        loadTimeOffRequests();
+      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
+        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
+        alert('Lỗi: Không tìm thấy yêu cầu này');
+        loadTimeOffRequests();
+      } else {
+        alert(`Lỗi: ${errorMsg || 'Không thể hủy yêu cầu'}`);
+      }
     } finally {
       setProcessing(false);
     }
@@ -241,14 +312,37 @@ export default function AdminTimeOffRequestsPage() {
   };
 
   const filteredRequests = timeOffRequests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.timeOffTypeName.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+
+    const matchesEmployee = employeeFilter === 'ALL' || request.employeeId.toString() === employeeFilter;
+
+    const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
+    const matchesDateTo = !dateTo || request.endDate <= dateTo;
+
+    return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
   });
+
+  // Stats calculation
+  const stats = {
+    total: filteredRequests.length,
+    pending: filteredRequests.filter(r => r.status === TimeOffStatus.PENDING).length,
+    approved: filteredRequests.filter(r => r.status === TimeOffStatus.APPROVED).length,
+    rejectedCancelled: filteredRequests.filter(r =>
+      r.status === TimeOffStatus.REJECTED || r.status === TimeOffStatus.CANCELLED
+    ).length,
+  };
+
+  // Helper to check if user can cancel a specific request
+  const canCancelRequest = (request: TimeOffRequest) => {
+    if (canCancelPending) return true;
+    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    return false;
+  };
 
   if (loading) {
     return (
@@ -268,62 +362,149 @@ export default function AdminTimeOffRequestsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Quản Lý Yêu Cầu Nghỉ Phép</h1>
           <p className="text-gray-600 mt-2">Duyệt và quản lý yêu cầu nghỉ phép của nhân viên</p>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-          Tạo Yêu Cầu Nghỉ Phép
-        </Button>
+        {canCreate && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+          >
+            <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
+            Tạo Yêu Cầu
+          </Button>
+        )}
+      </div>
+
+      {/* Stats - Dạng div thay vì Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Tổng số</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Chờ duyệt</p>
+              <p className="text-3xl font-bold text-orange-600">{stats.pending}</p>
+            </div>
+            <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faClock} className="text-orange-600 text-xl" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Đã duyệt</p>
+              <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
+            </div>
+            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xl" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Từ chối/Hủy</p>
+              <p className="text-3xl font-bold text-red-600">{stats.rejectedCancelled}</p>
+            </div>
+            <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xl" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="search">Tìm kiếm</Label>
+      {/* Filters - Bỏ Card */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <Label htmlFor="search">Tìm kiếm</Label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
+              />
               <Input
                 id="search"
-                placeholder="Tìm theo mã yêu cầu hoặc tên nhân viên..."
+                placeholder="Mã yêu cầu, nhân viên..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
             </div>
+          </div>
+
+          {canViewAll && (
             <div>
               <Select
-                label="Trạng thái"
-                value={statusFilter}
-                onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                label="Nhân viên"
+                value={employeeFilter}
+                onChange={(value) => setEmployeeFilter(value)}
                 options={[
-                  { value: 'ALL', label: 'Tất cả' },
-                  { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                  { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                  { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                  { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+                  { value: 'ALL', label: 'Tất cả nhân viên' },
+                  ...employees.map(emp => ({
+                    value: emp.employeeId.toString(),
+                    label: `${emp.lastName} ${emp.firstName}`
+                  }))
                 ]}
               />
             </div>
-            <div className="flex items-end">
-              <Button
-                onClick={loadTimeOffRequests}
-                variant="outline"
-                className="w-full"
-              >
-                <FontAwesomeIcon icon={faFilter} className="h-4 w-4 mr-2" />
-                Lọc
-              </Button>
-            </div>
+          )}
+
+          <div>
+            <Select
+              label="Trạng thái"
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+              options={[
+                { value: 'ALL', label: 'Tất cả' },
+                { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+              ]}
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <div>
+            <Label htmlFor="dateFrom">Từ ngày</Label>
+            <Input
+              id="dateFrom"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="dateTo">Đến ngày</Label>
+            <Input
+              id="dateTo"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Time Off Requests List */}
       <div className="grid gap-4">
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
           const canManage = request.status === TimeOffStatus.PENDING;
-          
+
           return (
             <Card key={request.requestId} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -337,17 +518,17 @@ export default function AdminTimeOffRequestsPage() {
                         {statusConfig.label}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                         <span>{request.employeeName}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
                         <span>
-                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} - 
+                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
                           {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
                         </span>
                       </div>
@@ -371,49 +552,55 @@ export default function AdminTimeOffRequestsPage() {
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/admin/time-off-requests/${request.requestId}`)}
-                    >
-                      <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
-                      Chi tiết
-                    </Button>
-                    
-                    {canManage && (
+
+                  <div className="flex items-center gap-2">
+                    {request.status === TimeOffStatus.PENDING ? (
                       <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openApproveModal(request)}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <FontAwesomeIcon icon={faCheck} className="h-4 w-4" />
-                          Duyệt
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openRejectModal(request)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
-                          Từ chối
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openCancelModal(request)}
-                          className="text-orange-600 hover:text-orange-700"
-                        >
-                          <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
-                          Hủy
-                        </Button>
+                        {canApprove && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openApproveModal(request)}
+                            className="text-green-600 hover:bg-green-50 border-green-300"
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="h-4 w-4 mr-1" />
+                            Duyệt
+                          </Button>
+                        )}
+
+                        {canReject && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openRejectModal(request)}
+                            className="text-red-600 hover:bg-red-50 border-red-300"
+                          >
+                            <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-1" />
+                            Từ chối
+                          </Button>
+                        )}
+
+                        {canCancelRequest(request) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openCancelModal(request)}
+                            className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                          >
+                            <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
+                            Hủy
+                          </Button>
+                        )}
                       </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/admin/time-off-requests/${request.requestId}`)}
+                      >
+                        <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
+                        Xem
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -428,20 +615,22 @@ export default function AdminTimeOffRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Tạo Yêu Cầu Nghỉ Phép</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <Label htmlFor="employee">Nhân viên *</Label>
-                <Select
-                  value={createForm.employeeId?.toString() || ''}
-                  onChange={(value) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
-                  options={employees?.map(emp => ({
-                    value: emp.employeeId.toString(),
-                    label: `${emp.fullName} (${emp.employeeCode})`
-                  })) || []}
-                />
-              </div>
-              
+              {canViewAll && (
+                <div>
+                  <Label htmlFor="employee">Nhân viên *</Label>
+                  <Select
+                    value={createForm.employeeId?.toString() || ''}
+                    onChange={(value) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
+                    options={employees?.map(emp => ({
+                      value: emp.employeeId.toString(),
+                      label: `${emp.fullName} (${emp.employeeCode})`
+                    })) || []}
+                  />
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
                 <Select
@@ -453,17 +642,25 @@ export default function AdminTimeOffRequestsPage() {
                   })) || []}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="startDate">Ngày bắt đầu *</Label>
                 <Input
                   id="startDate"
                   type="date"
                   value={createForm.startDate}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, startDate: e.target.value }))}
+                  onChange={(e) => {
+                    const newStartDate = e.target.value;
+                    setCreateForm(prev => ({
+                      ...prev,
+                      startDate: newStartDate,
+                      // Auto-set endDate = startDate if slot is selected
+                      endDate: prev.slotId ? newStartDate : prev.endDate
+                    }));
+                  }}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="endDate">Ngày kết thúc *</Label>
                 <Input
@@ -471,26 +668,36 @@ export default function AdminTimeOffRequestsPage() {
                   type="date"
                   value={createForm.endDate}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
+                  disabled={!!createForm.slotId}
+                  className={createForm.slotId ? 'bg-gray-100 cursor-not-allowed' : ''}
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="slot">Ca làm việc (nếu nghỉ nửa ngày)</Label>
+
+              <div className={canViewAll ? '' : 'md:col-span-2'}>
+                <Label htmlFor="slot">Ca nghỉ (tùy chọn)</Label>
                 <Select
                   value={createForm.slotId || ''}
-                  onChange={(value) => setCreateForm(prev => ({ 
-                    ...prev, 
-                    slotId: value ? value as TimeOffSlot : null 
-                  }))}
+                  onChange={(value) => {
+                    const newSlotId = value ? value as TimeOffSlot : null;
+                    setCreateForm(prev => ({
+                      ...prev,
+                      slotId: newSlotId,
+                      // If slot is selected, set endDate = startDate
+                      endDate: newSlotId ? prev.startDate : prev.endDate
+                    }));
+                  }}
                   options={[
-                    { value: '', label: 'Cả ngày' },
+                    { value: '', label: 'Nghỉ cả ngày' },
                     { value: TimeOffSlot.MORNING, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.MORNING].label },
                     { value: TimeOffSlot.AFTERNOON, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.AFTERNOON].label },
                   ]}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
+                </p>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <Label htmlFor="reason">Lý do nghỉ phép *</Label>
               <Textarea
@@ -501,7 +708,7 @@ export default function AdminTimeOffRequestsPage() {
                 rows={3}
               />
             </div>
-            
+
             <div className="flex space-x-3">
               <Button
                 variant="outline"
@@ -513,7 +720,7 @@ export default function AdminTimeOffRequestsPage() {
               <Button
                 onClick={handleCreateTimeOffRequest}
                 disabled={processing}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-[#8b5fbf] hover:bg-[#7a4fa8]"
               >
                 {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
               </Button>

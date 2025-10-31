@@ -5,7 +5,7 @@
 
 export enum TimeOffStatus {
   PENDING = 'PENDING',
-  APPROVED = 'APPROVED', 
+  APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED'
 }
@@ -44,7 +44,7 @@ export const TIME_OFF_SLOT_CONFIG = {
     time: '07:00-12:00'
   },
   [TimeOffSlot.AFTERNOON]: {
-    label: 'Ca chiều', 
+    label: 'Ca chiều',
     time: '13:00-18:00'
   }
 };
@@ -128,8 +128,12 @@ export interface TimeOffType {
   typeCode: string;
   description: string | null;
   requiresApproval: boolean;
+  requiresBalance: boolean;
+  defaultDaysPerYear: number | null;
   isPaid: boolean;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 

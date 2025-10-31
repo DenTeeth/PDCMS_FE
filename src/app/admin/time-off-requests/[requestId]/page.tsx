@@ -23,22 +23,21 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { OvertimeService } from '@/services/overtimeService';
-import { showOvertimeError } from '@/utils/overtimeErrorHandler';
+import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import {
-    OvertimeRequestDetail,
-    OvertimeStatus,
-    OVERTIME_STATUS_CONFIG,
-} from '@/types/overtime';
+    TimeOffRequestDetail,
+    TimeOffStatus,
+    TIME_OFF_STATUS_CONFIG,
+} from '@/types/timeOff';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function AdminOvertimeDetailPage() {
+export default function AdminTimeOffDetailPage() {
     const router = useRouter();
     const params = useParams();
     const { user } = useAuth();
-    const requestId = params.id as string;
+    const requestId = params.requestId as string;
 
-    const [request, setRequest] = useState<OvertimeRequestDetail | null>(null);
+    const [request, setRequest] = useState<TimeOffRequestDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Modal states
@@ -50,23 +49,26 @@ export default function AdminOvertimeDetailPage() {
     const [processing, setProcessing] = useState(false);
 
     // Permissions
-    const canApprove = user?.permissions?.includes('APPROVE_OT');
-    const canReject = user?.permissions?.includes('REJECT_OT');
-    const canCancelPending = user?.permissions?.includes('CANCEL_OT_PENDING');
+    const canApprove = user?.permissions?.includes('APPROVE_TIMEOFF');
+    const canReject = user?.permissions?.includes('REJECT_TIMEOFF');
+    const canCancelPending = user?.permissions?.includes('CANCEL_TIMEOFF_PENDING');
+    const canCancelOwn = user?.permissions?.includes('CANCEL_TIMEOFF_OWN');
 
     useEffect(() => {
-        loadRequestDetail();
+        if (requestId) {
+            loadRequestDetail();
+        }
     }, [requestId]);
 
     const loadRequestDetail = async () => {
         try {
             setLoading(true);
-            const data = await OvertimeService.getOvertimeRequestById(requestId);
+            const data = await TimeOffRequestService.getTimeOffRequestById(requestId);
             setRequest(data);
         } catch (error: any) {
-            console.error('Error loading overtime request:', error);
-            showOvertimeError(error);
-            router.push('/admin/overtime-requests');
+            console.error('Error loading time-off request:', error);
+            alert('Không thể tải thông tin yêu cầu');
+            router.push('/admin/time-off-requests');
         } finally {
             setLoading(false);
         }
@@ -77,60 +79,104 @@ export default function AdminOvertimeDetailPage() {
 
         try {
             setProcessing(true);
-            await OvertimeService.approveOvertimeRequest(request.requestId);
+            await TimeOffRequestService.approveTimeOffRequest(request.requestId);
             setShowApproveModal(false);
             await loadRequestDetail();
             alert('Đã duyệt yêu cầu thành công!');
         } catch (error: any) {
             console.error('Error approving request:', error);
-            showOvertimeError(error);
+            const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+            if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+                alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt"');
+                loadRequestDetail();
+            } else if (errorMsg?.includes('FORBIDDEN')) {
+                alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+            } else {
+                alert(`Lỗi: ${errorMsg || 'Không thể duyệt yêu cầu'}`);
+            }
         } finally {
             setProcessing(false);
         }
     };
 
     const handleReject = async () => {
-        if (!request || !rejectReason.trim()) return;
+        if (!request || !rejectReason.trim()) {
+            alert('Vui lòng nhập lý do từ chối');
+            return;
+        }
 
         try {
             setProcessing(true);
-            await OvertimeService.rejectOvertimeRequest(request.requestId, rejectReason);
+            await TimeOffRequestService.rejectTimeOffRequest(request.requestId, {
+                rejectedReason: rejectReason
+            });
             setShowRejectModal(false);
             setRejectReason('');
             await loadRequestDetail();
             alert('Đã từ chối yêu cầu!');
         } catch (error: any) {
             console.error('Error rejecting request:', error);
-            showOvertimeError(error);
+            const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+            if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+                alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt"');
+                loadRequestDetail();
+            } else if (errorMsg?.includes('FORBIDDEN')) {
+                alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+            } else {
+                alert(`Lỗi: ${errorMsg || 'Không thể từ chối yêu cầu'}`);
+            }
         } finally {
             setProcessing(false);
         }
     };
 
     const handleCancel = async () => {
-        if (!request || !cancelReason.trim()) return;
+        if (!request || !cancelReason.trim()) {
+            alert('Vui lòng nhập lý do hủy');
+            return;
+        }
 
         try {
             setProcessing(true);
-            await OvertimeService.cancelOvertimeRequest(request.requestId, cancelReason);
+            await TimeOffRequestService.cancelTimeOffRequest(request.requestId, {
+                cancellationReason: cancelReason
+            });
             setShowCancelModal(false);
             setCancelReason('');
             await loadRequestDetail();
             alert('Đã hủy yêu cầu!');
         } catch (error: any) {
-            console.error('Error canceling request:', error);
-            showOvertimeError(error);
+            console.error('Error cancelling request:', error);
+            const errorMsg = error.response?.data?.message || error.response?.data?.code;
+
+            if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
+                alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt"');
+                loadRequestDetail();
+            } else if (errorMsg?.includes('FORBIDDEN')) {
+                alert('Lỗi: Bạn không có quyền thực hiện hành động này');
+            } else {
+                alert(`Lỗi: ${errorMsg || 'Không thể hủy yêu cầu'}`);
+            }
         } finally {
             setProcessing(false);
         }
+    };
+
+    const canCancelRequest = () => {
+        if (!request) return false;
+        if (canCancelPending) return true;
+        if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+        return false;
     };
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải chi tiết yêu cầu...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Đang tải...</p>
                 </div>
             </div>
         );
@@ -138,14 +184,14 @@ export default function AdminOvertimeDetailPage() {
 
     if (!request) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-gray-600">Không tìm thấy yêu cầu.</p>
+            <div className="container mx-auto p-6">
+                <p className="text-red-600">Không tìm thấy yêu cầu</p>
             </div>
         );
     }
 
-    const statusConfig = OVERTIME_STATUS_CONFIG[request.status];
-    const isPending = request.status === OvertimeStatus.PENDING;
+    const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
+    const isPending = request.status === TimeOffStatus.PENDING;
 
     return (
         <div className="container mx-auto p-6 max-w-4xl">
@@ -156,14 +202,14 @@ export default function AdminOvertimeDetailPage() {
                     onClick={() => router.back()}
                     className="mb-4"
                 >
-                    <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+                    <FontAwesomeIcon icon={faArrowLeft} className="mr-2 h-4 w-4" />
                     Quay lại
                 </Button>
 
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Chi tiết yêu cầu làm thêm giờ</h1>
-                        <p className="text-gray-600 mt-2">Mã yêu cầu: <strong>{request.requestId}</strong></p>
+                        <h1 className="text-3xl font-bold text-gray-900">Chi tiết yêu cầu nghỉ phép</h1>
+                        <p className="text-gray-600 mt-1">Mã: {request.requestId}</p>
                     </div>
                     <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor} text-lg px-4 py-2`}>
                         {statusConfig.label}
@@ -182,44 +228,46 @@ export default function AdminOvertimeDetailPage() {
                             <Label className="text-gray-600">Nhân viên</Label>
                             <div className="flex items-center gap-2 mt-1">
                                 <FontAwesomeIcon icon={faUser} className="text-gray-400" />
-                                <div>
-                                    <p className="font-medium">{request.employee.fullName}</p>
-                                    <p className="text-xs text-gray-500">Mã NV: {request.employee.employeeCode}</p>
-                                </div>
+                                <p className="font-medium">{request.employeeName}</p>
                             </div>
                         </div>
 
                         <div>
-                            <Label className="text-gray-600">Ngày làm việc</Label>
+                            <Label className="text-gray-600">Loại phép</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <FontAwesomeIcon icon={faCircleInfo} className="text-gray-400" />
+                                <p className="font-medium">{request.timeOffTypeName}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label className="text-gray-600">Thời gian nghỉ</Label>
                             <div className="flex items-center gap-2 mt-1">
                                 <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
-                                <p className="font-medium">
-                                    {format(new Date(request.workDate), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label className="text-gray-600">Ca làm việc</Label>
-                            <div className="flex items-center gap-2 mt-1">
-                                <FontAwesomeIcon icon={faClock} className="text-gray-400" />
                                 <div>
-                                    <p className="font-medium">{request.workShift.shiftName}</p>
-                                    <span className="text-sm text-gray-500">
-                                        ({request.workShift.startTime} - {request.workShift.endTime})
-                                    </span>
+                                    <p className="font-medium">
+                                        {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })}
+                                        {' - '}
+                                        {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
+                                    </p>
+                                    {request.slotName && (
+                                        <p className="text-sm text-gray-500">{request.slotName}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <Label className="text-gray-600">Số giờ</Label>
-                            <p className="font-medium mt-1">{request.workShift.durationHours} giờ</p>
+                            <Label className="text-gray-600">Tổng số ngày</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <FontAwesomeIcon icon={faClock} className="text-gray-400" />
+                                <p className="font-medium">{request.totalDays} ngày</p>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                        <Label className="text-gray-600">Lý do làm thêm giờ</Label>
+                        <Label className="text-gray-600">Lý do nghỉ phép</Label>
                         <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <p className="text-gray-900">{request.reason}</p>
                         </div>
@@ -238,9 +286,9 @@ export default function AdminOvertimeDetailPage() {
                         <div className="flex items-center gap-2 mt-1">
                             <FontAwesomeIcon icon={faUser} className="text-purple-600" />
                             <div>
-                                <p className="font-medium">{request.requestedBy.fullName}</p>
+                                <p className="font-medium">{request.requestedByName}</p>
                                 <p className="text-xs text-gray-500">
-                                    {format(new Date(request.createdAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
+                                    {format(new Date(request.requestedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                                 </p>
                             </div>
                         </div>
@@ -252,7 +300,7 @@ export default function AdminOvertimeDetailPage() {
                             <div className="flex items-center gap-2 mt-1">
                                 <FontAwesomeIcon icon={faCheck} className="text-green-600" />
                                 <div>
-                                    <p className="font-medium">{request.approvedBy.fullName}</p>
+                                    <p className="font-medium">{request.approvedByName}</p>
                                     <p className="text-xs text-gray-500">
                                         {format(new Date(request.approvedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                                     </p>
@@ -281,20 +329,20 @@ export default function AdminOvertimeDetailPage() {
                 </CardContent>
             </Card>
 
-            {/* Actions */}
-            {isPending && (
+            {/* Actions Card - Only for PENDING requests */}
+            {isPending && (canApprove || canReject || canCancelRequest()) && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Thao tác</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex gap-3">
                             {canApprove && (
                                 <Button
                                     onClick={() => setShowApproveModal(true)}
                                     className="bg-green-600 hover:bg-green-700"
                                 >
-                                    <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                                    <FontAwesomeIcon icon={faCheck} className="mr-2 h-4 w-4" />
                                     Duyệt yêu cầu
                                 </Button>
                             )}
@@ -302,21 +350,20 @@ export default function AdminOvertimeDetailPage() {
                             {canReject && (
                                 <Button
                                     onClick={() => setShowRejectModal(true)}
-                                    variant="outline"
-                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                    className="bg-red-600 hover:bg-red-700"
                                 >
-                                    <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                                    <FontAwesomeIcon icon={faTimes} className="mr-2 h-4 w-4" />
                                     Từ chối
                                 </Button>
                             )}
 
-                            {canCancelPending && (
+                            {canCancelRequest() && (
                                 <Button
                                     onClick={() => setShowCancelModal(true)}
                                     variant="outline"
-                                    className="text-gray-600 border-gray-600 hover:bg-gray-50"
+                                    className="border-orange-600 text-orange-600 hover:bg-orange-50"
                                 >
-                                    <FontAwesomeIcon icon={faBan} className="mr-2" />
+                                    <FontAwesomeIcon icon={faBan} className="mr-2 h-4 w-4" />
                                     Hủy yêu cầu
                                 </Button>
                             )}
@@ -335,7 +382,11 @@ export default function AdminOvertimeDetailPage() {
                         <CardContent>
                             <div className="space-y-4">
                                 <p className="text-sm text-gray-600">
-                                    Bạn có chắc chắn muốn duyệt yêu cầu làm thêm giờ của <strong>{request.employee.fullName}</strong> vào ngày <strong>{format(new Date(request.workDate), 'dd/MM/yyyy', { locale: vi })}</strong>?
+                                    Bạn có chắc chắn muốn duyệt yêu cầu nghỉ phép của{' '}
+                                    <strong>{request.employeeName}</strong> từ ngày{' '}
+                                    <strong>{format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })}</strong>{' '}
+                                    đến ngày{' '}
+                                    <strong>{format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}</strong>?
                                 </p>
 
                                 <div className="flex gap-2 pt-4">
@@ -379,14 +430,14 @@ export default function AdminOvertimeDetailPage() {
                                         onChange={(e) => setRejectReason(e.target.value)}
                                         placeholder="Nhập lý do từ chối yêu cầu..."
                                         rows={4}
-                                        required
+                                        className="mt-1"
                                     />
                                 </div>
 
-                                <div className="flex gap-2 pt-4">
+                                <div className="flex gap-2">
                                     <Button
                                         onClick={handleReject}
-                                        disabled={!rejectReason.trim() || processing}
+                                        disabled={processing || !rejectReason.trim()}
                                         className="flex-1 bg-red-600 hover:bg-red-700"
                                     >
                                         {processing ? 'Đang xử lý...' : 'Xác nhận từ chối'}
@@ -427,15 +478,15 @@ export default function AdminOvertimeDetailPage() {
                                         onChange={(e) => setCancelReason(e.target.value)}
                                         placeholder="Nhập lý do hủy yêu cầu..."
                                         rows={4}
-                                        required
+                                        className="mt-1"
                                     />
                                 </div>
 
-                                <div className="flex gap-2 pt-4">
+                                <div className="flex gap-2">
                                     <Button
                                         onClick={handleCancel}
-                                        disabled={!cancelReason.trim() || processing}
-                                        className="flex-1"
+                                        disabled={processing || !cancelReason.trim()}
+                                        className="flex-1 bg-orange-600 hover:bg-orange-700"
                                     >
                                         {processing ? 'Đang xử lý...' : 'Xác nhận hủy'}
                                     </Button>
@@ -449,7 +500,7 @@ export default function AdminOvertimeDetailPage() {
                                         disabled={processing}
                                         className="flex-1"
                                     >
-                                        Hủy
+                                        Đóng
                                     </Button>
                                 </div>
                             </div>

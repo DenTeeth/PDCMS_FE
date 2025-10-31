@@ -13,12 +13,12 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 // Import types and services
-import { 
-  PartTimeSlot, 
+import {
+  PartTimeSlot,
   CreateWorkSlotRequest,
   UpdateWorkSlotRequest,
   WorkSlotQueryParams,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/workSlot';
 import { WorkShift } from '@/types/workShift';
 import { workSlotService } from '@/services/workSlotService';
@@ -28,16 +28,16 @@ import { useAuth } from '@/contexts/AuthContext';
 // ==================== MAIN COMPONENT ====================
 export default function WorkSlotsManagementPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // State management
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   // Filters temporarily removed
-  
+
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -80,7 +80,7 @@ export default function WorkSlotsManagementPage() {
       };
 
       const response = await workSlotService.getWorkSlots(params);
-        
+
       // Handle both array and paginated response
       if (Array.isArray(response)) {
         setWorkSlots(response);
@@ -102,7 +102,7 @@ export default function WorkSlotsManagementPage() {
   const fetchDropdownData = async () => {
     try {
       setLoadingDropdowns(true);
-      
+
       // Fetch active work shifts
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
@@ -117,19 +117,19 @@ export default function WorkSlotsManagementPage() {
   // ==================== CREATE WORK SLOT ====================
   const handleCreateWorkSlot = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check permission first
     if (!hasPermission(Permission.MANAGE_WORK_SLOTS)) {
       toast.error('You do not have permission to create work slots');
       return;
     }
-    
+
     // Validate required fields
     if (!createFormData.workShiftId) {
       toast.error('Please select a work shift');
       return;
     }
-    
+
     if (createFormData.quota < 1) {
       toast.error('Quota must be at least 1');
       return;
@@ -137,19 +137,19 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setCreating(true);
-      
+
       console.log('📤 Creating work slot:', createFormData);
-      
+
       await workSlotService.createWorkSlot(createFormData);
       toast.success('Work slot created successfully');
       setShowCreateModal(false);
       resetCreateForm();
-      
+
       // Refresh the work slots list
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to create work slot:', error);
-      
+
       let errorMessage = 'Failed to create work slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -158,7 +158,7 @@ export default function WorkSlotsManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setCreating(false);
@@ -185,7 +185,7 @@ export default function WorkSlotsManagementPage() {
 
   const handleUpdateWorkSlot = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingSlot) return;
 
     // Check permission first
@@ -208,9 +208,9 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setUpdating(true);
-      
+
       console.log('📤 Updating work slot:', editingSlot.slotId, editFormData);
-      
+
       await workSlotService.updateWorkSlot(editingSlot.slotId, editFormData);
       toast.success('Work slot updated successfully');
       setShowEditModal(false);
@@ -218,7 +218,7 @@ export default function WorkSlotsManagementPage() {
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to update work slot:', error);
-      
+
       let errorMessage = 'Failed to update work slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -227,7 +227,7 @@ export default function WorkSlotsManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setUpdating(false);
@@ -249,13 +249,13 @@ export default function WorkSlotsManagementPage() {
     try {
       setDeleting(true);
       console.log('🗑️ Deleting work slot:', slot.slotId);
-      
+
       await workSlotService.deleteWorkSlot(slot.slotId);
       toast.success('Work slot deleted successfully');
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to delete work slot:', error);
-      
+
       let errorMessage = 'Failed to delete work slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -264,7 +264,7 @@ export default function WorkSlotsManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setDeleting(false);
@@ -299,7 +299,7 @@ export default function WorkSlotsManagementPage() {
   };
 
   // ==================== RENDER ====================
-  
+
   return (
     <ProtectedRoute requiredPermissions={[Permission.VIEW_WORK_SHIFTS]}>
       <div className="container mx-auto p-6 space-y-6">
@@ -372,7 +372,7 @@ export default function WorkSlotsManagementPage() {
                           </Badge>
                         </td>
                         <td className="p-3">
-                          <Badge variant={slot.isActive ? "default" : "secondary"}>
+                          <Badge className={slot.isActive ? "bg-[#8b5fbf] text-white" : "bg-gray-200 text-gray-700"}>
                             {slot.isActive ? (
                               <>
                                 <CheckCircle className="h-3 w-3 mr-1" />
@@ -400,7 +400,7 @@ export default function WorkSlotsManagementPage() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             )}
-                            
+
                             {hasPermission(Permission.DELETE_WORK_SHIFTS) && (
                               <Button
                                 variant="outline"
