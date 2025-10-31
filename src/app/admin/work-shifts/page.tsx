@@ -14,11 +14,11 @@ import {
   X,
   AlertTriangle,
   RotateCcw,
-  ChevronDown,
   Search,
-  Filter,
   ArrowUp,
   ArrowDown,
+  ChevronDown,
+  Filter,
 } from 'lucide-react';
 import { workShiftService } from '@/services/workShiftService';
 import {
@@ -408,83 +408,83 @@ export default function WorkShiftsPage() {
   };
 
   return (
-    <div className="space-y-6 p-3 sm:p-6">
-      {/* ==================== HEADER ==================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="container mx-auto p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Quản lý Ca làm</h1>
-          <p className="text-sm sm:text-base text-gray-600">Xem và quản lý ca làm việc của nhân viên</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý Ca Làm</h1>
+          <p className="text-sm text-gray-600 mt-1">Xem và quản lý ca làm việc của nhân viên</p>
         </div>
-        <Button onClick={openCreateModal} className="bg-[#8b5fbf] hover:bg-[#7a4fb0] w-full sm:w-auto">
+
+        {/* Create Button */}
+        <Button onClick={openCreateModal} className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white">
           <Plus className="h-4 w-4 mr-2" />
-          Tạo ca làm
+          Tạo Ca Làm
         </Button>
       </div>
 
-      {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng số ca</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
+      {/* Stats Cards Grid - Giống ảnh */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Tổng số ca</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <Clock className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Đang hoạt động</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="h-6 w-6 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Clock className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ca thường</p>
-                <p className="text-2xl font-bold">{stats.normal}</p>
-              </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Hoạt động</p>
+              <p className="text-3xl font-bold text-green-600">{stats.active}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <Clock className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ca đêm</p>
-                <p className="text-2xl font-bold">{stats.night}</p>
-              </div>
+            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+              <Clock className="h-6 w-6 text-green-600" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Ca thường</p>
+              <p className="text-3xl font-bold text-blue-600">{stats.normal}</p>
+            </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Ca đêm</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.night}</p>
+            </div>
+            <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <Clock className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ==================== SEARCH & FILTER BAR ==================== */}
-      <Card className="shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            {/* Search Box - Dài hơn */}
+      {/* Toolbar: Search + Sort */}
+      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
+        <div className="flex flex-col gap-3">
+          {/* Search + Sort Row */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            {/* Search Box */}
             <div className="w-full sm:flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Tìm kiếm..."
+                  placeholder="Tìm kiếm theo tên ca, ID, thời gian..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 border-gray-300 focus:border-[#8b5fbf] focus:ring-[#8b5fbf] text-sm"
@@ -492,259 +492,233 @@ export default function WorkShiftsPage() {
               </div>
             </div>
 
-            {/* Sort Dropdown với Direction gộp chung */}
-            <div ref={sortDropdownRef} className="flex-shrink-0">
-              <div className="relative">
+            {/* Sort Dropdown + Direction */}
+            <div className="flex items-center gap-2">
+              {/* Dropdown chọn field */}
+              <div className="relative" ref={sortDropdownRef}>
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap min-w-[140px] justify-between"
+                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap"
                 >
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 flex-shrink-0" />
-                    <span>{getSortLabel()}</span>
-                  </div>
-                  {sortBy && (
-                    <div className="flex items-center gap-1 text-xs text-[#8b5fbf]">
-                      {sortOrder === 'asc' ? (
-                        <>
-                          <ArrowUp className="h-3 w-3" />
-                          <span className="hidden sm:inline">Tăng</span>
-                        </>
-                      ) : (
-                        <>
-                          <ArrowDown className="h-3 w-3" />
-                          <span className="hidden sm:inline">Giảm</span>
-                        </>
-                      )}
-                    </div>
-                  )}
+                  <Filter className="h-4 w-4 flex-shrink-0" />
+                  <span>{getSortLabel()}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''
+                    }`} />
                 </button>
 
                 {isSortDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
                     <div className="p-2">
-                      <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
-                        Sắp xếp theo
-                      </div>
-
                       {[
+                        { value: null, label: 'Mặc định' },
                         { value: 'name', label: 'Tên' },
                         { value: 'time', label: 'Thời gian' },
                         { value: 'duration', label: 'Số giờ' }
                       ].map((option) => (
-                        <div key={option.value}>
-                          <button
-                            onClick={() => {
-                              if (sortBy === option.value) {
-                                // Nếu đã chọn rồi thì toggle direction
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                // Chọn mới thì set mặc định ASC
-                                setSortBy(option.value as 'name' | 'time' | 'duration');
-                                setSortOrder('asc');
-                              }
-                              setIsSortDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${sortBy === option.value
+                        <button
+                          key={option.value || 'default'}
+                          onClick={() => {
+                            setSortBy(option.value as 'name' | 'time' | 'duration' | null);
+                            setSortOrder('asc');
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
                               ? 'bg-[#8b5fbf] text-white'
                               : 'text-gray-700 hover:bg-[#f3f0ff]'
-                              }`}
-                          >
-                            <span className="flex-1 text-left font-medium">{option.label}</span>
-                            {sortBy === option.value && (
-                              <div className="flex items-center gap-2">
-                                {sortOrder === 'asc' ? (
-                                  <>
-                                    <ArrowUp className="h-4 w-4" />
-                                    <span className="text-xs">Tăng dần</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ArrowDown className="h-4 w-4" />
-                                    <span className="text-xs">Giảm dần</span>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </button>
-                        </div>
+                            }`}
+                        >
+                          {option.label}
+                        </button>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Toggle Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                onClick={() => setActiveTab('active')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'active'
-                  ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-gray-300'
-                  }`}>
-                  <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+              {/* Direction buttons - chỉ hiện khi có sort */}
+              {sortBy && (
+                <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
+                  <button
+                    onClick={() => setSortOrder('asc')}
+                    className={`p-1.5 rounded transition-all ${sortOrder === 'asc'
+                        ? 'bg-[#8b5fbf] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                      }`}
+                    title="Tăng dần"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setSortOrder('desc')}
+                    className={`p-1.5 rounded transition-all ${sortOrder === 'desc'
+                        ? 'bg-[#8b5fbf] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                      }`}
+                    title="Giảm dần"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </button>
                 </div>
-                <span className="hidden sm:inline">Hoạt động</span>
-                <Badge className={`text-xs ${activeTab === 'active'
-                  ? 'bg-white/20 text-white border border-white/30'
-                  : 'bg-green-100 text-green-800'
-                  }`}>
-                  {stats.active}
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('inactive')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'inactive'
-                  ? 'bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'inactive' ? 'bg-white/20' : 'bg-gray-300'
-                  }`}>
-                  <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="hidden sm:inline">Không hoạt động</span>
-                <Badge className={`text-xs ${activeTab === 'inactive'
-                  ? 'bg-white/20 text-white border border-white/30'
-                  : 'bg-gray-200 text-gray-700'
-                  }`}>
-                  {stats.inactive}
-                </Badge>
-              </button>
+              )}
             </div>
           </div>
 
-          {/* Search Results Info */}
-          {searchQuery && (
-            <div className="text-xs sm:text-sm text-gray-600 mt-2">
-              Tìm thấy <span className="font-semibold text-[#8b5fbf]">{displayedShifts.length}</span> kết quả
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          {/* Status Filter Tabs */}
+          <div className="flex gap-2 pt-3 border-t border-gray-100">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'active'
+                ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+            >
+              <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-gray-300'
+                }`}>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="hidden sm:inline">Hoạt động</span>
+              <Badge className={`text-xs ${activeTab === 'active'
+                ? 'bg-white/20 text-white border border-white/30'
+                : 'bg-green-100 text-green-800'
+                }`}>
+                {stats.active}
+              </Badge>
+            </button>
 
-      {/* ==================== WORK SHIFTS TABLE ==================== */}
+            <button
+              onClick={() => setActiveTab('inactive')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'inactive'
+                ? 'bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+            >
+              <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'inactive' ? 'bg-white/20' : 'bg-gray-300'
+                }`}>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="hidden sm:inline">Không hoạt động</span>
+              <Badge className={`text-xs ${activeTab === 'inactive'
+                ? 'bg-white/20 text-white border border-white/30'
+                : 'bg-gray-200 text-gray-700'
+                }`}>
+                {stats.inactive}
+              </Badge>
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {/* ==================== WORK SHIFTS TABLE ==================== */}
-      {displayedShifts.length > 0 ? (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tên ca làm
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Thời gian
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                      Số giờ
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                      Loại ca
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                      Trạng thái
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Thao tác
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {displayedShifts.map((shift) => (
-                    <tr key={shift.workShiftId} className="hover:bg-gray-50">
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 flex items-center justify-center bg-blue-100 rounded-full">
-                            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+      {/* Table - No Card wrapper */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        {displayedShifts.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tên ca làm
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thời gian
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    Số giờ
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Loại ca
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Trạng thái
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {displayedShifts.map((shift) => (
+                  <tr key={shift.workShiftId} className="hover:bg-gray-50">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 flex items-center justify-center bg-blue-100 rounded-full">
+                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                        </div>
+                        <div className="ml-2 sm:ml-4">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900">
+                            {shift.shiftName}
                           </div>
-                          <div className="ml-2 sm:ml-4">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900">
-                              {shift.shiftName}
-                            </div>
-                            <div className="text-xs text-gray-500">{shift.workShiftId}</div>
-                            {/* Show badges on mobile below name */}
-                            <div className="flex gap-1 mt-1 md:hidden">
-                              {getCategoryBadge(shift.category)}
-                              {getStatusBadge(shift.isActive)}
-                            </div>
+                          <div className="text-xs text-gray-500">{shift.workShiftId}</div>
+                          {/* Show badges on mobile below name */}
+                          <div className="flex gap-1 mt-1 md:hidden">
+                            {getCategoryBadge(shift.category)}
+                            {getStatusBadge(shift.isActive)}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm text-gray-900">
-                          {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
-                        </div>
-                        {/* Show duration on mobile below time */}
-                        <div className="text-xs text-gray-500 sm:hidden">
-                          {shift.durationHours} giờ
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                        <div className="text-sm text-gray-900">{shift.durationHours} giờ</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                        {getCategoryBadge(shift.category)}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                        {getStatusBadge(shift.isActive)}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          {shift.isActive ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditModal(shift)}
-                                className="hover:bg-gray-100"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openDeleteModal(shift)}
-                                className="hover:bg-red-50 text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : (
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs sm:text-sm text-gray-900">
+                        {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                      </div>
+                      {/* Show duration on mobile below time */}
+                      <div className="text-xs text-gray-500 sm:hidden">
+                        {shift.durationHours} giờ
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <div className="text-sm text-gray-900">{shift.durationHours} giờ</div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {getCategoryBadge(shift.category)}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {getStatusBadge(shift.isActive)}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        {shift.isActive ? (
+                          <>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openReactivateModal(shift)}
-                              className="hover:bg-green-50 text-green-600"
-                              title="Kích hoạt lại"
+                              onClick={() => openEditModal(shift)}
+                              className="hover:bg-gray-100"
                             >
-                              <RotateCcw className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-12">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDeleteModal(shift)}
+                              className="hover:bg-red-50 text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openReactivateModal(shift)}
+                            className="hover:bg-green-50 text-green-600"
+                            title="Kích hoạt lại"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-12">
             <div className="text-center">
               <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 {searchQuery ? <Search className="h-8 w-8 text-gray-400" /> : <Clock className="h-8 w-8 text-gray-400" />}
@@ -759,17 +733,17 @@ export default function WorkShiftsPage() {
                 }
               </p>
               {!searchQuery && (
-                <Button onClick={openCreateModal} className="bg-[#8b5fbf] hover:bg-[#7a4fb0]">
+                <Button onClick={openCreateModal} className="bg-[#8b5fbf] hover:bg-[#7a4fa8]">
                   <Plus className="h-4 w-4 mr-2" />
                   Tạo ca làm đầu tiên
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* ==================== CREATE MODAL ==================== */}
+      {/* CREATE MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">

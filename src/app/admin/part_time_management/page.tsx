@@ -14,11 +14,11 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 // Import types and services
-import { 
-  ShiftRegistration, 
+import {
+  ShiftRegistration,
   UpdateShiftRegistrationRequest,
   ShiftRegistrationQueryParams,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,14 +27,14 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function PartTimeManagementPage() {
   const router = useRouter();
   const { user, hasPermission } = useAuth();
-  
+
   // State management
   const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   // Filter states
   const [filterEmployeeId, setFilterEmployeeId] = useState<string>('');
   const [filterIsActive, setFilterIsActive] = useState<string>('');
@@ -52,12 +52,12 @@ export default function PartTimeManagementPage() {
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsRegistration, setDetailsRegistration] = useState<ShiftRegistration | null>(null);
- 
+
 
   // ==================== FETCH DATA ====================
   useEffect(() => {
     fetchRegistrations();
-    
+
     // Debug: Log user permissions
     console.log('🔍 Current user:', user);
     console.log('🔍 User permissions:', user?.permissions);
@@ -77,9 +77,9 @@ export default function PartTimeManagementPage() {
       };
 
       const response = await shiftRegistrationService.getRegistrations(params);
-      
+
       console.log('📋 Fetched registrations response:', response);
-      
+
       // Support both array and paginated response formats
       if (Array.isArray(response)) {
         setRegistrations(response);
@@ -106,29 +106,29 @@ export default function PartTimeManagementPage() {
   // ==================== CREATE REGISTRATION ====================
   const handleCreateRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check permission first
     if (!hasPermission(Permission.CREATE_REGISTRATION)) {
       toast.error('You do not have permission to create shift registrations');
       return;
     }
-    
+
     // Validate required fields
     if (!createFormData.employeeId || createFormData.employeeId === 0) {
       toast.error('Please select an employee');
       return;
     }
-    
+
     if (!createFormData.workShiftId) {
       toast.error('Please select a work shift');
       return;
     }
-    
+
     if (!createFormData.effectiveFrom) {
       toast.error('Please select effective from date');
       return;
     }
-    
+
     if (createFormData.daysOfWeek.length === 0) {
       toast.error('Please select at least one day of week');
       return;
@@ -146,7 +146,7 @@ export default function PartTimeManagementPage() {
 
     try {
       setCreating(true);
-      
+
       // Prepare payload exactly as API expects (based on provided body)
       const payload: any = {
         employeeId: Number(createFormData.employeeId),
@@ -159,20 +159,20 @@ export default function PartTimeManagementPage() {
       if (createFormData.effectiveTo && createFormData.effectiveTo.trim() !== '') {
         payload.effectiveTo = createFormData.effectiveTo;
       }
-      
+
       console.log('📤 Submitting shift registration payload:', payload);
       console.log('🔍 Expected result: Registration should be created with isActive: true');
-      
+
       await shiftRegistrationService.createRegistration(payload);
       toast.success('Shift registration created successfully');
       setShowCreateModal(false);
       resetCreateForm();
-      
+
       // Refresh the registrations list to show new data
       await fetchRegistrations();
     } catch (error: any) {
       console.error('❌ Failed to create registration:', error);
-      
+
       let errorMessage = 'Failed to create shift registration';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -181,7 +181,7 @@ export default function PartTimeManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setCreating(false);
@@ -225,13 +225,13 @@ export default function PartTimeManagementPage() {
 
     try {
       console.log('🗑️ Deleting registration:', registration.registrationId);
-      
+
       await shiftRegistrationService.deleteRegistration(registration.registrationId);
       toast.success('Shift registration deleted successfully');
       await fetchRegistrations();
     } catch (error: any) {
       console.error('❌ Failed to delete registration:', error);
-      
+
       let errorMessage = 'Failed to delete shift registration';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -240,14 +240,14 @@ export default function PartTimeManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     }
   };
 
   const handleUpdateRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingRegistration) return;
 
     // Check permission first
@@ -261,12 +261,12 @@ export default function PartTimeManagementPage() {
       toast.error('Please select a work shift');
       return;
     }
-    
+
     if (!editFormData.effectiveFrom) {
       toast.error('Please select effective from date');
       return;
     }
-    
+
     if (!editFormData.daysOfWeek || editFormData.daysOfWeek.length === 0) {
       toast.error('Please select at least one day of week');
       return;
@@ -284,7 +284,7 @@ export default function PartTimeManagementPage() {
 
     try {
       setUpdating(true);
-      
+
       // Prepare payload exactly as API expects (similar to create payload)
       const payload: any = {
         workShiftId: editFormData.workShiftId,
@@ -297,12 +297,12 @@ export default function PartTimeManagementPage() {
       if (editFormData.effectiveTo && editFormData.effectiveTo.trim() !== '') {
         payload.effectiveTo = editFormData.effectiveTo;
       }
-      
+
       console.log('📤 Updating shift registration payload:', payload);
       console.log('📤 Registration ID:', editingRegistration.registrationId);
-      
+
       await shiftRegistrationService.updateRegistration(
-        editingRegistration.registrationId, 
+        editingRegistration.registrationId,
         payload
       );
       toast.success('Shift registration updated successfully');
@@ -311,7 +311,7 @@ export default function PartTimeManagementPage() {
       await fetchRegistrations();
     } catch (error: any) {
       console.error('❌ Failed to update registration:', error);
-      
+
       let errorMessage = 'Failed to update shift registration';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -320,7 +320,7 @@ export default function PartTimeManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setUpdating(false);
@@ -352,7 +352,7 @@ export default function PartTimeManagementPage() {
   const getDayOfWeekLabel = (day: DayOfWeek) => {
     const dayMap = {
       [DayOfWeek.MONDAY]: 'T2',
-      [DayOfWeek.TUESDAY]: 'T3', 
+      [DayOfWeek.TUESDAY]: 'T3',
       [DayOfWeek.WEDNESDAY]: 'T4',
       [DayOfWeek.THURSDAY]: 'T5',
       [DayOfWeek.FRIDAY]: 'T6',
@@ -374,7 +374,7 @@ export default function PartTimeManagementPage() {
   return (
     <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_ALL]}>
       <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
+        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Part-Time Registration Management</h1>
@@ -386,300 +386,300 @@ export default function PartTimeManagementPage() {
           </Button>
         </div>
 
-      {/* Filters temporarily hidden */}
+        {/* Filters temporarily hidden */}
 
-      {/* Registrations Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Shift Registrations ({totalElements})
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+        {/* Registrations Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Shift Registrations ({totalElements})
+              </CardTitle>
             </div>
-          ) : registrations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No shift registrations found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Registration ID</th>
-                    <th className="text-left p-3 font-medium">Day</th>
-                    <th className="text-left p-3 font-medium">Effective Period</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.map((registration) => (
-                    <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
-                      <td className="p-3">
-                        <Badge variant="outline">{getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}</Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <div>From: {formatDate(registration.effectiveFrom)}</div>
-                          {registration.effectiveTo && (
-                            <div>To: {formatDate(registration.effectiveTo)}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={registration.isActive ? "default" : "secondary"}>
-                          {registration.isActive ? (
-                            <>
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Inactive
-                            </>
-                          )}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setDetailsRegistration(registration);
-                              setShowDetailsModal(true);
-                            }}
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : registrations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No shift registrations found
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-3 font-medium">Registration ID</th>
+                      <th className="text-left p-3 font-medium">Day</th>
+                      <th className="text-left p-3 font-medium">Effective Period</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-4">
-              <div className="text-sm text-gray-600">
-                Page {currentPage + 1} of {totalPages} ({totalElements} total)
+                  </thead>
+                  <tbody>
+                    {registrations.map((registration) => (
+                      <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
+                        <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
+                        <td className="p-3">
+                          <Badge variant="outline">{getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}</Badge>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            <div>From: {formatDate(registration.effectiveFrom)}</div>
+                            {registration.effectiveTo && (
+                              <div>To: {formatDate(registration.effectiveTo)}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={registration.isActive ? "bg-[#8b5fbf] text-white" : "bg-gray-200 text-gray-700"}>
+                            {registration.isActive ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Inactive
+                              </>
+                            )}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDetailsRegistration(registration);
+                                setShowDetailsModal(true);
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                  disabled={currentPage === 0}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                  disabled={currentPage === totalPages - 1}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
 
-      {/* Create Modal temporarily removed */}
-
-      {/* Edit Modal */}
-      {showEditModal && editingRegistration && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Edit Shift Registration</h2>
-            <form onSubmit={handleUpdateRegistration} className="space-y-4">
-              <div>
-                <Label>Registration ID</Label>
-                <Input value={editingRegistration.registrationId} disabled />
-              </div>
-
-              <div>
-                <Label htmlFor="editWorkShift">Work Shift</Label>
-                <select
-                  id="editWorkShift"
-                  value={editFormData.workShiftId || ''}
-                  onChange={(e) => setEditFormData(prev => ({
-                    ...prev,
-                    workShiftId: e.target.value
-                  }))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Work Shift</option>
-                  {workShifts.map(shift => (
-                    <option key={shift.workShiftId} value={shift.workShiftId}>
-                      {shift.shiftName} ({shift.startTime}-{shift.endTime})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label>Days of Week</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {Object.values(DayOfWeek).map(day => (
-                    <label key={day} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={editFormData.daysOfWeek?.includes(day) || false}
-                        onChange={(e) => {
-                          const currentDays = editFormData.daysOfWeek || [];
-                          if (e.target.checked) {
-                            setEditFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: [...currentDays, day]
-                            }));
-                          } else {
-                            setEditFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: currentDays.filter(d => d !== day)
-                            }));
-                          }
-                        }}
-                      />
-                      <span className="text-sm">{day}</span>
-                    </label>
-                  ))}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600">
+                  Page {currentPage + 1} of {totalPages} ({totalElements} total)
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    Next
+                  </Button>
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div>
-                <Label htmlFor="editEffectiveFrom">Effective From</Label>
-                <Input
-                  id="editEffectiveFrom"
-                  type="date"
-                  value={editFormData.effectiveFrom || ''}
-                  onChange={(e) => setEditFormData(prev => ({
-                    ...prev,
-                    effectiveFrom: e.target.value
-                  }))}
-                />
-              </div>
+        {/* Create Modal temporarily removed */}
 
-              <div>
-                <Label htmlFor="editEffectiveTo">Effective To</Label>
-                <Input
-                  id="editEffectiveTo"
-                  type="date"
-                  value={editFormData.effectiveTo || ''}
-                  onChange={(e) => setEditFormData(prev => ({
-                    ...prev,
-                    effectiveTo: e.target.value
-                  }))}
-                />
-              </div>
+        {/* Edit Modal */}
+        {showEditModal && editingRegistration && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Edit Shift Registration</h2>
+              <form onSubmit={handleUpdateRegistration} className="space-y-4">
+                <div>
+                  <Label>Registration ID</Label>
+                  <Input value={editingRegistration.registrationId} disabled />
+                </div>
 
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={editFormData.isActive !== false}
+                <div>
+                  <Label htmlFor="editWorkShift">Work Shift</Label>
+                  <select
+                    id="editWorkShift"
+                    value={editFormData.workShiftId || ''}
                     onChange={(e) => setEditFormData(prev => ({
                       ...prev,
-                      isActive: e.target.checked
+                      workShiftId: e.target.value
+                    }))}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Work Shift</option>
+                    {workShifts.map(shift => (
+                      <option key={shift.workShiftId} value={shift.workShiftId}>
+                        {shift.shiftName} ({shift.startTime}-{shift.endTime})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label>Days of Week</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {Object.values(DayOfWeek).map(day => (
+                      <label key={day} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.daysOfWeek?.includes(day) || false}
+                          onChange={(e) => {
+                            const currentDays = editFormData.daysOfWeek || [];
+                            if (e.target.checked) {
+                              setEditFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: [...currentDays, day]
+                              }));
+                            } else {
+                              setEditFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: currentDays.filter(d => d !== day)
+                              }));
+                            }
+                          }}
+                        />
+                        <span className="text-sm">{day}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="editEffectiveFrom">Effective From</Label>
+                  <Input
+                    id="editEffectiveFrom"
+                    type="date"
+                    value={editFormData.effectiveFrom || ''}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      effectiveFrom: e.target.value
                     }))}
                   />
-                  <span>Active</span>
-                </label>
-              </div>
+                </div>
 
+                <div>
+                  <Label htmlFor="editEffectiveTo">Effective To</Label>
+                  <Input
+                    id="editEffectiveTo"
+                    type="date"
+                    value={editFormData.effectiveTo || ''}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      effectiveTo: e.target.value
+                    }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={editFormData.isActive !== false}
+                      onChange={(e) => setEditFormData(prev => ({
+                        ...prev,
+                        isActive: e.target.checked
+                      }))}
+                    />
+                    <span>Active</span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingRegistration(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updating}>
+                    {updating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Registration'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Details Modal */}
+        {showDetailsModal && detailsRegistration && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
+              <div className="space-y-3">
+                <div>
+                  <Label>Registration ID</Label>
+                  <Input value={detailsRegistration.registrationId} disabled />
+                </div>
+                <div>
+                  <Label>Employee</Label>
+                  <Input value={detailsRegistration.employeeName} disabled />
+                </div>
+                <div>
+                  <Label>Work Shift</Label>
+                  <Input value={detailsRegistration.shiftName} disabled />
+                </div>
+                <div>
+                  <Label>Day</Label>
+                  <Input value={getDayOfWeekLabel(detailsRegistration.dayOfWeek as DayOfWeek)} disabled />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Effective From</Label>
+                    <Input value={formatDate(detailsRegistration.effectiveFrom)} disabled />
+                  </div>
+                  <div>
+                    <Label>Effective To</Label>
+                    <Input value={detailsRegistration.effectiveTo ? formatDate(detailsRegistration.effectiveTo) : ''} disabled />
+                  </div>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Input value={detailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
+                </div>
+              </div>
               <div className="flex justify-end gap-2 pt-4">
                 <Button
-                  type="button"
                   variant="outline"
                   onClick={() => {
-                    setShowEditModal(false);
-                    setEditingRegistration(null);
+                    setShowDetailsModal(false);
+                    setDetailsRegistration(null);
                   }}
                 >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={updating}>
-                  {updating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    'Update Registration'
-                  )}
+                  Close
                 </Button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Details Modal */}
-      {showDetailsModal && detailsRegistration && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Registration Details</h2>
-            <div className="space-y-3">
-              <div>
-                <Label>Registration ID</Label>
-                <Input value={detailsRegistration.registrationId} disabled />
-              </div>
-              <div>
-                <Label>Employee</Label>
-                <Input value={detailsRegistration.employeeName} disabled />
-              </div>
-              <div>
-                <Label>Work Shift</Label>
-                <Input value={detailsRegistration.shiftName} disabled />
-              </div>
-              <div>
-                <Label>Day</Label>
-                <Input value={getDayOfWeekLabel(detailsRegistration.dayOfWeek as DayOfWeek)} disabled />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Effective From</Label>
-                  <Input value={formatDate(detailsRegistration.effectiveFrom)} disabled />
-                </div>
-                <div>
-                  <Label>Effective To</Label>
-                  <Input value={detailsRegistration.effectiveTo ? formatDate(detailsRegistration.effectiveTo) : ''} disabled />
-                </div>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Input value={detailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDetailsModal(false);
-                  setDetailsRegistration(null);
-                }}
-              >
-                Close
-              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       </div>
     </ProtectedRoute>
