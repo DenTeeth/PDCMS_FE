@@ -60,7 +60,7 @@ export const getOvertimeErrorMessage = (error: OvertimeError): string => {
 export const showOvertimeError = (error: any): void => {
   const overtimeError = handleOvertimeError(error);
   const message = getOvertimeErrorMessage(overtimeError);
-  
+
   // Log chi tiết error để debug
   console.error('🔴 Overtime Error Details:', {
     status: overtimeError.status,
@@ -69,7 +69,7 @@ export const showOvertimeError = (error: any): void => {
     fullError: error.response?.data,
     userMessage: message
   });
-  
+
   alert(message);
 };
 
