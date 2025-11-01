@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function EmployeePartTimeManagementRedirect() {
+export default function FixedRegistrationsRedirect() {
   const router = useRouter();
   
   useEffect(() => {
-    router.replace('/employee/registrations');
+    router.replace('/admin/registrations');
   }, [router]);
 
   return null;

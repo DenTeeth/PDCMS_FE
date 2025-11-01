@@ -21,12 +21,19 @@ export interface PartTimeSlot {
 
 /**
  * Available Slot for Employee Registration
+ * Response from GET /api/v1/registrations/available-slots
+ * 
+ * Note: API response only includes: slotId, shiftName, dayOfWeek, remaining
+ * workShiftId, quota, registered are optional (may not be in response)
  */
 export interface AvailableSlot {
   slotId: number;
-  shiftName: string;
+  shiftName: string;    // Note: shiftName (not workShiftName)
   dayOfWeek: DayOfWeek;
-  remaining: number;
+  remaining: number;    // Number of available spots
+  workShiftId?: string; // Optional: ID of work shift (may not be in response)
+  quota?: number;       // Optional: Total quota (may not be in response)
+  registered?: number;  // Optional: Number of registrations (may not be in response)
 }
 
 /**
@@ -53,10 +60,11 @@ export interface CreateWorkSlotRequest {
 
 /**
  * Request payload for updating a work slot
+ * Note: Both fields are optional (can update independently)
  */
 export interface UpdateWorkSlotRequest {
-  quota: number;
-  isActive: boolean;
+  quota?: number;       // Optional: Can update quota only
+  isActive?: boolean;   // Optional: Can update isActive only
 }
 
 /**

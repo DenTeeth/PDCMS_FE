@@ -54,7 +54,9 @@ export interface Role {
  */
 export enum EmploymentType {
   FULL_TIME = 'FULL_TIME',
-  PART_TIME = 'PART_TIME'
+  PART_TIME = 'PART_TIME', // Keep for backward compatibility
+  PART_TIME_FIXED = 'PART_TIME_FIXED', // Can use fixed shift registration
+  PART_TIME_FLEX = 'PART_TIME_FLEX' // Must use part-time slot registration
 }
 
 /**

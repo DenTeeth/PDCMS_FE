@@ -665,14 +665,14 @@ export default function AdminShiftCalendarPage() {
                   headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
                   }}
                   locale="vi"
                   events={getCalendarEvents()}
                   height="100%"
                   slotMinTime="06:00:00"
                   slotMaxTime="23:00:00"
-                  slotDuration="01:00:00"
+                  slotDuration="00:30:00"
                   slotLabelInterval="01:00:00"
                   allDaySlot={false}
                   nowIndicator={true}
