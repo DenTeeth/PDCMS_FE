@@ -1,4 +1,4 @@
-import { 
+import {
   faTachometerAlt,
   faUsers,
   faFileAlt,
@@ -37,6 +37,7 @@ import {
   faCalendarDays,
   faUmbrellaBeach,
   faListCheck,
+  faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { GroupedPermissions } from '@/types/auth';
@@ -187,6 +188,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/admin/time-off-types',
           icon: faListAlt,
           requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
+        },
+        {
+          name: 'Leave Balances',
+          href: '/admin/leave-balances',
+          icon: faWallet,
+          requiredPermissions: ['VIEW_LEAVE_BALANCE_ALL'],
         },
       ],
     },
@@ -424,7 +431,7 @@ export const getNavigationConfigByRole = (roles: string[]): NavigationConfig => 
   } else if (roles.includes('ROLE_PATIENT')) {
     return PATIENT_NAVIGATION_CONFIG;
   }
-  
+
   return PATIENT_NAVIGATION_CONFIG; // Default fallback
 };
 
@@ -436,7 +443,7 @@ export const generateNavigationConfig = (
   groupedPermissions: GroupedPermissions | undefined
 ): NavigationConfig => {
   const baseConfig = getNavigationConfigByRole([`ROLE_${baseRole.toUpperCase()}`]);
-  
+
   if (!groupedPermissions) {
     return baseConfig;
   }
@@ -446,7 +453,7 @@ export const generateNavigationConfig = (
     if (!item.requiredPermissionGroup) {
       return true; // Always show items without permission requirements
     }
-    
+
     return hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup);
   });
 
@@ -483,6 +490,6 @@ export const getBasePathByRole = (roles: string[]): string => {
   } else if (roles.includes('ROLE_PATIENT')) {
     return '/patient';
   }
-  
+
   return '/patient'; // Default fallback
 };

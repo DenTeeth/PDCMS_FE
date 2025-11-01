@@ -1,36 +1,27 @@
 'use client';
 
 /**
- * ⚠️ ADMIN TIME-OFF TYPES MANAGEMENT PAGE
+ * ADMIN TIME-OFF TYPES MANAGEMENT PAGE (P6.1)
  * 
- * STATUS: PARTIALLY IMPLEMENTED (READ-ONLY)
+ * Features:
+ * ✅ View all time-off types (including inactive)
+ * ✅ Create new time-off types
+ * ✅ Update existing types
+ * ✅ Toggle active status (soft delete)
+ * ✅ RBAC permissions
+ * ✅ Error handling (DUPLICATE_TYPE_CODE, TIMEOFF_TYPE_IN_USE)
  * 
- * ✅ COMPLETED:
- * - Stats cards (Total, Active, Inactive, Paid)
- * - Search & filters
- * - Table display
- * - RBAC permissions check
- * - UI/UX following work-shifts pattern
+ * RBAC Permissions:
+ * - VIEW_TIMEOFF_TYPE_ALL: Required to access page
+ * - CREATE_TIMEOFF_TYPE: Show Create button
+ * - UPDATE_TIMEOFF_TYPE: Show Edit button
+ * - DELETE_TIMEOFF_TYPE: Show Toggle Status button
  * 
- * ⏳ PENDING BE IMPLEMENTATION:
- * Backend chưa có Admin API endpoints, hiện tại chỉ có Employee API (READ-ONLY):
- * 
- * TODO: Cần BE implement các endpoints sau:
- * 1. GET /api/v1/admin/time-off-types (get ALL including inactive)
- * 2. POST /api/v1/admin/time-off-types (create new type)
- * 3. PATCH /api/v1/admin/time-off-types/{id} (update type)
- * 4. DELETE /api/v1/admin/time-off-types/{id} (toggle active status)
- * 
- * Error codes cần handle:
- * - 409 DUPLICATE_TYPE_CODE: Mã loại nghỉ phép đã tồn tại
- * - 409 TIMEOFF_TYPE_IN_USE: Không thể tắt vì đang được dùng
- * - 404 NOT_FOUND: Loại nghỉ phép không tồn tại
- * 
- * Khi BE hoàn thành, uncomment code trong:
- * - handleCreate()
- * - handleUpdate()
- * - handleToggleStatus()
- * - loadTimeOffTypes() → đổi sang getAllTimeOffTypes()
+ * API Endpoints:
+ * - GET /api/v1/admin/time-off-types (get all including inactive)
+ * - POST /api/v1/admin/time-off-types (create)
+ * - PATCH /api/v1/admin/time-off-types/{id} (update)
+ * - DELETE /api/v1/admin/time-off-types/{id} (toggle status)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -143,12 +134,8 @@ export default function AdminTimeOffTypesPage() {
   const loadTimeOffTypes = async () => {
     try {
       setLoading(true);
-      // TODO: Đổi sang getAllTimeOffTypes() khi BE implement Admin API
-      // const response = await TimeOffTypeService.getAllTimeOffTypes();
-      const response = await TimeOffTypeService.getTimeOffTypes({
-        page: 0,
-        size: 100
-      });
+      // Sử dụng Admin API để lấy tất cả (bao gồm cả inactive)
+      const response = await TimeOffTypeService.getAllTimeOffTypes();
       setTimeOffTypes(response || []);
     } catch (error: any) {
       handleApiError(error, 'Không thể tải danh sách loại nghỉ phép');
@@ -247,19 +234,25 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
-      // TODO: BE chưa implement Admin API - Chờ BE hoàn thành
-      alert('Tính năng này đang chờ BE implement Admin API (POST /api/v1/admin/time-off-types)');
-      return;
+      const createDto = {
+        typeCode: formData.typeCode,
+        typeName: formData.typeName,
+        description: formData.description,
+        requiresBalance: formData.requiresBalance,
+        defaultDaysPerYear: formData.defaultDaysPerYear,
+        isPaid: formData.isPaid,
+      };
 
-      // await TimeOffTypeService.createTimeOffType(formData);
-      // alert('Tạo loại nghỉ phép thành công!');
-      // setShowCreateModal(false);
-      // resetForm();
-      // loadTimeOffTypes();
+      await TimeOffTypeService.createTimeOffType(createDto);
+      alert('Tạo loại nghỉ phép thành công!');
+      setShowCreateModal(false);
+      resetForm();
+      loadTimeOffTypes();
     } catch (error: any) {
+      const errorCode = error?.response?.data?.code || error?.response?.data?.error;
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
-      if (errorMsg.includes('DUPLICATE_TYPE_CODE') || error?.response?.status === 409) {
+      if (errorCode === 'DUPLICATE_TYPE_CODE' || error?.response?.status === 409) {
         setFormErrors({ typeCode: 'Mã loại nghỉ phép này đã tồn tại' });
       } else {
         handleApiError(error, 'Không thể tạo loại nghỉ phép');
@@ -276,22 +269,28 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
-      // TODO: BE chưa implement Admin API - Chờ BE hoàn thành
-      alert('Tính năng này đang chờ BE implement Admin API (PATCH /api/v1/admin/time-off-types/{id})');
-      return;
+      const updateDto = {
+        typeCode: formData.typeCode,
+        typeName: formData.typeName,
+        description: formData.description,
+        requiresBalance: formData.requiresBalance,
+        defaultDaysPerYear: formData.defaultDaysPerYear,
+        isPaid: formData.isPaid,
+      };
 
-      // await TimeOffTypeService.updateTimeOffType(selectedType.typeId, formData);
-      // alert('Cập nhật loại nghỉ phép thành công!');
-      // setShowEditModal(false);
-      // setSelectedType(null);
-      // resetForm();
-      // loadTimeOffTypes();
+      await TimeOffTypeService.updateTimeOffType(Number(selectedType.typeId), updateDto);
+      alert('Cập nhật loại nghỉ phép thành công!');
+      setShowEditModal(false);
+      setSelectedType(null);
+      resetForm();
+      loadTimeOffTypes();
     } catch (error: any) {
+      const errorCode = error?.response?.data?.code || error?.response?.data?.error;
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
-      if (errorMsg.includes('DUPLICATE_TYPE_CODE') || error?.response?.status === 409) {
+      if (errorCode === 'DUPLICATE_TYPE_CODE' || error?.response?.status === 409) {
         setFormErrors({ typeCode: 'Mã loại nghỉ phép này đã tồn tại' });
-      } else if (error?.response?.status === 404) {
+      } else if (errorCode === 'TIMEOFF_TYPE_NOT_FOUND' || error?.response?.status === 404) {
         alert('Loại nghỉ phép không tồn tại');
         setShowEditModal(false);
         loadTimeOffTypes();
@@ -310,22 +309,19 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
-      // TODO: BE chưa implement Admin API - Chờ BE hoàn thành
-      alert('Tính năng này đang chờ BE implement Admin API (DELETE /api/v1/admin/time-off-types/{id})');
-      return;
-
-      // await TimeOffTypeService.deleteTimeOffType(selectedType.typeId);
-      // const newStatus = !selectedType.isActive;
-      // alert(`${newStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} loại nghỉ phép thành công!`);
-      // setShowToggleModal(false);
-      // setSelectedType(null);
-      // loadTimeOffTypes();
+      await TimeOffTypeService.deleteTimeOffType(Number(selectedType.typeId));
+      const newStatus = !selectedType.isActive;
+      alert(`${newStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} loại nghỉ phép thành công!`);
+      setShowToggleModal(false);
+      setSelectedType(null);
+      loadTimeOffTypes();
     } catch (error: any) {
+      const errorCode = error?.response?.data?.code || error?.response?.data?.error;
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
-      if (errorMsg.includes('TIMEOFF_TYPE_IN_USE') || error?.response?.status === 409) {
+      if (errorCode === 'TIMEOFF_TYPE_IN_USE' || error?.response?.status === 409) {
         alert('Không thể vô hiệu hóa. Loại nghỉ phép này đang được sử dụng trong các yêu cầu nghỉ phép đang chờ duyệt.');
-      } else if (error?.response?.status === 404) {
+      } else if (errorCode === 'TIMEOFF_TYPE_NOT_FOUND' || error?.response?.status === 404) {
         alert('Loại nghỉ phép không tồn tại');
         setShowToggleModal(false);
         loadTimeOffTypes();
@@ -522,8 +518,8 @@ export default function AdminTimeOffTypesPage() {
                               setIsSortDropdownOpen(false);
                             }}
                             className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortField === option.value
-                                ? 'bg-[#8b5fbf] text-white'
-                                : 'text-gray-700 hover:bg-[#f3f0ff]'
+                              ? 'bg-[#8b5fbf] text-white'
+                              : 'text-gray-700 hover:bg-[#f3f0ff]'
                               }`}
                           >
                             {option.label}
@@ -540,8 +536,8 @@ export default function AdminTimeOffTypesPage() {
                     <button
                       onClick={() => setSortOrder('asc')}
                       className={`p-1.5 rounded transition-all ${sortOrder === 'asc'
-                          ? 'bg-[#8b5fbf] text-white shadow-sm'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        ? 'bg-[#8b5fbf] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                         }`}
                       title="Tăng dần"
                     >
@@ -550,8 +546,8 @@ export default function AdminTimeOffTypesPage() {
                     <button
                       onClick={() => setSortOrder('desc')}
                       className={`p-1.5 rounded transition-all ${sortOrder === 'desc'
-                          ? 'bg-[#8b5fbf] text-white shadow-sm'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        ? 'bg-[#8b5fbf] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                         }`}
                       title="Giảm dần"
                     >

@@ -131,8 +131,13 @@ export default function AdminOvertimeRequestsPage() {
         return;
       }
 
-      console.log('Admin creating overtime request:', formData);
-      const response = await OvertimeService.createOvertimeRequest(formData);
+      // Đảm bảo employeeId là number
+      const requestData = {
+        ...formData,
+        employeeId: Number(formData.employeeId),
+      };
+      console.log('Admin creating overtime request:', requestData);
+      const response = await OvertimeService.createOvertimeRequest(requestData);
       setShowCreateForm(false);
       setFormData({
         employeeId: undefined,
