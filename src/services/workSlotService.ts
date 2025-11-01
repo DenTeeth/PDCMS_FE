@@ -24,36 +24,35 @@ class WorkSlotService {
   private readonly endpoint = '/work-slots';
 
   /**
-   * Fetch all work slots with pagination and filters
-   * @param params Query parameters
-   * @returns Paginated list of work slots
+   * Fetch all work slots
+   * According to API spec: Returns array directly (NOT paginated)
+   * @param params Query parameters (optional, API may not support all filters)
+   * @returns Array of work slots
    */
-  async getWorkSlots(params: WorkSlotQueryParams = {}): Promise<PaginatedWorkSlotResponse> {
-    const {
-      page = 0,
-      size = 10,
-      sortBy = 'slotId',
-      sortDirection = 'ASC',
-      ...filters
-    } = params;
-
+  async getWorkSlots(params: WorkSlotQueryParams = {}): Promise<PartTimeSlot[]> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(this.endpoint, {
-      params: {
-        page,
-        size,
-        sortBy,
-        sortDirection,
-        ...filters
-      }
+      params: params // API spec doesn't mention pagination params
     });
 
     // Handle both response structures
-    if (response.data?.data) {
+    // Case 1: Direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Case 2: Wrapped response { statusCode, data: [...] }
+    if (response.data?.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
     
-    return response.data;
+    // Case 3: Paginated response (backward compatibility)
+    if (response.data?.content && Array.isArray(response.data.content)) {
+      return response.data.content;
+    }
+    
+    // Fallback: return empty array
+    return [];
   }
 
   /**
@@ -73,7 +72,7 @@ class WorkSlotService {
 
   /**
    * Create a new work slot
-   * @param data Work slot data
+   * @param data Work slot data (workShiftId, dayOfWeek, quota)
    * @returns Created work slot
    */
   async createWorkSlot(data: CreateWorkSlotRequest): Promise<PartTimeSlot> {
@@ -87,7 +86,21 @@ class WorkSlotService {
       }
       return response.data as unknown as PartTimeSlot;
     } catch (error: any) {
-      if (error.response?.data?.message) {
+      // Handle specific error codes from BE
+      if (error.response?.data?.errorCode === 'SLOT_ALREADY_EXISTS') {
+        const message = error.response.data.message || 'Suất này đã tồn tại.';
+        const customError = new Error(message);
+        (customError as any).errorCode = 'SLOT_ALREADY_EXISTS';
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode) {
+        const errorCode = error.response.data.errorCode;
+        const message = error.response.data.message || error.response.data.detail || 'Failed to create work slot';
+        const customError = new Error(message);
+        (customError as any).errorCode = errorCode;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);
@@ -101,8 +114,10 @@ class WorkSlotService {
 
   /**
    * Update a work slot
+   * Note: Both quota and isActive are optional (can update independently)
+   * Important: quota cannot be less than registered (409 QUOTA_VIOLATION)
    * @param slotId Work slot ID to update
-   * @param data Update data
+   * @param data Update data (quota and isActive are optional)
    * @returns Updated work slot
    */
   async updateWorkSlot(slotId: number, data: UpdateWorkSlotRequest): Promise<PartTimeSlot> {
@@ -116,7 +131,21 @@ class WorkSlotService {
       }
       return response.data as unknown as PartTimeSlot;
     } catch (error: any) {
-      if (error.response?.data?.message) {
+      // Handle specific error codes from BE
+      if (error.response?.data?.errorCode === 'QUOTA_VIOLATION') {
+        const message = error.response.data.message || 'Không thể giảm quota. Đã có nhân viên đăng ký suất này.';
+        const customError = new Error(message);
+        (customError as any).errorCode = 'QUOTA_VIOLATION';
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode) {
+        const errorCode = error.response.data.errorCode;
+        const message = error.response.data.message || error.response.data.detail || 'Failed to update work slot';
+        const customError = new Error(message);
+        (customError as any).errorCode = errorCode;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);

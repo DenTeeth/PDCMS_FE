@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function EmployeePartTimeManagementRedirect() {
+export default function EmployeeFixedRegistrationsRedirect() {
   const router = useRouter();
   
   useEffect(() => {

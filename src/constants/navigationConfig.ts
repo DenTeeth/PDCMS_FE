@@ -145,10 +145,11 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Part-Time Registrations',
-          href: '/admin/part_time_management',
-          icon: faListCheck,
-          requiredPermissions: ['VIEW_REGISTRATION_ALL'],
+          name: 'Shift Registrations',
+          href: '/admin/registrations',
+          icon: faCalendarCheck,
+          requiredPermissions: ['VIEW_REGISTRATION_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL'],
+          requireAll: false, // Show if user has either permission
         },
         {
           name: 'Employee Shifts',
@@ -256,10 +257,11 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissions: ['VIEW_WORK_SHIFTS'],
     },
     {
-      name: 'Slot Registration',
-      href: '/employee/slot-registration',
-      icon: faClock,
-      requiredPermissions: ['VIEW_REGISTRATION_OWN'],
+      name: 'My Registrations',
+      href: '/employee/registrations',
+      icon: faCalendarCheck,
+      requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+      requireAll: false, // Show if user has either permission
     },
     {
       name: 'Overtime Requests',
@@ -278,18 +280,6 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       href: '/employee/shift-renewals',
       icon: faClockRotateLeft,
       requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-    },
-    {
-      name: 'My Schedule',
-      href: '/employee/my-schedule',
-      icon: faCalendarDays,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-    },
-    {
-      name: 'My Work Shifts',
-      href: '/employee/my-shifts',
-      icon: faClockFour,
-      requiredPermissions: ['VIEW_SHIFTS_OWN'],
     },
     {
       name: 'Shift Calendar',
