@@ -136,6 +136,26 @@ export interface TimeOffType {
   updatedAt?: string;
 }
 
+/**
+ * Admin Time Off Type DTOs (P6.1)
+ */
+export interface CreateTimeOffTypeDto {
+  typeCode: string;
+  typeName: string;
+  description: string;
+  requiresBalance: boolean;
+  defaultDaysPerYear: number | null;
+  isPaid: boolean;
+}
+
+export interface UpdateTimeOffTypeDto {
+  typeCode?: string;
+  typeName?: string;
+  description?: string;
+  requiresBalance?: boolean;
+  defaultDaysPerYear?: number | null;
+  isPaid?: boolean;
+}
 
 export interface TimeOffTypeListResponse {
   content: TimeOffType[];
@@ -170,6 +190,8 @@ export enum TimeOffErrorCode {
   TYPE_NOT_FOUND = 'TYPE_NOT_FOUND',
   REQUEST_NOT_FOUND = 'REQUEST_NOT_FOUND',
   ACCESS_DENIED = 'ACCESS_DENIED',
+  // P6.1 Admin API error codes
   DUPLICATE_TYPE_CODE = 'DUPLICATE_TYPE_CODE',
-  TYPE_IN_USE = 'TYPE_IN_USE'
+  TIMEOFF_TYPE_NOT_FOUND = 'TIMEOFF_TYPE_NOT_FOUND',
+  TIMEOFF_TYPE_IN_USE = 'TIMEOFF_TYPE_IN_USE',
 }

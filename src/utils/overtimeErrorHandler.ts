@@ -13,7 +13,8 @@ export interface OvertimeError {
 
 export const handleOvertimeError = (error: any): OvertimeError => {
   const status = error.response?.status || 500;
-  const code = error.response?.data?.code;
+  // Backend có thể trả về code hoặc error
+  const code = error.response?.data?.code || error.response?.data?.error;
   const message = error.response?.data?.message || error.message || 'Có lỗi xảy ra';
 
   return {
@@ -47,10 +48,15 @@ export const getOvertimeErrorMessage = (error: OvertimeError): string => {
       } else if (error.code === OvertimeErrorCode.INVALID_STATE_TRANSITION) {
         return 'Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING';
       }
-      return 'Xung đột dữ liệu';
+      // Nếu không có code cụ thể, hiển thị message từ backend
+      return error.message || 'Xung đột dữ liệu: Nhân viên đã có lịch làm việc hoặc đã đăng ký ca này';
 
     case 500:
-      return 'Lỗi máy chủ. Vui lòng thử lại sau';
+      // Hiển thị message từ backend nếu có
+      if (error.message && error.message !== 'Internal server error') {
+        return `Lỗi máy chủ: ${error.message}`;
+      }
+      return 'Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên';
 
     default:
       return error.message || 'Có lỗi xảy ra';
