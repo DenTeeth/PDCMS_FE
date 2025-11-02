@@ -24,9 +24,10 @@ import {
   DayOfWeek 
 } from '@/types/shiftRegistration';
 import { WorkShift } from '@/types/workShift';
-import { AvailableSlot } from '@/types/workSlot';
+import { AvailableSlot, PartTimeSlot } from '@/types/workSlot';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 import { workShiftService } from '@/services/workShiftService';
+import { workSlotService } from '@/services/workSlotService';
 import { getEmployeeIdFromToken } from '@/lib/utils';
 
 // Import types and services for Fixed Registration
@@ -143,6 +144,10 @@ export default function EmployeeRegistrationsPage() {
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingWorkShifts, setLoadingWorkShifts] = useState(false);
   
+  // Work slots (PartTimeSlot[]) - for mapping partTimeSlotId to shiftName
+  const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
+  const [loadingWorkSlots, setLoadingWorkSlots] = useState(false);
+  
   // Available slots for PART_TIME_FLEX employees
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
@@ -221,6 +226,10 @@ export default function EmployeeRegistrationsPage() {
         }
       }
       
+      // Always fetch workShifts and workSlots to get shift names for registrations
+      fetchWorkShifts();
+      fetchWorkSlotsData();
+      
       if (!currentEmployeeId) {
         console.warn('⚠️ [useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
       } else {
@@ -280,6 +289,24 @@ export default function EmployeeRegistrationsPage() {
       toast.error('Failed to load work shifts: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingWorkShifts(false);
+    }
+  };
+
+  // Fetch work slots (PartTimeSlot[]) for mapping shift names
+  const fetchWorkSlotsData = async () => {
+    try {
+      setLoadingWorkSlots(true);
+      const slotsResponse = await workSlotService.getWorkSlots();
+      setWorkSlots(slotsResponse || []);
+      console.log('📋 [fetchWorkSlotsData] Loaded work slots:', {
+        count: slotsResponse?.length || 0,
+        slots: slotsResponse
+      });
+    } catch (error: any) {
+      console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
+      // Don't show error toast - this is optional data
+    } finally {
+      setLoadingWorkSlots(false);
     }
   };
 
@@ -476,6 +503,29 @@ export default function EmployeeRegistrationsPage() {
   const getWorkShiftTime = (slotId: string | number) => {
     const workShift = workShifts.find(ws => ws.workShiftId === slotId);
     return workShift ? `${workShift.startTime} - ${workShift.endTime}` : '';
+  };
+
+  // Get shift name for registration - try multiple sources
+  const getRegistrationShiftName = (registration: ShiftRegistration): string => {
+    // First, try registration.workShiftName (from API response)
+    if (registration.workShiftName && registration.workShiftName.trim() !== '') {
+      return registration.workShiftName;
+    }
+    
+    // Second, try to find from availableSlots by partTimeSlotId
+    const availableSlot = availableSlots.find(slot => slot.slotId === registration.partTimeSlotId);
+    if (availableSlot && availableSlot.shiftName && availableSlot.shiftName.trim() !== '') {
+      return availableSlot.shiftName;
+    }
+    
+    // Third, try to find from workSlots (PartTimeSlot[]) by partTimeSlotId
+    const workSlot = workSlots.find(slot => slot.slotId === registration.partTimeSlotId);
+    if (workSlot && workSlot.workShiftName && workSlot.workShiftName.trim() !== '') {
+      return workSlot.workShiftName;
+    }
+    
+    // Fallback: return generic name
+    return `Ca làm việc (ID: ${registration.partTimeSlotId})`;
   };
 
   const formatFixedDaysOfWeek = (days: number[]): string => {
@@ -686,7 +736,7 @@ export default function EmployeeRegistrationsPage() {
                           <div className="space-y-3">
                             <div>
                               <h3 className="font-semibold text-gray-900 mb-2">
-                                {registration.shiftName}
+                                {getRegistrationShiftName(registration)}
                               </h3>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <Badge variant="outline">
@@ -971,7 +1021,7 @@ export default function EmployeeRegistrationsPage() {
                 <div>
                   <Label>Thông tin đăng ký</Label>
                   <div className="text-sm text-gray-600 space-y-1 mt-1 p-3 border rounded-md bg-gray-50">
-                    <div>Ca: {partTimeEditingRegistration?.shiftName || 'N/A'}</div>
+                    <div>Ca: {partTimeEditingRegistration?.workShiftName || 'N/A'}</div>
                     <div>Thứ: {partTimeEditingRegistration ? getDayOfWeekLabel(partTimeEditingRegistration.dayOfWeek) : 'N/A'}</div>
                     <div>Từ ngày: {partTimeEditingRegistration ? formatDate(partTimeEditingRegistration.effectiveFrom) : 'N/A'}</div>
                   </div>
