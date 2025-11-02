@@ -26,7 +26,7 @@ export interface ShiftRegistration {
   employeeId: number;
   employeeName: string;
   partTimeSlotId: number; // Changed from slotId to partTimeSlotId
-  shiftName: string;
+  workShiftName: string; // Changed from shiftName to workShiftName to match API response
   dayOfWeek: DayOfWeek; // Single day instead of array
   effectiveFrom: string; // YYYY-MM-DD format
   effectiveTo: string; // YYYY-MM-DD format (calculated: effectiveFrom + 3 months)

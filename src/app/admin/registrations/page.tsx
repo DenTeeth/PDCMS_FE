@@ -22,6 +22,8 @@ import {
   DayOfWeek 
 } from '@/types/shiftRegistration';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
+import { PartTimeSlot } from '@/types/workSlot';
+import { workSlotService } from '@/services/workSlotService';
 
 // Import types and services for Fixed Registration
 import {
@@ -71,16 +73,15 @@ export default function RegistrationsPage() {
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>('part-time');
 
-  // ==================== PART-TIME REGISTRATION STATE ====================
-  const [partTimeRegistrations, setPartTimeRegistrations] = useState<ShiftRegistration[]>([]);
+  // ==================== PART-TIME SLOTS STATE ====================
+  const [partTimeSlots, setPartTimeSlots] = useState<PartTimeSlot[]>([]);
   const [partTimeLoading, setPartTimeLoading] = useState(true);
-  const [partTimeCurrentPage, setPartTimeCurrentPage] = useState(0);
-  const [partTimeTotalPages, setPartTimeTotalPages] = useState(0);
-  const [partTimeTotalElements, setPartTimeTotalElements] = useState(0);
   
-  // Part-Time modals
-  const [showPartTimeDetailsModal, setShowPartTimeDetailsModal] = useState(false);
-  const [partTimeDetailsRegistration, setPartTimeDetailsRegistration] = useState<ShiftRegistration | null>(null);
+  // Slot detail modal state
+  const [showSlotDetailsModal, setShowSlotDetailsModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<PartTimeSlot | null>(null);
+  const [slotRegistrations, setSlotRegistrations] = useState<ShiftRegistration[]>([]);
+  const [loadingSlotRegistrations, setLoadingSlotRegistrations] = useState(false);
 
   // ==================== FIXED REGISTRATION STATE ====================
   const [fixedRegistrations, setFixedRegistrations] = useState<FixedShiftRegistration[]>([]);
@@ -116,41 +117,59 @@ export default function RegistrationsPage() {
   // ==================== FETCH DATA ====================
   useEffect(() => {
     if (activeTab === 'part-time') {
-      fetchPartTimeRegistrations();
+      fetchPartTimeSlots();
     } else if (activeTab === 'fixed') {
       fetchFixedRegistrations();
       fetchDropdownData();
     }
-  }, [activeTab, partTimeCurrentPage, filterEmployeeId]);
+  }, [activeTab, filterEmployeeId]);
 
-  // Part-Time Registration Fetch
-  const fetchPartTimeRegistrations = async () => {
+  // Part-Time Slots Fetch (Work Slots)
+  const fetchPartTimeSlots = async () => {
     try {
       setPartTimeLoading(true);
-      const params: ShiftRegistrationQueryParams = {
-        page: partTimeCurrentPage,
-        size: 10,
-        sortBy: 'effectiveFrom',
-        sortDirection: 'DESC'
-      };
-
-      const response = await shiftRegistrationService.getRegistrations(params);
-      
-      if (Array.isArray(response)) {
-        setPartTimeRegistrations(response);
-        setPartTimeTotalPages(1);
-        setPartTimeTotalElements(response.length);
-      } else {
-        setPartTimeRegistrations(response.content || []);
-        setPartTimeTotalPages(response.totalPages || 0);
-        setPartTimeTotalElements(response.totalElements || 0);
-      }
+      const slots = await workSlotService.getWorkSlots();
+      setPartTimeSlots(slots || []);
     } catch (error: any) {
-      console.error('Failed to fetch part-time registrations:', error);
-      toast.error(error.response?.data?.detail || 'Failed to fetch part-time registrations');
+      console.error('Failed to fetch part-time slots:', error);
+      toast.error(error.response?.data?.detail || 'Failed to fetch part-time slots');
     } finally {
       setPartTimeLoading(false);
     }
+  };
+
+  // Fetch registrations for a specific slot
+  const fetchSlotRegistrations = async (slotId: number) => {
+    try {
+      setLoadingSlotRegistrations(true);
+      const response = await shiftRegistrationService.getRegistrations({});
+      
+      // Filter registrations by partTimeSlotId
+      let allRegistrations: ShiftRegistration[] = [];
+      if (Array.isArray(response)) {
+        allRegistrations = response;
+      } else {
+        allRegistrations = response.content || [];
+      }
+      
+      // Filter by partTimeSlotId
+      const filtered = allRegistrations.filter(
+        reg => reg.partTimeSlotId === slotId && reg.isActive
+      );
+      setSlotRegistrations(filtered);
+    } catch (error: any) {
+      console.error('Failed to fetch slot registrations:', error);
+      toast.error(error.response?.data?.detail || 'Failed to fetch slot registrations');
+    } finally {
+      setLoadingSlotRegistrations(false);
+    }
+  };
+
+  // Handle slot detail click
+  const handleSlotDetailClick = async (slot: PartTimeSlot) => {
+    setSelectedSlot(slot);
+    setShowSlotDetailsModal(true);
+    await fetchSlotRegistrations(slot.slotId);
   };
 
   // Fixed Registration Fetch
@@ -451,7 +470,7 @@ export default function RegistrationsPage() {
           <div className="flex gap-2">
             <Button 
               onClick={() => {
-                if (activeTab === 'part-time') fetchPartTimeRegistrations();
+                if (activeTab === 'part-time') fetchPartTimeSlots();
                 else fetchFixedRegistrations();
               }} 
               variant="outline" 
@@ -515,7 +534,7 @@ export default function RegistrationsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Part-Time Registrations ({partTimeTotalElements})
+                    Part-Time Slots ({partTimeSlots.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -523,45 +542,46 @@ export default function RegistrationsPage() {
                     <div className="flex justify-center items-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </div>
-                  ) : partTimeRegistrations.length === 0 ? (
+                  ) : partTimeSlots.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No part-time registrations found
+                      No part-time slots found
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left p-3 font-medium">Registration ID</th>
-                            <th className="text-left p-3 font-medium">Employee</th>
+                            <th className="text-left p-3 font-medium">Slot ID</th>
+                            <th className="text-left p-3 font-medium">Work Shift</th>
                             <th className="text-left p-3 font-medium">Day</th>
-                            <th className="text-left p-3 font-medium">Effective Period</th>
+                            <th className="text-left p-3 font-medium">Quota</th>
+                            <th className="text-left p-3 font-medium">Registered</th>
                             <th className="text-left p-3 font-medium">Status</th>
                             <th className="text-left p-3 font-medium">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {partTimeRegistrations.map((registration) => (
-                            <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
-                              <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
+                          {partTimeSlots.map((slot) => (
+                            <tr key={slot.slotId} className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-mono text-sm">{slot.slotId}</td>
                               <td className="p-3">
-                                <div className="font-medium">{registration.employeeName}</div>
-                                <div className="text-sm text-gray-500">ID: {registration.employeeId}</div>
+                                <div className="font-medium">{slot.workShiftName}</div>
+                                <div className="text-sm text-gray-500">ID: {slot.workShiftId}</div>
                               </td>
                               <td className="p-3">
-                                <Badge variant="outline">{getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}</Badge>
+                                <Badge variant="outline">{getDayOfWeekLabel(slot.dayOfWeek as DayOfWeek)}</Badge>
                               </td>
                               <td className="p-3">
-                                <div className="text-sm">
-                                  <div>From: {formatDate(registration.effectiveFrom)}</div>
-                                  {registration.effectiveTo && (
-                                    <div>To: {formatDate(registration.effectiveTo)}</div>
-                                  )}
-                                </div>
+                                <span className="font-medium">{slot.quota}</span>
                               </td>
                               <td className="p-3">
-                                <Badge variant={registration.isActive ? "default" : "secondary"}>
-                                  {registration.isActive ? (
+                                <span className={`font-medium ${slot.registered >= slot.quota ? 'text-red-600' : 'text-green-600'}`}>
+                                  {slot.registered} / {slot.quota}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <Badge variant={slot.isActive ? "default" : "secondary"}>
+                                  {slot.isActive ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />
                                       Active
@@ -578,11 +598,8 @@ export default function RegistrationsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setPartTimeDetailsRegistration(registration);
-                                    setShowPartTimeDetailsModal(true);
-                                  }}
-                                  title="View Details"
+                                  onClick={() => handleSlotDetailClick(slot)}
+                                  title="View Slot Details"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -591,33 +608,6 @@ export default function RegistrationsPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
-                  )}
-
-                  {/* Pagination */}
-                  {partTimeTotalPages > 1 && (
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="text-sm text-gray-600">
-                        Page {partTimeCurrentPage + 1} of {partTimeTotalPages} ({partTimeTotalElements} total)
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPartTimeCurrentPage(prev => Math.max(0, prev - 1))}
-                          disabled={partTimeCurrentPage === 0}
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPartTimeCurrentPage(prev => Math.min(partTimeTotalPages - 1, prev + 1))}
-                          disabled={partTimeCurrentPage === partTimeTotalPages - 1}
-                        >
-                          Next
-                        </Button>
-                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -807,48 +797,120 @@ export default function RegistrationsPage() {
         </Tabs>
 
         {/* PART-TIME DETAILS MODAL */}
-        {showPartTimeDetailsModal && partTimeDetailsRegistration && (
+        {/* SLOT DETAILS MODAL */}
+        {showSlotDetailsModal && selectedSlot && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
-              <div className="space-y-3">
-                <div>
-                  <Label>Registration ID</Label>
-                  <Input value={partTimeDetailsRegistration.registrationId} disabled />
-                </div>
-                <div>
-                  <Label>Employee</Label>
-                  <Input value={partTimeDetailsRegistration.employeeName} disabled />
-                </div>
-                <div>
-                  <Label>Work Shift</Label>
-                  <Input value={partTimeDetailsRegistration.shiftName} disabled />
-                </div>
-                <div>
-                  <Label>Day</Label>
-                  <Input value={getDayOfWeekLabel(partTimeDetailsRegistration.dayOfWeek as DayOfWeek)} disabled />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Effective From</Label>
-                    <Input value={formatDate(partTimeDetailsRegistration.effectiveFrom)} disabled />
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Slot Details</h2>
+              
+              {/* Slot Information */}
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg">Slot Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Slot ID</Label>
+                      <Input value={selectedSlot.slotId} disabled />
+                    </div>
+                    <div>
+                      <Label>Work Shift</Label>
+                      <Input value={selectedSlot.workShiftName} disabled />
+                    </div>
+                    <div>
+                      <Label>Day of Week</Label>
+                      <Input value={getDayOfWeekLabel(selectedSlot.dayOfWeek as DayOfWeek)} disabled />
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <Input value={selectedSlot.isActive ? 'Active' : 'Inactive'} disabled />
+                    </div>
+                    <div>
+                      <Label>Quota</Label>
+                      <Input value={selectedSlot.quota} disabled />
+                    </div>
+                    <div>
+                      <Label>Registered</Label>
+                      <Input value={`${selectedSlot.registered} / ${selectedSlot.quota}`} disabled />
+                    </div>
+                    <div>
+                      <Label>Remaining</Label>
+                      <Input value={selectedSlot.quota - selectedSlot.registered} disabled />
+                    </div>
                   </div>
-                  <div>
-                    <Label>Effective To</Label>
-                    <Input value={partTimeDetailsRegistration.effectiveTo ? formatDate(partTimeDetailsRegistration.effectiveTo) : ''} disabled />
-                  </div>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Input value={partTimeDetailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+
+              {/* Employees who claimed this slot */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Employees who claimed this slot ({slotRegistrations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingSlotRegistrations ? (
+                    <div className="flex justify-center items-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : slotRegistrations.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No employees have claimed this slot yet.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-3 font-medium">Registration ID</th>
+                            <th className="text-left p-3 font-medium">Employee</th>
+                            <th className="text-left p-3 font-medium">Effective From</th>
+                            <th className="text-left p-3 font-medium">Effective To</th>
+                            <th className="text-left p-3 font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {slotRegistrations.map((registration) => (
+                            <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
+                              <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
+                              <td className="p-3">
+                                <div className="font-medium">{registration.employeeName}</div>
+                                <div className="text-sm text-gray-500">ID: {registration.employeeId}</div>
+                              </td>
+                              <td className="p-3 text-sm">{formatDate(registration.effectiveFrom)}</td>
+                              <td className="p-3 text-sm">{registration.effectiveTo ? formatDate(registration.effectiveTo) : 'N/A'}</td>
+                              <td className="p-3">
+                                <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                  {registration.isActive ? (
+                                    <>
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XCircle className="h-3 w-3 mr-1" />
+                                      Inactive
+                                    </>
+                                  )}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setShowPartTimeDetailsModal(false);
-                    setPartTimeDetailsRegistration(null);
+                    setShowSlotDetailsModal(false);
+                    setSelectedSlot(null);
+                    setSlotRegistrations([]);
                   }}
                 >
                   Close

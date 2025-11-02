@@ -58,7 +58,7 @@ export default function EmployeesPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table'); // Default to table view to reduce latency
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -546,11 +546,22 @@ export default function EmployeesPage() {
                       <p className="text-sm text-gray-600 mt-2">{employee.roleName}</p>
                       <p className="text-xs text-gray-500 mt-1">Code: {employee.employeeCode}</p>
                       <p className="text-xs text-gray-500">
-                        Type: <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
+                        Type: <span className={`px-2 py-1 rounded-full text-xs ${
+                          employee.employeeType === EmploymentType.FULL_TIME
                             ? 'bg-blue-100 text-blue-800'
-                            : 'bg-orange-100 text-orange-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                            ? 'bg-green-100 text-green-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-gray-100 text-gray-800'
                           }`}>
-                          {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                          {employee.employeeType === EmploymentType.FULL_TIME 
+                            ? 'Full Time' 
+                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                            ? 'Part Time - Fixed'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                            ? 'Part Time - Flex'
+                            : 'Part Time'}
                         </span>
                       </p>
                     </div>
@@ -662,11 +673,22 @@ export default function EmployeesPage() {
                           <div className="text-sm text-gray-900">{employee.roleName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            employee.employeeType === EmploymentType.FULL_TIME
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-orange-100 text-orange-800'
+                              : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                              ? 'bg-green-100 text-green-800'
+                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-gray-100 text-gray-800'
                             }`}>
-                            {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                            {employee.employeeType === EmploymentType.FULL_TIME 
+                              ? 'Full Time' 
+                              : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                              ? 'Part Time - Fixed'
+                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'Part Time - Flex'
+                              : 'Part Time'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -857,8 +879,14 @@ export default function EmployeesPage() {
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                      <option value={EmploymentType.PART_TIME}>Part Time</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <strong>Full Time:</strong> Làm việc toàn thời gian, Admin gán lịch cố định<br />
+                      <strong>Part Time - Fixed:</strong> Part-time với lịch cố định (Admin gán)<br />
+                      <strong>Part Time - Flex:</strong> Part-time linh hoạt (Tự đăng ký ca từ các slot có sẵn)
+                    </p>
                   </div>
 
                   {/* Conditional Fields based on Role */}
@@ -1194,7 +1222,8 @@ export default function EmployeesPage() {
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                      <option value={EmploymentType.PART_TIME}>Part Time</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
                     </select>
                     <p className="text-sm text-muted-foreground">
                       Update employment type if needed
