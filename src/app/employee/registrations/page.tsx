@@ -9,12 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, Eye, RotateCcw, CalendarDays, Info, ExternalLink, Clock, Calendar, TrendingUp, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import Link from 'next/link';
 
 // Import types and services for Part-Time Registration
 import { 
@@ -292,8 +291,24 @@ export default function EmployeeRegistrationsPage() {
     }
   };
 
-  // Fetch work slots (PartTimeSlot[]) for mapping shift names
+  /**
+   * Fetch work slots (PartTimeSlot[]) for mapping shift names
+   * 
+   * ⚠️ LƯU Ý QUAN TRỌNG:
+   * - API này yêu cầu permission MANAGE_WORK_SLOTS (chỉ dành cho Admin/Manager)
+   * - Employee KHÔNG có quyền này → Sẽ gây lỗi 403
+   * - Chỉ gọi API này nếu user có permission MANAGE_WORK_SLOTS
+   * - Employee chỉ cần xem registrations của chính họ, không cần xem tất cả work slots
+   */
   const fetchWorkSlotsData = async () => {
+    // Chỉ fetch nếu user có permission MANAGE_WORK_SLOTS
+    // (Thường là Admin/Manager mới có permission này)
+    if (!hasManagePermission) {
+      console.log('ℹ️ [fetchWorkSlotsData] Skipping - User does not have MANAGE_WORK_SLOTS permission');
+      setWorkSlots([]); // Set empty array
+      return;
+    }
+
     try {
       setLoadingWorkSlots(true);
       const slotsResponse = await workSlotService.getWorkSlots();
@@ -304,7 +319,17 @@ export default function EmployeeRegistrationsPage() {
       });
     } catch (error: any) {
       console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
-      // Don't show error toast - this is optional data
+      
+      // Nếu lỗi 403 → User không có permission (expected cho employee)
+      if (error.response?.status === 403) {
+        console.log('ℹ️ [fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
+        // Don't show error toast - this is expected for employees
+      } else {
+        // Các lỗi khác (500, network, etc.) - có thể log nhưng không hiển thị toast
+        // vì đây là optional data
+      }
+      
+      setWorkSlots([]); // Set empty array on error
     } finally {
       setLoadingWorkSlots(false);
     }
@@ -548,23 +573,10 @@ export default function EmployeeRegistrationsPage() {
   return (
     <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_OWN, Permission.VIEW_FIXED_REGISTRATIONS_OWN]}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Shift Registrations</h1>
-            <p className="text-gray-600 mt-1">Manage your part-time and fixed shift registrations</p>
-          </div>
-          <Button 
-            onClick={() => {
-              if (activeTab === 'part-time') fetchPartTimeRegistrations();
-              else fetchFixedRegistrations();
-            }} 
-            variant="outline" 
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Refresh
-          </Button>
+        {/* Header - Đơn giản hóa */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Đăng Ký Ca Làm Việc</h1>
+          <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm việc của bạn</p>
         </div>
 
         {/* Tabs */}
@@ -587,35 +599,6 @@ export default function EmployeeRegistrationsPage() {
           {/* PART-TIME REGISTRATIONS TAB */}
           {availableTabs.includes('part-time') && (
           <TabsContent value="part-time" className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Đăng Ký Ca Part-Time</h2>
-              <Button
-                onClick={() => {
-                  setShowPartTimeCreateModal(true);
-                  if (isPartTimeFlex) {
-                    fetchAvailableSlots();
-                  }
-                }}
-                disabled={loadingWorkShifts || loadingAvailableSlots}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Đăng Ký Ca Mới
-              </Button>
-            </div>
-
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Info className="h-4 w-4 text-blue-600" />
-                  <Badge variant="outline" className="text-xs">PART_TIME_FLEX</Badge>
-                  <span className="text-gray-700">
-                    Bạn có thể xem danh sách suất có sẵn và đăng ký suất phù hợp
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Available Slots Section - Carousel */}
             {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
@@ -717,16 +700,7 @@ export default function EmployeeRegistrationsPage() {
                   <div className="text-center py-12">
                     <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                     <p className="text-gray-700 font-medium mb-2">Chưa có đăng ký ca làm việc</p>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Bạn chưa có đăng ký ca làm việc nào. Hãy tạo đăng ký mới để bắt đầu.
-                    </p>
-                    <Button
-                      onClick={() => setShowPartTimeCreateModal(true)}
-                      disabled={loadingWorkShifts}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tạo Đăng Ký Mới
-                    </Button>
+                    <p className="text-sm text-gray-500">Vui lòng chọn suất ở trên để đăng ký</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -777,7 +751,7 @@ export default function EmployeeRegistrationsPage() {
                                   setPartTimeDeletingRegistration(registration);
                                   setShowPartTimeDeleteModal(true);
                                 }}
-                                className="flex-1 text-red-600 hover:text-red-700"
+                                className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
                                 Xóa
@@ -824,23 +798,6 @@ export default function EmployeeRegistrationsPage() {
           {/* FIXED REGISTRATIONS TAB */}
           {availableTabs.includes('fixed') && (
           <TabsContent value="fixed" className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Lịch Làm Việc Cố Định</h2>
-            </div>
-
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Info className="h-4 w-4 text-green-600" />
-                  <Badge variant="outline" className="text-xs">Lịch Cố định</Badge>
-                  <span className="text-gray-700">
-                    Lịch làm việc được Admin/Manager gán. Liên hệ Admin nếu cần thay đổi.
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Fixed Registrations Section */}
             <Card>
@@ -869,11 +826,10 @@ export default function EmployeeRegistrationsPage() {
                         <CardContent className="p-4">
                           <div className="space-y-3">
                             <div>
-                              <h3 className="font-semibold text-gray-900 mb-1">
+                              <h3 className="font-semibold text-gray-900 mb-2">
                                 {registration.workShiftName}
                               </h3>
-                              <p className="text-xs text-gray-500 mb-2">{registration.workShiftId}</p>
-                              <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
                                 <Badge variant="outline">
                                   {formatFixedDaysOfWeek(registration.daysOfWeek)}
                                 </Badge>
@@ -895,18 +851,6 @@ export default function EmployeeRegistrationsPage() {
                                 <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
                               )}
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setFixedDetailsRegistration(registration);
-                                setShowFixedDetailsModal(true);
-                              }}
-                              className="w-full"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Xem Chi Tiết
-                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -923,7 +867,7 @@ export default function EmployeeRegistrationsPage() {
         {showPartTimeCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Đăng Ký Ca Làm Việc Mới</h2>
+              <h2 className="text-xl font-bold mb-4">Đăng Ký Ca Làm Việc</h2>
               <form onSubmit={handlePartTimeCreate} className="space-y-4">
                 {isPartTimeFlex ? (
                   <>
@@ -965,7 +909,7 @@ export default function EmployeeRegistrationsPage() {
                       <Input
                         id="createEffectiveFrom"
                         type="date"
-                        min={new Date().toISOString().split('T')[0]} // Cannot be in the past
+                        min={new Date().toISOString().split('T')[0]}
                         value={partTimeCreateFormData.effectiveFrom}
                         onChange={(e) => setPartTimeCreateFormData(prev => ({
                           ...prev,
@@ -973,7 +917,6 @@ export default function EmployeeRegistrationsPage() {
                         }))}
                         required
                       />
-                      <p className="text-xs text-gray-500 mt-1">Ngày bắt đầu không được là quá khứ</p>
                     </div>
                   </>
                 ) : (
@@ -1016,17 +959,13 @@ export default function EmployeeRegistrationsPage() {
         {showPartTimeEditModal && partTimeEditingRegistration && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Sửa Đăng Ký Ca Làm Việc</h2>
+              <h2 className="text-xl font-bold mb-4">Sửa Đăng Ký</h2>
               <form onSubmit={handlePartTimeUpdate} className="space-y-4">
                 <div>
-                  <Label>Thông tin đăng ký</Label>
-                  <div className="text-sm text-gray-600 space-y-1 mt-1 p-3 border rounded-md bg-gray-50">
-                    <div>Ca: {partTimeEditingRegistration?.workShiftName || 'N/A'}</div>
-                    <div>Thứ: {partTimeEditingRegistration ? getDayOfWeekLabel(partTimeEditingRegistration.dayOfWeek) : 'N/A'}</div>
-                    <div>Từ ngày: {partTimeEditingRegistration ? formatDate(partTimeEditingRegistration.effectiveFrom) : 'N/A'}</div>
-                  </div>
+                  <Label>Ca làm việc</Label>
+                  <Input value={partTimeEditingRegistration?.workShiftName || 'N/A'} disabled className="bg-gray-50" />
                 </div>
-
+                
                 <div>
                   <Label htmlFor="editEffectiveTo">Đến ngày</Label>
                   <Input
@@ -1037,7 +976,9 @@ export default function EmployeeRegistrationsPage() {
                       ...prev,
                       effectiveTo: e.target.value
                     }))}
+                    min={partTimeEditingRegistration ? format(parseISO(partTimeEditingRegistration.effectiveFrom), 'yyyy-MM-dd') : undefined}
                   />
+                  <p className="text-xs text-gray-500 mt-1">Để trống nếu không có ngày kết thúc</p>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">
@@ -1109,37 +1050,29 @@ export default function EmployeeRegistrationsPage() {
         {showFixedDetailsModal && fixedDetailsRegistration && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
+              <h2 className="text-xl font-bold mb-4">Chi Tiết Lịch Làm Việc</h2>
               <div className="space-y-3">
                 <div>
-                  <Label>Registration ID</Label>
-                  <Input value={fixedDetailsRegistration.registrationId} disabled />
+                  <Label>Ca làm việc</Label>
+                  <Input value={fixedDetailsRegistration.workShiftName} disabled />
                 </div>
                 <div>
-                  <Label>Employee</Label>
-                  <Input value={`${fixedDetailsRegistration.employeeName} (ID: ${fixedDetailsRegistration.employeeId})`} disabled />
-                </div>
-                <div>
-                  <Label>Work Shift</Label>
-                  <Input value={`${fixedDetailsRegistration.workShiftName} (${fixedDetailsRegistration.workShiftId})`} disabled />
-                </div>
-                <div>
-                  <Label>Days of Week</Label>
+                  <Label>Thứ trong tuần</Label>
                   <Input value={formatFixedDaysOfWeek(fixedDetailsRegistration.daysOfWeek)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Effective From</Label>
+                    <Label>Từ ngày</Label>
                     <Input value={formatDate(fixedDetailsRegistration.effectiveFrom)} disabled />
                   </div>
                   <div>
-                    <Label>Effective To</Label>
+                    <Label>Đến ngày</Label>
                     <Input value={formatDate(fixedDetailsRegistration.effectiveTo)} disabled />
                   </div>
                 </div>
                 <div>
-                  <Label>Status</Label>
-                  <Input value={fixedDetailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
+                  <Label>Trạng thái</Label>
+                  <Input value={fixedDetailsRegistration.isActive ? 'Đang hoạt động' : 'Tạm dừng'} disabled />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
@@ -1150,7 +1083,7 @@ export default function EmployeeRegistrationsPage() {
                     setFixedDetailsRegistration(null);
                   }}
                 >
-                  Close
+                  Đóng
                 </Button>
               </div>
             </div>
