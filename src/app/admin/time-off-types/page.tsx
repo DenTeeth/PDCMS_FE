@@ -243,17 +243,34 @@ export default function AdminTimeOffTypesPage() {
         isPaid: formData.isPaid,
       };
 
+      console.log('🟢 Creating Time-Off Type:', createDto);
       await TimeOffTypeService.createTimeOffType(createDto);
       alert('Tạo loại nghỉ phép thành công!');
       setShowCreateModal(false);
       resetForm();
       loadTimeOffTypes();
     } catch (error: any) {
+      console.error('❌ Create Time-Off Type Error:', error);
+      console.error('📋 Error Response:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
+
       const errorCode = error?.response?.data?.code || error?.response?.data?.error;
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
       if (errorCode === 'DUPLICATE_TYPE_CODE' || error?.response?.status === 409) {
         setFormErrors({ typeCode: 'Mã loại nghỉ phép này đã tồn tại' });
+      } else if (error?.response?.status === 400) {
+        // Show validation errors from backend
+        const validationErrors = error?.response?.data?.errors || [];
+        if (validationErrors.length > 0) {
+          const errorMessages = validationErrors.map((e: any) => `${e.field}: ${e.message}`).join('\n');
+          alert(`Lỗi validation từ backend:\n\n${errorMessages}`);
+        } else {
+          alert(`Lỗi 400: ${errorMsg || JSON.stringify(error?.response?.data)}`);
+        }
       } else {
         handleApiError(error, 'Không thể tạo loại nghỉ phép');
       }
@@ -278,7 +295,7 @@ export default function AdminTimeOffTypesPage() {
         isPaid: formData.isPaid,
       };
 
-      await TimeOffTypeService.updateTimeOffType(Number(selectedType.typeId), updateDto);
+      await TimeOffTypeService.updateTimeOffType(selectedType.typeId, updateDto);
       alert('Cập nhật loại nghỉ phép thành công!');
       setShowEditModal(false);
       setSelectedType(null);
@@ -309,7 +326,7 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
-      await TimeOffTypeService.deleteTimeOffType(Number(selectedType.typeId));
+      await TimeOffTypeService.deleteTimeOffType(selectedType.typeId);
       const newStatus = !selectedType.isActive;
       alert(`${newStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} loại nghỉ phép thành công!`);
       setShowToggleModal(false);

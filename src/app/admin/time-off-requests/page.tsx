@@ -29,17 +29,20 @@ import Select from '@/components/ui/select';
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
 import { employeeService } from '@/services/employeeService';
+import { workShiftService } from '@/services/workShiftService';
 import {
   TimeOffRequest,
   TimeOffStatus,
   TIME_OFF_STATUS_CONFIG,
-  TimeOffSlot,
-  TIME_OFF_SLOT_CONFIG,
   CreateTimeOffRequestDto,
 } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
 import { Employee } from '@/types/employee';
+import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
+import { TimeOffErrorHandler } from '@/utils/timeOffErrorHandler';
+import { TimeOffDiagnostics } from '@/utils/timeOffDiagnostics';
+import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
 export default function AdminTimeOffRequestsPage() {
   const router = useRouter();
@@ -48,6 +51,7 @@ export default function AdminTimeOffRequestsPage() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
@@ -66,10 +70,13 @@ export default function AdminTimeOffRequestsPage() {
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<TimeOffRequest | null>(null);
+  const [viewDetails, setViewDetails] = useState<TimeOffRequest | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -91,13 +98,18 @@ export default function AdminTimeOffRequestsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+
+      // ✅ Load timeOffTypes and workShifts FIRST (needed for enrichment)
       await Promise.all([
-        loadTimeOffRequests(),
         loadTimeOffTypes(),
-        loadEmployees()
+        loadEmployees(),
+        loadWorkShifts()
       ]);
+
+      // ✅ Then load requests (uses timeOffTypes and workShifts for enrichment)
+      await loadTimeOffRequests();
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -110,18 +122,56 @@ export default function AdminTimeOffRequestsPage() {
         size: 50,
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
-      setTimeOffRequests(response.content || []);
+      console.log('📥 Time-Off Requests API Response:', response);
+
+      if (response.content && response.content.length > 0) {
+        const sample = response.content[0];
+
+        // Diagnostic logging
+        TimeOffDiagnostics.logStructure(sample, 'First Time-Off Request');
+
+        const validation = TimeOffDiagnostics.validateStructure(sample);
+        if (!validation.isValid) {
+          console.error('⚠️ Invalid request structure detected!');
+          console.error('Issues:', validation.issues);
+          console.error('Warnings:', validation.warnings);
+        }
+
+        // ✅ Enrich data with timeOffTypeName, workShiftName, and totalDays
+        const enrichedRequests = TimeOffDataEnricher.enrichRequests(
+          response.content,
+          timeOffTypes,
+          workShifts
+        );
+
+        console.log('✨ Enriched first request:', enrichedRequests[0]);
+        setTimeOffRequests(enrichedRequests);
+      } else {
+        setTimeOffRequests([]);
+      }
     } catch (error) {
-      console.error('Error loading time off requests:', error);
+      console.error('❌ Error loading time off requests:', error);
+      setTimeOffRequests([]);
     }
   };
 
   const loadTimeOffTypes = async () => {
     try {
-      const types = await TimeOffTypeService.getActiveTimeOffTypes();
-      setTimeOffTypes(types);
+      // Get ALL time-off types (including inactive) for display purposes
+      const types = await TimeOffTypeService.getAllTimeOffTypes();
+      setTimeOffTypes(types || []);
+      console.log('📋 Time-Off Types loaded:', types?.length || 0);
     } catch (error) {
-      console.error('Error loading time off types:', error);
+      console.error('❌ Error loading time off types:', error);
+      // Fallback: try to get active types only
+      try {
+        const activeTypes = await TimeOffTypeService.getActiveTimeOffTypes();
+        setTimeOffTypes(activeTypes || []);
+        console.log('📋 Active Time-Off Types loaded (fallback):', activeTypes?.length || 0);
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        setTimeOffTypes([]);
+      }
     }
   };
 
@@ -137,6 +187,17 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
+  const loadWorkShifts = async () => {
+    try {
+      const shifts = await workShiftService.getAll(true); // Get only active shifts
+      console.log('📋 Work Shifts loaded:', shifts);
+      setWorkShifts(shifts);
+    } catch (error) {
+      console.error('Error loading work shifts:', error);
+      setWorkShifts([]); // Fallback to empty array
+    }
+  };
+
   const handleCreateTimeOffRequest = async () => {
     // Auto-fill employeeId if user doesn't have VIEW_ALL permission
     const finalEmployeeId = canViewAll ? createForm.employeeId : Number(user?.employeeId);
@@ -146,7 +207,7 @@ export default function AdminTimeOffRequestsPage() {
       return;
     }
 
-    // Validation: If slot is selected, startDate must equal endDate
+    // Validation: If slotId is selected, startDate must equal endDate
     if (createForm.slotId && createForm.startDate !== createForm.endDate) {
       alert('Khi nghỉ theo ca, ngày bắt đầu và ngày kết thúc phải giống nhau');
       return;
@@ -168,21 +229,47 @@ export default function AdminTimeOffRequestsPage() {
         slotId: null,
         reason: ''
       });
-      loadTimeOffRequests();
-      alert(`Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
-    } catch (error: any) {
-      console.error('Error creating time off request:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.code;
 
-      // Handle specific errors
-      if (errorMsg?.includes('INSUFFICIENT_LEAVE_BALANCE')) {
-        alert('Lỗi: Bạn không đủ số ngày phép cho loại phép này');
-      } else if (errorMsg?.includes('INVALID_DATE_RANGE')) {
-        alert('Lỗi: Khoảng thời gian nghỉ không hợp lệ. Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau.');
-      } else if (errorMsg?.includes('DUPLICATE_TIMEOFF_REQUEST')) {
-        alert('Lỗi: Đã tồn tại yêu cầu nghỉ phép trùng với khoảng thời gian này');
+      // ✅ Reload to get fresh data with enrichment
+      await loadTimeOffRequests();
+
+      alert(`✅ Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
+    } catch (error: any) {
+      console.error('❌ Error creating time off request:', error);
+      console.error('📋 Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        code: error.response?.data?.code,
+        message: error.response?.data?.message
+      });
+
+      const errorCode = error.response?.data?.code || error.response?.data?.error;
+      const errorMsg = error.response?.data?.message || error.message || '';
+
+      // Handle specific errors with detailed messages
+      if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
+        alert('❌ Lỗi: Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư phép của bạn hoặc chọn loại nghỉ phép khác.');
+      } else if (errorCode === 'INVALID_DATE_RANGE' || errorMsg?.includes('DATE_RANGE')) {
+        alert('❌ Lỗi: Khoảng thời gian không hợp lệ!\n\n- Ngày kết thúc phải sau hoặc bằng ngày bắt đầu\n- Khi chọn ca nghỉ (sáng/chiều), ngày bắt đầu và kết thúc phải giống nhau');
+      } else if (errorCode === 'DUPLICATE_TIMEOFF_REQUEST' || error.response?.status === 409) {
+        alert('⚠️ Lỗi: Yêu cầu nghỉ phép trùng lặp!\n\nĐã tồn tại một yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu của bạn.');
+      } else if (errorCode === 'INVALID_SLOT_USAGE' || errorMsg?.includes('SLOT')) {
+        alert('❌ Lỗi: Sử dụng ca nghỉ không đúng!\n\nKhi chọn nghỉ theo ca (sáng hoặc chiều), ngày bắt đầu và ngày kết thúc phải giống nhau.');
+      } else if (errorCode === 'TYPE_NOT_FOUND' || errorMsg?.includes('TYPE') || error.response?.status === 404) {
+        alert('❌ Lỗi: Không tìm thấy loại nghỉ phép!\n\nLoại nghỉ phép bạn chọn không tồn tại hoặc đã bị vô hiệu hóa.');
+      } else if (error.response?.status === 403) {
+        alert('❌ Lỗi: Không có quyền!\n\nBạn không có quyền tạo yêu cầu nghỉ phép.');
+      } else if (error.response?.status === 400) {
+        // Generic 400 errors - show validation errors if available
+        const validationErrors = error.response?.data?.errors || [];
+        if (validationErrors.length > 0) {
+          const errorMessages = validationErrors.map((e: any) => `• ${e.field}: ${e.message}`).join('\n');
+          alert(`❌ Lỗi validation:\n\n${errorMessages}`);
+        } else {
+          alert(`❌ Lỗi: ${errorMsg || 'Dữ liệu không hợp lệ'}`);
+        }
       } else {
-        alert(`Lỗi: ${errorMsg || 'Không thể tạo yêu cầu nghỉ phép'}`);
+        alert(`❌ Lỗi: ${errorMsg || 'Không thể tạo yêu cầu nghỉ phép. Vui lòng thử lại sau.'}`);
       }
     } finally {
       setProcessing(false);
@@ -199,21 +286,16 @@ export default function AdminTimeOffRequestsPage() {
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadTimeOffRequests();
-      alert('Đã duyệt yêu cầu nghỉ phép thành công!');
+      alert('✅ Đã duyệt yêu cầu nghỉ phép thành công!');
     } catch (error: any) {
-      console.error('Error approving request:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+      const errorInfo = TimeOffErrorHandler.handleApproveError(error, selectedRequest.requestId);
+      alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
 
-      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
-        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+      if (errorInfo.shouldReload) {
         loadTimeOffRequests();
-      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
-        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
-      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
-        alert('Lỗi: Không tìm thấy yêu cầu này');
-        loadTimeOffRequests();
-      } else {
-        alert(`Lỗi: ${errorMsg || 'Không thể duyệt yêu cầu'}`);
+      }
+      if (errorInfo.shouldRedirect) {
+        window.location.href = errorInfo.shouldRedirect;
       }
     } finally {
       setProcessing(false);
@@ -236,21 +318,16 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setRejectReason('');
       loadTimeOffRequests();
-      alert('Đã từ chối yêu cầu nghỉ phép!');
+      alert('✅ Đã từ chối yêu cầu nghỉ phép!');
     } catch (error: any) {
-      console.error('Error rejecting request:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+      const errorInfo = TimeOffErrorHandler.handleRejectError(error, selectedRequest.requestId, rejectReason);
+      alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
 
-      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
-        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+      if (errorInfo.shouldReload) {
         loadTimeOffRequests();
-      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
-        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
-      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
-        alert('Lỗi: Không tìm thấy yêu cầu này');
-        loadTimeOffRequests();
-      } else {
-        alert(`Lỗi: ${errorMsg || 'Không thể từ chối yêu cầu'}`);
+      }
+      if (errorInfo.shouldRedirect) {
+        window.location.href = errorInfo.shouldRedirect;
       }
     } finally {
       setProcessing(false);
@@ -273,21 +350,16 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setCancelReason('');
       loadTimeOffRequests();
-      alert('Đã hủy yêu cầu nghỉ phép!');
+      alert('✅ Đã hủy yêu cầu nghỉ phép!');
     } catch (error: any) {
-      console.error('Error cancelling request:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.code;
+      const errorInfo = TimeOffErrorHandler.handleCancelError(error, selectedRequest.requestId, cancelReason);
+      alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
 
-      if (errorMsg?.includes('INVALID_STATE_TRANSITION')) {
-        alert('Lỗi: Yêu cầu này không còn ở trạng thái "Chờ duyệt". Trang sẽ được tải lại.');
+      if (errorInfo.shouldReload) {
         loadTimeOffRequests();
-      } else if (errorMsg?.includes('FORBIDDEN') || error.response?.status === 403) {
-        alert('Lỗi: Bạn không có quyền thực hiện hành động này');
-      } else if (errorMsg?.includes('NOT_FOUND') || error.response?.status === 404) {
-        alert('Lỗi: Không tìm thấy yêu cầu này');
-        loadTimeOffRequests();
-      } else {
-        alert(`Lỗi: ${errorMsg || 'Không thể hủy yêu cầu'}`);
+      }
+      if (errorInfo.shouldRedirect) {
+        window.location.href = errorInfo.shouldRedirect;
       }
     } finally {
       setProcessing(false);
@@ -311,15 +383,41 @@ export default function AdminTimeOffRequestsPage() {
     setShowCancelModal(true);
   };
 
+  const openViewModal = async (request: TimeOffRequest) => {
+    try {
+      setShowViewModal(true);
+      setLoadingDetails(true);
+
+      // Gọi API để lấy chi tiết
+      const details = await TimeOffRequestService.getTimeOffRequestById(request.requestId);
+
+      // ✅ Enrich detail data
+      const enrichedDetails = TimeOffDataEnricher.enrichRequest(
+        details,
+        timeOffTypes,
+        workShifts
+      );
+
+      console.log('✨ Enriched details:', enrichedDetails);
+      setViewDetails(enrichedDetails);
+    } catch (error: any) {
+      console.error('❌ Error loading request details:', error);
+      alert('Không thể tải chi tiết yêu cầu');
+      setShowViewModal(false);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const filteredRequests = timeOffRequests.filter((request) => {
     const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.timeOffTypeName.toLowerCase().includes(searchTerm.toLowerCase());
+      request.employee?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.timeOffTypeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    const matchesEmployee = employeeFilter === 'ALL' || request.employeeId.toString() === employeeFilter;
+    const matchesEmployee = employeeFilter === 'ALL' || request.employee?.employeeId.toString() === employeeFilter;
 
     const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
     const matchesDateTo = !dateTo || request.endDate <= dateTo;
@@ -340,7 +438,7 @@ export default function AdminTimeOffRequestsPage() {
   // Helper to check if user can cancel a specific request
   const canCancelRequest = (request: TimeOffRequest) => {
     if (canCancelPending) return true;
-    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    if (canCancelOwn && request.employee?.employeeId === Number(user?.employeeId)) return true;
     return false;
   };
 
@@ -522,7 +620,12 @@ export default function AdminTimeOffRequestsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                        <span>{request.employeeName}</span>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {request.employee?.fullName || `Nhân viên ID: ${request.employee?.employeeId || 'N/A'}`}
+                          </div>
+                          <div className="text-xs text-gray-500">Người nghỉ</div>
+                        </div>
                       </div>
 
                       <div className="flex items-center space-x-2">
@@ -535,21 +638,36 @@ export default function AdminTimeOffRequestsPage() {
 
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                        <span>{request.timeOffTypeName}</span>
+                        <span>{request.timeOffTypeName || request.timeOffTypeId}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{request.totalDays} ngày</span>
-                        {request.slotName && (
-                          <Badge variant="outline">{request.slotName}</Badge>
+                        <span className="font-semibold">{request.totalDays || 0} ngày</span>
+                        {request.workShiftName && (
+                          <Badge variant="outline">{request.workShiftName}</Badge>
+                        )}
+                        {!request.workShiftName && request.workShiftId && (
+                          <Badge variant="outline" className="text-xs text-gray-500">
+                            {request.workShiftId}
+                          </Badge>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-700">
-                        <strong>Lý do:</strong> {request.reason}
-                      </p>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-gray-500 font-medium">Người tạo:</span>
+                        <span className="text-gray-900">
+                          {request.requestedBy?.fullName || `User ID: ${request.requestedBy?.employeeId || 'N/A'}`}
+                        </span>
+                        <span className="text-gray-400">
+                          • {format(new Date(request.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </span>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <span className="text-gray-500 font-medium">Lý do:</span>
+                        <span className="text-gray-700">{request.reason || 'Không có lý do'}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -596,7 +714,7 @@ export default function AdminTimeOffRequestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/admin/time-off-requests/${request.requestId}`)}
+                        onClick={() => openViewModal(request)}
                       >
                         <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
                         Xem
@@ -636,7 +754,7 @@ export default function AdminTimeOffRequestsPage() {
                 <Select
                   value={createForm.timeOffTypeId}
                   onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
-                  options={timeOffTypes?.map(type => ({
+                  options={timeOffTypes?.filter(type => type.isActive).map(type => ({
                     value: type.typeId,
                     label: type.typeName
                   })) || []}
@@ -678,7 +796,7 @@ export default function AdminTimeOffRequestsPage() {
                 <Select
                   value={createForm.slotId || ''}
                   onChange={(value) => {
-                    const newSlotId = value ? value as TimeOffSlot : null;
+                    const newSlotId = value || null;
                     setCreateForm(prev => ({
                       ...prev,
                       slotId: newSlotId,
@@ -688,8 +806,10 @@ export default function AdminTimeOffRequestsPage() {
                   }}
                   options={[
                     { value: '', label: 'Nghỉ cả ngày' },
-                    { value: TimeOffSlot.MORNING, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.MORNING].label },
-                    { value: TimeOffSlot.AFTERNOON, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.AFTERNOON].label },
+                    ...workShifts.map(shift => ({
+                      value: shift.workShiftId,
+                      label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                    }))
                   ]}
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -732,16 +852,71 @@ export default function AdminTimeOffRequestsPage() {
       {/* Approve Modal */}
       {showApproveModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Xác nhận duyệt</h2>
-            <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn duyệt yêu cầu nghỉ phép này không?
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4 text-green-600">Xác nhận duyệt yêu cầu nghỉ phép</h2>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mã yêu cầu:</span>
+                <span className="font-semibold">{selectedRequest.requestId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Nhân viên nghỉ:</span>
+                <span className="font-semibold">
+                  {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Loại nghỉ:</span>
+                <span className="font-semibold">
+                  {selectedRequest.timeOffTypeName || selectedRequest.timeOffTypeId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Thời gian:</span>
+                <span className="font-semibold">
+                  {format(new Date(selectedRequest.startDate), 'dd/MM/yyyy', { locale: vi })} -{' '}
+                  {format(new Date(selectedRequest.endDate), 'dd/MM/yyyy', { locale: vi })}
+                  {selectedRequest.workShiftName && ` (${selectedRequest.workShiftName})`}
+                  {!selectedRequest.workShiftName && selectedRequest.workShiftId && ` (${selectedRequest.workShiftId})`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tổng số ngày:</span>
+                <span className="font-semibold text-green-600">
+                  {selectedRequest.totalDays || 0} ngày
+                </span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Người tạo đơn:</span>
+                  <span className="font-semibold text-purple-600">
+                    {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Thời gian tạo:</span>
+                  <span className="text-gray-700">
+                    {format(new Date(selectedRequest.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                  </span>
+                </div>
+              </div>
+              <div className="border-t pt-3">
+                <span className="text-gray-600 block mb-1">Lý do:</span>
+                <p className="text-gray-900 italic">"{selectedRequest.reason || 'Không có lý do'}"</p>
+              </div>
+            </div>
+
+            <p className="text-gray-600 mb-6 text-center font-medium">
+              Bạn có chắc chắn muốn duyệt yêu cầu này không?
             </p>
+
             <div className="flex space-x-3">
               <Button
                 variant="outline"
                 onClick={() => setShowApproveModal(false)}
                 className="flex-1"
+                disabled={processing}
               >
                 Hủy
               </Button>
@@ -750,7 +925,7 @@ export default function AdminTimeOffRequestsPage() {
                 disabled={processing}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                {processing ? 'Đang xử lý...' : 'Duyệt'}
+                {processing ? 'Đang xử lý...' : '✓ Duyệt'}
               </Button>
             </div>
           </div>
@@ -760,8 +935,34 @@ export default function AdminTimeOffRequestsPage() {
       {/* Reject Modal */}
       {showRejectModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Từ chối yêu cầu</h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4 text-red-600">Từ chối yêu cầu nghỉ phép</h2>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mã yêu cầu:</span>
+                <span className="font-semibold">{selectedRequest.requestId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Nhân viên:</span>
+                <span className="font-semibold">
+                  {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Người tạo:</span>
+                <span className="font-semibold text-purple-600">
+                  {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
+                </span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <span className="text-gray-600 block mb-1">Lý do nghỉ:</span>
+                <p className="text-gray-900 italic text-sm">
+                  "{selectedRequest.reason || 'Không có lý do'}"
+                </p>
+              </div>
+            </div>
+
             <div className="mb-4">
               <Label htmlFor="rejectReason">Lý do từ chối *</Label>
               <Textarea
@@ -825,6 +1026,241 @@ export default function AdminTimeOffRequestsPage() {
                 {processing ? 'Đang xử lý...' : 'Hủy yêu cầu'}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {showViewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Chi tiết Yêu cầu Nghỉ phép</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowViewModal(false);
+                  setViewDetails(null);
+                }}
+              >
+                ✕ Đóng
+              </Button>
+            </div>
+
+            {loadingDetails ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8b5fbf] mx-auto"></div>
+                <p className="mt-4 text-gray-600">Đang tải chi tiết...</p>
+              </div>
+            ) : viewDetails ? (
+              <div className="space-y-6">
+                {/* Header Info */}
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Mã yêu cầu: {viewDetails.requestId}
+                      </h3>
+                      <Badge className={`mt-2 ${TIME_OFF_STATUS_CONFIG[viewDetails.status].bgColor} ${TIME_OFF_STATUS_CONFIG[viewDetails.status].textColor}`}>
+                        {TIME_OFF_STATUS_CONFIG[viewDetails.status].label}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employee & Request Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                      <FontAwesomeIcon icon={faUser} className="h-5 w-5 mr-2 text-purple-600" />
+                      Thông tin Nhân viên
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Nhân viên nghỉ:</span>
+                        <span className="font-semibold">
+                          {viewDetails.employee?.fullName || `ID: ${viewDetails.employee?.employeeId || 'N/A'}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Mã NV:</span>
+                        <span className="font-semibold">{viewDetails.employee?.employeeCode || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                      <FontAwesomeIcon icon={faClock} className="h-5 w-5 mr-2 text-purple-600" />
+                      Thông tin Yêu cầu
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Người tạo:</span>
+                        <span className="font-semibold text-purple-600">
+                          {viewDetails.requestedBy?.fullName || `User ID: ${viewDetails.requestedBy?.employeeId || 'N/A'}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Thời gian tạo:</span>
+                        <span className="font-semibold">
+                          {format(new Date(viewDetails.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Time Off Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2 text-purple-600" />
+                    Chi tiết Nghỉ phép
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 block mb-1">Loại nghỉ phép:</span>
+                      <span className="font-semibold text-lg">
+                        {viewDetails.timeOffTypeName || viewDetails.timeOffTypeId}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block mb-1">Tổng số ngày:</span>
+                      <span className="font-semibold text-lg text-green-600">
+                        {viewDetails.totalDays || 0} ngày
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block mb-1">Ngày bắt đầu:</span>
+                      <span className="font-semibold">
+                        {format(new Date(viewDetails.startDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block mb-1">Ngày kết thúc:</span>
+                      <span className="font-semibold">
+                        {format(new Date(viewDetails.endDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
+                      </span>
+                    </div>
+                    {viewDetails.workShiftName && (
+                      <div className="md:col-span-2">
+                        <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
+                        <Badge variant="outline" className="text-base">
+                          {viewDetails.workShiftName}
+                        </Badge>
+                      </div>
+                    )}
+                    {!viewDetails.workShiftName && viewDetails.workShiftId && (
+                      <div className="md:col-span-2">
+                        <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
+                        <Badge variant="outline" className="text-base text-gray-500">
+                          {viewDetails.workShiftId}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-700 mb-2">Lý do nghỉ phép:</h4>
+                  <p className="text-gray-900 italic">
+                    "{viewDetails.reason || 'Không có lý do'}"
+                  </p>
+                </div>
+
+                {/* Approval/Rejection Info */}
+                {viewDetails.status === TimeOffStatus.APPROVED && viewDetails.approvedBy && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-800 mb-2 flex items-center">
+                      <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
+                      Thông tin Phê duyệt
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Người duyệt:</span>
+                        <span className="font-semibold text-green-900">{viewDetails.approvedBy.fullName}</span>
+                      </div>
+                      {viewDetails.approvedAt && (
+                        <div className="flex justify-between">
+                          <span className="text-green-700">Thời gian duyệt:</span>
+                          <span className="font-semibold text-green-900">
+                            {format(new Date(viewDetails.approvedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {viewDetails.status === TimeOffStatus.REJECTED && viewDetails.rejectedReason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-red-800 mb-2 flex items-center">
+                      <FontAwesomeIcon icon={faTimes} className="h-5 w-5 mr-2" />
+                      Thông tin Từ chối
+                    </h4>
+                    <p className="text-red-900 italic">"{viewDetails.rejectedReason}"</p>
+                  </div>
+                )}
+
+                {viewDetails.status === TimeOffStatus.CANCELLED && viewDetails.cancellationReason && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-orange-800 mb-2 flex items-center">
+                      <FontAwesomeIcon icon={faBan} className="h-5 w-5 mr-2" />
+                      Lý do Hủy
+                    </h4>
+                    <p className="text-orange-900 italic">"{viewDetails.cancellationReason}"</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                {viewDetails.status === TimeOffStatus.PENDING && (
+                  <div className="flex gap-3 pt-4 border-t">
+                    {canApprove && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          openApproveModal(viewDetails);
+                        }}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                        Duyệt
+                      </Button>
+                    )}
+                    {canReject && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          openRejectModal(viewDetails);
+                        }}
+                        className="flex-1 bg-red-600 hover:bg-red-700"
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        Từ chối
+                      </Button>
+                    )}
+                    {canCancelRequest(viewDetails) && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          openCancelModal(viewDetails);
+                        }}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700"
+                      >
+                        <FontAwesomeIcon icon={faBan} className="mr-2" />
+                        Hủy
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600">Không có dữ liệu</p>
+              </div>
+            )}
           </div>
         </div>
       )}

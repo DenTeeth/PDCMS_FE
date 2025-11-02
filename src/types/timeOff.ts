@@ -57,7 +57,7 @@ export interface CreateTimeOffRequestDto {
   timeOffTypeId: string;
   startDate: string; // YYYY-MM-DD format
   endDate: string; // YYYY-MM-DD format
-  slotId?: TimeOffSlot | null; // null for full-day, SLOT_* for half-day
+  slotId?: string | null; // null for full-day, workShiftId for half-day (e.g., "WS001")
   reason: string;
 }
 
@@ -82,31 +82,38 @@ export interface CancelTimeOffRequestDto {
 /**
  * Time Off Request Response Types
  */
+
+// Embedded employee info from backend
+export interface EmployeeInfo {
+  employeeId: number;
+  employeeCode: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+}
+
 export interface TimeOffRequest {
   requestId: string;
-  employeeId: number;
-  employeeName: string;
-  timeOffTypeId: string;
-  timeOffTypeName: string;
-  startDate: string;
-  endDate: string;
-  slotId?: TimeOffSlot | null;
-  slotName?: string | null;
-  totalDays: number;
-  reason: string;
-  status: TimeOffStatus;
-  requestedBy: number;
-  requestedByName: string;
-  requestedAt: string;
-  approvedBy?: number | null;
-  approvedByName?: string | null;
-  approvedAt?: string | null;
-  rejectedReason?: string | null;
-  cancellationReason?: string | null;
+  employee: EmployeeInfo; // ✅ Nested object from API
+  requestedBy: EmployeeInfo; // ✅ Nested object from API
+  timeOffTypeId: string; // ✅ From API
+  timeOffTypeName?: string; // ❌ NOT in API - need to lookup from timeOffTypes
+  startDate: string; // ✅ From API
+  endDate: string; // ✅ From API
+  workShiftId?: string | null; // ✅ From API (e.g., "WKS_MORNING_01")
+  workShiftName?: string | null; // ❌ NOT in API - need to lookup from workShifts
+  totalDays?: number; // ❌ NOT in API - need to calculate
+  reason: string | null; // ✅ From API
+  status: TimeOffStatus; // ✅ From API
+  requestedAt: string; // ✅ From API
+  approvedBy?: EmployeeInfo | null; // ✅ From API (nested object)
+  approvedAt?: string | null; // ✅ From API
+  rejectedReason?: string | null; // ✅ From API
+  cancellationReason?: string | null; // ✅ From API
 }
 
 export interface TimeOffRequestDetail extends TimeOffRequest {
-  // Additional fields for detailed view
+  // Additional fields for detailed view if needed
 }
 
 export interface TimeOffRequestListResponse {
