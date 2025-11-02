@@ -128,3 +128,31 @@ export enum WorkSlotErrorCode {
   QUOTA_VIOLATION = 'QUOTA_VIOLATION',
   SLOT_IS_FULL = 'SLOT_IS_FULL'
 }
+
+/**
+ * Registered Employee Information
+ * Part of PartTimeSlotDetailResponse
+ */
+export interface RegisteredEmployeeInfo {
+  employeeId: number;
+  employeeCode: string;
+  employeeName: string;
+  effectiveFrom: string; // ISO date string
+  effectiveTo: string;    // ISO date string
+}
+
+/**
+ * Part-Time Slot Detail Response
+ * Response from GET /api/v1/work-slots/{slotId}
+ * Includes slot information and list of registered employees
+ */
+export interface PartTimeSlotDetailResponse {
+  slotId: number;
+  workShiftId: string;
+  workShiftName: string;
+  dayOfWeek: string; // DayOfWeek enum value as string
+  quota: number;
+  registered: number; // Count of active registrations
+  isActive: boolean;
+  registeredEmployees: RegisteredEmployeeInfo[];
+}

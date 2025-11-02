@@ -13,7 +13,8 @@ import {
   WorkSlotQueryParams,
   PaginatedWorkSlotResponse,
   WorkSlotResponse,
-  AvailableSlot
+  AvailableSlot,
+  PartTimeSlotDetailResponse
 } from '@/types/workSlot';
 
 /**
@@ -189,6 +190,24 @@ class WorkSlotService {
     }
     
     return response.data;
+  }
+
+  /**
+   * Get slot detail with list of registered employees
+   * Response includes slot information and list of employees who claimed it
+   * @param slotId Work slot ID
+   * @returns Slot detail with registered employees
+   */
+  async getSlotDetail(slotId: number): Promise<PartTimeSlotDetailResponse> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get<{ statusCode: number; data: PartTimeSlotDetailResponse }>(`${this.endpoint}/${slotId}`);
+    
+    // Handle both response structures
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    
+    return response.data as unknown as PartTimeSlotDetailResponse;
   }
 }
 
