@@ -41,7 +41,6 @@ import { Employee } from '@/types/employee';
 import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
 import { TimeOffErrorHandler } from '@/utils/timeOffErrorHandler';
-import { TimeOffDiagnostics } from '@/utils/timeOffDiagnostics';
 import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
 export default function AdminTimeOffRequestsPage() {
@@ -109,7 +108,7 @@ export default function AdminTimeOffRequestsPage() {
       // ✅ Then load requests (uses timeOffTypes and workShifts for enrichment)
       await loadTimeOffRequests();
     } catch (error) {
-      console.error('❌ Error loading data:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -122,21 +121,8 @@ export default function AdminTimeOffRequestsPage() {
         size: 50,
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
-      console.log('📥 Time-Off Requests API Response:', response);
 
       if (response.content && response.content.length > 0) {
-        const sample = response.content[0];
-
-        // Diagnostic logging
-        TimeOffDiagnostics.logStructure(sample, 'First Time-Off Request');
-
-        const validation = TimeOffDiagnostics.validateStructure(sample);
-        if (!validation.isValid) {
-          console.error('⚠️ Invalid request structure detected!');
-          console.error('Issues:', validation.issues);
-          console.error('Warnings:', validation.warnings);
-        }
-
         // ✅ Enrich data with timeOffTypeName, workShiftName, and totalDays
         const enrichedRequests = TimeOffDataEnricher.enrichRequests(
           response.content,
@@ -144,32 +130,26 @@ export default function AdminTimeOffRequestsPage() {
           workShifts
         );
 
-        console.log('✨ Enriched first request:', enrichedRequests[0]);
         setTimeOffRequests(enrichedRequests);
       } else {
         setTimeOffRequests([]);
       }
     } catch (error) {
-      console.error('❌ Error loading time off requests:', error);
+      console.error('Error loading time off requests:', error);
       setTimeOffRequests([]);
     }
   };
 
   const loadTimeOffTypes = async () => {
     try {
-      // Get ALL time-off types (including inactive) for display purposes
       const types = await TimeOffTypeService.getAllTimeOffTypes();
       setTimeOffTypes(types || []);
-      console.log('📋 Time-Off Types loaded:', types?.length || 0);
     } catch (error) {
-      console.error('❌ Error loading time off types:', error);
-      // Fallback: try to get active types only
+      console.error('Error loading time off types:', error);
       try {
         const activeTypes = await TimeOffTypeService.getActiveTimeOffTypes();
         setTimeOffTypes(activeTypes || []);
-        console.log('📋 Active Time-Off Types loaded (fallback):', activeTypes?.length || 0);
       } catch (fallbackError) {
-        console.error('❌ Fallback also failed:', fallbackError);
         setTimeOffTypes([]);
       }
     }
@@ -235,14 +215,6 @@ export default function AdminTimeOffRequestsPage() {
 
       alert(`✅ Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
-      console.error('❌ Error creating time off request:', error);
-      console.error('📋 Error details:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        code: error.response?.data?.code,
-        message: error.response?.data?.message
-      });
-
       const errorCode = error.response?.data?.code || error.response?.data?.error;
       const errorMsg = error.response?.data?.message || error.message || '';
 
@@ -398,10 +370,8 @@ export default function AdminTimeOffRequestsPage() {
         workShifts
       );
 
-      console.log('✨ Enriched details:', enrichedDetails);
       setViewDetails(enrichedDetails);
     } catch (error: any) {
-      console.error('❌ Error loading request details:', error);
       alert('Không thể tải chi tiết yêu cầu');
       setShowViewModal(false);
     } finally {
