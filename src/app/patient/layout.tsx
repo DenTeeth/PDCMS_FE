@@ -1,4 +1,4 @@
-import DynamicSidebar from '@/components/layout/NewDynamicSidebar';
+import ModernSidebar from '@/components/layout/ModernSidebar';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Role } from '@/types/permission';
 
@@ -11,8 +11,8 @@ export default function PatientLayout({
     <ProtectedRoute requiredBaseRole="patient">
       <div className="min-h-screen bg-background">
         <div className="flex">
-          <DynamicSidebar />
-          <main className="flex-1 ml-64">
+          <ModernSidebar />
+          <main className="flex-1 transition-all duration-300 ease-out lg:ml-64">
             <div className="p-6">
               {children}
             </div>

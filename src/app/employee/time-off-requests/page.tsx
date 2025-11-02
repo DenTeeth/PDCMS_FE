@@ -28,15 +28,15 @@ import Select from '@/components/ui/select';
 
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
+import { workShiftService } from '@/services/workShiftService';
 import {
   TimeOffRequest,
   TimeOffStatus,
   TIME_OFF_STATUS_CONFIG,
-  TimeOffSlot,
-  TIME_OFF_SLOT_CONFIG,
   CreateTimeOffRequestDto,
 } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
+import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
@@ -45,13 +45,14 @@ export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { is403Error, handleError, clearError } = useApiErrorHandler();
-  
+
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
+  const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -78,7 +79,8 @@ export default function EmployeeTimeOffRequestsPage() {
       setLoading(true);
       await Promise.all([
         loadTimeOffRequests(),
-        loadTimeOffTypes()
+        loadTimeOffTypes(),
+        loadWorkShifts()
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -111,6 +113,16 @@ export default function EmployeeTimeOffRequestsPage() {
     }
   };
 
+  const loadWorkShifts = async () => {
+    try {
+      const shifts = await workShiftService.getAll(true);
+      setWorkShifts(shifts);
+    } catch (error) {
+      console.error('Error loading work shifts:', error);
+      setWorkShifts([]);
+    }
+  };
+
   const handleCreateTimeOffRequest = async () => {
     if (!createForm.timeOffTypeId || !createForm.startDate || !createForm.endDate || !createForm.reason.trim()) {
       alert('Vui lòng điền đầy đủ thông tin');
@@ -124,9 +136,9 @@ export default function EmployeeTimeOffRequestsPage() {
         ...createForm,
         employeeId: undefined
       };
-      
+
       const response = await TimeOffRequestService.createTimeOffRequest(requestData);
-      
+
       setShowCreateModal(false);
       setCreateForm({
         employeeId: undefined,
@@ -157,7 +169,7 @@ export default function EmployeeTimeOffRequestsPage() {
       await TimeOffRequestService.cancelTimeOffRequest(selectedRequest.requestId, {
         cancellationReason: cancelReason
       });
-      
+
       setShowCancelModal(false);
       setSelectedRequest(null);
       setCancelReason('');
@@ -178,11 +190,11 @@ export default function EmployeeTimeOffRequestsPage() {
   };
 
   const filteredRequests = timeOffRequests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -270,7 +282,7 @@ export default function EmployeeTimeOffRequestsPage() {
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
           const canCancel = request.status === TimeOffStatus.PENDING;
-          
+
           return (
             <Card key={request.requestId} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -284,17 +296,17 @@ export default function EmployeeTimeOffRequestsPage() {
                         {statusConfig.label}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                         <span>{request.employeeName}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
                         <span>
-                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} - 
+                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
                           {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
                         </span>
                       </div>
@@ -318,7 +330,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -328,7 +340,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
                       Chi tiết
                     </Button>
-                    
+
                     {canCancel && (
                       <Button
                         variant="outline"
@@ -353,7 +365,7 @@ export default function EmployeeTimeOffRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Tạo Yêu Cầu Nghỉ Phép</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
@@ -382,7 +394,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <Label htmlFor="startDate">Ngày bắt đầu *</Label>
                 <Input
@@ -392,7 +404,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   onChange={(e) => setCreateForm(prev => ({ ...prev, startDate: e.target.value }))}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="endDate">Ngày kết thúc *</Label>
                 <Input
@@ -402,24 +414,31 @@ export default function EmployeeTimeOffRequestsPage() {
                   onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="slot">Ca làm việc (nếu nghỉ nửa ngày)</Label>
                 <Select
                   value={createForm.slotId || ''}
-                  onChange={(value) => setCreateForm(prev => ({ 
-                    ...prev, 
-                    slotId: value ? value as TimeOffSlot : null 
+                  onChange={(value) => setCreateForm(prev => ({
+                    ...prev,
+                    slotId: value || null,
+                    // If slot is selected, set endDate = startDate
+                    endDate: value ? prev.startDate : prev.endDate
                   }))}
                   options={[
-                    { value: '', label: 'Cả ngày' },
-                    { value: TimeOffSlot.MORNING, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.MORNING].label },
-                    { value: TimeOffSlot.AFTERNOON, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.AFTERNOON].label },
+                    { value: '', label: 'Nghỉ cả ngày' },
+                    ...workShifts.map(shift => ({
+                      value: shift.workShiftId,
+                      label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                    }))
                   ]}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
+                </p>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <Label htmlFor="reason">Lý do nghỉ phép *</Label>
               <Textarea
@@ -430,7 +449,7 @@ export default function EmployeeTimeOffRequestsPage() {
                 rows={3}
               />
             </div>
-            
+
             <div className="flex space-x-3">
               <Button
                 variant="outline"
