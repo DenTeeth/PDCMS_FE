@@ -137,7 +137,7 @@ export class TimeOffTypeService {
    * - 409: CONFLICT - DUPLICATE_TYPE_CODE
    */
   static async updateTimeOffType(
-    typeId: number,
+    typeId: string,
     data: UpdateTimeOffTypeDto
   ): Promise<TimeOffType> {
     const axios = apiClient.getAxiosInstance();
@@ -163,7 +163,7 @@ export class TimeOffTypeService {
    * - 404: NOT_FOUND - TIMEOFF_TYPE_NOT_FOUND
    * - 409: CONFLICT - TIMEOFF_TYPE_IN_USE (có yêu cầu PENDING đang dùng)
    */
-  static async deleteTimeOffType(typeId: number): Promise<TimeOffType> {
+  static async deleteTimeOffType(typeId: string): Promise<TimeOffType> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.delete<TimeOffType>(
       `${this.ADMIN_BASE_URL}/${typeId}`
