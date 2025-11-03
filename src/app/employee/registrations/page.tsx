@@ -712,7 +712,10 @@ export default function EmployeeRegistrationsPage() {
                               <h3 className="font-semibold text-gray-900 mb-2">
                                 {getRegistrationShiftName(registration)}
                               </h3>
-                              <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
+                                <Badge variant="outline" className="font-mono">
+                                  Slot #{registration.partTimeSlotId}
+                                </Badge>
                                 <Badge variant="outline">
                                   {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
                                 </Badge>
