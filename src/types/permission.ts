@@ -48,6 +48,18 @@ export enum Permission {
   CREATE_SHIFTS = 'CREATE_SHIFTS',
   UPDATE_SHIFTS = 'UPDATE_SHIFTS',
   DELETE_SHIFTS = 'DELETE_SHIFTS',
+
+  // Room management permissions (Booking P1)
+  VIEW_ROOM = 'VIEW_ROOM',
+  CREATE_ROOM = 'CREATE_ROOM',
+  UPDATE_ROOM = 'UPDATE_ROOM',
+  DELETE_ROOM = 'DELETE_ROOM',
+  
+  // Service management permissions (Booking P2)
+  VIEW_SERVICE = 'VIEW_SERVICE',
+  CREATE_SERVICE = 'CREATE_SERVICE',
+  UPDATE_SERVICE = 'UPDATE_SERVICE',
+  DELETE_SERVICE = 'DELETE_SERVICE',
   
   // Contact permissions
   CREATE_CONTACT = 'CREATE_CONTACT',
