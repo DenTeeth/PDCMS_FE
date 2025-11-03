@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChartLine,

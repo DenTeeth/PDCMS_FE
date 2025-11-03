@@ -47,6 +47,7 @@ export interface Role {
   isActive: boolean;
   createdAt?: string;
   permissions?: Permission[];
+  requiresSpecialization?: boolean; // Whether this role requires specialization
 }
 
 /**

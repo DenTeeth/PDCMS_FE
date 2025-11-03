@@ -103,10 +103,10 @@ class RoleService {
 
   /**
    * Create a new role
-   * @param data Role creation data (roleId, roleName, description)
+   * @param data Role creation data (roleId, roleName, description, baseRoleId, requiresSpecialization)
    * @returns Created role
    */
-  async createRole(data: { roleId: string; roleName: string; description: string }): Promise<Role> {
+  async createRole(data: { roleId: string; roleName: string; description: string; baseRoleId: number; requiresSpecialization: boolean }): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post('/roles', data);
     

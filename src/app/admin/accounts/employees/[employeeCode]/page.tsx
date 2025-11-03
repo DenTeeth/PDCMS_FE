@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import {
   ArrowLeft,
   User,
