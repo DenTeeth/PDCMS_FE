@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { employeeService } from '@/services/employeeService';

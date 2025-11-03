@@ -484,7 +484,7 @@ export default function RegistrationsPage() {
           {canViewPartTime && (
             <TabsContent value="part-time" className="space-y-6">
               {/* Info Card - 303v2-p1 */}
-              <Card className="border-blue-200 bg-blue-50">
+              {/* <Card className="border-blue-200 bg-blue-50">
                 <CardContent className="pt-6">
                   <div className="flex items-start space-x-3">
                     <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -511,7 +511,7 @@ export default function RegistrationsPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card>
                 <CardHeader>
@@ -602,7 +602,7 @@ export default function RegistrationsPage() {
           {canViewFixed && (
             <TabsContent value="fixed" className="space-y-6">
               {/* Info Card - 303v2-p2 */}
-              <Card className="border-green-200 bg-green-50">
+              {/* <Card className="border-green-200 bg-green-50">
                 <CardContent className="pt-6">
                   <div className="flex items-start space-x-3">
                     <Info className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -621,7 +621,7 @@ export default function RegistrationsPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Header with Create Button */}
               <div className="flex justify-end">

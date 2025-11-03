@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
@@ -194,8 +194,9 @@ export default function EmployeesPage() {
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prepare payload based on role
-    const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+    // Check if selected role requires specialization
+    const selectedRoleForValidation = roles.find(role => role.roleId === formData.roleId);
+    const requiresSpecializationForValidation = selectedRoleForValidation?.requiresSpecialization === true;
 
     // Validation - All roles need basic fields + account credentials
     if (!formData.roleId || !formData.firstName || !formData.lastName ||
@@ -204,10 +205,10 @@ export default function EmployeesPage() {
       return;
     }
 
-    // Additional validation for Doctor/Nurse: must have specializations
-    if (isDoctorOrNurse) {
+    // Additional validation for roles that require specialization
+    if (requiresSpecializationForValidation) {
       if (!formData.specializationIds || formData.specializationIds.length === 0) {
-        toast.error('Please select at least one specialization for Doctor/Nurse');
+        toast.error('Please select at least one specialization for this role');
         return;
       }
     }
@@ -217,8 +218,8 @@ export default function EmployeesPage() {
 
       let payload: any;
 
-      if (isDoctorOrNurse) {
-        // For DOCTOR/NURSE: include all fields + specializationIds
+      if (requiresSpecializationForValidation) {
+        // For roles requiring specialization: include all fields + specializationIds
         payload = {
           username: formData.username,
           email: formData.email,
@@ -280,7 +281,9 @@ export default function EmployeesPage() {
     setFormData({ ...formData, roleId });
   };
 
-  const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+  // Check if selected role requires specialization
+  const selectedRole = roles.find(role => role.roleId === formData.roleId);
+  const requiresSpecialization = selectedRole?.requiresSpecialization === true;
 
   // ==================== EDIT EMPLOYEE ====================
   const openEditModal = (employee: Employee) => {
@@ -1013,8 +1016,8 @@ export default function EmployeesPage() {
                         </div>
                       </div>
 
-                      {/* RIGHT COLUMN: Specialization (Only for Doctor/Nurse) */}
-                      {isDoctorOrNurse && (
+                      {/* RIGHT COLUMN: Specialization (Only for roles that require specialization) */}
+                      {requiresSpecialization && (
                         <div className="lg:border-l lg:pl-6">
                           <h3 className="font-semibold mb-3 text-lg">Specialization</h3>
                           {loadingSpecializations ? (
@@ -1291,8 +1294,11 @@ export default function EmployeesPage() {
                       </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Specializations (Only for Doctor/Nurse) */}
-                    {(editingEmployee.roleName === 'ROLE_DOCTOR' || editingEmployee.roleName === 'ROLE_NURSE') && (
+                    {/* RIGHT COLUMN: Specializations (Only for roles that require specialization) */}
+                    {(() => {
+                      const editingRole = roles.find(role => role.roleId === editingEmployee.roleId);
+                      return editingRole?.requiresSpecialization === true;
+                    })() && (
                       <div className="lg:border-l lg:pl-6">
                         <h3 className="text-lg font-semibold mb-4">Specializations</h3>
                         {loadingSpecializations ? (

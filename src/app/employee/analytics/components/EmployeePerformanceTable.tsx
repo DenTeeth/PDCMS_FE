@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faSort,
