@@ -715,10 +715,12 @@ export default function ShiftCalendarPage() {
                     minute: '2-digit',
                     hour12: false
                   }}
-                  slotLabelFormat={{
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
+                  slotLabelContent={(arg) => {
+                    // Format as HH:mm (24h format without "giờ")
+                    const date = arg.date;
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
                   }}
                   datesSet={handleDatesSet}
                   eventClick={handleEventClick}

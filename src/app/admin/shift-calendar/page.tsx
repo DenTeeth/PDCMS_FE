@@ -45,8 +45,16 @@ export default function AdminShiftCalendarPage() {
   const [workShifts, setWorkShifts] = useState<WorkShiftTemplate[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasViewedCalendar, setHasViewedCalendar] = useState(false); // Track if user has clicked "Xem lịch"
   const calendarRef = useRef<FullCalendar>(null);
+  
+  // Calendar filter state (separate from currentDate to avoid auto-loading)
+  const [calendarFilter, setCalendarFilter] = useState({
+    selectedMonth: new Date().getMonth(),
+    selectedYear: new Date().getFullYear(),
+    selectedEmployeeForCalendar: null as number | null,
+  });
 
   // Summary state
   const [summaryData, setSummaryData] = useState<ShiftSummaryResponse | null>(null);
@@ -105,12 +113,13 @@ export default function AdminShiftCalendarPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (currentDate) {
-      console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
-      loadShifts();
-    }
-  }, [currentDate, selectedEmployee]);
+  // Removed auto-load on filter change - only load when user clicks "Xem lịch"
+  // useEffect(() => {
+  //   if (currentDate) {
+  //     console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
+  //     loadShifts();
+  //   }
+  // }, [currentDate, selectedEmployee]);
 
   // Handle FullCalendar view changes
   const handleDatesSet = (dateInfo: any) => {
@@ -136,8 +145,6 @@ export default function AdminShiftCalendarPage() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
-
       // Load work shifts
       const workShiftsData = await workShiftService.getAll();
       setWorkShifts(workShiftsData);
@@ -147,30 +154,34 @@ export default function AdminShiftCalendarPage() {
       const employeesResponse = await employeeService.getEmployees({});
       setEmployees(employeesResponse.content || []);
 
-      // Load shifts
-      await loadShifts();
+      // Don't auto-load shifts - wait for user to click "Xem lịch"
     } catch (error: any) {
       handleError(error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const loadShifts = async () => {
     try {
-      const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
+      setLoading(true);
+      
+      // Use calendarFilter instead of currentDate/selectedEmployee
+      const filterDate = new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1);
+      const startDate = format(startOfMonth(filterDate), 'yyyy-MM-dd');
+      const endDate = format(endOfMonth(filterDate), 'yyyy-MM-dd');
 
       const shiftsData = await EmployeeShiftService.getShifts({
         start_date: startDate,
         end_date: endDate,
-        employee_id: selectedEmployee || undefined,
+        employee_id: calendarFilter.selectedEmployeeForCalendar || undefined,
       });
 
       setShifts(shiftsData);
+      setHasViewedCalendar(true); // Mark as viewed
     } catch (error: any) {
       console.error('Error loading shifts:', error);
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -469,10 +480,12 @@ export default function AdminShiftCalendarPage() {
                 Tạo ca làm mới
               </Button>
             )}
-            <Button onClick={loadShifts} variant="outline" disabled={loading}>
-              <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Đang tải...' : 'Tải lại'}
-            </Button>
+            {hasViewedCalendar && (
+              <Button onClick={loadShifts} variant="outline" disabled={loading}>
+                <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Đang tải...' : 'Làm mới'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -638,19 +651,109 @@ export default function AdminShiftCalendarPage() {
           </div>
         )}
 
+        {/* Calendar Filter Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <FontAwesomeIcon icon={faCalendarAlt} />
+            Lịch Ca Làm Việc
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 flex-wrap">
+                {/* Employee Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
+                  <select
+                    value={calendarFilter.selectedEmployeeForCalendar?.toString() || ''}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedEmployeeForCalendar: e.target.value ? parseInt(e.target.value) : null
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-[200px]"
+                  >
+                    <option value="">Tất cả nhân viên</option>
+                    {employees.map(employee => (
+                      <option key={employee.employeeId} value={employee.employeeId}>
+                        {employee.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Month Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[60px]">Tháng:</Label>
+                  <select
+                    value={calendarFilter.selectedMonth}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedMonth: parseInt(e.target.value)
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {format(new Date(2024, i, 1), 'MMMM', { locale: vi })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Year Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[50px]">Năm:</Label>
+                  <select
+                    value={calendarFilter.selectedYear}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedYear: parseInt(e.target.value)
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const year = new Date().getFullYear() - 2 + i;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* View Calendar Button */}
+                <Button
+                  onClick={loadShifts}
+                  disabled={loading}
+                  className="ml-auto"
+                >
+                  <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Đang tải...' : 'Xem lịch'}
+                </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Calendar */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarAlt} />
-                {format(currentDate, 'MMMM yyyy', { locale: vi })}
+                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi })}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[600px]">
-              {loading ? (
+              {!hasViewedCalendar ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-6xl text-gray-300 mb-4" />
+                    <div className="text-gray-600 text-lg font-medium mb-2">Chưa có dữ liệu lịch</div>
+                    <div className="text-gray-500 text-sm">Vui lòng chọn bộ lọc và nhấn "Xem lịch" để hiển thị lịch làm việc</div>
+                  </div>
+                </div>
+              ) : loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -677,6 +780,22 @@ export default function AdminShiftCalendarPage() {
                   allDaySlot={false}
                   nowIndicator={true}
                   scrollTime="08:00:00"
+                  slotEventOverlap={false}
+                  eventOverlap={false}
+                  eventDisplay="block"
+                  eventMaxStack={10}
+                  slotLabelContent={(arg) => {
+                    // Format as HH:mm (24h format without "giờ")
+                    const date = arg.date;
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  }}
+                  eventTimeFormat={{
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }}
                   datesSet={handleDatesSet}
                   eventClick={handleEventClick}
                 />
@@ -686,35 +805,31 @@ export default function AdminShiftCalendarPage() {
         </Card>
 
         {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chú thích</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Đã lên lịch</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-gray-600">Hoàn thành</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-gray-500"></div>
-                <span className="text-sm text-gray-600">Đã hủy</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-500"></div>
-                <span className="text-sm text-gray-600">Nghỉ phép</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span className="text-sm text-gray-600">Vắng mặt</span>
-              </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-blue-500"></div>
+              <span className="text-sm text-gray-600">Đã lên lịch</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-500"></div>
+              <span className="text-sm text-gray-600">Hoàn thành</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gray-500"></div>
+              <span className="text-sm text-gray-600">Đã hủy</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-yellow-500"></div>
+              <span className="text-sm text-gray-600">Nghỉ phép</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-500"></div>
+              <span className="text-sm text-gray-600">Vắng mặt</span>
+            </div>
+          </div>
+        </div>
 
         {/* Detail Modal */}
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
