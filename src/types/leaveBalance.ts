@@ -6,22 +6,19 @@
 // ==================== Leave Balance ====================
 
 export interface LeaveBalance {
-  balance_id: string;
-  employee_id: number;
-  time_off_type_id: string;
-  type_name: string;
-  type_code: string;
-  cycle_year: number;
+  balance_id: number;
+  time_off_type: {
+    type_id: string;
+    type_name: string;
+    is_paid: boolean;
+  };
   total_days_allowed: number;
   days_taken: number;
   days_remaining: number;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface EmployeeLeaveBalancesResponse {
   employee_id: number;
-  employee_name: string;
   cycle_year: number;
   balances: LeaveBalance[];
 }

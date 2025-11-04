@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -15,6 +15,7 @@ import {
   faSearch,
   faPlus,
   faFilter,
+  faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -43,9 +44,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TimeOffErrorHandler } from '@/utils/timeOffErrorHandler';
 import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
+// ⚡ Lazy load Leave Balances component để tối ưu tốc độ
+const LeaveBalancesTab = lazy(() => import('@/components/admin/LeaveBalancesTab').then(mod => ({ default: mod.LeaveBalancesTab })));
+
+// Tab types
+type TabType = 'requests' | 'balances';
+
 export default function AdminTimeOffRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
+
+  // ⚡ Tab state
+  const [activeTab, setActiveTab] = useState<TabType>('requests');
 
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
@@ -118,7 +128,7 @@ export default function AdminTimeOffRequestsPage() {
     try {
       const response = await TimeOffRequestService.getTimeOffRequests({
         page: 0,
-        size: 50,
+        size: 20, // ⚡ Giảm từ 50 → 20 để load nhanh hơn
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
 
@@ -159,7 +169,7 @@ export default function AdminTimeOffRequestsPage() {
     try {
       const response = await employeeService.getEmployees({
         page: 0,
-        size: 100
+        size: 100 // ⚡ Tăng lại lên 100 để đảm bảo load đủ nhân viên
       });
       setEmployees(response.content || []);
     } catch (error) {
@@ -220,7 +230,7 @@ export default function AdminTimeOffRequestsPage() {
 
       // Handle specific errors with detailed messages
       if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
-        alert('❌ Lỗi: Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư phép của bạn hoặc chọn loại nghỉ phép khác.');
+        alert('❌ Lỗi: Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư nghỉ phép của bạn hoặc chọn loại nghỉ phép khác.');
       } else if (errorCode === 'INVALID_DATE_RANGE' || errorMsg?.includes('DATE_RANGE')) {
         alert('❌ Lỗi: Khoảng thời gian không hợp lệ!\n\n- Ngày kết thúc phải sau hoặc bằng ngày bắt đầu\n- Khi chọn ca nghỉ (sáng/chiều), ngày bắt đầu và kết thúc phải giống nhau');
       } else if (errorCode === 'DUPLICATE_TIMEOFF_REQUEST' || error.response?.status === 409) {
@@ -248,7 +258,8 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  const handleApprove = async () => {
+  // ⚡ useCallback để tránh re-create function mỗi lần render
+  const handleApprove = useCallback(async () => {
     if (!selectedRequest) return;
 
     try {
@@ -272,9 +283,9 @@ export default function AdminTimeOffRequestsPage() {
     } finally {
       setProcessing(false);
     }
-  };
+  }, [selectedRequest]);
 
-  const handleReject = async () => {
+  const handleReject = useCallback(async () => {
     if (!selectedRequest || !rejectReason.trim()) {
       alert('Vui lòng nhập lý do từ chối');
       return;
@@ -304,9 +315,9 @@ export default function AdminTimeOffRequestsPage() {
     } finally {
       setProcessing(false);
     }
-  };
+  }, [selectedRequest, rejectReason]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
     if (!selectedRequest || !cancelReason.trim()) {
       alert('Vui lòng nhập lý do hủy');
       return;
@@ -336,7 +347,7 @@ export default function AdminTimeOffRequestsPage() {
     } finally {
       setProcessing(false);
     }
-  };
+  }, [selectedRequest, cancelReason]);
 
   const openApproveModal = (request: TimeOffRequest) => {
     setSelectedRequest(request);
@@ -379,31 +390,34 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  const filteredRequests = timeOffRequests.filter((request) => {
-    const matchesSearch =
-      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employee?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.timeOffTypeName?.toLowerCase().includes(searchTerm.toLowerCase());
+  // ⚡ Memoize filtered requests để tránh re-calculate mỗi lần render
+  const filteredRequests = useMemo(() => {
+    return timeOffRequests.filter((request) => {
+      const matchesSearch =
+        request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.employee?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.timeOffTypeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
+      const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    const matchesEmployee = employeeFilter === 'ALL' || request.employee?.employeeId.toString() === employeeFilter;
+      const matchesEmployee = employeeFilter === 'ALL' || request.employee?.employeeId.toString() === employeeFilter;
 
-    const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
-    const matchesDateTo = !dateTo || request.endDate <= dateTo;
+      const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
+      const matchesDateTo = !dateTo || request.endDate <= dateTo;
 
-    return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
-  });
+      return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
+    });
+  }, [timeOffRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
-  // Stats calculation
-  const stats = {
+  // ⚡ Memoize stats calculation
+  const stats = useMemo(() => ({
     total: filteredRequests.length,
     pending: filteredRequests.filter(r => r.status === TimeOffStatus.PENDING).length,
     approved: filteredRequests.filter(r => r.status === TimeOffStatus.APPROVED).length,
     rejectedCancelled: filteredRequests.filter(r =>
       r.status === TimeOffStatus.REJECTED || r.status === TimeOffStatus.CANCELLED
     ).length,
-  };
+  }), [filteredRequests]);
 
   // Helper to check if user can cancel a specific request
   const canCancelRequest = (request: TimeOffRequest) => {
@@ -430,7 +444,7 @@ export default function AdminTimeOffRequestsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Quản Lý Yêu Cầu Nghỉ Phép</h1>
           <p className="text-gray-600 mt-2">Duyệt và quản lý yêu cầu nghỉ phép của nhân viên</p>
         </div>
-        {canCreate && (
+        {activeTab === 'requests' && canCreate && (
           <Button
             onClick={() => setShowCreateModal(true)}
             className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
@@ -441,798 +455,835 @@ export default function AdminTimeOffRequestsPage() {
         )}
       </div>
 
-      {/* Stats - Dạng div thay vì Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Tổng số</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Chờ duyệt</p>
-              <p className="text-3xl font-bold text-orange-600">{stats.pending}</p>
-            </div>
-            <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faClock} className="text-orange-600 text-xl" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Đã duyệt</p>
-              <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
-            </div>
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xl" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Từ chối/Hủy</p>
-              <p className="text-3xl font-bold text-red-600">{stats.rejectedCancelled}</p>
-            </div>
-            <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xl" />
-            </div>
-          </div>
+      {/* ⚡ TABS */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-6">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'requests'
+                ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
+            Time Off Requests
+          </button>
+          <button
+            onClick={() => setActiveTab('balances')}
+            className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'balances'
+                ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <FontAwesomeIcon icon={faWallet} className="h-4 w-4" />
+            Leave Balances
+          </button>
         </div>
       </div>
 
-      {/* Filters */}
-      {/* Filters - Bỏ Card */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div>
-            <Label htmlFor="search">Tìm kiếm</Label>
-            <div className="relative">
-              <FontAwesomeIcon
-                icon={faSearch}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
-              />
-              <Input
-                id="search"
-                placeholder="Mã yêu cầu, nhân viên..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {canViewAll && (
-            <div>
-              <Select
-                label="Nhân viên"
-                value={employeeFilter}
-                onChange={(value) => setEmployeeFilter(value)}
-                options={[
-                  { value: 'ALL', label: 'Tất cả nhân viên' },
-                  ...employees.map(emp => ({
-                    value: emp.employeeId.toString(),
-                    label: `${emp.lastName} ${emp.firstName}`
-                  }))
-                ]}
-              />
-            </div>
-          )}
-
-          <div>
-            <Select
-              label="Trạng thái"
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
-              options={[
-                { value: 'ALL', label: 'Tất cả' },
-                { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
-              ]}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="dateFrom">Từ ngày</Label>
-            <Input
-              id="dateFrom"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="dateTo">Đến ngày</Label>
-            <Input
-              id="dateTo"
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Time Off Requests List */}
-      <div className="grid gap-4">
-        {filteredRequests.map((request) => {
-          const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
-          const canManage = request.status === TimeOffStatus.PENDING;
-
-          return (
-            <Card key={request.requestId} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {request.requestId}
-                      </h3>
-                      <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
-                        <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {request.employee?.fullName || `Nhân viên ID: ${request.employee?.employeeId || 'N/A'}`}
-                          </div>
-                          <div className="text-xs text-gray-500">Người nghỉ</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
-                        <span>
-                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
-                          {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                        <span>{request.timeOffTypeName || request.timeOffTypeId}</span>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{request.totalDays || 0} ngày</span>
-                        {request.workShiftName && (
-                          <Badge variant="outline">{request.workShiftName}</Badge>
-                        )}
-                        {!request.workShiftName && request.workShiftId && (
-                          <Badge variant="outline" className="text-xs text-gray-500">
-                            {request.workShiftId}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-gray-500 font-medium">Người tạo:</span>
-                        <span className="text-gray-900">
-                          {request.requestedBy?.fullName || `User ID: ${request.requestedBy?.employeeId || 'N/A'}`}
-                        </span>
-                        <span className="text-gray-400">
-                          • {format(new Date(request.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                        </span>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <span className="text-gray-500 font-medium">Lý do:</span>
-                        <span className="text-gray-700">{request.reason || 'Không có lý do'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {request.status === TimeOffStatus.PENDING ? (
-                      <>
-                        {canApprove && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openApproveModal(request)}
-                            className="text-green-600 hover:bg-green-50 border-green-300"
-                          >
-                            <FontAwesomeIcon icon={faCheck} className="h-4 w-4 mr-1" />
-                            Duyệt
-                          </Button>
-                        )}
-
-                        {canReject && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openRejectModal(request)}
-                            className="text-red-600 hover:bg-red-50 border-red-300"
-                          >
-                            <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-1" />
-                            Từ chối
-                          </Button>
-                        )}
-
-                        {canCancelRequest(request) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openCancelModal(request)}
-                            className="text-orange-600 hover:bg-orange-50 border-orange-300"
-                          >
-                            <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
-                            Hủy
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openViewModal(request)}
-                      >
-                        <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
-                        Xem
-                      </Button>
-                    )}
-                  </div>
+      {/* ⚡ TAB CONTENT */}
+      {activeTab === 'requests' ? (
+        <>{/* Time Off Requests Content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Tổng số */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+            </div>
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Tạo Yêu Cầu Nghỉ Phép</h2>
+            {/* Chờ duyệt */}
+            <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-yellow-800 mb-2">Chờ duyệt</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faClock} className="text-yellow-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-yellow-800">{stats.pending}</p>
+              </div>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Đã duyệt */}
+            <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-green-800 mb-2">Đã duyệt</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faCheck} className="text-green-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-green-800">{stats.approved}</p>
+              </div>
+            </div>
+
+            {/* Từ chối/Hủy */}
+            <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-red-800 mb-2">Từ chối/Hủy</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faTimes} className="text-red-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-red-800">{stats.rejectedCancelled}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          {/* Filters - Bỏ Card */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <Label htmlFor="search">Tìm kiếm</Label>
+                <div className="relative">
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
+                  />
+                  <Input
+                    id="search"
+                    placeholder="Mã yêu cầu, nhân viên..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
               {canViewAll && (
                 <div>
-                  <Label htmlFor="employee">Nhân viên *</Label>
                   <Select
-                    value={createForm.employeeId?.toString() || ''}
-                    onChange={(value) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
-                    options={employees?.map(emp => ({
-                      value: emp.employeeId.toString(),
-                      label: `${emp.fullName} (${emp.employeeCode})`
-                    })) || []}
+                    label="Nhân viên"
+                    value={employeeFilter}
+                    onChange={(value) => setEmployeeFilter(value)}
+                    options={[
+                      { value: 'ALL', label: 'Tất cả nhân viên' },
+                      ...employees.map(emp => ({
+                        value: emp.employeeId.toString(),
+                        label: `${emp.lastName} ${emp.firstName}`
+                      }))
+                    ]}
                   />
                 </div>
               )}
 
               <div>
-                <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
                 <Select
-                  value={createForm.timeOffTypeId}
-                  onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
-                  options={timeOffTypes?.filter(type => type.isActive).map(type => ({
-                    value: type.typeId,
-                    label: type.typeName
-                  })) || []}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="startDate">Ngày bắt đầu *</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={createForm.startDate}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    setCreateForm(prev => ({
-                      ...prev,
-                      startDate: newStartDate,
-                      // Auto-set endDate = startDate if slot is selected
-                      endDate: prev.slotId ? newStartDate : prev.endDate
-                    }));
-                  }}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="endDate">Ngày kết thúc *</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={createForm.endDate}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
-                  disabled={!!createForm.slotId}
-                  className={createForm.slotId ? 'bg-gray-100 cursor-not-allowed' : ''}
-                />
-              </div>
-
-              <div className={canViewAll ? '' : 'md:col-span-2'}>
-                <Label htmlFor="slot">Ca nghỉ (tùy chọn)</Label>
-                <Select
-                  value={createForm.slotId || ''}
-                  onChange={(value) => {
-                    const newSlotId = value || null;
-                    setCreateForm(prev => ({
-                      ...prev,
-                      slotId: newSlotId,
-                      // If slot is selected, set endDate = startDate
-                      endDate: newSlotId ? prev.startDate : prev.endDate
-                    }));
-                  }}
+                  label="Trạng thái"
+                  value={statusFilter}
+                  onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
                   options={[
-                    { value: '', label: 'Nghỉ cả ngày' },
-                    ...workShifts.map(shift => ({
-                      value: shift.workShiftId,
-                      label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
-                    }))
+                    { value: 'ALL', label: 'Tất cả' },
+                    { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                    { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                    { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                    { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
                   ]}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
-                </p>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <Label htmlFor="reason">Lý do nghỉ phép *</Label>
-              <Textarea
-                id="reason"
-                value={createForm.reason}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
-                placeholder="Nhập lý do nghỉ phép..."
-                rows={3}
-              />
-            </div>
+              <div>
+                <Label htmlFor="dateFrom">Từ ngày</Label>
+                <Input
+                  id="dateFrom"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
 
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1"
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleCreateTimeOffRequest}
-                disabled={processing}
-                className="flex-1 bg-[#8b5fbf] hover:bg-[#7a4fa8]"
-              >
-                {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
-              </Button>
+              <div>
+                <Label htmlFor="dateTo">Đến ngày</Label>
+                <Input
+                  id="dateTo"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Approve Modal */}
-      {showApproveModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4 text-green-600">Xác nhận duyệt yêu cầu nghỉ phép</h2>
+          {/* Time Off Requests List */}
+          <div className="grid gap-4">
+            {filteredRequests.map((request) => {
+              const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
+              const canManage = request.status === TimeOffStatus.PENDING;
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Mã yêu cầu:</span>
-                <span className="font-semibold">{selectedRequest.requestId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Nhân viên nghỉ:</span>
-                <span className="font-semibold">
-                  {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Loại nghỉ:</span>
-                <span className="font-semibold">
-                  {selectedRequest.timeOffTypeName || selectedRequest.timeOffTypeId}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Thời gian:</span>
-                <span className="font-semibold">
-                  {format(new Date(selectedRequest.startDate), 'dd/MM/yyyy', { locale: vi })} -{' '}
-                  {format(new Date(selectedRequest.endDate), 'dd/MM/yyyy', { locale: vi })}
-                  {selectedRequest.workShiftName && ` (${selectedRequest.workShiftName})`}
-                  {!selectedRequest.workShiftName && selectedRequest.workShiftId && ` (${selectedRequest.workShiftId})`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tổng số ngày:</span>
-                <span className="font-semibold text-green-600">
-                  {selectedRequest.totalDays || 0} ngày
-                </span>
-              </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Người tạo đơn:</span>
-                  <span className="font-semibold text-purple-600">
-                    {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Thời gian tạo:</span>
-                  <span className="text-gray-700">
-                    {format(new Date(selectedRequest.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                  </span>
-                </div>
-              </div>
-              <div className="border-t pt-3">
-                <span className="text-gray-600 block mb-1">Lý do:</span>
-                <p className="text-gray-900 italic">"{selectedRequest.reason || 'Không có lý do'}"</p>
-              </div>
-            </div>
+              return (
+                <Card key={request.requestId} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {request.requestId}
+                          </h3>
+                          <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                            {statusConfig.label}
+                          </Badge>
+                        </div>
 
-            <p className="text-gray-600 mb-6 text-center font-medium">
-              Bạn có chắc chắn muốn duyệt yêu cầu này không?
-            </p>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {request.employee?.fullName || `Nhân viên ID: ${request.employee?.employeeId || 'N/A'}`}
+                              </div>
+                              <div className="text-xs text-gray-500">Người nghỉ</div>
+                            </div>
+                          </div>
 
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowApproveModal(false)}
-                className="flex-1"
-                disabled={processing}
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleApprove}
-                disabled={processing}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {processing ? 'Đang xử lý...' : '✓ Duyệt'}
-              </Button>
-            </div>
+                          <div className="flex items-center space-x-2">
+                            <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
+                            <span>
+                              {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
+                              {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
+                            <span>{request.timeOffTypeName || request.timeOffTypeId}</span>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold">{request.totalDays || 0} ngày</span>
+                            {request.workShiftName && (
+                              <Badge variant="outline">{request.workShiftName}</Badge>
+                            )}
+                            {!request.workShiftName && request.workShiftId && (
+                              <Badge variant="outline" className="text-xs text-gray-500">
+                                {request.workShiftId}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-start space-x-2">
+                            <span className="text-gray-500 font-medium">Người tạo:</span>
+                            <span className="text-gray-900">
+                              {request.requestedBy?.fullName || `User ID: ${request.requestedBy?.employeeId || 'N/A'}`}
+                            </span>
+                            <span className="text-gray-400">
+                              • {format(new Date(request.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </span>
+                          </div>
+                          <div className="flex items-start space-x-2">
+                            <span className="text-gray-500 font-medium">Lý do:</span>
+                            <span className="text-gray-700">{request.reason || 'Không có lý do'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 justify-end ml-auto">
+                        {request.status === TimeOffStatus.PENDING ? (
+                          <>
+                            {canApprove && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openApproveModal(request)}
+                                className="text-green-600 hover:bg-green-50 border-green-300"
+                              >
+                                <FontAwesomeIcon icon={faCheck} className="h-4 w-4 mr-1" />
+                                Duyệt
+                              </Button>
+                            )}
+
+                            {canReject && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openRejectModal(request)}
+                                className="text-red-600 hover:bg-red-50 border-red-300"
+                              >
+                                <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-1" />
+                                Từ chối
+                              </Button>
+                            )}
+
+                            {canCancelRequest(request) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openCancelModal(request)}
+                                className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                              >
+                                <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
+                                Hủy
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openViewModal(request)}
+                          >
+                            <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
+                            Xem
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-      )}
 
-      {/* Reject Modal */}
-      {showRejectModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4 text-red-600">Từ chối yêu cầu nghỉ phép</h2>
-
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Mã yêu cầu:</span>
-                <span className="font-semibold">{selectedRequest.requestId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Nhân viên:</span>
-                <span className="font-semibold">
-                  {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Người tạo:</span>
-                <span className="font-semibold text-purple-600">
-                  {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
-                </span>
-              </div>
-              <div className="border-t pt-2 mt-2">
-                <span className="text-gray-600 block mb-1">Lý do nghỉ:</span>
-                <p className="text-gray-900 italic text-sm">
-                  "{selectedRequest.reason || 'Không có lý do'}"
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <Label htmlFor="rejectReason">Lý do từ chối *</Label>
-              <Textarea
-                id="rejectReason"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Nhập lý do từ chối..."
-                rows={3}
-                required
-              />
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowRejectModal(false)}
-                className="flex-1"
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleReject}
-                disabled={processing || !rejectReason.trim()}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-              >
-                {processing ? 'Đang xử lý...' : 'Từ chối'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cancel Modal */}
-      {showCancelModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
-            <div className="mb-4">
-              <Label htmlFor="cancelReason">Lý do hủy *</Label>
-              <Textarea
-                id="cancelReason"
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Nhập lý do hủy..."
-                rows={3}
-                required
-              />
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowCancelModal(false)}
-                className="flex-1"
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleCancel}
-                disabled={processing || !cancelReason.trim()}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                {processing ? 'Đang xử lý...' : 'Hủy yêu cầu'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Details Modal */}
-      {showViewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Chi tiết Yêu cầu Nghỉ phép</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setShowViewModal(false);
-                  setViewDetails(null);
-                }}
-              >
-                ✕ Đóng
-              </Button>
-            </div>
-
-            {loadingDetails ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8b5fbf] mx-auto"></div>
-                <p className="mt-4 text-gray-600">Đang tải chi tiết...</p>
-              </div>
-            ) : viewDetails ? (
-              <div className="space-y-6">
-                {/* Header Info */}
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Mã yêu cầu: {viewDetails.requestId}
-                      </h3>
-                      <Badge className={`mt-2 ${TIME_OFF_STATUS_CONFIG[viewDetails.status].bgColor} ${TIME_OFF_STATUS_CONFIG[viewDetails.status].textColor}`}>
-                        {TIME_OFF_STATUS_CONFIG[viewDetails.status].label}
-                      </Badge>
-                    </div>
-                  </div>
+          {/* Create Modal */}
+          {showCreateModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
+                <div className="flex-shrink-0 border-b px-6 py-4">
+                  <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
                 </div>
 
-                {/* Employee & Request Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                      <FontAwesomeIcon icon={faUser} className="h-5 w-5 mr-2 text-purple-600" />
-                      Thông tin Nhân viên
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Nhân viên nghỉ:</span>
-                        <span className="font-semibold">
-                          {viewDetails.employee?.fullName || `ID: ${viewDetails.employee?.employeeId || 'N/A'}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Mã NV:</span>
-                        <span className="font-semibold">{viewDetails.employee?.employeeCode || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                      <FontAwesomeIcon icon={faClock} className="h-5 w-5 mr-2 text-purple-600" />
-                      Thông tin Yêu cầu
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Người tạo:</span>
-                        <span className="font-semibold text-purple-600">
-                          {viewDetails.requestedBy?.fullName || `User ID: ${viewDetails.requestedBy?.employeeId || 'N/A'}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Thời gian tạo:</span>
-                        <span className="font-semibold">
-                          {format(new Date(viewDetails.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Time Off Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2 text-purple-600" />
-                    Chi tiết Nghỉ phép
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600 block mb-1">Loại nghỉ phép:</span>
-                      <span className="font-semibold text-lg">
-                        {viewDetails.timeOffTypeName || viewDetails.timeOffTypeId}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 block mb-1">Tổng số ngày:</span>
-                      <span className="font-semibold text-lg text-green-600">
-                        {viewDetails.totalDays || 0} ngày
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 block mb-1">Ngày bắt đầu:</span>
-                      <span className="font-semibold">
-                        {format(new Date(viewDetails.startDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 block mb-1">Ngày kết thúc:</span>
-                      <span className="font-semibold">
-                        {format(new Date(viewDetails.endDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
-                      </span>
-                    </div>
-                    {viewDetails.workShiftName && (
-                      <div className="md:col-span-2">
-                        <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
-                        <Badge variant="outline" className="text-base">
-                          {viewDetails.workShiftName}
-                        </Badge>
+                <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {canViewAll && (
+                      <div>
+                        <Label htmlFor="employee">Nhân viên <span className="text-red-500">*</span></Label>
+                        <Select
+                          value={createForm.employeeId?.toString() || ''}
+                          onChange={(value) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
+                          options={employees?.map(emp => ({
+                            value: emp.employeeId.toString(),
+                            label: `${emp.fullName} (${emp.employeeCode})`
+                          })) || []}
+                        />
                       </div>
                     )}
-                    {!viewDetails.workShiftName && viewDetails.workShiftId && (
-                      <div className="md:col-span-2">
-                        <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
-                        <Badge variant="outline" className="text-base text-gray-500">
-                          {viewDetails.workShiftId}
-                        </Badge>
-                      </div>
-                    )}
+
+                    <div>
+                      <Label htmlFor="timeOffType">Loại nghỉ phép <span className="text-red-500">*</span></Label>
+                      <Select
+                        value={createForm.timeOffTypeId}
+                        onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
+                        options={timeOffTypes?.filter(type => type.isActive).map(type => ({
+                          value: type.typeId,
+                          label: type.typeName
+                        })) || []}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="startDate">Ngày bắt đầu <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={createForm.startDate}
+                        onChange={(e) => {
+                          const newStartDate = e.target.value;
+                          setCreateForm(prev => ({
+                            ...prev,
+                            startDate: newStartDate,
+                            // Auto-set endDate = startDate if slot is selected
+                            endDate: prev.slotId ? newStartDate : prev.endDate
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="endDate">Ngày kết thúc <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={createForm.endDate}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
+                        disabled={!!createForm.slotId}
+                        className={createForm.slotId ? 'bg-gray-100 cursor-not-allowed' : ''}
+                      />
+                    </div>
+
+                    <div className={canViewAll ? '' : 'md:col-span-2'}>
+                      <Label htmlFor="slot">Ca nghỉ (tùy chọn)</Label>
+                      <Select
+                        value={createForm.slotId || ''}
+                        onChange={(value) => {
+                          const newSlotId = value || null;
+                          setCreateForm(prev => ({
+                            ...prev,
+                            slotId: newSlotId,
+                            // If slot is selected, set endDate = startDate
+                            endDate: newSlotId ? prev.startDate : prev.endDate
+                          }));
+                        }}
+                        options={[
+                          { value: '', label: 'Nghỉ cả ngày' },
+                          ...workShifts.map(shift => ({
+                            value: shift.workShiftId,
+                            label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                          }))
+                        ]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reason">Lý do nghỉ phép <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      id="reason"
+                      value={createForm.reason}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
+                      placeholder="Nhập lý do nghỉ phép..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mt-4 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCreateModal(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      onClick={handleCreateTimeOffRequest}
+                      disabled={processing}
+                      className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+                    >
+                      {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}      {/* Approve Modal */}
+          {showApproveModal && selectedRequest && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+                <h2 className="text-xl font-bold mb-4 text-green-600">Xác nhận duyệt yêu cầu nghỉ phép</h2>
+
+                <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Mã yêu cầu:</span>
+                    <span className="font-semibold">{selectedRequest.requestId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Nhân viên nghỉ:</span>
+                    <span className="font-semibold">
+                      {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Loại nghỉ:</span>
+                    <span className="font-semibold">
+                      {selectedRequest.timeOffTypeName || selectedRequest.timeOffTypeId}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Thời gian:</span>
+                    <span className="font-semibold">
+                      {format(new Date(selectedRequest.startDate), 'dd/MM/yyyy', { locale: vi })} -{' '}
+                      {format(new Date(selectedRequest.endDate), 'dd/MM/yyyy', { locale: vi })}
+                      {selectedRequest.workShiftName && ` (${selectedRequest.workShiftName})`}
+                      {!selectedRequest.workShiftName && selectedRequest.workShiftId && ` (${selectedRequest.workShiftId})`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tổng số ngày:</span>
+                    <span className="font-semibold text-green-600">
+                      {selectedRequest.totalDays || 0} ngày
+                    </span>
+                  </div>
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-600">Người tạo đơn:</span>
+                      <span className="font-semibold text-purple-600">
+                        {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Thời gian tạo:</span>
+                      <span className="text-gray-700">
+                        {format(new Date(selectedRequest.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="border-t pt-3">
+                    <span className="text-gray-600 block mb-1">Lý do:</span>
+                    <p className="text-gray-900 italic">"{selectedRequest.reason || 'Không có lý do'}"</p>
                   </div>
                 </div>
 
-                {/* Reason */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-700 mb-2">Lý do nghỉ phép:</h4>
-                  <p className="text-gray-900 italic">
-                    "{viewDetails.reason || 'Không có lý do'}"
-                  </p>
+                <p className="text-gray-600 mb-6 text-center font-medium">
+                  Bạn có chắc chắn muốn duyệt yêu cầu này không?
+                </p>
+
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowApproveModal(false)}
+                    disabled={processing}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleApprove}
+                    disabled={processing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {processing ? 'Đang xử lý...' : '✓ Duyệt'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}      {/* Reject Modal */}
+          {showRejectModal && selectedRequest && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+                <h2 className="text-xl font-bold mb-4 text-red-600">Từ chối yêu cầu nghỉ phép</h2>
+
+                <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Mã yêu cầu:</span>
+                    <span className="font-semibold">{selectedRequest.requestId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Nhân viên:</span>
+                    <span className="font-semibold">
+                      {selectedRequest.employee?.fullName || `ID: ${selectedRequest.employee?.employeeId || 'N/A'}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Người tạo:</span>
+                    <span className="font-semibold text-purple-600">
+                      {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 mt-2">
+                    <span className="text-gray-600 block mb-1">Lý do nghỉ:</span>
+                    <p className="text-gray-900 italic text-sm">
+                      "{selectedRequest.reason || 'Không có lý do'}"
+                    </p>
+                  </div>
                 </div>
 
-                {/* Approval/Rejection Info */}
-                {viewDetails.status === TimeOffStatus.APPROVED && viewDetails.approvedBy && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-green-800 mb-2 flex items-center">
-                      <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
-                      Thông tin Phê duyệt
-                    </h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-green-700">Người duyệt:</span>
-                        <span className="font-semibold text-green-900">{viewDetails.approvedBy.fullName}</span>
+                <div className="mb-4">
+                  <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+                  <Textarea
+                    id="rejectReason"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Nhập lý do từ chối..."
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRejectModal(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleReject}
+                    disabled={processing || !rejectReason.trim()}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {processing ? 'Đang xử lý...' : 'Từ chối'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}      {/* Cancel Modal */}
+          {showCancelModal && selectedRequest && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
+                <div className="mb-4">
+                  <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
+                  <Textarea
+                    id="cancelReason"
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Nhập lý do hủy..."
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCancelModal(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    disabled={processing || !cancelReason.trim()}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {processing ? 'Đang xử lý...' : 'Hủy yêu cầu'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}      {/* View Details Modal */}
+          {showViewModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col">
+                <div className="flex justify-between items-center border-b px-6 py-4 flex-shrink-0">
+                  <h2 className="text-2xl font-bold text-gray-900">Chi tiết Yêu cầu Nghỉ phép</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setViewDetails(null);
+                    }}
+                  >
+                    ✕ Đóng
+                  </Button>
+                </div>
+
+                <div className="overflow-y-auto flex-1 px-6 py-4">
+
+                  {loadingDetails ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8b5fbf] mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Đang tải chi tiết...</p>
+                    </div>
+                  ) : viewDetails ? (
+                    <div className="space-y-6">
+                      {/* Header Info */}
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              Mã yêu cầu: {viewDetails.requestId}
+                            </h3>
+                            <Badge className={`mt-2 ${TIME_OFF_STATUS_CONFIG[viewDetails.status].bgColor} ${TIME_OFF_STATUS_CONFIG[viewDetails.status].textColor}`}>
+                              {TIME_OFF_STATUS_CONFIG[viewDetails.status].label}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                      {viewDetails.approvedAt && (
-                        <div className="flex justify-between">
-                          <span className="text-green-700">Thời gian duyệt:</span>
-                          <span className="font-semibold text-green-900">
-                            {format(new Date(viewDetails.approvedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                          </span>
+
+                      {/* Employee & Request Info */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                            <FontAwesomeIcon icon={faUser} className="h-5 w-5 mr-2 text-purple-600" />
+                            Thông tin Nhân viên
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Nhân viên nghỉ:</span>
+                              <span className="font-semibold">
+                                {viewDetails.employee?.fullName || `ID: ${viewDetails.employee?.employeeId || 'N/A'}`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Mã NV:</span>
+                              <span className="font-semibold">{viewDetails.employee?.employeeCode || 'N/A'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                            <FontAwesomeIcon icon={faClock} className="h-5 w-5 mr-2 text-purple-600" />
+                            Thông tin Yêu cầu
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Người tạo:</span>
+                              <span className="font-semibold text-purple-600">
+                                {viewDetails.requestedBy?.fullName || `User ID: ${viewDetails.requestedBy?.employeeId || 'N/A'}`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Thời gian tạo:</span>
+                              <span className="font-semibold">
+                                {format(new Date(viewDetails.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Time Off Details */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2 text-purple-600" />
+                          Chi tiết Nghỉ phép
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600 block mb-1">Loại nghỉ phép:</span>
+                            <span className="font-semibold text-lg">
+                              {viewDetails.timeOffTypeName || viewDetails.timeOffTypeId}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 block mb-1">Tổng số ngày:</span>
+                            <span className="font-semibold text-lg text-green-600">
+                              {viewDetails.totalDays || 0} ngày
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 block mb-1">Ngày bắt đầu:</span>
+                            <span className="font-semibold">
+                              {format(new Date(viewDetails.startDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 block mb-1">Ngày kết thúc:</span>
+                            <span className="font-semibold">
+                              {format(new Date(viewDetails.endDate), 'dd/MM/yyyy (EEEE)', { locale: vi })}
+                            </span>
+                          </div>
+                          {viewDetails.workShiftName && (
+                            <div className="md:col-span-2">
+                              <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
+                              <Badge variant="outline" className="text-base">
+                                {viewDetails.workShiftName}
+                              </Badge>
+                            </div>
+                          )}
+                          {!viewDetails.workShiftName && viewDetails.workShiftId && (
+                            <div className="md:col-span-2">
+                              <span className="text-gray-600 block mb-1">Ca nghỉ:</span>
+                              <Badge variant="outline" className="text-base text-gray-500">
+                                {viewDetails.workShiftId}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Reason */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-700 mb-2">Lý do nghỉ phép:</h4>
+                        <p className="text-gray-900 italic">
+                          "{viewDetails.reason || 'Không có lý do'}"
+                        </p>
+                      </div>
+
+                      {/* Approval/Rejection Info */}
+                      {viewDetails.status === TimeOffStatus.APPROVED && viewDetails.approvedBy && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-800 mb-2 flex items-center">
+                            <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
+                            Thông tin Phê duyệt
+                          </h4>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-green-700">Người duyệt:</span>
+                              <span className="font-semibold text-green-900">{viewDetails.approvedBy.fullName}</span>
+                            </div>
+                            {viewDetails.approvedAt && (
+                              <div className="flex justify-between">
+                                <span className="text-green-700">Thời gian duyệt:</span>
+                                <span className="font-semibold text-green-900">
+                                  {format(new Date(viewDetails.approvedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {viewDetails.status === TimeOffStatus.REJECTED && viewDetails.rejectedReason && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-red-800 mb-2 flex items-center">
+                            <FontAwesomeIcon icon={faTimes} className="h-5 w-5 mr-2" />
+                            Thông tin Từ chối
+                          </h4>
+                          <p className="text-red-900 italic">"{viewDetails.rejectedReason}"</p>
+                        </div>
+                      )}
+
+                      {viewDetails.status === TimeOffStatus.CANCELLED && viewDetails.cancellationReason && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-orange-800 mb-2 flex items-center">
+                            <FontAwesomeIcon icon={faBan} className="h-5 w-5 mr-2" />
+                            Lý do Hủy
+                          </h4>
+                          <p className="text-orange-900 italic">"{viewDetails.cancellationReason}"</p>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      {viewDetails.status === TimeOffStatus.PENDING && (
+                        <div className="flex gap-3 pt-4 border-t">
+                          {canApprove && (
+                            <Button
+                              onClick={() => {
+                                setShowViewModal(false);
+                                openApproveModal(viewDetails);
+                              }}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                              Duyệt
+                            </Button>
+                          )}
+                          {canReject && (
+                            <Button
+                              onClick={() => {
+                                setShowViewModal(false);
+                                openRejectModal(viewDetails);
+                              }}
+                              className="flex-1 bg-red-600 hover:bg-red-700"
+                            >
+                              <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                              Từ chối
+                            </Button>
+                          )}
+                          {canCancelRequest(viewDetails) && (
+                            <Button
+                              onClick={() => {
+                                setShowViewModal(false);
+                                openCancelModal(viewDetails);
+                              }}
+                              className="flex-1 bg-orange-600 hover:bg-orange-700"
+                            >
+                              <FontAwesomeIcon icon={faBan} className="mr-2" />
+                              Hủy
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-
-                {viewDetails.status === TimeOffStatus.REJECTED && viewDetails.rejectedReason && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-red-800 mb-2 flex items-center">
-                      <FontAwesomeIcon icon={faTimes} className="h-5 w-5 mr-2" />
-                      Thông tin Từ chối
-                    </h4>
-                    <p className="text-red-900 italic">"{viewDetails.rejectedReason}"</p>
-                  </div>
-                )}
-
-                {viewDetails.status === TimeOffStatus.CANCELLED && viewDetails.cancellationReason && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-orange-800 mb-2 flex items-center">
-                      <FontAwesomeIcon icon={faBan} className="h-5 w-5 mr-2" />
-                      Lý do Hủy
-                    </h4>
-                    <p className="text-orange-900 italic">"{viewDetails.cancellationReason}"</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                {viewDetails.status === TimeOffStatus.PENDING && (
-                  <div className="flex gap-3 pt-4 border-t">
-                    {canApprove && (
-                      <Button
-                        onClick={() => {
-                          setShowViewModal(false);
-                          openApproveModal(viewDetails);
-                        }}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                        Duyệt
-                      </Button>
-                    )}
-                    {canReject && (
-                      <Button
-                        onClick={() => {
-                          setShowViewModal(false);
-                          openRejectModal(viewDetails);
-                        }}
-                        className="flex-1 bg-red-600 hover:bg-red-700"
-                      >
-                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                        Từ chối
-                      </Button>
-                    )}
-                    {canCancelRequest(viewDetails) && (
-                      <Button
-                        onClick={() => {
-                          setShowViewModal(false);
-                          openCancelModal(viewDetails);
-                        }}
-                        className="flex-1 bg-orange-600 hover:bg-orange-700"
-                      >
-                        <FontAwesomeIcon icon={faBan} className="mr-2" />
-                        Hủy
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-gray-600">Không có dữ liệu</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
+            </div>
+          )}
+        </>
+      ) : (
+        <Suspense
+          fallback={
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
               <div className="text-center py-12">
-                <p className="text-gray-600">Không có dữ liệu</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Đang tải Leave Balances...</p>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          }
+        >
+          <LeaveBalancesTab
+            employees={employees}
+            timeOffTypes={timeOffTypes}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -336,7 +336,7 @@ export default function AdminTimeOffDetailPage() {
                         <CardTitle>Thao tác</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 justify-end">
                             {canApprove && (
                                 <Button
                                     onClick={() => setShowApproveModal(true)}
@@ -389,22 +389,21 @@ export default function AdminTimeOffDetailPage() {
                                     <strong>{format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}</strong>?
                                 </p>
 
-                                <div className="flex gap-2 pt-4">
-                                    <Button
-                                        onClick={handleApprove}
-                                        disabled={processing}
-                                        className="flex-1 bg-green-600 hover:bg-green-700"
-                                    >
-                                        {processing ? 'Đang xử lý...' : 'Xác nhận duyệt'}
-                                    </Button>
+                                <div className="flex gap-2 pt-4 justify-end">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={() => setShowApproveModal(false)}
                                         disabled={processing}
-                                        className="flex-1"
                                     >
                                         Hủy
+                                    </Button>
+                                    <Button
+                                        onClick={handleApprove}
+                                        disabled={processing}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        {processing ? 'Đang xử lý...' : 'Xác nhận duyệt'}
                                     </Button>
                                 </div>
                             </div>
@@ -423,7 +422,7 @@ export default function AdminTimeOffDetailPage() {
                         <CardContent>
                             <div className="space-y-4">
                                 <div>
-                                    <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+                                    <Label htmlFor="rejectReason">Lý do từ chối <span className="text-red-500">*</span></Label>
                                     <Textarea
                                         id="rejectReason"
                                         value={rejectReason}
@@ -434,14 +433,7 @@ export default function AdminTimeOffDetailPage() {
                                     />
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={handleReject}
-                                        disabled={processing || !rejectReason.trim()}
-                                        className="flex-1 bg-red-600 hover:bg-red-700"
-                                    >
-                                        {processing ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-                                    </Button>
+                                <div className="flex gap-2 justify-end">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -450,9 +442,15 @@ export default function AdminTimeOffDetailPage() {
                                             setRejectReason('');
                                         }}
                                         disabled={processing}
-                                        className="flex-1"
                                     >
                                         Hủy
+                                    </Button>
+                                    <Button
+                                        onClick={handleReject}
+                                        disabled={processing || !rejectReason.trim()}
+                                        className="bg-red-600 hover:bg-red-700"
+                                    >
+                                        {processing ? 'Đang xử lý...' : 'Xác nhận từ chối'}
                                     </Button>
                                 </div>
                             </div>
@@ -471,7 +469,7 @@ export default function AdminTimeOffDetailPage() {
                         <CardContent>
                             <div className="space-y-4">
                                 <div>
-                                    <Label htmlFor="cancelReason">Lý do hủy *</Label>
+                                    <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
                                     <Textarea
                                         id="cancelReason"
                                         value={cancelReason}
@@ -482,14 +480,7 @@ export default function AdminTimeOffDetailPage() {
                                     />
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={handleCancel}
-                                        disabled={processing || !cancelReason.trim()}
-                                        className="flex-1 bg-orange-600 hover:bg-orange-700"
-                                    >
-                                        {processing ? 'Đang xử lý...' : 'Xác nhận hủy'}
-                                    </Button>
+                                <div className="flex gap-2 justify-end">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -498,9 +489,15 @@ export default function AdminTimeOffDetailPage() {
                                             setCancelReason('');
                                         }}
                                         disabled={processing}
-                                        className="flex-1"
                                     >
                                         Đóng
+                                    </Button>
+                                    <Button
+                                        onClick={handleCancel}
+                                        disabled={processing || !cancelReason.trim()}
+                                        className="bg-orange-600 hover:bg-orange-700"
+                                    >
+                                        {processing ? 'Đang xử lý...' : 'Xác nhận hủy'}
                                     </Button>
                                 </div>
                             </div>

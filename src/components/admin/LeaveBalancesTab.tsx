@@ -1,27 +1,16 @@
 'use client';
 
 /**
- * ⚠️ ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
- * 
- * FEATURES:
- * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE_ALL)
- * 2. Manual Adjustment - Điều chỉnh thủ công số dư (RBAC: ADJUST_LEAVE_BALANCE)
- * 3. Annual Reset Tool - Kích hoạt job cộng phép năm (RBAC: ADJUST_LEAVE_BALANCE)
- * 
- * UI/UX: Following work-shifts pattern with purple theme
+ * LEAVE BALANCES TAB COMPONENT
+ * Tái sử dụng từ admin/leave-balances với tối ưu hóa
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Wallet,
-  Users,
-  Calendar,
   Plus,
-  Minus,
   RefreshCw,
   AlertTriangle,
-  CheckCircle2,
-  XCircle,
   Search,
   Settings,
   ChevronLeft,
@@ -42,7 +31,6 @@ import { TimeOffTypeService } from '@/services/timeOffTypeService';
 
 import {
   EmployeeLeaveBalancesResponse,
-  LeaveBalance,
   AdjustmentFormData,
   AnnualResetFormData
 } from '@/types/leaveBalance';
@@ -52,7 +40,12 @@ import { TimeOffType } from '@/types/timeOff';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 
-export default function AdminLeaveBalancesPage() {
+interface LeaveBalancesTabProps {
+  employees: Employee[];
+  timeOffTypes: TimeOffType[];
+}
+
+export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propTimeOffTypes }: LeaveBalancesTabProps) {
   const { user } = useAuth();
   const { handleError: handleApiError } = useApiErrorHandler();
 
@@ -60,18 +53,16 @@ export default function AdminLeaveBalancesPage() {
   const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL');
   const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE');
 
-  // ==================== STATE ====================
-
   // Balance Viewer State
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>(propEmployees);
+  const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>(propTimeOffTypes);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [balanceData, setBalanceData] = useState<EmployeeLeaveBalancesResponse | null>(null);
   const [loadingBalances, setLoadingBalances] = useState(false);
 
   // Search/Filter State
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
 
   // Year Picker State
   const [showYearPicker, setShowYearPicker] = useState(false);
@@ -83,7 +74,6 @@ export default function AdminLeaveBalancesPage() {
   const [showAnnualResetModal, setShowAnnualResetModal] = useState(false);
 
   // Form States
-  const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
   const [adjustFormData, setAdjustFormData] = useState<AdjustmentFormData>({
     timeOffTypeId: '',
     cycleYear: new Date().getFullYear(),
@@ -101,35 +91,24 @@ export default function AdminLeaveBalancesPage() {
   const [annualResetFormErrors, setAnnualResetFormErrors] = useState<Partial<Record<keyof AnnualResetFormData, string>>>({});
   const [submittingAnnualReset, setSubmittingAnnualReset] = useState(false);
 
-  // ==================== LOAD DATA ====================
+  // ⚡ Memoize filtered employees
+  const filteredEmployees = useMemo(() => {
+    if (!employeeSearchTerm.trim()) return employees;
 
-  useEffect(() => {
-    if (canViewBalances) {
-      loadEmployees();
-      loadTimeOffTypes();
-    }
-  }, [canViewBalances]);
+    const searchLower = employeeSearchTerm.toLowerCase();
+    return employees.filter(emp =>
+      emp.fullName.toLowerCase().includes(searchLower) ||
+      emp.employeeCode?.toLowerCase().includes(searchLower) ||
+      emp.employeeId.toString().includes(searchLower)
+    );
+  }, [employeeSearchTerm, employees]);
 
+  // Load balances when employee or year changes
   useEffect(() => {
     if (selectedEmployeeId && selectedYear) {
       loadBalances();
     }
   }, [selectedEmployeeId, selectedYear]);
-
-  // Filter employees based on search term
-  useEffect(() => {
-    if (employeeSearchTerm.trim() === '') {
-      setFilteredEmployees(employees);
-    } else {
-      const searchLower = employeeSearchTerm.toLowerCase();
-      const filtered = employees.filter(emp =>
-        emp.fullName.toLowerCase().includes(searchLower) ||
-        emp.employeeCode?.toLowerCase().includes(searchLower) ||
-        emp.employeeId.toString().includes(searchLower)
-      );
-      setFilteredEmployees(filtered);
-    }
-  }, [employeeSearchTerm, employees]);
 
   // Close year picker on outside click
   useEffect(() => {
@@ -142,25 +121,14 @@ export default function AdminLeaveBalancesPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const loadEmployees = async () => {
-    try {
-      const data = await employeeService.getEmployees();
-      const empList = data.content || [];
-      setEmployees(empList);
-      setFilteredEmployees(empList);
-    } catch (error: any) {
-      handleApiError(error, 'Không thể tải danh sách nhân viên');
-    }
-  };
+  // Sync with props if they change
+  useEffect(() => {
+    setEmployees(propEmployees);
+  }, [propEmployees]);
 
-  const loadTimeOffTypes = async () => {
-    try {
-      const data = await TimeOffTypeService.getActiveTimeOffTypes();
-      setTimeOffTypes(data);
-    } catch (error: any) {
-      handleApiError(error, 'Không thể tải danh sách loại nghỉ phép');
-    }
-  };
+  useEffect(() => {
+    setTimeOffTypes(propTimeOffTypes);
+  }, [propTimeOffTypes]);
 
   const loadBalances = async () => {
     if (!selectedEmployeeId) return;
@@ -168,7 +136,7 @@ export default function AdminLeaveBalancesPage() {
     try {
       setLoadingBalances(true);
       const data = await LeaveBalanceService.getEmployeeBalances(
-        selectedEmployeeId,
+        Number(selectedEmployeeId),
         selectedYear
       );
       setBalanceData(data);
@@ -204,21 +172,12 @@ export default function AdminLeaveBalancesPage() {
   const validateAdjustForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!adjustFormData.timeOffTypeId) {
-      errors.timeOffTypeId = 'Vui lòng chọn loại phép';
-    }
-
-    if (!adjustFormData.cycleYear) {
-      errors.cycleYear = 'Vui lòng nhập năm';
-    }
-
+    if (!adjustFormData.timeOffTypeId) errors.timeOffTypeId = 'Vui lòng chọn loại phép';
+    if (!adjustFormData.cycleYear) errors.cycleYear = 'Vui lòng nhập năm';
     if (adjustFormData.changeAmount === null || adjustFormData.changeAmount === 0) {
       errors.changeAmount = 'Vui lòng nhập số lượng điều chỉnh (khác 0)';
     }
-
-    if (!adjustFormData.notes.trim()) {
-      errors.notes = 'Vui lòng nhập ghi chú';
-    }
+    if (!adjustFormData.notes.trim()) errors.notes = 'Vui lòng nhập ghi chú';
 
     setAdjustFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -231,7 +190,7 @@ export default function AdminLeaveBalancesPage() {
       setSubmittingAdjust(true);
 
       await LeaveBalanceService.adjustBalance({
-        employee_id: selectedEmployeeId,
+        employee_id: Number(selectedEmployeeId),
         time_off_type_id: adjustFormData.timeOffTypeId,
         cycle_year: adjustFormData.cycleYear,
         change_amount: adjustFormData.changeAmount!,
@@ -240,18 +199,14 @@ export default function AdminLeaveBalancesPage() {
 
       alert('Điều chỉnh số dư ngày nghỉ thành công!');
       setShowAdjustModal(false);
-      loadBalances(); // Refresh
+      loadBalances();
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
       if (errorMsg.includes('INVALID_BALANCE') || error?.response?.status === 400) {
-        setAdjustFormErrors({
-          changeAmount: 'Số dư ngày nghỉ không thể âm sau khi điều chỉnh'
-        });
+        setAdjustFormErrors({ changeAmount: 'Số dư ngày nghỉ không thể âm sau khi điều chỉnh' });
       } else if (errorMsg.includes('RELATED_RESOURCE_NOT_FOUND') || error?.response?.status === 404) {
-        setAdjustFormErrors({
-          timeOffTypeId: 'Nhân viên hoặc loại ngày nghỉ phép không tồn tại'
-        });
+        setAdjustFormErrors({ timeOffTypeId: 'Nhân viên hoặc loại ngày nghỉ phép không tồn tại' });
       } else {
         handleApiError(error, 'Không thể điều chỉnh số dư ngày nghỉ');
       }
@@ -281,10 +236,7 @@ export default function AdminLeaveBalancesPage() {
       errors.cycleYear = 'Năm phải >= năm hiện tại';
     }
 
-    if (!annualResetFormData.applyToTypeId) {
-      errors.applyToTypeId = 'Vui lòng chọn loại phép';
-    }
-
+    if (!annualResetFormData.applyToTypeId) errors.applyToTypeId = 'Vui lòng chọn loại phép';
     if (annualResetFormData.defaultAllowance === null || annualResetFormData.defaultAllowance <= 0) {
       errors.defaultAllowance = 'Số ngày cộng phải > 0';
     }
@@ -317,9 +269,7 @@ export default function AdminLeaveBalancesPage() {
       if (errorMsg.includes('JOB_ALREADY_RUN') || error?.response?.status === 409) {
         alert(`Job reset cho năm ${annualResetFormData.cycleYear} đã được chạy trước đó.`);
       } else if (errorMsg.includes('INVALID_YEAR') || error?.response?.status === 400) {
-        setAnnualResetFormErrors({
-          cycleYear: 'Năm không hợp lệ'
-        });
+        setAnnualResetFormErrors({ cycleYear: 'Năm không hợp lệ' });
       } else {
         handleApiError(error, 'Không thể kích hoạt Job');
       }
@@ -328,33 +278,20 @@ export default function AdminLeaveBalancesPage() {
     }
   };
 
-  // ==================== PERMISSION CHECK ====================
+  // ==================== RENDER ====================
 
   if (!canViewBalances) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-96">
-          <CardContent className="pt-6 text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Không có quyền truy cập</h3>
-            <p className="text-gray-600">Bạn không có quyền xem số dư ngày nghỉ của nhân viên.</p>
-          </CardContent>
-        </Card>
+      <div className="text-center py-12">
+        <p className="text-gray-600">Bạn không có quyền xem số dư ngày nghỉ của nhân viên.</p>
       </div>
     );
   }
 
-  // ==================== RENDER ====================
-
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Số Dư Ngày Nghỉ</h1>
-          <p className="text-gray-600 mt-2">Xem và điều chỉnh số dư ngày nghỉ của nhân viên</p>
-        </div>
-
+    <>
+      {/* Header Actions */}
+      <div className="flex justify-end mb-4">
         {canAdjustBalances && (
           <Button
             onClick={openAnnualResetModal}
@@ -366,9 +303,8 @@ export default function AdminLeaveBalancesPage() {
         )}
       </div>
 
-      {/* ==================== BALANCE VIEWER ==================== */}
-
-      <Card className="mb-6">
+      {/* Balance Viewer Card */}
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5 text-purple-600" />
@@ -398,7 +334,7 @@ export default function AdminLeaveBalancesPage() {
                 <Select
                   label=""
                   value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value) => setSelectedEmployeeId(Number(value))}
+                  onChange={(value) => setSelectedEmployeeId(value || null)}
                   options={[
                     { value: '', label: '-- Chọn nhân viên --' },
                     ...filteredEmployees.map(emp => ({
@@ -425,7 +361,6 @@ export default function AdminLeaveBalancesPage() {
               {/* Year Picker Dropdown */}
               {showYearPicker && (
                 <div className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80">
-                  {/* Header with navigation */}
                   <div className="flex items-center justify-between mb-4">
                     <Button
                       variant="outline"
@@ -448,7 +383,6 @@ export default function AdminLeaveBalancesPage() {
                     </Button>
                   </div>
 
-                  {/* Year grid */}
                   <div className="grid grid-cols-3 gap-2">
                     {Array.from({ length: 12 }, (_, i) => {
                       const year = displayYear - 5 + i;
@@ -513,7 +447,6 @@ export default function AdminLeaveBalancesPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {balanceData.balances.map((balance) => {
-                    // Find full type info from timeOffTypes using the new structure
                     const typeInfo = timeOffTypes.find(t => t.typeId === balance.time_off_type.type_id);
 
                     return (
@@ -598,49 +531,56 @@ export default function AdminLeaveBalancesPage() {
         </CardContent>
       </Card>
 
-      {/* ==================== ADJUSTMENT MODAL ==================== */}
+      {/* Modals */}
 
+      {/* ==================== ADJUSTMENT MODAL ==================== */}
       {showAdjustModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
-            <CardHeader className="border-b flex-shrink-0">
-              <CardTitle>Điều Chỉnh Số Dư Ngày Nghỉ Thủ Công</CardTitle>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Điều Chỉnh Phép Thủ Công
+              </CardTitle>
             </CardHeader>
-            <CardContent className="overflow-y-auto flex-1 pt-4 space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Lưu ý:</strong> Nhập <strong>số dương</strong> để cộng phép, <strong>số âm</strong> để trừ phép.
+            <CardContent className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Nhân viên:</strong> {employees.find(e => e.employeeId === selectedEmployeeId)?.fullName}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Select
-                    label="Loại Phép *"
+                  <Label htmlFor="adjust-type">Loại Phép *</Label>
+                  <select
+                    id="adjust-type"
                     value={adjustFormData.timeOffTypeId}
-                    onChange={(value) => {
-                      setAdjustFormData({ ...adjustFormData, timeOffTypeId: value });
+                    onChange={(e) => {
+                      setAdjustFormData({ ...adjustFormData, timeOffTypeId: e.target.value });
                       const newErrors = { ...adjustFormErrors };
                       delete newErrors.timeOffTypeId;
                       setAdjustFormErrors(newErrors);
                     }}
-                    options={[
-                      { value: '', label: '-- Chọn loại phép --' },
-                      ...timeOffTypes.map(type => ({
-                        value: type.typeId,
-                        label: `${type.typeName} (${type.typeCode})`
-                      }))
-                    ]}
-                  />
+                    className={`w-full px-3 py-2 border rounded-md ${adjustFormErrors.timeOffTypeId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">-- Chọn loại phép --</option>
+                    {timeOffTypes.map(type => (
+                      <option key={type.typeId} value={type.typeId}>
+                        {type.typeName} ({type.typeCode})
+                      </option>
+                    ))}
+                  </select>
                   {adjustFormErrors.timeOffTypeId && (
                     <p className="text-red-500 text-sm mt-1">{adjustFormErrors.timeOffTypeId}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="adj-year">Năm *</Label>
+                  <Label htmlFor="adjust-year">Năm *</Label>
                   <Input
-                    id="adj-year"
+                    id="adjust-year"
                     type="number"
                     value={adjustFormData.cycleYear}
                     onChange={(e) => {
@@ -680,7 +620,7 @@ export default function AdminLeaveBalancesPage() {
 
               <div>
                 <Label htmlFor="notes">Ghi Chú *</Label>
-                <Textarea
+                <textarea
                   id="notes"
                   placeholder="VD: Thưởng phép năm 2025, Sửa lỗi nhập liệu..."
                   rows={3}
@@ -691,7 +631,8 @@ export default function AdminLeaveBalancesPage() {
                     delete newErrors.notes;
                     setAdjustFormErrors(newErrors);
                   }}
-                  className={adjustFormErrors.notes ? 'border-red-500' : ''}
+                  className={`w-full px-3 py-2 border rounded-md ${adjustFormErrors.notes ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
                 {adjustFormErrors.notes && (
                   <p className="text-red-500 text-sm mt-1">{adjustFormErrors.notes}</p>
@@ -720,7 +661,6 @@ export default function AdminLeaveBalancesPage() {
       )}
 
       {/* ==================== ANNUAL RESET MODAL ==================== */}
-
       {showAnnualResetModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl">
@@ -786,23 +726,26 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div>
-                <Select
-                  label="Loại Phép *"
+                <Label htmlFor="reset-type">Loại Phép *</Label>
+                <select
+                  id="reset-type"
                   value={annualResetFormData.applyToTypeId}
-                  onChange={(value) => {
-                    setAnnualResetFormData({ ...annualResetFormData, applyToTypeId: value });
+                  onChange={(e) => {
+                    setAnnualResetFormData({ ...annualResetFormData, applyToTypeId: e.target.value });
                     const newErrors = { ...annualResetFormErrors };
                     delete newErrors.applyToTypeId;
                     setAnnualResetFormErrors(newErrors);
                   }}
-                  options={[
-                    { value: '', label: '-- Chọn loại phép --' },
-                    ...timeOffTypes.map(type => ({
-                      value: type.typeId,
-                      label: `${type.typeName} (${type.typeCode})`
-                    }))
-                  ]}
-                />
+                  className={`w-full px-3 py-2 border rounded-md ${annualResetFormErrors.applyToTypeId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">-- Chọn loại phép --</option>
+                  {timeOffTypes.map(type => (
+                    <option key={type.typeId} value={type.typeId}>
+                      {type.typeName} ({type.typeCode})
+                    </option>
+                  ))}
+                </select>
                 {annualResetFormErrors.applyToTypeId && (
                   <p className="text-red-500 text-sm mt-1">{annualResetFormErrors.applyToTypeId}</p>
                 )}
@@ -835,6 +778,6 @@ export default function AdminLeaveBalancesPage() {
           </Card>
         </div>
       )}
-    </div>
+    </>
   );
 }
