@@ -461,8 +461,8 @@ export default function AdminTimeOffRequestsPage() {
           <button
             onClick={() => setActiveTab('requests')}
             className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'requests'
-                ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
@@ -471,8 +471,8 @@ export default function AdminTimeOffRequestsPage() {
           <button
             onClick={() => setActiveTab('balances')}
             className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'balances'
-                ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             <FontAwesomeIcon icon={faWallet} className="h-4 w-4" />
