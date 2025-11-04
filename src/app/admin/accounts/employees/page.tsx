@@ -120,7 +120,8 @@ export default function EmployeesPage() {
 
   const fetchRoles = async () => {
     try {
-      const response = await roleService.getRoles();
+      // Use employee-assignable endpoint to exclude ROLE_PATIENT
+      const response = await roleService.getEmployeeAssignableRoles();
       setRoles(response || []);
     } catch (error: any) {
       console.error('Failed to fetch roles:', error);

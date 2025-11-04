@@ -106,3 +106,22 @@ export const ROOM_STATUS_LABELS = {
   true: 'Đang hoạt động',
   false: 'Đã vô hiệu hóa',
 } as const;
+
+// Room-Service Compatibility Types (V16)
+export interface CompatibleService {
+  serviceId: number;
+  serviceCode: string;
+  serviceName: string;
+  price: number;
+}
+
+export interface RoomServicesResponse {
+  roomId: string;
+  roomCode: string;
+  roomName: string;
+  compatibleServices: CompatibleService[];
+}
+
+export interface UpdateRoomServicesRequest {
+  serviceCodes: string[];
+}

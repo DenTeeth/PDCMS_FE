@@ -5,7 +5,9 @@ import {
   UpdateRoomRequest, 
   RoomFilters, 
   RoomListResponse,
-  ApiResponse 
+  ApiResponse,
+  RoomServicesResponse,
+  UpdateRoomServicesRequest
 } from '@/types/room';
 
 export class RoomService {
@@ -96,12 +98,25 @@ export class RoomService {
 
   /**
    * Lấy chi tiết phòng theo ID
+   * @deprecated Consider using getRoomByCode() instead - docs specify using roomCode
    */
   static async getRoomById(roomId: string): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<Room>(`${this.BASE_URL}/${roomId}`);
     
     // Return the room data directly
+    return response.data;
+  }
+
+  /**
+   * Lấy chi tiết phòng theo Code
+   * P1.2 - GET /api/v1/rooms/code/{roomCode}
+   * Note: Backend uses /rooms/code/{roomCode} path, not /rooms/{roomCode}
+   */
+  static async getRoomByCode(roomCode: string): Promise<Room> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.get<Room>(`${this.BASE_URL}/code/${roomCode}`);
+    
     return response.data;
   }
 
@@ -133,6 +148,7 @@ export class RoomService {
 
   /**
    * Vô hiệu hóa/Kích hoạt phòng (Toggle status)
+   * P1.5 - DELETE /api/v1/rooms/{roomId}
    */
   static async toggleRoomStatus(roomId: string): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
@@ -141,6 +157,39 @@ export class RoomService {
     console.log('Toggle Room Status Response:', response.data);
     
     // Return the room data directly
+    return response.data;
+  }
+
+  /**
+   * P1.5 - Get Room Services (NEW - V16)
+   * GET /api/v1/rooms/{roomCode}/services
+   * Lấy danh sách dịch vụ mà phòng này hỗ trợ
+   */
+  static async getRoomServices(roomCode: string): Promise<RoomServicesResponse> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.get<RoomServicesResponse>(
+      `${this.BASE_URL}/${roomCode}/services`
+    );
+    
+    return response.data;
+  }
+
+  /**
+   * P1.6 - Update Room Services (NEW - V16)
+   * PUT /api/v1/rooms/{roomCode}/services
+   * Cấu hình danh sách dịch vụ mà phòng này có thể thực hiện
+   * Note: API này REPLACE (thay thế hoàn toàn) danh sách services hiện tại
+   */
+  static async updateRoomServices(
+    roomCode: string,
+    request: UpdateRoomServicesRequest
+  ): Promise<RoomServicesResponse> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.put<RoomServicesResponse>(
+      `${this.BASE_URL}/${roomCode}/services`,
+      request
+    );
+    
     return response.data;
   }
 }

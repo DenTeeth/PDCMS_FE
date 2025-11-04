@@ -205,10 +205,32 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
     },
     {
-      name: 'Room Management',
-      href: '/admin/rooms',
-      icon: faHospitalUser,
-      requiredPermissionGroup: 'ROOM_MANAGEMENT',
+      name: 'Booking Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
+      // Show if user has any of these permission groups
+      requiredPermissions: ['VIEW_ROOM', 'VIEW_SERVICE', 'VIEW_APPOINTMENT'],
+      requireAll: false,
+      submenu: [
+        {
+          name: 'Rooms',
+          href: '/admin/booking/rooms',
+          icon: faHospitalUser,
+          requiredPermissionGroup: 'ROOM_MANAGEMENT',
+        },
+        {
+          name: 'Services',
+          href: '/admin/booking/services',
+          icon: faTeeth,
+          requiredPermissionGroup: 'SERVICE_MANAGEMENT',
+        },
+        {
+          name: 'Appointments',
+          href: '/admin/booking/appointments',
+          icon: faCalendarAlt,
+          requiredPermissionGroup: 'APPOINTMENT',
+        },
+      ],
     },
     {
       name: 'Settings',

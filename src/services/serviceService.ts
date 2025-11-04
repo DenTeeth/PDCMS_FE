@@ -41,6 +41,7 @@ export class ServiceService {
     }
 
     // Get service by ID
+    // @deprecated Consider using getServiceByCode() instead - docs specify using serviceCode
     static async getServiceById(serviceId: number): Promise<Service> {
         const url = `${this.BASE_URL}/${serviceId}`;
         console.log('ServiceService.getServiceById - URL:', url);
@@ -53,15 +54,30 @@ export class ServiceService {
     }
 
     // Get service by code
+    // P2.3 - GET /api/v1/services/{serviceCode}
+    // Note: Backend might use /services/{serviceCode} or /services/code/{serviceCode}
+    // This method tries the standard path first, if fails try /code/ path
     static async getServiceByCode(serviceCode: string): Promise<Service> {
-        const url = `${this.BASE_URL}/code/${serviceCode}`;
-        console.log('ServiceService.getServiceByCode - URL:', url);
-
         const axios = apiClient.getAxiosInstance();
-        const response = await axios.get<Service>(url);
-        console.log('ServiceService.getServiceByCode - Response:', response.data);
-
-        return response.data;
+        
+        // Try standard path first (as per docs)
+        try {
+            const url = `${this.BASE_URL}/${serviceCode}`;
+            console.log('ServiceService.getServiceByCode - URL:', url);
+            const response = await axios.get<Service>(url);
+            console.log('ServiceService.getServiceByCode - Response:', response.data);
+            return response.data;
+        } catch (error: any) {
+            // Fallback to /code/ path if standard path doesn't work
+            if (error.response?.status === 404) {
+                const url = `${this.BASE_URL}/code/${serviceCode}`;
+                console.log('ServiceService.getServiceByCode - Fallback URL:', url);
+                const response = await axios.get<Service>(url);
+                console.log('ServiceService.getServiceByCode - Fallback Response:', response.data);
+                return response.data;
+            }
+            throw error;
+        }
     }
 
     // Create new service
@@ -77,8 +93,10 @@ export class ServiceService {
     }
 
     // Update service
-    static async updateService(serviceId: number, data: UpdateServiceRequest): Promise<Service> {
-        const url = `${this.BASE_URL}/${serviceId}`;
+    // P2.4 - PUT /api/v1/services/{serviceCode}
+    // Changed from serviceId to serviceCode to match docs
+    static async updateService(serviceCode: string, data: UpdateServiceRequest): Promise<Service> {
+        const url = `${this.BASE_URL}/${serviceCode}`;
         console.log('ServiceService.updateService - URL:', url);
         console.log('ServiceService.updateService - Data:', data);
 
@@ -89,9 +107,21 @@ export class ServiceService {
         return response.data;
     }
 
-    // Soft delete service
-    static async deleteService(serviceId: number): Promise<void> {
+    // Soft delete service by ID (V2 - Recommended)
+    // P2.5 - DELETE /api/v1/services/{serviceId}
+    static async deleteServiceById(serviceId: number): Promise<void> {
         const url = `${this.BASE_URL}/${serviceId}`;
+        console.log('ServiceService.deleteServiceById - URL:', url);
+
+        const axios = apiClient.getAxiosInstance();
+        await axios.delete(url);
+        console.log('ServiceService.deleteServiceById - Success');
+    }
+
+    // Soft delete service by code (Legacy - V1)
+    // P2.5 - DELETE /api/v1/services/code/{serviceCode}
+    static async deleteService(serviceCode: string): Promise<void> {
+        const url = `${this.BASE_URL}/code/${serviceCode}`;
         console.log('ServiceService.deleteService - URL:', url);
 
         const axios = apiClient.getAxiosInstance();
@@ -99,7 +129,21 @@ export class ServiceService {
         console.log('ServiceService.deleteService - Success');
     }
 
-    // Activate service
+    // Toggle service status (V2 - Recommended)
+    // P2.6 - PATCH /api/v1/services/{serviceId}/toggle
+    static async toggleServiceStatus(serviceId: number): Promise<Service> {
+        const url = `${this.BASE_URL}/${serviceId}/toggle`;
+        console.log('ServiceService.toggleServiceStatus - URL:', url);
+
+        const axios = apiClient.getAxiosInstance();
+        const response = await axios.patch<Service>(url);
+        console.log('ServiceService.toggleServiceStatus - Response:', response.data);
+
+        return response.data;
+    }
+
+    // Activate service (Legacy - V1)
+    // @deprecated Use toggleServiceStatus instead
     static async activateService(serviceId: number): Promise<Service> {
         const url = `${this.BASE_URL}/${serviceId}/activate`;
         console.log('ServiceService.activateService - URL:', url);
