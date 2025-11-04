@@ -128,7 +128,7 @@ export default function EmployeeDetailPage() {
 
       // Build partial update payload
       const payload: UpdateEmployeeRequest = {};
-      
+
       if (editFormData.firstName && editFormData.firstName !== employee.firstName) {
         payload.firstName = editFormData.firstName;
       }
@@ -152,7 +152,7 @@ export default function EmployeeDetailPage() {
       const currentSpecIds = employee.specializations?.map((s: any) => s.specializationId).sort() || [];
       const newSpecIds = editFormData.specializationIds?.sort() || [];
       const specializationsChanged = JSON.stringify(currentSpecIds) !== JSON.stringify(newSpecIds);
-      
+
       if (specializationsChanged && editFormData.specializationIds) {
         payload.specializationIds = editFormData.specializationIds;
       }
@@ -167,7 +167,7 @@ export default function EmployeeDetailPage() {
       await employeeService.updateEmployee(employee.employeeCode, payload);
       toast.success('Employee updated successfully');
       setShowEditModal(false);
-      
+
       // Refresh employee details
       await fetchEmployeeDetails();
     } catch (error: any) {
@@ -247,8 +247,8 @@ export default function EmployeeDetailPage() {
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
           >
@@ -269,12 +269,11 @@ export default function EmployeeDetailPage() {
               <div>
                 <CardTitle className="text-2xl">{employee.fullName}</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  {employee.employeeCode} • {employee.roleName} • 
-                  <span className={`ml-1 px-2 py-1 rounded-full text-xs ${
-                    employee.employeeType === EmploymentType.FULL_TIME 
-                      ? 'bg-blue-100 text-blue-800' 
+                  {employee.employeeCode} • {employee.roleName} •
+                  <span className={`ml-1 px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-orange-100 text-orange-800'
-                  }`}>
+                    }`}>
                     {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
                   </span>
                 </p>
@@ -441,13 +440,12 @@ export default function EmployeeDetailPage() {
             </div>
             <div>
               <Label className="text-gray-600">Employment Type</Label>
-              <Badge 
-                variant="outline" 
-                className={`text-base px-3 py-1 ${
-                  employee.employeeType === EmploymentType.FULL_TIME 
-                    ? 'border-blue-200 text-blue-800' 
+              <Badge
+                variant="outline"
+                className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
+                    ? 'border-blue-200 text-blue-800'
                     : 'border-orange-200 text-orange-800'
-                }`}
+                  }`}
               >
                 {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
               </Badge>
@@ -520,11 +518,11 @@ export default function EmployeeDetailPage() {
       {/* Edit Employee Modal */}
       {showEditModal && employee && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
+          <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Edit Employee</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdateEmployee} className="space-y-6">
                 {/* Employee Info */}
                 <div className="mb-4 p-3 bg-muted/50 rounded-lg">
@@ -561,7 +559,7 @@ export default function EmployeeDetailPage() {
                 {/* Personal Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Personal Information</h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-firstName">First Name</Label>

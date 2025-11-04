@@ -73,7 +73,7 @@ function TimePicker({ value, onChange, placeholder, required }: TimePickerProps)
     // Nếu chọn 21h thì tự động set 00 phút và đóng picker luôn
     if (newHour === '21') {
       setMinute('00');
-      onChange(`${newHour}:00:00`);
+      onChange(`${newHour}:00`);
       setIsOpen(false);
     } else if (minute !== '00') {
       // Các giờ khác, giữ nguyên phút đã chọn nếu có
@@ -83,7 +83,7 @@ function TimePicker({ value, onChange, placeholder, required }: TimePickerProps)
 
   const handleMinuteChange = (newMinute: string) => {
     setMinute(newMinute);
-    onChange(`${hour}:${newMinute}:00`);
+    onChange(`${hour}:${newMinute}`);
     setIsOpen(false); // Chỉ đóng khi chọn phút
   };
 
@@ -423,53 +423,49 @@ export default function WorkShiftsPage() {
         </Button>
       </div>
 
-      {/* Stats Cards Grid - Giống ảnh */}
+      {/* Stats Cards Grid - Color-coded borders */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Tổng số ca</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+        {/* Tổng số ca */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số ca</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Clock className="h-6 w-6 text-blue-600" />
             </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Hoạt động</p>
-              <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+        {/* Hoạt động */}
+        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock className="h-6 w-6 text-green-700" />
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-              <Clock className="h-6 w-6 text-green-600" />
-            </div>
+            <p className="text-3xl font-bold text-green-800">{stats.active}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Ca thường</p>
-              <p className="text-3xl font-bold text-blue-600">{stats.normal}</p>
+        {/* Ca thường */}
+        <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-blue-800 mb-2">Ca thường</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock className="h-6 w-6 text-blue-700" />
             </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Clock className="h-6 w-6 text-blue-600" />
-            </div>
+            <p className="text-3xl font-bold text-blue-800">{stats.normal}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Ca đêm</p>
-              <p className="text-3xl font-bold text-purple-600">{stats.night}</p>
+        {/* Ca đêm */}
+        <div className="bg-purple-50 rounded-xl border border-purple-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-purple-800 mb-2">Ca đêm</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock className="h-6 w-6 text-purple-700" />
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <Clock className="h-6 w-6 text-purple-600" />
-            </div>
+            <p className="text-3xl font-bold text-purple-800">{stats.night}</p>
           </div>
         </div>
       </div>
@@ -523,8 +519,8 @@ export default function WorkShiftsPage() {
                             setIsSortDropdownOpen(false);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
-                              ? 'bg-[#8b5fbf] text-white'
-                              : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            ? 'bg-[#8b5fbf] text-white'
+                            : 'text-gray-700 hover:bg-[#f3f0ff]'
                             }`}
                         >
                           {option.label}
@@ -541,8 +537,8 @@ export default function WorkShiftsPage() {
                   <button
                     onClick={() => setSortOrder('asc')}
                     className={`p-1.5 rounded transition-all ${sortOrder === 'asc'
-                        ? 'bg-[#8b5fbf] text-white shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                      ? 'bg-[#8b5fbf] text-white shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                       }`}
                     title="Tăng dần"
                   >
@@ -551,8 +547,8 @@ export default function WorkShiftsPage() {
                   <button
                     onClick={() => setSortOrder('desc')}
                     className={`p-1.5 rounded transition-all ${sortOrder === 'desc'
-                        ? 'bg-[#8b5fbf] text-white shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                      ? 'bg-[#8b5fbf] text-white shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                       }`}
                     title="Giảm dần"
                   >
@@ -746,8 +742,8 @@ export default function WorkShiftsPage() {
       {/* CREATE MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
-            <CardHeader className="border-b">
+          <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
+            <CardHeader className="border-b flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle>Tạo ca làm mới</CardTitle>
                 <Button
@@ -759,7 +755,7 @@ export default function WorkShiftsPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleCreateSubmit}>
                 <div className="space-y-4">
                   <div>
@@ -855,7 +851,9 @@ export default function WorkShiftsPage() {
               <form onSubmit={handleEditSubmit}>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="editShiftName">Tên ca làm</Label>
+                    <Label htmlFor="editShiftName">
+                      Tên ca làm <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="editShiftName"
                       value={editFormData.shiftName || ''}
@@ -868,7 +866,9 @@ export default function WorkShiftsPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="editStartTime">Giờ bắt đầu</Label>
+                      <Label htmlFor="editStartTime">
+                        Giờ bắt đầu <span className="text-red-500">*</span>
+                      </Label>
                       <TimePicker
                         value={editFormData.startTime || ''}
                         onChange={(time) => setEditFormData({ ...editFormData, startTime: time })}
@@ -877,7 +877,9 @@ export default function WorkShiftsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="editEndTime">Giờ kết thúc</Label>
+                      <Label htmlFor="editEndTime">
+                        Giờ kết thúc <span className="text-red-500">*</span>
+                      </Label>
                       <TimePicker
                         value={editFormData.endTime || ''}
                         onChange={(time) => setEditFormData({ ...editFormData, endTime: time })}

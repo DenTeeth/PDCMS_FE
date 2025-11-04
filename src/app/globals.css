@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/sidebar-animations.css";
+@import "../styles/responsive-layout.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -168,6 +169,24 @@
     font-feature-settings: 'rlig' 1, 'calt' 1;
     line-height: 1.6;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Responsive sidebar margin adjustment */
+  main {
+    margin-left: 0;
+    transition: margin-left 0.3s ease-out;
+  }
+
+  @media (min-width: 1024px) {
+    body:has(aside.w-72) main {
+      margin-left: 18rem;
+      /* 288px for full sidebar */
+    }
+
+    body:has(aside.w-20) main {
+      margin-left: 5rem;
+      /* 80px for collapsed sidebar */
+    }
   }
 
   /* Better focus states for accessibility */

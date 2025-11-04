@@ -36,7 +36,7 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -93,7 +93,7 @@ export default function PatientDetailPage() {
   // ==================== EDIT PATIENT ====================
   const openEditModal = () => {
     if (!patient) return;
-    
+
     setEditFormData({
       firstName: patient.firstName || '',
       lastName: patient.lastName || '',
@@ -113,15 +113,15 @@ export default function PatientDetailPage() {
 
   const handleUpdatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!patient) return;
 
     try {
       setUpdating(true);
-      
+
       // Build partial update payload (only send fields that have values and changed)
       const payload: UpdatePatientRequest = {};
-      
+
       if (editFormData.firstName && editFormData.firstName !== patient.firstName) {
         payload.firstName = editFormData.firstName;
       }
@@ -245,8 +245,8 @@ export default function PatientDetailPage() {
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
           >
@@ -525,11 +525,11 @@ export default function PatientDetailPage() {
       {/* ==================== EDIT PATIENT MODAL ==================== */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
+          <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Edit Patient - {patient?.patientCode}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdatePatient} className="space-y-6">
                 {/* Basic Information */}
                 <div>

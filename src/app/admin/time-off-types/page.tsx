@@ -36,7 +36,6 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
-  DollarSign,
   ArrowUp,
   ArrowDown,
   ChevronDown,
@@ -234,16 +233,26 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
+      // Business rule: Nếu requiresBalance = false, defaultDaysPerYear phải là null
       const createDto = {
         typeCode: formData.typeCode,
         typeName: formData.typeName,
         description: formData.description,
         requiresBalance: formData.requiresBalance,
-        defaultDaysPerYear: formData.defaultDaysPerYear,
+        defaultDaysPerYear: formData.requiresBalance ? formData.defaultDaysPerYear : null,
         isPaid: formData.isPaid,
       };
 
       console.log('🟢 Creating Time-Off Type:', createDto);
+      console.log('🔍 Payload detail:', JSON.stringify(createDto, null, 2));
+      console.log('🔍 Type check:', {
+        typeCode: typeof createDto.typeCode,
+        typeName: typeof createDto.typeName,
+        description: typeof createDto.description,
+        requiresBalance: typeof createDto.requiresBalance,
+        defaultDaysPerYear: typeof createDto.defaultDaysPerYear,
+        isPaid: typeof createDto.isPaid,
+      });
       await TimeOffTypeService.createTimeOffType(createDto);
       alert('Tạo loại nghỉ phép thành công!');
       setShowCreateModal(false);
@@ -254,7 +263,8 @@ export default function AdminTimeOffTypesPage() {
       console.error('📋 Error Response:', {
         status: error?.response?.status,
         data: error?.response?.data,
-        message: error?.message
+        message: error?.message,
+        fullError: JSON.stringify(error?.response?.data, null, 2)
       });
 
       const errorCode = error?.response?.data?.code || error?.response?.data?.error;
@@ -286,12 +296,13 @@ export default function AdminTimeOffTypesPage() {
     try {
       setSubmitting(true);
 
+      // Business rule: Nếu requiresBalance = false, defaultDaysPerYear phải là null
       const updateDto = {
         typeCode: formData.typeCode,
         typeName: formData.typeName,
         description: formData.description,
         requiresBalance: formData.requiresBalance,
-        defaultDaysPerYear: formData.defaultDaysPerYear,
+        defaultDaysPerYear: formData.requiresBalance ? formData.defaultDaysPerYear : null,
         isPaid: formData.isPaid,
       };
 
@@ -435,53 +446,38 @@ export default function AdminTimeOffTypesPage() {
           )}
         </div>
 
-        {/* Stats Cards Grid - Giống ảnh */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Stats Cards Grid - 3 cards balanced */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Tổng số */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Tổng số</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Calendar className="h-6 w-6 text-blue-600" />
               </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
 
+          {/* Hoạt động */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Hoạt động</p>
-                <p className="text-3xl font-bold text-green-600">{stats.active}</p>
-              </div>
-              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Hoạt động</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
               </div>
+              <p className="text-3xl font-bold text-green-600">{stats.active}</p>
             </div>
           </div>
 
+          {/* Vô hiệu */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Vô hiệu</p>
-                <p className="text-3xl font-bold text-red-600">{stats.inactive}</p>
-              </div>
-              <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Vô hiệu</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <XCircle className="h-6 w-6 text-red-600" />
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Có lương</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.paid}</p>
-              </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-              </div>
+              <p className="text-3xl font-bold text-red-600">{stats.inactive}</p>
             </div>
           </div>
         </div>
@@ -623,9 +619,6 @@ export default function AdminTimeOffTypesPage() {
                     Mô Tả
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Yêu Cầu Số Dư
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Ngày/Năm
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -656,19 +649,18 @@ export default function AdminTimeOffTypesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Badge className={type.requiresBalance ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
-                        {type.requiresBalance ? 'Có' : 'Không'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="text-sm text-gray-900">
                         {type.defaultDaysPerYear !== null ? type.defaultDaysPerYear : 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Badge className={type.isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                        {type.isPaid ? 'Có' : 'Không'}
-                      </Badge>
+                      <div className="flex items-center justify-center" title={type.isPaid ? 'Có lương' : 'Không lương'}>
+                        {type.isPaid ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <Badge className={type.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
@@ -716,12 +708,15 @@ export default function AdminTimeOffTypesPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Tạo Loại Nghỉ Phép Mới</CardTitle>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-purple-600" />
+                Tạo Loại Nghỉ Phép Mới
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="typeCode">Mã Loại <span className="text-red-500">*</span></Label>
@@ -779,7 +774,12 @@ export default function AdminTimeOffTypesPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="defaultDays">Ngày Mặc Định/Năm</Label>
+                  <Label htmlFor="defaultDays">
+                    Ngày Mặc Định/Năm
+                    {!formData.requiresBalance && (
+                      <span className="text-xs text-gray-500 ml-2">(Chỉ khi yêu cầu số dư)</span>
+                    )}
+                  </Label>
                   <Input
                     id="defaultDays"
                     type="number"
@@ -791,15 +791,21 @@ export default function AdminTimeOffTypesPage() {
                       setFormData({ ...formData, defaultDaysPerYear: value });
                       setFormErrors({ ...formErrors, defaultDaysPerYear: undefined });
                     }}
+                    disabled={!formData.requiresBalance}
                     className={formErrors.defaultDaysPerYear ? 'border-red-500' : ''}
                   />
+                  {!formData.requiresBalance && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      ⓘ Không cần khi không yêu cầu số dư
+                    </p>
+                  )}
                   {formErrors.defaultDaysPerYear && (
                     <p className="text-red-500 text-sm mt-1">{formErrors.defaultDaysPerYear}</p>
                   )}
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Yêu Cầu Số Dư</Label>
+                  <Label className="mb-2">Yêu Cầu Số Dư Ngày Nghỉ</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -847,7 +853,14 @@ export default function AdminTimeOffTypesPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-between gap-2 pt-4">
+                <Button
+                  onClick={handleCreate}
+                  disabled={submitting}
+                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+                >
+                  {submitting ? 'Đang tạo...' : 'Tạo Loại Nghỉ Phép'}
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -858,13 +871,6 @@ export default function AdminTimeOffTypesPage() {
                 >
                   Hủy
                 </Button>
-                <Button
-                  onClick={handleCreate}
-                  disabled={submitting}
-                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
-                >
-                  {submitting ? 'Đang tạo...' : 'Tạo Loại Nghỉ Phép'}
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -873,12 +879,15 @@ export default function AdminTimeOffTypesPage() {
 
       {/* Edit Modal */}
       {showEditModal && selectedType && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Chỉnh Sửa Loại Nghỉ Phép</CardTitle>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-purple-600" />
+                Chỉnh Sửa Loại Nghỉ Phép
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-typeCode">Mã Loại <span className="text-red-500">*</span></Label>
@@ -935,7 +944,12 @@ export default function AdminTimeOffTypesPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="edit-defaultDays">Ngày Mặc Định/Năm</Label>
+                  <Label htmlFor="edit-defaultDays">
+                    Ngày Mặc Định/Năm
+                    {!formData.requiresBalance && (
+                      <span className="text-xs text-gray-500 ml-2">(Chỉ khi có yêu cầu số dư ngày nghỉ)</span>
+                    )}
+                  </Label>
                   <Input
                     id="edit-defaultDays"
                     type="number"
@@ -947,15 +961,21 @@ export default function AdminTimeOffTypesPage() {
                       setFormData({ ...formData, defaultDaysPerYear: value });
                       setFormErrors({ ...formErrors, defaultDaysPerYear: undefined });
                     }}
+                    disabled={!formData.requiresBalance}
                     className={formErrors.defaultDaysPerYear ? 'border-red-500' : ''}
                   />
+                  {!formData.requiresBalance && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      ⓘ Không cần khi không yêu cầu số dư
+                    </p>
+                  )}
                   {formErrors.defaultDaysPerYear && (
                     <p className="text-red-500 text-sm mt-1">{formErrors.defaultDaysPerYear}</p>
                   )}
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Yêu Cầu Số Dư</Label>
+                  <Label className="mb-2">Yêu Cầu Số Dư Ngày Nghỉ</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -1003,7 +1023,14 @@ export default function AdminTimeOffTypesPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-between gap-2 pt-4">
+                <Button
+                  onClick={handleUpdate}
+                  disabled={submitting}
+                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+                >
+                  {submitting ? 'Đang cập nhật...' : 'Cập Nhật'}
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1015,13 +1042,6 @@ export default function AdminTimeOffTypesPage() {
                 >
                   Hủy
                 </Button>
-                <Button
-                  onClick={handleUpdate}
-                  disabled={submitting}
-                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
-                >
-                  {submitting ? 'Đang cập nhật...' : 'Cập Nhật'}
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -1030,14 +1050,19 @@ export default function AdminTimeOffTypesPage() {
 
       {/* Toggle Status Modal */}
       {showToggleModal && selectedType && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>
+            <CardHeader className="border-b flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                {selectedType.isActive ? (
+                  <PowerOff className="h-5 w-5 text-red-600" />
+                ) : (
+                  <Power className="h-5 w-5 text-green-600" />
+                )}
                 {selectedType.isActive ? 'Vô Hiệu Hóa' : 'Kích Hoạt'} Loại Nghỉ Phép
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="pt-4 space-y-4">{/* Fixed height, no scroll needed for simple confirmation */}
               <p className="text-gray-600">
                 Bạn có chắc chắn muốn {selectedType.isActive ? 'vô hiệu hóa' : 'kích hoạt'} loại nghỉ phép{' '}
                 <strong>{selectedType.typeName}</strong>?
@@ -1051,7 +1076,14 @@ export default function AdminTimeOffTypesPage() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-between gap-2 pt-4">
+                <Button
+                  onClick={handleToggleStatus}
+                  disabled={submitting}
+                  className={selectedType.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                >
+                  {submitting ? 'Đang xử lý...' : (selectedType.isActive ? 'Vô Hiệu Hóa' : 'Kích Hoạt')}
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1061,13 +1093,6 @@ export default function AdminTimeOffTypesPage() {
                   disabled={submitting}
                 >
                   Hủy
-                </Button>
-                <Button
-                  onClick={handleToggleStatus}
-                  disabled={submitting}
-                  className={selectedType.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
-                >
-                  {submitting ? 'Đang xử lý...' : (selectedType.isActive ? 'Vô Hiệu Hóa' : 'Kích Hoạt')}
                 </Button>
               </div>
             </CardContent>
