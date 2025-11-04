@@ -26,6 +26,17 @@ import { vi } from 'date-fns/locale';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { EmployeeShift, ShiftStatus, ShiftSource } from '@/types/employeeShift';
 
+// Helper function to format time to HH:mm (remove seconds)
+const formatTime = (time: string | null | undefined): string => {
+  if (!time) return '';
+  // If time is in format HH:mm:ss, return HH:mm
+  const parts = time.split(':');
+  if (parts.length >= 2) {
+    return `${parts[0]}:${parts[1]}`;
+  }
+  return time;
+};
+
 interface EmployeeShiftsFormData {
   workDate?: string;
   startDate?: string;
@@ -359,7 +370,7 @@ export default function AdminEmployeeShiftsPage() {
                         <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4" />
                           <span>
-                            {shift.workShift.startTime} - {shift.workShift.endTime}
+                            {formatTime(shift.workShift.startTime)} - {formatTime(shift.workShift.endTime)}
                           </span>
                         </div>
 
