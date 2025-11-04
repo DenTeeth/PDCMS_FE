@@ -132,13 +132,10 @@ export default function AdminOvertimeRequestDetailPage() {
               <p className="text-gray-600">Request ID: {request.requestId}</p>
             </div>
           </div>
-          <Badge className={statusConfig.color}>
-            <FontAwesomeIcon icon={statusConfig.icon} className="mr-1" />
+          <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
             {statusConfig.label}
           </Badge>
-        </div>
-
-        {/* Main Content */}
+        </div>        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Employee Information */}
           <Card>
@@ -203,8 +200,7 @@ export default function AdminOvertimeRequestDetailPage() {
               <div>
                 <label className="text-sm font-medium text-gray-500">Trạng thái hiện tại</label>
                 <div className="mt-1">
-                  <Badge className={statusConfig.color}>
-                    <FontAwesomeIcon icon={statusConfig.icon} className="mr-1" />
+                  <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
                     {statusConfig.label}
                   </Badge>
                 </div>

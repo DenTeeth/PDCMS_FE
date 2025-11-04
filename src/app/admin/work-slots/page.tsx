@@ -14,12 +14,12 @@ import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 
 // Import types and services
-import { 
-  PartTimeSlot, 
+import {
+  PartTimeSlot,
   CreateWorkSlotRequest,
   UpdateWorkSlotRequest,
   WorkSlotQueryParams,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/workSlot';
 import { WorkShift } from '@/types/workShift';
 import { workSlotService } from '@/services/workSlotService';
@@ -29,14 +29,14 @@ import { useAuth } from '@/contexts/AuthContext';
 // ==================== MAIN COMPONENT ====================
 export default function WorkSlotsManagementPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // State management
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   // Note: API returns array directly (NOT paginated), so no pagination needed
-  
+
   // Filters temporarily removed
-  
+
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -85,7 +85,7 @@ export default function WorkSlotsManagementPage() {
   const fetchDropdownData = async () => {
     try {
       setLoadingDropdowns(true);
-      
+
       // Fetch active work shifts
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
@@ -100,19 +100,19 @@ export default function WorkSlotsManagementPage() {
   // ==================== CREATE WORK SLOT ====================
   const handleCreateWorkSlot = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check permission first
     if (!hasPermission(Permission.MANAGE_WORK_SLOTS)) {
       toast.error('You do not have permission to create work slots');
       return;
     }
-    
+
     // Validate required fields
     if (!createFormData.workShiftId) {
       toast.error('Please select a work shift');
       return;
     }
-    
+
     if (createFormData.quota < 1) {
       toast.error('Quota must be at least 1');
       return;
@@ -120,19 +120,19 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setCreating(true);
-      
+
       console.log('📤 Creating work slot:', createFormData);
-      
+
       await workSlotService.createWorkSlot(createFormData);
       toast.success('Work slot created successfully');
       setShowCreateModal(false);
       resetCreateForm();
-      
+
       // Refresh the work slots list
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to create work slot:', error);
-      
+
       let errorMessage = 'Failed to create work slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -141,7 +141,7 @@ export default function WorkSlotsManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setCreating(false);
@@ -168,7 +168,7 @@ export default function WorkSlotsManagementPage() {
 
   const handleUpdateWorkSlot = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingSlot) return;
 
     // Check permission first
@@ -191,9 +191,9 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setUpdating(true);
-      
+
       console.log('📤 Updating work slot:', editingSlot.slotId, editFormData);
-      
+
       await workSlotService.updateWorkSlot(editingSlot.slotId, editFormData);
       toast.success('Work slot updated successfully');
       setShowEditModal(false);
@@ -201,7 +201,7 @@ export default function WorkSlotsManagementPage() {
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to update work slot:', error);
-      
+
       // Handle specific error codes
       if (error.errorCode === 'QUOTA_VIOLATION' || error.response?.data?.errorCode === 'QUOTA_VIOLATION') {
         const message = error.message || error.response?.data?.message || `Không thể giảm số lượng. Đã có ${editingSlot.registered} nhân viên đăng ký suất này.`;
@@ -237,13 +237,13 @@ export default function WorkSlotsManagementPage() {
     try {
       setDeleting(true);
       console.log('🗑️ Deleting work slot:', slot.slotId);
-      
+
       await workSlotService.deleteWorkSlot(slot.slotId);
       toast.success('Work slot deleted successfully');
       await fetchWorkSlots();
     } catch (error: any) {
       console.error('❌ Failed to delete work slot:', error);
-      
+
       let errorMessage = 'Failed to delete work slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -252,7 +252,7 @@ export default function WorkSlotsManagementPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setDeleting(false);
@@ -287,7 +287,7 @@ export default function WorkSlotsManagementPage() {
   };
 
   // ==================== RENDER ====================
-  
+
   return (
     <ProtectedRoute requiredPermissions={[Permission.MANAGE_WORK_SLOTS]}>
       <div className="container mx-auto p-6 space-y-6">
@@ -302,12 +302,12 @@ export default function WorkSlotsManagementPage() {
                   <Badge variant="outline" className="text-xs">Part-Time Flex</Badge>
                 </div>
                 <p className="text-sm text-blue-700 mb-3">
-                  Quản lý các suất làm việc part-time linh hoạt. Tạo suất mới (VD: Cần 2 người Ca Sáng T3), 
+                  Quản lý các suất làm việc part-time linh hoạt. Tạo suất mới (VD: Cần 2 người Ca Sáng T3),
                   cập nhật quota hoặc đóng/mở suất. Nhân viên <strong>PART_TIME_FLEX</strong> sẽ thấy các suất còn trống và tự đăng ký.
                 </p>
                 <div className="flex items-center gap-4 text-xs text-blue-600">
-                  <Link 
-                    href="/admin/registrations" 
+                  <Link
+                    href="/admin/registrations"
                     className="flex items-center gap-1 hover:text-blue-800 hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" />
@@ -427,10 +427,12 @@ export default function WorkSlotsManagementPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Tạo Suất mới</h2>
-              <form onSubmit={handleCreateWorkSlot} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Tạo Suất mới</h2>
+              </div>
+              <form onSubmit={handleCreateWorkSlot} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label htmlFor="createWorkShift">Mẫu ca *</Label>
                   <select
@@ -516,10 +518,12 @@ export default function WorkSlotsManagementPage() {
 
         {/* Edit Modal */}
         {showEditModal && editingSlot && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Chỉnh sửa Suất</h2>
-              <form onSubmit={handleUpdateWorkSlot} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Chỉnh sửa Suất</h2>
+              </div>
+              <form onSubmit={handleUpdateWorkSlot} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label>Mẫu ca</Label>
                   <Input value={editingSlot.workShiftName || getWorkShiftName(editingSlot.workShiftId)} disabled />

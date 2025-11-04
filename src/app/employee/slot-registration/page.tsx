@@ -27,11 +27,11 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 // Import types and services
-import { 
+import {
   AvailableSlot,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/workSlot';
-import { 
+import {
   ShiftRegistration,
   CreateShiftRegistrationRequest,
   ShiftRegistrationQueryParams
@@ -42,16 +42,16 @@ import { useAuth } from '@/contexts/AuthContext';
 // ==================== MAIN COMPONENT ====================
 export default function SlotRegistrationPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // State management
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<ShiftRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
-  
+
   // Filter states
   const [filterDayOfWeek, setFilterDayOfWeek] = useState<string>('');
-  
+
   // Registration modal states
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [registering, setRegistering] = useState(false);
@@ -92,7 +92,7 @@ export default function SlotRegistrationPage() {
         sortBy: 'effectiveFrom',
         sortDirection: 'DESC'
       };
-      
+
       const response = await shiftRegistrationService.getMyRegistrations(params);
       console.log('📋 My registrations:', response);
       // Handle both array and paginated responses
@@ -120,7 +120,7 @@ export default function SlotRegistrationPage() {
 
   const handleSubmitRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedSlot) return;
 
     // Validate required fields
@@ -133,7 +133,7 @@ export default function SlotRegistrationPage() {
     const selectedDate = new Date(registerFormData.effectiveFrom);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < today) {
       toast.error('Effective date cannot be in the past');
       return;
@@ -141,19 +141,19 @@ export default function SlotRegistrationPage() {
 
     try {
       setRegistering(true);
-      
+
       const payload: CreateShiftRegistrationRequest = {
         partTimeSlotId: selectedSlot.slotId,
         effectiveFrom: registerFormData.effectiveFrom
       };
-      
+
       console.log('📤 Registering for slot:', payload);
-      
+
       await shiftRegistrationService.createRegistration(payload);
       toast.success('Successfully registered for the slot!');
       setShowRegisterModal(false);
       setSelectedSlot(null);
-      
+
       // Refresh both lists
       await Promise.all([
         fetchAvailableSlots(),
@@ -161,7 +161,7 @@ export default function SlotRegistrationPage() {
       ]);
     } catch (error: any) {
       console.error('❌ Failed to register for slot:', error);
-      
+
       let errorMessage = 'Failed to register for slot';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -170,7 +170,7 @@ export default function SlotRegistrationPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setRegistering(false);
@@ -186,10 +186,10 @@ export default function SlotRegistrationPage() {
     try {
       setDeleting(true);
       console.log('🗑️ Cancelling registration:', registration.registrationId);
-      
+
       await shiftRegistrationService.deleteRegistration(registration.registrationId);
       toast.success('Registration cancelled successfully');
-      
+
       // Refresh both lists
       await Promise.all([
         fetchAvailableSlots(),
@@ -197,7 +197,7 @@ export default function SlotRegistrationPage() {
       ]);
     } catch (error: any) {
       console.error('❌ Failed to cancel registration:', error);
-      
+
       let errorMessage = 'Failed to cancel registration';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -206,7 +206,7 @@ export default function SlotRegistrationPage() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setDeleting(false);
@@ -300,13 +300,13 @@ export default function SlotRegistrationPage() {
                             {slot.remaining} left
                           </Badge>
                         </div>
-                        
+
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
                             <span>{getDayOfWeekLabel(slot.dayOfWeek)}</span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-gray-500" />
                             <span className="text-sm text-gray-600">
@@ -435,10 +435,12 @@ export default function SlotRegistrationPage() {
 
         {/* Registration Modal */}
         {showRegisterModal && selectedSlot && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Register for Slot</h2>
-              <form onSubmit={handleSubmitRegistration} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Register for Slot</h2>
+              </div>
+              <form onSubmit={handleSubmitRegistration} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label>Work Shift</Label>
                   <Input value={selectedSlot.shiftName} disabled />

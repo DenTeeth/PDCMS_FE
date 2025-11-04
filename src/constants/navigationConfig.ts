@@ -167,8 +167,8 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Leave Management',
-      icon: faUmbrellaBeach,
+      name: 'Request Management',
+      icon: faClipboardList,
       hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
       submenu: [
@@ -184,17 +184,19 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faUmbrellaBeach,
           requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
+      ],
+    },
+    {
+      name: 'Leave Management',
+      icon: faListAlt,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
         {
           name: 'Time Off Types',
           href: '/admin/time-off-types',
           icon: faListAlt,
           requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
-        },
-        {
-          name: 'Leave Balances',
-          href: '/admin/leave-balances',
-          icon: faWallet,
-          requiredPermissions: ['VIEW_LEAVE_BALANCE_ALL'],
         },
       ],
     },
@@ -299,16 +301,24 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       requireAll: false, // Show if user has either permission
     },
     {
-      name: 'Overtime Requests',
-      href: '/employee/overtime-requests',
-      icon: faClockFour,
+      name: 'Request Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-    },
-    {
-      name: 'Time Off Requests',
-      href: '/employee/time-off-requests',
-      icon: faUmbrellaBeach,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
+        {
+          name: 'Overtime Requests',
+          href: '/employee/overtime-requests',
+          icon: faClockFour,
+          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+        },
+        {
+          name: 'Time Off Requests',
+          href: '/employee/time-off-requests',
+          icon: faUmbrellaBeach,
+          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+        },
+      ],
     },
     {
       name: 'Shift Renewals',
