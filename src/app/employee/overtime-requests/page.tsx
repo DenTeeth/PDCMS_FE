@@ -54,7 +54,7 @@ export default function EmployeeOvertimeRequestsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OvertimeStatus | 'ALL'>('ALL');
-  
+
   // Modal states for manager functions
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -187,7 +187,7 @@ export default function EmployeeOvertimeRequestsPage() {
     try {
       setProcessing(true);
       await OvertimeService.approveOvertimeRequest(selectedRequest.requestId);
-      
+
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadOvertimeRequests();
@@ -202,14 +202,14 @@ export default function EmployeeOvertimeRequestsPage() {
 
   const handleReject = async () => {
     if (!selectedRequest || !rejectReason.trim()) {
-      alert('Vui lòng nhập lý do từ chối');
+      alert('Vui lòng nhập lý do');
       return;
     }
 
     try {
       setProcessing(true);
       await OvertimeService.rejectOvertimeRequest(selectedRequest.requestId, rejectReason);
-      
+
       setShowRejectModal(false);
       setSelectedRequest(null);
       setRejectReason('');
@@ -235,12 +235,12 @@ export default function EmployeeOvertimeRequestsPage() {
   };
 
   const filteredRequests = overtimeRequests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -266,7 +266,7 @@ export default function EmployeeOvertimeRequestsPage() {
             {isManager ? 'Quản Lý Yêu Cầu Làm Thêm Giờ' : 'Yêu Cầu Làm Thêm Giờ'}
           </h1>
           <p className="text-gray-600 mt-2">
-            {isManager 
+            {isManager
               ? 'Duyệt và quản lý yêu cầu làm thêm giờ của nhân viên'
               : 'Xem và tạo yêu cầu làm thêm giờ của bạn'
             }
@@ -350,7 +350,7 @@ export default function EmployeeOvertimeRequestsPage() {
                         {statusConfig.label}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faUser} className="text-gray-400" />
@@ -365,22 +365,22 @@ export default function EmployeeOvertimeRequestsPage() {
                         <span>{request.workShiftName}</span>
                       </div>
                     </div>
-                    
+
                     <p className="text-gray-700 mt-3">{request.reason}</p>
-                    
+
                     {request.rejectedReason && (
                       <p className="text-red-600 mt-2">
-                        <strong>Lý do từ chối:</strong> {request.rejectedReason}
+                        <strong>Lý do:</strong> {request.rejectedReason}
                       </p>
                     )}
-                    
+
                     {request.cancellationReason && (
                       <p className="text-gray-600 mt-2">
-                        <strong>Lý do hủy:</strong> {request.cancellationReason}
+                        <strong>Lý do:</strong> {request.cancellationReason}
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2 ml-4">
                     <Button
                       variant="outline"
@@ -390,7 +390,7 @@ export default function EmployeeOvertimeRequestsPage() {
                       <FontAwesomeIcon icon={faEye} className="mr-1" />
                       Chi tiết
                     </Button>
-                    
+
                     {/* Manager actions for PENDING requests */}
                     {request.status === OvertimeStatus.PENDING && isManager && (
                       <>
@@ -405,7 +405,7 @@ export default function EmployeeOvertimeRequestsPage() {
                             Duyệt
                           </Button>
                         )}
-                        
+
                         {canReject && (
                           <Button
                             variant="outline"
@@ -417,7 +417,7 @@ export default function EmployeeOvertimeRequestsPage() {
                             Từ chối
                           </Button>
                         )}
-                        
+
                         {canCancel && (
                           <Button
                             variant="outline"
@@ -431,7 +431,7 @@ export default function EmployeeOvertimeRequestsPage() {
                         )}
                       </>
                     )}
-                    
+
                     {/* Employee cancel own PENDING requests */}
                     {request.status === OvertimeStatus.PENDING && !isManager && canCancelOwn && (
                       <Button
@@ -489,7 +489,7 @@ export default function EmployeeOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Select
                     label="Ca làm việc"
@@ -502,7 +502,7 @@ export default function EmployeeOvertimeRequestsPage() {
                     }))}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="reason">Lý do</Label>
                   <Textarea
@@ -513,7 +513,7 @@ export default function EmployeeOvertimeRequestsPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1">
                     Tạo yêu cầu
@@ -545,18 +545,18 @@ export default function EmployeeOvertimeRequestsPage() {
                 <p className="text-sm text-gray-600">
                   Yêu cầu: <strong>{selectedRequest.requestId}</strong>
                 </p>
-                
+
                 <div>
-                  <Label htmlFor="cancelReason">Lý do hủy *</Label>
+                  <Label htmlFor="cancelReason">Lý do *</Label>
                   <Textarea
                     id="cancelReason"
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Nhập lý do hủy yêu cầu..."
+                    placeholder="Nhập lý do yêu cầu..."
                     required
                   />
                 </div>
-                
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     onClick={handleCancelRequest}
@@ -614,12 +614,12 @@ export default function EmployeeOvertimeRequestsPage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Từ chối yêu cầu</h2>
             <div className="mb-4">
-              <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+              <Label htmlFor="rejectReason">Lý do *</Label>
               <Textarea
                 id="rejectReason"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Nhập lý do từ chối..."
+                placeholder="Nhập lý do..."
                 rows={3}
                 required
               />

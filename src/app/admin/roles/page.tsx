@@ -31,12 +31,12 @@ import { permissionService } from '@/services/permissionService';
 // ==================== MAIN COMPONENT ====================
 export default function RolesPage() {
   const router = useRouter();
-  
+
   // State management
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -89,7 +89,7 @@ export default function RolesPage() {
   // ==================== CREATE ROLE ====================
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.roleId || !formData.roleName || !formData.description) {
       toast.error('Please fill in all fields');
       return;
@@ -122,7 +122,7 @@ export default function RolesPage() {
 
   const handleUpdateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingRole || !editFormData.roleName || !editFormData.description) {
       toast.error('Please fill in all fields');
       return;
@@ -219,8 +219,8 @@ export default function RolesPage() {
   // ==================== FILTER ROLES ====================
   const filteredRoles = (roles || []).filter(role => {
     const matchesSearch = role.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         role.roleId.toLowerCase().includes(searchTerm.toLowerCase());
+      role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.roleId.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -259,43 +259,38 @@ export default function RolesPage() {
 
       {/* ==================== STATS ==================== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Roles</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
+        {/* Total Roles */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Total Roles</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Shield className="h-6 w-6 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+          </div>
+        </div>
+
+        {/* Active */}
+        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-green-800 mb-2">Active</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="h-6 w-6 text-green-700" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <XCircle className="h-4 w-4 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold">{stats.inactive}</p>
-              </div>
+            <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+          </div>
+        </div>
+
+        {/* Inactive */}
+        <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-red-800 mb-2">Inactive</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <XCircle className="h-6 w-6 text-red-700" />
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-3xl font-bold text-red-800">{stats.inactive}</p>
+          </div>
+        </div>
       </div>
 
       {/* ==================== SEARCH ==================== */}
@@ -680,11 +675,10 @@ export default function RolesPage() {
                         {permissions.map((permission) => (
                           <label
                             key={permission.permissionId}
-                            className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${
-                              selectedPermissions.includes(permission.permissionId)
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200'
-                            }`}
+                            className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${selectedPermissions.includes(permission.permissionId)
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200'
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -755,7 +749,7 @@ export default function RolesPage() {
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}". 
+                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}".
                   The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
                 </p>
               </div>

@@ -15,11 +15,11 @@ import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 
 // Import types and services for Part-Time Registration
-import { 
-  ShiftRegistration, 
+import {
+  ShiftRegistration,
   UpdateShiftRegistrationRequest,
   ShiftRegistrationQueryParams,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 
@@ -54,7 +54,7 @@ const DAY_LABELS: { [key: number]: string } = {
 const getDayOfWeekLabel = (day: DayOfWeek): string => {
   const dayMap = {
     [DayOfWeek.MONDAY]: 'T2',
-    [DayOfWeek.TUESDAY]: 'T3', 
+    [DayOfWeek.TUESDAY]: 'T3',
     [DayOfWeek.WEDNESDAY]: 'T4',
     [DayOfWeek.THURSDAY]: 'T5',
     [DayOfWeek.FRIDAY]: 'T6',
@@ -67,7 +67,7 @@ const getDayOfWeekLabel = (day: DayOfWeek): string => {
 // ==================== MAIN COMPONENT ====================
 export default function RegistrationsPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>('part-time');
 
@@ -77,7 +77,7 @@ export default function RegistrationsPage() {
   const [partTimeCurrentPage, setPartTimeCurrentPage] = useState(0);
   const [partTimeTotalPages, setPartTimeTotalPages] = useState(0);
   const [partTimeTotalElements, setPartTimeTotalElements] = useState(0);
-  
+
   // Part-Time modals
   const [showPartTimeDetailsModal, setShowPartTimeDetailsModal] = useState(false);
   const [partTimeDetailsRegistration, setPartTimeDetailsRegistration] = useState<ShiftRegistration | null>(null);
@@ -135,7 +135,7 @@ export default function RegistrationsPage() {
       };
 
       const response = await shiftRegistrationService.getRegistrations(params);
-      
+
       if (Array.isArray(response)) {
         setPartTimeRegistrations(response);
         setPartTimeTotalPages(1);
@@ -175,7 +175,7 @@ export default function RegistrationsPage() {
   const fetchDropdownData = async () => {
     try {
       setLoadingDropdowns(true);
-      
+
       // Fetch active work shifts
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
@@ -187,9 +187,9 @@ export default function RegistrationsPage() {
         size: 1000,
         isActive: true
       });
-      
+
       // Filter to only employees who can use fixed registration
-      const eligibleEmployees = (employeesResponse.content || []).filter(emp => 
+      const eligibleEmployees = (employeesResponse.content || []).filter(emp =>
         canUseFixedRegistration(emp.employeeType as EmploymentType)
       );
       setEmployees(eligibleEmployees);
@@ -268,7 +268,7 @@ export default function RegistrationsPage() {
       console.error('Failed to create fixed registration:', error);
 
       let errorMessage = 'Failed to create fixed shift registration';
-      
+
       if (error.errorCode === FixedRegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
         errorMessage = 'Employee type PART_TIME_FLEX cannot use fixed shift registration. Use part-time registration instead.';
       } else if (error.errorCode === FixedRegistrationErrorCode.DUPLICATE_FIXED_SHIFT_REGISTRATION) {
@@ -340,8 +340,8 @@ export default function RegistrationsPage() {
 
       const payload: UpdateFixedRegistrationRequest = {
         ...(fixedEditFormData.workShiftId && { workShiftId: fixedEditFormData.workShiftId }),
-        ...(fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0 && { 
-          daysOfWeek: fixedEditFormData.daysOfWeek.sort((a, b) => a - b) 
+        ...(fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0 && {
+          daysOfWeek: fixedEditFormData.daysOfWeek.sort((a, b) => a - b)
         }),
         ...(fixedEditFormData.effectiveFrom && { effectiveFrom: fixedEditFormData.effectiveFrom }),
         effectiveTo: fixedEditFormData.effectiveTo !== undefined ? fixedEditFormData.effectiveTo : undefined
@@ -449,12 +449,12 @@ export default function RegistrationsPage() {
             <p className="text-gray-600 mt-1">Manage part-time and fixed shift registrations</p>
           </div>
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={() => {
                 if (activeTab === 'part-time') fetchPartTimeRegistrations();
                 else fetchFixedRegistrations();
-              }} 
-              variant="outline" 
+              }}
+              variant="outline"
               className="flex items-center gap-2"
             >
               <RotateCcw className="h-4 w-4" />
@@ -492,12 +492,12 @@ export default function RegistrationsPage() {
                         <Badge variant="outline" className="text-xs">Flexible Schedule</Badge>
                       </div>
                       <p className="text-sm text-blue-700 mb-3">
-                        Hệ thống quản lý đăng ký ca linh hoạt cho nhân viên <strong>PART_TIME_FLEX</strong>. 
+                        Hệ thống quản lý đăng ký ca linh hoạt cho nhân viên <strong>PART_TIME_FLEX</strong>.
                         Nhân viên tự đăng ký (claim) các suất làm việc có sẵn.
                       </p>
                       <div className="flex items-center gap-4 text-xs text-blue-600">
-                        <Link 
-                          href="/admin/work-slots" 
+                        <Link
+                          href="/admin/work-slots"
                           className="flex items-center gap-1 hover:text-blue-800 hover:underline"
                         >
                           <ExternalLink className="h-3 w-3" />
@@ -639,7 +639,7 @@ export default function RegistrationsPage() {
                         <Badge variant="outline" className="text-xs bg-green-100">Fixed Schedule</Badge>
                       </div>
                       <p className="text-sm text-green-700 mb-3">
-                        Hệ thống quản lý lịch cố định cho nhân viên <strong>FULL_TIME</strong> và <strong>PART_TIME_FIXED</strong>. 
+                        Hệ thống quản lý lịch cố định cho nhân viên <strong>FULL_TIME</strong> và <strong>PART_TIME_FIXED</strong>.
                         Admin/Manager gán lịch làm việc cố định cho nhân viên (VD: Ca Sáng T2-T6).
                       </p>
                       <div className="text-xs text-green-600">
@@ -808,10 +808,12 @@ export default function RegistrationsPage() {
 
         {/* PART-TIME DETAILS MODAL */}
         {showPartTimeDetailsModal && partTimeDetailsRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
-              <div className="space-y-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Registration Details</h2>
+              </div>
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
                 <div>
                   <Label>Registration ID</Label>
                   <Input value={partTimeDetailsRegistration.registrationId} disabled />
@@ -860,10 +862,12 @@ export default function RegistrationsPage() {
 
         {/* FIXED CREATE MODAL */}
         {showFixedCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Create Fixed Shift Registration</h2>
-              <form onSubmit={handleFixedCreate} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Create Fixed Shift Registration</h2>
+              </div>
+              <form onSubmit={handleFixedCreate} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label htmlFor="createEmployee">Employee *</Label>
                   <select
@@ -999,10 +1003,12 @@ export default function RegistrationsPage() {
 
         {/* FIXED EDIT MODAL */}
         {showFixedEditModal && fixedEditingRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Edit Fixed Shift Registration</h2>
-              <form onSubmit={handleFixedUpdate} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Edit Fixed Shift Registration</h2>
+              </div>
+              <form onSubmit={handleFixedUpdate} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label>Registration ID</Label>
                   <Input value={fixedEditingRegistration.registrationId} disabled />
@@ -1122,10 +1128,12 @@ export default function RegistrationsPage() {
 
         {/* FIXED DETAILS MODAL */}
         {showFixedDetailsModal && fixedDetailsRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
-              <div className="space-y-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Registration Details</h2>
+              </div>
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
                 <div>
                   <Label>Registration ID</Label>
                   <Input value={fixedDetailsRegistration.registrationId} disabled />

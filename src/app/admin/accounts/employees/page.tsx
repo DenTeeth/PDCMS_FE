@@ -376,39 +376,38 @@ export default function EmployeesPage() {
 
         {/* ==================== STATS ==================== */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Employees</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                </div>
+          {/* Total Employees */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Total Employees</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active</p>
-                  <p className="text-2xl font-bold">{stats.active}</p>
-                </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+          </div>
+
+          {/* Active */}
+          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-green-800 mb-2">Active</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-green-700" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <XCircle className="h-8 w-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Inactive</p>
-                  <p className="text-2xl font-bold">{stats.inactive}</p>
-                </div>
+              <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+            </div>
+          </div>
+
+          {/* Inactive */}
+          <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-red-800 mb-2">Inactive</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <XCircle className="h-6 w-6 text-red-700" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-3xl font-bold text-red-800">{stats.inactive}</p>
+            </div>
+          </div>
         </div>
 
         {/* ==================== SEARCH & FILTERS ==================== */}
@@ -547,8 +546,8 @@ export default function EmployeesPage() {
                       <p className="text-xs text-gray-500 mt-1">Code: {employee.employeeCode}</p>
                       <p className="text-xs text-gray-500">
                         Type: <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-orange-100 text-orange-800'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-orange-100 text-orange-800'
                           }`}>
                           {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
                         </span>
@@ -663,8 +662,8 @@ export default function EmployeesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-orange-100 text-orange-800'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-orange-100 text-orange-800'
                             }`}>
                             {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
                           </span>
@@ -768,8 +767,8 @@ export default function EmployeesPage() {
                             onClick={() => setPage(i)}
                             disabled={loading}
                             className={`h-9 w-9 p-0 ${i === page
-                                ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
-                                : 'hover:bg-gray-100'
+                              ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
+                              : 'hover:bg-gray-100'
                               }`}
                           >
                             {i + 1}
@@ -1145,11 +1144,11 @@ export default function EmployeesPage() {
         {/* Edit Employee Modal */}
         {showEditModal && editingEmployee && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
-              <CardHeader>
+            <Card className="w-full max-w-5xl max-h-[85vh] flex flex-col">
+              <CardHeader className="border-b flex-shrink-0">
                 <CardTitle>Edit Employee</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-y-auto flex-1 pt-6">
                 <form onSubmit={handleUpdateEmployee} className="space-y-6">
                   {/* Employee Info */}
                   <div className="mb-4 p-3 bg-muted/50 rounded-lg">

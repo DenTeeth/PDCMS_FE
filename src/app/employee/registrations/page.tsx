@@ -17,11 +17,11 @@ import { vi } from 'date-fns/locale';
 import Link from 'next/link';
 
 // Import types and services for Part-Time Registration
-import { 
-  ShiftRegistration, 
+import {
+  ShiftRegistration,
   CreateShiftRegistrationRequest,
   UpdateShiftRegistrationRequest,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { WorkShift } from '@/types/workShift';
 import { AvailableSlot } from '@/types/workSlot';
@@ -52,7 +52,7 @@ const DAY_LABELS: { [key: number]: string } = {
 const getDayOfWeekLabel = (day: DayOfWeek): string => {
   const dayMap = {
     [DayOfWeek.MONDAY]: 'T2',
-    [DayOfWeek.TUESDAY]: 'T3', 
+    [DayOfWeek.TUESDAY]: 'T3',
     [DayOfWeek.WEDNESDAY]: 'T4',
     [DayOfWeek.THURSDAY]: 'T5',
     [DayOfWeek.FRIDAY]: 'T6',
@@ -79,16 +79,16 @@ const getDayName = (day: DayOfWeek): string => {
 // ==================== MAIN COMPONENT ====================
 export default function EmployeeRegistrationsPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // Determine which tabs to show based on permissions and employee type
   const hasManagePermission = hasPermission(Permission.MANAGE_WORK_SLOTS);
   const isPartTimeFlex = user?.employmentType === 'PART_TIME_FLEX';
-  
+
   // Determine available tabs and default tab using useMemo
   const { availableTabs, defaultTab } = useMemo(() => {
     let tabs: Array<'part-time' | 'fixed'> = [];
     let defaultTabValue: 'part-time' | 'fixed' = 'part-time';
-    
+
     if (hasManagePermission) {
       // Condition 1: Has MANAGE_WORK_SLOTS → Show both tabs
       tabs = ['part-time', 'fixed'];
@@ -102,13 +102,13 @@ export default function EmployeeRegistrationsPage() {
       tabs = ['fixed'];
       defaultTabValue = 'fixed';
     }
-    
+
     return { availableTabs: tabs, defaultTab: defaultTabValue };
   }, [hasManagePermission, isPartTimeFlex]);
-  
+
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>(defaultTab);
-  
+
   // Reset active tab if current tab is not available
   useEffect(() => {
     if (!availableTabs.includes(activeTab)) {
@@ -142,7 +142,7 @@ export default function EmployeeRegistrationsPage() {
 
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingWorkShifts, setLoadingWorkShifts] = useState(false);
-  
+
   // Available slots for PART_TIME_FLEX employees
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
@@ -174,7 +174,7 @@ export default function EmployeeRegistrationsPage() {
         }
       }
     }
-    
+
     // If not in user object, try to decode from token
     if (user?.token) {
       try {
@@ -196,7 +196,7 @@ export default function EmployeeRegistrationsPage() {
         console.error('❌ [currentEmployeeId] Error extracting from token:', error);
       }
     }
-    
+
     // Return null if not found - backend will get from token
     return null;
   }, [user?.employeeId, user?.token]);
@@ -208,7 +208,7 @@ export default function EmployeeRegistrationsPage() {
       // So we can still fetch available slots even without currentEmployeeId
       console.log('📋 [useEffect] Fetching Part-Time Registrations...');
       fetchPartTimeRegistrations();
-      
+
       // Load available slots if user has VIEW_AVAILABLE_SLOTS permission (PART_TIME_FLEX)
       // Note: available slots API doesn't require employeeId in request
       if (isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) {
@@ -220,7 +220,7 @@ export default function EmployeeRegistrationsPage() {
           fetchWorkShifts();
         }
       }
-      
+
       if (!currentEmployeeId) {
         console.warn('⚠️ [useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
       } else {
@@ -237,14 +237,14 @@ export default function EmployeeRegistrationsPage() {
   const fetchPartTimeRegistrations = async () => {
     try {
       setPartTimeLoading(true);
-      
+
       const response = await shiftRegistrationService.getMyRegistrations({
         page: partTimeCurrentPage,
         size: 10,
         sortBy: 'effectiveFrom',
         sortDirection: 'DESC'
       });
-      
+
       // Handle both array and paginated responses
       // According to API spec: Employee view typically returns array directly
       if (Array.isArray(response)) {
@@ -271,7 +271,7 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkShifts(true);
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
-      
+
       if (!shiftsResponse || shiftsResponse.length === 0) {
         toast.warning('No work shifts available. Please contact admin to create work shifts.');
       }
@@ -288,25 +288,25 @@ export default function EmployeeRegistrationsPage() {
     try {
       console.log('🚀 [fetchAvailableSlots] Starting fetch...');
       setLoadingAvailableSlots(true);
-      
+
       console.log('📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots()...');
       const slots = await shiftRegistrationService.getAvailableSlots();
-      
+
       console.log('✅ [fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
         firstItem: Array.isArray(slots) && slots.length > 0 ? slots[0] : 'no items'
       });
-      
+
       const slotsArray = slots || [];
       console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
         count: slotsArray.length,
         slots: slotsArray
       });
-      
+
       setAvailableSlots(slotsArray);
-      
+
       if (!slots || slotsArray.length === 0) {
         console.warn('⚠️ [fetchAvailableSlots] No available slots found');
         toast.info('Hiện tại không có suất nào còn trống. Vui lòng thử lại sau.');
@@ -333,7 +333,7 @@ export default function EmployeeRegistrationsPage() {
   const fetchFixedRegistrations = async () => {
     try {
       setFixedLoading(true);
-      
+
       // Build params - only include employeeId if we have it
       // If not provided, backend will get employeeId from token
       const params: FixedRegistrationQueryParams = {};
@@ -350,12 +350,12 @@ export default function EmployeeRegistrationsPage() {
       setFixedRegistrations(response);
     } catch (error: any) {
       console.error('Failed to fetch fixed registrations:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Failed to fetch fixed shift registrations';
+      const errorMessage = error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch fixed shift registrations';
       toast.error(errorMessage);
-      
+
       if (error.errorCode === 'EMPLOYEE_ID_REQUIRED' || error.response?.status === 400) {
         toast.error('Employee ID is required. Please contact administrator.');
       } else if (error.response?.status === 403) {
@@ -369,7 +369,7 @@ export default function EmployeeRegistrationsPage() {
   // ==================== PART-TIME REGISTRATION HANDLERS ====================
   const handlePartTimeCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate based on employee type
     if (isPartTimeFlex) {
       // PART_TIME_FLEX: Need partTimeSlotId and effectiveFrom
@@ -399,7 +399,7 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('❌ Failed to create registration:', error);
-      
+
       // Handle specific error codes
       if (error.errorCode === 'INVALID_EMPLOYEE_TYPE' || error.response?.data?.errorCode === 'INVALID_EMPLOYEE_TYPE') {
         toast.error('Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt.');
@@ -427,13 +427,13 @@ export default function EmployeeRegistrationsPage() {
 
   const handlePartTimeUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!partTimeEditingRegistration) return;
 
     try {
       setPartTimeUpdating(true);
       await shiftRegistrationService.updateRegistration(
-        partTimeEditingRegistration.registrationId, 
+        partTimeEditingRegistration.registrationId,
         partTimeEditFormData
       );
       toast.success('Shift registration updated successfully');
@@ -504,12 +504,12 @@ export default function EmployeeRegistrationsPage() {
             <h1 className="text-3xl font-bold text-gray-900">My Shift Registrations</h1>
             <p className="text-gray-600 mt-1">Manage your part-time and fixed shift registrations</p>
           </div>
-          <Button 
+          <Button
             onClick={() => {
               if (activeTab === 'part-time') fetchPartTimeRegistrations();
               else fetchFixedRegistrations();
-            }} 
-            variant="outline" 
+            }}
+            variant="outline"
             className="flex items-center gap-2"
           >
             <RotateCcw className="h-4 w-4" />
@@ -536,345 +536,347 @@ export default function EmployeeRegistrationsPage() {
 
           {/* PART-TIME REGISTRATIONS TAB */}
           {availableTabs.includes('part-time') && (
-          <TabsContent value="part-time" className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Đăng Ký Ca Part-Time</h2>
-              <Button
-                onClick={() => {
-                  setShowPartTimeCreateModal(true);
-                  if (isPartTimeFlex) {
-                    fetchAvailableSlots();
-                  }
-                }}
-                disabled={loadingWorkShifts || loadingAvailableSlots}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Đăng Ký Ca Mới
-              </Button>
-            </div>
+            <TabsContent value="part-time" className="space-y-6">
+              {/* Header */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Đăng Ký Ca Part-Time</h2>
+                <Button
+                  onClick={() => {
+                    setShowPartTimeCreateModal(true);
+                    if (isPartTimeFlex) {
+                      fetchAvailableSlots();
+                    }
+                  }}
+                  disabled={loadingWorkShifts || loadingAvailableSlots}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Đăng Ký Ca Mới
+                </Button>
+              </div>
 
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Info className="h-4 w-4 text-blue-600" />
-                  <Badge variant="outline" className="text-xs">PART_TIME_FLEX</Badge>
-                  <span className="text-gray-700">
-                    Bạn có thể xem danh sách suất có sẵn và đăng ký suất phù hợp
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Info Card */}
+              <Card>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <Badge variant="outline" className="text-xs">PART_TIME_FLEX</Badge>
+                    <span className="text-gray-700">
+                      Bạn có thể xem danh sách suất có sẵn và đăng ký suất phù hợp
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Available Slots Section - Carousel */}
-            {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
+              {/* Available Slots Section - Carousel */}
+              {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Các Suất Làm Việc Có Sẵn ({availableSlots.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingAvailableSlots ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                        <span className="text-gray-600">Đang tải...</span>
+                      </div>
+                    ) : availableSlots.length === 0 ? (
+                      <div className="text-center py-12">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
+                        <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
+                      </div>
+                    ) : (
+                      <Carousel className="w-full" autoplay={false}>
+                        <CarouselContent>
+                          {availableSlots.map((slot) => (
+                            <CarouselItem key={slot.slotId} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                              <Card className="border">
+                                <CardContent className="p-4">
+                                  <div className="space-y-3">
+                                    <div>
+                                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                        {slot.shiftName}
+                                      </h3>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <Badge variant="outline">
+                                          <CalendarDays className="h-3 w-3 mr-1" />
+                                          {getDayOfWeekLabel(slot.dayOfWeek)}
+                                        </Badge>
+                                        <Badge
+                                          variant="outline"
+                                          className={
+                                            slot.remaining > 0
+                                              ? 'bg-green-50 text-green-700'
+                                              : 'bg-red-50 text-red-700'
+                                          }
+                                        >
+                                          <Users className="h-3 w-3 mr-1" />
+                                          {slot.remaining > 0 ? `Còn ${slot.remaining} chỗ` : 'Đã đầy'}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      onClick={() => {
+                                        setPartTimeCreateFormData({
+                                          partTimeSlotId: slot.slotId,
+                                          effectiveFrom: new Date().toISOString().split('T')[0]
+                                        });
+                                        setShowPartTimeCreateModal(true);
+                                      }}
+                                      className="w-full"
+                                      size="sm"
+                                      disabled={slot.remaining === 0}
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      {slot.remaining > 0 ? 'Đăng Ký' : 'Đã Đầy'}
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                      </Carousel>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* My Registrations Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Các Suất Làm Việc Có Sẵn ({availableSlots.length})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5" />
+                      Đăng Ký Của Tôi ({partTimeTotalElements})
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {loadingAvailableSlots ? (
+                  {partTimeLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
                       <span className="text-gray-600">Đang tải...</span>
                     </div>
-                  ) : availableSlots.length === 0 ? (
+                  ) : partTimeRegistrations.length === 0 ? (
                     <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
-                      <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
+                      <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-700 font-medium mb-2">Chưa có đăng ký ca làm việc</p>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Bạn chưa có đăng ký ca làm việc nào. Hãy tạo đăng ký mới để bắt đầu.
+                      </p>
+                      <Button
+                        onClick={() => setShowPartTimeCreateModal(true)}
+                        disabled={loadingWorkShifts}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tạo Đăng Ký Mới
+                      </Button>
                     </div>
                   ) : (
-                    <Carousel className="w-full" autoplay={false}>
-                      <CarouselContent>
-                        {availableSlots.map((slot) => (
-                          <CarouselItem key={slot.slotId} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                            <Card className="border">
-                              <CardContent className="p-4">
-                                <div className="space-y-3">
-                                  <div>
-                                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                      {slot.shiftName}
-                                    </h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="outline">
-                                        <CalendarDays className="h-3 w-3 mr-1" />
-                                        {getDayOfWeekLabel(slot.dayOfWeek)}
-                                      </Badge>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={
-                                          slot.remaining > 0 
-                                            ? 'bg-green-50 text-green-700' 
-                                            : 'bg-red-50 text-red-700'
-                                        }
-                                      >
-                                        <Users className="h-3 w-3 mr-1" />
-                                        {slot.remaining > 0 ? `Còn ${slot.remaining} chỗ` : 'Đã đầy'}
-                                      </Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {partTimeRegistrations.map((registration) => (
+                        <Card key={registration.registrationId}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                  {registration.shiftName}
+                                </h3>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline">
+                                    {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
+                                  </Badge>
+                                  <Badge className={registration.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                    <div className="flex items-center space-x-1">
+                                      {registration.isActive ? (
+                                        <CheckCircle className="h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="h-3 w-3" />
+                                      )}
+                                      <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
                                     </div>
-                                  </div>
-                                  <Button
-                                    onClick={() => {
-                                      setPartTimeCreateFormData({
-                                        partTimeSlotId: slot.slotId,
-                                        effectiveFrom: new Date().toISOString().split('T')[0]
-                                      });
-                                      setShowPartTimeCreateModal(true);
-                                    }}
-                                    className="w-full"
-                                    size="sm"
-                                    disabled={slot.remaining === 0}
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    {slot.remaining > 0 ? 'Đăng Ký' : 'Đã Đầy'}
-                                  </Button>
+                                  </Badge>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
+                                {registration.effectiveTo && (
+                                  <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handlePartTimeEdit(registration)}
+                                  className="flex-1"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Sửa
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setPartTimeDeletingRegistration(registration);
+                                    setShowPartTimeDeleteModal(true);
+                                  }}
+                                  className="flex-1 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Xóa
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {partTimeTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="text-sm text-gray-700">
+                        Hiển thị {partTimeCurrentPage * 10 + 1} - {Math.min((partTimeCurrentPage + 1) * 10, partTimeTotalElements)} trong {partTimeTotalElements} đăng ký
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPartTimeCurrentPage(prev => Math.max(0, prev - 1))}
+                          disabled={partTimeCurrentPage === 0}
+                        >
+                          Trước
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPartTimeCurrentPage(prev => Math.min(partTimeTotalPages - 1, prev + 1))}
+                          disabled={partTimeCurrentPage === partTimeTotalPages - 1}
+                        >
+                          Sau
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
-            )}
-
-            {/* My Registrations Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5" />
-                    Đăng Ký Của Tôi ({partTimeTotalElements})
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {partTimeLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
-                    <span className="text-gray-600">Đang tải...</span>
-                  </div>
-                ) : partTimeRegistrations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-gray-700 font-medium mb-2">Chưa có đăng ký ca làm việc</p>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Bạn chưa có đăng ký ca làm việc nào. Hãy tạo đăng ký mới để bắt đầu.
-                    </p>
-                    <Button
-                      onClick={() => setShowPartTimeCreateModal(true)}
-                      disabled={loadingWorkShifts}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tạo Đăng Ký Mới
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {partTimeRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-2">
-                                {registration.shiftName}
-                              </h3>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline">
-                                  {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
-                                </Badge>
-                                <Badge className={registration.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
-                                  </div>
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 pt-2 border-t">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePartTimeEdit(registration)}
-                                className="flex-1"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Sửa
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setPartTimeDeletingRegistration(registration);
-                                  setShowPartTimeDeleteModal(true);
-                                }}
-                                className="flex-1 text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Xóa
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {/* Pagination */}
-                {partTimeTotalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-gray-700">
-                      Hiển thị {partTimeCurrentPage * 10 + 1} - {Math.min((partTimeCurrentPage + 1) * 10, partTimeTotalElements)} trong {partTimeTotalElements} đăng ký
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPartTimeCurrentPage(prev => Math.max(0, prev - 1))}
-                        disabled={partTimeCurrentPage === 0}
-                      >
-                        Trước
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPartTimeCurrentPage(prev => Math.min(partTimeTotalPages - 1, prev + 1))}
-                        disabled={partTimeCurrentPage === partTimeTotalPages - 1}
-                      >
-                        Sau
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            </TabsContent>
           )}
 
           {/* FIXED REGISTRATIONS TAB */}
           {availableTabs.includes('fixed') && (
-          <TabsContent value="fixed" className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Lịch Làm Việc Cố Định</h2>
-            </div>
+            <TabsContent value="fixed" className="space-y-6">
+              {/* Header */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Lịch Làm Việc Cố Định</h2>
+              </div>
 
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Info className="h-4 w-4 text-green-600" />
-                  <Badge variant="outline" className="text-xs">Lịch Cố định</Badge>
-                  <span className="text-gray-700">
-                    Lịch làm việc được Admin/Manager gán. Liên hệ Admin nếu cần thay đổi.
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Info Card */}
+              <Card>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Info className="h-4 w-4 text-green-600" />
+                    <Badge variant="outline" className="text-xs">Lịch Cố định</Badge>
+                    <span className="text-gray-700">
+                      Lịch làm việc được Admin/Manager gán. Liên hệ Admin nếu cần thay đổi.
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Fixed Registrations Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
-                  Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {fixedLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
-                    <span className="text-gray-600">Đang tải...</span>
-                  </div>
-                ) : fixedRegistrations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
-                    <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {fixedRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-1">
-                                {registration.workShiftName}
-                              </h3>
-                              <p className="text-xs text-gray-500 mb-2">{registration.workShiftId}</p>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline">
-                                  {formatFixedDaysOfWeek(registration.daysOfWeek)}
-                                </Badge>
-                                <Badge variant={registration.isActive ? "default" : "secondary"}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
-                                  </div>
-                                </Badge>
+              {/* Fixed Registrations Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5" />
+                    Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {fixedLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
+                      <span className="text-gray-600">Đang tải...</span>
+                    </div>
+                  ) : fixedRegistrations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
+                      <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {fixedRegistrations.map((registration) => (
+                        <Card key={registration.registrationId}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 mb-1">
+                                  {registration.workShiftName}
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-2">{registration.workShiftId}</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline">
+                                    {formatFixedDaysOfWeek(registration.daysOfWeek)}
+                                  </Badge>
+                                  <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                    <div className="flex items-center space-x-1">
+                                      {registration.isActive ? (
+                                        <CheckCircle className="h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="h-3 w-3" />
+                                      )}
+                                      <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
+                                    </div>
+                                  </Badge>
+                                </div>
                               </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
+                                {registration.effectiveTo && (
+                                  <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
+                                )}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setFixedDetailsRegistration(registration);
+                                  setShowFixedDetailsModal(true);
+                                }}
+                                className="w-full"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Xem Chi Tiết
+                              </Button>
                             </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setFixedDetailsRegistration(registration);
-                                setShowFixedDetailsModal(true);
-                              }}
-                              className="w-full"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Xem Chi Tiết
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
         </Tabs>
 
         {/* PART-TIME CREATE MODAL */}
         {showPartTimeCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Đăng Ký Ca Làm Việc Mới</h2>
-              <form onSubmit={handlePartTimeCreate} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Đăng Ký Ca Làm Việc Mới</h2>
+              </div>
+              <form onSubmit={handlePartTimeCreate} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 {isPartTimeFlex ? (
                   <>
                     {/* PART_TIME_FLEX: Use available slots */}
@@ -964,10 +966,12 @@ export default function EmployeeRegistrationsPage() {
 
         {/* PART-TIME EDIT MODAL */}
         {showPartTimeEditModal && partTimeEditingRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Sửa Đăng Ký Ca Làm Việc</h2>
-              <form onSubmit={handlePartTimeUpdate} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Sửa Đăng Ký Ca Làm Việc</h2>
+              </div>
+              <form onSubmit={handlePartTimeUpdate} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
                   <Label>Thông tin đăng ký</Label>
                   <div className="text-sm text-gray-600 space-y-1 mt-1 p-3 border rounded-md bg-gray-50">
@@ -1057,10 +1061,12 @@ export default function EmployeeRegistrationsPage() {
 
         {/* FIXED DETAILS MODAL */}
         {showFixedDetailsModal && fixedDetailsRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
-              <div className="space-y-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4">
+                <h2 className="text-xl font-bold">Registration Details</h2>
+              </div>
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
                 <div>
                   <Label>Registration ID</Label>
                   <Input value={fixedDetailsRegistration.registrationId} disabled />

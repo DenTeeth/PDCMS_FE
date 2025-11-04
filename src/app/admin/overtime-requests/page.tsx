@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -82,7 +82,7 @@ export default function AdminOvertimeRequestsPage() {
       setLoading(true);
       const response = await OvertimeService.getOvertimeRequests({
         page: 0,
-        size: 50,
+        size: 20, // ⚡ Giảm từ 50 → 20
         sort: 'createdAt,desc',
       });
       setOvertimeRequests(response.content);
@@ -97,7 +97,7 @@ export default function AdminOvertimeRequestsPage() {
     try {
       const response = await employeeService.getEmployees({
         page: 0,
-        size: 100,
+        size: 100, // ⚡ Tăng lại lên 100 để đảm bảo load đủ nhân viên
         isActive: true,
       });
       setEmployees(response.content);
@@ -183,35 +183,42 @@ export default function AdminOvertimeRequestsPage() {
     setShowStatusModal(true);
   };
 
-  const filteredRequests = overtimeRequests.filter((request) => {
-    const matchesSearch =
-      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
+  // ⚡ Memoize filtered requests
+  const filteredRequests = useMemo(() => {
+    return overtimeRequests.filter((request) => {
+      const matchesSearch =
+        request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
+      const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    const matchesEmployee = employeeFilter === 'ALL' ||
-      request.employeeId?.toString() === employeeFilter;
+      const matchesEmployee = employeeFilter === 'ALL' ||
+        request.employeeId?.toString() === employeeFilter;
 
-    const requestDate = new Date(request.workDate);
-    const matchesDateFrom = !dateFrom || requestDate >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || requestDate <= new Date(dateTo);
+      const requestDate = new Date(request.workDate);
+      const matchesDateFrom = !dateFrom || requestDate >= new Date(dateFrom);
+      const matchesDateTo = !dateTo || requestDate <= new Date(dateTo);
 
-    return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
-  });
+      return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
+    });
+  }, [overtimeRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
-  const canApprove = user?.permissions?.includes('APPROVE_OT');
-  const canReject = user?.permissions?.includes('REJECT_OT');
-  const canCancelPending = user?.permissions?.includes('CANCEL_OT_PENDING');
-  const canCancelOwn = user?.permissions?.includes('CANCEL_OT_OWN');
-  const canCreate = user?.permissions?.includes('CREATE_OT') || user?.permissions?.includes('CREATE_OVERTIME');
+  // ⚡ Memoize permission checks
+  const canApprove = useMemo(() => user?.permissions?.includes('APPROVE_OT'), [user?.permissions]);
+  const canReject = useMemo(() => user?.permissions?.includes('REJECT_OT'), [user?.permissions]);
+  const canCancelPending = useMemo(() => user?.permissions?.includes('CANCEL_OT_PENDING'), [user?.permissions]);
+  const canCancelOwn = useMemo(() => user?.permissions?.includes('CANCEL_OT_OWN'), [user?.permissions]);
+  const canCreate = useMemo(() =>
+    user?.permissions?.includes('CREATE_OT') || user?.permissions?.includes('CREATE_OVERTIME'),
+    [user?.permissions]
+  );
 
-  // Helper function to check if user can cancel a specific request
-  const canCancelRequest = (request: OvertimeRequest) => {
+  // ⚡ useCallback helper function
+  const canCancelRequest = useCallback((request: OvertimeRequest) => {
     if (canCancelPending) return true;
     if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
     return false;
-  };
+  }, [canCancelPending, canCancelOwn, user?.employeeId]);
 
   if (loading) {
     return (
@@ -242,61 +249,57 @@ export default function AdminOvertimeRequestsPage() {
         )}
       </div>
 
-      {/* Stats - Dạng div thay vì Card */}
+      {/* Stats - Icon trước số */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Tổng yêu cầu</p>
-              <p className="text-3xl font-bold text-gray-900">{overtimeRequests.length}</p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+        {/* Tổng yêu cầu */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng yêu cầu</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
             </div>
+            <p className="text-3xl font-bold text-gray-900">{overtimeRequests.length}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Chờ duyệt</p>
-              <p className="text-3xl font-bold text-orange-600">
-                {overtimeRequests.filter(r => r.status === OvertimeStatus.PENDING).length}
-              </p>
+        {/* Chờ duyệt */}
+        <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-yellow-800 mb-2">Chờ duyệt</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faClock} className="text-yellow-700 text-xl" />
             </div>
-            <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faClock} className="text-orange-600 text-xl" />
-            </div>
+            <p className="text-3xl font-bold text-yellow-800">
+              {overtimeRequests.filter(r => r.status === OvertimeStatus.PENDING).length}
+            </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Đã duyệt</p>
-              <p className="text-3xl font-bold text-green-600">
-                {overtimeRequests.filter(r => r.status === OvertimeStatus.APPROVED).length}
-              </p>
+        {/* Đã duyệt */}
+        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-green-800 mb-2">Đã duyệt</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faCheck} className="text-green-700 text-xl" />
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xl" />
-            </div>
+            <p className="text-3xl font-bold text-green-800">
+              {overtimeRequests.filter(r => r.status === OvertimeStatus.APPROVED).length}
+            </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Từ chối/Hủy</p>
-              <p className="text-3xl font-bold text-red-600">
-                {overtimeRequests.filter(r =>
-                  r.status === OvertimeStatus.REJECTED || r.status === OvertimeStatus.CANCELLED
-                ).length}
-              </p>
+        {/* Từ chối/Hủy */}
+        <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-red-800 mb-2">Từ chối/Hủy</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faTimes} className="text-red-700 text-xl" />
             </div>
-            <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xl" />
-            </div>
+            <p className="text-3xl font-bold text-red-800">
+              {overtimeRequests.filter(r =>
+                r.status === OvertimeStatus.REJECTED || r.status === OvertimeStatus.CANCELLED
+              ).length}
+            </p>
           </div>
         </div>
       </div>
@@ -400,7 +403,7 @@ export default function AdminOvertimeRequestsPage() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <FontAwesomeIcon icon={faUser} className="text-gray-400" />
-                          <span>{request.employeeName}</span>
+                          <span>{request.employeeName || 'N/A'}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -484,7 +487,7 @@ export default function AdminOvertimeRequestsPage() {
             <CardContent>
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
                 <div>
-                  <Label htmlFor="employeeId">Nhân viên</Label>
+                  <Label htmlFor="employeeId">Nhân viên <span className="text-red-500">*</span></Label>
                   <Select
                     label="Chọn nhân viên"
                     value={formData.employeeId ? formData.employeeId.toString() : ''}
@@ -499,18 +502,19 @@ export default function AdminOvertimeRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="workDate">Ngày làm việc</Label>
+                  <Label htmlFor="workDate">Ngày làm việc <span className="text-red-500">*</span></Label>
                   <Input
                     id="workDate"
                     type="date"
                     value={formData.workDate}
                     onChange={(e) => setFormData({ ...formData, workDate: e.target.value })}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="workShiftId">Ca làm việc</Label>
+                  <Label htmlFor="workShiftId">Ca làm việc <span className="text-red-500">*</span></Label>
                   <Select
                     label="Chọn ca làm việc"
                     value={formData.workShiftId}
@@ -525,7 +529,7 @@ export default function AdminOvertimeRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reason">Lý do</Label>
+                  <Label htmlFor="reason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="reason"
                     value={formData.reason}
@@ -535,26 +539,23 @@ export default function AdminOvertimeRequestsPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">
-                    Tạo yêu cầu
-                  </Button>
+                <div className="flex gap-3 pt-4 justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowCreateForm(false)}
-                    className="flex-1"
                   >
                     Hủy
+                  </Button>
+                  <Button type="submit">
+                    Tạo yêu cầu
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* Status Update Modal */}
+      )}      {/* Status Update Modal */}
       {showStatusModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
@@ -574,7 +575,7 @@ export default function AdminOvertimeRequestsPage() {
                 {(statusAction === 'reject' || statusAction === 'cancel') && (
                   <div>
                     <Label htmlFor="reason">
-                      {statusAction === 'reject' ? 'Lý do từ chối' : 'Lý do hủy'} *
+                      {statusAction === 'reject' ? 'Lý do từ chối' : 'Lý do hủy'} <span className="text-red-500">*</span>
                     </Label>
                     <Textarea
                       id="reason"
@@ -586,23 +587,21 @@ export default function AdminOvertimeRequestsPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    onClick={handleStatusUpdate}
-                    disabled={statusAction !== 'approve' && !statusReason.trim()}
-                    className="flex-1"
-                  >
-                    {statusAction === 'approve' && 'Duyệt'}
-                    {statusAction === 'reject' && 'Từ chối'}
-                    {statusAction === 'cancel' && 'Hủy'}
-                  </Button>
+                <div className="flex gap-3 pt-4 justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowStatusModal(false)}
-                    className="flex-1"
                   >
                     Hủy
+                  </Button>
+                  <Button
+                    onClick={handleStatusUpdate}
+                    disabled={statusAction !== 'approve' && !statusReason.trim()}
+                  >
+                    {statusAction === 'approve' && 'Duyệt'}
+                    {statusAction === 'reject' && 'Từ chối'}
+                    {statusAction === 'cancel' && 'Hủy'}
                   </Button>
                 </div>
               </div>
