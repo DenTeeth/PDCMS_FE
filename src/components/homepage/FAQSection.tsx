@@ -3,38 +3,12 @@
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface FAQItem {
   question: string;
   answer: string;
 }
-
-const faqs: FAQItem[] = [
-  {
-    question: "How often should I visit the dentist?",
-    answer: "We recommend visiting the dentist every 6 months for regular checkups and cleanings. However, some patients may need more frequent visits depending on their oral health needs.",
-  },
-  {
-    question: "What should I do in a dental emergency?",
-    answer: "Contact our clinic immediately. We offer emergency dental services and will do our best to see you as soon as possible. For severe bleeding or trauma, go to the nearest emergency room.",
-  },
-  {
-    question: "Do you accept dental insurance?",
-    answer: "Yes, we accept most major dental insurance plans. Our team will work with your insurance provider to maximize your benefits. We also offer flexible payment plans for those without insurance.",
-  },
-  {
-    question: "Are your treatments painful?",
-    answer: "We use modern techniques and anesthesia to ensure your comfort during all procedures. Most patients report minimal to no discomfort. We prioritize your comfort and will adjust our approach based on your needs.",
-  },
-  {
-    question: "How long does a typical appointment take?",
-    answer: "A routine checkup and cleaning usually takes 45-60 minutes. More complex procedures may require longer appointments. We'll provide you with an estimated time when you schedule your visit.",
-  },
-  {
-    question: "Do you offer teeth whitening services?",
-    answer: "Yes, we offer both in-office and take-home teeth whitening options. Our cosmetic dentistry team will help you choose the best whitening solution for your smile goals.",
-  },
-];
 
 export default function FAQSection() {
   const [ref, inView] = useInView({
@@ -43,6 +17,13 @@ export default function FAQSection() {
   });
 
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  const t = useTranslations('FAQ');
+
+  const faqs: FAQItem[] = [0, 1, 2, 3, 4, 5].map(i => ({
+    question: t(`questions.${i}.question`),
+    answer: t(`questions.${i}.answer`),
+  }));
 
   const toggleFAQ = (index: number) => {
     setExpandedIndex(expandedIndex === index ? null : index);
@@ -58,10 +39,10 @@ export default function FAQSection() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Frequently Asked Questions
+            {t('title')}
           </h2>
           <p className="text-xl text-muted-foreground">
-            Find answers to common questions about our dental services
+            {t('subtitle')}
           </p>
         </motion.div>
 
