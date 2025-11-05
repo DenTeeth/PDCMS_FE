@@ -1,0 +1,149 @@
+'use client';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { StorageTransaction, TransactionType, WarehouseType } from '@/types/warehouse';
+import { FileText, Calendar, User, Package } from 'lucide-react';
+
+interface TransactionDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transaction: StorageTransaction | null;
+}
+
+export default function TransactionDetailModal({
+  isOpen,
+  onClose,
+  transaction,
+}: TransactionDetailModalProps) {
+  if (!transaction) return null;
+
+  const isInTransaction = transaction.type === TransactionType.IN;
+  const isColdStorage = transaction.warehouseType === WarehouseType.COLD;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Chi tiết {isInTransaction ? 'phiếu nhập' : 'phiếu xuất'}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Header Info */}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Mã phiếu</p>
+              <p className="font-semibold text-lg">{transaction.code}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Loại kho</p>
+              <Badge variant={isColdStorage ? 'default' : 'secondary'}>
+                {isColdStorage ? 'Kho lạnh' : 'Kho thường'}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {isInTransaction ? 'Ngày nhập' : 'Ngày xuất'}
+              </p>
+              <p className="font-medium">
+                {new Date(transaction.transactionDate).toLocaleDateString('vi-VN')}
+              </p>
+            </div>
+            {isInTransaction && transaction.supplierName && (
+              <div>
+                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                  <User className="h-4 w-4" />
+                  Nhà cung cấp
+                </p>
+                <p className="font-medium">{transaction.supplierName}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Items Table */}
+          <div>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Danh sách vật tư
+            </h3>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-600">STT</th>
+                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-600">Tên vật tư</th>
+                    <th className="text-right py-2 px-4 text-sm font-medium text-gray-600">Số lượng</th>
+                    <th className="text-right py-2 px-4 text-sm font-medium text-gray-600">Đơn giá</th>
+                    {isInTransaction && isColdStorage && (
+                      <th className="text-left py-2 px-4 text-sm font-medium text-gray-600">Hạn SD</th>
+                    )}
+                    <th className="text-right py-2 px-4 text-sm font-medium text-gray-600">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transaction.items.map((item, index) => (
+                    <tr key={index} className="border-t hover:bg-gray-50">
+                      <td className="py-2 px-4 text-sm">{index + 1}</td>
+                      <td className="py-2 px-4 text-sm font-medium">{item.itemName}</td>
+                      <td className="py-2 px-4 text-sm text-right">{item.quantity}</td>
+                      <td className="py-2 px-4 text-sm text-right">
+                        {item.unitPrice.toLocaleString('vi-VN')} đ
+                      </td>
+                      {isInTransaction && isColdStorage && (
+                        <td className="py-2 px-4 text-sm">
+                          {item.expiryDate
+                            ? new Date(item.expiryDate).toLocaleDateString('vi-VN')
+                            : '-'}
+                        </td>
+                      )}
+                      <td className="py-2 px-4 text-sm text-right font-medium">
+                        {(item.totalPrice || 0).toLocaleString('vi-VN')} đ
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-50 border-t-2">
+                  <tr>
+                    <td
+                      colSpan={isInTransaction && isColdStorage ? 5 : 4}
+                      className="py-3 px-4 text-right font-semibold"
+                    >
+                      Tổng chi phí:
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold text-lg text-blue-600">
+                      {transaction.totalCost.toLocaleString('vi-VN')} đ
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Notes */}
+          {transaction.notes && (
+            <div>
+              <h3 className="font-semibold mb-2">Ghi chú</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{transaction.notes}</p>
+            </div>
+          )}
+
+          {/* Footer Info */}
+          <div className="border-t pt-4 text-sm text-gray-500">
+            <p>Người tạo: {transaction.createdBy}</p>
+            <p>Ngày tạo: {new Date(transaction.createdAt).toLocaleString('vi-VN')}</p>
+            <p>Cập nhật lần cuối: {new Date(transaction.updatedAt).toLocaleString('vi-VN')}</p>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button onClick={onClose}>Đóng</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
