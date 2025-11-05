@@ -127,7 +127,7 @@ export default function AdminContactsList() {
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
                         </div>
-                    </div>
+            </div>
                 </CardContent>
             </Card>
 
@@ -137,7 +137,7 @@ export default function AdminContactsList() {
                     <CardTitle className="text-lg sm:text-xl">Danh Sách Liên Hệ</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? (
+            {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-[#8b5fbf]" />
                         </div>
@@ -171,8 +171,8 @@ export default function AdminContactsList() {
                                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Thao Tác
                                             </th>
-                                        </tr>
-                                    </thead>
+                        </tr>
+                    </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {data.items.map((contact: any) => (
                                             <tr key={contact.id} className="hover:bg-gray-50 transition-colors">
@@ -235,9 +235,9 @@ export default function AdminContactsList() {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        ))}
+                    </tbody>
+                </table>
                             </div>
 
                             {/* Mobile Cards - Visible on mobile only */}
