@@ -191,6 +191,28 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
+      name: 'Warehouse Management',
+      icon: faWarehouse,
+      hasSubmenu: true,
+      submenu: [
+        {
+          name: 'Storage In/Out',
+          href: '/admin/warehouse/storage-in-out',
+          icon: faClipboard,
+        },
+        {
+          name: 'Inventory',
+          href: '/admin/warehouse/inventory',
+          icon: faListAlt,
+        },
+        {
+          name: 'Suppliers',
+          href: '/admin/warehouse/suppliers',
+          icon: faUsers,
+        },
+      ],
+    },
+    {
       name: 'Customer Contacts',
       href: '/admin/customer-contacts',
       icon: faPhone,
