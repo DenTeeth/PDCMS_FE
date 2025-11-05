@@ -3,19 +3,13 @@
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Stat {
   value: number;
   label: string;
   suffix: string;
 }
-
-const stats: Stat[] = [
-  { value: 10000, label: "Happy Patients", suffix: "+" },
-  { value: 2500, label: "Teeth Whitened", suffix: "+" },
-  { value: 800, label: "Dental Implants", suffix: "+" },
-  { value: 15, label: "Years of Experience", suffix: "+" },
-];
 
 function CountUpAnimation({ end, duration = 2000 }: { end: number; duration?: number }) {
   const [count, setCount] = useState(0);
@@ -44,6 +38,15 @@ export default function StatsSection() {
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  const t = useTranslations('Stats');
+
+  const stats: Stat[] = [
+    { value: 10000, label: t('patients'), suffix: "+" },
+    { value: 15, label: t('experience'), suffix: "+" },
+    { value: 50, label: t('doctors'), suffix: "+" },
+    { value: 5, label: t('rating'), suffix: "★" },
+  ];
 
   return (
     <section className="py-16 bg-gradient-to-r from-primary to-secondary" ref={ref}>
