@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { memo } from "react";
+import { useTranslations } from 'next-intl';
 import Hero from "@/img/Hero.jpg";
 
 const HeroSection = memo(function HeroSection() {
@@ -12,6 +13,8 @@ const HeroSection = memo(function HeroSection() {
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  const t = useTranslations('Hero');
 
   return (
     <section className="relative min-h-screen flex items-center py-20 lg:py-32 overflow-hidden">
@@ -43,10 +46,10 @@ const HeroSection = memo(function HeroSection() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight"
             >
-              Elevating Smiles with
+              {t('title')}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary">
-                Expert Care and a Gentle Touch
+                {t('subtitle')}
               </span>
             </motion.h1>
 
@@ -69,13 +72,13 @@ const HeroSection = memo(function HeroSection() {
                 href="#appointment"
                 className="inline-block bg-primary text-primary-foreground px-10 py-4 rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl font-semibold text-base transform hover:scale-105"
               >
-                Book Appointment
+                {t('cta')}
               </Link>
               <Link
                 href="#services"
                 className="inline-block bg-white/90 backdrop-blur-sm border-2 border-primary/30 text-foreground px-10 py-4 rounded-lg hover:bg-white transition-all font-semibold text-base transform hover:scale-105 shadow-lg"
               >
-                Our Services
+                {t('secondaryCta')}
               </Link>
             </motion.div>
           </motion.div>

@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Calendar, 
-  Clock, 
-  Search, 
+import {
+  Calendar,
+  Clock,
+  Search,
   Filter,
   ChevronLeft,
   ChevronRight,
@@ -25,6 +25,17 @@ import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { EmployeeShift, ShiftStatus, ShiftSource } from '@/types/employeeShift';
+
+// Helper function to format time to HH:mm (remove seconds)
+const formatTime = (time: string | null | undefined): string => {
+  if (!time) return '';
+  // If time is in format HH:mm:ss, return HH:mm
+  const parts = time.split(':');
+  if (parts.length >= 2) {
+    return `${parts[0]}:${parts[1]}`;
+  }
+  return time;
+};
 
 interface EmployeeShiftsFormData {
   workDate?: string;
@@ -170,11 +181,11 @@ export default function AdminEmployeeShiftsPage() {
 
   // Filter shifts based on search
   const filteredShifts = shifts.filter(shift => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       shift.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shift.workShift.shiftName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shift.notes?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesSearch;
   });
 
@@ -204,15 +215,15 @@ export default function AdminEmployeeShiftsPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+        {/* Filters - Bỏ Card */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <Filter className="h-5 w-5" />
               <span>Bộ lọc</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               {/* Search */}
               <div className="relative md:col-span-2">
@@ -295,18 +306,18 @@ export default function AdminEmployeeShiftsPage() {
                 </select>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Shifts List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+        {/* Shifts List - Bỏ Card */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
               <Users className="h-5 w-5" />
               <span>Danh sách ca làm việc ({filteredShifts.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="p-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -321,85 +332,84 @@ export default function AdminEmployeeShiftsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredShifts.map((shift) => (
-                  <div
-                    key={shift.shiftId}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {shift.employeeName}
-                          </h3>
-                          <span className="text-gray-500">-</span>
-                          <span className="text-lg font-medium text-gray-700">
-                            {shift.workShift.shiftName}
-                          </span>
-                          <Badge className={getStatusBadgeColor(shift.status)}>
-                            <div className="flex items-center space-x-1">
-                              {getStatusIcon(shift.status)}
-                              <span>{shift.status}</span>
-                            </div>
-                          </Badge>
-                          <Badge className={getSourceBadgeColor(shift.source)}>
-                            {shift.source}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {format(parseISO(shift.workDate), 'dd/MM/yyyy', { locale: vi })} 
-                              ({format(parseISO(shift.workDate), 'EEEE', { locale: vi })})
-                            </span>
+              <div className="space-y-4">{filteredShifts.map((shift) => (
+                <div
+                  key={shift.shiftId}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {shift.employeeName}
+                        </h3>
+                        <span className="text-gray-500">-</span>
+                        <span className="text-lg font-medium text-gray-700">
+                          {shift.workShift.shiftName}
+                        </span>
+                        <Badge className={getStatusBadgeColor(shift.status)}>
+                          <div className="flex items-center space-x-1">
+                            {getStatusIcon(shift.status)}
+                            <span>{shift.status}</span>
                           </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              {shift.workShift.startTime} - {shift.workShift.endTime}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">ID:</span>
-                            <span className="font-mono text-xs">{shift.shiftId}</span>
-                          </div>
-
-                          {shift.registrationId && (
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">Đăng ký:</span>
-                              <span className="font-mono text-xs">{shift.registrationId}</span>
-                            </div>
-                          )}
-                          
-                          {shift.notes && (
-                            <div className="md:col-span-4">
-                              <span className="font-medium">Ghi chú:</span> {shift.notes}
-                            </div>
-                          )}
-                        </div>
+                        </Badge>
+                        <Badge className={getSourceBadgeColor(shift.source)}>
+                          {shift.source}
+                        </Badge>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // TODO: Implement view details
-                            console.log('View shift details:', shift.shiftId);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                          Chi tiết
-                        </Button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            {format(parseISO(shift.workDate), 'dd/MM/yyyy', { locale: vi })}
+                            ({format(parseISO(shift.workDate), 'EEEE', { locale: vi })})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>
+                            {formatTime(shift.workShift.startTime)} - {formatTime(shift.workShift.endTime)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">ID:</span>
+                          <span className="font-mono text-xs">{shift.shiftId}</span>
+                        </div>
+
+                        {shift.registrationId && (
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Đăng ký:</span>
+                            <span className="font-mono text-xs">{shift.registrationId}</span>
+                          </div>
+                        )}
+
+                        {shift.notes && (
+                          <div className="md:col-span-4">
+                            <span className="font-medium">Ghi chú:</span> {shift.notes}
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // TODO: Implement view details
+                          console.log('View shift details:', shift.shiftId);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                        Chi tiết
+                      </Button>
+                    </div>
                   </div>
-                ))}
+                </div>
+              ))}
               </div>
             )}
 
@@ -431,8 +441,8 @@ export default function AdminEmployeeShiftsPage() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );

@@ -37,7 +37,7 @@ import { toast } from 'sonner';
 export default function AdminShiftCalendarPage() {
   const { user } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
-  
+
   // State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
@@ -45,8 +45,16 @@ export default function AdminShiftCalendarPage() {
   const [workShifts, setWorkShifts] = useState<WorkShiftTemplate[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasViewedCalendar, setHasViewedCalendar] = useState(false); // Track if user has clicked "Xem lịch"
   const calendarRef = useRef<FullCalendar>(null);
+  
+  // Calendar filter state (separate from currentDate to avoid auto-loading)
+  const [calendarFilter, setCalendarFilter] = useState({
+    selectedMonth: new Date().getMonth(),
+    selectedYear: new Date().getFullYear(),
+    selectedEmployeeForCalendar: null as number | null,
+  });
 
   // Summary state
   const [summaryData, setSummaryData] = useState<ShiftSummaryResponse | null>(null);
@@ -56,7 +64,7 @@ export default function AdminShiftCalendarPage() {
     startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
   });
-  
+
   // Modal states
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -64,7 +72,7 @@ export default function AdminShiftCalendarPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState<EmployeeShift | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  
+
   // Form states
   const [createForm, setCreateForm] = useState({
     employee_id: '',
@@ -72,19 +80,19 @@ export default function AdminShiftCalendarPage() {
     work_shift_id: '',
     notes: '',
   });
-  
+
   const [updateForm, setUpdateForm] = useState({
     status: '',
     notes: '',
   });
-  
+
   // Permissions - Admin luôn có quyền VIEW_SHIFTS_ALL
   const canViewAll = user?.permissions?.includes('VIEW_SHIFTS_ALL') || false;
   const canCreate = user?.permissions?.includes('CREATE_SHIFTS') || false;
   const canUpdate = user?.permissions?.includes('UPDATE_SHIFTS') || false;
   const canDelete = user?.permissions?.includes('DELETE_SHIFTS') || false;
   const canViewSummary = user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') || false;
-  
+
   // Debug permissions
   console.log('Admin permissions:', user?.permissions);
   console.log('Can view all:', canViewAll);
@@ -105,72 +113,75 @@ export default function AdminShiftCalendarPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (currentDate) {
-      console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
-      loadShifts();
-    }
-  }, [currentDate, selectedEmployee]);
+  // Removed auto-load on filter change - only load when user clicks "Xem lịch"
+  // useEffect(() => {
+  //   if (currentDate) {
+  //     console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
+  //     loadShifts();
+  //   }
+  // }, [currentDate, selectedEmployee]);
 
   // Handle FullCalendar view changes
   const handleDatesSet = (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
     const newDate = new Date(dateInfo.start);
-    
+
     // Update currentDate to keep title in sync with calendar
     setCurrentDate(prevDate => {
       const prevMonth = prevDate.getMonth();
       const prevYear = prevDate.getFullYear();
       const newMonth = newDate.getMonth();
       const newYear = newDate.getFullYear();
-      
+
       // Only update if month/year actually changed to avoid unnecessary re-renders
       if (prevMonth !== newMonth || prevYear !== newYear) {
         console.log('Month/Year changed from', prevMonth + 1, prevYear, 'to', newMonth + 1, newYear);
         return newDate;
       }
-      
+
       return prevDate;
     });
   };
 
   const loadData = async () => {
     try {
-      setLoading(true);
-      
       // Load work shifts
       const workShiftsData = await workShiftService.getAll();
       setWorkShifts(workShiftsData);
-      
+
       // Load employees (Admin luôn có quyền xem tất cả)
       const employeeService = new EmployeeService();
       const employeesResponse = await employeeService.getEmployees({});
       setEmployees(employeesResponse.content || []);
-      
-      // Load shifts
-      await loadShifts();
+
+      // Don't auto-load shifts - wait for user to click "Xem lịch"
     } catch (error: any) {
       handleError(error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const loadShifts = async () => {
     try {
-      const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
+      setLoading(true);
+      
+      // Use calendarFilter instead of currentDate/selectedEmployee
+      const filterDate = new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1);
+      const startDate = format(startOfMonth(filterDate), 'yyyy-MM-dd');
+      const endDate = format(endOfMonth(filterDate), 'yyyy-MM-dd');
 
       const shiftsData = await EmployeeShiftService.getShifts({
         start_date: startDate,
         end_date: endDate,
-        employee_id: selectedEmployee || undefined,
+        employee_id: calendarFilter.selectedEmployeeForCalendar || undefined,
       });
 
       setShifts(shiftsData);
+      setHasViewedCalendar(true); // Mark as viewed
     } catch (error: any) {
       console.error('Error loading shifts:', error);
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -213,11 +224,11 @@ export default function AdminShiftCalendarPage() {
     return shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
       const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
-      
+
       const title = `${employee?.fullName || 'N/A'} - ${workShift?.shiftName || shift.workShiftId}`;
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
       const end = `${shift.workDate}T${workShift?.endTime || '17:00:00'}`;
-      
+
       return {
         id: shift.employeeShiftId,
         title,
@@ -247,7 +258,7 @@ export default function AdminShiftCalendarPage() {
       setDetailLoading(true);
       const shiftId = clickInfo.event.id;
       console.log('Event clicked:', shiftId);
-      
+
       // Find shift in current data first
       const existingShift = shifts.find(shift => shift.employeeShiftId === shiftId);
       if (existingShift) {
@@ -256,7 +267,7 @@ export default function AdminShiftCalendarPage() {
         setDetailLoading(false);
         return;
       }
-      
+
       // If not found, fetch from API
       const shiftDetail = await EmployeeShiftService.getShiftById(shiftId);
       setSelectedShift(shiftDetail);
@@ -273,7 +284,7 @@ export default function AdminShiftCalendarPage() {
   const handleCreateShift = async () => {
     try {
       console.log('Creating shift:', createForm);
-      
+
       const shiftData = {
         employee_id: parseInt(createForm.employee_id),
         work_date: createForm.work_date,
@@ -282,7 +293,7 @@ export default function AdminShiftCalendarPage() {
       };
 
       await EmployeeShiftService.createShift(shiftData);
-      
+
       // Reset form
       setCreateForm({
         employee_id: '',
@@ -290,17 +301,17 @@ export default function AdminShiftCalendarPage() {
         work_shift_id: '',
         notes: '',
       });
-      
+
       // Close modal
       setShowCreateModal(false);
-      
+
       // Reload shifts
       await loadShifts();
-      
+
       // Show success message
       console.log('✅ Shift created successfully');
       toast.success("Tạo ca làm việc thành công!");
-      
+
     } catch (error: any) {
       console.error('Error creating shift:', error);
       handleCreateError(error);
@@ -311,7 +322,7 @@ export default function AdminShiftCalendarPage() {
   const handleCreateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'HOLIDAY_CONFLICT':
         toast.error("Không thể tạo ca làm vào ngày nghỉ lễ. Vui lòng sử dụng quy trình OT.");
@@ -339,34 +350,34 @@ export default function AdminShiftCalendarPage() {
   // Handle update shift
   const handleUpdateShift = async () => {
     if (!selectedShift) return;
-    
+
     try {
       console.log('Updating shift:', selectedShift.employeeShiftId, updateForm);
-      
+
       const updateData = {
         status: updateForm.status || undefined,
         notes: updateForm.notes || undefined,
       };
 
       await EmployeeShiftService.updateShift(selectedShift.employeeShiftId, updateData);
-      
+
       // Reset form
       setUpdateForm({
         status: '',
         notes: '',
       });
-      
+
       // Close modals
       setShowUpdateModal(false);
       setShowDetailModal(false);
-      
+
       // Reload shifts
       await loadShifts();
-      
+
       // Show success message
       console.log('✅ Shift updated successfully');
       toast.success("Cập nhật ca làm việc thành công!");
-      
+
     } catch (error: any) {
       console.error('Error updating shift:', error);
       handleUpdateError(error);
@@ -377,7 +388,7 @@ export default function AdminShiftCalendarPage() {
   const handleUpdateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'SHIFT_FINALIZED':
         toast.error("Không thể cập nhật ca làm đã hoàn thành/đã hủy.");
@@ -399,23 +410,23 @@ export default function AdminShiftCalendarPage() {
   // Handle delete shift
   const handleDeleteShift = async () => {
     if (!selectedShift) return;
-    
+
     try {
       console.log('Deleting shift:', selectedShift.employeeShiftId);
-      
+
       await EmployeeShiftService.deleteShift(selectedShift.employeeShiftId);
-      
+
       // Close modals
       setShowDeleteModal(false);
       setShowDetailModal(false);
-      
+
       // Reload shifts
       await loadShifts();
-      
+
       // Show success message
       console.log('✅ Shift deleted successfully');
       toast.success("Hủy ca làm việc thành công!");
-      
+
     } catch (error: any) {
       console.error('Error deleting shift:', error);
       handleDeleteError(error);
@@ -426,7 +437,7 @@ export default function AdminShiftCalendarPage() {
   const handleDeleteError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'CANNOT_CANCEL_BATCH':
         toast.error("Không thể hủy ca làm mặc định của nhân viên Full-time. Vui lòng tạo yêu cầu nghỉ phép.");
@@ -450,7 +461,7 @@ export default function AdminShiftCalendarPage() {
   }
 
   return (
-    <ProtectedRoute 
+    <ProtectedRoute
       requiredBaseRole="admin"
       requiredPermissions={['VIEW_SHIFTS_ALL']}
       requireAll={false}
@@ -469,10 +480,12 @@ export default function AdminShiftCalendarPage() {
                 Tạo ca làm mới
               </Button>
             )}
-            <Button onClick={loadShifts} variant="outline" disabled={loading}>
-              <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Đang tải...' : 'Tải lại'}
-            </Button>
+            {hasViewedCalendar && (
+              <Button onClick={loadShifts} variant="outline" disabled={loading}>
+                <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Đang tải...' : 'Làm mới'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -552,11 +565,11 @@ export default function AdminShiftCalendarPage() {
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
                   <span className="text-sm font-medium text-gray-700">Xem dữ liệu:</span>
                 </div>
-                <Button 
-                  onClick={loadSummary} 
+                <Button
+                  onClick={loadSummary}
                   size="sm"
                   disabled={summaryLoading || !summaryDateRange.startDate || !summaryDateRange.endDate}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
                 >
                   <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${summaryLoading ? 'animate-spin' : ''}`} />
                   {summaryLoading ? 'Đang tải...' : 'Xem thống kê'}
@@ -577,10 +590,10 @@ export default function AdminShiftCalendarPage() {
               <div className="mt-6 text-center py-8 bg-red-50 rounded-lg border border-red-200">
                 <FontAwesomeIcon icon={faExclamationTriangle} className="text-2xl mb-2 text-red-500" />
                 <p className="text-red-600 font-medium">{summaryError}</p>
-                <Button 
-                  onClick={loadSummary} 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  onClick={loadSummary}
+                  variant="outline"
+                  size="sm"
                   className="mt-2 border-red-300 text-red-600 hover:bg-red-50"
                 >
                   Thử lại
@@ -638,19 +651,109 @@ export default function AdminShiftCalendarPage() {
           </div>
         )}
 
+        {/* Calendar Filter Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <FontAwesomeIcon icon={faCalendarAlt} />
+            Lịch Ca Làm Việc
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 flex-wrap">
+                {/* Employee Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
+                  <select
+                    value={calendarFilter.selectedEmployeeForCalendar?.toString() || ''}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedEmployeeForCalendar: e.target.value ? parseInt(e.target.value) : null
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-[200px]"
+                  >
+                    <option value="">Tất cả nhân viên</option>
+                    {employees.map(employee => (
+                      <option key={employee.employeeId} value={employee.employeeId}>
+                        {employee.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Month Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[60px]">Tháng:</Label>
+                  <select
+                    value={calendarFilter.selectedMonth}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedMonth: parseInt(e.target.value)
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {format(new Date(2024, i, 1), 'MMMM', { locale: vi })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Year Filter */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-gray-700 min-w-[50px]">Năm:</Label>
+                  <select
+                    value={calendarFilter.selectedYear}
+                    onChange={(e) => setCalendarFilter(prev => ({
+                      ...prev,
+                      selectedYear: parseInt(e.target.value)
+                    }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const year = new Date().getFullYear() - 2 + i;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* View Calendar Button */}
+                <Button
+                  onClick={loadShifts}
+                  disabled={loading}
+                  className="ml-auto"
+                >
+                  <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Đang tải...' : 'Xem lịch'}
+                </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Calendar */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarAlt} />
-                {format(currentDate, 'MMMM yyyy', { locale: vi })}
+                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi })}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[600px]">
-              {loading ? (
+              {!hasViewedCalendar ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-6xl text-gray-300 mb-4" />
+                    <div className="text-gray-600 text-lg font-medium mb-2">Chưa có dữ liệu lịch</div>
+                    <div className="text-gray-500 text-sm">Vui lòng chọn bộ lọc và nhấn "Xem lịch" để hiển thị lịch làm việc</div>
+                  </div>
+                </div>
+              ) : loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -665,18 +768,34 @@ export default function AdminShiftCalendarPage() {
                   headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
                   }}
                   locale="vi"
                   events={getCalendarEvents()}
                   height="100%"
                   slotMinTime="06:00:00"
                   slotMaxTime="23:00:00"
-                  slotDuration="01:00:00"
+                  slotDuration="00:30:00"
                   slotLabelInterval="01:00:00"
                   allDaySlot={false}
                   nowIndicator={true}
                   scrollTime="08:00:00"
+                  slotEventOverlap={false}
+                  eventOverlap={false}
+                  eventDisplay="block"
+                  eventMaxStack={10}
+                  slotLabelContent={(arg) => {
+                    // Format as HH:mm (24h format without "giờ")
+                    const date = arg.date;
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  }}
+                  eventTimeFormat={{
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }}
                   datesSet={handleDatesSet}
                   eventClick={handleEventClick}
                 />
@@ -686,35 +805,31 @@ export default function AdminShiftCalendarPage() {
         </Card>
 
         {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chú thích</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Đã lên lịch</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-gray-600">Hoàn thành</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-gray-500"></div>
-                <span className="text-sm text-gray-600">Đã hủy</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-500"></div>
-                <span className="text-sm text-gray-600">Nghỉ phép</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span className="text-sm text-gray-600">Vắng mặt</span>
-              </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-blue-500"></div>
+              <span className="text-sm text-gray-600">Đã lên lịch</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-500"></div>
+              <span className="text-sm text-gray-600">Hoàn thành</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gray-500"></div>
+              <span className="text-sm text-gray-600">Đã hủy</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-yellow-500"></div>
+              <span className="text-sm text-gray-600">Nghỉ phép</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-500"></div>
+              <span className="text-sm text-gray-600">Vắng mặt</span>
+            </div>
+          </div>
+        </div>
 
         {/* Detail Modal */}
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
@@ -725,7 +840,7 @@ export default function AdminShiftCalendarPage() {
                 Chi tiết ca làm việc
               </DialogTitle>
             </DialogHeader>
-            
+
             {detailLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -756,21 +871,21 @@ export default function AdminShiftCalendarPage() {
                       {format(new Date(selectedShift.workDate), 'dd/MM/yyyy', { locale: vi })}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Ca làm việc:</span>
                     <span className="text-sm text-gray-900">
                       {selectedShift.workShift?.shiftName || selectedShift.workShiftId}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Thời gian:</span>
                     <span className="text-sm text-gray-900">
                       {selectedShift.workShift?.startTime || '08:00'} - {selectedShift.workShift?.endTime || '17:00'}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Trạng thái:</span>
                     <Badge
@@ -783,14 +898,14 @@ export default function AdminShiftCalendarPage() {
                       {selectedShift.status}
                     </Badge>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Nguồn:</span>
                     <span className="text-sm text-gray-900">
                       {selectedShift.shiftType}
                     </span>
                   </div>
-                  
+
                   {selectedShift.notes && (
                     <div>
                       <span className="text-sm font-medium text-gray-600">Ghi chú:</span>
@@ -806,15 +921,15 @@ export default function AdminShiftCalendarPage() {
                 Không tìm thấy thông tin ca làm việc
               </div>
             )}
-            
+
             <DialogFooter>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowDetailModal(false)}>
                   Đóng
                 </Button>
                 {canUpdate && selectedShift && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     disabled={selectedShift.status === 'COMPLETED' || selectedShift.status === 'CANCELLED'}
                     onClick={() => {
                       setUpdateForm({
@@ -833,8 +948,8 @@ export default function AdminShiftCalendarPage() {
                   </Button>
                 )}
                 {canDelete && selectedShift && (
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     onClick={() => setShowDeleteModal(true)}
                   >
                     Hủy ca
@@ -854,7 +969,7 @@ export default function AdminShiftCalendarPage() {
                 Tạo ca làm mới
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               {/* Employee Selection */}
               <div>
@@ -925,12 +1040,12 @@ export default function AdminShiftCalendarPage() {
                 />
               </div>
             </div>
-            
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateShift}
                 disabled={!createForm.employee_id || !createForm.work_date || !createForm.work_shift_id}
               >
@@ -990,7 +1105,7 @@ export default function AdminShiftCalendarPage() {
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 onClick={handleUpdateShift}
                 disabled={!updateForm.status}
               >
@@ -1041,7 +1156,7 @@ export default function AdminShiftCalendarPage() {
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={handleDeleteShift}
               >

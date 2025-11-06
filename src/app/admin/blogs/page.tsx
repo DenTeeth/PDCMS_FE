@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
   Eye,
   FileText,
   Calendar,
@@ -30,7 +30,7 @@ export default function BlogsPage() {
 
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         blog.author.toLowerCase().includes(searchTerm.toLowerCase());
+      blog.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || blog.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -56,195 +56,193 @@ export default function BlogsPage() {
   return (
     <ProtectedRoute requiredBaseRole="admin">
       <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Blog Management</h1>
-          <p className="text-gray-600">Manage blog posts and news content</p>
-        </div>
-        <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Post
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Posts</p>
-                <p className="text-2xl font-bold">{blogs.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-bold">P</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Published</p>
-                <p className="text-2xl font-bold">{blogs.filter(b => b.status === 'published').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <span className="text-yellow-600 font-bold">D</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Drafts</p>
-                <p className="text-2xl font-bold">{blogs.filter(b => b.status === 'draft').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 font-bold">A</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Authors</p>
-                <p className="text-2xl font-bold">{new Set(blogs.map(b => b.authorId)).size}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-
-          <div className="md:w-48">
-              <Label htmlFor="status" className="mb-2">Status</Label>
-              <select
-                id="status"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="search" className="mb-2">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  id="search"
-                  placeholder="Search by title or author..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Blog Management</h1>
+            <p className="text-gray-600">Manage blog posts and news content</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Post
+          </Button>
+        </div>
 
-      {/* Blogs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBlogs.map((blog) => (
-          <Card key={blog.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{blog.title}</CardTitle>
-                  <CardDescription className="mt-2 line-clamp-3">
-                    {blog.excerpt}
-                  </CardDescription>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(blog.status)}`}>
-                  {getStatusText(blog.status)}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Author and Date */}
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-1" />
-                    {blog.author}
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {new Date(blog.createdAt).toLocaleDateString('en-US')}
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1">
-                  {blog.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
-                    >
-                      <Tag className="h-3 w-3 mr-1" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-3 border-t">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Total */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <BookOpen className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-semibold text-gray-700">Total Posts</p>
+                  <p className="text-2xl font-bold text-gray-900">{blogs.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          {/* Published */}
+          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-700 font-bold">P</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-green-800">Published</p>
+                <p className="text-2xl font-bold text-green-800">{blogs.filter(b => b.status === 'published').length}</p>
+              </div>
+            </div>
+          </div>
+          {/* Drafts */}
+          <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-yellow-700 font-bold">D</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-yellow-800">Drafts</p>
+                <p className="text-2xl font-bold text-yellow-800">{blogs.filter(b => b.status === 'draft').length}</p>
+              </div>
+            </div>
+          </div>
+          {/* Authors */}
+          <div className="bg-purple-50 rounded-xl border border-purple-200 shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-purple-700 font-bold">A</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-purple-800">Authors</p>
+                <p className="text-2xl font-bold text-purple-800">{new Set(blogs.map(b => b.authorId)).size}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Empty State */}
-      {filteredBlogs.length === 0 && (
+        {/* Filters */}
         <Card>
-          <CardContent className="p-12 text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
-            <p className="text-gray-500 mb-4">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'Try changing filters or search keywords'
-                : 'Start writing your first post'
-              }
-            </p>
-            <Button onClick={() => setShowAddModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Write New Post
-            </Button>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+
+              <div className="md:w-48">
+                <Label htmlFor="status" className="mb-2">Status</Label>
+                <select
+                  id="status"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="search" className="mb-2">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="search"
+                    placeholder="Search by title or author..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+            </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Blogs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredBlogs.map((blog) => (
+            <Card key={blog.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg line-clamp-2">{blog.title}</CardTitle>
+                    <CardDescription className="mt-2 line-clamp-3">
+                      {blog.excerpt}
+                    </CardDescription>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(blog.status)}`}>
+                    {getStatusText(blog.status)}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {/* Author and Date */}
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 mr-1" />
+                      {blog.author}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {new Date(blog.createdAt).toLocaleDateString('en-US')}
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1">
+                    {blog.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+                      >
+                        <Tag className="h-3 w-3 mr-1" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {filteredBlogs.length === 0 && (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm || filterStatus !== 'all'
+                  ? 'Try changing filters or search keywords'
+                  : 'Start writing your first post'
+                }
+              </p>
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Write New Post
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </ProtectedRoute>
   );

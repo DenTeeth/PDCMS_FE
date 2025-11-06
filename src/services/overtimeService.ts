@@ -29,14 +29,14 @@ export class OvertimeService {
     data: CreateOvertimeRequestDto
   ): Promise<OvertimeRequestDetail> {
     const axios = apiClient.getAxiosInstance();
-    
+
     console.log('🔍 OvertimeService.createOvertimeRequest called with:', {
       url: this.BASE_URL,
       data: data,
       hasEmployeeId: data.employeeId !== undefined,
       employeeId: data.employeeId
     });
-    
+
     try {
       const response = await axios.post<OvertimeRequestDetail>(
         this.BASE_URL,
@@ -49,7 +49,10 @@ export class OvertimeService {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        message: error.message
+        code: error.response?.data?.code,
+        message: error.response?.data?.message,
+        fullResponse: error.response,
+        originalError: error.message
       });
       throw error;
     }
@@ -71,7 +74,7 @@ export class OvertimeService {
     }
   ): Promise<OvertimeRequestListResponse> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.page !== undefined) {
       queryParams.append('page', params.page.toString());
     }
@@ -82,7 +85,7 @@ export class OvertimeService {
       queryParams.append('sort', params.sort);
     }
 
-    const url = queryParams.toString() 
+    const url = queryParams.toString()
       ? `${this.BASE_URL}?${queryParams.toString()}`
       : this.BASE_URL;
 

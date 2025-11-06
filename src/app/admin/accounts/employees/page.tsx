@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
@@ -44,13 +44,13 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function EmployeesPage() {
   const router = useRouter();
   const { user } = useAuth();
-  
+
   // Permission checks
   const canCreate = user?.permissions?.includes('CREATE_EMPLOYEE') || false;
   const canUpdate = user?.permissions?.includes('UPDATE_EMPLOYEE') || false;
   const canDelete = user?.permissions?.includes('DELETE_EMPLOYEE') || false;
   const canView = user?.permissions?.includes('VIEW_EMPLOYEE') || false;
-  
+
   // State management
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,15 +58,15 @@ export default function EmployeesPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table'); // Default to table view to reduce latency
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   // Roles list
   const [roles, setRoles] = useState<Role[]>([]);
-  
+
   // Specializations list
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [loadingSpecializations, setLoadingSpecializations] = useState(false);
@@ -120,7 +120,8 @@ export default function EmployeesPage() {
 
   const fetchRoles = async () => {
     try {
-      const response = await roleService.getRoles();
+      // Use employee-assignable endpoint to exclude ROLE_PATIENT
+      const response = await roleService.getEmployeeAssignableRoles();
       setRoles(response || []);
     } catch (error: any) {
       console.error('Failed to fetch roles:', error);
@@ -151,7 +152,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      
+
       // Build query params - BE supports pagination and filters
       const params: any = {
         page,
@@ -174,7 +175,7 @@ export default function EmployeesPage() {
       if (filterStatus && filterStatus !== 'all') {
         params.isActive = filterStatus === 'active';
       }
-      
+
       console.log('Fetching employees with params:', params);
       const response = await employeeService.getEmployees(params);
       console.log('Received employees:', response.content.length, 'items');
@@ -193,32 +194,33 @@ export default function EmployeesPage() {
   // ==================== CREATE EMPLOYEE ====================
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Prepare payload based on role
-    const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
-    
+
+    // Check if selected role requires specialization
+    const selectedRoleForValidation = roles.find(role => role.roleId === formData.roleId);
+    const requiresSpecializationForValidation = selectedRoleForValidation?.requiresSpecialization === true;
+
     // Validation - All roles need basic fields + account credentials
     if (!formData.roleId || !formData.firstName || !formData.lastName ||
-        !formData.username || !formData.email || !formData.password) {
+      !formData.username || !formData.email || !formData.password) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Additional validation for Doctor/Nurse: must have specializations
-    if (isDoctorOrNurse) {
+    // Additional validation for roles that require specialization
+    if (requiresSpecializationForValidation) {
       if (!formData.specializationIds || formData.specializationIds.length === 0) {
-        toast.error('Please select at least one specialization for Doctor/Nurse');
+        toast.error('Please select at least one specialization for this role');
         return;
       }
     }
 
     try {
       setCreating(true);
-      
+
       let payload: any;
-      
-      if (isDoctorOrNurse) {
-        // For DOCTOR/NURSE: include all fields + specializationIds
+
+      if (requiresSpecializationForValidation) {
+        // For roles requiring specialization: include all fields + specializationIds
         payload = {
           username: formData.username,
           email: formData.email,
@@ -249,7 +251,7 @@ export default function EmployeesPage() {
       }
 
       console.log('📤 Creating employee with payload:', payload);
-      
+
       await employeeService.createEmployee(payload);
       toast.success('Employee created successfully');
       setShowCreateModal(false);
@@ -280,7 +282,9 @@ export default function EmployeesPage() {
     setFormData({ ...formData, roleId });
   };
 
-  const isDoctorOrNurse = formData.roleId === 'ROLE_DOCTOR' || formData.roleId === 'ROLE_NURSE';
+  // Check if selected role requires specialization
+  const selectedRole = roles.find(role => role.roleId === formData.roleId);
+  const requiresSpecialization = selectedRole?.requiresSpecialization === true;
 
   // ==================== EDIT EMPLOYEE ====================
   const openEditModal = (employee: Employee) => {
@@ -300,12 +304,12 @@ export default function EmployeesPage() {
 
   const handleUpdateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingEmployee) return;
 
     try {
       setUpdating(true);
-      
+
       // Only include fields that have values (partial update)
       const payload: UpdateEmployeeRequest = {};
       if (editFormData.firstName) payload.firstName = editFormData.firstName;
@@ -318,7 +322,7 @@ export default function EmployeesPage() {
       if (editFormData.specializationIds && editFormData.specializationIds.length > 0) {
         payload.specializationIds = editFormData.specializationIds;
       }
-      
+
       await employeeService.updateEmployee(editingEmployee.employeeCode, payload);
       toast.success('Employee updated successfully');
       setShowEditModal(false);
@@ -353,187 +357,187 @@ export default function EmployeesPage() {
 
   // ==================== RENDER ====================
   return (
-    <ProtectedRoute 
-      requiredBaseRole="admin" 
+    <ProtectedRoute
+      requiredBaseRole="admin"
       requiredPermissions={['VIEW_EMPLOYEE']}
     >
       <div className="space-y-6 p-6">
-      {/* ==================== HEADER ==================== */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-          <p className="text-gray-600">View and manage employee information</p>
+        {/* ==================== HEADER ==================== */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+            <p className="text-gray-600">View and manage employee information</p>
+          </div>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            disabled={!canCreate}
+            title={!canCreate ? "Bạn không có quyền tạo nhân viên mới" : ""}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Employee
+          </Button>
         </div>
-        <Button 
-          onClick={() => setShowCreateModal(true)}
-          disabled={!canCreate}
-          title={!canCreate ? "Bạn không có quyền tạo nhân viên mới" : ""}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Employee
-        </Button>
-      </div>
 
-      {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Employees</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+        {/* ==================== STATS ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Employees</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Active</p>
+                  <p className="text-2xl font-bold">{stats.active}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <XCircle className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold">{stats.inactive}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <XCircle className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Inactive</p>
+                  <p className="text-2xl font-bold">{stats.inactive}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* ==================== SEARCH & FILTERS ==================== */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <Label htmlFor="search">Search</Label>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  id="search"
-                  placeholder="Search by name, email, phone, or code..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filter
-                  {(filterRole !== 'all' || filterStatus !== 'all') && (
-                    <Badge variant="secondary" className="ml-1">
-                      {(filterRole !== 'all' ? 1 : 0) + (filterStatus !== 'all' ? 1 : 0)}
-                    </Badge>
-                  )}
-                </Button>
-                <div className="flex border rounded-md">
+        {/* ==================== SEARCH & FILTERS ==================== */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <Label htmlFor="search">Search</Label>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="search"
+                    placeholder="Search by name, email, phone, or code..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2">
                   <Button
-                    variant={viewMode === 'card' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('card')}
+                    variant="outline"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="gap-2"
                   >
-                    <Grid3x3 className="h-4 w-4" />
+                    <Filter className="h-4 w-4" />
+                    Filter
+                    {(filterRole !== 'all' || filterStatus !== 'all') && (
+                      <Badge variant="secondary" className="ml-1">
+                        {(filterRole !== 'all' ? 1 : 0) + (filterStatus !== 'all' ? 1 : 0)}
+                      </Badge>
+                    )}
                   </Button>
-                  <Button
-                    variant={viewMode === 'table' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Filter Section */}
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <select
-                    value={filterRole}
-                    onChange={(e) => {
-                      setFilterRole(e.target.value);
-                      setPage(0);
-                    }}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">All Roles</option>
-                    {roles.map((role) => (
-                      <option key={role.roleId} value={role.roleId}>
-                        {role.roleName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => {
-                      setFilterStatus(e.target.value);
-                      setPage(0);
-                    }}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                {(filterRole !== 'all' || filterStatus !== 'all') && (
-                  <div className="md:col-span-2">
+                  <div className="flex border rounded-md">
                     <Button
-                      variant="outline"
+                      variant={viewMode === 'card' ? 'default' : 'ghost'}
                       size="sm"
-                      onClick={() => {
-                        setFilterRole('all');
-                        setFilterStatus('all');
-                      }}
-                      className="gap-2"
+                      onClick={() => setViewMode('card')}
                     >
-                      <X className="h-4 w-4" />
-                      Clear Filters
+                      <Grid3x3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('table')}
+                    >
+                      <List className="h-4 w-4" />
                     </Button>
                   </div>
-                )}
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* ==================== EMPLOYEE LIST ==================== */}
-      {employees.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-gray-500">
-              <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium">No employees found</p>
-              <p className="text-sm mt-1">Try adjusting your search or filters</p>
+              {/* Filter Section */}
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <select
+                      value={filterRole}
+                      onChange={(e) => {
+                        setFilterRole(e.target.value);
+                        setPage(0);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Roles</option>
+                      {roles.map((role) => (
+                        <option key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => {
+                        setFilterStatus(e.target.value);
+                        setPage(0);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  {(filterRole !== 'all' || filterStatus !== 'all') && (
+                    <div className="md:col-span-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFilterRole('all');
+                          setFilterStatus('all');
+                        }}
+                        className="gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Clear Filters
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      ) : viewMode === 'card' ? (
-        /* Card View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        {/* ==================== EMPLOYEE LIST ==================== */}
+        {employees.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium">No employees found</p>
+                <p className="text-sm mt-1">Try adjusting your search or filters</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : viewMode === 'card' ? (
+          /* Card View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {employees.map((employee) => (
               <Card key={employee.employeeCode} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -547,11 +551,21 @@ export default function EmployeesPage() {
                       <p className="text-xs text-gray-500 mt-1">Code: {employee.employeeCode}</p>
                       <p className="text-xs text-gray-500">
                         Type: <span className={`px-2 py-1 rounded-full text-xs ${
-                          employee.employeeType === EmploymentType.FULL_TIME 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-orange-100 text-orange-800'
-                        }`}>
-                          {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                          employee.employeeType === EmploymentType.FULL_TIME
+                            ? 'bg-blue-100 text-blue-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                            ? 'bg-green-100 text-green-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {employee.employeeType === EmploymentType.FULL_TIME 
+                            ? 'Full Time' 
+                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                            ? 'Part Time - Fixed'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                            ? 'Part Time - Flex'
+                            : 'Part Time'}
                         </span>
                       </p>
                     </div>
@@ -582,8 +596,8 @@ export default function EmployeesPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 pt-3 border-t">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
                         disabled={!canView}
@@ -592,8 +606,8 @@ export default function EmployeesPage() {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -610,388 +624,684 @@ export default function EmployeesPage() {
                 </CardContent>
               </Card>
             ))}
-        </div>
-      ) : (
-        /* Table View */
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Employee
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {employees.map((employee) => (
-                    <tr key={employee.employeeCode} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <User className="h-5 w-5 text-blue-600" />
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee.fullName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {employee.employeeCode}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{employee.roleName}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          employee.employeeType === EmploymentType.FULL_TIME 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-orange-100 text-orange-800'
-                        }`}>
-                          {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{employee.account.email}</div>
-                        {employee.phone && (
-                          <div className="text-sm text-gray-500">{employee.phone}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                          {employee.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
-                            disabled={!canView}
-                            title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(employee);
-                            }}
-                            disabled={!canUpdate}
-                            title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                        </div>
-                      </td>
+          </div>
+        ) : (
+          /* Table View */
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Employee
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Card>
-          <CardContent className="p-4">
-            {/* Centered Pagination controls */}
-            <div className="flex justify-center items-center">
-              <div className="flex items-center gap-2">
-                {/* First page */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(0)}
-                  disabled={page === 0 || loading}
-                  className="h-9 w-9 p-0"
-                  title="First page"
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-
-                {/* Previous page */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0 || loading}
-                  className="h-9 px-3"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-
-                {/* Page numbers */}
-                <div className="flex items-center gap-1">
-                  {(() => {
-                    const pageNumbers = [];
-                    const maxVisible = 5;
-                    let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
-                    let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-                    
-                    if (endPage - startPage < maxVisible - 1) {
-                      startPage = Math.max(0, endPage - maxVisible + 1);
-                    }
-
-                    for (let i = startPage; i <= endPage; i++) {
-                      pageNumbers.push(
-                        <Button
-                          key={i}
-                          variant={i === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPage(i)}
-                          disabled={loading}
-                          className={`h-9 w-9 p-0 ${
-                            i === page 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                              : 'hover:bg-gray-100'
-                          }`}
-                        >
-                          {i + 1}
-                        </Button>
-                      );
-                    }
-                    return pageNumbers;
-                  })()}
-                </div>
-
-                {/* Next page */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1 || loading}
-                  className="h-9 px-3"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-
-                {/* Last page */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(totalPages - 1)}
-                  disabled={page >= totalPages - 1 || loading}
-                  className="h-9 w-9 p-0"
-                  title="Last page"
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <Card className="w-full max-w-5xl my-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                Create New Employee
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateEmployee} className="space-y-4">
-                {/* Role Selection - Always shown first */}
-                <div>
-                  <Label htmlFor="roleId">
-                    Role <span className="text-red-500">*</span>
-                  </Label>
-                  <select
-                    id="roleId"
-                    value={formData.roleId}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                    disabled={creating}
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select a role</option>
-                    {roles.map((role) => (
-                      <option key={role.roleId} value={role.roleId}>
-                        {role.roleName}
-                      </option>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {employees.map((employee) => (
+                      <tr key={employee.employeeCode} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <User className="h-5 w-5 text-blue-600" />
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {employee.fullName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {employee.employeeCode}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{employee.roleName}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            employee.employeeType === EmploymentType.FULL_TIME
+                              ? 'bg-blue-100 text-blue-800'
+                              : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                              ? 'bg-green-100 text-green-800'
+                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-gray-100 text-gray-800'
+                            }`}>
+                            {employee.employeeType === EmploymentType.FULL_TIME 
+                              ? 'Full Time' 
+                              : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                              ? 'Part Time - Fixed'
+                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'Part Time - Flex'
+                              : 'Part Time'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{employee.account.email}</div>
+                          {employee.phone && (
+                            <div className="text-sm text-gray-500">{employee.phone}</div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge className={employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {employee.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
+                              disabled={!canView}
+                              title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(employee);
+                              }}
+                              disabled={!canUpdate}
+                              title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-                  </select>
-                </div>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-                {/* Employment Type Selection */}
-                <div>
-                  <Label htmlFor="employeeType">
-                    Employment Type <span className="text-red-500">*</span>
-                  </Label>
-                  <select
-                    id="employeeType"
-                    value={formData.employeeType}
-                    onChange={(e) => setFormData({ ...formData, employeeType: e.target.value as EmploymentType })}
-                    disabled={creating}
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Card>
+            <CardContent className="p-4">
+              {/* Centered Pagination controls */}
+              <div className="flex justify-center items-center">
+                <div className="flex items-center gap-2">
+                  {/* First page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(0)}
+                    disabled={page === 0 || loading}
+                    className="h-9 w-9 p-0"
+                    title="First page"
                   >
-                    <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                    <option value={EmploymentType.PART_TIME}>Part Time</option>
-                  </select>
-                </div>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
 
-                {/* Conditional Fields based on Role */}
-                {formData.roleId && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-4">
-                    {/* LEFT COLUMN: Account & Personal Information */}
-                    <div className="space-y-6">
-                      {/* Account Information - Always shown */}
-                      <div>
-                        <h3 className="font-semibold mb-3 text-lg">Account Information</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="username">
-                              Username <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                              id="username"
-                              placeholder="e.g., john.doe"
-                              value={formData.username}
-                              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                              disabled={creating}
-                              required
-                            />
+                  {/* Previous page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={page === 0 || loading}
+                    className="h-9 px-3"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const pageNumbers = [];
+                      const maxVisible = 5;
+                      let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
+                      let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+
+                      if (endPage - startPage < maxVisible - 1) {
+                        startPage = Math.max(0, endPage - maxVisible + 1);
+                      }
+
+                      for (let i = startPage; i <= endPage; i++) {
+                        pageNumbers.push(
+                          <Button
+                            key={i}
+                            variant={i === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setPage(i)}
+                            disabled={loading}
+                            className={`h-9 w-9 p-0 ${i === page
+                                ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
+                                : 'hover:bg-gray-100'
+                              }`}
+                          >
+                            {i + 1}
+                          </Button>
+                        );
+                      }
+                      return pageNumbers;
+                    })()}
+                  </div>
+
+                  {/* Next page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1 || loading}
+                    className="h-9 px-3"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+
+                  {/* Last page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(totalPages - 1)}
+                    disabled={page >= totalPages - 1 || loading}
+                    className="h-9 w-9 p-0"
+                    title="Last page"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <Card className="w-full max-w-5xl my-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  Create New Employee
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCreateEmployee} className="space-y-4">
+                  {/* Role Selection - Always shown first */}
+                  <div>
+                    <Label htmlFor="roleId">
+                      Role <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      id="roleId"
+                      value={formData.roleId}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      disabled={creating}
+                      required
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select a role</option>
+                      {roles.map((role) => (
+                        <option key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Employment Type Selection */}
+                  <div>
+                    <Label htmlFor="employeeType">
+                      Employment Type <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      id="employeeType"
+                      value={formData.employeeType}
+                      onChange={(e) => setFormData({ ...formData, employeeType: e.target.value as EmploymentType })}
+                      disabled={creating}
+                      required
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value={EmploymentType.FULL_TIME}>Full Time</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <strong>Full Time:</strong> Làm việc toàn thời gian, Admin gán lịch cố định<br />
+                      <strong>Part Time - Fixed:</strong> Part-time với lịch cố định (Admin gán)<br />
+                      <strong>Part Time - Flex:</strong> Part-time linh hoạt (Tự đăng ký ca từ các slot có sẵn)
+                    </p>
+                  </div>
+
+                  {/* Conditional Fields based on Role */}
+                  {formData.roleId && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-4">
+                      {/* LEFT COLUMN: Account & Personal Information */}
+                      <div className="space-y-6">
+                        {/* Account Information - Always shown */}
+                        <div>
+                          <h3 className="font-semibold mb-3 text-lg">Account Information</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="username">
+                                Username <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="username"
+                                placeholder="e.g., john.doe"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                disabled={creating}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="email">
+                                Email <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="e.g., john@example.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                disabled={creating}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="password">
+                                Password <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="password"
+                                type="password"
+                                placeholder="Enter password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                disabled={creating}
+                                required
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Minimum 6 characters
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <Label htmlFor="email">
-                              Email <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              placeholder="e.g., john@example.com"
-                              value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              disabled={creating}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="password">
-                              Password <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                              id="password"
-                              type="password"
-                              placeholder="Enter password"
-                              value={formData.password}
-                              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                              disabled={creating}
-                              required
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Minimum 6 characters
-                            </p>
+                        </div>
+
+                        {/* Personal Information */}
+                        <div className="border-t pt-6">
+                          <h3 className="font-semibold mb-3 text-lg">Personal Information</h3>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label htmlFor="firstName">
+                                  First Name <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                  id="firstName"
+                                  placeholder="e.g., John"
+                                  value={formData.firstName}
+                                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                  disabled={creating}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="lastName">
+                                  Last Name <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                  id="lastName"
+                                  placeholder="e.g., Doe"
+                                  value={formData.lastName}
+                                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                  disabled={creating}
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor="phone">Phone</Label>
+                              <Input
+                                id="phone"
+                                placeholder="e.g., 0123456789"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                disabled={creating}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                              <Input
+                                id="dateOfBirth"
+                                type="date"
+                                value={formData.dateOfBirth}
+                                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                                disabled={creating}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="address">Address</Label>
+                              <textarea
+                                id="address"
+                                placeholder="Enter full address"
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                disabled={creating}
+                                rows={3}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Personal Information */}
-                      <div className="border-t pt-6">
-                        <h3 className="font-semibold mb-3 text-lg">Personal Information</h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label htmlFor="firstName">
-                                First Name <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id="firstName"
-                                placeholder="e.g., John"
-                                value={formData.firstName}
-                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                disabled={creating}
-                                required
-                              />
+                      {/* RIGHT COLUMN: Specialization (Only for roles that require specialization) */}
+                      {requiresSpecialization && (
+                        <div className="lg:border-l lg:pl-6">
+                          <h3 className="font-semibold mb-3 text-lg">Specialization</h3>
+                          {loadingSpecializations ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">Loading specializations...</span>
                             </div>
-                            <div>
-                              <Label htmlFor="lastName">
-                                Last Name <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id="lastName"
-                                placeholder="e.g., Doe"
-                                value={formData.lastName}
-                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                disabled={creating}
-                                required
-                              />
+                          ) : specializations.length === 0 ? (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                              <p className="text-sm text-yellow-800">
+                                ⚠️ <strong>Note:</strong> No active specializations available.
+                              </p>
                             </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="phone">Phone</Label>
-                            <Input
-                              id="phone"
-                              placeholder="e.g., 0123456789"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              disabled={creating}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                            <Input
-                              id="dateOfBirth"
-                              type="date"
-                              value={formData.dateOfBirth}
-                              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                              disabled={creating}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="address">Address</Label>
-                            <textarea
-                              id="address"
-                              placeholder="Enter full address"
-                              value={formData.address}
-                              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                              disabled={creating}
-                              rows={3}
-                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div>
+                                <Label>
+                                  Select Specializations <span className="text-red-500">*</span>
+                                </Label>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Choose one or more specializations for this employee
+                                </p>
+                              </div>
+
+                              {/* Selected Specializations Badges */}
+                              {formData.specializationIds && formData.specializationIds.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  {formData.specializationIds.map((specId) => {
+                                    const spec = specializations.find(s => s.specializationId === specId);
+                                    return spec ? (
+                                      <Badge
+                                        key={specId}
+                                        className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
+                                      >
+                                        <span>{spec.specializationCode}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setFormData({
+                                              ...formData,
+                                              specializationIds: formData.specializationIds?.filter(id => id !== specId)
+                                            });
+                                          }}
+                                          className="hover:bg-blue-700 rounded-full p-0.5"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </Badge>
+                                    ) : null;
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Checkbox List */}
+                              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                                {specializations.map((spec) => (
+                                  <label
+                                    key={spec.specializationId}
+                                    className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.specializationIds?.includes(spec.specializationId) || false}
+                                      onChange={(e) => {
+                                        const currentIds = formData.specializationIds || [];
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            specializationIds: [...currentIds, spec.specializationId]
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                          });
+                                        }
+                                      }}
+                                      disabled={creating}
+                                      className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-sm text-gray-900">
+                                        {spec.specializationCode}
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        {spec.specializationName}
+                                      </div>
+                                      {spec.description && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          {spec.description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+
+                              {/* Validation message */}
+                              {formData.specializationIds?.length === 0 && (
+                                <p className="text-xs text-red-500">
+                                  Please select at least one specialization
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Form Actions */}
+                  <div className="flex gap-3 justify-end pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setFormData({
+                          username: '',
+                          email: '',
+                          password: '',
+                          roleId: '',
+                          firstName: '',
+                          lastName: '',
+                          employeeType: EmploymentType.FULL_TIME,
+                          phone: '',
+                          dateOfBirth: '',
+                          address: '',
+                          specializationIds: [],
+                        });
+                      }}
+                      disabled={creating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={creating || !formData.roleId}>
+                      {creating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Employee
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Edit Employee Modal */}
+        {showEditModal && editingEmployee && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+              <CardHeader>
+                <CardTitle>Edit Employee</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdateEmployee} className="space-y-6">
+                  {/* Employee Info */}
+                  <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Employee Code</p>
+                        <p className="font-semibold">{editingEmployee.employeeCode}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Current Role</p>
+                        <Badge>{editingEmployee.roleName}</Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Role Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-role">Change Role</Label>
+                    <Select
+                      options={roles.map((role) => ({
+                        value: role.roleId,
+                        label: role.roleName,
+                        description: role.description,
+                      }))}
+                      value={editFormData.roleId}
+                      onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                      placeholder="Select a role"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Update employee role if needed
+                    </p>
+                  </div>
+
+                  {/* Employment Type */}
+                  <div>
+                    <Label htmlFor="editEmployeeType">Employment Type</Label>
+                    <select
+                      id="editEmployeeType"
+                      value={editFormData.employeeType}
+                      onChange={(e) => setEditFormData({ ...editFormData, employeeType: e.target.value as EmploymentType })}
+                      disabled={updating}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value={EmploymentType.FULL_TIME}>Full Time</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
+                    </select>
+                    <p className="text-sm text-muted-foreground">
+                      Update employment type if needed
+                    </p>
+                  </div>
+
+                  {/* Two Column Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* LEFT COLUMN: Personal Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Personal Information</h3>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-firstName">First Name</Label>
+                          <Input
+                            id="edit-firstName"
+                            value={editFormData.firstName}
+                            onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                            placeholder="Enter first name"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-lastName">Last Name</Label>
+                          <Input
+                            id="edit-lastName"
+                            value={editFormData.lastName}
+                            onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                            placeholder="Enter last name"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-phone">Phone</Label>
+                        <Input
+                          id="edit-phone"
+                          value={editFormData.phone}
+                          onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                        <Input
+                          id="edit-dateOfBirth"
+                          type="date"
+                          value={editFormData.dateOfBirth}
+                          onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-address">Address</Label>
+                        <textarea
+                          id="edit-address"
+                          value={editFormData.address}
+                          onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                          placeholder="Enter address"
+                          rows={3}
+                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
                       </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Specialization (Only for Doctor/Nurse) */}
-                    {isDoctorOrNurse && (
+                    {/* RIGHT COLUMN: Specializations (Only for roles that require specialization) */}
+                    {(() => {
+                      const editingRole = roles.find(role => role.roleId === editingEmployee.roleId);
+                      return editingRole?.requiresSpecialization === true;
+                    })() && (
                       <div className="lg:border-l lg:pl-6">
-                        <h3 className="font-semibold mb-3 text-lg">Specialization</h3>
+                        <h3 className="text-lg font-semibold mb-4">Specializations</h3>
                         {loadingSpecializations ? (
                           <div className="flex items-center gap-2 text-gray-500">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1000,24 +1310,22 @@ export default function EmployeesPage() {
                         ) : specializations.length === 0 ? (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <p className="text-sm text-yellow-800">
-                              ⚠️ <strong>Note:</strong> No active specializations available.
+                              ⚠️ No active specializations available.
                             </p>
                           </div>
                         ) : (
                           <div className="space-y-3">
                             <div>
-                              <Label>
-                                Select Specializations <span className="text-red-500">*</span>
-                              </Label>
+                              <Label>Update Specializations</Label>
                               <p className="text-xs text-gray-500 mt-1">
-                                Choose one or more specializations for this employee
+                                Modify employee specializations
                               </p>
                             </div>
 
                             {/* Selected Specializations Badges */}
-                            {formData.specializationIds && formData.specializationIds.length > 0 && (
+                            {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
                               <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                {formData.specializationIds.map((specId) => {
+                                {editFormData.specializationIds.map((specId) => {
                                   const spec = specializations.find(s => s.specializationId === specId);
                                   return spec ? (
                                     <Badge
@@ -1028,9 +1336,9 @@ export default function EmployeesPage() {
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          setFormData({
-                                            ...formData,
-                                            specializationIds: formData.specializationIds?.filter(id => id !== specId)
+                                          setEditFormData({
+                                            ...editFormData,
+                                            specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
                                           });
                                         }}
                                         className="hover:bg-blue-700 rounded-full p-0.5"
@@ -1052,22 +1360,22 @@ export default function EmployeesPage() {
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={formData.specializationIds?.includes(spec.specializationId) || false}
+                                    checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
                                     onChange={(e) => {
-                                      const currentIds = formData.specializationIds || [];
+                                      const currentIds = editFormData.specializationIds || [];
                                       if (e.target.checked) {
-                                        setFormData({
-                                          ...formData,
+                                        setEditFormData({
+                                          ...editFormData,
                                           specializationIds: [...currentIds, spec.specializationId]
                                         });
                                       } else {
-                                        setFormData({
-                                          ...formData,
+                                        setEditFormData({
+                                          ...editFormData,
                                           specializationIds: currentIds.filter(id => id !== spec.specializationId)
                                         });
                                       }
                                     }}
-                                    disabled={creating}
+                                    disabled={updating}
                                     className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                   />
                                   <div className="flex-1">
@@ -1086,330 +1394,55 @@ export default function EmployeesPage() {
                                 </label>
                               ))}
                             </div>
-
-                            {/* Validation message */}
-                            {formData.specializationIds?.length === 0 && (
-                              <p className="text-xs text-red-500">
-                                Please select at least one specialization
-                              </p>
-                            )}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Form Actions */}
-                <div className="flex gap-3 justify-end pt-4 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setFormData({
-                        username: '',
-                        email: '',
-                        password: '',
-                        roleId: '',
-                        firstName: '',
-                        lastName: '',
-                        employeeType: EmploymentType.FULL_TIME,
-                        phone: '',
-                        dateOfBirth: '',
-                        address: '',
-                        specializationIds: [],
-                      });
-                    }}
-                    disabled={creating}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={creating || !formData.roleId}>
-                    {creating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Employee
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Edit Employee Modal */}
-      {showEditModal && editingEmployee && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Edit Employee</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateEmployee} className="space-y-6">
-                {/* Employee Info */}
-                <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Employee Code</p>
-                      <p className="font-semibold">{editingEmployee.employeeCode}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Current Role</p>
-                      <Badge>{editingEmployee.roleName}</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Role Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="edit-role">Change Role</Label>
-                  <Select
-                    options={roles.map((role) => ({
-                      value: role.roleId,
-                      label: role.roleName,
-                      description: role.description,
-                    }))}
-                    value={editFormData.roleId}
-                    onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
-                    placeholder="Select a role"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Update employee role if needed
-                  </p>
-                </div>
-
-                {/* Employment Type */}
-                <div>
-                  <Label htmlFor="editEmployeeType">Employment Type</Label>
-                  <select
-                    id="editEmployeeType"
-                    value={editFormData.employeeType}
-                    onChange={(e) => setEditFormData({ ...editFormData, employeeType: e.target.value as EmploymentType })}
-                    disabled={updating}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                    <option value={EmploymentType.PART_TIME}>Part Time</option>
-                  </select>
-                  <p className="text-sm text-muted-foreground">
-                    Update employment type if needed
-                  </p>
-                </div>
-
-                {/* Two Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* LEFT COLUMN: Personal Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="edit-firstName">First Name</Label>
-                        <Input
-                          id="edit-firstName"
-                          value={editFormData.firstName}
-                          onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                          placeholder="Enter first name"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="edit-lastName">Last Name</Label>
-                        <Input
-                          id="edit-lastName"
-                          value={editFormData.lastName}
-                          onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                          placeholder="Enter last name"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-phone">Phone</Label>
-                      <Input
-                        id="edit-phone"
-                        value={editFormData.phone}
-                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                        placeholder="Enter phone number"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
-                      <Input
-                        id="edit-dateOfBirth"
-                        type="date"
-                        value={editFormData.dateOfBirth}
-                        onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-address">Address</Label>
-                      <textarea
-                        id="edit-address"
-                        value={editFormData.address}
-                        onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                        placeholder="Enter address"
-                        rows={3}
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* RIGHT COLUMN: Specializations (Only for Doctor/Nurse) */}
-                  {(editingEmployee.roleName === 'ROLE_DOCTOR' || editingEmployee.roleName === 'ROLE_NURSE') && (
-                    <div className="lg:border-l lg:pl-6">
-                      <h3 className="text-lg font-semibold mb-4">Specializations</h3>
-                      {loadingSpecializations ? (
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">Loading specializations...</span>
-                        </div>
-                      ) : specializations.length === 0 ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <p className="text-sm text-yellow-800">
-                            ⚠️ No active specializations available.
-                          </p>
-                        </div>
+                  {/* Actions */}
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingEmployee(null);
+                        setEditFormData({
+                          firstName: '',
+                          lastName: '',
+                          phone: '',
+                          dateOfBirth: '',
+                          address: '',
+                          specializationIds: [],
+                        });
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updating || !canUpdate}
+                      title={!canUpdate ? "Bạn không có quyền cập nhật nhân viên" : ""}
+                    >
+                      {updating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Updating...
+                        </>
                       ) : (
-                        <div className="space-y-3">
-                          <div>
-                            <Label>Update Specializations</Label>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Modify employee specializations
-                            </p>
-                          </div>
-
-                          {/* Selected Specializations Badges */}
-                          {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
-                            <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              {editFormData.specializationIds.map((specId) => {
-                                const spec = specializations.find(s => s.specializationId === specId);
-                                return spec ? (
-                                  <Badge
-                                    key={specId}
-                                    className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
-                                  >
-                                    <span>{spec.specializationCode}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditFormData({
-                                          ...editFormData,
-                                          specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
-                                        });
-                                      }}
-                                      className="hover:bg-blue-700 rounded-full p-0.5"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
-
-                          {/* Checkbox List */}
-                          <div className="border rounded-lg max-h-96 overflow-y-auto">
-                            {specializations.map((spec) => (
-                              <label
-                                key={spec.specializationId}
-                                className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
-                                  onChange={(e) => {
-                                    const currentIds = editFormData.specializationIds || [];
-                                    if (e.target.checked) {
-                                      setEditFormData({
-                                        ...editFormData,
-                                        specializationIds: [...currentIds, spec.specializationId]
-                                      });
-                                    } else {
-                                      setEditFormData({
-                                        ...editFormData,
-                                        specializationIds: currentIds.filter(id => id !== spec.specializationId)
-                                      });
-                                    }
-                                  }}
-                                  disabled={updating}
-                                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium text-sm text-gray-900">
-                                    {spec.specializationCode}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {spec.specializationName}
-                                  </div>
-                                  {spec.description && (
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      {spec.description}
-                                    </div>
-                                  )}
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                        <>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Update Employee
+                        </>
                       )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditingEmployee(null);
-                      setEditFormData({
-                        firstName: '',
-                        lastName: '',
-                        phone: '',
-                        dateOfBirth: '',
-                        address: '',
-                        specializationIds: [],
-                      });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={updating || !canUpdate}
-                    title={!canUpdate ? "Bạn không có quyền cập nhật nhân viên" : ""}
-                  >
-                    {updating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Update Employee
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

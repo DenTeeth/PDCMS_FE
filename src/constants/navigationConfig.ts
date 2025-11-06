@@ -1,4 +1,4 @@
-import { 
+import {
   faTachometerAlt,
   faUsers,
   faFileAlt,
@@ -37,6 +37,7 @@ import {
   faCalendarDays,
   faUmbrellaBeach,
   faListCheck,
+  faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { GroupedPermissions } from '@/types/auth';
@@ -145,10 +146,11 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Part-Time Registrations',
-          href: '/admin/part_time_management',
-          icon: faListCheck,
-          requiredPermissions: ['VIEW_REGISTRATION_ALL'],
+          name: 'Shift Registrations',
+          href: '/admin/registrations',
+          icon: faCalendarCheck,
+          requiredPermissions: ['VIEW_REGISTRATION_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL'],
+          requireAll: false, // Show if user has either permission
         },
         {
           name: 'Employee Shifts',
@@ -165,8 +167,8 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Leave Management',
-      icon: faUmbrellaBeach,
+      name: 'Request Management',
+      icon: faClipboardList,
       hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
       submenu: [
@@ -182,6 +184,14 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faUmbrellaBeach,
           requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
+      ],
+    },
+    {
+      name: 'Leave Management',
+      icon: faListAlt,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
         {
           name: 'Time Off Types',
           href: '/admin/time-off-types',
@@ -217,6 +227,34 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       href: '/admin/customer-contacts',
       icon: faPhone,
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+    },
+    {
+      name: 'Booking Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
+      // Show if user has any of these permission groups
+      requiredPermissions: ['VIEW_ROOM', 'VIEW_SERVICE', 'VIEW_APPOINTMENT'],
+      requireAll: false,
+      submenu: [
+        {
+          name: 'Rooms',
+          href: '/admin/booking/rooms',
+          icon: faHospitalUser,
+          requiredPermissionGroup: 'ROOM_MANAGEMENT',
+        },
+        {
+          name: 'Services',
+          href: '/admin/booking/services',
+          icon: faTeeth,
+          requiredPermissionGroup: 'SERVICE_MANAGEMENT',
+        },
+        {
+          name: 'Appointments',
+          href: '/admin/booking/appointments',
+          icon: faCalendarAlt,
+          requiredPermissionGroup: 'APPOINTMENT',
+        },
+      ],
     },
     {
       name: 'Settings',
@@ -278,40 +316,37 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissions: ['VIEW_WORK_SHIFTS'],
     },
     {
-      name: 'Slot Registration',
-      href: '/employee/slot-registration',
-      icon: faClock,
-      requiredPermissions: ['VIEW_REGISTRATION_OWN'],
+      name: 'My Registrations',
+      href: '/employee/registrations',
+      icon: faCalendarCheck,
+      requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+      requireAll: false, // Show if user has either permission
     },
     {
-      name: 'Overtime Requests',
-      href: '/employee/overtime-requests',
-      icon: faClockFour,
+      name: 'Request Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-    },
-    {
-      name: 'Time Off Requests',
-      href: '/employee/time-off-requests',
-      icon: faUmbrellaBeach,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
+        {
+          name: 'Overtime Requests',
+          href: '/employee/overtime-requests',
+          icon: faClockFour,
+          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+        },
+        {
+          name: 'Time Off Requests',
+          href: '/employee/time-off-requests',
+          icon: faUmbrellaBeach,
+          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+        },
+      ],
     },
     {
       name: 'Shift Renewals',
       href: '/employee/shift-renewals',
       icon: faClockRotateLeft,
       requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-    },
-    {
-      name: 'My Schedule',
-      href: '/employee/my-schedule',
-      icon: faCalendarDays,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-    },
-    {
-      name: 'My Work Shifts',
-      href: '/employee/my-shifts',
-      icon: faClockFour,
-      requiredPermissions: ['VIEW_SHIFTS_OWN'],
     },
     {
       name: 'Shift Calendar',
@@ -446,7 +481,7 @@ export const getNavigationConfigByRole = (roles: string[]): NavigationConfig => 
   } else if (roles.includes('ROLE_PATIENT')) {
     return PATIENT_NAVIGATION_CONFIG;
   }
-  
+
   return PATIENT_NAVIGATION_CONFIG; // Default fallback
 };
 
@@ -458,7 +493,7 @@ export const generateNavigationConfig = (
   groupedPermissions: GroupedPermissions | undefined
 ): NavigationConfig => {
   const baseConfig = getNavigationConfigByRole([`ROLE_${baseRole.toUpperCase()}`]);
-  
+
   if (!groupedPermissions) {
     return baseConfig;
   }
@@ -468,7 +503,7 @@ export const generateNavigationConfig = (
     if (!item.requiredPermissionGroup) {
       return true; // Always show items without permission requirements
     }
-    
+
     return hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup);
   });
 
@@ -505,6 +540,6 @@ export const getBasePathByRole = (roles: string[]): string => {
   } else if (roles.includes('ROLE_PATIENT')) {
     return '/patient';
   }
-  
+
   return '/patient'; // Default fallback
 };

@@ -24,19 +24,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import Select from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
+import { workShiftService } from '@/services/workShiftService';
 import {
   TimeOffRequest,
   TimeOffStatus,
   TIME_OFF_STATUS_CONFIG,
-  TimeOffSlot,
-  TIME_OFF_SLOT_CONFIG,
   CreateTimeOffRequestDto,
 } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
+import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
@@ -45,13 +45,14 @@ export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { is403Error, handleError, clearError } = useApiErrorHandler();
-  
+
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
+  const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -78,7 +79,8 @@ export default function EmployeeTimeOffRequestsPage() {
       setLoading(true);
       await Promise.all([
         loadTimeOffRequests(),
-        loadTimeOffTypes()
+        loadTimeOffTypes(),
+        loadWorkShifts()
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -111,6 +113,16 @@ export default function EmployeeTimeOffRequestsPage() {
     }
   };
 
+  const loadWorkShifts = async () => {
+    try {
+      const shifts = await workShiftService.getAll(true);
+      setWorkShifts(shifts);
+    } catch (error) {
+      console.error('Error loading work shifts:', error);
+      setWorkShifts([]);
+    }
+  };
+
   const handleCreateTimeOffRequest = async () => {
     if (!createForm.timeOffTypeId || !createForm.startDate || !createForm.endDate || !createForm.reason.trim()) {
       alert('Vui lòng điền đầy đủ thông tin');
@@ -119,14 +131,20 @@ export default function EmployeeTimeOffRequestsPage() {
 
     try {
       setProcessing(true);
-      // For employee self-requests, don't send employeeId (backend will infer from JWT)
+
+      // For employee self-requests, use employeeId from auth context
       const requestData = {
-        ...createForm,
-        employeeId: undefined
+        timeOffTypeId: createForm.timeOffTypeId,
+        startDate: createForm.startDate,
+        endDate: createForm.endDate,
+        slotId: createForm.slotId,
+        reason: createForm.reason,
+        employeeId: Number(user?.employeeId) // Get from logged-in user
       };
-      
+
+      console.log('🔍 Creating time-off request:', requestData);
       const response = await TimeOffRequestService.createTimeOffRequest(requestData);
-      
+
       setShowCreateModal(false);
       setCreateForm({
         employeeId: undefined,
@@ -139,8 +157,15 @@ export default function EmployeeTimeOffRequestsPage() {
       loadTimeOffRequests();
       alert(`Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
-      console.error('Error creating time off request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể tạo yêu cầu nghỉ phép'}`);
+      console.error('❌ Error creating time off request:', error);
+      console.error('📋 Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.response?.data?.message
+      });
+
+      const errorMsg = error.response?.data?.message || error.message || 'Không thể tạo yêu cầu nghỉ phép';
+      alert(`❌ Lỗi: ${errorMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -157,7 +182,7 @@ export default function EmployeeTimeOffRequestsPage() {
       await TimeOffRequestService.cancelTimeOffRequest(selectedRequest.requestId, {
         cancellationReason: cancelReason
       });
-      
+
       setShowCancelModal(false);
       setSelectedRequest(null);
       setCancelReason('');
@@ -178,11 +203,11 @@ export default function EmployeeTimeOffRequestsPage() {
   };
 
   const filteredRequests = timeOffRequests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -270,7 +295,7 @@ export default function EmployeeTimeOffRequestsPage() {
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
           const canCancel = request.status === TimeOffStatus.PENDING;
-          
+
           return (
             <Card key={request.requestId} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -284,17 +309,17 @@ export default function EmployeeTimeOffRequestsPage() {
                         {statusConfig.label}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                         <span>{request.employeeName}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
                         <span>
-                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} - 
+                          {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
                           {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
                         </span>
                       </div>
@@ -318,7 +343,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -328,7 +353,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
                       Chi tiết
                     </Button>
-                    
+
                     {canCancel && (
                       <Button
                         variant="outline"
@@ -350,108 +375,118 @@ export default function EmployeeTimeOffRequestsPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Tạo Yêu Cầu Nghỉ Phép</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
-                <Select
-                  value={createForm.timeOffTypeId}
-                  onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
-                  options={timeOffTypes?.map(type => ({
-                    value: type.typeId,
-                    label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
-                  })) || []}
-                />
-                {createForm.timeOffTypeId && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    {(() => {
-                      const selectedType = timeOffTypes?.find(t => t.typeId === createForm.timeOffTypeId);
-                      return selectedType ? (
-                        <div>
-                          <p><strong>Mã:</strong> {selectedType.typeCode}</p>
-                          <p><strong>Yêu cầu phê duyệt:</strong> {selectedType.requiresApproval ? 'Có' : 'Không'}</p>
-                          {selectedType.description && (
-                            <p><strong>Mô tả:</strong> {selectedType.description}</p>
-                          )}
-                        </div>
-                      ) : null;
-                    })()}
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <Label htmlFor="startDate">Ngày bắt đầu *</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={createForm.startDate}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, startDate: e.target.value }))}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="endDate">Ngày kết thúc *</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={createForm.endDate}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="slot">Ca làm việc (nếu nghỉ nửa ngày)</Label>
-                <Select
-                  value={createForm.slotId || ''}
-                  onChange={(value) => setCreateForm(prev => ({ 
-                    ...prev, 
-                    slotId: value ? value as TimeOffSlot : null 
-                  }))}
-                  options={[
-                    { value: '', label: 'Cả ngày' },
-                    { value: TimeOffSlot.MORNING, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.MORNING].label },
-                    { value: TimeOffSlot.AFTERNOON, label: TIME_OFF_SLOT_CONFIG[TimeOffSlot.AFTERNOON].label },
-                  ]}
-                />
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="flex-shrink-0 border-b px-6 py-4">
+              <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
             </div>
-            
-            <div className="mb-4">
-              <Label htmlFor="reason">Lý do nghỉ phép *</Label>
-              <Textarea
-                id="reason"
-                value={createForm.reason}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
-                placeholder="Nhập lý do nghỉ phép..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1"
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleCreateTimeOffRequest}
-                disabled={processing}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
-              </Button>
+
+            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
+                  <Select
+                    value={createForm.timeOffTypeId}
+                    onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
+                    options={timeOffTypes?.map(type => ({
+                      value: type.typeId,
+                      label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
+                    })) || []}
+                  />
+                  {createForm.timeOffTypeId && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      {(() => {
+                        const selectedType = timeOffTypes?.find(t => t.typeId === createForm.timeOffTypeId);
+                        return selectedType ? (
+                          <div>
+                            <p><strong>Mã:</strong> {selectedType.typeCode}</p>
+                            <p><strong>Yêu cầu phê duyệt:</strong> {selectedType.requiresApproval ? 'Có' : 'Không'}</p>
+                            {selectedType.description && (
+                              <p><strong>Mô tả:</strong> {selectedType.description}</p>
+                            )}
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="startDate">Ngày bắt đầu *</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={createForm.startDate}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="endDate">Ngày kết thúc *</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={createForm.endDate}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    min={createForm.startDate || new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="slot">Ca làm việc (nếu nghỉ nửa ngày)</Label>
+                  <Select
+                    value={createForm.slotId || ''}
+                    onChange={(value) => setCreateForm(prev => ({
+                      ...prev,
+                      slotId: value || null,
+                      // If slot is selected, set endDate = startDate
+                      endDate: value ? prev.startDate : prev.endDate
+                    }))}
+                    options={[
+                      { value: '', label: 'Nghỉ cả ngày' },
+                      ...workShifts.map(shift => ({
+                        value: shift.workShiftId,
+                        label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                      }))
+                    ]}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="reason">Lý do nghỉ phép *</Label>
+                <Textarea
+                  id="reason"
+                  value={createForm.reason}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Nhập lý do nghỉ phép..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-between gap-3 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleCreateTimeOffRequest}
+                  disabled={processing}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Cancel Modal */}
+      )}      {/* Cancel Modal */}
       {showCancelModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">

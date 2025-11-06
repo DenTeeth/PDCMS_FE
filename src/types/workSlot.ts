@@ -21,12 +21,19 @@ export interface PartTimeSlot {
 
 /**
  * Available Slot for Employee Registration
+ * Response from GET /api/v1/registrations/available-slots
+ * 
+ * Note: API response only includes: slotId, shiftName, dayOfWeek, remaining
+ * workShiftId, quota, registered are optional (may not be in response)
  */
 export interface AvailableSlot {
   slotId: number;
-  shiftName: string;
+  shiftName: string;    // Note: shiftName (not workShiftName)
   dayOfWeek: DayOfWeek;
-  remaining: number;
+  remaining: number;    // Number of available spots
+  workShiftId?: string; // Optional: ID of work shift (may not be in response)
+  quota?: number;       // Optional: Total quota (may not be in response)
+  registered?: number;  // Optional: Number of registrations (may not be in response)
 }
 
 /**
@@ -53,10 +60,11 @@ export interface CreateWorkSlotRequest {
 
 /**
  * Request payload for updating a work slot
+ * Note: Both fields are optional (can update independently)
  */
 export interface UpdateWorkSlotRequest {
-  quota: number;
-  isActive: boolean;
+  quota?: number;       // Optional: Can update quota only
+  isActive?: boolean;   // Optional: Can update isActive only
 }
 
 /**
@@ -119,4 +127,32 @@ export enum WorkSlotErrorCode {
   SLOT_NOT_FOUND = 'SLOT_NOT_FOUND',
   QUOTA_VIOLATION = 'QUOTA_VIOLATION',
   SLOT_IS_FULL = 'SLOT_IS_FULL'
+}
+
+/**
+ * Registered Employee Information
+ * Part of PartTimeSlotDetailResponse
+ */
+export interface RegisteredEmployeeInfo {
+  employeeId: number;
+  employeeCode: string;
+  employeeName: string;
+  effectiveFrom: string; // ISO date string
+  effectiveTo: string;    // ISO date string
+}
+
+/**
+ * Part-Time Slot Detail Response
+ * Response from GET /api/v1/work-slots/{slotId}
+ * Includes slot information and list of registered employees
+ */
+export interface PartTimeSlotDetailResponse {
+  slotId: number;
+  workShiftId: string;
+  workShiftName: string;
+  dayOfWeek: string; // DayOfWeek enum value as string
+  quota: number;
+  registered: number; // Count of active registrations
+  isActive: boolean;
+  registeredEmployees: RegisteredEmployeeInfo[];
 }
