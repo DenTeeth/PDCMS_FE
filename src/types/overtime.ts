@@ -3,6 +3,9 @@
  * Based on Overtime_API.md specification
  */
 
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faClock, faCheck, faTimes, faBan } from '@fortawesome/free-solid-svg-icons';
+
 export enum OvertimeStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
@@ -149,23 +152,27 @@ export const OVERTIME_STATUS_CONFIG = {
     color: 'warning',
     bgColor: 'bg-yellow-100',
     textColor: 'text-yellow-800',
+    icon: faClock,
   },
   [OvertimeStatus.APPROVED]: {
     label: 'Đã duyệt',
     color: 'success',
     bgColor: 'bg-green-100',
     textColor: 'text-green-800',
+    icon: faCheck,
   },
   [OvertimeStatus.REJECTED]: {
     label: 'Từ chối',
     color: 'danger',
     bgColor: 'bg-red-100',
     textColor: 'text-red-800',
+    icon: faTimes,
   },
   [OvertimeStatus.CANCELLED]: {
     label: 'Đã hủy',
     color: 'secondary',
     bgColor: 'bg-gray-100',
     textColor: 'text-gray-800',
+    icon: faBan,
   },
 };

@@ -16,18 +16,18 @@ import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 // Import types and services for Part-Time Registration
-import { 
-  ShiftRegistration, 
+import {
+  ShiftRegistration,
   CreateShiftRegistrationRequest,
   UpdateShiftRegistrationRequest,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { WorkShift } from '@/types/workShift';
 import { AvailableSlot, PartTimeSlot } from '@/types/workSlot';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 import { workShiftService } from '@/services/workShiftService';
 import { workSlotService } from '@/services/workSlotService';
-import { getEmployeeIdFromToken } from '@/lib/utils';
+import { getEmployeeIdFromToken, formatTimeToHHMM } from '@/lib/utils';
 
 // Import types and services for Fixed Registration
 import {
@@ -52,7 +52,7 @@ const DAY_LABELS: { [key: number]: string } = {
 const getDayOfWeekLabel = (day: DayOfWeek): string => {
   const dayMap = {
     [DayOfWeek.MONDAY]: 'T2',
-    [DayOfWeek.TUESDAY]: 'T3', 
+    [DayOfWeek.TUESDAY]: 'T3',
     [DayOfWeek.WEDNESDAY]: 'T4',
     [DayOfWeek.THURSDAY]: 'T5',
     [DayOfWeek.FRIDAY]: 'T6',
@@ -79,16 +79,16 @@ const getDayName = (day: DayOfWeek): string => {
 // ==================== MAIN COMPONENT ====================
 export default function EmployeeRegistrationsPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // Determine which tabs to show based on permissions and employee type
   const hasManagePermission = hasPermission(Permission.MANAGE_WORK_SLOTS);
   const isPartTimeFlex = user?.employmentType === 'PART_TIME_FLEX';
-  
+
   // Determine available tabs and default tab using useMemo
   const { availableTabs, defaultTab } = useMemo(() => {
     let tabs: Array<'part-time' | 'fixed'> = [];
     let defaultTabValue: 'part-time' | 'fixed' = 'part-time';
-    
+
     if (hasManagePermission) {
       // Condition 1: Has MANAGE_WORK_SLOTS → Show both tabs
       tabs = ['part-time', 'fixed'];
@@ -102,13 +102,13 @@ export default function EmployeeRegistrationsPage() {
       tabs = ['fixed'];
       defaultTabValue = 'fixed';
     }
-    
+
     return { availableTabs: tabs, defaultTab: defaultTabValue };
   }, [hasManagePermission, isPartTimeFlex]);
-  
+
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>(defaultTab);
-  
+
   // Reset active tab if current tab is not available
   useEffect(() => {
     if (!availableTabs.includes(activeTab)) {
@@ -128,7 +128,9 @@ export default function EmployeeRegistrationsPage() {
   const [partTimeCreating, setPartTimeCreating] = useState(false);
   const [partTimeCreateFormData, setPartTimeCreateFormData] = useState<CreateShiftRegistrationRequest>({
     partTimeSlotId: 0,
-    effectiveFrom: ''
+    effectiveFrom: '',
+    effectiveTo: '',
+    dayOfWeek: []
   });
 
   const [showPartTimeEditModal, setShowPartTimeEditModal] = useState(false);
@@ -142,11 +144,11 @@ export default function EmployeeRegistrationsPage() {
 
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingWorkShifts, setLoadingWorkShifts] = useState(false);
-  
+
   // Work slots (PartTimeSlot[]) - for mapping partTimeSlotId to shiftName
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loadingWorkSlots, setLoadingWorkSlots] = useState(false);
-  
+
   // Available slots for PART_TIME_FLEX employees
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
@@ -178,7 +180,7 @@ export default function EmployeeRegistrationsPage() {
         }
       }
     }
-    
+
     // If not in user object, try to decode from token
     if (user?.token) {
       try {
@@ -200,7 +202,7 @@ export default function EmployeeRegistrationsPage() {
         console.error('❌ [currentEmployeeId] Error extracting from token:', error);
       }
     }
-    
+
     // Return null if not found - backend will get from token
     return null;
   }, [user?.employeeId, user?.token]);
@@ -212,7 +214,7 @@ export default function EmployeeRegistrationsPage() {
       // So we can still fetch available slots even without currentEmployeeId
       console.log('📋 [useEffect] Fetching Part-Time Registrations...');
       fetchPartTimeRegistrations();
-      
+
       // Load available slots if user has VIEW_AVAILABLE_SLOTS permission (PART_TIME_FLEX)
       // Note: available slots API doesn't require employeeId in request
       if (isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) {
@@ -224,11 +226,11 @@ export default function EmployeeRegistrationsPage() {
           fetchWorkShifts();
         }
       }
-      
+
       // Always fetch workShifts and workSlots to get shift names for registrations
       fetchWorkShifts();
       fetchWorkSlotsData();
-      
+
       if (!currentEmployeeId) {
         console.warn('⚠️ [useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
       } else {
@@ -245,14 +247,14 @@ export default function EmployeeRegistrationsPage() {
   const fetchPartTimeRegistrations = async () => {
     try {
       setPartTimeLoading(true);
-      
+
       const response = await shiftRegistrationService.getMyRegistrations({
         page: partTimeCurrentPage,
         size: 10,
         sortBy: 'effectiveFrom',
         sortDirection: 'DESC'
-      });
-      
+      }, 'part-time-flex'); // ✅ Specify type to use /registrations/part-time-flex endpoint
+
       // Handle both array and paginated responses
       // According to API spec: Employee view typically returns array directly
       if (Array.isArray(response)) {
@@ -268,7 +270,22 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('❌ Failed to fetch part-time registrations:', error);
-      toast.error(error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to fetch your shift registrations');
+
+      // Extract detailed error message from 500 response
+      let errorMessage = 'Failed to fetch your shift registrations';
+      if (error.response?.status === 500) {
+        console.error('🔥 [Backend 500 Error] Server error details:', {
+          fullResponse: error.response,
+          data: error.response.data,
+          message: error.response.data?.message,
+          detail: error.response.data?.detail,
+          error: error.response.data?.error,
+          trace: error.response.data?.trace
+        });
+        errorMessage = `Server error: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Internal server error - check backend logs'}`;
+      }
+
+      toast.error(error.response?.data?.detail || error.response?.data?.message || error.message || errorMessage);
     } finally {
       setPartTimeLoading(false);
     }
@@ -279,7 +296,7 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkShifts(true);
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
-      
+
       if (!shiftsResponse || shiftsResponse.length === 0) {
         toast.warning('No work shifts available. Please contact admin to create work shifts.');
       }
@@ -319,7 +336,7 @@ export default function EmployeeRegistrationsPage() {
       });
     } catch (error: any) {
       console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
-      
+
       // Nếu lỗi 403 → User không có permission (expected cho employee)
       if (error.response?.status === 403) {
         console.log('ℹ️ [fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
@@ -328,7 +345,7 @@ export default function EmployeeRegistrationsPage() {
         // Các lỗi khác (500, network, etc.) - có thể log nhưng không hiển thị toast
         // vì đây là optional data
       }
-      
+
       setWorkSlots([]); // Set empty array on error
     } finally {
       setLoadingWorkSlots(false);
@@ -340,25 +357,25 @@ export default function EmployeeRegistrationsPage() {
     try {
       console.log('🚀 [fetchAvailableSlots] Starting fetch...');
       setLoadingAvailableSlots(true);
-      
+
       console.log('📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots()...');
       const slots = await shiftRegistrationService.getAvailableSlots();
-      
+
       console.log('✅ [fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
         firstItem: Array.isArray(slots) && slots.length > 0 ? slots[0] : 'no items'
       });
-      
+
       const slotsArray = slots || [];
       console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
         count: slotsArray.length,
         slots: slotsArray
       });
-      
+
       setAvailableSlots(slotsArray);
-      
+
       if (!slots || slotsArray.length === 0) {
         console.warn('⚠️ [fetchAvailableSlots] No available slots found');
         toast.info('Hiện tại không có suất nào còn trống. Vui lòng thử lại sau.');
@@ -374,7 +391,22 @@ export default function EmployeeRegistrationsPage() {
         statusText: error.response?.statusText,
         data: error.response?.data
       });
-      toast.error(error.response?.data?.message || error.message || 'Failed to load available slots');
+
+      // Extract detailed error message from 500 response
+      let errorMessage = 'Failed to load available slots';
+      if (error.response?.status === 500) {
+        console.error('🔥 [Backend 500 Error] Server error details:', {
+          fullResponse: error.response,
+          data: error.response.data,
+          message: error.response.data?.message,
+          detail: error.response.data?.detail,
+          error: error.response.data?.error,
+          trace: error.response.data?.trace
+        });
+        errorMessage = `Server error: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Internal server error'}`;
+      }
+
+      toast.error(error.response?.data?.message || error.message || errorMessage);
     } finally {
       console.log('🏁 [fetchAvailableSlots] Finished (set loading to false)');
       setLoadingAvailableSlots(false);
@@ -385,7 +417,7 @@ export default function EmployeeRegistrationsPage() {
   const fetchFixedRegistrations = async () => {
     try {
       setFixedLoading(true);
-      
+
       // Build params - only include employeeId if we have it
       // If not provided, backend will get employeeId from token
       const params: FixedRegistrationQueryParams = {};
@@ -402,12 +434,12 @@ export default function EmployeeRegistrationsPage() {
       setFixedRegistrations(response);
     } catch (error: any) {
       console.error('Failed to fetch fixed registrations:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Failed to fetch fixed shift registrations';
+      const errorMessage = error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch fixed shift registrations';
       toast.error(errorMessage);
-      
+
       if (error.errorCode === 'EMPLOYEE_ID_REQUIRED' || error.response?.status === 400) {
         toast.error('Employee ID is required. Please contact administrator.');
       } else if (error.response?.status === 403) {
@@ -421,13 +453,31 @@ export default function EmployeeRegistrationsPage() {
   // ==================== PART-TIME REGISTRATION HANDLERS ====================
   const handlePartTimeCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate based on employee type
     if (isPartTimeFlex) {
-      // PART_TIME_FLEX: Need partTimeSlotId and effectiveFrom
-      if (!partTimeCreateFormData.partTimeSlotId || !partTimeCreateFormData.effectiveFrom) {
-        toast.error('Vui lòng chọn suất và ngày bắt đầu');
+      // PART_TIME_FLEX: Need all required fields
+      if (!partTimeCreateFormData.partTimeSlotId) {
+        toast.error('Vui lòng chọn suất làm việc');
         return;
+      }
+      if (!partTimeCreateFormData.dayOfWeek || partTimeCreateFormData.dayOfWeek.length === 0) {
+        toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
+        return;
+      }
+      if (!partTimeCreateFormData.effectiveFrom) {
+        toast.error('Vui lòng chọn ngày bắt đầu');
+        return;
+      }
+
+      // Validate dates if effectiveTo is provided
+      if (partTimeCreateFormData.effectiveTo) {
+        const from = new Date(partTimeCreateFormData.effectiveFrom);
+        const to = new Date(partTimeCreateFormData.effectiveTo);
+        if (to < from) {
+          toast.error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
+          return;
+        }
       }
     } else {
       // Admin/Manager with MANAGE_WORK_SLOTS: Use old form structure (if still needed)
@@ -438,11 +488,13 @@ export default function EmployeeRegistrationsPage() {
     try {
       setPartTimeCreating(true);
       await shiftRegistrationService.createRegistration(partTimeCreateFormData);
-      toast.success('Đăng ký ca làm việc thành công');
+      toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.');
       setShowPartTimeCreateModal(false);
       setPartTimeCreateFormData({
         partTimeSlotId: 0,
-        effectiveFrom: ''
+        effectiveFrom: '',
+        effectiveTo: '',
+        dayOfWeek: []
       });
       // Refresh data
       await fetchPartTimeRegistrations();
@@ -451,7 +503,7 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('❌ Failed to create registration:', error);
-      
+
       // Handle specific error codes
       if (error.errorCode === 'INVALID_EMPLOYEE_TYPE' || error.response?.data?.errorCode === 'INVALID_EMPLOYEE_TYPE') {
         toast.error('Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt.');
@@ -479,13 +531,13 @@ export default function EmployeeRegistrationsPage() {
 
   const handlePartTimeUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!partTimeEditingRegistration) return;
 
     try {
       setPartTimeUpdating(true);
       await shiftRegistrationService.updateRegistration(
-        partTimeEditingRegistration.registrationId, 
+        partTimeEditingRegistration.registrationId.toString(),
         partTimeEditFormData
       );
       toast.success('Shift registration updated successfully');
@@ -506,7 +558,7 @@ export default function EmployeeRegistrationsPage() {
 
     try {
       setPartTimeDeleting(true);
-      await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId);
+      await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId.toString());
       toast.success('Shift registration deleted successfully');
       setShowPartTimeDeleteModal(false);
       setPartTimeDeletingRegistration(null);
@@ -527,28 +579,28 @@ export default function EmployeeRegistrationsPage() {
 
   const getWorkShiftTime = (slotId: string | number) => {
     const workShift = workShifts.find(ws => ws.workShiftId === slotId);
-    return workShift ? `${workShift.startTime} - ${workShift.endTime}` : '';
+    return workShift ? `${formatTimeToHHMM(workShift.startTime)} - ${formatTimeToHHMM(workShift.endTime)}` : '';
   };
 
   // Get shift name for registration - try multiple sources
   const getRegistrationShiftName = (registration: ShiftRegistration): string => {
-    // First, try registration.workShiftName (from API response)
-    if (registration.workShiftName && registration.workShiftName.trim() !== '') {
-      return registration.workShiftName;
+    // First, try registration.shiftName (from API response)
+    if (registration.shiftName && registration.shiftName.trim() !== '') {
+      return registration.shiftName;
     }
-    
+
     // Second, try to find from availableSlots by partTimeSlotId
     const availableSlot = availableSlots.find(slot => slot.slotId === registration.partTimeSlotId);
     if (availableSlot && availableSlot.shiftName && availableSlot.shiftName.trim() !== '') {
       return availableSlot.shiftName;
     }
-    
+
     // Third, try to find from workSlots (PartTimeSlot[]) by partTimeSlotId
     const workSlot = workSlots.find(slot => slot.slotId === registration.partTimeSlotId);
     if (workSlot && workSlot.workShiftName && workSlot.workShiftName.trim() !== '') {
       return workSlot.workShiftName;
     }
-    
+
     // Fallback: return generic name
     return `Ca làm việc (ID: ${registration.partTimeSlotId})`;
   };
@@ -598,271 +650,274 @@ export default function EmployeeRegistrationsPage() {
 
           {/* PART-TIME REGISTRATIONS TAB */}
           {availableTabs.includes('part-time') && (
-          <TabsContent value="part-time" className="space-y-6">
+            <TabsContent value="part-time" className="space-y-6">
 
-            {/* Available Slots Section - Carousel */}
-            {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
+              {/* Available Slots Section - Carousel */}
+              {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Các Suất Làm Việc Có Sẵn ({availableSlots.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingAvailableSlots ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                        <span className="text-gray-600">Đang tải...</span>
+                      </div>
+                    ) : availableSlots.length === 0 ? (
+                      <div className="text-center py-12">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
+                        <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
+                      </div>
+                    ) : (
+                      <Carousel className="w-full" autoplay={false}>
+                        <CarouselContent>
+                          {availableSlots.map((slot) => (
+                            <CarouselItem key={slot.slotId} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                              <Card className="border">
+                                <CardContent className="p-4">
+                                  <div className="space-y-3">
+                                    <div>
+                                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                        {slot.shiftName}
+                                      </h3>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <Badge variant="outline">
+                                          <CalendarDays className="h-3 w-3 mr-1" />
+                                          {slot.dayOfWeek}
+                                        </Badge>
+                                        <Badge
+                                          variant="outline"
+                                          className={
+                                            slot.totalDatesEmpty > 0
+                                              ? 'bg-green-50 text-green-700'
+                                              : 'bg-red-50 text-red-700'
+                                          }
+                                        >
+                                          <Users className="h-3 w-3 mr-1" />
+                                          {slot.totalDatesEmpty > 0 ? `${slot.totalDatesEmpty} ngày còn trống` : 'Đã đầy'}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-gray-600 mt-2">{slot.availabilitySummary}</p>
+                                    </div>
+                                    <Button
+                                      onClick={() => {
+                                        setPartTimeCreateFormData({
+                                          partTimeSlotId: slot.slotId,
+                                          dayOfWeek: slot.dayOfWeek ? slot.dayOfWeek.split(',').map(d => d.trim()) : [],
+                                          effectiveFrom: slot.effectiveFrom,
+                                          effectiveTo: undefined
+                                        });
+                                        setShowPartTimeCreateModal(true);
+                                      }}
+                                      className="w-full"
+                                      size="sm"
+                                      disabled={slot.totalDatesEmpty === 0}
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      {slot.totalDatesEmpty > 0 ? 'Đăng Ký' : 'Đã Đầy'}
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                      </Carousel>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* My Registrations Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Các Suất Làm Việc Có Sẵn ({availableSlots.length})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5" />
+                      Đăng Ký Của Tôi ({partTimeTotalElements})
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {loadingAvailableSlots ? (
+                  {partTimeLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
                       <span className="text-gray-600">Đang tải...</span>
                     </div>
-                  ) : availableSlots.length === 0 ? (
+                  ) : partTimeRegistrations.length === 0 ? (
                     <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
-                      <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
+                      <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-700 font-medium mb-2">Chưa có đăng ký ca làm việc</p>
+                      <p className="text-sm text-gray-500">Vui lòng chọn suất ở trên để đăng ký</p>
                     </div>
                   ) : (
-                    <Carousel className="w-full" autoplay={false}>
-                      <CarouselContent>
-                        {availableSlots.map((slot) => (
-                          <CarouselItem key={slot.slotId} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                            <Card className="border">
-                              <CardContent className="p-4">
-                                <div className="space-y-3">
-                                  <div>
-                                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                      {slot.shiftName}
-                                    </h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="outline">
-                                        <CalendarDays className="h-3 w-3 mr-1" />
-                                        {getDayOfWeekLabel(slot.dayOfWeek)}
-                                      </Badge>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={
-                                          slot.remaining > 0 
-                                            ? 'bg-green-50 text-green-700' 
-                                            : 'bg-red-50 text-red-700'
-                                        }
-                                      >
-                                        <Users className="h-3 w-3 mr-1" />
-                                        {slot.remaining > 0 ? `Còn ${slot.remaining} chỗ` : 'Đã đầy'}
-                                      </Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {partTimeRegistrations.map((registration) => (
+                        <Card key={registration.registrationId}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                  {getRegistrationShiftName(registration)}
+                                </h3>
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                  <Badge variant="outline" className="font-mono">
+                                    Slot #{registration.partTimeSlotId}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
+                                  </Badge>
+                                  <Badge className={registration.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                    <div className="flex items-center space-x-1">
+                                      {registration.isActive ? (
+                                        <CheckCircle className="h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="h-3 w-3" />
+                                      )}
+                                      <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
                                     </div>
-                                  </div>
-                                  <Button
-                                    onClick={() => {
-                                      setPartTimeCreateFormData({
-                                        partTimeSlotId: slot.slotId,
-                                        effectiveFrom: new Date().toISOString().split('T')[0]
-                                      });
-                                      setShowPartTimeCreateModal(true);
-                                    }}
-                                    className="w-full"
-                                    size="sm"
-                                    disabled={slot.remaining === 0}
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    {slot.remaining > 0 ? 'Đăng Ký' : 'Đã Đầy'}
-                                  </Button>
+                                  </Badge>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
+                                {registration.effectiveTo && (
+                                  <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handlePartTimeEdit(registration)}
+                                  className="flex-1"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Sửa
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setPartTimeDeletingRegistration(registration);
+                                    setShowPartTimeDeleteModal(true);
+                                  }}
+                                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Xóa
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {partTimeTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="text-sm text-gray-700">
+                        Hiển thị {partTimeCurrentPage * 10 + 1} - {Math.min((partTimeCurrentPage + 1) * 10, partTimeTotalElements)} trong {partTimeTotalElements} đăng ký
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPartTimeCurrentPage(prev => Math.max(0, prev - 1))}
+                          disabled={partTimeCurrentPage === 0}
+                        >
+                          Trước
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPartTimeCurrentPage(prev => Math.min(partTimeTotalPages - 1, prev + 1))}
+                          disabled={partTimeCurrentPage === partTimeTotalPages - 1}
+                        >
+                          Sau
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
-            )}
-
-            {/* My Registrations Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5" />
-                    Đăng Ký Của Tôi ({partTimeTotalElements})
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {partTimeLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
-                    <span className="text-gray-600">Đang tải...</span>
-                  </div>
-                ) : partTimeRegistrations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-gray-700 font-medium mb-2">Chưa có đăng ký ca làm việc</p>
-                    <p className="text-sm text-gray-500">Vui lòng chọn suất ở trên để đăng ký</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {partTimeRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-2">
-                                {getRegistrationShiftName(registration)}
-                              </h3>
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <Badge variant="outline" className="font-mono">
-                                  Slot #{registration.partTimeSlotId}
-                                </Badge>
-                                <Badge variant="outline">
-                                  {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
-                                </Badge>
-                                <Badge className={registration.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
-                                  </div>
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 pt-2 border-t">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePartTimeEdit(registration)}
-                                className="flex-1"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Sửa
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setPartTimeDeletingRegistration(registration);
-                                  setShowPartTimeDeleteModal(true);
-                                }}
-                                className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Xóa
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {/* Pagination */}
-                {partTimeTotalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-gray-700">
-                      Hiển thị {partTimeCurrentPage * 10 + 1} - {Math.min((partTimeCurrentPage + 1) * 10, partTimeTotalElements)} trong {partTimeTotalElements} đăng ký
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPartTimeCurrentPage(prev => Math.max(0, prev - 1))}
-                        disabled={partTimeCurrentPage === 0}
-                      >
-                        Trước
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPartTimeCurrentPage(prev => Math.min(partTimeTotalPages - 1, prev + 1))}
-                        disabled={partTimeCurrentPage === partTimeTotalPages - 1}
-                      >
-                        Sau
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            </TabsContent>
           )}
 
           {/* FIXED REGISTRATIONS TAB */}
           {availableTabs.includes('fixed') && (
-          <TabsContent value="fixed" className="space-y-6">
+            <TabsContent value="fixed" className="space-y-6">
 
-            {/* Fixed Registrations Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
-                  Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {fixedLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
-                    <span className="text-gray-600">Đang tải...</span>
-                  </div>
-                ) : fixedRegistrations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
-                    <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {fixedRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-2">
-                                {registration.workShiftName}
-                              </h3>
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <Badge variant="outline">
-                                  {formatFixedDaysOfWeek(registration.daysOfWeek)}
-                                </Badge>
-                                <Badge variant={registration.isActive ? "default" : "secondary"}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
-                                  </div>
-                                </Badge>
+              {/* Fixed Registrations Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5" />
+                    Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {fixedLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
+                      <span className="text-gray-600">Đang tải...</span>
+                    </div>
+                  ) : fixedRegistrations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
+                      <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {fixedRegistrations.map((registration) => (
+                        <Card key={registration.registrationId}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                  {registration.workShiftName}
+                                </h3>
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                  <Badge variant="outline">
+                                    {formatFixedDaysOfWeek(registration.daysOfWeek)}
+                                  </Badge>
+                                  <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                    <div className="flex items-center space-x-1">
+                                      {registration.isActive ? (
+                                        <CheckCircle className="h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="h-3 w-3" />
+                                      )}
+                                      <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
+                                    </div>
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
+                                {registration.effectiveTo && (
+                                  <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
+                                )}
                               </div>
                             </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
         </Tabs>
 
@@ -890,17 +945,23 @@ export default function EmployeeRegistrationsPage() {
                         <select
                           id="createSlot"
                           value={partTimeCreateFormData.partTimeSlotId || ''}
-                          onChange={(e) => setPartTimeCreateFormData(prev => ({
-                            ...prev,
-                            partTimeSlotId: parseInt(e.target.value) || 0
-                          }))}
+                          onChange={(e) => {
+                            const selectedSlot = availableSlots.find(s => s.slotId === parseInt(e.target.value));
+                            setPartTimeCreateFormData(prev => ({
+                              ...prev,
+                              partTimeSlotId: parseInt(e.target.value) || 0,
+                              dayOfWeek: selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [],
+                              effectiveFrom: selectedSlot?.effectiveFrom || '',
+                              effectiveTo: undefined
+                            }));
+                          }}
                           className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         >
                           <option value="">Chọn suất làm việc</option>
                           {availableSlots.map(slot => (
                             <option key={slot.slotId} value={slot.slotId}>
-                              {slot.shiftName} - {getDayOfWeekLabel(slot.dayOfWeek)} (Còn {slot.remaining}{slot.quota ? `/${slot.quota}` : ''} chỗ)
+                              {slot.shiftName} - {slot.dayOfWeek} ({slot.totalDatesEmpty} ngày còn trống)
                             </option>
                           ))}
                         </select>
@@ -908,11 +969,59 @@ export default function EmployeeRegistrationsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="createEffectiveFrom">Từ ngày *</Label>
+                      <Label htmlFor="createDayOfWeek">
+                        Thứ trong tuần <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="space-y-2 mt-2">
+                        {partTimeCreateFormData.partTimeSlotId > 0 ? (
+                          // Show only days from selected slot
+                          (() => {
+                            const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
+                            const availableDays = selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
+
+                            return availableDays.length > 0 ? (
+                              availableDays.map(day => (
+                                <label key={day} className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    value={day}
+                                    checked={partTimeCreateFormData.dayOfWeek?.includes(day)}
+                                    onChange={(e) => {
+                                      const currentDays = partTimeCreateFormData.dayOfWeek || [];
+                                      if (e.target.checked) {
+                                        setPartTimeCreateFormData(prev => ({
+                                          ...prev,
+                                          dayOfWeek: [...currentDays, day]
+                                        }));
+                                      } else {
+                                        setPartTimeCreateFormData(prev => ({
+                                          ...prev,
+                                          dayOfWeek: currentDays.filter(d => d !== day)
+                                        }));
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <span>{getDayName(day as DayOfWeek)}</span>
+                                </label>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">Vui lòng chọn suất làm việc trước</p>
+                            );
+                          })()
+                        ) : (
+                          <p className="text-sm text-gray-500">Vui lòng chọn suất làm việc trước</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="createEffectiveFrom">
+                        Từ ngày <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="createEffectiveFrom"
                         type="date"
-                        min={new Date().toISOString().split('T')[0]}
                         value={partTimeCreateFormData.effectiveFrom}
                         onChange={(e) => setPartTimeCreateFormData(prev => ({
                           ...prev,
@@ -920,6 +1029,21 @@ export default function EmployeeRegistrationsPage() {
                         }))}
                         required
                       />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="createEffectiveTo">Đến ngày</Label>
+                      <Input
+                        id="createEffectiveTo"
+                        type="date"
+                        min={partTimeCreateFormData.effectiveFrom || ''}
+                        value={partTimeCreateFormData.effectiveTo || ''}
+                        onChange={(e) => setPartTimeCreateFormData(prev => ({
+                          ...prev,
+                          effectiveTo: e.target.value
+                        }))}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">Để trống nếu muốn dùng ngày kết thúc của suất</p>
                     </div>
                   </>
                 ) : (
@@ -936,7 +1060,9 @@ export default function EmployeeRegistrationsPage() {
                       setShowPartTimeCreateModal(false);
                       setPartTimeCreateFormData({
                         partTimeSlotId: 0,
-                        effectiveFrom: ''
+                        effectiveFrom: '',
+                        effectiveTo: '',
+                        dayOfWeek: []
                       });
                     }}
                   >
@@ -966,9 +1092,9 @@ export default function EmployeeRegistrationsPage() {
               <form onSubmit={handlePartTimeUpdate} className="space-y-4">
                 <div>
                   <Label>Ca làm việc</Label>
-                  <Input value={partTimeEditingRegistration?.workShiftName || 'N/A'} disabled className="bg-gray-50" />
+                  <Input value={partTimeEditingRegistration?.shiftName || 'N/A'} disabled className="bg-gray-50" />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="editEffectiveTo">Đến ngày</Label>
                   <Input
