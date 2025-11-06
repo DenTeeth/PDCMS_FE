@@ -46,7 +46,7 @@ interface PatientStats {
 // ==================== MAIN COMPONENT ====================
 export default function PatientsPage() {
   const router = useRouter();
-  
+
   // State management
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +116,7 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      
+
       // Build query params - BE only supports page, size, sortBy, sortDirection
       // Note: Search, status, gender filters will be applied on FE
       // DEMO: size=1 to see pagination clearly
@@ -131,11 +131,11 @@ export default function PatientsPage() {
       // if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       // if (filterStatus !== 'all') params.isActive = filterStatus === 'active';
       // if (filterGender !== 'all') params.gender = filterGender;
-      
+
       console.log('Fetching patients with params:', params);
       const response = await patientService.getPatients(params);
       console.log('Received patients:', response.content.length, 'items, totalPages:', response.totalPages);
-      
+
       setPatients(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
@@ -150,17 +150,17 @@ export default function PatientsPage() {
   // ==================== CREATE PATIENT ====================
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
-    if (!formData.username || !formData.password || !formData.email || 
-        !formData.firstName || !formData.lastName) {
+    if (!formData.username || !formData.password || !formData.email ||
+      !formData.firstName || !formData.lastName) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
       setCreating(true);
-      
+
       // Prepare payload - only include fields that have values
       const payload: CreatePatientWithAccountRequest = {
         username: formData.username,
@@ -179,7 +179,7 @@ export default function PatientsPage() {
       if (formData.allergies) payload.allergies = formData.allergies;
       if (formData.emergencyContactName) payload.emergencyContactName = formData.emergencyContactName;
       if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
-      
+
       await patientService.createPatient(payload);
       toast.success('Patient created successfully');
       setShowCreateModal(false);
@@ -230,15 +230,15 @@ export default function PatientsPage() {
 
   const handleUpdatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingPatient) return;
 
     try {
       setUpdating(true);
-      
+
       // Build partial update payload (only send fields that have values)
       const payload: UpdatePatientRequest = {};
-      
+
       if (editFormData.firstName && editFormData.firstName !== editingPatient.firstName) {
         payload.firstName = editFormData.firstName;
       }
@@ -299,7 +299,7 @@ export default function PatientsPage() {
   // ==================== FILTERING (All filters on FE until BE supports them) ====================
   const filteredPatients = patients.filter((patient) => {
     // Search filter (FE)
-    const matchesSearch = !debouncedSearchTerm || 
+    const matchesSearch = !debouncedSearchTerm ||
       patient.fullName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       patient.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       patient.phone?.includes(debouncedSearchTerm) ||
@@ -373,50 +373,49 @@ export default function PatientsPage() {
 
       {/* ==================== STATS ==================== */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Patients</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
+        {/* Total Patients */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Total Patients</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <UserCheck className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+          </div>
+        </div>
+
+        {/* Active */}
+        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-green-800 mb-2">Active</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <UserCheck className="h-6 w-6 text-green-700" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <User className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Male</p>
-                <p className="text-2xl font-bold">{stats.male}</p>
-              </div>
+            <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+          </div>
+        </div>
+
+        {/* Male */}
+        <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-blue-800 mb-2">Male</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-blue-700" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <User className="h-8 w-8 text-pink-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Female</p>
-                <p className="text-2xl font-bold">{stats.female}</p>
-              </div>
+            <p className="text-3xl font-bold text-blue-800">{stats.male}</p>
+          </div>
+        </div>
+
+        {/* Female */}
+        <div className="bg-pink-50 rounded-xl border border-pink-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-pink-800 mb-2">Female</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-pink-700" />
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-3xl font-bold text-pink-800">{stats.female}</p>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -531,7 +530,7 @@ export default function PatientsPage() {
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
               <p className="text-lg font-medium">No patients found on this page</p>
               <p className="text-sm mt-1">
-                {patients.length > 0 
+                {patients.length > 0
                   ? 'Try adjusting your filters or navigate to another page'
                   : 'No patients available'}
               </p>
@@ -760,7 +759,7 @@ export default function PatientsPage() {
                     const maxVisible = 5;
                     let startPage = Math.max(0, page - Math.floor(maxVisible / 2));
                     let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-                    
+
                     if (endPage - startPage < maxVisible - 1) {
                       startPage = Math.max(0, endPage - maxVisible + 1);
                     }
@@ -773,11 +772,10 @@ export default function PatientsPage() {
                           size="sm"
                           onClick={() => setPage(i)}
                           disabled={loading}
-                          className={`h-9 w-9 p-0 ${
-                            i === page 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                              : 'hover:bg-gray-100'
-                          }`}
+                          className={`h-9 w-9 p-0 ${i === page
+                            ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
+                            : 'hover:bg-gray-100'
+                            }`}
                         >
                           {i + 1}
                         </Button>
@@ -1073,11 +1071,11 @@ export default function PatientsPage() {
       {/* ==================== EDIT PATIENT MODAL ==================== */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
+          <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Edit Patient - {editingPatient?.patientCode}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdatePatient} className="space-y-6">
                 {/* Basic Information */}
                 <div>

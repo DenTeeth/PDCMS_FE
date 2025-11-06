@@ -14,7 +14,8 @@ import {
   ShiftRegistrationQueryParams,
   PaginatedShiftRegistrationResponse,
   ShiftRegistrationResponse,
-  ShiftRegistrationListResponse
+  ShiftRegistrationListResponse,
+  RegistrationErrorCode
 } from '@/types/shiftRegistration';
 import { AvailableSlot } from '@/types/workSlot';
 
@@ -26,11 +27,14 @@ class ShiftRegistrationService {
   private readonly endpoint = '/registrations';
 
   /**
-   * Fetch all shift registrations with pagination and filters
-   * @param params Query parameters (page, size, sortBy, sortDirection, employeeId, workShiftId, isActive)
-   * @returns Paginated list of shift registrations
+   * Fetch all shift registrations
+   * According to API spec: Can return array OR paginated response
+   * - Employee view (VIEW_OWN): Returns array directly
+   * - Admin view (UPDATE_REGISTRATIONS_ALL): May return array or paginated
+   * @param params Query parameters (page, size, sortBy, sortDirection, employeeId, isActive)
+   * @returns Array of registrations OR paginated response
    */
-  async getRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<PaginatedShiftRegistrationResponse> {
+  async getRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
     const {
       page = 0,
       size = 10,
@@ -50,14 +54,28 @@ class ShiftRegistrationService {
     });
 
     // Handle both response structures
-    // Case 1: { statusCode, data: {...} }
-    // Case 2: Direct pagination object
-    if (response.data?.data) {
+    // Case 1: Direct array response (Employee view, Admin view)
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Case 2: Wrapped array response { statusCode, data: [...] }
+    if (response.data?.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
     
-    // If BE returns direct pagination object
-    return response.data;
+    // Case 3: Paginated response { content: [...], totalPages, ... }
+    if (response.data?.content && Array.isArray(response.data.content)) {
+      return response.data;
+    }
+    
+    // Case 4: Wrapped paginated response { statusCode, data: { content: [...] } }
+    if (response.data?.data?.content && Array.isArray(response.data.data.content)) {
+      return response.data.data;
+    }
+    
+    // Fallback: return empty array
+    return [];
   }
 
   /**
@@ -93,8 +111,39 @@ class ShiftRegistrationService {
       }
       return response.data as unknown as ShiftRegistration;
     } catch (error: any) {
-      // Re-throw with more specific error message
-      if (error.response?.data?.message) {
+      // Handle specific error codes
+      if (error.response?.data?.errorCode === RegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
+        const message = error.response.data.message || 'Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt.';
+        const customError = new Error(message);
+        (customError as any).errorCode = RegistrationErrorCode.INVALID_EMPLOYEE_TYPE;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode === RegistrationErrorCode.SLOT_IS_FULL) {
+        const message = error.response.data.message || 'Suất này đã đủ người đăng ký.';
+        const customError = new Error(message);
+        (customError as any).errorCode = RegistrationErrorCode.SLOT_IS_FULL;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode === RegistrationErrorCode.REGISTRATION_CONFLICT) {
+        const message = error.response.data.message || 'Bạn đã đăng ký suất này rồi hoặc có ca làm việc trùng giờ.';
+        const customError = new Error(message);
+        (customError as any).errorCode = RegistrationErrorCode.REGISTRATION_CONFLICT;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode === RegistrationErrorCode.WORK_SLOT_NOT_FOUND) {
+        const message = error.response.data.message || 'Suất này đã bị đóng hoặc không tồn tại.';
+        const customError = new Error(message);
+        (customError as any).errorCode = RegistrationErrorCode.WORK_SLOT_NOT_FOUND;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.errorCode) {
+        const errorCode = error.response.data.errorCode;
+        const message = error.response.data.message || error.response.data.detail || 'Failed to create shift registration';
+        const customError = new Error(message);
+        (customError as any).errorCode = errorCode;
+        (customError as any).status = error.response.status;
+        throw customError;
+      } else if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);
@@ -171,15 +220,51 @@ class ShiftRegistrationService {
    * @returns List of available slots with remaining quota
    */
   async getAvailableSlots(): Promise<AvailableSlot[]> {
+    console.log('🌐 [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/available-slots...');
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get('/registrations/available-slots');
     
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
+    try {
+      const response = await axiosInstance.get('/registrations/available-slots');
+      
+      console.log('📥 [shiftRegistrationService.getAvailableSlots] API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : 'N/A'
+      });
+      
+      // Handle both response structures
+      let slots: AvailableSlot[] = [];
+      
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
+        slots = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
+        slots = response.data;
+      } else {
+        console.warn('⚠️ [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
+        slots = [];
+      }
+      
+      console.log('📊 [shiftRegistrationService.getAvailableSlots] Returning slots:', {
+        count: slots.length,
+        slots: slots
+      });
+      
+      return slots;
+    } catch (error: any) {
+      console.error('❌ [shiftRegistrationService.getAvailableSlots] API Error:', {
+        error,
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      throw error;
     }
-    
-    return response.data;
   }
 
   /**
@@ -203,11 +288,13 @@ class ShiftRegistrationService {
   /**
    * Get registrations for current user (employee)
    * Uses the same endpoint but with user's token, BE will filter by ownership
+   * According to API spec: Returns array directly (NOT paginated) for employee view
    * @param params Query parameters
-   * @returns User's shift registrations
+   * @returns User's shift registrations (array OR paginated)
    */
-  async getMyRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<PaginatedShiftRegistrationResponse> {
+  async getMyRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
     // Same as getRegistrations, but BE will filter based on user's permissions
+    // Employee view typically returns array directly
     return this.getRegistrations(params);
   }
 

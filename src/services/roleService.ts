@@ -29,6 +29,21 @@ class RoleService {
   }
 
   /**
+   * Fetch roles that can be assigned to employees (excludes ROLE_PATIENT)
+   * @returns Array of employee-assignable roles
+   */
+  async getEmployeeAssignableRoles(): Promise<Role[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get('/roles/employee-assignable');
+    
+    // BE có thể trả về wrapped hoặc trực tiếp
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
+  }
+
+  /**
    * Fetch role by ID
    * @param roleId Role ID (e.g., "ROLE_ADMIN")
    * @returns Role details
@@ -103,10 +118,10 @@ class RoleService {
 
   /**
    * Create a new role
-   * @param data Role creation data (roleId, roleName, description)
+   * @param data Role creation data (roleId, roleName, description, baseRoleId, requiresSpecialization)
    * @returns Created role
    */
-  async createRole(data: { roleId: string; roleName: string; description: string }): Promise<Role> {
+  async createRole(data: { roleId: string; roleName: string; description: string; baseRoleId: number; requiresSpecialization: boolean }): Promise<Role> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post('/roles', data);
     

@@ -232,18 +232,28 @@ export default function ShiftCalendarPage() {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
       const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
       
-      const title = `${employee?.fullName || 'N/A'} - ${workShift?.shiftName || shift.workShiftId}`;
+      const employeeName = employee?.fullName || 'N/A';
+      const shiftName = workShift?.shiftName || shift.workShiftId;
+      
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
       const end = `${shift.workDate}T${workShift?.endTime || '17:00:00'}`;
       
       return {
         id: shift.employeeShiftId,
-        title,
+        title: `${employeeName} - ${shiftName}`,
         start,
         end,
         allDay: false,
         backgroundColor: getEventColor(shift.status),
         borderColor: getEventColor(shift.status),
+        textColor: '#ffffff',
+        extendedProps: {
+          employeeName,
+          shiftName,
+          status: shift.status,
+          workShiftId: shift.workShiftId,
+          workDate: shift.workDate
+        }
       };
     });
   };
@@ -691,11 +701,27 @@ export default function ShiftCalendarPage() {
                   height="100%"
                   slotMinTime="06:00:00"
                   slotMaxTime="23:00:00"
-                  slotDuration="01:00:00"
+                  slotDuration="00:30:00"
                   slotLabelInterval="01:00:00"
                   allDaySlot={false}
                   nowIndicator={true}
                   scrollTime="08:00:00"
+                  slotEventOverlap={false}
+                  eventOverlap={false}
+                  eventDisplay="block"
+                  eventMaxStack={10}
+                  eventTimeFormat={{
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }}
+                  slotLabelContent={(arg) => {
+                    // Format as HH:mm (24h format without "giờ")
+                    const date = arg.date;
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  }}
                   datesSet={handleDatesSet}
                   eventClick={handleEventClick}
                 />
@@ -703,6 +729,7 @@ export default function ShiftCalendarPage() {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Legend */}
         <Card>

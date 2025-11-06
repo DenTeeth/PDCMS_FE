@@ -5,6 +5,8 @@ import {
     Appointment,
     AppointmentFilter,
     CreateAppointmentRequest,
+    CreateAppointmentRequestLegacy,
+    CreateAppointmentResponse,
     UpdateAppointmentRequest,
     RescheduleAppointmentRequest,
     CancelAppointmentRequest,
@@ -13,6 +15,8 @@ import {
     Service,
     Patient,
     Dentist,
+    AvailableTimesRequest,
+    AvailableTimesResponse,
 } from '@/types/appointment';
 
 const APPOINTMENT_BASE_URL = '/appointments';
@@ -30,9 +34,17 @@ export const appointmentService = {
         return response.data;
     },
 
-    // Create new appointment
-    createAppointment: async (data: CreateAppointmentRequest): Promise<Appointment> => {
-        const response = await api.post(APPOINTMENT_BASE_URL, data);
+    // Create new appointment (P3.2 - Updated to match docs)
+    // NEW API spec: Uses codes instead of IDs, roomCode, serviceCodes array, appointmentStartTime
+    createAppointment: async (data: CreateAppointmentRequest): Promise<CreateAppointmentResponse> => {
+        const response = await api.post<CreateAppointmentResponse>(APPOINTMENT_BASE_URL, data);
+        return response.data;
+    },
+
+    // Legacy create appointment (deprecated - for backward compatibility)
+    // @deprecated Use createAppointment() with new request format instead
+    createAppointmentLegacy: async (data: CreateAppointmentRequestLegacy): Promise<Appointment> => {
+        const response = await api.post<Appointment>(APPOINTMENT_BASE_URL, data);
         return response.data;
     },
 
@@ -145,6 +157,33 @@ export const appointmentService = {
 
     getDentistById: async (id: number): Promise<Dentist> => {
         const response = await api.get(`/dentists/${id}`);
+        return response.data;
+    },
+
+    // P3.1 - Find Available Times
+    // GET /api/v1/appointments/available-times
+    // Find available time slots for booking appointments
+    findAvailableTimes: async (request: AvailableTimesRequest): Promise<AvailableTimesResponse> => {
+        const params = new URLSearchParams();
+        
+        // Required params
+        params.append('date', request.date);
+        params.append('employeeCode', request.employeeCode);
+        
+        // Array params - use multiple query params for array
+        request.serviceCodes.forEach(code => {
+            params.append('serviceCodes', code);
+        });
+        
+        // Optional participant codes
+        if (request.participantCodes && request.participantCodes.length > 0) {
+            request.participantCodes.forEach(code => {
+                params.append('participantCodes', code);
+            });
+        }
+        
+        const url = `${APPOINTMENT_BASE_URL}/available-times?${params.toString()}`;
+        const response = await api.get<AvailableTimesResponse>(url);
         return response.data;
     },
 };
