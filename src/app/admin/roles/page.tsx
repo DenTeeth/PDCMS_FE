@@ -44,6 +44,8 @@ export default function RolesPage() {
     roleId: '',
     roleName: '',
     description: '',
+    baseRoleId: '',
+    requiresSpecialization: false,
   });
 
   // Edit modal states
@@ -90,17 +92,36 @@ export default function RolesPage() {
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.roleId || !formData.roleName || !formData.description) {
-      toast.error('Please fill in all fields');
+    if (!formData.roleId || !formData.roleName || !formData.description || !formData.baseRoleId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Map roleId string to baseRoleId number
+    const baseRoleIdMap: { [key: string]: number } = {
+      'ROLE_ADMIN': 1,
+      'ROLE_EMPLOYEE': 2,
+      'ROLE_PATIENT': 3,
+    };
+
+    const baseRoleId = baseRoleIdMap[formData.baseRoleId];
+    if (!baseRoleId) {
+      toast.error('Invalid base role selected');
       return;
     }
 
     try {
       setCreating(true);
-      await roleService.createRole(formData);
+      await roleService.createRole({
+        roleId: formData.roleId,
+        roleName: formData.roleName,
+        description: formData.description,
+        baseRoleId: baseRoleId,
+        requiresSpecialization: formData.requiresSpecialization,
+      });
       toast.success('Role created successfully');
       setShowCreateModal(false);
-      setFormData({ roleId: '', roleName: '', description: '' });
+      setFormData({ roleId: '', roleName: '', description: '', baseRoleId: '', requiresSpecialization: false });
       fetchRoles(); // Refresh list
     } catch (error: any) {
       console.error('Failed to create role:', error);
@@ -503,13 +524,54 @@ export default function RolesPage() {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="baseRoleId">
+                    Base Role <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="baseRoleId"
+                    value={formData.baseRoleId}
+                    onChange={(e) => setFormData({ ...formData, baseRoleId: e.target.value })}
+                    disabled={creating}
+                    required
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a base role</option>
+                    <option value="ROLE_ADMIN">Admin (ROLE_ADMIN)</option>
+                    <option value="ROLE_EMPLOYEE">Employee (ROLE_EMPLOYEE)</option>
+                    <option value="ROLE_PATIENT">Patient (ROLE_PATIENT)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Select a base role to inherit permissions from
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="requiresSpecialization"
+                      checked={formData.requiresSpecialization}
+                      onChange={(e) => setFormData({ ...formData, requiresSpecialization: e.target.checked })}
+                      disabled={creating}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="requiresSpecialization" className="cursor-pointer">
+                      Requires Specialization
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Check if this role requires specialization (e.g., for doctors)
+                  </p>
+                </div>
+
                 <div className="flex gap-3 justify-end pt-4">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
                       setShowCreateModal(false);
-                      setFormData({ roleId: '', roleName: '', description: '' });
+                      setFormData({ roleId: '', roleName: '', description: '', baseRoleId: '', requiresSpecialization: false });
                     }}
                     disabled={creating}
                   >

@@ -1,8 +1,7 @@
 'use client';
 
-import DynamicSidebar from '@/components/layout/NewDynamicSidebar';
+import ModernSidebar from '@/components/layout/ModernSidebar';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Role } from '@/types/permission';
 
 export default function EmployeeLayout({
   children,
@@ -13,10 +12,12 @@ export default function EmployeeLayout({
     <ProtectedRoute requiredBaseRole="employee">
       <div className="min-h-screen bg-background">
         <div className="flex">
-          <DynamicSidebar />
-          <main className="flex-1 ml-64">
-            <div className="p-6">
-              {children}
+          <ModernSidebar />
+          <main className="flex-1 transition-all duration-300 ease-out min-h-screen w-full overflow-x-hidden">
+            <div className="p-3 sm:p-4 md:p-6 pb-20 w-full">
+              <div className="max-w-[1600px] mx-auto w-full">
+                {children}
+              </div>
             </div>
           </main>
         </div>

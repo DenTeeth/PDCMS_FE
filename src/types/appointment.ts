@@ -38,7 +38,8 @@ export interface AppointmentFilter {
     searchTerm?: string;
 }
 
-export interface CreateAppointmentRequest {
+// OLD CreateAppointmentRequest (deprecated - uses IDs)
+export interface CreateAppointmentRequestLegacy {
     patientId: number;
     dentistId: number;
     serviceId: number;
@@ -47,6 +48,17 @@ export interface CreateAppointmentRequest {
     endTime: string;
     notes?: string;
     reasonForVisit?: string;
+}
+
+// NEW CreateAppointmentRequest (P3.2 - matches docs)
+export interface CreateAppointmentRequest {
+    patientCode: string;        // Required: Patient code (not ID)
+    employeeCode: string;        // Required: Doctor/employee code (not ID)
+    roomCode: string;            // Required: Room code from available slots
+    serviceCodes: string[];      // Required: Array of service codes (not single ID)
+    appointmentStartTime: string; // Required: ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
+    participantCodes?: string[];  // Optional: Assistant/participant codes
+    notes?: string;             // Optional: Notes from receptionist
 }
 
 export interface UpdateAppointmentRequest {
@@ -135,4 +147,54 @@ export interface Dentist {
     fullName: string;
     specialization?: string;
     avatar?: string;
+}
+
+// P3.1 - Find Available Times Types
+export interface AvailableTimesRequest {
+    date: string;                    // Required: YYYY-MM-DD format
+    employeeCode: string;            // Required: Doctor/employee code
+    serviceCodes: string[];          // Required: Array of service codes (at least 1)
+    participantCodes?: string[];    // Optional: Assistant/participant codes
+}
+
+export interface TimeSlot {
+    startTime: string;                        // ISO 8601 format
+    availableCompatibleRoomCodes: string[];   // List of compatible room codes
+    note?: string | null;                    // Optional note
+}
+
+export interface AvailableTimesResponse {
+    totalDurationNeeded: number;  // Total minutes (SUM of service duration + buffer)
+    availableSlots: TimeSlot[];   // Array of available time slots
+    message?: string | null;      // Optional message (e.g., "No compatible rooms")
+}
+
+// P3.2 - Create Appointment Response Types
+export interface CreateAppointmentResponse {
+    appointmentCode: string;
+    status: 'SCHEDULED';
+    appointmentStartTime: string;
+    appointmentEndTime: string;
+    expectedDurationMinutes: number;
+    patient: {
+        patientCode: string;
+        fullName: string;
+    };
+    doctor: {
+        employeeCode: string;
+        fullName: string;
+    };
+    room: {
+        roomCode: string;
+        roomName: string;
+    };
+    services: Array<{
+        serviceCode: string;
+        serviceName: string;
+    }>;
+    participants?: Array<{
+        employeeCode: string;
+        fullName: string;
+        role: 'ASSISTANT' | 'SECONDARY_DOCTOR' | 'OBSERVER';
+    }>;
 }

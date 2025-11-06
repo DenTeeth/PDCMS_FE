@@ -130,8 +130,8 @@ export class TimeOffRequestService {
   ): Promise<TimeOffRequest> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<TimeOffRequest>(
-      `${this.BASE_URL}/${requestId}/approve`,
-      {}
+      `${this.BASE_URL}/${requestId}`,
+      { status: 'APPROVED' }
     );
     return response.data;
   }
@@ -152,8 +152,8 @@ export class TimeOffRequestService {
   ): Promise<TimeOffRequest> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<TimeOffRequest>(
-      `${this.BASE_URL}/${requestId}/reject`,
-      data
+      `${this.BASE_URL}/${requestId}`,
+      { status: 'REJECTED', reason: data.rejectedReason }
     );
     return response.data;
   }
@@ -174,8 +174,8 @@ export class TimeOffRequestService {
   ): Promise<TimeOffRequest> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<TimeOffRequest>(
-      `${this.BASE_URL}/${requestId}/cancel`,
-      data
+      `${this.BASE_URL}/${requestId}`,
+      { status: 'CANCELLED', reason: data.cancellationReason }
     );
     return response.data;
   }
