@@ -30,13 +30,13 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-const ContactRow = memo(function ContactRow({ contact, showDelete }: { contact: any; showDelete?: boolean }) {
+const ContactRow = memo(function ContactRow({ contact, showDelete, basePath }: { contact: any; showDelete?: boolean; basePath?: string }) {
   const del = useSoftDeleteContact();
   const { user } = useAuth();
 
   // Memoize computed values
   const canDelete = useMemo(() =>
-    user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete'),
+    user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT'),
     [user?.roles, user?.permissions]
   );
 
@@ -91,8 +91,8 @@ const ContactRow = memo(function ContactRow({ contact, showDelete }: { contact: 
       <td className="py-2 px-3">{createdAt}</td>
       <td className="py-2 px-3">
         <div className="flex items-center gap-2">
-          <Link href={`/employee/customers/contact/${contact.id}`} className="text-sm px-2 py-1 rounded bg-blue-50 text-blue-600">View</Link>
-          <Link href={`/employee/customers/contact/${contact.id}/edit`} className="text-sm px-2 py-1 rounded bg-green-50 text-green-600">Edit</Link>
+          <Link href={`${basePath || '/employee/customers/contact'}/${contact.id}`} className="text-sm px-2 py-1 rounded bg-blue-50 text-blue-600">View</Link>
+          <Link href={`${basePath || '/employee/customers/contact'}/${contact.id}/edit`} className="text-sm px-2 py-1 rounded bg-green-50 text-green-600">Edit</Link>
           {visibleDelete && (
             <button onClick={handleDelete} className="text-sm px-2 py-1 rounded bg-red-50 text-red-600">Delete</button>
           )}
