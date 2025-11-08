@@ -38,6 +38,7 @@ import {
   faUmbrellaBeach,
   faListCheck,
   faWallet,
+  faComments,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { GroupedPermissions } from '@/types/auth';
@@ -245,6 +246,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
 /**
  * EMPLOYEE NAVIGATION CONFIG
  * Dựa trên groupedPermissions từ BE
+ * Tổ chức theo nhóm chức năng
  */
 export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
   title: 'PDCMS Employee',
@@ -254,52 +256,78 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       href: '/employee',
       icon: faTachometerAlt,
     },
-    // Patient & Treatment Management
+    // Booking Management
     {
-      name: 'Patients',
-      href: '/employee/patients',
-      icon: faHospitalUser,
-      requiredPermissionGroup: 'PATIENT',
-    },
-    {
-      name: 'Treatments',
-      href: '/employee/treatments',
-      icon: faStethoscope,
-      requiredPermissionGroup: 'TREATMENT',
-    },
-    {
-      name: 'Customer Contacts',
-      href: '/employee/customer-contacts',
-      icon: faPhone,
-      requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-    },
-    {
-      name: 'Customers',
-      href: '/employee/customers',
-      icon: faUsers,
-      requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-    },
-    // Appointments
-    {
-      name: 'Appointments',
-      href: '/employee/appointments',
-      icon: faCalendarAlt,
-      requiredPermissionGroup: 'APPOINTMENT',
+      name: 'Booking Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
+      requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
+      requireAll: false,
+      submenu: [
+        {
+          name: 'Appointments',
+          href: '/employee/appointments',
+          icon: faCalendarAlt,
+          requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
+          requireAll: false,
+        },
+      ],
     },
     // Schedule Management
     {
-      name: 'My Work Schedule',
-      href: '/employee/schedule',
-      icon: faCalendarAlt,
-      requiredPermissions: ['VIEW_WORK_SHIFTS'],
-    },
-    {
-      name: 'My Registrations',
-      href: '/employee/registrations',
+      name: 'Schedule Management',
       icon: faCalendarCheck,
-      requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
-      requireAll: false, // Show if user has either permission
+      hasSubmenu: true,
+      requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+      requireAll: false,
+      submenu: [
+        {
+          name: 'My Registrations',
+          href: '/employee/registrations',
+          icon: faCalendarCheck,
+          requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+          requireAll: false,
+        },
+        {
+          name: 'Shift Calendar',
+          href: '/employee/shift-calendar',
+          icon: faCalendarAlt,
+          requiredPermissions: ['VIEW_SHIFTS_OWN'],
+        },
+        {
+          name: 'My Calendar',
+          href: '/employee/my-calendar',
+          icon: faCalendarDays,
+          requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_APPOINTMENT_OWN'],
+          requireAll: false,
+        },
+        {
+          name: 'Fixed Registrations',
+          href: '/employee/fixed-registrations',
+          icon: faListCheck,
+          requiredPermissions: ['VIEW_FIXED_REGISTRATIONS_OWN'],
+        },
+        {
+          name: 'Part-Time Management',
+          href: '/employee/part_time_management',
+          icon: faBusinessTime,
+          requiredPermissions: ['VIEW_REGISTRATION_OWN'],
+        },
+        {
+          name: 'Slot Registration',
+          href: '/employee/slot-registration',
+          icon: faClock,
+          requiredPermissions: ['VIEW_REGISTRATION_OWN'],
+        },
+        {
+          name: 'Shift Renewals',
+          href: '/employee/renewals',
+          icon: faClockRotateLeft,
+          requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+        },
+      ],
     },
+    // Request Management
     {
       name: 'Request Management',
       icon: faClipboardList,
@@ -320,18 +348,39 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
         },
       ],
     },
+    // Customer Management
     {
-      name: 'Shift Renewals',
-      href: '/employee/shift-renewals',
-      icon: faClockRotateLeft,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+      name: 'Customer Management',
+      icon: faUsers,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+      submenu: [
+        {
+          name: 'Customers',
+          href: '/employee/customers',
+          icon: faUsers,
+          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+        },
+        {
+          name: 'Customer Contacts',
+          href: '/employee/customer-contacts',
+          icon: faPhone,
+          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+        },
+        {
+          name: 'Customer Feedback',
+          href: '/employee/customers/feedback',
+          icon: faComments,
+          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+        },
+      ],
     },
+    // Analytics
     {
-      name: 'Shift Calendar',
-      href: '/employee/shift-calendar',
-      icon: faCalendarDays,
-      requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_ALL'],
-      requireAll: false,
+      name: 'Analytics',
+      href: '/employee/analytics',
+      icon: faChartLine,
+      requiredPermissionGroup: 'ANALYTICS', // Adjust based on actual permission group
     },
     // Settings
     {

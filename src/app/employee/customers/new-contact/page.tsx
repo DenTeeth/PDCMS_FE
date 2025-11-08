@@ -17,7 +17,7 @@ export default function NewCustomerContactPage() {
         try {
             await create.mutateAsync(values);
             toast.success('Customer contact created successfully');
-            router.push('/employee/customers');
+            router.push('/employee/customer-contacts');
         } catch (err: any) {
             toast.error(err.message || 'Failed to create contact');
         }
@@ -30,7 +30,7 @@ export default function NewCustomerContactPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push('/employee/customers')}
+                    onClick={() => router.push('/employee/customer-contacts')}
                     className="flex items-center space-x-2"
                 >
                     <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />

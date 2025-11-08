@@ -54,7 +54,7 @@ export function AppointmentDetailsModal({
     if (!appointment) return null;
 
     const statusInfo = APPOINTMENT_STATUS_COLORS[appointment.status];
-    const canModify = appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED';
+    const canModify = appointment.status === 'SCHEDULED';
 
     return (
         <Dialog open={open} onOpenChange={onClose}>

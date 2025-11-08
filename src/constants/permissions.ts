@@ -169,12 +169,6 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_TREATMENT],
     },
     {
-      name: 'My Schedule',
-      href: '/employee/schedule',
-      icon: faCalendarAlt,
-      requiredPermissions: [Permission.VIEW_WORK_SHIFTS],
-    },
-    {
       name: 'My Shift Registrations',
       href: '/employee/part_time_management',
       icon: faClock,
