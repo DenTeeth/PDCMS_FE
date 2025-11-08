@@ -30,7 +30,7 @@ export const getContacts = async (params?: Record<string, any>) => {
   } catch (e) {
     // ignore
   }
-  
+
   // Backend returns { content: [...], pageable, totalElements, ... } directly
   // OR wrapped as { data: { content: [...] } }
   const payload = res.data;
@@ -231,10 +231,56 @@ export const softDeleteContact = async (id: string) => {
   return res.data;
 };
 
+// ==================== P2: History APIs ====================
+
+export const getContactHistory = async (id: string, params?: Record<string, any>) => {
+  const res = await axios.get(`/customer-contacts/${id}/history`, { params });
+  return res.data;
+};
+
+export const addContactHistory = async (id: string, payload: { type: string; content: string }) => {
+  const res = await axios.post(`/customer-contacts/${id}/history`, payload);
+  return res.data;
+};
+
+// ==================== P3: Business Actions ====================
+
+export const assignContact = async (id: string, payload?: { employeeId?: string }) => {
+  // payload.employeeId optional -> backend handles auto-assign
+  const res = await axios.post(`/customer-contacts/${id}/assign`, payload || {});
+  return res.data;
+};
+
+export const convertContact = async (id: string) => {
+  const res = await axios.post(`/customer-contacts/${id}/convert`);
+  return res.data;
+};
+
+// ==================== Optional: Stats ====================
+
+export const getContactStats = async (params?: Record<string, any>) => {
+  const res = await axios.get('/customer-contacts/stats', { params });
+  return res.data;
+};
+
+export const getConversionRate = async (params?: Record<string, any>) => {
+  const res = await axios.get('/customer-contacts/conversion-rate', { params });
+  return res.data;
+};
+
 export default {
   getContacts,
   getContact,
   createContact,
   updateContact,
   softDeleteContact,
+  // history
+  getContactHistory,
+  addContactHistory,
+  // business
+  assignContact,
+  convertContact,
+  // stats
+  getContactStats,
+  getConversionRate,
 };

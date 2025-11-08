@@ -1,0 +1,267 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "services": "Services",
+    "doctors": "Doctors",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login"
+  },
+  "Hero": {
+    "title": "Elevating Smiles with",
+    "subtitle": "Expert Care and a Gentle Touch",
+    "cta": "Book Appointment",
+    "secondaryCta": "Our Services"
+  },
+  "Stats": {
+    "patients": "Happy Patients",
+    "experience": "Years of Experience",
+    "doctors": "Professional Doctors",
+    "rating": "Rating"
+  },
+  "About": {
+    "title": "Professional and Personalized",
+    "subtitle": "Dental Excellence",
+    "description": "We provide high-quality dental care with a personal touch for you and your entire family. Our experienced team is dedicated to creating beautiful, healthy smiles in a comfortable environment.",
+    "features": {
+      "personalizedPlans": "Personalized Treatment Plans",
+      "personalizedPlansDesc": "Customized care tailored to your unique dental needs",
+      "gentleCare": "Gentle Care for Kids and Adults",
+      "gentleCareDesc": "Compassionate approach for patients of all ages",
+      "technology": "State-of-the-Art Technology",
+      "technologyDesc": "Latest equipment for precise and comfortable treatment",
+      "scheduling": "Flexible Appointment Scheduling",
+      "schedulingDesc": "Convenient booking options to fit your busy lifestyle"
+    },
+    "cta": "Book Appointment",
+    "images": {
+      "professional": "Dental Professional",
+      "expert": "Expert Dentist",
+      "specialist": "Dental Care Specialist",
+      "dentist": "Dental Expert"
+    }
+  },
+  "Services": {
+    "title": "Services",
+    "subtitle": "Our clinic offers a wide range of services and constantly studies new technology to add more specialized services.",
+    "sectionTitle": "Complete Care for Every Smile",
+    "sectionSubtitle": "Comprehensive dental services tailored to your needs",
+    "moreDetails": "More Details →",
+    "cards": {
+      "general": {
+        "title": "General Dentistry",
+        "description": "Comprehensive oral care including checkups, cleanings, and preventive treatments to maintain optimal dental health."
+      },
+      "cosmetic": {
+        "title": "Cosmetic Dentistry",
+        "description": "Transform your smile with whitening, veneers, and other aesthetic procedures for a confident, beautiful appearance."
+      },
+      "pediatric": {
+        "title": "Pediatric Dentistry",
+        "description": "Specialized gentle care for children's dental health in a fun, comfortable environment that puts kids at ease."
+      },
+      "restorative": {
+        "title": "Restorative Dentistry",
+        "description": "Advanced solutions including crowns, bridges, and implants to restore function and appearance of damaged teeth."
+      }
+    },
+    "pageCards": [
+      {
+        "title": "Cosmetic Dentistry",
+        "description": "Improve the appearance of your teeth, including whitening & veneers.",
+        "link": "/services/cosmetic"
+      },
+      {
+        "title": "Pediatric Dentistry",
+        "description": "Tailored dental care for infants, children, and teens.",
+        "link": "/services/pediatric"
+      },
+      {
+        "title": "Dental Implants",
+        "description": "Replace missing teeth with artificial roots implanted in the jaw.",
+        "link": "/services/implants"
+      },
+      {
+        "title": "Orthodontics",
+        "description": "Correct misaligned teeth and jaws with braces or aligners.",
+        "link": "/services/orthodontics"
+      },
+      {
+        "title": "General Checkup",
+        "description": "Regular checkups and cleanings to maintain oral health.",
+        "link": "/services/general"
+      },
+      {
+        "title": "Root Canal",
+        "description": "Repair and save badly decayed or infected teeth.",
+        "link": "/services/root-canal"
+      }
+    ]
+  },
+  "Doctors": {
+    "title": "Our Medical Team",
+    "subtitle": "Experienced doctors with specialized training and the most modern equipment.",
+    "experience": "Experience:",
+    "education": "Education:",
+    "description": "Description:",
+    "schedule": "Schedule:",
+    "languages": "Languages:",
+    "bookAppointment": "Book Appointment",
+    "sectionTitle": "Meet Our Dental Team",
+    "sectionSubtitle": "Committed to Your Smile - Experienced professionals dedicated to your oral health",
+    "viewProfile": "View Profile",
+    "homeDoctors": [
+      {
+        "name": "Dr. Sarah Bennett",
+        "specialty": "General Dentistry",
+        "experience": "15+ years of experience",
+        "description": "Leading specialist in general dentistry with extensive experience in comprehensive oral care."
+      },
+      {
+        "name": "Dr. Maya Lin",
+        "specialty": "Cosmetic Dentistry",
+        "experience": "12+ years of experience",
+        "description": "Expert in smile makeovers, veneers, and advanced cosmetic procedures."
+      },
+      {
+        "name": "Dr. Michael Reyes",
+        "specialty": "Orthodontics",
+        "experience": "18+ years of experience",
+        "description": "Specialist in braces and aligners with cutting-edge orthodontic techniques."
+      },
+      {
+        "name": "Dr. James Carter",
+        "specialty": "Pediatric Dentistry",
+        "experience": "10+ years of experience",
+        "description": "Gentle care specialist for children with a fun, compassionate approach."
+      }
+    ]
+  },
+  "Features": {
+    "title": "Exceptional Service With a Personal Touch",
+    "subtitle": "We combine expertise, advanced technology, and a caring approach to deliver outstanding dental care in a comfortable environment.",
+    "cards": {
+      "team": {
+        "title": "Experienced Dental Team",
+        "description": "Our team of highly skilled dentists with over 15 years of experience"
+      },
+      "technology": {
+        "title": "Advanced Technology",
+        "description": "State-of-the-art equipment for precise and comfortable treatments"
+      },
+      "treatment": {
+        "title": "Personalized Treatment",
+        "description": "Customized care plans tailored to your unique dental needs"
+      },
+      "environment": {
+        "title": "Family-Friendly Environment",
+        "description": "Welcoming atmosphere for patients of all ages"
+      }
+    }
+  },
+  "Testimonials": {
+    "title": "Our Happy Customers",
+    "description": "See what our patients are saying about us",
+    "cards": [
+      {
+        "name": "Sarah Johnson",
+        "role": "Regular Patient",
+        "content": "The team at this clinic is absolutely amazing! They made me feel comfortable during my entire treatment. Highly recommend!",
+        "avatar": "👩"
+      },
+      {
+        "name": "Michael Chen",
+        "role": "Family Patient",
+        "content": "Best dental experience ever! The staff is professional, caring, and the facility is state-of-the-art. My whole family loves coming here.",
+        "avatar": "👨"
+      },
+      {
+        "name": "Emily Rodriguez",
+        "role": "Cosmetic Patient",
+        "content": "I'm so happy with my smile transformation! The results exceeded my expectations. Thank you for the wonderful care!",
+        "avatar": "👩"
+      },
+      {
+        "name": "David Williams",
+        "role": "Implant Patient",
+        "content": "Professional service from start to finish. The implant procedure was smooth and painless. Couldn't be happier with the results!",
+        "avatar": "👨"
+      }
+    ]
+  },
+  "FAQ": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to common questions about our dental services",
+    "questions": [
+      {
+        "question": "How often should I visit the dentist?",
+        "answer": "We recommend visiting the dentist every 6 months for regular checkups and cleanings. However, some patients may need more frequent visits depending on their oral health needs."
+      },
+      {
+        "question": "What should I do in a dental emergency?",
+        "answer": "Contact our clinic immediately. We offer emergency dental services and will do our best to see you as soon as possible. For severe bleeding or trauma, go to the nearest emergency room."
+      },
+      {
+        "question": "Do you accept dental insurance?",
+        "answer": "Yes, we accept most major dental insurance plans. Our team will work with your insurance provider to maximize your benefits. We also offer flexible payment plans for those without insurance."
+      },
+      {
+        "question": "Are your treatments painful?",
+        "answer": "We use modern techniques and anesthesia to ensure your comfort during all procedures. Most patients report minimal to no discomfort. We prioritize your comfort and will adjust our approach based on your needs."
+      },
+      {
+        "question": "How long does a typical appointment take?",
+        "answer": "A routine checkup and cleaning usually takes 45-60 minutes. More complex procedures may require longer appointments. We'll provide you with an estimated time when you schedule your visit."
+      },
+      {
+        "question": "Do you offer teeth whitening services?",
+        "answer": "Yes, we offer both in-office and take-home teeth whitening options. Our cosmetic dentistry team will help you choose the best whitening solution for your smile goals."
+      }
+    ]
+  },
+  "Appointment": {
+    "title": "Book an Appointment",
+    "subtitle": "Tell us your problem, book an appointment, and get the best advice from experts in the field.",
+    "form": {
+      "fullName": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name"
+      },
+      "phone": {
+        "label": "Phone Number",
+        "placeholder": "Enter your phone number"
+      },
+      "service": {
+        "label": "Service Type",
+        "placeholder": "Select a service",
+        "options": {
+          "pediatric": "Pediatric Dentistry",
+          "implants": "Implant Dentistry",
+          "cosmetic": "Cosmetic Dentistry",
+          "general": "General Checkup"
+        }
+      },
+      "time": {
+        "label": "Preferred Time"
+      },
+      "submit": "BOOK APPOINTMENT",
+      "successMessage": "Appointment booked successfully! We will contact you soon."
+    },
+    "contact": {
+      "callTitle": "OR CALL NOW",
+      "callSubtitle": "Call us for online consultation or to book an appointment at the clinic as soon as possible.",
+      "address": {
+        "label": "Address",
+        "value": "123 ABC Street, District 1, Ho Chi Minh City"
+      },
+      "hours": {
+        "label": "Working Hours",
+        "value": "Monday - Sunday: 8:00 AM - 8:00 PM"
+      },
+      "email": {
+        "label": "Email",
+        "value": "contact@denteeth.com"
+      }
+    }
+  }
+}

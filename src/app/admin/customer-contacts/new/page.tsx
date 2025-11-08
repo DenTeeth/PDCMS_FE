@@ -1,8 +1,13 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import ContactForm from '@/app/employee/customers/components/ContactForm';
 import { useCreateContact } from '@/hooks/contactHooks';
 import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserPlus, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 export default function AdminCreateCustomerContact() {
     const router = useRouter();
@@ -11,7 +16,7 @@ export default function AdminCreateCustomerContact() {
     const onSubmit = async (values: any) => {
         try {
             await create.mutateAsync(values);
-            toast.success('Customer contact created (admin test)');
+            toast.success('Customer contact created');
             router.push('/admin/customer-contacts');
         } catch (err: any) {
             toast.error(err.message || 'Create failed');
@@ -19,18 +24,35 @@ export default function AdminCreateCustomerContact() {
     };
 
     return (
-        <div className="p-8">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg p-6 shadow">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold">Admin - Create Customer Contact (Temp)</h1>
-                        <p className="text-sm text-muted-foreground">Temporary page to test contact creation from admin area</p>
-                    </div>
-                    <div>
-                        <button className="btn-outline" onClick={() => router.push('/admin/customer-contacts')}>Back</button>
-                    </div>
+        <div className="space-y-6 p-6">
+            <div className="flex items-center space-x-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push('/admin/customer-contacts')}
+                    className="flex items-center space-x-2"
+                >
+                    <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
+                    <span>Back</span>
+                </Button>
+                <div>
+                    <h1 className="text-3xl font-bold text-foreground">Create New Customer Contact</h1>
+                    <p className="text-muted-foreground mt-2">Add a new customer contact record to the system</p>
                 </div>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                        <FontAwesomeIcon icon={faUserPlus} className="h-5 w-5" />
+                        <span>Contact Information</span>
+                    </CardTitle>
+                    <CardDescription>Fill in the customer contact details below</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ContactForm onSubmit={onSubmit} />
+                </CardContent>
+            </Card>
         </div>
     );
 }

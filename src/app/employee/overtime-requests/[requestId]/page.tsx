@@ -28,6 +28,7 @@ import {
   OvertimeStatus,
   OVERTIME_STATUS_CONFIG,
 } from '@/types/overtime';
+import { formatTimeToHHMM } from '@/lib/utils';
 
 export default function EmployeeOvertimeRequestDetailPage() {
   const params = useParams();
@@ -182,7 +183,7 @@ export default function EmployeeOvertimeRequestDetailPage() {
                 <label className="text-sm font-medium text-gray-500">Ca làm việc</label>
                 <p className="text-lg font-semibold">{request.workShift.shiftName}</p>
                 <p className="text-sm text-gray-500">
-                  {request.workShift.startTime} - {request.workShift.endTime}
+                  {formatTimeToHHMM(request.workShift.startTime)} - {formatTimeToHHMM(request.workShift.endTime)}
                 </p>
                 <p className="text-sm text-gray-500">
                   Thời lượng: {request.workShift.durationHours} giờ

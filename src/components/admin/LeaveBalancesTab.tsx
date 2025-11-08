@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import Select from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { employeeService } from '@/services/employeeService';
@@ -331,10 +331,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 </p>
               )}
               <div className="mt-2">
-                <Select
-                  label=""
+                <CustomSelect
+                  label="Chọn nhân viên"
                   value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value) => setSelectedEmployeeId(value || null)}
+                  onChange={(value: string) => setSelectedEmployeeId(value || null)}
                   options={[
                     { value: '', label: '-- Chọn nhân viên --' },
                     ...filteredEmployees.map(emp => ({
