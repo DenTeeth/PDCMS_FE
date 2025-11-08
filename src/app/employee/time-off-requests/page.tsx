@@ -24,11 +24,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
 import { workShiftService } from '@/services/workShiftService';
+import { formatTimeToHHMM } from '@/lib/utils';
 import {
   TimeOffRequest,
   TimeOffStatus,
@@ -40,6 +41,8 @@ import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
+import { LeaveBalanceService } from '@/services/leaveBalanceService';
+import { EmployeeLeaveBalancesResponse } from '@/types/leaveBalance';
 
 export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
@@ -49,6 +52,7 @@ export default function EmployeeTimeOffRequestsPage() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
+  const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalancesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
@@ -80,12 +84,32 @@ export default function EmployeeTimeOffRequestsPage() {
       await Promise.all([
         loadTimeOffRequests(),
         loadTimeOffTypes(),
-        loadWorkShifts()
+        loadWorkShifts(),
+        loadLeaveBalances()
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLeaveBalances = async () => {
+    if (!user?.employeeId) return;
+
+    try {
+      const currentYear = new Date().getFullYear();
+      const balances = await LeaveBalanceService.getEmployeeBalances(
+        Number(user.employeeId),
+        currentYear
+      );
+      setLeaveBalances(balances);
+    } catch (error: any) {
+      console.error('Error loading leave balances:', error);
+      // Don't show error if 404 (no balances yet)
+      if (error?.response?.status !== 404) {
+        handleError(error, 'Không thể tải số dư ngày nghỉ');
+      }
     }
   };
 
@@ -124,9 +148,48 @@ export default function EmployeeTimeOffRequestsPage() {
   };
 
   const handleCreateTimeOffRequest = async () => {
+    // Prevent duplicate submissions
+    if (processing) {
+      console.log('⚠️ Already processing, ignoring duplicate submit');
+      return;
+    }
+
     if (!createForm.timeOffTypeId || !createForm.startDate || !createForm.endDate || !createForm.reason.trim()) {
       alert('Vui lòng điền đầy đủ thông tin');
       return;
+    }
+
+    // Validate dates
+    const startDate = new Date(createForm.startDate);
+    const endDate = new Date(createForm.endDate);
+
+    if (endDate < startDate) {
+      alert('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
+      return;
+    }
+
+    // Check for overlapping requests (client-side validation)
+    const hasOverlap = timeOffRequests.some(request => {
+      // Only check pending/approved requests
+      if (request.status === 'REJECTED' || request.status === 'CANCELLED') {
+        return false;
+      }
+
+      const reqStart = new Date(request.startDate);
+      const reqEnd = new Date(request.endDate);
+
+      // Check if date ranges overlap
+      return (startDate <= reqEnd) && (endDate >= reqStart);
+    });
+
+    if (hasOverlap) {
+      const confirmSubmit = confirm(
+        '⚠️ Cảnh báo: Đã có yêu cầu nghỉ phép trong khoảng thời gian này.\n\n' +
+        'Bạn có chắc chắn muốn tiếp tục tạo yêu cầu mới?'
+      );
+      if (!confirmSubmit) {
+        return;
+      }
     }
 
     try {
@@ -155,17 +218,36 @@ export default function EmployeeTimeOffRequestsPage() {
         reason: ''
       });
       loadTimeOffRequests();
-      alert(`Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
+      alert(`✅ Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
       console.error('❌ Error creating time off request:', error);
       console.error('📋 Error details:', {
         status: error.response?.status,
         data: error.response?.data,
-        message: error.response?.data?.message
+        message: error.response?.data?.message,
+        detail: error.response?.data?.detail
       });
 
-      const errorMsg = error.response?.data?.message || error.message || 'Không thể tạo yêu cầu nghỉ phép';
-      alert(`❌ Lỗi: ${errorMsg}`);
+      const status = error.response?.status;
+      let errorMsg = '';
+
+      if (status === 409) {
+        // Conflict - overlapping requests or duplicate
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
+      } else if (status === 400) {
+        // Bad request - validation error
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+      } else if (status === 403) {
+        // Forbidden
+        errorMsg = 'Bạn không có quyền tạo yêu cầu này.';
+      } else {
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          error.message || 'Không thể tạo yêu cầu nghỉ phép';
+      }
+
+      alert(`❌ Lỗi (${status || 'Unknown'}): ${errorMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -249,6 +331,56 @@ export default function EmployeeTimeOffRequestsPage() {
         </Button>
       </div>
 
+      {/* Leave Balances Card */}
+      {leaveBalances && leaveBalances.balances.length > 0 && (
+        <Card className="mb-6 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-blue-900">
+              <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2" />
+              Số Dư Ngày Nghỉ Năm {leaveBalances.cycle_year}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {leaveBalances.balances.map((balance) => (
+                <div
+                  key={balance.balance_id}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-900">
+                      {balance.time_off_type.type_name}
+                    </h3>
+                    <Badge variant={balance.time_off_type.is_paid ? 'default' : 'secondary'}>
+                      {balance.time_off_type.is_paid ? 'Có lương' : 'Không lương'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tổng số ngày:</span>
+                      <span className="font-semibold text-gray-900">{balance.total_days_allowed} ngày</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Đã sử dụng:</span>
+                      <span className="font-semibold text-orange-600">{balance.days_taken} ngày</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-gray-200">
+                      <span className="text-gray-600 font-medium">Còn lại:</span>
+                      <span className={`font-bold text-lg ${balance.days_remaining > 5 ? 'text-green-600' :
+                          balance.days_remaining > 0 ? 'text-yellow-600' :
+                            'text-red-600'
+                        }`}>
+                        {balance.days_remaining} ngày
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -263,7 +395,7 @@ export default function EmployeeTimeOffRequestsPage() {
               />
             </div>
             <div>
-              <Select
+              <CustomSelect
                 label="Trạng thái"
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
@@ -313,7 +445,7 @@ export default function EmployeeTimeOffRequestsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                        <span>{request.employeeName}</span>
+                        <span>{request.employee?.fullName || request.employee?.firstName}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
@@ -326,13 +458,13 @@ export default function EmployeeTimeOffRequestsPage() {
 
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                        <span>{request.timeOffTypeName}</span>
+                        <span>{request.timeOffTypeName || 'N/A'}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
                         <span className="font-semibold">{request.totalDays} ngày</span>
-                        {request.slotName && (
-                          <Badge variant="outline">{request.slotName}</Badge>
+                        {request.workShiftName && (
+                          <Badge variant="outline">{request.workShiftName}</Badge>
                         )}
                       </div>
                     </div>
@@ -384,14 +516,15 @@ export default function EmployeeTimeOffRequestsPage() {
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="timeOffType">Loại nghỉ phép *</Label>
-                  <Select
+                  <CustomSelect
+                    label="Loại nghỉ phép *"
                     value={createForm.timeOffTypeId}
                     onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
                     options={timeOffTypes?.map(type => ({
                       value: type.typeId,
                       label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
                     })) || []}
+                    required
                   />
                   {createForm.timeOffTypeId && (
                     <div className="mt-2 text-sm text-gray-600">
@@ -434,8 +567,8 @@ export default function EmployeeTimeOffRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="slot">Ca làm việc (nếu nghỉ nửa ngày)</Label>
-                  <Select
+                  <CustomSelect
+                    label="Ca làm việc (nếu nghỉ nửa ngày)"
                     value={createForm.slotId || ''}
                     onChange={(value) => setCreateForm(prev => ({
                       ...prev,
@@ -447,7 +580,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       { value: '', label: 'Nghỉ cả ngày' },
                       ...workShifts.map(shift => ({
                         value: shift.workShiftId,
-                        label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                        label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`
                       }))
                     ]}
                   />
@@ -467,6 +600,53 @@ export default function EmployeeTimeOffRequestsPage() {
                   rows={3}
                 />
               </div>
+
+              {/* Conflict Warning */}
+              {createForm.startDate && createForm.endDate && (() => {
+                const startDate = new Date(createForm.startDate);
+                const endDate = new Date(createForm.endDate);
+
+                const overlappingRequests = timeOffRequests.filter(request => {
+                  if (request.status === 'REJECTED' || request.status === 'CANCELLED') {
+                    return false;
+                  }
+                  const reqStart = new Date(request.startDate);
+                  const reqEnd = new Date(request.endDate);
+                  return (startDate <= reqEnd) && (endDate >= reqStart);
+                });
+
+                if (overlappingRequests.length > 0) {
+                  return (
+                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-yellow-900 mb-2">
+                            ⚠️ Cảnh báo: Trùng lịch nghỉ phép
+                          </h4>
+                          <p className="text-sm text-yellow-800 mb-2">
+                            Đã có {overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này:
+                          </p>
+                          <ul className="text-sm text-yellow-700 space-y-1">
+                            {overlappingRequests.map(req => (
+                              <li key={req.requestId} className="flex items-center">
+                                <Badge variant={req.status === 'PENDING' ? 'default' : 'secondary'} className="mr-2">
+                                  {TIME_OFF_STATUS_CONFIG[req.status]?.label || req.status}
+                                </Badge>
+                                <span>
+                                  {format(new Date(req.startDate), 'dd/MM/yyyy')} - {format(new Date(req.endDate), 'dd/MM/yyyy')}
+                                  {req.timeOffTypeName ? ` - ${req.timeOffTypeName}` : ''}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               <div className="flex justify-between gap-3 mt-4">
                 <Button

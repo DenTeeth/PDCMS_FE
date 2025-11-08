@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { OvertimeService } from '@/services/overtimeService';
 import { workShiftService } from '@/services/workShiftService';
@@ -37,6 +37,7 @@ import {
 } from '@/types/overtime';
 import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatTimeToHHMM } from '@/lib/utils';
 
 interface OvertimeRequestFormData {
   employeeId: number;
@@ -316,7 +317,7 @@ export default function EmployeeOvertimeRequestsPage() {
               />
             </div>
             <div>
-              <Select
+              <CustomSelect
                 label="Trạng thái"
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value as OvertimeStatus | 'ALL')}
@@ -491,14 +492,14 @@ export default function EmployeeOvertimeRequestsPage() {
                 </div>
 
                 <div>
-                  <Select
+                  <CustomSelect
                     label="Ca làm việc"
                     value={formData.workShiftId}
                     onChange={(value) => setFormData({ ...formData, workShiftId: value })}
                     placeholder={workShifts.length === 0 ? "Đang tải danh sách ca làm việc..." : "Chọn ca làm việc"}
                     options={workShifts.map((shift) => ({
                       value: shift.workShiftId,
-                      label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`,
+                      label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`,
                     }))}
                   />
                 </div>

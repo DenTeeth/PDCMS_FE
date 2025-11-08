@@ -10,7 +10,7 @@
  */
 export enum DayOfWeek {
   MONDAY = 'MONDAY',
-  TUESDAY = 'TUESDAY', 
+  TUESDAY = 'TUESDAY',
   WEDNESDAY = 'WEDNESDAY',
   THURSDAY = 'THURSDAY',
   FRIDAY = 'FRIDAY',
@@ -22,25 +22,35 @@ export enum DayOfWeek {
  * Shift Registration entity returned from API (New Quota-based System)
  */
 export interface ShiftRegistration {
-  registrationId: string; // Format: REG{YYYYMMDD}_{employeeId}_{slotId}
+  registrationId: number; // Registration ID
   employeeId: number;
-  employeeName: string;
-  partTimeSlotId: number; // Changed from slotId to partTimeSlotId
-  workShiftName: string; // Changed from shiftName to workShiftName to match API response
-  dayOfWeek: DayOfWeek; // Single day instead of array
+  employeeName?: string;
+  partTimeSlotId: number; // The slot being registered
+  workShiftId: string; // Work shift ID (e.g., "WKS_MORNING_02")
+  shiftName: string; // Human-readable shift name
+  dayOfWeek: string; // Day of week (e.g., "MONDAY")
   effectiveFrom: string; // YYYY-MM-DD format
-  effectiveTo: string; // YYYY-MM-DD format (calculated: effectiveFrom + 3 months)
-  isActive: boolean; // Changed from 'active' to 'isActive'
+  effectiveTo: string; // YYYY-MM-DD format
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'; // Registration status
+  dates: string[]; // Array of actual work dates (YYYY-MM-DD format)
+  reason: string | null; // Reason for rejection (if any)
+  processedBy: number | null; // Admin who processed the registration
+  processedAt: string | null; // When it was processed
+  createdAt: string; // ISO timestamp
+  isActive?: boolean; // For compatibility with old system
 }
 
 /**
  * Request payload for creating a new shift registration (New Quota-based System)
+ * For PART_TIME_FLEX employees registering for flexible work slots
  */
 export interface CreateShiftRegistrationRequest {
-  partTimeSlotId: number; // Changed from workShiftId + daysOfWeek to partTimeSlotId
-  effectiveFrom: string; // YYYY-MM-DD format
-  // effectiveTo is calculated automatically (effectiveFrom + 3 months)
+  partTimeSlotId: number; // The work slot to register for
+  effectiveFrom: string; // YYYY-MM-DD format - Start date of registration period
+  effectiveTo?: string; // YYYY-MM-DD format - End date of registration period (optional)
+  dayOfWeek?: string[]; // Optional: Array of days (e.g., ["THURSDAY", "SATURDAY"])
   // employeeId is determined from JWT token
+  // Status starts as PENDING, requires manager approval
 }
 
 /**

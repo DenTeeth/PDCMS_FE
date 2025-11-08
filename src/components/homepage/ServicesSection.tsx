@@ -3,50 +3,45 @@
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useState } from "react";
-import { ReactElement } from "react";
+import { useTranslations } from "next-intl";
 
 interface Service {
-  icon: ReactElement;
-  title: string;
-  description: string;
+  key: string;
+  icon: React.ReactNode;
 }
 
 const services: Service[] = [
   {
+    key: "general",
     icon: (
       <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
     ),
-    title: "General Dentistry",
-    description: "Comprehensive oral care including checkups, cleanings, and preventive treatments to maintain optimal dental health.",
   },
   {
+    key: "cosmetic",
     icon: (
       <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
       </svg>
     ),
-    title: "Cosmetic Dentistry",
-    description: "Transform your smile with whitening, veneers, and other aesthetic procedures for a confident, beautiful appearance.",
   },
   {
+    key: "pediatric",
     icon: (
       <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    title: "Pediatric Dentistry",
-    description: "Specialized gentle care for children's dental health in a fun, comfortable environment that puts kids at ease.",
   },
   {
+    key: "restorative",
     icon: (
       <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
       </svg>
     ),
-    title: "Restorative Dentistry",
-    description: "Advanced solutions including crowns, bridges, and implants to restore function and appearance of damaged teeth.",
   }
 ];
 
@@ -56,6 +51,7 @@ export default function ServicesSection() {
     threshold: 0.1,
   });
 
+  const t = useTranslations('Services');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   return (
@@ -68,17 +64,17 @@ export default function ServicesSection() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Complete Care for Every Smile
+            {t('sectionTitle')}
           </h2>
           <p className="text-xl text-muted-foreground">
-            Comprehensive dental services tailored to your needs
+            {t('sectionSubtitle')}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, idx) => (
             <motion.div
-              key={idx}
+              key={service.key}
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: idx * 0.1 }}
@@ -107,9 +103,9 @@ export default function ServicesSection() {
                 >
                   {service.icon}
                 </motion.div>
-                <h3 className="text-xl font-semibold mb-4 text-foreground group-hover:text-primary transition-colors">{service.title}</h3>
+                <h3 className="text-xl font-semibold mb-4 text-foreground group-hover:text-primary transition-colors">{t(`cards.${service.key}.title`)}</h3>
                 <p className="text-muted-foreground mb-6 flex-grow">
-                  {service.description}
+                  {t(`cards.${service.key}.description`)}
                 </p>
 
                 <motion.button
