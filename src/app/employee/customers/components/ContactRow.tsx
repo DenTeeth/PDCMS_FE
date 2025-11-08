@@ -91,8 +91,8 @@ const ContactRow = memo(function ContactRow({ contact, showDelete }: { contact: 
       <td className="py-2 px-3">{createdAt}</td>
       <td className="py-2 px-3">
         <div className="flex items-center gap-2">
-          <Link href={`/employee/customers/contact/${contact.id}`} className="text-sm px-2 py-1 rounded bg-blue-50 text-blue-600">View</Link>
-          <Link href={`/employee/customers/contact/${contact.id}/edit`} className="text-sm px-2 py-1 rounded bg-green-50 text-green-600">Edit</Link>
+          <Link href={`/employee/customer-contacts/${contact.id}`} className="text-sm px-2 py-1 rounded bg-blue-50 text-blue-600">View</Link>
+          <Link href={`/employee/customer-contacts/${contact.id}/edit`} className="text-sm px-2 py-1 rounded bg-green-50 text-green-600">Edit</Link>
           {visibleDelete && (
             <button onClick={handleDelete} className="text-sm px-2 py-1 rounded bg-red-50 text-red-600">Delete</button>
           )}

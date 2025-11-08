@@ -1,29 +1,33 @@
 'use client';
 
 /**
- * Employee Appointments Page
- * Requires: VIEW_APPOINTMENT_OWN or VIEW_APPOINTMENT_ALL permission
+ * Admin Appointment Management Page
  * 
  * Features:
- * - Calendar view (Day/Week/Month) with color-coded appointments
- * - List view with pagination
- * - Search and filter functionality
+ * - List view with pagination (for statistics)
+ * - Calendar view (for visual scheduling)
+ * - Full filtering and search capabilities
+ * - Create appointment functionality
  * - View appointment details
- * - RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
+import { toast } from 'sonner';
 import { Plus, Calendar, List } from 'lucide-react';
 import { appointmentService } from '@/services/appointmentService';
 import {
   AppointmentSummaryDTO,
   AppointmentFilterCriteria,
+  DatePreset,
+  AppointmentStatus,
 } from '@/types/appointment';
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
 import AppointmentList from '@/components/appointments/AppointmentList';
@@ -32,7 +36,7 @@ import CreateAppointmentModal from '@/components/appointments/CreateAppointmentM
 
 type ViewMode = 'list' | 'calendar';
 
-export default function EmployeeAppointmentsPage() {
+export default function AdminAppointmentsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
@@ -51,6 +55,8 @@ export default function EmployeeAppointmentsPage() {
     sortDirection: 'ASC',
   });
 
+  // Search state - handled by AppointmentFilters component
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(10);
@@ -58,12 +64,10 @@ export default function EmployeeAppointmentsPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   // Permissions
-  const canViewAll = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
-  const canViewOwn = user?.permissions?.includes('VIEW_APPOINTMENT_OWN') || false;
-  const canView = canViewAll || canViewOwn;
+  const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
   const canCreate = user?.permissions?.includes('CREATE_APPOINTMENT') || false;
 
-  // Request cancellation refs
+  // Request cancellation để tránh race condition
   const abortControllerRef = useRef<AbortController | null>(null);
   const handleErrorRef = useRef(handleError);
 
@@ -88,6 +92,7 @@ export default function EmployeeAppointmentsPage() {
     let isMounted = true;
 
     const loadAppointments = async () => {
+      // Stale-while-revalidate: Keep old data visible while loading
       setLoading(true);
       try {
         const criteria: AppointmentFilterCriteria = {
@@ -98,16 +103,7 @@ export default function EmployeeAppointmentsPage() {
           sortDirection: filters.sortDirection || 'ASC',
         };
 
-        // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
-        // DO NOT send employeeCode filter - backend will handle RBAC filtering automatically
-        // Only send employeeCode if user has VIEW_APPOINTMENT_ALL (for searching other employees)
-        if (canViewOwn && !canViewAll) {
-          // Remove any entity filters that require VIEW_APPOINTMENT_ALL
-          delete criteria.employeeCode;
-          delete criteria.patientCode;
-          delete criteria.patientName;
-          delete criteria.patientPhone;
-        }
+        // Search filters are already in filters object from AppointmentFilters component
 
         const response = await appointmentService.getAppointmentsPage(criteria);
 
@@ -150,7 +146,7 @@ export default function EmployeeAppointmentsPage() {
         abortControllerRef.current = null;
       }
     };
-  }, [canView, filters, currentPage, pageSize, canViewOwn, canViewAll]);
+  }, [canView, filters, currentPage, pageSize]); // Direct dependencies - trigger when these change
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: Partial<AppointmentFilterCriteria>) => {
@@ -169,109 +165,144 @@ export default function EmployeeAppointmentsPage() {
     setCurrentPage(0);
   }, []);
 
-  // Handle pagination
+  // Handle page change
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
 
-  // Handle appointment click (navigate to detail page)
-  const handleAppointmentClick = useCallback((appointment: AppointmentSummaryDTO) => {
-    router.push(`/employee/booking/appointments/${appointment.appointmentCode}`);
+  // Handle row click - navigate to detail page
+  const handleRowClick = useCallback((appointment: AppointmentSummaryDTO) => {
+    router.push(`/admin/booking/appointments/${appointment.appointmentCode}`);
+  }, [router]);
+
+  // Handle calendar event click - navigate to detail page
+  const handleCalendarEventClick = useCallback((appointment: AppointmentSummaryDTO) => {
+    router.push(`/admin/booking/appointments/${appointment.appointmentCode}`);
   }, [router]);
 
   // Handle create appointment
-  const handleCreateAppointment = useCallback(() => {
+  const handleCreateAppointment = () => {
     setShowCreateModal(true);
-  }, []);
+  };
 
   // Handle create appointment success
-  const handleCreateSuccess = useCallback(() => {
+  const handleCreateSuccess = () => {
     // Reload appointments after creating - trigger by updating filters
     setFilters((prev) => ({ ...prev }));
-    setShowCreateModal(false);
-  }, []);
+  };
 
-  // Permission checks
   if (is403Error) {
     return <UnauthorizedMessage message="Bạn không có quyền truy cập trang này." />;
   }
 
   if (!canView) {
-    return <UnauthorizedMessage message="Bạn không có quyền xem lịch hẹn." />;
+    return <UnauthorizedMessage message="Bạn không có quyền xem danh sách appointments." />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <ProtectedRoute requiredPermissions={['VIEW_APPOINTMENT_ALL']}>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lịch Hẹn</h1>
-          <p className="text-gray-600 mt-1">Quản lý lịch hẹn của bạn</p>
+            <h1 className="text-3xl font-bold">Appointment Management</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage patient appointments with calendar and list views
+            </p>
           </div>
-        {canCreate && (
-          <Button onClick={handleCreateAppointment}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo lịch hẹn mới
-          </Button>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            {canCreate && (
+              <Button onClick={handleCreateAppointment}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Appointment
+              </Button>
+            )}
+          </div>
+        </div>
 
-      {/* View Mode Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-        <TabsList>
-          <TabsTrigger value="list">
-            <List className="mr-2 h-4 w-4" />
-            Danh sách
-          </TabsTrigger>
-          <TabsTrigger value="calendar">
-            <Calendar className="mr-2 h-4 w-4" />
-            Lịch
-          </TabsTrigger>
-        </TabsList>
+        {/* View Mode Tabs */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+          <TabsList>
+            <TabsTrigger value="list">
+              <List className="h-4 w-4 mr-2" />
+              List View
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendar View
+            </TabsTrigger>
+          </TabsList>
 
-        {/* List View */}
-        <TabsContent value="list" className="space-y-4 mt-6">
-          <AppointmentFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onClearFilters={handleClearFilters}
-            canViewAll={canViewAll} // Hide entity filters if VIEW_APPOINTMENT_OWN
-          />
-          <AppointmentList
-            appointments={appointments}
-            loading={loading}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onRowClick={handleAppointmentClick}
-          />
-        </TabsContent>
+          {/* List View */}
+          <TabsContent value="list" className="mt-6 space-y-4">
+            {/* Filters */}
+            <AppointmentFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
+              canViewAll={true} // Admin always has VIEW_APPOINTMENT_ALL
+            />
 
-        {/* Calendar View */}
-        <TabsContent value="calendar" className="space-y-4 mt-6">
-          <AppointmentFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onClearFilters={handleClearFilters}
-            canViewAll={canViewAll} // Hide entity filters if VIEW_APPOINTMENT_OWN
-          />
-          <AppointmentCalendar
-            onEventClick={handleAppointmentClick}
-            filters={filters}
-            loading={loading}
-            canViewAll={canViewAll} // Pass canViewAll to handle RBAC filtering
-          />
-        </TabsContent>
-      </Tabs>
+            {/* Sort Controls */}
+            <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+              <div className="min-w-[200px]">
+                <label className="text-sm font-medium">Sort By</label>
+                <select
+                  value={filters.sortBy || 'appointmentStartTime'}
+                  onChange={(e) => handleFiltersChange({ sortBy: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg mt-1"
+                >
+                  <option value="appointmentStartTime">Start Time</option>
+                  <option value="appointmentCode">Appointment Code</option>
+                  <option value="patientCode">Patient Code</option>
+                  <option value="employeeCode">Doctor Code</option>
+                  <option value="roomCode">Room Code</option>
+                </select>
+              </div>
+              <div className="min-w-[150px]">
+                <label className="text-sm font-medium">Direction</label>
+                <select
+                  value={filters.sortDirection || 'ASC'}
+                  onChange={(e) => handleFiltersChange({ sortDirection: e.target.value as 'ASC' | 'DESC' })}
+                  className="w-full px-4 py-2 border rounded-lg mt-1"
+                >
+                  <option value="ASC">Ascending</option>
+                  <option value="DESC">Descending</option>
+                </select>
+              </div>
+            </div>
 
-      {/* Create Appointment Modal */}
-      {canCreate && (
-      <CreateAppointmentModal
+            {/* List */}
+            <AppointmentList
+              appointments={appointments}
+              loading={loading}
+              onRowClick={handleRowClick}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              showActions={true}
+            />
+          </TabsContent>
+
+          {/* Calendar View */}
+          <TabsContent value="calendar" className="mt-6">
+            <AppointmentCalendar
+              onEventClick={handleCalendarEventClick}
+              filters={filters}
+              loading={loading}
+              canViewAll={true} // Admin always has VIEW_APPOINTMENT_ALL
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Create Appointment Modal */}
+        <CreateAppointmentModal
           open={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCreateSuccess}
         />
-      )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
+

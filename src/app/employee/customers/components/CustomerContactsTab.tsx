@@ -74,7 +74,7 @@ export default function CustomerContactsTab() {
                         Manage customer contact records and inquiries
                     </p>
                 </div>
-                <Link href="/employee/customers/new-contact">
+                <Link href="/employee/customer-contacts/new">
                     <Button className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
                         <span>New Contact</span>

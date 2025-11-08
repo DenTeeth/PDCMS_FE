@@ -230,7 +230,7 @@ export default function AppointmentList({
                                                                 <FontAwesomeIcon icon={faEye} className="mr-2" />
                                                                 View
                                                             </Button>
-                                                            {(appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED') && (
+                                                            {appointment.status === 'SCHEDULED' && (
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
@@ -290,7 +290,7 @@ export default function AppointmentList({
                                                         <FontAwesomeIcon icon={faEye} className="mr-2" />
                                                         View
                                                     </Button>
-                                                    {(appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED') && (
+                                                    {appointment.status === 'SCHEDULED' && (
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
