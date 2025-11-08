@@ -711,15 +711,15 @@ export default function EmployeeRegistrationsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {availableSlots.map((slot) => {
                         const availableCount = slot.totalDatesAvailable - slot.totalDatesFull;
-                        const availabilityPercent = slot.totalDatesAvailable > 0 
-                          ? (availableCount / slot.totalDatesAvailable) * 100 
+                        const availabilityPercent = slot.totalDatesAvailable > 0
+                          ? (availableCount / slot.totalDatesAvailable) * 100
                           : 0;
                         const isExpanded = expandedSlotId === slot.slotId;
                         const slotDetails = slotDetailsMap[slot.slotId];
 
                         return (
-                          <div 
-                            key={slot.slotId} 
+                          <div
+                            key={slot.slotId}
                             className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
                           >
                             <div className="p-6">
@@ -743,11 +743,10 @@ export default function EmployeeRegistrationsPage() {
                                     </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                                    <div 
-                                      className={`h-2 rounded-full transition-all duration-500 ${
-                                        availabilityPercent > 50 ? 'bg-green-500' : 
-                                        availabilityPercent > 20 ? 'bg-yellow-500' : 'bg-red-500'
-                                      }`}
+                                    <div
+                                      className={`h-2 rounded-full transition-all duration-500 ${availabilityPercent > 50 ? 'bg-green-500' :
+                                          availabilityPercent > 20 ? 'bg-yellow-500' : 'bg-red-500'
+                                        }`}
                                       style={{ width: `${availabilityPercent}%` }}
                                     ></div>
                                   </div>
@@ -764,14 +763,14 @@ export default function EmployeeRegistrationsPage() {
                                     </p>
                                     <div className="grid grid-cols-1 gap-2">
                                       {slotDetails.availabilityByMonth.slice(0, 3).map((month, idx) => {
-                                        const statusColor = 
+                                        const statusColor =
                                           month.status === 'FULL' ? 'bg-red-50 border-red-200' :
-                                          month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
-                                          'bg-green-50 border-green-200';
-                                        
+                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
+                                              'bg-green-50 border-green-200';
+
                                         return (
-                                          <div 
-                                            key={idx} 
+                                          <div
+                                            key={idx}
                                             className={`p-2 rounded-lg border text-center ${statusColor}`}
                                           >
                                             <p className="text-xs font-bold text-gray-700">{month.monthName}</p>
@@ -800,17 +799,17 @@ export default function EmployeeRegistrationsPage() {
                                       <div className="space-y-2 pt-2 border-t border-gray-100 animate-in slide-in-from-top duration-300">
                                         <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
                                           {slotDetails.availabilityByMonth.map((month, idx) => {
-                                            const statusEmoji = 
+                                            const statusEmoji =
                                               month.status === 'FULL' ? '🔴' :
-                                              month.status === 'PARTIAL' ? '🟡' : '🟢';
-                                            const statusColor = 
+                                                month.status === 'PARTIAL' ? '🟡' : '🟢';
+                                            const statusColor =
                                               month.status === 'FULL' ? 'bg-red-100 text-red-700 border-red-200' :
-                                              month.status === 'PARTIAL' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                              'bg-green-100 text-green-700 border-green-200';
-                                            
+                                                month.status === 'PARTIAL' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                  'bg-green-100 text-green-700 border-green-200';
+
                                             return (
-                                              <div 
-                                                key={idx} 
+                                              <div
+                                                key={idx}
                                                 className={`flex items-center justify-between p-3 rounded-lg border ${statusColor}`}
                                               >
                                                 <div className="flex items-center gap-2">
@@ -827,8 +826,8 @@ export default function EmployeeRegistrationsPage() {
                                                     {month.totalDatesAvailable}/{month.totalWorkingDays}
                                                   </p>
                                                   <p className="text-xs opacity-75">
-                                                    {month.status === 'FULL' ? 'Đã đầy' : 
-                                                     month.status === 'PARTIAL' ? 'Sắp đầy' : 'Còn nhiều'}
+                                                    {month.status === 'FULL' ? 'Đã đầy' :
+                                                      month.status === 'PARTIAL' ? 'Sắp đầy' : 'Còn nhiều'}
                                                   </p>
                                                 </div>
                                               </div>
@@ -889,8 +888,8 @@ export default function EmployeeRegistrationsPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {partTimeRegistrations.map((registration) => (
-                      <div 
-                        key={registration.registrationId} 
+                      <div
+                        key={registration.registrationId}
                         className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
                       >
                         <div className="p-6">
