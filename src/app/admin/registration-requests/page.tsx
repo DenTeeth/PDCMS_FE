@@ -414,7 +414,6 @@ export default function RegistrationRequestsPage() {
                       <th className="text-left p-3 font-medium">Employee</th>
                       <th className="text-left p-3 font-medium">Shift</th>
                       <th className="text-left p-3 font-medium">Day</th>
-                      <th className="text-left p-3 font-medium">Quota</th>
                       <th className="text-left p-3 font-medium">Period</th>
                       <th className="text-left p-3 font-medium">Status</th>
                       <th className="text-left p-3 font-medium">Created</th>
@@ -444,18 +443,6 @@ export default function RegistrationRequestsPage() {
                             <Badge variant="outline">
                               {getDayOfWeekLabel(registration.dayOfWeek)}
                             </Badge>
-                          </td>
-                          <td className="p-3">
-                            {slotDetails ? (
-                              <div className="text-sm">
-                                <div className="font-medium text-blue-600">
-                                  {slotDetails.overallRemaining} / {slotDetails.quota}
-                                </div>
-                                <div className="text-xs text-gray-500">còn lại</div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400">Loading...</div>
-                            )}
                           </td>
                           <td className="p-3">
                             <div className="text-sm">
@@ -747,11 +734,13 @@ export default function RegistrationRequestsPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-2">Selected Dates:</p>
                     <div className="flex flex-wrap gap-2">
-                      {selectedRegistration.dates.map((date, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {formatDate(date)}
-                        </Badge>
-                      ))}
+                      {[...selectedRegistration.dates]
+                        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+                        .map((date, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {formatDate(date)}
+                          </Badge>
+                        ))}
                     </div>
                   </div>
                 )}
