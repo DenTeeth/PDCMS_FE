@@ -42,6 +42,8 @@ import { patientService } from '@/services/patientService';
 import { RoomService } from '@/services/roomService';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { specializationService } from '@/services/specializationService';
+import { ServiceCategoryService } from '@/services/serviceCategoryService';
+import { ServiceCategory } from '@/types/serviceCategory';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
 import {
   CreateAppointmentRequest,
@@ -259,6 +261,7 @@ export default function CreateAppointmentModal({
   const [services, setServices] = useState<Service[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
 
@@ -382,6 +385,10 @@ export default function CreateAppointmentModal({
       // Load specializations
       const specializationsData = await specializationService.getAll();
       setSpecializations(specializationsData);
+
+      // Load categories
+      const categoriesData = await ServiceCategoryService.getAllCategories();
+      setCategories(categoriesData.filter(cat => cat.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
 
       // Load employees (all active employees - will filter by ROLE_DENTIST in Step 4)
       const employeeService = new EmployeeService();
@@ -834,20 +841,41 @@ export default function CreateAppointmentModal({
     });
   };
 
-  // Step 3: Get services grouped by specialization
-  const getServicesGroupedBySpecialization = useMemo(() => {
-    const grouped = new Map<string | number, Service[]>();
+  // Step 3: Get services grouped by category (fallback to specialization if no category)
+  const getServicesGroupedByCategory = useMemo(() => {
+    const grouped = new Map<string | number, { category?: ServiceCategory; services: Service[] }>();
     
+    // First, group by category
     services.forEach((service) => {
-      const specId = service.specializationId || 'none';
-      if (!grouped.has(specId)) {
-        grouped.set(specId, []);
+      const categoryId = service.categoryId || 'none';
+      if (!grouped.has(categoryId)) {
+        const category = categoryId !== 'none' ? categories.find(c => c.categoryId === categoryId) : undefined;
+        grouped.set(categoryId, { category, services: [] });
       }
-      grouped.get(specId)!.push(service);
+      grouped.get(categoryId)!.services.push(service);
     });
 
+    // For services without category, group by specialization
+    const noCategoryGroup = grouped.get('none');
+    if (noCategoryGroup && noCategoryGroup.services.length > 0) {
+      const bySpec = new Map<string | number, Service[]>();
+      noCategoryGroup.services.forEach((service) => {
+        const specId = service.specializationId || 'none-spec';
+        if (!bySpec.has(specId)) {
+          bySpec.set(specId, []);
+        }
+        bySpec.get(specId)!.push(service);
+      });
+      
+      // Replace 'none' group with specialization groups
+      grouped.delete('none');
+      bySpec.forEach((specServices, specId) => {
+        grouped.set(`spec-${specId}`, { services: specServices });
+      });
+    }
+
     return grouped;
-  }, [services]);
+  }, [services, categories]);
 
   // Step 3: Get filtered services based on selected specialization filter
   const getFilteredServices = (): Service[] => {
@@ -1480,7 +1508,7 @@ export default function CreateAppointmentModal({
             </div>
           )}
 
-          {/* Step 3: Select Services (grouped by specialization) */}
+          {/* Step 3: Select Services (grouped by category) */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <div>
@@ -1506,43 +1534,93 @@ export default function CreateAppointmentModal({
 
               <div>
                 <Label>Select Services (at least 1) <span className="text-red-500">*</span></Label>
-                <Card className="p-4 mt-1 max-h-60 overflow-y-auto">
+                <Card className="p-4 mt-1 max-h-96 overflow-y-auto">
                   {loadingData ? (
                     <p className="text-sm text-muted-foreground">Loading services...</p>
-                  ) : getFilteredServices().length === 0 ? (
+                  ) : Array.from(getServicesGroupedByCategory.entries()).length === 0 ? (
                     <Card className="p-4 bg-red-50 border-red-200">
-                      <p className="text-sm text-red-800">No services found for the selected filter.</p>
+                      <p className="text-sm text-red-800">No services found.</p>
                     </Card>
                   ) : (
-                    <div className="space-y-2">
-                      {getFilteredServices().map((service) => {
-                        const isSelected = serviceCodes.includes(service.serviceCode);
-                        return (
-                          <div key={service.serviceId} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`service-${service.serviceId}`}
-                              checked={isSelected}
-                              onCheckedChange={() => handleToggleService(service.serviceCode)}
-                            />
-                            <Label
-                              htmlFor={`service-${service.serviceId}`}
-                              className={`text-sm font-normal cursor-pointer flex-1 ${
-                                isSelected ? 'font-semibold' : ''
-                              }`}
-                            >
-                              {service.serviceName} ({service.serviceCode})
-                              <span className="text-muted-foreground ml-2">
-                                • {service.defaultDurationMinutes} min • {service.price?.toLocaleString()} VND
-                              </span>
-                              {service.specializationName && (
-                                <Badge variant="outline" className="ml-2 text-xs">
-                                  {service.specializationName}
+                    <div className="space-y-4">
+                      {Array.from(getServicesGroupedByCategory.entries())
+                        .filter(([_, group]) => {
+                          // Apply specialization filter
+                          if (selectedSpecializationFilter === 'all') return true;
+                          if (selectedSpecializationFilter === 'none') {
+                            return group.services.some(s => !s.specializationId);
+                          }
+                          const specId = parseInt(selectedSpecializationFilter, 10);
+                          return group.services.some(s => s.specializationId === specId);
+                        })
+                        .map(([key, group]) => (
+                          <div key={key} className="space-y-2">
+                            {group.category ? (
+                              <div className="flex items-center gap-2 pb-2 border-b">
+                                <h4 className="font-semibold text-sm text-primary">
+                                  {group.category.categoryName}
+                                </h4>
+                                <Badge variant="secondary" className="text-xs">
+                                  {group.services.length} {group.services.length === 1 ? 'service' : 'services'}
                                 </Badge>
-                              )}
-                            </Label>
+                              </div>
+                            ) : key.toString().startsWith('spec-') ? (
+                              <div className="flex items-center gap-2 pb-2 border-b">
+                                <h4 className="font-semibold text-sm text-muted-foreground">
+                                  {(() => {
+                                    const specId = key.toString().replace('spec-', '');
+                                    if (specId === 'none-spec') return 'No Specialization';
+                                    const spec = specializations.find(s => String(s.specializationId) === specId);
+                                    return spec ? spec.specializationName : 'Other';
+                                  })()}
+                                </h4>
+                                <Badge variant="outline" className="text-xs">
+                                  {group.services.length} {group.services.length === 1 ? 'service' : 'services'}
+                                </Badge>
+                              </div>
+                            ) : null}
+                            <div className="space-y-2 pl-4">
+                              {group.services
+                                .filter(service => {
+                                  // Apply specialization filter
+                                  if (selectedSpecializationFilter === 'all') return true;
+                                  if (selectedSpecializationFilter === 'none') {
+                                    return !service.specializationId;
+                                  }
+                                  const specId = parseInt(selectedSpecializationFilter, 10);
+                                  return service.specializationId === specId;
+                                })
+                                .map((service) => {
+                                  const isSelected = serviceCodes.includes(service.serviceCode);
+                                  return (
+                                    <div key={service.serviceId} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`service-${service.serviceId}`}
+                                        checked={isSelected}
+                                        onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                      />
+                                      <Label
+                                        htmlFor={`service-${service.serviceId}`}
+                                        className={`text-sm font-normal cursor-pointer flex-1 ${
+                                          isSelected ? 'font-semibold' : ''
+                                        }`}
+                                      >
+                                        {service.serviceName} ({service.serviceCode})
+                                        <span className="text-muted-foreground ml-2">
+                                          • {service.defaultDurationMinutes} min • {service.price?.toLocaleString()} VND
+                                        </span>
+                                        {service.specializationName && (
+                                          <Badge variant="outline" className="ml-2 text-xs">
+                                            {service.specializationName}
+                                          </Badge>
+                                        )}
+                                      </Label>
+                                    </div>
+                                  );
+                                })}
+                            </div>
                           </div>
-                        );
-                      })}
+                        ))}
                     </div>
                   )}
                 </Card>

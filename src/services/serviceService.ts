@@ -3,7 +3,7 @@ import { specializationService } from './specializationService';
 import { apiClient } from '@/lib/api';
 
 export class ServiceService {
-    private static readonly BASE_URL = '/services';
+    private static readonly BASE_URL = '/booking/services';
     
     // Get paginated services with filters
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
