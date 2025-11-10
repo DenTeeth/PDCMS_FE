@@ -9,6 +9,9 @@ export interface Service {
   price: number;
   specializationId?: number;
   specializationName?: string;
+  categoryId?: number;
+  categoryCode?: string;
+  categoryName?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -18,6 +21,7 @@ export interface ServiceFilters {
   keyword?: string;
   isActive?: string; // "true", "false", or empty string for "all"
   specializationId?: string; // "1", "2", or empty string for "all"
+  categoryId?: string; // "1", "2", or empty string for "all"
   sortBy?: string; // Default: "serviceName"
   sortDirection?: 'ASC' | 'DESC'; // Backend uses uppercase
   page?: number; // Default: 0
@@ -32,6 +36,7 @@ export interface CreateServiceRequest {
   defaultBufferMinutes: number;
   price: number;
   specializationId?: number;
+  categoryId?: number;
   isActive: boolean;
 }
 
@@ -42,6 +47,7 @@ export interface UpdateServiceRequest {
   defaultBufferMinutes?: number;
   price?: number;
   specializationId?: number;
+  categoryId?: number;
   isActive?: boolean;
 }
 

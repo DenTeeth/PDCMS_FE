@@ -34,6 +34,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { ServiceService } from '@/services/serviceService';
 import { specializationService } from '@/services/specializationService';
 import { 
@@ -44,12 +47,20 @@ import {
   UpdateServiceRequest,
 } from '@/types/service';
 import { Specialization } from '@/types/specialization';
+import { 
+  ServiceCategory, 
+  CreateServiceCategoryRequest, 
+  UpdateServiceCategoryRequest,
+  ReorderServiceCategoriesRequest,
+  ServiceCategoryErrorCode 
+} from '@/types/serviceCategory';
+import { ServiceCategoryService } from '@/services/serviceCategoryService';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { toast } from 'sonner';
-import { Eye, Plus, Search, ChevronLeft, ChevronRight, Edit, Trash2, X } from 'lucide-react';
+import { Eye, Plus, Search, ChevronLeft, ChevronRight, Edit, Trash2, X, GripVertical } from 'lucide-react';
 
 interface ServiceFormData {
   serviceCode: string;
@@ -59,19 +70,24 @@ interface ServiceFormData {
   defaultBufferMinutes: number;
   price: number;
   specializationId?: number;
+  categoryId?: number;
   isActive: boolean;
 }
 
 export default function BookingServicesPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
 
-  // State
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'services' | 'categories'>('services');
+
+  // Services state
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Filter & Search states
   const [specializationFilter, setSpecializationFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isActiveFilter, setIsActiveFilter] = useState<string>('all');
   
   // Sort states
@@ -100,6 +116,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    categoryId: undefined,
     isActive: true,
   });
 
@@ -111,6 +128,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    categoryId: undefined,
     isActive: true,
   });
 
@@ -119,6 +137,28 @@ export default function BookingServicesPage() {
   const canCreate = user?.permissions?.includes('CREATE_SERVICE') || false;
   const canUpdate = user?.permissions?.includes('UPDATE_SERVICE') || false;
   const canDelete = user?.permissions?.includes('DELETE_SERVICE') || false;
+
+  // Categories state
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryStatusFilter, setCategoryStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  
+  // Category modals
+  const [showCategoryCreateModal, setShowCategoryCreateModal] = useState(false);
+  const [showCategoryUpdateModal, setShowCategoryUpdateModal] = useState(false);
+  const [showCategoryDeleteModal, setShowCategoryDeleteModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  
+  // Category forms
+  const [categoryCreateForm, setCategoryCreateForm] = useState<CreateServiceCategoryRequest>({
+    categoryCode: '',
+    categoryName: '',
+    displayOrder: 0,
+    description: ''
+  });
+  const [categoryUpdateForm, setCategoryUpdateForm] = useState<UpdateServiceCategoryRequest>({});
+  const [categoryFormErrors, setCategoryFormErrors] = useState<Record<string, string>>({});
 
   // Search state - separate from debounced search
   // searchInput: what user types (immediate update)
@@ -143,6 +183,46 @@ export default function BookingServicesPage() {
     loadSpecializations();
   }, []);
 
+  // Load categories
+  const loadCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true);
+      console.log('Loading categories...');
+      const data = await ServiceCategoryService.getAllCategories();
+      console.log('Categories loaded:', data);
+      setCategories(data);
+    } catch (error: any) {
+      console.error('Error loading categories:', error);
+      toast.error('Không thể tải danh sách danh mục dịch vụ');
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  // Load categories on mount and when tab changes
+  useEffect(() => {
+    if (activeTab === 'categories') {
+      loadCategories();
+    }
+  }, [activeTab, loadCategories]);
+
+  // Auto-update displayOrder when categories change and form is empty
+  useEffect(() => {
+    if (categories.length > 0 && categoryCreateForm.categoryCode === '' && categoryCreateForm.categoryName === '') {
+      const maxOrder = Math.max(...categories.map(c => c.displayOrder));
+      setCategoryCreateForm(prev => ({
+        ...prev,
+        displayOrder: maxOrder + 1
+      }));
+    } else if (categories.length === 0) {
+      setCategoryCreateForm(prev => ({
+        ...prev,
+        displayOrder: 0
+      }));
+    }
+  }, [categories, categoryCreateForm.categoryCode, categoryCreateForm.categoryName]);
+
   // Use specializations directly from API (getAllSpecialization)
   // Parse specializationId from string to number for backend compatibility
   const availableSpecializations = useMemo(() => {
@@ -162,6 +242,20 @@ export default function BookingServicesPage() {
     const spec = availableSpecializations.find(s => s.id === specializationId);
     return spec?.name || 'Không xác định';
   }, [availableSpecializations]);
+
+  // Available categories (active only for service forms)
+  const availableCategories = useMemo(() => {
+    return categories
+      .filter(cat => cat.isActive)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [categories]);
+
+  // Helper function để lấy category name
+  const getCategoryName = useCallback((categoryId?: number): string => {
+    if (!categoryId) return 'Không có';
+    const cat = availableCategories.find(c => c.categoryId === categoryId);
+    return cat?.categoryName || 'Không xác định';
+  }, [availableCategories]);
 
   // Load services với filters, sort và pagination
   // Use ref to store handleError to avoid including it in dependencies
@@ -205,6 +299,14 @@ export default function BookingServicesPage() {
         }
       }
 
+      // Add categoryId filter if not 'all'
+      if (categoryFilter !== 'all') {
+        const catId = parseInt(categoryFilter);
+        if (!isNaN(catId)) {
+          filters.categoryId = String(catId);
+        }
+      }
+
       // Add isActive filter if not 'all'
       if (isActiveFilter !== 'all') {
         filters.isActive = isActiveFilter === 'active' ? 'true' : 'false';
@@ -239,7 +341,7 @@ export default function BookingServicesPage() {
         abortControllerRef.current = null;
       }
     }
-  }, [canView, debouncedSearch, specializationFilter, isActiveFilter, sortBy, sortDirection, currentPage, pageSize]);
+  }, [canView, debouncedSearch, specializationFilter, categoryFilter, isActiveFilter, sortBy, sortDirection, currentPage, pageSize]);
 
   // Load services khi filters hoặc page thay đổi
   useEffect(() => {
@@ -256,13 +358,14 @@ export default function BookingServicesPage() {
   // Reset về page 0 khi filters hoặc sort thay đổi (debouncedSearch thay vì searchInput)
   useEffect(() => {
     setCurrentPage(0);
-  }, [debouncedSearch, specializationFilter, isActiveFilter, sortBy, sortDirection]);
+  }, [debouncedSearch, specializationFilter, categoryFilter, isActiveFilter, sortBy, sortDirection]);
 
   // Clear all filters function
   const handleClearFilters = () => {
     setSearchInput('');
     setSearchKeyword('');
     setSpecializationFilter('all');
+    setCategoryFilter('all');
     setIsActiveFilter('all');
     setSortBy('serviceName');
     setSortDirection('ASC');
@@ -302,6 +405,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: createForm.defaultBufferMinutes,
         price: createForm.price,
         specializationId: createForm.specializationId || undefined,
+        categoryId: createForm.categoryId || undefined,
         isActive: createForm.isActive,
       };
 
@@ -316,6 +420,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: 10,
         price: 0,
         specializationId: undefined,
+        categoryId: undefined,
         isActive: true,
       });
 
@@ -385,6 +490,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: updateForm.defaultBufferMinutes,
         price: updateForm.price,
         specializationId: updateForm.specializationId || undefined,
+        categoryId: updateForm.categoryId || undefined,
         isActive: updateForm.isActive,
       };
 
@@ -477,6 +583,7 @@ export default function BookingServicesPage() {
       defaultBufferMinutes: service.defaultBufferMinutes,
       price: service.price,
       specializationId: service.specializationId,
+      categoryId: service.categoryId,
       isActive: service.isActive,
     });
     setShowUpdateModal(true);
@@ -494,6 +601,194 @@ export default function BookingServicesPage() {
     setSelectedService(service);
     setShowDetailModal(true);
   }, []);
+
+  // ==================== CATEGORY HANDLERS ====================
+  
+  // Filter categories
+  const filteredCategories = useMemo(() => {
+    return categories.filter(category => {
+      const matchesSearch = !categorySearch || 
+        category.categoryName.toLowerCase().includes(categorySearch.toLowerCase()) ||
+        category.categoryCode.toLowerCase().includes(categorySearch.toLowerCase());
+      
+      const matchesStatus = categoryStatusFilter === 'all' ||
+        (categoryStatusFilter === 'active' && category.isActive) ||
+        (categoryStatusFilter === 'inactive' && !category.isActive);
+      
+      return matchesSearch && matchesStatus;
+    }).sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [categories, categorySearch, categoryStatusFilter]);
+
+  // Create category
+  const handleCreateCategory = async () => {
+    try {
+      setCategoryFormErrors({});
+      
+      // Validation
+      if (!categoryCreateForm.categoryCode.trim()) {
+        setCategoryFormErrors({ categoryCode: 'Mã danh mục là bắt buộc' });
+        return;
+      }
+      if (!categoryCreateForm.categoryName.trim()) {
+        setCategoryFormErrors({ categoryName: 'Tên danh mục là bắt buộc' });
+        return;
+      }
+      if (categoryCreateForm.displayOrder < 0) {
+        setCategoryFormErrors({ displayOrder: 'Thứ tự hiển thị phải >= 0' });
+        return;
+      }
+
+      await ServiceCategoryService.createCategory(categoryCreateForm);
+      toast.success('Tạo danh mục dịch vụ thành công');
+      setShowCategoryCreateModal(false);
+      // Reset form - displayOrder will be auto-updated by useEffect
+      setCategoryCreateForm({
+        categoryCode: '',
+        categoryName: '',
+        displayOrder: 0,
+        description: ''
+      });
+      loadCategories();
+    } catch (error: any) {
+      console.error('Error creating category:', error);
+      
+      if (error.errorCode === ServiceCategoryErrorCode.CATEGORY_CODE_EXISTS) {
+        setCategoryFormErrors({ categoryCode: 'Mã danh mục này đã tồn tại' });
+      } else {
+        toast.error(error.message || 'Không thể tạo danh mục dịch vụ');
+      }
+    }
+  };
+
+  // Update category
+  const handleUpdateCategory = async () => {
+    if (!selectedCategory) return;
+
+    try {
+      setCategoryFormErrors({});
+      await ServiceCategoryService.updateCategory(selectedCategory.categoryId, categoryUpdateForm);
+      toast.success('Cập nhật danh mục dịch vụ thành công');
+      setShowCategoryUpdateModal(false);
+      setSelectedCategory(null);
+      setCategoryUpdateForm({});
+      loadCategories();
+    } catch (error: any) {
+      console.error('Error updating category:', error);
+      
+      if (error.errorCode === ServiceCategoryErrorCode.CATEGORY_CODE_EXISTS) {
+        setCategoryFormErrors({ categoryCode: 'Mã danh mục này đã tồn tại' });
+      } else {
+        toast.error(error.message || 'Không thể cập nhật danh mục dịch vụ');
+      }
+    }
+  };
+
+  // Delete category (soft delete)
+  const handleDeleteCategory = async () => {
+    if (!selectedCategory) return;
+
+    try {
+      await ServiceCategoryService.deleteCategory(selectedCategory.categoryId);
+      toast.success('Xóa danh mục dịch vụ thành công');
+      setShowCategoryDeleteModal(false);
+      setSelectedCategory(null);
+      loadCategories();
+    } catch (error: any) {
+      console.error('Error deleting category:', error);
+      
+      if (error.errorCode === ServiceCategoryErrorCode.CATEGORY_HAS_ACTIVE_SERVICES) {
+        toast.error('Không thể xóa danh mục này vì còn dịch vụ đang active. Vui lòng vô hiệu hóa hoặc chuyển dịch vụ trước.');
+      } else {
+        toast.error(error.message || 'Không thể xóa danh mục dịch vụ');
+      }
+    }
+  };
+
+  // Open update modal
+  const openCategoryUpdateModal = (category: ServiceCategory) => {
+    setSelectedCategory(category);
+    setCategoryUpdateForm({
+      categoryName: category.categoryName,
+      displayOrder: category.displayOrder,
+      description: category.description,
+      isActive: category.isActive
+    });
+    setCategoryFormErrors({});
+    setShowCategoryUpdateModal(true);
+  };
+
+  // Drag and drop reorder
+  const [draggedCategory, setDraggedCategory] = useState<ServiceCategory | null>(null);
+  const [reorderedCategories, setReorderedCategories] = useState<ServiceCategory[]>([]);
+  const [hasReordered, setHasReordered] = useState(false);
+
+  // Initialize reorderedCategories when categories change
+  useEffect(() => {
+    setReorderedCategories([...filteredCategories]);
+    setHasReordered(false);
+  }, [filteredCategories]);
+
+  const handleDragStart = (category: ServiceCategory) => {
+    setDraggedCategory(category);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetCategory: ServiceCategory) => {
+    e.preventDefault();
+    if (!draggedCategory || draggedCategory.categoryId === targetCategory.categoryId) return;
+
+    const draggedIndex = reorderedCategories.findIndex(c => c.categoryId === draggedCategory.categoryId);
+    const targetIndex = reorderedCategories.findIndex(c => c.categoryId === targetCategory.categoryId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newCategories = [...reorderedCategories];
+    newCategories.splice(draggedIndex, 1);
+    newCategories.splice(targetIndex, 0, draggedCategory);
+
+    // Update displayOrder
+    const updatedCategories = newCategories.map((cat, index) => ({
+      ...cat,
+      displayOrder: index
+    }));
+
+    setReorderedCategories(updatedCategories);
+    setHasReordered(true);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCategory(null);
+  };
+
+  const handleSaveReorder = async () => {
+    try {
+      const orders: ReorderServiceCategoriesRequest = {
+        orders: reorderedCategories.map((cat, index) => ({
+          categoryId: cat.categoryId,
+          displayOrder: index
+        }))
+      };
+
+      await ServiceCategoryService.reorderCategories(orders);
+      toast.success('Sắp xếp lại danh mục thành công');
+      setHasReordered(false);
+      loadCategories();
+    } catch (error: any) {
+      console.error('Error reordering categories:', error);
+      toast.error('Không thể sắp xếp lại danh mục');
+      // Revert to original order
+      setReorderedCategories([...filteredCategories]);
+      setHasReordered(false);
+    }
+  };
+
+  const handleCancelReorder = () => {
+    setReorderedCategories([...filteredCategories]);
+    setHasReordered(false);
+  };
 
   // Columns definition
   const columns: OptimizedTableColumn<Service>[] = useMemo(() => [
@@ -515,6 +810,15 @@ export default function BookingServicesPage() {
       accessor: (service) => (
         <Badge variant="outline">
           {getSpecializationName(service.specializationId)}
+        </Badge>
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      accessor: (service) => (
+        <Badge variant="secondary">
+          {getCategoryName(service.categoryId)}
         </Badge>
       ),
     },
@@ -606,16 +910,29 @@ export default function BookingServicesPage() {
           <div>
             <h1 className="text-3xl font-bold">Services Management</h1>
             <p className="text-muted-foreground mt-2">
-              Manage clinic services and their configurations
+              Manage clinic services and their categories
             </p>
           </div>
-          {canCreate && (
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Service
-            </Button>
-          )}
         </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'services' | 'categories')} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="services">Dịch vụ</TabsTrigger>
+            <TabsTrigger value="categories">Danh mục</TabsTrigger>
+          </TabsList>
+
+          {/* Tab 1: Services */}
+          <TabsContent value="services" className="space-y-6">
+            {/* Header with Create Button */}
+            <div className="flex items-center justify-end">
+              {canCreate && (
+                <Button onClick={() => setShowCreateModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Service
+                </Button>
+              )}
+            </div>
 
         {/* Filter và Sort Controls */}
         <div className="space-y-4">
@@ -654,6 +971,24 @@ export default function BookingServicesPage() {
                   {availableSpecializations.map((spec) => (
                     <SelectItem key={spec.id} value={String(spec.id)}>
                       {spec.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Filter */}
+            <div className="min-w-[200px]">
+              <Label htmlFor="category">Category</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger id="category" className="mt-1">
+                  <SelectValue placeholder="Tất cả danh mục" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả danh mục</SelectItem>
+                  {availableCategories.map((cat) => (
+                    <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
+                      {cat.categoryName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -825,31 +1160,59 @@ export default function BookingServicesPage() {
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="create-specialization">Specialization</Label>
-                <Select
-                  value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setCreateForm({ ...createForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="create-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="create-specialization">Specialization</Label>
+                  <Select
+                    value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setCreateForm({ ...createForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="create-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="create-category">Category</Label>
+                  <Select
+                    value={createForm.categoryId ? String(createForm.categoryId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setCreateForm({ ...createForm, categoryId: undefined });
+                      } else {
+                        const catId = parseInt(value);
+                        setCreateForm({ ...createForm, categoryId: isNaN(catId) ? undefined : catId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="create-category">
+                      <SelectValue placeholder="Select category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
+                          {cat.categoryName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -941,31 +1304,59 @@ export default function BookingServicesPage() {
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="update-specialization">Specialization</Label>
-                <Select
-                  value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setUpdateForm({ ...updateForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="update-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="update-specialization">Specialization</Label>
+                  <Select
+                    value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setUpdateForm({ ...updateForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="update-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="update-category">Category</Label>
+                  <Select
+                    value={updateForm.categoryId ? String(updateForm.categoryId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setUpdateForm({ ...updateForm, categoryId: undefined });
+                      } else {
+                        const catId = parseInt(value);
+                        setUpdateForm({ ...updateForm, categoryId: isNaN(catId) ? undefined : catId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="update-category">
+                      <SelectValue placeholder="Select category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
+                          {cat.categoryName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -1068,6 +1459,14 @@ export default function BookingServicesPage() {
                     </p>
                   </div>
                   <div>
+                    <Label>Category</Label>
+                    <p className="text-sm">
+                      {getCategoryName(selectedService.categoryId)}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <Label>Status</Label>
                     <Badge variant={selectedService.isActive ? 'default' : 'secondary'}>
                       {selectedService.isActive ? 'Active' : 'Inactive'}
@@ -1099,6 +1498,362 @@ export default function BookingServicesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+
+          {/* Tab 2: Categories */}
+          <TabsContent value="categories" className="space-y-6">
+            {/* Header with Create Button */}
+            <div className="flex items-center justify-end">
+              {canCreate && (
+                <Button onClick={() => setShowCategoryCreateModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Category
+                </Button>
+              )}
+            </div>
+
+            {/* Filter Controls */}
+            <div className="flex flex-wrap items-end gap-4 p-4 border rounded-lg bg-card">
+              {/* Search */}
+              <div className="flex-1 min-w-[200px]">
+                <Label htmlFor="category-search">Search</Label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    id="category-search"
+                    type="text"
+                    placeholder="Search by category code, name..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="min-w-[120px]">
+                <Label htmlFor="category-status">Status</Label>
+                <Select value={categoryStatusFilter} onValueChange={(v) => setCategoryStatusFilter(v as 'all' | 'active' | 'inactive')}>
+                  <SelectTrigger id="category-status" className="mt-1">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters Button */}
+              <div className="min-w-[120px]">
+                <Label className="opacity-0">Clear</Label>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCategorySearch('');
+                    setCategoryStatusFilter('all');
+                  }}
+                  className="mt-1 w-full"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+
+            {/* Reorder Actions */}
+            {hasReordered && (
+              <div className="flex items-center justify-end gap-2 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                <p className="text-sm text-muted-foreground">Bạn đã thay đổi thứ tự. Lưu thay đổi?</p>
+                <Button variant="outline" size="sm" onClick={handleCancelReorder}>
+                  Hủy
+                </Button>
+                <Button size="sm" onClick={handleSaveReorder}>
+                  Lưu thay đổi
+                </Button>
+              </div>
+            )}
+
+            {/* Categories Table */}
+            <div className="border rounded-lg bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-12">Order</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Category Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoriesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="flex justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (hasReordered ? reorderedCategories : filteredCategories).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No categories found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (hasReordered ? reorderedCategories : filteredCategories).map((category) => (
+                      <TableRow
+                        key={category.categoryId}
+                        draggable={canUpdate}
+                        onDragStart={() => handleDragStart(category)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, category)}
+                        onDragEnd={handleDragEnd}
+                        className={`${canUpdate ? 'cursor-move' : 'cursor-default'} ${
+                          draggedCategory?.categoryId === category.categoryId ? 'opacity-50' : ''
+                        } hover:bg-muted/50 transition-colors`}
+                      >
+                        <TableCell>
+                          {canUpdate && (
+                            <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{category.displayOrder}</TableCell>
+                        <TableCell className="font-medium">{category.categoryCode}</TableCell>
+                        <TableCell>{category.categoryName}</TableCell>
+                        <TableCell>
+                          {category.description ? (
+                            <span className="text-sm text-muted-foreground">{category.description}</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={category.isActive ? 'default' : 'secondary'}>
+                            {category.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {canUpdate && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openCategoryUpdateModal(category)}
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedCategory(category);
+                                  setShowCategoryDeleteModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Category Create Modal */}
+            <Dialog open={showCategoryCreateModal} onOpenChange={setShowCategoryCreateModal}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Category</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details to create a new service category
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="categoryCode">Category Code *</Label>
+                      <Input
+                        id="categoryCode"
+                        value={categoryCreateForm.categoryCode}
+                        onChange={(e) => setCategoryCreateForm(prev => ({ ...prev, categoryCode: e.target.value.toUpperCase() }))}
+                        placeholder="e.g., GEN"
+                      />
+                      {categoryFormErrors.categoryCode && (
+                        <p className="text-red-500 text-sm mt-1">{categoryFormErrors.categoryCode}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="categoryName">Category Name *</Label>
+                      <Input
+                        id="categoryName"
+                        value={categoryCreateForm.categoryName}
+                        onChange={(e) => setCategoryCreateForm(prev => ({ ...prev, categoryName: e.target.value }))}
+                        placeholder="e.g., A. General Dentistry"
+                      />
+                      {categoryFormErrors.categoryName && (
+                        <p className="text-red-500 text-sm mt-1">{categoryFormErrors.categoryName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="displayOrder">Display Order *</Label>
+                    <Input
+                      id="displayOrder"
+                      type="number"
+                      value={categoryCreateForm.displayOrder}
+                      onChange={(e) => setCategoryCreateForm(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                      readOnly
+                      className="bg-muted cursor-not-allowed"
+                    />
+                    {categoryFormErrors.displayOrder && (
+                      <p className="text-red-500 text-sm mt-1">{categoryFormErrors.displayOrder}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tự động tăng dần dựa trên danh sách hiện tại (số càng nhỏ hiển thị càng trước)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={categoryCreateForm.description || ''}
+                      onChange={(e) => setCategoryCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Category description..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCategoryCreateModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateCategory}>Create</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Category Update Modal */}
+            <Dialog open={showCategoryUpdateModal} onOpenChange={setShowCategoryUpdateModal}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Update Category</DialogTitle>
+                  <DialogDescription>
+                    Update the category details
+                  </DialogDescription>
+                </DialogHeader>
+                {selectedCategory && (
+                  <div className="space-y-4 py-4">
+                    <div>
+                      <Label>Category Code</Label>
+                      <Input
+                        value={selectedCategory.categoryCode}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Category code cannot be changed</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="updateCategoryName">Category Name *</Label>
+                      <Input
+                        id="updateCategoryName"
+                        value={categoryUpdateForm.categoryName !== undefined ? categoryUpdateForm.categoryName : selectedCategory.categoryName}
+                        onChange={(e) => setCategoryUpdateForm(prev => ({ ...prev, categoryName: e.target.value }))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="updateDisplayOrder">Display Order *</Label>
+                      <Input
+                        id="updateDisplayOrder"
+                        type="number"
+                        value={categoryUpdateForm.displayOrder !== undefined ? categoryUpdateForm.displayOrder : selectedCategory.displayOrder}
+                        onChange={(e) => setCategoryUpdateForm(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
+                        min="0"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="updateDescription">Description</Label>
+                      <Textarea
+                        id="updateDescription"
+                        value={categoryUpdateForm.description !== undefined ? categoryUpdateForm.description : selectedCategory.description || ''}
+                        onChange={(e) => setCategoryUpdateForm(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="updateIsActive"
+                        checked={categoryUpdateForm.isActive !== undefined ? categoryUpdateForm.isActive : selectedCategory.isActive}
+                        onChange={(e) => setCategoryUpdateForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                        className="rounded"
+                      />
+                      <Label htmlFor="updateIsActive">Active</Label>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCategoryUpdateModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdateCategory}>Update</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Category Delete Modal */}
+            <Dialog open={showCategoryDeleteModal} onOpenChange={setShowCategoryDeleteModal}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Category</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this category? This action cannot be undone if the category has active services.
+                  </DialogDescription>
+                </DialogHeader>
+                {selectedCategory && (
+                  <div className="py-4">
+                    <p className="text-sm">
+                      <strong>Category Code:</strong> {selectedCategory.categoryCode}
+                    </p>
+                    <p className="text-sm">
+                      <strong>Category Name:</strong> {selectedCategory.categoryName}
+                    </p>
+                    <p className="text-sm text-red-600 mt-2">
+                      Note: Cannot delete category with active services.
+                    </p>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCategoryDeleteModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDeleteCategory}>
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+        </Tabs>
       </div>
     </ProtectedRoute>
   );
