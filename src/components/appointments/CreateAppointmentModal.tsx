@@ -45,6 +45,7 @@ import { specializationService } from '@/services/specializationService';
 import { ServiceCategoryService } from '@/services/serviceCategoryService';
 import { ServiceCategory } from '@/types/serviceCategory';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   CreateAppointmentRequest,
   AvailableTimesRequest,
@@ -240,6 +241,8 @@ export default function CreateAppointmentModal({
   onClose,
   onSuccess,
 }: CreateAppointmentModalProps) {
+  const { user } = useAuth();
+  
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
@@ -288,6 +291,23 @@ export default function CreateAppointmentModal({
 
   // Step 3: Selected specialization filter
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
+  // Step 3: Selected category filter
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  
+  // Current user's employee data (if employee)
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
+  
+  // Get current user's specializations (if employee)
+  const currentUserSpecializations = useMemo(() => {
+    if (!currentEmployee || !currentEmployee.specializations) return [];
+    return currentEmployee.specializations.map((spec: any) => {
+      const specId = typeof spec === 'string' ? parseInt(spec, 10) : (typeof spec === 'object' ? parseInt(String(spec.specializationId || spec.id || spec), 10) : spec);
+      return isNaN(specId) ? null : specId;
+    }).filter((id: number | null): id is number => id !== null);
+  }, [currentEmployee]);
+  
+  // Check if current user has any specializations
+  const hasUserSpecializations = currentUserSpecializations.length > 0;
 
   // Load initial data
   useEffect(() => {
@@ -368,8 +388,10 @@ export default function CreateAppointmentModal({
     setAllEmployeeShifts(new Map());
     setSuggestedDates([]);
     setSelectedSpecializationFilter('all');
+    setSelectedCategoryFilter('all');
     setSelectedMonth(startOfMonth(new Date()));
   };
+
 
   const loadInitialData = async () => {
     setLoadingData(true);
@@ -398,6 +420,15 @@ export default function CreateAppointmentModal({
         isActive: true,
       });
       setEmployees(employeesResponse.content);
+      
+      // Load current employee data if user is employee
+      if (user && user.employeeId) {
+        const employeeId = user.employeeId;
+        const foundEmployee = employeesResponse.content.find(emp => String(emp.employeeId) === String(employeeId));
+        if (foundEmployee) {
+          setCurrentEmployee(foundEmployee);
+        }
+      }
 
       // Load rooms (active only)
       const roomsData = await RoomService.getActiveRooms();
@@ -895,14 +926,33 @@ export default function CreateAppointmentModal({
 
     // Get required specialization IDs from selected services
     const requiredSpecializationIds = new Set<number>();
+    const servicesWithoutSpecialization: Service[] = [];
+    
     serviceCodes.forEach((code) => {
       const service = services.find((s) => s.serviceCode === code);
-      if (service?.specializationId) {
-        requiredSpecializationIds.add(service.specializationId);
+      if (service) {
+        if (service.specializationId) {
+          requiredSpecializationIds.add(service.specializationId);
+        } else {
+          servicesWithoutSpecialization.push(service);
+        }
       }
     });
 
-    return employees.filter((employee) => {
+    // Log for debugging
+    console.log('🔍 getCompatibleDoctors - Debug Info:', {
+      serviceCodes,
+      requiredSpecializationIds: Array.from(requiredSpecializationIds),
+      servicesWithoutSpecialization: servicesWithoutSpecialization.map(s => ({
+        code: s.serviceCode,
+        name: s.serviceName,
+        categoryId: s.categoryId,
+        categoryName: s.categoryName
+      })),
+      totalEmployees: employees.length
+    });
+
+    const compatibleDoctors = employees.filter((employee) => {
       // Must be ROLE_DENTIST or ROLE_DOCTOR
       if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
         return false;
@@ -913,18 +963,47 @@ export default function CreateAppointmentModal({
         return false;
       }
 
+      const employeeSpecializationIds = employee.specializations.map((spec) => 
+        parseInt(String(spec.specializationId), 10)
+      ).filter(id => !isNaN(id));
+
       // If services require specialization, doctor must have at least one matching
       if (requiredSpecializationIds.size > 0) {
-        const employeeSpecializationIds = employee.specializations.map((spec) => 
-          parseInt(String(spec.specializationId), 10)
-        );
-        return Array.from(requiredSpecializationIds).some((reqId) =>
+        const hasMatchingSpecialization = Array.from(requiredSpecializationIds).some((reqId) =>
           employeeSpecializationIds.includes(reqId)
         );
+        
+        // Log for debugging
+        if (!hasMatchingSpecialization) {
+          console.log(`❌ Employee ${employee.employeeCode} (${employee.fullName}) filtered out:`, {
+            employeeSpecializationIds,
+            requiredSpecializationIds: Array.from(requiredSpecializationIds),
+            roleName: employee.roleName
+          });
+        }
+        
+        return hasMatchingSpecialization;
       }
 
+      // If no services require specialization (all selected services have no specializationId),
+      // show all doctors with specializations (they can handle general services)
+      console.log(`✅ Employee ${employee.employeeCode} (${employee.fullName}) included (no specialization required):`, {
+        employeeSpecializationIds,
+        servicesWithoutSpecialization: servicesWithoutSpecialization.length
+      });
       return true;
     });
+
+    console.log('✅ getCompatibleDoctors - Result:', {
+      totalCompatible: compatibleDoctors.length,
+      compatibleDoctors: compatibleDoctors.map(d => ({
+        code: d.employeeCode,
+        name: d.fullName,
+        specializations: d.specializations?.map(s => s.specializationId)
+      }))
+    });
+
+    return compatibleDoctors;
   };
 
   const handleToggleService = (serviceCode: string) => {
@@ -1511,25 +1590,52 @@ export default function CreateAppointmentModal({
           {/* Step 3: Select Services (grouped by category) */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <div>
-                <Label>Filter by Specialization</Label>
-                <Select
-                  value={selectedSpecializationFilter}
-                  onValueChange={setSelectedSpecializationFilter}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="All specializations" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Specializations</SelectItem>
-                    <SelectItem value="none">No Specialization</SelectItem>
-                    {specializations.map((spec) => (
-                      <SelectItem key={spec.specializationId} value={String(spec.specializationId)}>
-                        {spec.specializationName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Filter Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Specialization Filter - Only show if user has specializations */}
+                {hasUserSpecializations && (
+                  <div>
+                    <Label>Filter by Specialization</Label>
+                    <Select
+                      value={selectedSpecializationFilter}
+                      onValueChange={setSelectedSpecializationFilter}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="All specializations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Specializations</SelectItem>
+                        <SelectItem value="none">No Specialization</SelectItem>
+                        {specializations.map((spec) => (
+                          <SelectItem key={spec.specializationId} value={String(spec.specializationId)}>
+                            {spec.specializationName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {/* Category Filter */}
+                <div>
+                  <Label>Filter by Category</Label>
+                  <Select
+                    value={selectedCategoryFilter}
+                    onValueChange={setSelectedCategoryFilter}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
+                          {cat.categoryName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
@@ -1546,12 +1652,22 @@ export default function CreateAppointmentModal({
                       {Array.from(getServicesGroupedByCategory.entries())
                         .filter(([_, group]) => {
                           // Apply specialization filter
-                          if (selectedSpecializationFilter === 'all') return true;
-                          if (selectedSpecializationFilter === 'none') {
-                            return group.services.some(s => !s.specializationId);
+                          if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
+                            if (selectedSpecializationFilter === 'none') {
+                              if (!group.services.some(s => !s.specializationId)) return false;
+                            } else {
+                              const specId = parseInt(selectedSpecializationFilter, 10);
+                              if (!group.services.some(s => s.specializationId === specId)) return false;
+                            }
                           }
-                          const specId = parseInt(selectedSpecializationFilter, 10);
-                          return group.services.some(s => s.specializationId === specId);
+                          
+                          // Apply category filter
+                          if (selectedCategoryFilter !== 'all') {
+                            const catId = parseInt(selectedCategoryFilter, 10);
+                            if (!group.category || group.category.categoryId !== catId) return false;
+                          }
+                          
+                          return true;
                         })
                         .map(([key, group]) => (
                           <div key={key} className="space-y-2">
@@ -1583,12 +1699,22 @@ export default function CreateAppointmentModal({
                               {group.services
                                 .filter(service => {
                                   // Apply specialization filter
-                                  if (selectedSpecializationFilter === 'all') return true;
-                                  if (selectedSpecializationFilter === 'none') {
-                                    return !service.specializationId;
+                                  if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
+                                    if (selectedSpecializationFilter === 'none') {
+                                      if (service.specializationId) return false;
+                                    } else {
+                                      const specId = parseInt(selectedSpecializationFilter, 10);
+                                      if (service.specializationId !== specId) return false;
+                                    }
                                   }
-                                  const specId = parseInt(selectedSpecializationFilter, 10);
-                                  return service.specializationId === specId;
+                                  
+                                  // Apply category filter
+                                  if (selectedCategoryFilter !== 'all') {
+                                    const catId = parseInt(selectedCategoryFilter, 10);
+                                    if (service.categoryId !== catId) return false;
+                                  }
+                                  
+                                  return true;
                                 })
                                 .map((service) => {
                                   const isSelected = serviceCodes.includes(service.serviceCode);
@@ -1659,22 +1785,41 @@ export default function CreateAppointmentModal({
                       <SelectValue placeholder={loadingData || loadingShifts ? 'Loading...' : 'Select a doctor'} />
                     </SelectTrigger>
                     <SelectContent>
-                      {getCompatibleDoctors()
-                        .filter((employee) => {
+                      {(() => {
+                        const compatibleDoctors = getCompatibleDoctors();
+                        const doctorsWithShifts = compatibleDoctors.filter((employee) => {
                           // Only show doctors with shifts on the selected date
                           const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
                           return shiftsForDate.length > 0;
-                        })
-                        .map((employee) => {
+                        });
+                        
+                        // If no doctors with shifts, show all compatible doctors (user can still select to see available slots)
+                        const doctorsToShow = doctorsWithShifts.length > 0 ? doctorsWithShifts : compatibleDoctors;
+                        
+                        if (doctorsToShow.length === 0) {
+                          return (
+                            <SelectItem value="no-doctors" disabled>
+                              No compatible doctors available
+                            </SelectItem>
+                          );
+                        }
+                        
+                        return doctorsToShow.map((employee) => {
+                          const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
+                          const hasShifts = shiftsForDate.length > 0;
                           return (
                             <SelectItem 
                               key={employee.employeeId} 
                               value={employee.employeeCode}
                             >
                               {employee.fullName} ({employee.employeeCode})
+                              {!hasShifts && (
+                                <span className="text-xs text-muted-foreground ml-2">(No shifts on this date)</span>
+                              )}
                             </SelectItem>
                           );
-                        })}
+                        });
+                      })()}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -2110,9 +2255,7 @@ export default function CreateAppointmentModal({
       </DialogContent>
     </Dialog>
   );
-}
-
-function getStepTitle(step: Step): string {
+}function getStepTitle(step: Step): string {
   switch (step) {
     case 1:
       return 'Select Patient';
@@ -2128,3 +2271,5 @@ function getStepTitle(step: Step): string {
       return '';
   }
 }
+
+

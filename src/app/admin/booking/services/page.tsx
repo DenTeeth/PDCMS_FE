@@ -71,6 +71,7 @@ interface ServiceFormData {
   price: number;
   specializationId?: number;
   categoryId?: number;
+  displayOrder?: number; // Display order within category
   isActive: boolean;
 }
 
@@ -117,6 +118,7 @@ export default function BookingServicesPage() {
     price: 0,
     specializationId: undefined,
     categoryId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -129,6 +131,7 @@ export default function BookingServicesPage() {
     price: 0,
     specializationId: undefined,
     categoryId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -200,7 +203,13 @@ export default function BookingServicesPage() {
     }
   }, []);
 
-  // Load categories on mount and when tab changes
+  // Load categories on mount to ensure they're available for service forms
+  // Also reload when switching to categories tab
+  useEffect(() => {
+    loadCategories();
+  }, []); // Load once on mount
+
+  // Reload categories when switching to categories tab (to refresh data after CRUD operations)
   useEffect(() => {
     if (activeTab === 'categories') {
       loadCategories();
@@ -388,14 +397,30 @@ export default function BookingServicesPage() {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
+      // Validate duration must be multiple of 15
+      if (createForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
       if (createForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
+        return;
+      }
+      // Validate buffer must be multiple of 5
+      if (createForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
         return;
       }
       if (createForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a number (required by backend NOT NULL constraint)
+      // If no category, default to 1. If category exists, use calculated value or default to 1
+      const finalDisplayOrder = createForm.displayOrder && createForm.displayOrder > 0 
+        ? createForm.displayOrder 
+        : 1;
 
       const requestData: CreateServiceRequest = {
         serviceCode: createForm.serviceCode.trim(),
@@ -406,9 +431,12 @@ export default function BookingServicesPage() {
         price: createForm.price,
         specializationId: createForm.specializationId || undefined,
         categoryId: createForm.categoryId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: createForm.isActive,
       };
 
+      console.log('Creating service with data:', JSON.stringify(requestData, null, 2));
+      
       await ServiceService.createService(requestData);
 
       // Reset form
@@ -421,6 +449,7 @@ export default function BookingServicesPage() {
         price: 0,
         specializationId: undefined,
         categoryId: undefined,
+        displayOrder: 1, // Reset to default 1
         isActive: true,
       });
 
@@ -433,7 +462,15 @@ export default function BookingServicesPage() {
       toast.success('Tạo dịch vụ thành công!');
     } catch (error: any) {
       console.error('Error creating service:', error);
-      handleCreateError(error);
+      console.error('Error response:', error.response?.data);
+      
+      // Show more detailed error message
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.message || 'Lỗi server. Vui lòng kiểm tra lại dữ liệu hoặc liên hệ admin.';
+        toast.error(`Lỗi tạo dịch vụ: ${errorMessage}`);
+      } else {
+        handleCreateError(error);
+      }
     }
   };
 
@@ -470,18 +507,34 @@ export default function BookingServicesPage() {
         toast.error('Vui lòng nhập tên dịch vụ');
         return;
       }
-      if (updateForm.defaultDurationMinutes < 1) {
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes < 1) {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
-      if (updateForm.defaultBufferMinutes < 0) {
+      // Validate duration must be multiple of 15
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
         return;
       }
-      if (updateForm.price < 0) {
+      // Validate buffer must be multiple of 5
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
+        return;
+      }
+      if (updateForm.price !== undefined && updateForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a number (required by backend NOT NULL constraint)
+      // If no category, default to 1. If category exists, use calculated value or default to 1
+      const finalDisplayOrder = updateForm.displayOrder && updateForm.displayOrder > 0 
+        ? updateForm.displayOrder 
+        : (selectedService?.displayOrder || 1);
 
       const requestData: UpdateServiceRequest = {
         serviceName: updateForm.serviceName.trim(),
@@ -491,6 +544,7 @@ export default function BookingServicesPage() {
         price: updateForm.price,
         specializationId: updateForm.specializationId || undefined,
         categoryId: updateForm.categoryId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: updateForm.isActive,
       };
 
@@ -584,6 +638,7 @@ export default function BookingServicesPage() {
       price: service.price,
       specializationId: service.specializationId,
       categoryId: service.categoryId,
+      displayOrder: service.displayOrder,
       isActive: service.isActive,
     });
     setShowUpdateModal(true);
@@ -1134,10 +1189,17 @@ export default function BookingServicesPage() {
                   <Input
                     id="create-duration"
                     type="number"
-                    min="1"
+                    min="15"
+                    step="15"
                     value={createForm.defaultDurationMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setCreateForm({ ...createForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
                   <Label htmlFor="create-buffer">Buffer (minutes) *</Label>
@@ -1145,9 +1207,16 @@ export default function BookingServicesPage() {
                     id="create-buffer"
                     type="number"
                     min="0"
+                    step="5"
                     value={createForm.defaultBufferMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setCreateForm({ ...createForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
                   <Label htmlFor="create-price">Price (VND) *</Label>
@@ -1156,7 +1225,18 @@ export default function BookingServicesPage() {
                     type="number"
                     min="0"
                     value={createForm.price}
-                    onChange={(e) => setCreateForm({ ...createForm, price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setCreateForm({ ...createForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setCreateForm({ ...createForm, price: value });
+                    }}
                   />
                 </div>
               </div>
@@ -1193,10 +1273,25 @@ export default function BookingServicesPage() {
                     value={createForm.categoryId ? String(createForm.categoryId) : 'none-selected'}
                     onValueChange={(value) => {
                       if (value === 'none-selected') {
-                        setCreateForm({ ...createForm, categoryId: undefined });
+                        // If no category, set displayOrder to 1 (default)
+                        setCreateForm({ ...createForm, categoryId: undefined, displayOrder: 1 });
                       } else {
                         const catId = parseInt(value);
-                        setCreateForm({ ...createForm, categoryId: isNaN(catId) ? undefined : catId });
+                        if (!isNaN(catId)) {
+                          // Auto-calculate displayOrder based on existing services in this category
+                          const servicesInCategory = services.filter(s => s.categoryId === catId);
+                          const maxDisplayOrder = servicesInCategory.length > 0 
+                            ? Math.max(...servicesInCategory.map(s => s.displayOrder || 0))
+                            : 0;
+                          setCreateForm({ 
+                            ...createForm, 
+                            categoryId: catId,
+                            displayOrder: maxDisplayOrder + 1
+                          });
+                        } else {
+                          // If invalid category, set displayOrder to 1 (default)
+                          setCreateForm({ ...createForm, categoryId: undefined, displayOrder: 1 });
+                        }
                       }
                     }}
                   >
@@ -1212,6 +1307,27 @@ export default function BookingServicesPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label htmlFor="create-displayOrder">Display Order {createForm.categoryId ? '(within category)' : ''}</Label>
+                  <Input
+                    id="create-displayOrder"
+                    type="number"
+                    min="1"
+                    value={createForm.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setCreateForm({ ...createForm, displayOrder: value });
+                    }}
+                    readOnly
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {createForm.categoryId 
+                      ? `Tự động tăng dần theo category (hiện tại: ${createForm.displayOrder || 1})`
+                      : `Giá trị mặc định: ${createForm.displayOrder || 1} (bắt buộc bởi backend)`
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1278,10 +1394,17 @@ export default function BookingServicesPage() {
                   <Input
                     id="update-duration"
                     type="number"
-                    min="1"
-                    value={updateForm.defaultDurationMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    min="15"
+                    step="15"
+                    value={updateForm.defaultDurationMinutes !== undefined ? updateForm.defaultDurationMinutes : (selectedService?.defaultDurationMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setUpdateForm({ ...updateForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
                   <Label htmlFor="update-buffer">Buffer (minutes) *</Label>
@@ -1289,9 +1412,16 @@ export default function BookingServicesPage() {
                     id="update-buffer"
                     type="number"
                     min="0"
-                    value={updateForm.defaultBufferMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    step="5"
+                    value={updateForm.defaultBufferMinutes !== undefined ? updateForm.defaultBufferMinutes : (selectedService?.defaultBufferMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setUpdateForm({ ...updateForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
                   <Label htmlFor="update-price">Price (VND) *</Label>
@@ -1299,8 +1429,19 @@ export default function BookingServicesPage() {
                     id="update-price"
                     type="number"
                     min="0"
-                    value={updateForm.price}
-                    onChange={(e) => setUpdateForm({ ...updateForm, price: parseFloat(e.target.value) || 0 })}
+                    value={updateForm.price !== undefined ? updateForm.price : (selectedService?.price || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setUpdateForm({ ...updateForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setUpdateForm({ ...updateForm, price: value });
+                    }}
                   />
                 </div>
               </div>
@@ -1337,10 +1478,40 @@ export default function BookingServicesPage() {
                     value={updateForm.categoryId ? String(updateForm.categoryId) : 'none-selected'}
                     onValueChange={(value) => {
                       if (value === 'none-selected') {
-                        setUpdateForm({ ...updateForm, categoryId: undefined });
+                        // If no category, set displayOrder to 1 (default) or keep existing if available
+                        setUpdateForm({ 
+                          ...updateForm, 
+                          categoryId: undefined, 
+                          displayOrder: updateForm.displayOrder || selectedService?.displayOrder || 1 
+                        });
                       } else {
                         const catId = parseInt(value);
-                        setUpdateForm({ ...updateForm, categoryId: isNaN(catId) ? undefined : catId });
+                        if (!isNaN(catId)) {
+                          // Auto-calculate displayOrder based on existing services in this category
+                          // Exclude current service from calculation
+                          const servicesInCategory = services.filter(s => 
+                            s.categoryId === catId && s.serviceId !== selectedService?.serviceId
+                          );
+                          const maxDisplayOrder = servicesInCategory.length > 0 
+                            ? Math.max(...servicesInCategory.map(s => s.displayOrder || 0))
+                            : 0;
+                          // If changing category, set to max + 1, otherwise keep current displayOrder
+                          const newDisplayOrder = updateForm.categoryId !== catId 
+                            ? maxDisplayOrder + 1 
+                            : (updateForm.displayOrder || maxDisplayOrder + 1);
+                          setUpdateForm({ 
+                            ...updateForm, 
+                            categoryId: catId,
+                            displayOrder: newDisplayOrder
+                          });
+                        } else {
+                          // If invalid category, set displayOrder to existing or default to 1
+                          setUpdateForm({ 
+                            ...updateForm, 
+                            categoryId: undefined, 
+                            displayOrder: updateForm.displayOrder || selectedService?.displayOrder || 1 
+                          });
+                        }
                       }
                     }}
                   >
@@ -1356,6 +1527,27 @@ export default function BookingServicesPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label htmlFor="update-displayOrder">Display Order {updateForm.categoryId ? '(within category)' : ''}</Label>
+                  <Input
+                    id="update-displayOrder"
+                    type="number"
+                    min="1"
+                    value={updateForm.displayOrder || selectedService?.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setUpdateForm({ ...updateForm, displayOrder: value });
+                    }}
+                    readOnly
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {updateForm.categoryId 
+                      ? `Tự động tăng dần theo category (hiện tại: ${updateForm.displayOrder || selectedService?.displayOrder || 1})`
+                      : `Giá trị hiện tại: ${updateForm.displayOrder || selectedService?.displayOrder || 1} (bắt buộc bởi backend)`
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
