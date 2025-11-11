@@ -12,6 +12,7 @@ export interface Service {
   categoryId?: number;
   categoryCode?: string;
   categoryName?: string;
+  displayOrder?: number; // Display order within category
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -37,6 +38,7 @@ export interface CreateServiceRequest {
   price: number;
   specializationId?: number;
   categoryId?: number;
+  displayOrder?: number; // Display order within category
   isActive: boolean;
 }
 
@@ -48,6 +50,7 @@ export interface UpdateServiceRequest {
   price?: number;
   specializationId?: number;
   categoryId?: number;
+  displayOrder?: number; // Display order within category
   isActive?: boolean;
 }
 

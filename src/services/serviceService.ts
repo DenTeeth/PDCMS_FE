@@ -3,7 +3,7 @@ import { specializationService } from './specializationService';
 import { apiClient } from '@/lib/api';
 
 export class ServiceService {
-    private static readonly BASE_URL = '/booking/services';
+    private static readonly BASE_URL = 'booking/services';
     
     // Get paginated services with filters
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
@@ -83,13 +83,19 @@ export class ServiceService {
     // Create new service
     static async createService(data: CreateServiceRequest): Promise<Service> {
         console.log('ServiceService.createService - URL:', this.BASE_URL);
-        console.log('ServiceService.createService - Data:', data);
+        console.log('ServiceService.createService - Data:', JSON.stringify(data, null, 2));
 
         const axios = apiClient.getAxiosInstance();
-        const response = await axios.post<Service>(this.BASE_URL, data);
-        console.log('ServiceService.createService - Response:', response.data);
-
-        return response.data;
+        try {
+            const response = await axios.post<Service>(this.BASE_URL, data);
+            console.log('ServiceService.createService - Response:', response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error('ServiceService.createService - Error:', error);
+            console.error('ServiceService.createService - Error Response:', error.response?.data);
+            console.error('ServiceService.createService - Request Data:', data);
+            throw error;
+        }
     }
 
     // Update service
