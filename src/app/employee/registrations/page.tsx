@@ -77,6 +77,34 @@ const getDayName = (day: DayOfWeek): string => {
   return dayMap[day] || day;
 };
 
+// Get next date for a specific day of week from today
+const getNextDateForDayOfWeek = (dayOfWeek: DayOfWeek): string => {
+  const dayMap: Record<DayOfWeek, number> = {
+    'MONDAY': 1,
+    'TUESDAY': 2,
+    'WEDNESDAY': 3,
+    'THURSDAY': 4,
+    'FRIDAY': 5,
+    'SATURDAY': 6,
+    'SUNDAY': 0
+  };
+
+  const today = new Date();
+  const targetDay = dayMap[dayOfWeek];
+  const currentDay = today.getDay();
+
+  // Calculate days until next occurrence of target day
+  let daysUntilTarget = targetDay - currentDay;
+  if (daysUntilTarget <= 0) {
+    daysUntilTarget += 7; // Move to next week if today or past
+  }
+
+  const nextDate = new Date(today);
+  nextDate.setDate(today.getDate() + daysUntilTarget);
+
+  return nextDate.toISOString().split('T')[0];
+};
+
 // ==================== MAIN COMPONENT ====================
 export default function EmployeeRegistrationsPage() {
   const { user, hasPermission } = useAuth();
@@ -509,7 +537,17 @@ export default function EmployeeRegistrationsPage() {
 
     try {
       setPartTimeCreating(true);
-      await shiftRegistrationService.createRegistration(partTimeCreateFormData);
+
+      // If effectiveTo is not provided, use slot's effectiveTo
+      const requestData = { ...partTimeCreateFormData };
+      if (!requestData.effectiveTo && requestData.partTimeSlotId) {
+        const selectedSlot = availableSlots.find(s => s.slotId === requestData.partTimeSlotId);
+        if (selectedSlot?.effectiveTo) {
+          requestData.effectiveTo = selectedSlot.effectiveTo;
+        }
+      }
+
+      await shiftRegistrationService.createRegistration(requestData);
       toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.');
       setShowPartTimeCreateModal(false);
       setPartTimeCreateFormData({
@@ -1011,12 +1049,13 @@ export default function EmployeeRegistrationsPage() {
                                         <div
                                           key={idx}
                                           className={`flex-1 p-2 rounded text-center text-xs border ${month.status === 'FULL' ? 'bg-red-50 border-red-200' :
-                                              month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
-                                                'bg-green-50 border-green-200'
+                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
+                                              'bg-green-50 border-green-200'
                                             }`}
                                         >
                                           <p className="font-semibold text-gray-700">{month.monthName.split(' ')[0]}</p>
                                           <p className="font-bold text-gray-800">{month.totalDatesAvailable}</p>
+                                          <p className="text-gray-600 text-[10px]">còn {month.totalDatesAvailable} slot</p>
                                         </div>
                                       ))}
                                     </div>
@@ -1027,8 +1066,8 @@ export default function EmployeeRegistrationsPage() {
                                         <div
                                           key={idx}
                                           className={`flex items-center justify-between p-2 rounded text-xs border ${month.status === 'FULL' ? 'bg-red-50 border-red-200' :
-                                              month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
-                                                'bg-green-50 border-green-200'
+                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
+                                              'bg-green-50 border-green-200'
                                             }`}
                                         >
                                           <div>
@@ -1048,10 +1087,15 @@ export default function EmployeeRegistrationsPage() {
 
                               <Button
                                 onClick={() => {
+                                  // Calculate next date based on first day of week in slot
+                                  const daysOfWeek = slot.dayOfWeek ? slot.dayOfWeek.split(',').map(d => d.trim() as DayOfWeek) : [];
+                                  const firstDay = daysOfWeek[0];
+                                  const calculatedDate = firstDay ? getNextDateForDayOfWeek(firstDay) : '';
+
                                   setPartTimeCreateFormData({
                                     partTimeSlotId: slot.slotId,
-                                    dayOfWeek: slot.dayOfWeek ? slot.dayOfWeek.split(',').map(d => d.trim()) : [],
-                                    effectiveFrom: slot.effectiveFrom,
+                                    dayOfWeek: daysOfWeek,
+                                    effectiveFrom: calculatedDate,
                                     effectiveTo: undefined
                                   });
                                   setShowPartTimeCreateModal(true);
