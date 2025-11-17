@@ -1179,4 +1179,265 @@ export const warehouseService = {
   },
 };
 
+// ============================================
+// V3 ENHANCED SERVICES (MERGED FROM V3)
+// ============================================
+
+import {
+  ItemMaster,
+  ItemMasterFilter,
+  CreateItemMasterDto,
+  UpdateItemMasterDto,
+  ItemBatch,
+  BatchFilter,
+  StorageTransactionV3,
+  StorageTransactionFilter,
+  CreateImportTransactionDto,
+  CreateExportTransactionDto,
+  CreateAdjustmentDto,
+  SupplierItem,
+  InventoryStats,
+  StorageStats,
+  ExpiringBatch,
+  LossRecord,
+} from '@/types/warehouse';
+
+// Get axios instance
+const api = apiClient.getAxiosInstance();
+
+/**
+ * ITEM MASTER SERVICE (V3 - Vật Tư Master Data)
+ */
+export const itemMasterService = {
+  getSummary: async (filter?: ItemMasterFilter): Promise<ItemMaster[]> => {
+    const response = await api.get<ItemMaster[]>('/api/v1/warehouse/item-master/summary', {
+      params: filter,
+    });
+    return response.data;
+  },
+
+  getAll: async (filter?: ItemMasterFilter): Promise<PageResponse<ItemMaster>> => {
+    const response = await api.get<PageResponse<ItemMaster>>('/api/v1/warehouse/item-master', {
+      params: filter,
+    });
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<ItemMaster> => {
+    const response = await api.get<ItemMaster>(`/api/v1/warehouse/item-master/${id}`);
+    return response.data;
+  },
+
+  create: async (data: CreateItemMasterDto): Promise<ItemMaster> => {
+    const response = await api.post<ItemMaster>('/api/v1/warehouse/item-master', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: UpdateItemMasterDto): Promise<ItemMaster> => {
+    const response = await api.put<ItemMaster>(`/api/v1/warehouse/item-master/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/v1/warehouse/item-master/${id}`);
+  },
+};
+
+/**
+ * ITEM BATCH SERVICE (V3 - Quản lý Lô hàng)
+ */
+export const itemBatchService = {
+  getBatchesByItemId: async (itemId: number, filter?: BatchFilter): Promise<ItemBatch[]> => {
+    const response = await api.get<ItemBatch[]>(`/api/v1/warehouse/item-master/${itemId}/batches`, {
+      params: { ...filter, sort_by: 'expiry_date', sort_direction: 'ASC' },
+    });
+    return response.data;
+  },
+
+  getById: async (batchId: number): Promise<ItemBatch> => {
+    const response = await api.get<ItemBatch>(`/api/v1/warehouse/batches/${batchId}`);
+    return response.data;
+  },
+
+  getExpiringSoon: async (days: number = 30): Promise<ExpiringBatch[]> => {
+    const response = await api.get<ExpiringBatch[]>('/api/v1/warehouse/batches/expiring-soon', {
+      params: { days },
+    });
+    return response.data;
+  },
+};
+
+/**
+ * STORAGE TRANSACTION SERVICE (V3 - Xuất/Nhập Kho)
+ */
+export const storageTransactionService = {
+  getAll: async (filter?: StorageTransactionFilter): Promise<PageResponse<StorageTransactionV3>> => {
+    const response = await api.get<PageResponse<StorageTransactionV3>>('/api/v1/warehouse/transactions', {
+      params: filter,
+    });
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<StorageTransactionV3> => {
+    const response = await api.get<StorageTransactionV3>(`/api/v1/warehouse/transactions/${id}`);
+    return response.data;
+  },
+
+  createImport: async (data: CreateImportTransactionDto): Promise<StorageTransactionV3> => {
+    const response = await api.post<StorageTransactionV3>('/api/v1/warehouse/transactions/import', data);
+    return response.data;
+  },
+
+  createExport: async (data: CreateExportTransactionDto): Promise<StorageTransactionV3> => {
+    const response = await api.post<StorageTransactionV3>('/api/v1/warehouse/transactions/export', data);
+    return response.data;
+  },
+
+  createAdjustment: async (data: CreateAdjustmentDto): Promise<StorageTransactionV3> => {
+    const response = await api.post<StorageTransactionV3>('/api/v1/warehouse/transactions/adjustment', data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/v1/warehouse/transactions/${id}`);
+  },
+};
+
+/**
+ * SUPPLIER SERVICE (V3 Enhanced)
+ */
+export const supplierServiceV3 = {
+  getAll: async (params?: { search?: string; status?: string }): Promise<any[]> => {
+    const response = await api.get<any[]>('/api/v1/warehouse/suppliers', { params });
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<any> => {
+    const response = await api.get<any>(`/api/v1/warehouse/suppliers/${id}`);
+    return response.data;
+  },
+
+  getSuppliedItems: async (supplierId: number): Promise<SupplierItem[]> => {
+    const response = await api.get<SupplierItem[]>(`/api/v1/warehouse/suppliers/${supplierId}/items`);
+    return response.data;
+  },
+
+  create: async (data: any): Promise<any> => {
+    const response = await api.post<any>('/api/v1/warehouse/suppliers', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: any): Promise<any> => {
+    const response = await api.put<any>(`/api/v1/warehouse/suppliers/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/v1/warehouse/suppliers/${id}`);
+  },
+};
+
+/**
+ * CATEGORY SERVICE (V3)
+ */
+export const categoryService = {
+  getAll: async (): Promise<any[]> => {
+    const response = await api.get<any[]>('/api/v1/warehouse/categories');
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<any> => {
+    const response = await api.get<any>(`/api/v1/warehouse/categories/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any): Promise<any> => {
+    const response = await api.post<any>('/api/v1/warehouse/categories', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: any): Promise<any> => {
+    const response = await api.put<any>(`/api/v1/warehouse/categories/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/v1/warehouse/categories/${id}`);
+  },
+};
+
+/**
+ * ANALYTICS & REPORTS SERVICE (V3)
+ */
+export const warehouseAnalyticsService = {
+  getInventoryStats: async (): Promise<InventoryStats> => {
+    const response = await api.get<InventoryStats>('/api/v1/warehouse/analytics/inventory-stats');
+    return response.data;
+  },
+
+  getStorageStats: async (month?: string): Promise<StorageStats> => {
+    const response = await api.get<StorageStats>('/api/v1/warehouse/analytics/storage-stats', {
+      params: { month },
+    });
+    return response.data;
+  },
+
+  getLossRecords: async (month?: string): Promise<LossRecord[]> => {
+    const response = await api.get<LossRecord[]>('/api/v1/warehouse/analytics/loss-records', {
+      params: { month },
+    });
+    return response.data;
+  },
+
+  getExpiringBatches: async (days: number = 30): Promise<ExpiringBatch[]> => {
+    const response = await api.get<ExpiringBatch[]>('/api/v1/warehouse/analytics/expiring-batches', {
+      params: { days },
+    });
+    return response.data;
+  },
+};
+
+// ============================================
+// HELPER FUNCTIONS (V3)
+// ============================================
+
+export const calculateStockStatus = (
+  currentQty: number,
+  minLevel: number,
+  maxLevel: number
+): 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK' => {
+  if (currentQty === 0) return 'OUT_OF_STOCK';
+  if (currentQty < minLevel) return 'LOW_STOCK';
+  if (currentQty > maxLevel) return 'OVERSTOCK';
+  return 'NORMAL';
+};
+
+export const isExpiringSoon = (expiryDate: string, daysThreshold: number = 30): boolean => {
+  const expiry = new Date(expiryDate);
+  const today = new Date();
+  const diffTime = expiry.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= daysThreshold && diffDays >= 0;
+};
+
+export const sortByFEFO = (batches: ItemBatch[]): ItemBatch[] => {
+  return [...batches].sort((a, b) => {
+    if (!a.expiry_date) return 1;
+    if (!b.expiry_date) return -1;
+    return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
+  });
+};
+
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+};
+
+export const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
+
 export default warehouseService;

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import Select from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
 import {
   StorageTransaction,
@@ -138,8 +138,8 @@ export default function TransactionFormModal({
   };
 
   const supplierOptions = suppliers.map((sup) => ({
-    value: sup.id,
-    label: sup.name,
+    value: String(sup.supplierId),
+    label: sup.supplierName,
   }));
 
   const itemOptions = inventoryItems.map((item) => ({
@@ -168,13 +168,21 @@ export default function TransactionFormModal({
               <div>
                 <Label htmlFor="supplierId">Nhà cung cấp *</Label>
                 <Select
-                  label=""
                   value={formData.supplierId || ''}
-                  onChange={(value) => setFormData({ ...formData, supplierId: value })}
-                  options={supplierOptions}
-                  placeholder="Chọn nhà cung cấp"
+                  onValueChange={(value: string) => setFormData({ ...formData, supplierId: value })}
                   required
-                />
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn nhà cung cấp" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supplierOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -220,13 +228,21 @@ export default function TransactionFormModal({
                     <tr key={index} className="border-t">
                       <td className="py-2 px-3">
                         <Select
-                          label=""
                           value={item.itemId}
-                          onChange={(value) => handleItemChange(index, 'itemId', value)}
-                          options={itemOptions}
-                          placeholder="Chọn vật tư"
+                          onValueChange={(value: string) => handleItemChange(index, 'itemId', value)}
                           required
-                        />
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn vật tư" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {itemOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="py-2 px-3">
                         <Input
