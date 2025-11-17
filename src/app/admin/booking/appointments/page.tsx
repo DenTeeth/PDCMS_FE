@@ -243,35 +243,6 @@ export default function AdminAppointmentsPage() {
               canViewAll={true} // Admin always has VIEW_APPOINTMENT_ALL
             />
 
-            {/* Sort Controls */}
-            <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
-              <div className="min-w-[200px]">
-                <label className="text-sm font-medium">Sort By</label>
-                <select
-                  value={filters.sortBy || 'appointmentStartTime'}
-                  onChange={(e) => handleFiltersChange({ sortBy: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg mt-1"
-                >
-                  <option value="appointmentStartTime">Start Time</option>
-                  <option value="appointmentCode">Appointment Code</option>
-                  <option value="patientCode">Patient Code</option>
-                  <option value="employeeCode">Doctor Code</option>
-                  <option value="roomCode">Room Code</option>
-                </select>
-              </div>
-              <div className="min-w-[150px]">
-                <label className="text-sm font-medium">Direction</label>
-                <select
-                  value={filters.sortDirection || 'ASC'}
-                  onChange={(e) => handleFiltersChange({ sortDirection: e.target.value as 'ASC' | 'DESC' })}
-                  className="w-full px-4 py-2 border rounded-lg mt-1"
-                >
-                  <option value="ASC">Ascending</option>
-                  <option value="DESC">Descending</option>
-                </select>
-              </div>
-            </div>
-
             {/* List */}
             <AppointmentList
               appointments={appointments}

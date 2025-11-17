@@ -55,6 +55,7 @@ import {
   APPOINTMENT_REASON_CODE_LABELS,
 } from '@/types/appointment';
 import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
+import DelayAppointmentModal from '@/components/appointments/DelayAppointmentModal';
 import {
   ArrowLeft,
   Calendar,
@@ -89,19 +90,15 @@ export default function AdminAppointmentDetailPage() {
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | null>(null);
   const [statusUpdateReason, setStatusUpdateReason] = useState<AppointmentReasonCode | ''>('');
   const [statusUpdateNotes, setStatusUpdateNotes] = useState<string>('');
-  const [delayNewStartTime, setDelayNewStartTime] = useState<string>('');
-  const [delayReason, setDelayReason] = useState<AppointmentReasonCode | ''>('');
-  const [delayNotes, setDelayNotes] = useState<string>('');
   const [updating, setUpdating] = useState(false);
-  const [delaying, setDelaying] = useState(false);
 
   // Permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
   const canUpdateStatus = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || false;
   const canDelay = user?.permissions?.includes('DELAY_APPOINTMENT') || false;
   // Reschedule permission: can reschedule if has UPDATE_APPOINTMENT_STATUS or can create appointments
-  const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || 
-                         user?.permissions?.includes('CREATE_APPOINTMENT') || false;
+  const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') ||
+    user?.permissions?.includes('CREATE_APPOINTMENT') || false;
 
   // Request cancellation ref
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -133,10 +130,10 @@ export default function AdminAppointmentDetailPage() {
         setLoading(true);
         // Use P3.4 endpoint to get appointment detail
         const detail = await appointmentService.getAppointmentDetail(appointmentCode);
-        
+
         // Check if request was cancelled or component unmounted
         if (abortController.signal.aborted || !isMounted) return;
-        
+
         setAppointment(detail);
       } catch (error: any) {
         // Don't show error if request was cancelled
@@ -144,7 +141,7 @@ export default function AdminAppointmentDetailPage() {
           return;
         }
         console.error('Error loading appointment:', error);
-        
+
         // Check if 404 - appointment not found
         if (error.response?.status === 404) {
           toast.error('Appointment not found', {
@@ -248,7 +245,7 @@ export default function AdminAppointmentDetailPage() {
 
     try {
       setUpdating(true);
-      
+
       const request: UpdateAppointmentStatusRequest = {
         status: selectedStatus,
         reasonCode: selectedStatus === 'CANCELLED' ? (statusUpdateReason as AppointmentReasonCode) : undefined,
@@ -256,14 +253,14 @@ export default function AdminAppointmentDetailPage() {
       };
 
       const updated = await appointmentService.updateAppointmentStatus(appointment.appointmentCode, request);
-      
+
       toast.success('Status updated successfully', {
         description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
       });
-      
+
       // Update appointment with new data
       setAppointment(updated);
-      
+
       // Reset form
       setShowStatusModal(false);
       setSelectedStatus(null);
@@ -292,7 +289,7 @@ export default function AdminAppointmentDetailPage() {
     // Validate: New start time must be after original
     const originalStart = new Date(appointment.appointmentStartTime);
     const newStart = new Date(delayNewStartTime);
-    
+
     if (newStart <= originalStart) {
       toast.error('Invalid time', {
         description: 'New start time must be after the original start time',
@@ -302,7 +299,7 @@ export default function AdminAppointmentDetailPage() {
 
     try {
       setDelaying(true);
-      
+
       const request: DelayAppointmentRequest = {
         newStartTime: delayNewStartTime, // ISO 8601 format
         reasonCode: delayReason ? (delayReason as AppointmentReasonCode) : undefined,
@@ -310,14 +307,14 @@ export default function AdminAppointmentDetailPage() {
       };
 
       const updated = await appointmentService.delayAppointment(appointment.appointmentCode, request);
-      
+
       toast.success('Appointment delayed successfully', {
         description: `New start time: ${formatDateTime(delayNewStartTime)}`,
       });
-      
+
       // Update appointment with new data
       setAppointment(updated);
-      
+
       // Reset form
       setShowDelayModal(false);
       setDelayNewStartTime('');
@@ -646,8 +643,8 @@ export default function AdminAppointmentDetailPage() {
         </Tabs>
 
         {/* Status Update Modal */}
-        <Dialog 
-          open={showStatusModal} 
+        <Dialog
+          open={showStatusModal}
           onOpenChange={(open) => {
             setShowStatusModal(open);
             if (!open) {
@@ -745,9 +742,9 @@ export default function AdminAppointmentDetailPage() {
               <Button
                 onClick={handleStatusUpdate}
                 disabled={
-                  updating || 
-                  !selectedStatus || 
-                  selectedStatus === appointment.status || 
+                  updating ||
+                  !selectedStatus ||
+                  selectedStatus === appointment.status ||
                   (selectedStatus === 'CANCELLED' && !statusUpdateReason) ||
                   (selectedStatus && !getValidNextStatuses(appointment.status).includes(selectedStatus))
                 }
@@ -769,120 +766,17 @@ export default function AdminAppointmentDetailPage() {
         </Dialog>
 
         {/* Delay Appointment Modal */}
-        <Dialog 
-          open={showDelayModal} 
-          onOpenChange={(open) => {
-            setShowDelayModal(open);
-            if (!open) {
-              // Reset form when closing
-              setDelayNewStartTime('');
-              setDelayReason('');
-              setDelayNotes('');
+        <DelayAppointmentModal
+          open={showDelayModal}
+          appointment={appointment}
+          onClose={() => setShowDelayModal(false)}
+          onSuccess={() => {
+            // Reload appointment to get updated data
+            if (appointmentCode) {
+              loadAppointmentDetails();
             }
           }}
-        >
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Delay Appointment</DialogTitle>
-              <DialogDescription>
-                Move this appointment to a later time. Current start time: <span className="font-semibold">{formatDateTime(appointment.appointmentStartTime)}</span>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* New Start Time */}
-              <div>
-                <Label htmlFor="newStartTime">New Start Time <span className="text-red-500">*</span></Label>
-                <Input
-                  id="newStartTime"
-                  type="datetime-local"
-                  value={delayNewStartTime ? new Date(delayNewStartTime).toISOString().slice(0, 16) : ''}
-                  onChange={(e) => {
-                    // Convert datetime-local format to ISO 8601
-                    const localDateTime = e.target.value;
-                    if (localDateTime) {
-                      // Convert to ISO 8601 format
-                      const date = new Date(localDateTime);
-                      const isoString = date.toISOString();
-                      setDelayNewStartTime(isoString);
-                    } else {
-                      setDelayNewStartTime('');
-                    }
-                  }}
-                  className="mt-1"
-                  min={appointment ? new Date(appointment.appointmentStartTime).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Must be after the current start time
-                </p>
-              </div>
-
-              {/* Reason Code */}
-              <div>
-                <Label htmlFor="delayReason">Reason Code (Optional)</Label>
-                <Select
-                  value={delayReason || ''}
-                  onValueChange={(value) => setDelayReason(value as AppointmentReasonCode || '')}
-                >
-                  <SelectTrigger id="delayReason" className="mt-1">
-                    <SelectValue placeholder="Select reason (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
-                    {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
-                      <SelectItem key={code} value={code}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <Label htmlFor="delayNotes">Notes (Optional)</Label>
-                <Textarea
-                  id="delayNotes"
-                  value={delayNotes}
-                  onChange={(e) => setDelayNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDelayModal(false);
-                }}
-                disabled={delaying}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDelay}
-                disabled={
-                  delaying || 
-                  !delayNewStartTime ||
-                  (appointment && new Date(delayNewStartTime) <= new Date(appointment.appointmentStartTime))
-                }
-              >
-                {delaying ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Delaying...
-                  </>
-                ) : (
-                  <>
-                    <Clock className="h-4 w-4 mr-2" />
-                    Delay Appointment
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        />
 
         {/* Reschedule Appointment Modal */}
         <RescheduleAppointmentModal
@@ -894,13 +788,13 @@ export default function AdminAppointmentDetailPage() {
             toast.success('Appointment rescheduled successfully', {
               description: `Old appointment cancelled. New appointment code: ${newAppointment.appointmentCode}`,
             });
-            
+
             // Update appointment with new appointment details
             setAppointment(newAppointment);
-            
+
             // Close modal
             setShowRescheduleModal(false);
-            
+
             // Optionally reload appointment to get latest data
             // This will be handled by the useEffect that watches appointmentCode
             // But since the code changed, we need to navigate to the new appointment

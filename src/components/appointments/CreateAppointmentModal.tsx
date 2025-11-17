@@ -133,11 +133,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${
-          disabled
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
             ? 'bg-muted cursor-not-allowed opacity-50'
             : 'bg-background hover:border-primary'
-        }`}
+          }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -155,11 +154,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {hours.map((h) => (
                   <div
                     key={h}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      h === hour
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${h === hour
                         ? 'bg-primary text-primary-foreground font-medium'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     onClick={() => handleHourChange(h)}
                   >
                     {h}
@@ -177,11 +175,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {minutes.map((m) => (
                   <div
                     key={m}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      m === minute
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${m === minute
                         ? 'bg-primary text-primary-foreground font-medium'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     onClick={() => handleMinuteChange(m)}
                   >
                     {m}
@@ -261,17 +258,18 @@ export default function CreateAppointmentModal({
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
+  const [loadSlotsError, setLoadSlotsError] = useState<string>('');
 
   // Search states
   const [patientSearch, setPatientSearch] = useState<string>('');
   const [patientSearchResults, setPatientSearchResults] = useState<Patient[]>([]);
   const [searchingPatients, setSearchingPatients] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
-  
+
   // Employee shifts for selected date
   const [allEmployeeShifts, setAllEmployeeShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
   const [loadingShifts, setLoadingShifts] = useState(false);
-  
+
   // Participant shifts
   const [participantShifts, setParticipantShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
   const [loadingParticipantShifts, setLoadingParticipantShifts] = useState(false);
@@ -279,7 +277,7 @@ export default function CreateAppointmentModal({
   // Step 2: Date suggestions
   const [suggestedDates, setSuggestedDates] = useState<string[]>([]);
   const [loadingDateSuggestions, setLoadingDateSuggestions] = useState(false);
-  
+
   // Step 2: Month navigation for calendar
   const [selectedMonth, setSelectedMonth] = useState<Date>(startOfMonth(new Date()));
 
@@ -452,7 +450,7 @@ export default function CreateAppointmentModal({
     try {
       // Get all doctors with matching specializations
       const compatibleDoctors = getCompatibleDoctors();
-      
+
       if (compatibleDoctors.length === 0) {
         // No doctors available - suggest nearby dates
         generateDateSuggestions();
@@ -496,7 +494,7 @@ export default function CreateAppointmentModal({
   const generateDateSuggestions = () => {
     const today = startOfDay(new Date());
     const suggestions: string[] = [];
-    
+
     for (let i = 1; i <= 7; i++) {
       const date = addDays(today, i);
       // Use format from date-fns to get local date string (YYYY-MM-DD)
@@ -506,7 +504,7 @@ export default function CreateAppointmentModal({
         suggestions.push(dateStr);
       }
     }
-    
+
     setSuggestedDates(suggestions);
   };
 
@@ -536,12 +534,12 @@ export default function CreateAppointmentModal({
           today.setHours(0, 0, 0, 0);
           const endDate = new Date(today);
           endDate.setMonth(endDate.getMonth() + 3);
-          
+
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
           const startDateStr = format(today, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
-          
+
           const employeeId = parseInt(doctor.employeeId, 10);
           if (!isNaN(employeeId)) {
             try {
@@ -585,12 +583,12 @@ export default function CreateAppointmentModal({
           today.setHours(0, 0, 0, 0);
           const endDate = new Date(today);
           endDate.setMonth(endDate.getMonth() + 3);
-          
+
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
           const startDateStr = format(today, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
-          
+
           const employeeId = parseInt(doctor.employeeId, 10);
           if (!isNaN(employeeId)) {
             try {
@@ -633,7 +631,7 @@ export default function CreateAppointmentModal({
   const getDatesWithShifts = (): Set<string> => {
     const dates = new Set<string>();
     const today = startOfDay(new Date());
-    
+
     allEmployeeShifts.forEach((shifts) => {
       shifts.forEach((shift) => {
         const shiftDate = startOfDay(new Date(shift.workDate));
@@ -645,7 +643,7 @@ export default function CreateAppointmentModal({
         }
       });
     });
-    
+
     return dates;
   };
 
@@ -685,20 +683,20 @@ export default function CreateAppointmentModal({
     if (!appointmentDate) return false;
     const shifts = getShiftsForDoctorAndDate(doctorCode, appointmentDate);
     if (shifts.length === 0) return false;
-    
+
     const slotTime = new Date(slotStartTime);
     const slotHour = slotTime.getHours();
     const slotMinute = slotTime.getMinutes();
-    
+
     return shifts.some((shift) => {
       if (!shift.workShift) return false;
       const [startHour, startMinute] = shift.workShift.startTime.split(':').map(Number);
       const [endHour, endMinute] = shift.workShift.endTime.split(':').map(Number);
-      
+
       const shiftStart = startHour * 60 + startMinute;
       const shiftEnd = endHour * 60 + endMinute;
       const slotTimeMinutes = slotHour * 60 + slotMinute;
-      
+
       return slotTimeMinutes >= shiftStart && slotTimeMinutes < shiftEnd;
     });
   };
@@ -708,20 +706,20 @@ export default function CreateAppointmentModal({
     if (!appointmentDate) return false;
     const shifts = getParticipantShiftsForDate(participantCode, appointmentDate);
     if (shifts.length === 0) return false;
-    
+
     const slotTime = new Date(slotStartTime);
     const slotHour = slotTime.getHours();
     const slotMinute = slotTime.getMinutes();
-    
+
     return shifts.some((shift) => {
       if (!shift.workShift) return false;
       const [startHour, startMinute] = shift.workShift.startTime.split(':').map(Number);
       const [endHour, endMinute] = shift.workShift.endTime.split(':').map(Number);
-      
+
       const shiftStart = startHour * 60 + startMinute;
       const shiftEnd = endHour * 60 + endMinute;
       const slotTimeMinutes = slotHour * 60 + slotMinute;
-      
+
       return slotTimeMinutes >= shiftStart && slotTimeMinutes < shiftEnd;
     });
   };
@@ -729,10 +727,16 @@ export default function CreateAppointmentModal({
   // Load available slots using available-times API
   const loadAvailableSlots = async () => {
     if (!employeeCode || !appointmentDate || serviceCodes.length === 0) {
+      console.log('❌ Missing required fields for loadAvailableSlots:', {
+        employeeCode,
+        appointmentDate,
+        serviceCodes,
+      });
       return;
     }
 
     setLoadingAvailableSlots(true);
+    setLoadSlotsError(''); // Reset error message
     try {
       const request: AvailableTimesRequest = {
         date: appointmentDate,
@@ -741,20 +745,43 @@ export default function CreateAppointmentModal({
         participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
       };
 
+      console.log('🔍 Calling available-times API with request:', request);
       const response = await appointmentService.findAvailableTimes(request);
+      console.log('✅ Available-times API response:', response);
+
       setAvailableSlots(response.availableSlots || []);
-      
-      // Auto-select first available slot if no time selected yet
-      if (!appointmentStartTime && response.availableSlots.length > 0) {
+
+      // Capture error message from API response
+      if (response.message) {
+        setLoadSlotsError(response.message);
+      }
+
+      // IMPORTANT: Reset roomCode when reloading slots to prevent incompatibility
+      setRoomCode('');
+      setAppointmentStartTime('');
+
+      // Auto-select first available slot if slots are found
+      if (response.availableSlots.length > 0) {
         const firstSlot = response.availableSlots[0];
+        console.log('✅ Auto-selecting first slot:', firstSlot);
         setAppointmentStartTime(firstSlot.startTime);
         if (firstSlot.availableCompatibleRoomCodes.length > 0) {
           setRoomCode(firstSlot.availableCompatibleRoomCodes[0]);
         }
+      } else {
+        console.warn('⚠️ No available slots found in response');
       }
     } catch (error: any) {
-      console.error('Failed to load available slots:', error);
-      toast.error('Failed to load available slots: ' + (error.response?.data?.message || error.message));
+      console.error('❌ Failed to load available slots:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMsg = error.response?.data?.message || error.message;
+      setLoadSlotsError(errorMsg);
+      // User-friendly toast message
+      toast.error('Không thể tải thông tin lịch trống. Vui lòng thử lại sau.');
       setAvailableSlots([]);
     } finally {
       setLoadingAvailableSlots(false);
@@ -772,30 +799,30 @@ export default function CreateAppointmentModal({
       // Get all eligible participants (STANDARD specialization, not the selected doctor)
       const eligibleParticipants = employees.filter((e) => {
         if (e.employeeCode === employeeCode) return false;
-        
+
         const hasStandardSpecialization = e.specializations?.some(
-          (spec) => 
-            String(spec.specializationId) === '8' || 
+          (spec) =>
+            String(spec.specializationId) === '8' ||
             spec.specializationId === '8'
         );
-        
+
         return hasStandardSpecialization;
       });
 
       const shiftsMap = new Map<string, EmployeeShift[]>();
-      
+
       await Promise.all(
         eligibleParticipants.map(async (participant) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const endDate = new Date(today);
           endDate.setMonth(endDate.getMonth() + 3);
-          
+
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
           const startDateStr = format(today, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
-          
+
           const employeeId = parseInt(participant.employeeId, 10);
           if (!isNaN(employeeId)) {
             try {
@@ -813,7 +840,7 @@ export default function CreateAppointmentModal({
           }
         })
       );
-      
+
       setParticipantShifts(shiftsMap);
     } catch (error: any) {
       console.error('Failed to load participant shifts:', error);
@@ -837,7 +864,7 @@ export default function CreateAppointmentModal({
   // Step 3: Get services grouped by specialization
   const getServicesGroupedBySpecialization = useMemo(() => {
     const grouped = new Map<string | number, Service[]>();
-    
+
     services.forEach((service) => {
       const specId = service.specializationId || 'none';
       if (!grouped.has(specId)) {
@@ -854,9 +881,9 @@ export default function CreateAppointmentModal({
     if (selectedSpecializationFilter === 'all') {
       return services;
     }
-    
+
     const specId = parseInt(selectedSpecializationFilter, 10);
-    return services.filter((service) => 
+    return services.filter((service) =>
       service.specializationId === specId || (!service.specializationId && selectedSpecializationFilter === 'none')
     );
   };
@@ -887,7 +914,7 @@ export default function CreateAppointmentModal({
 
       // If services require specialization, doctor must have at least one matching
       if (requiredSpecializationIds.size > 0) {
-        const employeeSpecializationIds = employee.specializations.map((spec) => 
+        const employeeSpecializationIds = employee.specializations.map((spec) =>
           parseInt(String(spec.specializationId), 10)
         );
         return Array.from(requiredSpecializationIds).some((reqId) =>
@@ -917,6 +944,9 @@ export default function CreateAppointmentModal({
 
   const handleSelectTimeSlot = (slot: TimeSlot) => {
     setAppointmentStartTime(slot.startTime);
+    // IMPORTANT: Always reset roomCode when changing slot to prevent selecting incompatible room
+    setRoomCode('');
+    // Auto-select first compatible room if available
     if (slot.availableCompatibleRoomCodes.length > 0) {
       setRoomCode(slot.availableCompatibleRoomCodes[0]);
     }
@@ -975,8 +1005,20 @@ export default function CreateAppointmentModal({
 
   const handleCreate = async () => {
     if (!patientCode || !employeeCode || !roomCode || serviceCodes.length === 0 || !appointmentStartTime) {
-      toast.error('Please complete all required fields');
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
+    }
+
+    // CRITICAL VALIDATION: Ensure selected room is compatible with the time slot
+    if (selectedSlot) {
+      const compatibleRooms = selectedSlot.availableCompatibleRoomCodes || [];
+      if (compatibleRooms.length > 0 && !compatibleRooms.includes(roomCode)) {
+        toast.error(
+          `Phòng ${roomCode} không hỗ trợ dịch vụ đã chọn. Vui lòng chọn phòng khác từ danh sách.`,
+          { duration: 5000 }
+        );
+        return;
+      }
     }
 
     setLoading(true);
@@ -984,7 +1026,7 @@ export default function CreateAppointmentModal({
       // Ensure appointmentStartTime is in ISO_LOCAL_DATE_TIME format: YYYY-MM-DDTHH:mm:ss
       // Backend uses DateTimeFormatter.ISO_LOCAL_DATE_TIME which expects exactly this format
       let formattedStartTime = appointmentStartTime;
-      
+
       // Remove timezone if present (Z or +HH:mm)
       if (formattedStartTime.includes('Z')) {
         formattedStartTime = formattedStartTime.replace('Z', '');
@@ -992,12 +1034,12 @@ export default function CreateAppointmentModal({
       if (formattedStartTime.match(/[+-]\d{2}:\d{2}$/)) {
         formattedStartTime = formattedStartTime.replace(/[+-]\d{2}:\d{2}$/, '');
       }
-      
+
       // Remove milliseconds if present (.SSS)
       if (formattedStartTime.includes('.')) {
         formattedStartTime = formattedStartTime.split('.')[0];
       }
-      
+
       // Ensure format is YYYY-MM-DDTHH:mm:ss
       if (formattedStartTime && !formattedStartTime.includes(':')) {
         // If it's just a date, this shouldn't happen, but handle it
@@ -1022,12 +1064,52 @@ export default function CreateAppointmentModal({
 
       await appointmentService.createAppointment(request);
 
-      toast.success('Appointment created successfully!');
+      toast.success('✅ Đặt lịch hẹn thành công!');
       onSuccess();
       onClose();
     } catch (error: any) {
       console.error('Failed to create appointment:', error);
-      toast.error('Failed to create appointment: ' + (error.response?.data?.message || error.message));
+
+      // Enhanced error handling
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      const statusCode = error.response?.status;
+
+      if (statusCode === 400) {
+        // Bad Request - usually validation or business rule errors
+        if (errorMessage.includes('Room') && errorMessage.includes('does not support')) {
+          toast.error(
+            'Phòng đã chọn không hỗ trợ dịch vụ này. Vui lòng chọn phòng khác.',
+            { duration: 5000 }
+          );
+        } else if (errorMessage.toLowerCase().includes('không có phòng') || errorMessage.toLowerCase().includes('no room')) {
+          toast.error(
+            'Không có phòng phù hợp cho dịch vụ này. Vui lòng chọn ngày hoặc bác sĩ khác.',
+            { duration: 5000 }
+          );
+        } else {
+          toast.error(`Thông tin không hợp lệ: ${errorMessage}`, { duration: 5000 });
+        }
+      } else if (statusCode === 409) {
+        // Conflict - slot taken, employee not qualified, etc.
+        if (errorMessage.toLowerCase().includes('taken') || errorMessage.toLowerCase().includes('đã được đặt')) {
+          toast.error(
+            'Khung giờ này đã có người đặt. Vui lòng chọn khung giờ khác.',
+            { duration: 5000 }
+          );
+        } else if (errorMessage.toLowerCase().includes('not qualified') || errorMessage.toLowerCase().includes('không đủ năng lực')) {
+          toast.error(
+            'Bác sĩ không có chuyên môn phù hợp với dịch vụ này. Vui lòng chọn bác sĩ khác.',
+            { duration: 5000 }
+          );
+        } else {
+          toast.error(
+            `Xung đột lịch hẹn: ${errorMessage}`,
+            { duration: 5000 }
+          );
+        }
+      } else {
+        toast.error('Không thể tạo lịch hẹn. Vui lòng thử lại sau.', { duration: 5000 });
+      }
     } finally {
       setLoading(false);
     }
@@ -1063,28 +1145,25 @@ export default function CreateAppointmentModal({
                 <div className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                        step === currentStep
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step === currentStep
                           ? 'bg-primary text-primary-foreground scale-110'
                           : step < currentStep
-                          ? 'bg-primary/20 text-primary'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                            ? 'bg-primary/20 text-primary'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
                     >
                       {step < currentStep ? <CheckCircle className="h-5 w-5" /> : step}
                     </div>
-                    <div className={`text-xs mt-1 text-center max-w-[80px] ${
-                      step === currentStep ? 'font-semibold text-primary' : 'text-muted-foreground'
-                    }`}>
+                    <div className={`text-xs mt-1 text-center max-w-[80px] ${step === currentStep ? 'font-semibold text-primary' : 'text-muted-foreground'
+                      }`}>
                       {getStepTitle(step as Step)}
                     </div>
                   </div>
                   {/* Hide connecting line between step 1 and 2, show for other steps */}
                   {step < 5 && step !== 1 && (
                     <div
-                      className={`h-1 flex-1 mx-2 mt-[-20px] ${
-                        step < currentStep ? 'bg-primary' : 'bg-muted'
-                      }`}
+                      className={`h-1 flex-1 mx-2 mt-[-20px] ${step < currentStep ? 'bg-primary' : 'bg-muted'
+                        }`}
                     />
                   )}
                 </div>
@@ -1123,11 +1202,10 @@ export default function CreateAppointmentModal({
                       <div
                         key={patient.patientId}
                         onClick={() => handleSelectPatient(patient)}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                          patientCode === patient.patientCode
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${patientCode === patient.patientCode
                             ? 'border-primary bg-primary/5'
                             : 'hover:bg-muted'
-                        }`}
+                          }`}
                       >
                         <div className="font-medium">{patient.fullName}</div>
                         <div className="text-sm text-muted-foreground">
@@ -1235,9 +1313,9 @@ export default function CreateAppointmentModal({
                             const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
                             const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
                             const dates: React.ReactElement[] = [];
-                            
+
                             let currentDate = new Date(calendarStart);
-                            
+
                             while (currentDate <= calendarEnd) {
                               // Use format from date-fns to get local date string (YYYY-MM-DD)
                               // This avoids timezone issues with toISOString()
@@ -1246,10 +1324,10 @@ export default function CreateAppointmentModal({
                               const isSelected = appointmentDate === dateStr;
                               const isToday = isSameDay(currentDate, today);
                               const isCurrentMonth = isSameMonth(currentDate, selectedMonth);
-                              
+
                               // Check if this date has any doctors with shifts (for Step 2 - all doctors)
                               const hasDoctors = hasDoctorsWithShifts(dateStr);
-                              
+
                               dates.push(
                                 <button
                                   key={dateStr}
@@ -1263,17 +1341,16 @@ export default function CreateAppointmentModal({
                                     }
                                   }}
                                   disabled={isPast || !isCurrentMonth}
-                                  className={`p-2 rounded text-center transition-all ${
-                                    !isCurrentMonth
+                                  className={`p-2 rounded text-center transition-all ${!isCurrentMonth
                                       ? 'bg-muted/20 opacity-30 cursor-not-allowed'
                                       : isPast
-                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                                      : isSelected
-                                      ? 'bg-primary text-primary-foreground font-semibold scale-105'
-                                      : hasDoctors
-                                      ? 'bg-green-50 hover:bg-green-100 border border-green-200'
-                                      : 'bg-muted/50 hover:bg-muted border border-border'
-                                  } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
+                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground font-semibold scale-105'
+                                          : hasDoctors
+                                            ? 'bg-green-50 hover:bg-green-100 border border-green-200'
+                                            : 'bg-muted/50 hover:bg-muted border border-border'
+                                    } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
                                 >
                                   <div className="text-xs font-medium">{currentDate.getDate()}</div>
                                   {hasDoctors && !isPast && isCurrentMonth && (
@@ -1281,10 +1358,10 @@ export default function CreateAppointmentModal({
                                   )}
                                 </button>
                               );
-                              
+
                               currentDate = addDays(currentDate, 1);
                             }
-                            
+
                             return dates;
                           })()}
                         </div>
@@ -1526,9 +1603,8 @@ export default function CreateAppointmentModal({
                             />
                             <Label
                               htmlFor={`service-${service.serviceId}`}
-                              className={`text-sm font-normal cursor-pointer flex-1 ${
-                                isSelected ? 'font-semibold' : ''
-                              }`}
+                              className={`text-sm font-normal cursor-pointer flex-1 ${isSelected ? 'font-semibold' : ''
+                                }`}
                             >
                               {service.serviceName} ({service.serviceCode})
                               <span className="text-muted-foreground ml-2">
@@ -1589,8 +1665,8 @@ export default function CreateAppointmentModal({
                         })
                         .map((employee) => {
                           return (
-                            <SelectItem 
-                              key={employee.employeeId} 
+                            <SelectItem
+                              key={employee.employeeId}
                               value={employee.employeeCode}
                             >
                               {employee.fullName} ({employee.employeeCode})
@@ -1645,24 +1721,23 @@ export default function CreateAppointmentModal({
                                   : '';
                                 const isSelected = slot.startTime === appointmentStartTime;
                                 const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0 
+                                const areParticipantsAvailable = participantCodes.length > 0
                                   ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
                                   : true;
                                 const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-                                
+
                                 return (
                                   <button
                                     key={slot.startTime}
                                     type="button"
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${
-                                      !isAvailable
+                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
                                         ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
                                         : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                    }`}
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
                                     {slotTime}
@@ -1690,24 +1765,23 @@ export default function CreateAppointmentModal({
                                   : '';
                                 const isSelected = slot.startTime === appointmentStartTime;
                                 const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0 
+                                const areParticipantsAvailable = participantCodes.length > 0
                                   ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
                                   : true;
                                 const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-                                
+
                                 return (
                                   <button
                                     key={slot.startTime}
                                     type="button"
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${
-                                      !isAvailable
+                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
                                         ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
                                         : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                    }`}
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
                                     {slotTime}
@@ -1735,24 +1809,23 @@ export default function CreateAppointmentModal({
                                   : '';
                                 const isSelected = slot.startTime === appointmentStartTime;
                                 const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0 
+                                const areParticipantsAvailable = participantCodes.length > 0
                                   ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
                                   : true;
                                 const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-                                
+
                                 return (
                                   <button
                                     key={slot.startTime}
                                     type="button"
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${
-                                      !isAvailable
+                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
                                         ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
                                         : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                    }`}
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
                                     {slotTime}
@@ -1768,9 +1841,60 @@ export default function CreateAppointmentModal({
                       </div>
                     ) : (
                       <Card className="p-4 mt-1 bg-red-50 border-red-200">
-                        <div className="flex items-center gap-2 text-sm text-red-600">
-                          <AlertCircle className="h-4 w-4" />
-                          <span>No available slots found for the selected date and services</span>
+                        <div className="space-y-3">
+                          {/* Main error title */}
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-semibold text-red-700">
+                                Không tìm thấy khung giờ khả dụng
+                              </p>
+                              <p className="text-xs text-red-600 mt-1">
+                                Không có lịch trống cho bác sĩ này vào ngày {appointmentDate}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Friendly suggestions */}
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-xs font-medium text-blue-800 mb-2">
+                              💡 Gợi ý giải pháp:
+                            </p>
+                            <ul className="text-xs text-blue-700 space-y-1.5">
+                              <li className="flex items-start gap-2">
+                                <span className="mt-0.5">•</span>
+                                <span>Thử chọn <strong>ngày khác</strong> (bác sĩ có thể chưa có lịch làm việc ngày này)</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="mt-0.5">•</span>
+                                <span>Chọn <strong>bác sĩ khác</strong> cùng chuyên khoa</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="mt-0.5">•</span>
+                                <span>Liên hệ lễ tân để được tư vấn lịch hẹn phù hợp</span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          {/* Technical details - collapsible for advanced users */}
+                          {loadSlotsError && (
+                            <details className="text-xs">
+                              <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
+                                Chi tiết kỹ thuật (dành cho quản trị viên)
+                              </summary>
+                              <div className="mt-2 space-y-2">
+                                <div className="bg-gray-50 border border-gray-200 p-2 rounded">
+                                  <span className="font-semibold text-gray-700">Thông báo từ hệ thống:</span>
+                                  <p className="text-gray-600 mt-1">{loadSlotsError}</p>
+                                </div>
+                                <div className="bg-amber-50 border border-amber-200 p-2 rounded">
+                                  <p className="text-amber-800">
+                                    ⚙️ <strong>Yêu cầu cấu hình:</strong> Admin cần cấu hình ánh xạ phòng-dịch vụ tại trang quản lý phòng
+                                  </p>
+                                </div>
+                              </div>
+                            </details>
+                          )}
                         </div>
                       </Card>
                     )}
@@ -1788,14 +1912,21 @@ export default function CreateAppointmentModal({
                       <SelectContent>
                         {(() => {
                           const compatibleRoomCodes = selectedSlot?.availableCompatibleRoomCodes || [];
-                          
+
+                          // CRITICAL FIX: Only show compatible rooms, never show all rooms
+                          if (compatibleRoomCodes.length === 0) {
+                            return (
+                              <SelectItem value="" disabled>
+                                No compatible rooms available for this time slot
+                              </SelectItem>
+                            );
+                          }
+
                           return rooms
                             .filter((room) => {
                               if (!room.isActive) return false;
-                              if (selectedSlot && compatibleRoomCodes.length > 0) {
-                                return compatibleRoomCodes.includes(room.roomCode);
-                              }
-                              return true;
+                              // MUST be in compatible room list
+                              return compatibleRoomCodes.includes(room.roomCode);
                             })
                             .map((room) => (
                               <SelectItem key={room.roomId} value={room.roomCode}>
@@ -1826,28 +1957,28 @@ export default function CreateAppointmentModal({
                     {(() => {
                       const eligibleParticipants = employees.filter((e) => {
                         if (e.employeeCode === employeeCode) return false;
-                        
+
                         const hasStandardSpecialization = e.specializations?.some(
-                          (spec) => 
-                            String(spec.specializationId) === '8' || 
+                          (spec) =>
+                            String(spec.specializationId) === '8' ||
                             spec.specializationId === '8'
                         );
-                        
+
                         if (!hasStandardSpecialization) return false;
-                        
+
                         // Only show participants with shifts on the selected date
                         if (appointmentDate) {
                           const shiftsForDate = getParticipantShiftsForDate(e.employeeCode, appointmentDate);
                           return shiftsForDate.length > 0;
                         }
-                        
+
                         return true;
                       });
 
                       if (eligibleParticipants.length === 0) {
                         return (
                           <div className="text-center py-4 text-sm text-muted-foreground">
-                            {appointmentDate 
+                            {appointmentDate
                               ? 'No eligible participants with shifts found for the selected date. Only employees with STANDARD specialization (medical staff) who have shifts on this date can be selected.'
                               : 'No eligible participants found. Only employees with STANDARD specialization (medical staff) can be selected.'}
                           </div>
