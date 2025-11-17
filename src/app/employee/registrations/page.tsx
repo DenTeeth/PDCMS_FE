@@ -265,6 +265,8 @@ export default function EmployeeRegistrationsPage() {
 
       // Always fetch workShifts and workSlots to get shift names for registrations
       fetchWorkShifts();
+      // Always fetch workShifts and workSlots to get shift names for registrations
+      fetchWorkShifts();
       fetchWorkSlotsData();
 
       if (!currentEmployeeId) {
@@ -277,7 +279,7 @@ export default function EmployeeRegistrationsPage() {
       // Backend will get employeeId from token if not provided in params
       fetchFixedRegistrations();
     }
-  }, [activeTab, partTimeCurrentPage, currentEmployeeId, availableTabs, isPartTimeFlex, hasPermission]);
+  }, [activeTab, partTimeCurrentPage, currentEmployeeId, availableTabs, isPartTimeFlex, hasPermission, slotMonthFilter]);
 
   // Part-Time Registration Fetch
   const fetchPartTimeRegistrations = async () => {
@@ -394,8 +396,10 @@ export default function EmployeeRegistrationsPage() {
       console.log('🚀 [fetchAvailableSlots] Starting fetch...');
       setLoadingAvailableSlots(true);
 
-      console.log('📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots()...');
-      const slots = await shiftRegistrationService.getAvailableSlots();
+      // Pass month filter to API if selected
+      const monthParam = slotMonthFilter !== 'ALL' ? slotMonthFilter : undefined;
+      console.log(`📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots(${monthParam || 'no filter'})...`);
+      const slots = await shiftRegistrationService.getAvailableSlots(monthParam);
 
       console.log('✅ [fetchAvailableSlots] API Response received:', {
         rawData: slots,
@@ -688,13 +692,8 @@ export default function EmployeeRegistrationsPage() {
     // Hide FULL slots (no empty dates)
     slots = slots.filter(slot => slot.totalDatesEmpty > 0);
 
-    // Filter by month
-    if (slotMonthFilter !== 'ALL') {
-      slots = slots.filter(slot => {
-        const slotMonth = format(parseISO(slot.effectiveFrom), 'yyyy-MM');
-        return slotMonth === slotMonthFilter;
-      });
-    }
+    // NO NEED to filter by month - BE already filtered via API parameter
+    // Month filter is handled by passing ?month=YYYY-MM to API
 
     // Filter by day of week (multi-select)
     if (slotDayFilter.length > 0) {
@@ -722,7 +721,7 @@ export default function EmployeeRegistrationsPage() {
         return availB - availA;
       });
     }
-  }, [availableSlots, slotSortBy, slotMonthFilter, slotDayFilter]);
+  }, [availableSlots, slotSortBy, slotDayFilter]);
 
   // Sort registrations by status
   const sortedPartTimeRegistrations = useMemo(() => {
@@ -752,15 +751,35 @@ export default function EmployeeRegistrationsPage() {
     }
   }, [partTimeRegistrations, registrationSortBy, registrationStatusFilter]);
 
-  // Get available months from slots
+  // Get available months from slot details (months with actual availability)
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
-    availableSlots.forEach(slot => {
-      const month = format(parseISO(slot.effectiveFrom), 'yyyy-MM');
-      months.add(month);
+
+    // Get months from slotDetailsMap (actual availability from BE)
+    Object.values(slotDetailsMap).forEach(details => {
+      if (details?.availabilityByMonth) {
+        details.availabilityByMonth.forEach(month => {
+          if (month.totalDatesAvailable > 0) {
+            // Parse "November 2025" to "2025-11"
+            const [monthName, year] = month.monthName.split(' ');
+            const monthNumber = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
+            const monthStr = `${year}-${monthNumber.toString().padStart(2, '0')}`;
+            months.add(monthStr);
+          }
+        });
+      }
     });
+
+    // Fallback: If no slot details loaded yet, get from effectiveFrom
+    if (months.size === 0) {
+      availableSlots.forEach(slot => {
+        const month = format(parseISO(slot.effectiveFrom), 'yyyy-MM');
+        months.add(month);
+      });
+    }
+
     return Array.from(months).sort();
-  }, [availableSlots]);
+  }, [availableSlots, slotDetailsMap]);
 
   // Get month display name
   const getMonthDisplayName = (monthStr: string) => {

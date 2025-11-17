@@ -230,14 +230,17 @@ class ShiftRegistrationService {
   /**
    * Get available slots for employee registration
    * API: GET /registrations/part-time-flex/available-slots
+   * @param month Optional month filter in format YYYY-MM (e.g., "2025-12")
    * @returns List of available slots with remaining quota
    */
-  async getAvailableSlots(): Promise<AvailableSlot[]> {
-    console.log('🌐 [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/part-time-flex/available-slots...');
+  async getAvailableSlots(month?: string): Promise<AvailableSlot[]> {
+    const monthParam = month ? `?month=${month}` : '';
+    console.log(`🌐 [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/part-time-flex/available-slots${monthParam}...`);
     const axiosInstance = apiClient.getAxiosInstance();
 
     try {
-      const response = await axiosInstance.get('/registrations/part-time-flex/available-slots');
+      const params = month ? { month } : {};
+      const response = await axiosInstance.get('/registrations/part-time-flex/available-slots', { params });
 
       console.log('📥 [shiftRegistrationService.getAvailableSlots] API Response:', {
         status: response.status,
