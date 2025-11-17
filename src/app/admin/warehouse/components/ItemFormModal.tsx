@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Select from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { InventoryItem, CreateInventoryItemDto, UnitType, WarehouseType, Category } from '@/types/warehouse';
 
 interface ItemFormModalProps {
@@ -34,7 +34,7 @@ export default function ItemFormModal({
     name: '',
     categoryId: '',
     unitPrice: 0,
-    unit: UnitType.PIECE,
+    unit: UnitType.CAI,
     minStock: 10,
     warehouseType,
     expiryDate: '',
@@ -55,9 +55,9 @@ export default function ItemFormModal({
     } else {
       setFormData({
         name: '',
-        categoryId: categories.length > 0 ? categories[0].id : '',
+        categoryId: categories.length > 0 ? categories[0].id || '' : '',
         unitPrice: 0,
-        unit: UnitType.PIECE,
+        unit: UnitType.CAI,
         minStock: 10,
         warehouseType,
         expiryDate: '',
@@ -86,8 +86,8 @@ export default function ItemFormModal({
   };
 
   const categoryOptions = categories.map((cat) => ({
-    value: cat.id,
-    label: cat.name,
+    value: cat.id || '',
+    label: cat.name || '',
   }));
 
   return (
@@ -101,13 +101,21 @@ export default function ItemFormModal({
           <div>
             <Label htmlFor="categoryId">Danh mục *</Label>
             <Select
-              label=""
               value={formData.categoryId}
-              onChange={(value) => setFormData({ ...formData, categoryId: value })}
-              options={categoryOptions}
-              placeholder="Chọn danh mục"
+              onValueChange={(value: string) => setFormData({ ...formData, categoryId: value })}
               required
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn danh mục" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -139,12 +147,21 @@ export default function ItemFormModal({
             <div>
               <Label htmlFor="unit">Đơn vị tính *</Label>
               <Select
-                label=""
                 value={formData.unit}
-                onChange={(value) => setFormData({ ...formData, unit: value as UnitType })}
-                options={unitOptions}
+                onValueChange={(value: string) => setFormData({ ...formData, unit: value as UnitType })}
                 required
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn đơn vị" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unitOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
