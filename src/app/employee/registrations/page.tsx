@@ -988,23 +988,25 @@ export default function EmployeeRegistrationsPage() {
                   ) : availableSlots.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {sortedAvailableSlots.map((slot) => {
-                        // FIX: Use totalDatesEmpty instead of calculated value
-                        const availableCount = slot.totalDatesEmpty;
-                        const totalCount = slot.totalDatesAvailable;
-                        // Calculate availability percentage correctly
-                        const availabilityPercent = totalCount > 0
-                          ? (availableCount / totalCount) * 100
+                        const slotDetails = slotDetailsMap[slot.slotId];
+
+                        // Correct calculation: Empty days / Total days
+                        const totalDays = slot.totalDatesAvailable; // Total working days (FIXED)
+                        const emptyDays = slot.totalDatesEmpty; // Days with slots available (DECREASING)
+
+                        // Calculate percentage based on empty days
+                        const availablePercent = totalDays > 0
+                          ? (emptyDays / totalDays) * 100
                           : 0;
 
-                        // Color logic based on percentage of AVAILABLE slots
+                        // Color logic based on percentage of available days
                         const getColorClass = () => {
-                          if (availabilityPercent >= 50) return 'bg-green-500'; // 50%+ còn → Xanh
-                          if (availabilityPercent >= 20) return 'bg-yellow-500'; // 20-49% còn → Vàng
+                          if (availablePercent >= 50) return 'bg-green-500'; // 50%+ còn → Xanh
+                          if (availablePercent >= 20) return 'bg-yellow-500'; // 20-49% còn → Vàng
                           return 'bg-red-500'; // <20% còn → Đỏ
                         };
 
                         const isExpanded = expandedSlotId === slot.slotId;
-                        const slotDetails = slotDetailsMap[slot.slotId];
 
                         return (
                           <Card key={slot.slotId} className="hover:shadow-lg transition-shadow">
@@ -1031,74 +1033,115 @@ export default function EmployeeRegistrationsPage() {
                                 )}
                               </div>
 
-                              {/* Availability Bar */}
+                              {/* Availability Bar - Empty Days / Total Days */}
                               <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
                                   <span className="text-gray-600">Còn trống:</span>
-                                  <span className="font-bold text-purple-600">{availableCount}/{totalCount}</span>
+                                  <span className="font-bold text-purple-600">{emptyDays}/{totalDays}</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                   <div
-                                    className={`h-2 rounded-full transition-all ${getColorClass()}`}
-                                    style={{ width: `${availabilityPercent}%` }}
+                                    className={`h-2 rounded-full ${getColorClass()}`}
+                                    style={{ width: `${availablePercent}%` }}
                                   />
                                 </div>
                                 <div className="text-xs text-gray-500 text-center">
-                                  {availabilityPercent.toFixed(0)}% còn trống
+                                  {availablePercent.toFixed(0)}% còn trống
                                 </div>
                               </div>
 
-                              {/* Monthly Summary - Compact */}
+                              {/* Monthly Summary - Collapsible */}
                               {slotDetails?.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
                                 <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium text-gray-600">Tình trạng tháng</span>
-                                    <button
-                                      onClick={() => setExpandedSlotId(isExpanded ? null : slot.slotId)}
-                                      className="text-purple-600 hover:text-purple-700"
-                                    >
-                                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                    </button>
-                                  </div>
+                                  {/* Toggle Button */}
+                                  <button
+                                    onClick={() => setExpandedSlotId(isExpanded ? null : slot.slotId)}
+                                    className="w-full flex items-center justify-between p-2 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-xs font-medium text-purple-600"
+                                  >
+                                    <span>Tình trạng tháng</span>
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-4 h-4" />
+                                    ) : (
+                                      <ChevronDown className="w-4 h-4" />
+                                    )}
+                                  </button>
 
-                                  {!isExpanded ? (
-                                    // Collapsed: Show first 2 months inline
-                                    <div className="flex gap-2">
-                                      {slotDetails.availabilityByMonth.slice(0, 2).map((month, idx) => (
-                                        <div
-                                          key={idx}
-                                          className={`flex-1 p-2 rounded text-center text-xs border ${month.status === 'FULL' ? 'bg-red-50 border-red-200' :
-                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
-                                              'bg-green-50 border-green-200'
-                                            }`}
-                                        >
-                                          <p className="font-semibold text-gray-700">{month.monthName.split(' ')[0]}</p>
-                                          <p className="font-bold text-gray-800">{month.totalDatesAvailable}</p>
-                                          <p className="text-gray-600 text-[10px]">còn {month.totalDatesAvailable} slot</p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    // Expanded: Show all months
-                                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                      {slotDetails.availabilityByMonth.map((month, idx) => (
-                                        <div
-                                          key={idx}
-                                          className={`flex items-center justify-between p-2 rounded text-xs border ${month.status === 'FULL' ? 'bg-red-50 border-red-200' :
-                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
-                                              'bg-green-50 border-green-200'
-                                            }`}
-                                        >
-                                          <div>
-                                            <p className="font-semibold text-gray-700">{month.monthName}</p>
-                                            <p className="text-gray-600">{month.totalWorkingDays} ngày làm</p>
-                                          </div>
-                                          <div className="text-right">
-                                            <p className="font-bold">{month.totalDatesAvailable}</p>
-                                            <p className="text-gray-600">còn trống</p>
-                                          </div>
-                                        </div>
-                                      ))}
+                                  {/* Expanded Content */}
+                                  {isExpanded && (
+                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                      {slotDetails.availabilityByMonth.map((month, idx) => {
+                                        const percentAvailable = (month.totalDatesAvailable / month.totalWorkingDays) * 100;
+                                        const percentPartial = (month.totalDatesPartial / month.totalWorkingDays) * 100;
+                                        const percentFull = (month.totalDatesFull / month.totalWorkingDays) * 100;
+
+                                        return (
+                                          <button
+                                            key={idx}
+                                            onClick={() => {
+                                              toast.info(
+                                                `${month.monthName}: ${month.totalDatesAvailable}/${month.totalWorkingDays} ngày còn trống`,
+                                                {
+                                                  description: 'Tính năng xem chi tiết từng ngày đang được phát triển'
+                                                }
+                                              );
+                                            }}
+                                            className="w-full text-left p-2.5 rounded-lg border border-gray-200 hover:border-purple-300 hover:shadow-sm transition-all"
+                                          >
+                                            <div className="flex items-center justify-between mb-1.5">
+                                              <span className="text-xs font-semibold text-gray-700">
+                                                {month.monthName}
+                                              </span>
+                                              <span className="text-xs font-bold text-purple-600">
+                                                {month.totalDatesAvailable}/{month.totalWorkingDays}
+                                              </span>
+                                            </div>
+
+                                            {/* Progress Bar */}
+                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                                              {percentAvailable > 0 && (
+                                                <div
+                                                  className="bg-green-500 h-full"
+                                                  style={{ width: `${percentAvailable}%` }}
+                                                  title={`${month.totalDatesAvailable} ngày còn trống`}
+                                                />
+                                              )}
+                                              {percentPartial > 0 && (
+                                                <div
+                                                  className="bg-yellow-500 h-full"
+                                                  style={{ width: `${percentPartial}%` }}
+                                                  title={`${month.totalDatesPartial} ngày gần đầy`}
+                                                />
+                                              )}
+                                              {percentFull > 0 && (
+                                                <div
+                                                  className="bg-red-500 h-full"
+                                                  style={{ width: `${percentFull}%` }}
+                                                  title={`${month.totalDatesFull} ngày đã đầy`}
+                                                />
+                                              )}
+                                            </div>
+
+                                            <div className="flex items-center gap-3 mt-1.5 text-[10px]">
+                                              <div className="flex items-center gap-1">
+                                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                <span className="text-gray-600">{month.totalDatesAvailable} trống</span>
+                                              </div>
+                                              {month.totalDatesPartial > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                                  <span className="text-gray-600">{month.totalDatesPartial} gần đầy</span>
+                                                </div>
+                                              )}
+                                              {month.totalDatesFull > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                                  <span className="text-gray-600">{month.totalDatesFull} đầy</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </button>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>
@@ -1119,10 +1162,10 @@ export default function EmployeeRegistrationsPage() {
                                   });
                                   setShowPartTimeCreateModal(true);
                                 }}
-                                disabled={availableCount === 0}
+                                disabled={emptyDays === 0}
                                 className="w-full"
                               >
-                                {availableCount > 0 ? '+ Đăng Ký' : 'Đã Đầy'}
+                                {emptyDays > 0 ? '+ Đăng Ký' : 'Đã Đầy'}
                               </Button>
                             </CardContent>
                           </Card>
