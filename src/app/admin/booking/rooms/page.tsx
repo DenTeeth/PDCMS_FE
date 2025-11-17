@@ -35,10 +35,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { RoomService } from '@/services/roomService';
-import { 
-  Room, 
-  RoomListResponse, 
-  RoomType, 
+import {
+  Room,
+  RoomListResponse,
+  RoomType,
   RoomFormData,
   ROOM_TYPE_LABELS,
   ROOM_STATUS_LABELS
@@ -48,7 +48,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { toast } from 'sonner';
-import { Eye, Plus, Search, ChevronLeft, ChevronRight, Edit, Trash2, X } from 'lucide-react';
+import { Eye, Plus, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, X, Filter } from 'lucide-react';
 
 export default function BookingRoomsPage() {
   const { user } = useAuth();
@@ -57,15 +57,15 @@ export default function BookingRoomsPage() {
   // State
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   // Filter & Search states
   const [roomTypeFilter, setRoomTypeFilter] = useState<string>('all');
-  const [isActiveFilter, setIsActiveFilter] = useState<string>('all');
-  
+  const [isActiveFilter, setIsActiveFilter] = useState<string>('active');
+
   // Sort states
   const [sortBy, setSortBy] = useState<string>('roomId');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(10);
@@ -105,16 +105,20 @@ export default function BookingRoomsPage() {
   // searchKeyword: what triggers search (set on Enter or debounced)
   const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  
+
   // Debounced search - longer delay (1000ms) or trigger on Enter
   const debouncedSearch = useDebounce(searchKeyword, 1000);
+
+  // Sort dropdown state
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load all rooms to extract unique room types (only once on mount, with ref to prevent re-calls)
   const [allRoomsForTypes, setAllRoomsForTypes] = useState<Room[]>([]);
   const hasLoadedTypes = useRef(false);
   useEffect(() => {
     if (!canView || hasLoadedTypes.current) return;
-    
+
     const loadAllRoomsForTypes = async () => {
       try {
         hasLoadedTypes.current = true;
@@ -126,7 +130,7 @@ export default function BookingRoomsPage() {
         hasLoadedTypes.current = false; // Reset on error to allow retry
       }
     };
-    
+
     loadAllRoomsForTypes();
   }, [canView]);
 
@@ -173,7 +177,7 @@ export default function BookingRoomsPage() {
 
   const loadRooms = useCallback(async () => {
     if (!canView) return;
-    
+
     // Cancel previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -240,7 +244,7 @@ export default function BookingRoomsPage() {
   // Load rooms khi filters hoặc page thay đổi
   useEffect(() => {
     loadRooms();
-    
+
     // Cleanup: Cancel request on unmount or when dependencies change
     return () => {
       if (abortControllerRef.current) {
@@ -254,12 +258,35 @@ export default function BookingRoomsPage() {
     setCurrentPage(0);
   }, [debouncedSearch, roomTypeFilter, isActiveFilter, sortBy, sortDirection]);
 
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Helper function to get sort label
+  const getSortLabel = () => {
+    const labels: Record<string, string> = {
+      roomId: 'Mặc định',
+      roomCode: 'Mã phòng',
+      roomName: 'Tên phòng',
+      createdAt: 'Ngày tạo',
+    };
+    return labels[sortBy] || 'Sắp xếp';
+  };
+
   // Clear all filters function
   const handleClearFilters = () => {
     setSearchInput('');
     setSearchKeyword('');
     setRoomTypeFilter('all');
-    setIsActiveFilter('all');
+    setIsActiveFilter('active');
     setSortBy('roomId');
     setSortDirection('ASC');
     setCurrentPage(0);
@@ -504,7 +531,7 @@ export default function BookingRoomsPage() {
       key: 'actions',
       header: 'Actions',
       accessor: (room) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -512,9 +539,10 @@ export default function BookingRoomsPage() {
               e.stopPropagation();
               handleRowClick(room);
             }}
+            className="hover:bg-gray-100"
+            title="Xem chi tiết"
           >
-            <Eye className="h-4 w-4 mr-1" />
-            View
+            <Eye className="h-4 w-4" />
           </Button>
           {canUpdate && (
             <Button
@@ -524,9 +552,10 @@ export default function BookingRoomsPage() {
                 e.stopPropagation();
                 handleEditClick(room);
               }}
+              className="hover:bg-gray-100"
+              title="Chỉnh sửa"
             >
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
+              <Edit className="h-4 w-4" />
             </Button>
           )}
           {canDelete && room.isActive && (
@@ -537,15 +566,15 @@ export default function BookingRoomsPage() {
                 e.stopPropagation();
                 handleDeleteClick(room);
               }}
-              className="text-red-600 hover:text-red-700"
+              className="hover:bg-red-50 text-red-600"
+              title="Vô hiệu hóa"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Deactivate
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>
       ),
-      className: 'w-[200px]',
+      className: 'w-[120px]',
     },
   ], [handleRowClick, canUpdate, canDelete]);
 
@@ -579,146 +608,187 @@ export default function BookingRoomsPage() {
         </div>
 
         {/* Filter và Sort Controls */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-end gap-4 p-4 border rounded-lg bg-card">
-            {/* Search */}
-            <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Bar */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-[50%] -translate-y-[50%] h-4 w-4 text-gray-400" />
                 <Input
-                  id="search"
-                  type="text"
-                  placeholder="Search by room code, name... (Press Enter to search)"
+                  placeholder="Tìm kiếm theo tên ca, ID, thời gian..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       setSearchKeyword(searchInput);
-                      setCurrentPage(0); // Reset to first page
+                      setCurrentPage(0);
                     }
                   }}
-                  className="pl-10"
+                  className="pl-10 border-gray-300 focus:border-[#8b5fbf] focus:ring-[#8b5fbf] text-sm"
                 />
               </div>
             </div>
 
-            {/* Room Type Filter - Dynamic from data */}
-            <div className="min-w-[150px]">
-              <Label htmlFor="roomType">Room Type</Label>
-              <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
-                <SelectTrigger id="roomType" className="mt-1">
-                  <SelectValue placeholder="Tất cả loại phòng" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả loại phòng</SelectItem>
-                  {availableRoomTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {getRoomTypeLabel(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Sort Dropdown + Direction */}
+            <div className="flex items-center gap-2">
+              {/* Dropdown chọn field */}
+              <div className="relative" ref={sortDropdownRef}>
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap"
+                >
+                  <Filter className="h-4 w-4 flex-shrink-0" />
+                  <span>{getSortLabel()}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-            {/* Status Filter */}
-            <div className="min-w-[120px]">
-              <Label htmlFor="status">Status</Label>
-              <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-                <SelectTrigger id="status" className="mt-1">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {isSortDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                    <div className="p-2">
+                      {[
+                        { value: 'roomId', label: 'Mặc định' },
+                        { value: 'roomCode', label: 'Mã phòng' },
+                        { value: 'roomName', label: 'Tên phòng' },
+                        { value: 'createdAt', label: 'Ngày tạo' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
+                              ? 'bg-[#8b5fbf] text-white'
+                              : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {/* Sort By */}
-            <div className="min-w-[150px]">
-              <Label htmlFor="sortBy">Sort By</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger id="sortBy" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="roomId">Room ID</SelectItem>
-                  <SelectItem value="roomCode">Room Code</SelectItem>
-                  <SelectItem value="roomName">Room Name</SelectItem>
-                  <SelectItem value="createdAt">Created Date</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Sort Direction */}
-            <div className="min-w-[120px]">
-              <Label htmlFor="sortDir">Direction</Label>
-              <Select 
-                value={sortDirection} 
-                onValueChange={(value: 'ASC' | 'DESC') => setSortDirection(value)}
-              >
-                <SelectTrigger id="sortDir" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ASC">Ascending</SelectItem>
-                  <SelectItem value="DESC">Descending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Clear Filters Button */}
-            <div className="min-w-[120px]">
-              <Label className="opacity-0">Clear</Label>
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                className="mt-1 w-full"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear Filters
-              </Button>
+              {/* Direction buttons */}
+              <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
+                <button
+                  onClick={() => setSortDirection('ASC')}
+                  className={`p-1.5 rounded transition-all ${sortDirection === 'ASC'
+                      ? 'bg-[#8b5fbf] text-white shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    }`}
+                  title="Tăng dần"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setSortDirection('DESC')}
+                  className={`p-1.5 rounded transition-all ${sortDirection === 'DESC'
+                      ? 'bg-[#8b5fbf] text-white shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    }`}
+                  title="Giảm dần"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Table */}
-          <OptimizedTable
-            data={rooms}
-            columns={columns}
-            loading={loading}
-            onRowClick={handleRowClick}
-            emptyMessage="No rooms found"
-          />
-
-          {/* Pagination - Below table, centered */}
-          {totalPages > 0 && (
-            <div className="flex items-center justify-center gap-2 py-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 0 || loading}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <div className="text-sm font-medium min-w-[100px] text-center">
-                Page {currentPage + 1} of {totalPages}
+          {/* Status Filter Tabs */}
+          <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3">
+            <button
+              onClick={() => setIsActiveFilter('active')}
+              className={
+                isActiveFilter === 'active'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+            >
+              <div className={
+                isActiveFilter === 'active'
+                  ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+              }>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage >= totalPages - 1 || loading}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+              <span className="hidden sm:inline">Hoạt động</span>
+              <Badge className={
+                isActiveFilter === 'active'
+                  ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
+                  : 'text-xs bg-green-100 text-green-800'
+              }>
+                {rooms.filter(r => r.isActive).length}
+              </Badge>
+            </button>
+
+            <button
+              onClick={() => setIsActiveFilter('inactive')}
+              className={
+                isActiveFilter === 'inactive'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
+                  : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+            >
+              <div className={
+                isActiveFilter === 'inactive'
+                  ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+              }>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="hidden sm:inline">Không hoạt động</span>
+              <Badge className={
+                isActiveFilter === 'inactive'
+                  ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
+                  : 'text-xs bg-gray-200 text-gray-700'
+              }>
+                {rooms.filter(r => !r.isActive).length}
+              </Badge>
+            </button>
+          </div>
         </div>
+
+        {/* Table */}
+        <OptimizedTable
+          data={rooms}
+          columns={columns}
+          loading={loading}
+          onRowClick={handleRowClick}
+          emptyMessage="No rooms found"
+        />
+
+        {/* Pagination - Below table, centered */}
+        {totalPages > 0 && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 0 || loading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <div className="text-sm font-medium min-w-[100px] text-center">
+              Page {currentPage + 1} of {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage >= totalPages - 1 || loading}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Create Modal */}
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -792,7 +862,7 @@ export default function BookingRoomsPage() {
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateRoom}
                 disabled={!createForm.roomCode.trim() || !createForm.roomName.trim() || !createForm.roomType}
               >
@@ -874,7 +944,7 @@ export default function BookingRoomsPage() {
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleUpdateRoom}
                 disabled={!updateForm.roomCode.trim() || !updateForm.roomName.trim() || !updateForm.roomType}
               >
@@ -914,7 +984,7 @@ export default function BookingRoomsPage() {
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={handleDeleteRoom}
               >
@@ -946,19 +1016,19 @@ export default function BookingRoomsPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Room Type</label>
-                    <p className="text-base">
+                    <div className="text-base">
                       <Badge variant="outline">
                         {ROOM_TYPE_LABELS[selectedRoom.roomType] || selectedRoom.roomType}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <p className="text-base">
+                    <div className="text-base">
                       <Badge variant={selectedRoom.isActive ? 'default' : 'secondary'}>
                         {selectedRoom.isActive ? 'Active' : 'Inactive'}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                   {selectedRoom.createdAt && (
                     <div>

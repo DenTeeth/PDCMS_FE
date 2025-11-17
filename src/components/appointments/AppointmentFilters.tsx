@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AppointmentFilterCriteria, AppointmentStatus, DatePreset } from '@/types/appointment';
-import { Search, X } from 'lucide-react';
+import { Search, X, Filter, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface AppointmentFiltersProps {
   filters: Partial<AppointmentFilterCriteria>;
@@ -38,9 +38,13 @@ export default function AppointmentFilters({
   const [searchInput, setSearchInput] = useState(
     filters.searchCode || filters.patientName || filters.patientPhone || filters.employeeCode || filters.roomCode || filters.serviceCode || ''
   );
-  
+
   // Debounced search - triggers filter change after 1000ms or on Enter
   const debouncedSearch = useDebounce(searchInput, 1000);
+
+  // Sort dropdown state
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync search input with filters (only when filters change from outside, not from our own changes)
   useEffect(() => {
@@ -54,40 +58,40 @@ export default function AppointmentFilters({
   const prevDebouncedSearchRef = useRef<string>('');
   const filtersRef = useRef(filters);
   const onFiltersChangeRef = useRef(onFiltersChange);
-  
+
   // Update refs when values change
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
-  
+
   useEffect(() => {
     onFiltersChangeRef.current = onFiltersChange;
   }, [onFiltersChange]);
-  
+
   // Handle debounced search - only trigger when debounced value actually changes
   useEffect(() => {
     const searchValue = debouncedSearch.trim();
-    
+
     // Skip if debounced value hasn't changed
     if (prevDebouncedSearchRef.current === searchValue) {
       return;
     }
-    
+
     // Update ref
     prevDebouncedSearchRef.current = searchValue;
-    
+
     const currentSearchCode = filtersRef.current.searchCode || '';
-    
+
     // Skip if search value matches current filter (avoid unnecessary updates)
     if (searchValue && currentSearchCode === searchValue) {
       return;
     }
-    
+
     // Skip if clearing and filters are already clear
     if (!searchValue && !currentSearchCode) {
       return;
     }
-    
+
     // Only update if search value changed
     if (searchValue) {
       if (currentSearchCode !== searchValue) {
@@ -109,6 +113,28 @@ export default function AppointmentFilters({
       }
     }
   }, [debouncedSearch]); // Only depend on debouncedSearch
+
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Helper function to get sort label
+  const getSortLabel = () => {
+    const labels: Record<string, string> = {
+      appointmentStartTime: 'Thời gian',
+      appointmentCode: 'Mã lịch hẹn',
+      patientCode: 'Mã bệnh nhân',
+    };
+    return labels[filters.sortBy || 'appointmentStartTime'] || 'Sắp xếp';
+  };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -144,119 +170,193 @@ export default function AppointmentFilters({
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-4 p-4 border rounded-lg bg-card">
-      {/* NEW: Combined Search - Search by code or name for patient/doctor/employee/room/service */}
-      <div className="flex-1 min-w-[200px]">
-        <Label htmlFor="search">Search</Label>
-        <div className="relative mt-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            id="search"
-            type="text"
-            placeholder="Search by code (patient/doctor/room/service)... (Press Enter)"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            className="pl-10"
-          />
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search Bar */}
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Tìm kiếm theo tên ca, ID, thời gian..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="pl-10 border-gray-300 focus:border-[#8b5fbf] focus:ring-[#8b5fbf] text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Sort Dropdown + Direction */}
+        <div className="flex items-center gap-2">
+          {/* Dropdown chọn field */}
+          <div className="relative" ref={sortDropdownRef}>
+            <button
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap"
+            >
+              <Filter className="h-4 w-4 flex-shrink-0" />
+              <span>{getSortLabel()}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isSortDropdownOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                <div className="p-2">
+                  {[
+                    { value: 'appointmentStartTime', label: 'Thời gian' },
+                    { value: 'appointmentCode', label: 'Mã lịch hẹn' },
+                    { value: 'patientCode', label: 'Mã bệnh nhân' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        onFiltersChange({ ...filters, sortBy: option.value });
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${(filters.sortBy || 'appointmentStartTime') === option.value
+                          ? 'bg-[#8b5fbf] text-white'
+                          : 'text-gray-700 hover:bg-[#f3f0ff]'
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Direction buttons */}
+          <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
+            <button
+              onClick={() => {
+                onFiltersChange({ ...filters, sortDirection: 'ASC' });
+              }}
+              className={`p-1.5 rounded transition-all ${(filters.sortDirection || 'ASC') === 'ASC'
+                  ? 'bg-[#8b5fbf] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+              title="Tăng dần"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                onFiltersChange({ ...filters, sortDirection: 'DESC' });
+              }}
+              className={`p-1.5 rounded transition-all ${filters.sortDirection === 'DESC'
+                  ? 'bg-[#8b5fbf] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+              title="Giảm dần"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Date Preset */}
-      <div className="min-w-[150px]">
-        <Label htmlFor="datePreset">Date Preset</Label>
-        <Select
-          value={filters.datePreset || 'none'}
-          onValueChange={(value) => {
-            if (value === 'none') {
-              onFiltersChange({ ...filters, datePreset: undefined, dateFrom: undefined, dateTo: undefined });
-            } else {
-              onFiltersChange({ ...filters, datePreset: value as DatePreset, dateFrom: undefined, dateTo: undefined });
-            }
-          }}
+      {/* Status Filter Tabs */}
+      <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3 overflow-x-auto">
+        <button
+          onClick={() => onFiltersChange({ ...filters, status: undefined })}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap ${!filters.status || filters.status.length === 0
+              ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
         >
-          <SelectTrigger id="datePreset" className="mt-1">
-            <SelectValue placeholder="Select date preset" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">All Dates</SelectItem>
-            {Object.entries(datePresetLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          Tất cả
+        </button>
+        {Object.entries(statusLabels).map(([value, label]) => {
+          const isActive = filters.status?.includes(value as AppointmentStatus);
+          return (
+            <button
+              key={value}
+              onClick={() => {
+                onFiltersChange({ ...filters, status: [value as AppointmentStatus] });
+              }}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap ${isActive
+                  ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+            >
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{label.substring(0, 3)}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Date From */}
-      <div className="min-w-[150px]">
-        <Label htmlFor="dateFrom">Date From</Label>
-        <Input
-          id="dateFrom"
-          type="date"
-          value={filters.dateFrom || ''}
-          onChange={(e) => {
-            onFiltersChange({ ...filters, dateFrom: e.target.value || undefined, datePreset: undefined });
-          }}
-          className="mt-1"
-        />
-      </div>
+      {/* Date Filters - Optional Row */}
+      {(filters.dateFrom || filters.dateTo || filters.datePreset) && (
+        <div className="flex flex-wrap items-end gap-4 pt-3 border-t border-gray-100 mt-3">
+          {/* Date Preset */}
+          <div className="min-w-[150px]">
+            <Label htmlFor="datePreset">Date Preset</Label>
+            <Select
+              value={filters.datePreset || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  onFiltersChange({ ...filters, datePreset: undefined, dateFrom: undefined, dateTo: undefined });
+                } else {
+                  onFiltersChange({ ...filters, datePreset: value as DatePreset, dateFrom: undefined, dateTo: undefined });
+                }
+              }}
+            >
+              <SelectTrigger id="datePreset" className="mt-1">
+                <SelectValue placeholder="Select date preset" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">All Dates</SelectItem>
+                {Object.entries(datePresetLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Date To */}
-      <div className="min-w-[150px]">
-        <Label htmlFor="dateTo">Date To</Label>
-        <Input
-          id="dateTo"
-          type="date"
-          value={filters.dateTo || ''}
-          onChange={(e) => {
-            onFiltersChange({ ...filters, dateTo: e.target.value || undefined, datePreset: undefined });
-          }}
-          className="mt-1"
-        />
-      </div>
+          {/* Date From */}
+          <div className="min-w-[150px]">
+            <Label htmlFor="dateFrom">Date From</Label>
+            <Input
+              id="dateFrom"
+              type="date"
+              value={filters.dateFrom || ''}
+              onChange={(e) => {
+                onFiltersChange({ ...filters, dateFrom: e.target.value || undefined, datePreset: undefined });
+              }}
+              className="mt-1"
+            />
+          </div>
 
-      {/* Status Filter - Multi-select */}
-      <div className="min-w-[150px]">
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={filters.status && filters.status.length > 0 ? filters.status.join(',') : 'all'}
-          onValueChange={(value) => {
-            if (value === 'all') {
-              onFiltersChange({ ...filters, status: undefined });
-            } else {
-              onFiltersChange({ ...filters, status: [value as AppointmentStatus] });
-            }
-          }}
-        >
-          <SelectTrigger id="status" className="mt-1">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          {/* Date To */}
+          <div className="min-w-[150px]">
+            <Label htmlFor="dateTo">Date To</Label>
+            <Input
+              id="dateTo"
+              type="date"
+              value={filters.dateTo || ''}
+              onChange={(e) => {
+                onFiltersChange({ ...filters, dateTo: e.target.value || undefined, datePreset: undefined });
+              }}
+              className="mt-1"
+            />
+          </div>
 
-
-      {/* Clear Filters Button */}
-      <div className="min-w-[120px]">
-        <Label className="opacity-0">Clear</Label>
-        <Button
-          variant="outline"
-          onClick={onClearFilters}
-          className="mt-1 w-full"
-        >
-          <X className="h-4 w-4 mr-2" />
-          Clear Filters
-        </Button>
-      </div>
+          {/* Clear Filters Button */}
+          <Button
+            variant="outline"
+            onClick={onClearFilters}
+            className="mb-0"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Clear Filters
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

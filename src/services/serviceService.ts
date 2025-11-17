@@ -3,20 +3,20 @@ import { specializationService } from './specializationService';
 import { apiClient } from '@/lib/api';
 
 export class ServiceService {
-    private static readonly BASE_URL = '/services';
-    
+    private static readonly BASE_URL = 'booking/services';
+
     // Get paginated services with filters
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
         const params = new URLSearchParams();
-        
+
         // Add pagination (required by backend)
         params.append('page', String(filters.page || 0));
         params.append('size', String(filters.size || 10));
-        
+
         // Add sorting (required by backend)
         params.append('sortBy', filters.sortBy || 'serviceName');
         params.append('sortDirection', filters.sortDirection || 'ASC');
-        
+
         // Add optional filters
         if (filters.isActive !== undefined && filters.isActive !== '') {
             params.append('isActive', filters.isActive);
@@ -27,7 +27,7 @@ export class ServiceService {
         if (filters.keyword) {
             params.append('keyword', filters.keyword);
         }
-        
+
         const url = `${this.BASE_URL}?${params.toString()}`;
         console.log('ServiceService.getServices - URL:', url);
         console.log('ServiceService.getServices - Params:', Object.fromEntries(params));
@@ -59,7 +59,7 @@ export class ServiceService {
     // This method tries the standard path first, if fails try /code/ path
     static async getServiceByCode(serviceCode: string): Promise<Service> {
         const axios = apiClient.getAxiosInstance();
-        
+
         // Try standard path first (as per docs)
         try {
             const url = `${this.BASE_URL}/${serviceCode}`;
