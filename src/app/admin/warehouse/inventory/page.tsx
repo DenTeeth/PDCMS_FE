@@ -1,530 +1,325 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * Modern Inventory Page (Unified V3)
+ * Following Stripe/Vercel/Linear design patterns
+ * Implements: Item Master management, Dashboard stats, FEFO tracking
+ */
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  PlusCircle, 
+  Package, 
+  AlertTriangle, 
+  AlarmClock, 
+  TrendingDown,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+} from 'lucide-react';
 import {
-  faPlus,
-  faSearch,
-  faEdit,
-  faTrash,
-  faEye,
-  faBoxes,
-  faWarehouse,
-  faExclamationTriangle,
-  faClock,
-  faCheckCircle,
-  faChevronLeft,
-  faChevronRight,
-} from '@fortawesome/free-solid-svg-icons';
-import { toast } from 'sonner';
-import { warehouseService } from '@/services/warehouseService';
-import { Inventory, WarehouseType, InventoryStatus, PageResponse } from '@/types/warehouse';
-import InventoryFormModal from '../components/InventoryFormModal';
-import InventoryDetailModal from '../components/InventoryDetailModal';
+  itemMasterService,
+  warehouseAnalyticsService,
+  formatCurrency,
+  formatDate,
+} from '@/services/warehouseService';
+import { ItemMaster, InventoryTabState } from '@/types/warehouse';
+import CreateItemMasterModal from '../components/CreateItemMasterModal';
 
 export default function InventoryPage() {
-  const [pageData, setPageData] = useState<PageResponse<Inventory> | null>(null);
-  const [filteredInventory, setFilteredInventory] = useState<Inventory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWarehouseType, setSelectedWarehouseType] = useState<WarehouseType | 'ALL'>('ALL');
+  // ============================================
+  // STATE MANAGEMENT
+  // ============================================
+  const [tabState, setTabState] = useState<InventoryTabState>({
+    activeFilter: 'ALL',
+    searchQuery: '',
+  });
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ItemMaster | null>(null);
+
+  // ============================================
+  // DATA FETCHING (React Query)
+  // ============================================
   
-  // Quick filters
-  const [showLowStock, setShowLowStock] = useState(false);
-  const [showExpiringSoon, setShowExpiringSoon] = useState(false);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize] = useState(20);
-  const [sortBy] = useState<'itemName' | 'unitPrice' | 'stockQuantity' | 'createdAt' | 'updatedAt'>('itemName');
-  const [sortDirection] = useState<'ASC' | 'DESC'>('ASC');
+  // Dashboard Stats
+  const { data: stats } = useQuery({
+    queryKey: ['inventoryStats'],
+    queryFn: () => warehouseAnalyticsService.getInventoryStats(),
+  });
 
-  // Modal states
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingInventory, setEditingInventory] = useState<Inventory | null>(null);
-  const [viewingInventory, setViewingInventory] = useState<Inventory | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  // Main Inventory Data
+  const { data: inventory, isLoading } = useQuery({
+    queryKey: ['itemMasterSummary', tabState],
+    queryFn: () => {
+      const filter: any = {
+        search: tabState.searchQuery || undefined,
+      };
 
-  // Fetch inventory
-  const fetchInventory = async () => {
-    setLoading(true);
-    try {
-      const data = await warehouseService.getInventory({
-        page: currentPage,
-        size: pageSize,
-        sortBy,
-        sortDirection,
-        warehouseType: selectedWarehouseType === 'ALL' ? undefined : selectedWarehouseType,
-      });
-      console.log('Inventory data received:', data);
-      setPageData(data);
-      setFilteredInventory(data?.content || []);
-    } catch (error: any) {
-      console.error('Error fetching inventory:', error);
-      console.error('Error details:', error.response?.data);
-      toast.error(error.response?.data?.message || 'Không thể tải danh sách vật tư');
-      setPageData(null);
-      setFilteredInventory([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Apply tab filters
+      if (tabState.activeFilter === 'COLD') filter.warehouse_type = 'COLD';
+      if (tabState.activeFilter === 'NORMAL') filter.warehouse_type = 'NORMAL';
+      if (tabState.activeFilter === 'LOW_STOCK') filter.stock_status = 'LOW_STOCK';
+      if (tabState.activeFilter === 'EXPIRING_SOON') filter.is_expiring_soon = true;
 
-  useEffect(() => {
-    fetchInventory();
-  }, [currentPage, pageSize, sortBy, sortDirection, selectedWarehouseType]);
+      return itemMasterService.getSummary(filter);
+    },
+  });
 
-  // Search filter (client-side for current page)
-  useEffect(() => {
-    if (pageData) {
-      let filtered = pageData.content;
-
-      // Apply search filter
-      if (searchTerm) {
-        filtered = filtered.filter(
-          (item) =>
-            item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Apply quick filters
-      if (showLowStock) {
-        filtered = filtered.filter((item) => isLowStock(item));
-      }
-
-      if (showExpiringSoon) {
-        filtered = filtered.filter((item) => isExpiringSoon(item.expiryDate));
-      }
-
-      setFilteredInventory(filtered);
-    }
-  }, [searchTerm, pageData, showLowStock, showExpiringSoon]);
-
-  // Handle create/edit
-  const handleOpenFormModal = (inventory?: Inventory) => {
-    setEditingInventory(inventory || null);
-    setIsFormModalOpen(true);
-  };
-
-  const handleCloseFormModal = () => {
-    setEditingInventory(null);
-    setIsFormModalOpen(false);
-  };
-
-  const handleSaveInventory = async (data: any) => {
-    try {
-      if (editingInventory) {
-        await warehouseService.updateInventory(editingInventory.inventoryId, data);
-        toast.success('Cập nhật vật tư thành công');
-      } else {
-        await warehouseService.createInventory(data);
-        toast.success('Tạo vật tư thành công');
-      }
-      handleCloseFormModal();
-      await fetchInventory();
-    } catch (error: any) {
-      console.error('Error saving inventory:', error);
-      console.error('Error response:', error.response?.data);
-      
-      // Handle specific error codes
-      let errorMessage = 'Không thể lưu vật tư';
-      
-      if (error.response?.status === 409) {
-        errorMessage = error.response?.data?.message || 'Tên vật tư đã tồn tại trong hệ thống';
-      } else if (error.response?.status === 400) {
-        errorMessage = error.response?.data?.message || 'Dữ liệu không hợp lệ';
-      } else {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      
-      toast.error(errorMessage);
-      throw error; // Re-throw để modal không đóng khi lỗi
-    }
-  };
-
-  // Handle delete
-  const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc muốn xóa vật tư này?')) return;
-
-    try {
-      await warehouseService.deleteInventory(id);
-      toast.success('Xóa vật tư thành công');
-      await fetchInventory();
-    } catch (error) {
-      console.error('Error deleting inventory:', error);
-      toast.error('Không thể xóa vật tư');
-    }
-  };
-
-  // Handle view detail
-  const handleViewDetail = async (id: number) => {
-    try {
-      const data = await warehouseService.getInventoryById(id);
-      if (data) {
-        setViewingInventory(data);
-        setIsViewModalOpen(true);
-      }
-    } catch (error) {
-      console.error('Error fetching inventory detail:', error);
-      toast.error('Không thể tải thông tin vật tư');
-    }
-  };
-
-  const handleCloseViewModal = () => {
-    setViewingInventory(null);
-    setIsViewModalOpen(false);
-  };
-
-  // Helper: check expiry
-  const isExpiringSoon = (expiryDate?: string) => {
-    if (!expiryDate) return false;
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const daysLeft = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return daysLeft <= 90 && daysLeft >= 0; // Expiring within 90 days
-  };
-
-  const isExpired = (expiryDate?: string) => {
-    if (!expiryDate) return false;
-    return new Date(expiryDate) < new Date();
-  };
-
-  // Helper: check low stock
-  const isLowStock = (item: Inventory) => {
-    return item.minStockLevel && item.stockQuantity <= item.minStockLevel;
-  };
-
-  // Helper: status badge
-  const getStatusBadge = (status: InventoryStatus) => {
-    const variants = {
-      [InventoryStatus.ACTIVE]: { variant: 'default' as const, label: 'Hoạt động' },
-      [InventoryStatus.INACTIVE]: { variant: 'secondary' as const, label: 'Ngưng' },
-      [InventoryStatus.OUT_OF_STOCK]: { variant: 'destructive' as const, label: 'Hết hàng' },
+  // ============================================
+  // UI HELPERS
+  // ============================================
+  const getStockStatusBadge = (status: string) => {
+    const configs = {
+      NORMAL: { className: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: '✓ Bình thường' },
+      LOW_STOCK: { className: 'bg-amber-50 text-amber-700 border-amber-300 animate-pulse', label: '⚠ Tồn thấp' },
+      OUT_OF_STOCK: { className: 'bg-rose-50 text-rose-700 border-rose-300', label: '✕ Hết hàng' },
+      OVERSTOCK: { className: 'bg-blue-50 text-blue-700 border-blue-200', label: '↑ Dư thừa' },
     };
-    const config = variants[status];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const config = configs[status as keyof typeof configs] || configs.NORMAL;
+    return <Badge className={`${config.className} font-medium`}>{config.label}</Badge>;
   };
 
+  const getWarehouseTypeBadge = (type: string) => {
+    return type === 'COLD' ? (
+      <Badge className="bg-blue-500 text-white hover:bg-blue-600">🧊 Kho Lạnh</Badge>
+    ) : (
+      <Badge variant="secondary" className="bg-slate-100 text-slate-700">📦 Kho Thường</Badge>
+    );
+  };
+
+  // ============================================
+  // RENDER: MODERN DASHBOARD
+  // ============================================
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Quản Lý Vật Tư</h1>
-          <p className="text-muted-foreground mt-1">Quản lý kho vật tư y tế</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="max-w-[1400px] mx-auto p-6 space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+              Quản Lý Vật Tư
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Tổng quan tồn kho và định nghĩa vật tư (Item Master)
+            </p>
+          </div>
+          <Button 
+            size="lg"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-violet-500/30"
+          >
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Thêm Vật Tư Mới
+          </Button>
         </div>
-        <Button onClick={() => handleOpenFormModal()}>
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Thêm Vật Tư
-        </Button>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tổng Vật Tư
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faBoxes} className="text-blue-500 text-2xl" />
-              <span className="text-3xl font-bold">{pageData?.totalElements || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Stats Cards (Mentor Requirements) */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Total Items */}
+          <Card className="border-none shadow-md hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tổng Mã Vật Tư</p>
+                  <p className="text-3xl font-bold mt-2">{stats?.total_items || 0}</p>
+                </div>
+                <div className="h-12 w-12 bg-violet-100 dark:bg-violet-900/30 rounded-xl flex items-center justify-center">
+                  <Package className="h-6 w-6 text-violet-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Cảnh Báo Tồn Thấp
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-500 text-2xl" />
-              <span className="text-3xl font-bold">
-                {pageData?.content.filter(i => isLowStock(i)).length || 0}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Card 2: Low Stock Warning (Amber Border) */}
+          <Card className="border-2 border-amber-400 shadow-md shadow-amber-200/50 hover:shadow-xl transition-all duration-300 animate-border-pulse">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Cảnh Báo Tồn Thấp</p>
+                  <p className="text-3xl font-bold mt-2 text-amber-600">{stats?.low_stock_count || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Dưới mức tối thiểu</p>
+                </div>
+                <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-amber-600 animate-pulse" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sắp Hết Hạn
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faClock} className="text-red-500 text-2xl" />
-              <span className="text-3xl font-bold">
-                {pageData?.content.filter(i => isExpiringSoon(i.expiryDate)).length || 0}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Card 3: Expiring Soon (Red Border) */}
+          <Card className="border-2 border-rose-400 shadow-md shadow-rose-200/50 hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-rose-700 dark:text-rose-400">Sắp Hết Hạn</p>
+                  <p className="text-3xl font-bold mt-2 text-rose-600">{stats?.expiring_soon_count || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Trong 30 ngày</p>
+                </div>
+                <div className="h-12 w-12 bg-rose-100 dark:bg-rose-900/30 rounded-xl flex items-center justify-center">
+                  <AlarmClock className="h-6 w-6 text-rose-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <FontAwesomeIcon
-                  icon={faSearch}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  placeholder="Tìm tên vật tư, nhóm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Card 4: Monthly Loss */}
+          <Card className="border-none shadow-md hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Thất Thoát (Tháng Này)</p>
+                  <p className="text-3xl font-bold mt-2 text-rose-600">
+                    {formatCurrency(stats?.monthly_loss_value || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Hủy/Hỏng</p>
+                </div>
+                <div className="h-12 w-12 bg-rose-100 dark:bg-rose-900/30 rounded-xl flex items-center justify-center">
+                  <TrendingDown className="h-6 w-6 text-rose-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Table Section */}
+        <Card className="border-none shadow-xl">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-bold">Danh Sách Vật Tư</CardTitle>
+              
+              {/* Search Bar */}
+              <div className="flex items-center gap-4">
+                <div className="relative w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm theo mã, tên vật tư..."
+                    value={tabState.searchQuery}
+                    onChange={(e) => setTabState({ ...tabState, searchQuery: e.target.value })}
+                    className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Warehouse Type Filter */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedWarehouseType === 'ALL' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedWarehouseType('ALL')}
-              >
-                Tất Cả
-              </Button>
-              <Button
-                variant={selectedWarehouseType === WarehouseType.COLD ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedWarehouseType(WarehouseType.COLD)}
-              >
-                Kho Lạnh
-              </Button>
-              <Button
-                variant={selectedWarehouseType === WarehouseType.NORMAL ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedWarehouseType(WarehouseType.NORMAL)}
-              >
-                Kho Thường
-              </Button>
+            {/* Filter Tabs */}
+            <Tabs 
+              value={tabState.activeFilter} 
+              onValueChange={(value) => setTabState({ ...tabState, activeFilter: value as any })}
+              className="mt-4"
+            >
+              <TabsList className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <TabsTrigger value="ALL">Tất Cả</TabsTrigger>
+                <TabsTrigger value="COLD">🧊 Kho Lạnh</TabsTrigger>
+                <TabsTrigger value="NORMAL">📦 Kho Thường</TabsTrigger>
+                <TabsTrigger value="LOW_STOCK" className="text-amber-600">⚠ Tồn Thấp</TabsTrigger>
+                <TabsTrigger value="EXPIRING_SOON" className="text-rose-600">⏰ Sắp Hết Hạn</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
 
-              {/* Quick Filters */}
-              <div className="w-px bg-border mx-1"></div>
-              <Button
-                variant={showLowStock ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowLowStock(!showLowStock)}
-                className="flex items-center gap-2"
-              >
-                <FontAwesomeIcon icon={faExclamationTriangle} />
-                Tồn Thấp
-              </Button>
-
-              <Button
-                variant={showExpiringSoon ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowExpiringSoon(!showExpiringSoon)}
-                className="flex items-center gap-2"
-              >
-                <FontAwesomeIcon icon={faClock} />
-                Sắp Hết Hạn
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Inventory Table */}
-      {loading ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Đang tải...</p>
-          </CardContent>
-        </Card>
-      ) : filteredInventory.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Không có dữ liệu</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
           <CardContent className="p-0">
+            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-muted/50 border-b">
+                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="text-left p-4 font-medium">Tên Vật Tư</th>
-                    <th className="text-left p-4 font-medium">Nhà Cung Cấp</th>
-                    <th className="text-left p-4 font-medium">Loại Kho</th>
-                    <th className="text-left p-4 font-medium">Nhóm</th>
-                    <th className="text-left p-4 font-medium">Tồn Kho</th>
-                    <th className="text-left p-4 font-medium">Hạn SD</th>
-                    <th className="text-left p-4 font-medium">Trạng Thái</th>
-                    <th className="text-right p-4 font-medium">Thao Tác</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Mã Vật Tư</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Tên Vật Tư</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Nhóm</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Loại Kho</th>
+                    <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Tồn Kho</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Trạng Thái</th>
+                    <th className="text-center py-4 px-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Thao Tác</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredInventory.map((item) => (
-                    <tr key={item.inventoryId} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="p-4">
-                        <div>
-                          <div className="font-medium">{item.itemName || 'N/A'}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.unitOfMeasure}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-sm">
-                          {item.supplierName || `#${item.supplierId}`}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant={item.warehouseType === WarehouseType.COLD ? 'default' : 'secondary'}>
-                          {item.warehouseType === WarehouseType.COLD ? '❄️ Kho lạnh' : '📦 Kho thường'}
-                        </Badge>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-sm">{item.category || '-'}</span>
-                      </td>
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          <div className={`font-semibold ${isLowStock(item) ? 'text-red-600' : ''}`}>
-                            {item.stockQuantity}
-                            {isLowStock(item) && (
-                              <FontAwesomeIcon icon={faExclamationTriangle} className="ml-2 text-red-500" />
-                            )}
-                          </div>
-                          {item.minStockLevel && (
-                            <div className="text-xs text-muted-foreground">
-                              Min: {item.minStockLevel}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        {item.expiryDate ? (
-                          <div className="space-y-1">
-                            {isExpired(item.expiryDate) ? (
-                              <Badge variant="destructive" className="text-xs">
-                                <FontAwesomeIcon icon={faClock} className="mr-1" />
-                                Đã hết hạn
-                              </Badge>
-                            ) : isExpiringSoon(item.expiryDate) ? (
-                              <Badge variant="destructive" className="text-xs">
-                                <FontAwesomeIcon icon={faExclamationTriangle} className="mr-1" />
-                                Sắp hết hạn
-                              </Badge>
-                            ) : (
-                              <span className="text-sm text-green-600">
-                                {new Date(item.expiryDate).toLocaleDateString('vi-VN')}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {getStatusBadge(item.status)}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewDetail(item.inventoryId)}
-                            title="Xem chi tiết"
-                          >
-                            <FontAwesomeIcon icon={faEye} className="text-blue-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenFormModal(item)}
-                            title="Chỉnh sửa"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDelete(item.inventoryId)}
-                            title="Xóa"
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="text-red-500" />
-                          </Button>
-                        </div>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                        Đang tải...
                       </td>
                     </tr>
-                  ))}
+                  ) : !inventory || inventory.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                        Không tìm thấy dữ liệu
+                      </td>
+                    </tr>
+                  ) : (
+                    inventory.map((item) => (
+                      <tr 
+                        key={item.item_master_id}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                      >
+                        <td className="py-4 px-6">
+                          <span className="font-mono text-sm font-semibold text-violet-600 dark:text-violet-400">
+                            {item.item_code}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="max-w-xs">
+                            <div className="font-medium text-sm">{item.item_name}</div>
+                            {item.is_tool && (
+                              <Badge variant="outline" className="mt-1 text-xs">🔧 Dụng cụ</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-muted-foreground">
+                          {item.category?.category_name || '-'}
+                        </td>
+                        <td className="py-4 px-6">
+                          {getWarehouseTypeBadge(item.warehouse_type)}
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="font-semibold text-sm">
+                            {item.total_quantity.toLocaleString('vi-VN')}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{item.unit_of_measure}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          {getStockStatusBadge(item.stock_status)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="ghost" size="sm" title="Xem chi tiết">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" title="Chỉnh sửa">
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700" title="Xóa">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Pagination */}
-      {pageData && !pageData.empty && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Hiển thị {pageData.numberOfElements} / {pageData.totalElements} vật tư
-                {searchTerm && ` (đang lọc)`}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={pageData.first || loading}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Trước
-                </Button>
-                <span className="text-sm px-3">
-                  Trang {pageData.number + 1} / {pageData.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={pageData.last || loading}
-                >
-                  Sau
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      </div>
 
-      {/* Form Modal */}
-      <InventoryFormModal
-        isOpen={isFormModalOpen}
-        onClose={handleCloseFormModal}
-        onSave={handleSaveInventory}
-        inventory={editingInventory}
-      />
-
-      {/* View Detail Modal */}
-      <InventoryDetailModal
-        isOpen={isViewModalOpen}
-        onClose={handleCloseViewModal}
-        inventory={viewingInventory}
+      {/* Create/Edit Item Modal */}
+      <CreateItemMasterModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingItem(null);
+        }}
+        item={editingItem}
       />
     </div>
   );
