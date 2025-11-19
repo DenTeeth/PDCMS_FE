@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -160,6 +160,9 @@ export default function CreateExportModal({
               <TruckIcon className="h-5 w-5 text-blue-600" />
               Phiếu Xuất Kho (FEFO) {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Tạo phiếu xuất kho với FEFO (First Expired, First Out)
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">

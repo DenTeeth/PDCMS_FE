@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,7 +96,8 @@ export default function CreateItemMasterModal({
         });
       }
     }
-  }, [isOpen, item, categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, item]); // ✅ Removed categories from deps to prevent infinite loop
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,6 +133,9 @@ export default function CreateItemMasterModal({
             <Package className="h-5 w-5 text-violet-600" />
             {item ? 'Chỉnh sửa Vật Tư' : 'Thêm Vật Tư Mới'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {item ? 'Form chỉnh sửa thông tin vật tư' : 'Form thêm vật tư mới vào hệ thống'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

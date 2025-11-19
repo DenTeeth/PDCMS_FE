@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Supplier, CreateSupplierDto, UpdateSupplierDto } from '@/types/warehouse';
+import { CreateSupplierRequest, UpdateSupplierRequest, SupplierDetailResponse } from '@/types/supplier';
 
 interface SupplierFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CreateSupplierDto | UpdateSupplierDto) => Promise<void>;
-  supplier?: Supplier | null;
+  onSave: (data: CreateSupplierRequest | UpdateSupplierRequest) => Promise<void>;
+  supplier?: SupplierDetailResponse | null;
 }
 
 export default function SupplierFormModal({
@@ -21,11 +21,13 @@ export default function SupplierFormModal({
   onSave,
   supplier,
 }: SupplierFormModalProps) {
-  const [formData, setFormData] = useState<CreateSupplierDto>({
+  const [formData, setFormData] = useState<CreateSupplierRequest>({
+    supplierCode: '',
     supplierName: '',
     phoneNumber: '',
-    address: '',
     email: '',
+    address: '',
+    contactPerson: '',
     notes: '',
   });
   const [loading, setLoading] = useState(false);
@@ -33,18 +35,22 @@ export default function SupplierFormModal({
   useEffect(() => {
     if (supplier) {
       setFormData({
+        supplierCode: supplier.supplierCode,
         supplierName: supplier.supplierName,
-        phoneNumber: supplier.phoneNumber,
-        address: supplier.address,
+        phoneNumber: supplier.phoneNumber || '',
         email: supplier.email || '',
+        address: supplier.address || '',
+        contactPerson: supplier.contactPerson || '',
         notes: supplier.notes || '',
       });
     } else {
       setFormData({
+        supplierCode: '',
         supplierName: '',
         phoneNumber: '',
-        address: '',
         email: '',
+        address: '',
+        contactPerson: '',
         notes: '',
       });
     }
@@ -52,6 +58,30 @@ export default function SupplierFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.supplierCode.trim()) {
+      alert('Mã nhà cung cấp là bắt buộc!');
+      return;
+    }
+    if (!formData.supplierName.trim()) {
+      alert('Tên nhà cung cấp là bắt buộc!');
+      return;
+    }
+    if (!formData.phoneNumber.trim()) {
+      alert('Số điện thoại là bắt buộc!');
+      return;
+    }
+    if (!formData.email.trim()) {
+      alert('Email là bắt buộc!');
+      return;
+    }
+    if (!formData.address.trim()) {
+      alert('Địa chỉ là bắt buộc!');
+      return;
+    }
+    
+
     setLoading(true);
     try {
       await onSave(formData);
@@ -76,21 +106,34 @@ export default function SupplierFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Basic Info */}
+          {/* Row 1: Code & Name */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <Label htmlFor="supplierName">Tên nhà cung cấp *</Label>
+            <div>
+              <Label htmlFor="supplierCode">Mã NCC <span className="text-red-500">*</span></Label>
+              <Input
+                id="supplierCode"
+                value={formData.supplierCode}
+                onChange={(e) => setFormData({ ...formData, supplierCode: e.target.value })}
+                placeholder="Ví dụ: SUP001"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="supplierName">Tên nhà cung cấp <span className="text-red-500">*</span></Label>
               <Input
                 id="supplierName"
                 value={formData.supplierName}
                 onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
-                placeholder="VD: Công ty TNHH Thiết bị Y tế ABC"
+                placeholder="VD: Công ty TNHH ABC"
                 required
               />
             </div>
+          </div>
 
+          {/* Row 2: Contact Person & Phone */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="phoneNumber">Số điện thoại *</Label>
+              <Label htmlFor="phoneNumber">Điện thoại <span className="text-red-500">*</span></Label>
               <Input
                 id="phoneNumber"
                 value={formData.phoneNumber}
@@ -100,32 +143,35 @@ export default function SupplierFormModal({
                 required
               />
             </div>
-
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="VD: contact@abc.com"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <Label htmlFor="address">Địa chỉ *</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="VD: 123 Nguyễn Huệ, Q1, TP.HCM"
-                rows={2}
-                required
-              />
-            </div>
           </div>
 
-          {/* Notes */}
+          {/* Row 3: Email */}
+          <div>
+            <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="VD: contact@abc.com"
+              required
+            />
+          </div>
+
+          {/* Row 4: Address */}
+          <div>
+            <Label htmlFor="address">Địa chỉ <span className="text-red-500">*</span></Label>
+            <Textarea
+              id="address"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="VD: 123 Nguyễn Huệ, Q1, TP.HCM"
+              rows={2}
+              required
+            />
+          </div>
+
+          {/* Row 5: Notes */}
           <div className="border-t pt-4 mt-4">
             <Label htmlFor="notes">Ghi chú</Label>
             <Textarea
