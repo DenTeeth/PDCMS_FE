@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Inventory, WarehouseType, InventoryStatus } from '@/types/warehouse';
@@ -58,6 +58,9 @@ export default function InventoryDetailModal({
             <FontAwesomeIcon icon={faBox} className="text-blue-500" />
             Chi tiết vật tư: {inventory.itemName}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Xem thông tin chi tiết và lịch sử giao dịch của vật tư
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

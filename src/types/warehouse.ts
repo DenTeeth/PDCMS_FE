@@ -76,31 +76,47 @@ export enum SupplierStatus {
 
 export interface Supplier {
   supplierId: number;
+  supplierCode: string;
   supplierName: string;
+  contactPerson?: string;
   phoneNumber: string;
   email?: string;
   address: string;
-  status: SupplierStatus;
+  taxCode?: string;
+  bankAccount?: string;
+  bankName?: string;
   notes?: string;
+  isActive: boolean;
+  status?: SupplierStatus; // Keep for backward compatibility
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateSupplierDto {
+  supplierCode: string;
   supplierName: string;
+  contactPerson?: string;
   phoneNumber: string;
   email?: string;
   address: string;
+  taxCode?: string;
+  bankAccount?: string;
+  bankName?: string;
   notes?: string;
 }
 
 export interface UpdateSupplierDto {
   supplierName?: string;
+  contactPerson?: string;
   phoneNumber?: string;
   email?: string;
   address?: string;
-  status?: SupplierStatus;
+  taxCode?: string;
+  bankAccount?: string;
+  bankName?: string;
   notes?: string;
+  isActive?: boolean;
+  status?: SupplierStatus;
 }
 
 // ============================================

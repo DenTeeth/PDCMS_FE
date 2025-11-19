@@ -13,101 +13,87 @@ import {
   faTrash,
   faEye,
   faUsers,
-  faPhone,
-  faEnvelope,
-  faMapMarkerAlt,
   faChevronLeft,
   faChevronRight,
+  faSort,
 } from '@fortawesome/free-solid-svg-icons';
-import { toast } from 'sonner';
-import { warehouseService } from '@/services/warehouseService';
-import { Supplier, SupplierStatus, PageResponse } from '@/types/warehouse';
+import {
+  useSuppliers,
+  useCreateSupplier,
+  useUpdateSupplier,
+  useDeleteSupplier,
+} from '@/hooks/useSuppliers';
+import {
+  SupplierSummaryResponse,
+  SupplierDetailResponse,
+  CreateSupplierRequest,
+  UpdateSupplierRequest,
+} from '@/types/supplier';
+import { formatDate, getStatusColor, getStatusLabel } from '@/utils/formatters';
 import SupplierFormModal from '../components/SupplierFormModal';
 import SupplierDetailModal from '../components/SupplierDetailModal';
 
 export default function SuppliersPage() {
-  const [pageData, setPageData] = useState<PageResponse<Supplier> | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Pagination & Search state
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState(''); // For input debounce
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortField, setSortField] = useState<string>('supplierName');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const pageSize = 10; // Fixed 10 items per page
-
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<SupplierDetailResponse | null>(null);
+  const [viewingSupplier, setViewingSupplier] = useState<SupplierSummaryResponse | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // Debounce search input
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearchKeyword(searchInput);
-      setCurrentPage(0); // Reset to page 0 when searching
+      setDebouncedSearch(searchKeyword);
+      setPage(0); // Reset to first page on search
     }, 500);
-
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchKeyword]);
 
-  // Fetch suppliers (client-side search filter)
-  const fetchSuppliers = async () => {
-    setLoading(true);
-    try {
-      // Always get all suppliers (BE auto sorts newest first)
-      const allData = await warehouseService.getSuppliers({
-        page: 0,
-        size: 1000, // Get enough for client filtering
-      });
-      
-      let filtered = allData.content;
-      
-      // Apply search filter (client-side)
-      if (searchKeyword.trim()) {
-        const keyword = searchKeyword.toLowerCase().trim();
-        filtered = allData.content.filter((supplier) =>
-          supplier.supplierName?.toLowerCase().includes(keyword) ||
-          supplier.phoneNumber?.includes(keyword) ||
-          supplier.email?.toLowerCase().includes(keyword) ||
-          supplier.address?.toLowerCase().includes(keyword)
-        );
-      }
-      
-      // Manual pagination
-      const start = currentPage * pageSize;
-      const end = start + pageSize;
-      const data: PageResponse<Supplier> = {
-        content: filtered.slice(start, end),
-        totalElements: filtered.length,
-        totalPages: Math.ceil(filtered.length / pageSize),
-        size: pageSize,
-        number: currentPage,
-        numberOfElements: filtered.slice(start, end).length,
-        first: currentPage === 0,
-        last: currentPage >= Math.ceil(filtered.length / pageSize) - 1,
-        empty: filtered.length === 0,
+  // Fetch suppliers using API V1
+  const { data: suppliersPage, isLoading } = useSuppliers({
+    page,
+    size,
+    search: debouncedSearch || undefined,
+    sort: `${sortField},${sortDirection}`,
+  });
+
+  const suppliers = suppliersPage?.content || [];
+  const totalPages = suppliersPage?.totalPages || 0;
+  const totalElements = suppliersPage?.totalElements || 0;
+
+  // Mutations
+  const createMutation = useCreateSupplier();
+  const updateMutation = useUpdateSupplier();
+  const deleteMutation = useDeleteSupplier();
+
+  const handleOpenFormModal = (supplier?: SupplierSummaryResponse) => {
+    if (supplier) {
+      // Convert summary to detail format for editing
+      const detailData: SupplierDetailResponse = {
+        supplierId: supplier.supplierId,
+        supplierCode: supplier.supplierCode,
+        supplierName: supplier.supplierName,
+        phoneNumber: supplier.phoneNumber,
+        email: supplier.email,
+        address: '',
+        notes: '',
+        contactPerson: '',
+        isActive: supplier.status === 'ACTIVE',
+        createdAt: '',
+        suppliedItems: [],
       };
-      
-      console.log('Suppliers data received:', data);
-      setPageData(data);
-    } catch (error: any) {
-      console.error('Error fetching suppliers:', error);
-      console.error('Error details:', error.response?.data);
-      toast.error(error.response?.data?.message || 'Không thể tải danh sách nhà cung cấp');
-      setPageData(null);
-    } finally {
-      setLoading(false);
+      setEditingSupplier(detailData);
+    } else {
+      setEditingSupplier(null);
     }
-  };
-
-  useEffect(() => {
-    fetchSuppliers();
-  }, [currentPage, searchKeyword]);
-
-  // Handle create/edit
-  const handleOpenFormModal = (supplier?: Supplier) => {
-    setEditingSupplier(supplier || null);
     setIsFormModalOpen(true);
   };
 
@@ -116,73 +102,28 @@ export default function SuppliersPage() {
     setIsFormModalOpen(false);
   };
 
-  const handleSaveSupplier = async (data: any) => {
-    try {
-      if (editingSupplier) {
-        await warehouseService.updateSupplier(editingSupplier.supplierId, data);
-        toast.success('Cập nhật nhà cung cấp thành công');
-      } else {
-        await warehouseService.createSupplier(data);
-        toast.success('Tạo nhà cung cấp thành công');
-      }
-      handleCloseFormModal();
-      
-      // Reset to page 0 to see the new/updated item at top (newest first)
-      setCurrentPage(0);
-      await fetchSuppliers();
-    } catch (error: any) {
-      console.error('Error saving supplier:', error);
-      console.error('Error response:', error.response?.data);
-      
-      // Handle specific error codes
-      let errorMessage = 'Không thể lưu nhà cung cấp';
-      
-      if (error.response?.status === 409) {
-        const responseMessage = error.response?.data?.message || error.response?.data?.error || '';
-        if (responseMessage.toLowerCase().includes('phone')) {
-          errorMessage = 'Số điện thoại đã tồn tại trong hệ thống';
-        } else if (responseMessage.toLowerCase().includes('certification')) {
-          errorMessage = 'Số giấy phép đã tồn tại trong hệ thống';
-        } else if (responseMessage.toLowerCase().includes('email')) {
-          errorMessage = 'Email đã tồn tại trong hệ thống';
-        } else {
-          errorMessage = responseMessage || 'Thông tin nhà cung cấp đã tồn tại';
-        }
-      } else {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      
-      toast.error(errorMessage);
-      throw error; // Re-throw để modal không đóng khi lỗi
+  const handleSaveSupplier = async (data: CreateSupplierRequest | UpdateSupplierRequest) => {
+    if (editingSupplier) {
+      updateMutation.mutate(
+        { id: editingSupplier.supplierId, data },
+        { onSuccess: () => handleCloseFormModal() }
+      );
+    } else {
+      createMutation.mutate(
+        data as CreateSupplierRequest,
+        { onSuccess: () => handleCloseFormModal() }
+      );
     }
   };
 
-  // Handle delete
   const handleDelete = async (id: number) => {
     if (!confirm('Bạn có chắc muốn xóa nhà cung cấp này?')) return;
-
-    try {
-      await warehouseService.deleteSupplier(id);
-      toast.success('Xóa nhà cung cấp thành công');
-      await fetchSuppliers();
-    } catch (error) {
-      console.error('Error deleting supplier:', error);
-      toast.error('Không thể xóa nhà cung cấp');
-    }
+    deleteMutation.mutate(id);
   };
 
-  // Handle view detail
-  const handleViewDetail = async (id: number) => {
-    try {
-      const data = await warehouseService.getSupplierById(id);
-      if (data) {
-        setViewingSupplier(data);
-        setIsViewModalOpen(true);
-      }
-    } catch (error) {
-      console.error('Error fetching supplier detail:', error);
-      toast.error('Không thể tải thông tin nhà cung cấp');
-    }
+  const handleViewDetail = async (supplier: SupplierSummaryResponse) => {
+    setViewingSupplier(supplier);
+    setIsViewModalOpen(true);
   };
 
   const handleCloseViewModal = () => {
@@ -190,204 +131,228 @@ export default function SuppliersPage() {
     setIsViewModalOpen(false);
   };
 
-  // Helper: status badge
-  const getStatusBadge = (status: SupplierStatus) => {
-    const variants = {
-      [SupplierStatus.ACTIVE]: { variant: 'default' as const, label: 'Hoạt động' },
-      [SupplierStatus.INACTIVE]: { variant: 'secondary' as const, label: 'Ngưng' },
-      [SupplierStatus.SUSPENDED]: { variant: 'destructive' as const, label: 'Tạm ngừng' },
-    };
-    const config = variants[status];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
+    return (
+      <Badge className={getStatusColor(status)}>
+        {getStatusLabel(status)}
+      </Badge>
+    );
+  };
+
+  const activeCount = suppliers.filter((s) => s.status === 'ACTIVE').length;
+  const inactiveCount = suppliers.filter((s) => s.status === 'INACTIVE').length;
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Nhà Cung Cấp</h1>
-          <p className="text-muted-foreground mt-1">Quản lý thông tin nhà cung cấp vật tư y tế</p>
+          <h1 className="text-3xl font-bold">Quản lý Nhà cung cấp</h1>
+          <p className="text-slate-600 mt-1">Quản lý danh sách nhà cung cấp vật tư</p>
         </div>
         <Button onClick={() => handleOpenFormModal()}>
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Thêm Nhà Cung Cấp
+          <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
+          Thêm nhà cung cấp
         </Button>
       </div>
 
       {/* Stats Card */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Tổng Nhà Cung Cấp
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <FontAwesomeIcon icon={faUsers} className="text-blue-500 text-2xl" />
-            <span className="text-3xl font-bold">{pageData?.totalElements || 0}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Tổng số NCC
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalElements}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Đang hoạt động
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {activeCount}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Ngưng hoạt động
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-600">
+              {inactiveCount}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Search */}
+      {/* Search Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="relative">
-            <FontAwesomeIcon
-              icon={faSearch}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-            />
+            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Tìm theo tên, SĐT, email, địa chỉ..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              type="text"
+              placeholder="Tìm kiếm theo tên, SĐT, email, địa chỉ..."
               className="pl-10"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
             />
-            {searchInput && (
-              <button
-                onClick={() => setSearchInput('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            )}
           </div>
-          {searchKeyword && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Đang tìm: <span className="font-medium">{searchKeyword}</span>
-            </p>
-          )}
         </CardContent>
       </Card>
 
       {/* Suppliers Table */}
-      {loading ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Đang tải...</p>
-          </CardContent>
-        </Card>
-      ) : !pageData || pageData.empty ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">
-              {searchKeyword ? 'Không tìm thấy kết quả' : 'Không có dữ liệu'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/50 border-b">
-                  <tr>
-                    <th className="text-left p-4 font-medium">Tên NCC</th>
-                    <th className="text-left p-4 font-medium">Liên hệ</th>
-                    <th className="text-left p-4 font-medium">Địa chỉ</th>
-                    <th className="text-left p-4 font-medium">Trạng thái</th>
-                    <th className="text-right p-4 font-medium">Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageData.content.map((supplier) => (
-                    <tr key={supplier.supplierId} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="p-4">
-                        <div className="font-medium">{supplier.supplierName || 'N/A'}</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <FontAwesomeIcon icon={faPhone} className="text-muted-foreground" />
-                            {supplier.phoneNumber || 'N/A'}
-                          </div>
-                          {supplier.email && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <FontAwesomeIcon icon={faEnvelope} className="text-muted-foreground" />
-                              {supplier.email}
-                            </div>
-                          )}
+      <Card>
+        <CardContent className="pt-6">
+          {isLoading ? (
+            <div className="text-center py-8">Đang tải...</div>
+          ) : suppliers.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FontAwesomeIcon icon={faUsers} className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Không tìm thấy nhà cung cấp</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th
+                        className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort('supplierCode')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Mã NCC
+                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <FontAwesomeIcon icon={faMapMarkerAlt} />
-                          <span>{supplier.address || 'Chưa có địa chỉ'}</span>
+                      </th>
+                      <th
+                        className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort('supplierName')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Tên nhà cung cấp
+                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                         </div>
-                      </td>
-                      <td className="p-4">
-                        {getStatusBadge(supplier.status)}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-2">
+                      </th>
+                      <th className="text-left p-3">Điện thoại</th>
+                      <th className="text-left p-3">Email</th>
+                      <th className="text-left p-3">Trạng thái</th>
+                      <th className="text-right p-3">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suppliers.map((supplier) => (
+                      <tr key={supplier.supplierId} className="border-b hover:bg-gray-50">
+                        <td className="p-3">
+                          <span className="font-mono text-sm">{supplier.supplierCode}</span>
+                        </td>
+                        <td className="p-3 font-medium">{supplier.supplierName}</td>
+                        <td className="p-3">{supplier.phoneNumber || '-'}</td>
+                        <td className="p-3 text-sm">{supplier.email || '-'}</td>
+                        <td className="p-3">{getStatusBadge(supplier.status)}</td>
+                        <td className="p-3 text-right space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewDetail(supplier.supplierId)}
-                            title="Xem chi tiết"
+                            onClick={() => handleViewDetail(supplier)}
                           >
-                            <FontAwesomeIcon icon={faEye} />
+                            <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenFormModal(supplier)}
                           >
-                            <FontAwesomeIcon icon={faEdit} />
+                            <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(supplier.supplierId)}>
-                            <FontAwesomeIcon icon={faTrash} className="text-red-500" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(supplier.supplierId)}
+                          >
+                            <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
                           </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pagination */}
-      {pageData && !pageData.empty && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Hiển thị {pageData.numberOfElements} / {pageData.totalElements} nhà cung cấp
-                {searchKeyword && ` - Tìm kiếm: "${searchKeyword}"`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={pageData.first || loading}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Trước
-                </Button>
-                <span className="text-sm px-3">
-                  Trang {pageData.number + 1} / {pageData.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={pageData.last || loading}
-                >
-                  Sau
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Form Modal */}
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} nhà cung cấp
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(0)}
+                    disabled={page === 0}
+                  >
+                    Đầu
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 0}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
+                  </Button>
+                  <span className="text-sm px-3">
+                    Trang {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages - 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    Cuối
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
       <SupplierFormModal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
@@ -395,7 +360,6 @@ export default function SuppliersPage() {
         supplier={editingSupplier}
       />
 
-      {/* View Detail Modal */}
       <SupplierDetailModal
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}

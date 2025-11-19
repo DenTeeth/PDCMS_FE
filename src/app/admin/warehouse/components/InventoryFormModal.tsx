@@ -126,6 +126,9 @@ export default function InventoryFormModal({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{inventory ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {inventory ? 'Cập nhật thông tin tồn kho vật tư' : 'Thêm vật tư vào tồn kho'}
+          </DialogDescription>
           <DialogDescription>
             {inventory 
               ? 'Cập nhật thông tin vật tư y tế trong kho' 
