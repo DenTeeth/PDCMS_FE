@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StorageTransaction, TransactionType, WarehouseType } from '@/types/warehouse';
@@ -30,6 +30,9 @@ export default function TransactionDetailModal({
             <FileText className="h-5 w-5" />
             Chi tiết {isInTransaction ? 'phiếu nhập' : 'phiếu xuất'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Xem thông tin chi tiết của phiếu {isInTransaction ? 'nhập' : 'xuất'} kho
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
