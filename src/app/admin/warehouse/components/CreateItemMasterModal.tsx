@@ -16,14 +16,13 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { ItemMaster, CreateItemMasterDto, Category } from '@/types/warehouse';
-import { itemMasterService, categoryService } from '@/services/warehouseService';
+import { inventoryService, type ItemMasterV1, type CreateItemMasterRequest, type CategoryV1 } from '@/services/inventoryService';
 import { Package, Snowflake, Box } from 'lucide-react';
 
 interface CreateItemMasterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item?: ItemMaster | null;
+  item?: ItemMasterV1 | null;
 }
 
 export default function CreateItemMasterModal({
@@ -32,32 +31,32 @@ export default function CreateItemMasterModal({
   item,
 }: CreateItemMasterModalProps) {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<CreateItemMasterDto>({
-    item_code: '',
-    item_name: '',
-    unit_of_measure: 'Cái',
-    warehouse_type: 'NORMAL',
-    category_id: 0,
-    min_stock_level: 10,
-    max_stock_level: 100,
-    is_tool: false,
+  const [formData, setFormData] = useState<CreateItemMasterRequest>({
+    itemCode: '',
+    itemName: '',
+    unitOfMeasure: 'Cái',
+    warehouseType: 'NORMAL',
+    categoryId: 0,
+    minStockLevel: 10,
+    maxStockLevel: 100,
+    isTool: false,
     notes: '',
   });
 
-  // Fetch categories
-  const { data: categories = [] } = useQuery<Category[]>({
+  // Fetch categories - API V1
+  const { data: categories = [] } = useQuery<CategoryV1[]>({
     queryKey: ['categories'],
-    queryFn: () => categoryService.getAll(),
+    queryFn: () => inventoryService.getCategories(),
   });
 
-  // Create/Update mutation
+  // Create/Update mutation - API V1
   const mutation = useMutation({
-    mutationFn: (data: CreateItemMasterDto) =>
+    mutationFn: (data: CreateItemMasterRequest) =>
       item
-        ? itemMasterService.update(item.item_master_id, data)
-        : itemMasterService.create(data),
+        ? inventoryService.update(item.id, data)
+        : inventoryService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itemMasterSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       toast.success(item ? 'Cập nhật vật tư thành công!' : 'Thêm vật tư mới thành công!');
       onClose();
@@ -72,26 +71,26 @@ export default function CreateItemMasterModal({
     if (isOpen) {
       if (item) {
         setFormData({
-          item_code: item.item_code,
-          item_name: item.item_name,
-          unit_of_measure: item.unit_of_measure,
-          warehouse_type: item.warehouse_type,
-          category_id: item.category_id,
-          min_stock_level: item.min_stock_level,
-          max_stock_level: item.max_stock_level,
-          is_tool: item.is_tool,
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          unitOfMeasure: item.unitOfMeasure,
+          warehouseType: item.warehouseType,
+          categoryId: item.categoryId || 0,
+          minStockLevel: item.minStockLevel,
+          maxStockLevel: item.maxStockLevel,
+          isTool: item.isTool,
           notes: item.notes || '',
         });
       } else {
         setFormData({
-          item_code: '',
-          item_name: '',
-          unit_of_measure: 'Cái',
-          warehouse_type: 'NORMAL',
-          category_id: categories.length > 0 && categories[0].id ? Number(categories[0].id) : 0,
-          min_stock_level: 10,
-          max_stock_level: 100,
-          is_tool: false,
+          itemCode: '',
+          itemName: '',
+          unitOfMeasure: 'Cái',
+          warehouseType: 'NORMAL',
+          categoryId: categories.length > 0 ? categories[0].id : 0,
+          minStockLevel: 10,
+          maxStockLevel: 100,
+          isTool: false,
           notes: '',
         });
       }
@@ -103,19 +102,19 @@ export default function CreateItemMasterModal({
     e.preventDefault();
 
     // Validation
-    if (!formData.item_code.trim()) {
+    if (!formData.itemCode.trim()) {
       toast.error('Mã vật tư là bắt buộc!');
       return;
     }
-    if (!formData.item_name.trim()) {
+    if (!formData.itemName.trim()) {
       toast.error('Tên vật tư là bắt buộc!');
       return;
     }
-    if (formData.min_stock_level < 0) {
+    if (formData.minStockLevel < 0) {
       toast.error('Tồn kho tối thiểu phải >= 0!');
       return;
     }
-    if (formData.max_stock_level < formData.min_stock_level) {
+    if (formData.maxStockLevel < formData.minStockLevel) {
       toast.error('Tồn kho tối đa phải >= Tối thiểu!');
       return;
     }
@@ -142,13 +141,13 @@ export default function CreateItemMasterModal({
           {/* Mã & Tên */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="item_code" className="text-sm font-medium">
+              <Label htmlFor="itemCode" className="text-sm font-medium">
                 Mã Vật Tư <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="item_code"
-                value={formData.item_code}
-                onChange={(e) => setFormData({ ...formData, item_code: e.target.value })}
+                id="itemCode"
+                value={formData.itemCode}
+                onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
                 placeholder="VD: VT001"
                 required
                 disabled={!!item} // Disable when editing
@@ -156,13 +155,13 @@ export default function CreateItemMasterModal({
             </div>
 
             <div>
-              <Label htmlFor="item_name" className="text-sm font-medium">
+              <Label htmlFor="itemName" className="text-sm font-medium">
                 Tên Vật Tư <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="item_name"
-                value={formData.item_name}
-                onChange={(e) => setFormData({ ...formData, item_name: e.target.value })}
+                id="itemName"
+                value={formData.itemName}
+                onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                 placeholder="VD: Lidocaine 2%"
                 required
               />
@@ -176,9 +175,9 @@ export default function CreateItemMasterModal({
                 Nhóm Vật Tư <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={String(formData.category_id)}
+                value={String(formData.categoryId)}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, category_id: Number(value) })
+                  setFormData({ ...formData, categoryId: Number(value) })
                 }
               >
                 <SelectTrigger>
@@ -199,8 +198,8 @@ export default function CreateItemMasterModal({
                 Đơn Vị Tính <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.unit_of_measure}
-                onValueChange={(value) => setFormData({ ...formData, unit_of_measure: value })}
+                value={formData.unitOfMeasure}
+                onValueChange={(value) => setFormData({ ...formData, unitOfMeasure: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn đơn vị" />
@@ -222,9 +221,9 @@ export default function CreateItemMasterModal({
               Loại Kho <span className="text-red-500">*</span>
             </Label>
             <RadioGroup
-              value={formData.warehouse_type}
+              value={formData.warehouseType}
               onValueChange={(value: 'COLD' | 'NORMAL') =>
-                setFormData({ ...formData, warehouse_type: value })
+                setFormData({ ...formData, warehouseType: value })
               }
               className="flex gap-6"
             >
@@ -252,12 +251,12 @@ export default function CreateItemMasterModal({
                 Tồn Kho Tối Thiểu
               </Label>
               <Input
-                id="min_stock_level"
+                id="minStockLevel"
                 type="number"
                 min="0"
-                value={formData.min_stock_level}
+                value={formData.minStockLevel}
                 onChange={(e) =>
-                  setFormData({ ...formData, min_stock_level: Number(e.target.value) })
+                  setFormData({ ...formData, minStockLevel: Number(e.target.value) })
                 }
                 placeholder="10"
               />
@@ -268,12 +267,12 @@ export default function CreateItemMasterModal({
                 Tồn Kho Tối Đa
               </Label>
               <Input
-                id="max_stock_level"
+                id="maxStockLevel"
                 type="number"
                 min="0"
-                value={formData.max_stock_level}
+                value={formData.maxStockLevel}
                 onChange={(e) =>
-                  setFormData({ ...formData, max_stock_level: Number(e.target.value) })
+                  setFormData({ ...formData, maxStockLevel: Number(e.target.value) })
                 }
                 placeholder="100"
               />
@@ -285,8 +284,8 @@ export default function CreateItemMasterModal({
             <input
               type="checkbox"
               id="is_tool"
-              checked={formData.is_tool}
-              onChange={(e) => setFormData({ ...formData, is_tool: e.target.checked })}
+              checked={formData.isTool}
+              onChange={(e) => setFormData({ ...formData, isTool: e.target.checked })}
               className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
             />
             <Label htmlFor="is_tool" className="cursor-pointer text-sm text-amber-900">
