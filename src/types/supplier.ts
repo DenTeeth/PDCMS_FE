@@ -106,10 +106,9 @@ export interface SuppliedItemResponse {
 export interface CreateSupplierRequest {
   supplierCode: string;
   supplierName: string;
-  phoneNumber: string;
-  email: string;
   address: string;
-  contactPerson: string;
+  phoneNumber?: string;
+  email?: string;
   notes?: string;
 }
 

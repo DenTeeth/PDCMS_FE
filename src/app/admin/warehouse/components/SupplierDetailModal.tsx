@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   SupplierSummaryResponse,
   SupplierDetailResponse,
@@ -34,6 +36,7 @@ import {
   faMoneyBill,
   faBarcode,
   faBox,
+  faSearch,
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SupplierDetailModalProps {
@@ -47,6 +50,8 @@ export default function SupplierDetailModal({
   onClose,
   supplier,
 }: SupplierDetailModalProps) {
+  const [searchKeyword, setSearchKeyword] = useState('');
+
   // Fetch full supplier detail using API V1
   const { data: supplierDetail, isLoading: loadingDetail } = useSupplier(
     supplier?.supplierId || null
@@ -59,6 +64,15 @@ export default function SupplierDetailModal({
   );
 
   if (!supplier) return null;
+
+  // Filter supplied items by search keyword
+  const filteredItems = supplierDetail?.suppliedItems?.filter((item) => {
+    const keyword = searchKeyword.toLowerCase();
+    return (
+      item.itemName?.toLowerCase().includes(keyword) ||
+      item.itemCode?.toLowerCase().includes(keyword)
+    );
+  }) || [];
 
   const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
     return (
@@ -93,7 +107,7 @@ export default function SupplierDetailModal({
             </TabsTrigger>
             <TabsTrigger value="items" className="gap-2">
               <FontAwesomeIcon icon={faBoxes} className="w-4 h-4" />
-              Vật tư cung cấp ({suppliedItems.length})
+              Vật tư cung cấp ({supplierDetail?.suppliedItems?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -138,14 +152,6 @@ export default function SupplierDetailModal({
                   
                   <div className="grid grid-cols-1 gap-3">
                     <div className="flex items-start gap-3">
-                      <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Người liên hệ</p>
-                        <p className="font-medium">{supplierDetail.contactPerson || '-'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-muted-foreground mt-1" />
                       <div>
                         <p className="text-xs text-muted-foreground">Số điện thoại</p>
@@ -181,38 +187,6 @@ export default function SupplierDetailModal({
                   </div>
                 </div>
 
-                {/* Supplied Items Summary */}
-                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
-                    Vật tư đã cung cấp
-                  </h3>
-                  {supplierDetail.suppliedItems && supplierDetail.suppliedItems.length > 0 ? (
-                    <div className="space-y-2">
-                      {supplierDetail.suppliedItems.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                          <div className="flex items-center gap-3">
-                            <FontAwesomeIcon icon={faBox} className="w-4 h-4 text-blue-500" />
-                            <div>
-                              <p className="font-medium text-sm">{item.itemName || '-'}</p>
-                              <p className="text-xs text-muted-foreground">Mã: {item.itemCode || '-'}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-blue-600">
-                              {(item.totalQuantitySupplied || 0).toLocaleString()} đơn vị
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Lần cuối: {item.lastSuppliedDate ? formatDate(item.lastSuppliedDate) : '-'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Chưa có vật tư nào</p>
-                  )}
-                </div>
-
                 {/* Notes */}
                 {supplierDetail.notes && (
                   <div className="bg-muted/30 rounded-lg p-4 space-y-3">
@@ -244,6 +218,20 @@ export default function SupplierDetailModal({
                 Vật tư đã cung cấp
               </h3>
 
+              {/* Search Bar */}
+              <div className="mb-4">
+                <div className="relative">
+                  <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Tìm kiếm theo mã vật tư hoặc tên vật tư..."
+                    className="pl-10"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                  />
+                </div>
+              </div>
+
               {loadingDetail ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Đang tải danh sách vật tư...
@@ -252,6 +240,11 @@ export default function SupplierDetailModal({
                 <div className="text-center py-8 text-muted-foreground">
                   <FontAwesomeIcon icon={faBoxes} className="w-12 h-12 mb-3 opacity-30" />
                   <p>Chưa có vật tư nào được cung cấp</p>
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FontAwesomeIcon icon={faBoxes} className="w-12 h-12 mb-3 opacity-30" />
+                  <p>Không tìm thấy vật tư phù hợp</p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
@@ -266,7 +259,7 @@ export default function SupplierDetailModal({
                       </tr>
                     </thead>
                     <tbody>
-                      {supplierDetail.suppliedItems.map((item, index) => (
+                      {filteredItems.map((item, index) => (
                         <tr key={item.itemMasterId || index} className="border-t hover:bg-slate-50">
                           <td className="p-3 text-center text-slate-600">{index + 1}</td>
                           <td className="p-3">

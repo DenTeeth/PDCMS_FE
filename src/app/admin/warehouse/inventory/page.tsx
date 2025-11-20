@@ -21,10 +21,15 @@ import {
   faBoxes,
   faExclamationTriangle,
   faClock,
+  faEye,
+  faSort,
+  faChevronLeft,
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 import { inventoryService, type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import CreateItemMasterModal from '../components/CreateItemMasterModal';
+import ItemDetailModal from '../components/ItemDetailModal';
 
 type FilterTab = 'ALL' | 'COLD' | 'NORMAL' | 'LOW_STOCK' | 'EXPIRING_SOON';
 
@@ -39,8 +44,14 @@ export default function InventoryPage() {
     activeFilter: 'ALL',
     searchQuery: '',
   });
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
+  const [sortField, setSortField] = useState<string>('itemName');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemMasterV1 | null>(null);
+  const [viewingItemId, setViewingItemId] = useState<number | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Dashboard Stats - API V1
   const { data: stats } = useQuery({
@@ -49,11 +60,14 @@ export default function InventoryPage() {
   });
 
   // Main Inventory Data - API V1
-  const { data: inventory = [], isLoading } = useQuery({
-    queryKey: ['inventorySummary', tabState],
+  const { data: inventoryPage, isLoading } = useQuery({
+    queryKey: ['inventorySummary', tabState, page, sortField, sortDirection],
     queryFn: () => {
       const filter: any = {
         search: tabState.searchQuery || undefined,
+        page,
+        size,
+        sort: `${sortField},${sortDirection}`,
       };
 
       // Apply tab filters
@@ -65,6 +79,10 @@ export default function InventoryPage() {
       return inventoryService.getSummary(filter);
     },
   });
+
+  const inventory = Array.isArray(inventoryPage) ? inventoryPage : ((inventoryPage as any)?.content || []);
+  const totalPages = (inventoryPage as any)?.totalPages || 1;
+  const totalElements = (inventoryPage as any)?.totalElements || inventory.length;
 
   // Delete mutation - API V1
   const deleteMutation = useMutation({
@@ -109,6 +127,41 @@ export default function InventoryPage() {
     setIsCreateModalOpen(false);
   };
 
+  const handleViewDetail = (itemId: number) => {
+    setViewingItemId(itemId);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingItemId(null);
+    setIsViewModalOpen(false);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setTabState({ ...tabState, searchQuery: value });
+    setPage(0); // Reset to first page on search
+  };
+
+  const handleFilterChange = (filter: FilterTab) => {
+    setTabState({ activeFilter: filter, searchQuery: tabState.searchQuery });
+    setPage(0); // Reset to first page on filter change
+  };
+
   const getStockStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
       NORMAL: { variant: 'default', label: 'Bình thường' },
@@ -143,7 +196,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -151,75 +204,54 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalItems || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="h-4 w-4 text-red-500" />
-              Sắp hết
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats?.lowStockCount || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <FontAwesomeIcon icon={faClock} className="h-4 w-4 text-orange-500" />
-              Sắp hết hạn
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats?.expiringWithin30Days || 0}</div>
+            <div className="text-2xl font-bold">{totalElements}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Giá trị tồn kho
+              Sắp hết hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {(stats?.totalValue || 0).toLocaleString('vi-VN')} ₫
+            <div className="text-2xl font-bold text-red-600">
+              {stats?.lowStockCount || 0}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Sắp hết hạn
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {stats?.expiringWithin30Days || 0}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filter Tabs */}
-      <Tabs value={tabState.activeFilter} onValueChange={(v: any) => setTabState({ ...tabState, activeFilter: v })}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="ALL">Tất cả</TabsTrigger>
-          <TabsTrigger value="COLD">Kho lạnh</TabsTrigger>
-          <TabsTrigger value="NORMAL">Kho thường</TabsTrigger>
-          <TabsTrigger value="LOW_STOCK">Sắp hết</TabsTrigger>
-          <TabsTrigger value="EXPIRING_SOON">Sắp hết hạn</TabsTrigger>
-        </TabsList>
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Tìm kiếm theo mã vật tư, tên, danh mục..."
+              className="pl-10"
+              value={tabState.searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value={tabState.activeFilter} className="mt-6">
-          {/* Search Bar */}
-          <Card className="mb-4">
-            <CardContent className="pt-6">
-              <div className="relative">
-                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Tìm kiếm theo mã vật tư, tên..."
-                  className="pl-10"
-                  value={tabState.searchQuery}
-                  onChange={(e) => setTabState({ ...tabState, searchQuery: e.target.value })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Inventory Table */}
-          <Card>
-            <CardContent className="pt-6">
+      {/* Inventory Table */}
+      <Card>
+        <CardContent className="pt-6">
               {isLoading ? (
                 <div className="text-center py-8">Đang tải...</div>
               ) : inventory.length === 0 ? (
@@ -228,23 +260,48 @@ export default function InventoryPage() {
                   <p>Không tìm thấy vật tư</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3">Mã vật tư</th>
-                        <th className="text-left p-3">Tên vật tư</th>
-                        <th className="text-left p-3">Loại kho</th>
-                        <th className="text-left p-3">Danh mục</th>
-                        <th className="text-right p-3">Tồn kho</th>
-                        <th className="text-right p-3">Min/Max</th>
-                        <th className="text-left p-3">Trạng thái</th>
-                        <th className="text-right p-3">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inventory.map((item: InventorySummary) => (
-                        <tr key={item.itemMasterId} className="border-b hover:bg-gray-50">
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th 
+                            className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('itemCode')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Mã vật tư
+                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                            </div>
+                          </th>
+                          <th 
+                            className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('itemName')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Tên vật tư
+                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                            </div>
+                          </th>
+                          <th className="text-left p-3">Loại kho</th>
+                          <th className="text-left p-3">Danh mục</th>
+                          <th 
+                            className="text-right p-3 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSort('totalQuantity')}
+                          >
+                            <div className="flex items-center justify-end gap-2">
+                              Tồn kho
+                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                            </div>
+                          </th>
+                          <th className="text-right p-3">Min/Max</th>
+                          <th className="text-left p-3">Trạng thái</th>
+                          <th className="text-right p-3">Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inventory.map((item: InventorySummary) => (
+                          <tr key={item.itemMasterId} className="border-b hover:bg-gray-50">
                           <td className="p-3">
                             <span className="font-mono text-sm">{item.itemCode}</span>
                           </td>
@@ -264,7 +321,16 @@ export default function InventoryPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => handleViewDetail(item.itemMasterId)}
+                              title="Xem chi tiết"
+                            >
+                              <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleEdit(item)}
+                              title="Chỉnh sửa"
                             >
                               <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
                             </Button>
@@ -272,6 +338,7 @@ export default function InventoryPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(item.itemMasterId)}
+                              title="Xóa"
                             >
                               <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
                             </Button>
@@ -281,17 +348,67 @@ export default function InventoryPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-gray-600">
+                    Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(0)}
+                      disabled={page === 0}
+                    >
+                      Đầu
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 0}
+                    >
+                      <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm px-3">
+                      Trang {page + 1} / {totalPages || 1}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page >= totalPages - 1}
+                    >
+                      <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages - 1)}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Cuối
+                    </Button>
+                  </div>
+                </div>
+              </>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
 
       {/* Create/Edit Modal */}
       <CreateItemMasterModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseModal}
         item={editingItem}
+      />
+
+      {/* View Detail Modal */}
+      <ItemDetailModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        itemId={viewingItemId}
       />
     </div>
   );
