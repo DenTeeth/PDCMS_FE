@@ -3,6 +3,7 @@
  * Handles API calls for warehouse operations (Cold & Normal Storage)
  */
 
+import axios from 'axios';
 import { apiClient } from '@/lib/api';
 import {
   Supplier,
@@ -682,7 +683,7 @@ const generateCode = (type: TransactionType): string => {
 // SUPPLIER SERVICE (REAL API CALLS)
 // ============================================
 
-const axios = apiClient.getAxiosInstance();
+const axiosV1 = apiClient.getAxiosInstance();
 
 export const warehouseService = {
   // Get all suppliers with pagination (sorted newest first by BE)
@@ -691,7 +692,7 @@ export const warehouseService = {
     queryParams.append('page', (params?.page ?? 0).toString());
     queryParams.append('size', (params?.size ?? 10).toString());
 
-    const response = await axios.get<PageResponse<Supplier>>(
+    const response = await axiosV1.get<PageResponse<Supplier>>(
       `/suppliers?${queryParams.toString()}`
     );
     // BE trả trực tiếp PageResponse, không có wrapper { status, data }
@@ -706,7 +707,7 @@ export const warehouseService = {
     queryParams.append('size', (params?.size ?? 10).toString());
 
     try {
-      const response = await axios.get<PageResponse<Supplier>>(
+      const response = await axiosV1.get<PageResponse<Supplier>>(
         `/suppliers/search?${queryParams.toString()}`
       );
       return response.data;
@@ -719,7 +720,7 @@ export const warehouseService = {
   // Get supplier by ID
   getSupplierById: async (id: number): Promise<Supplier | null> => {
     try {
-      const response = await axios.get<Supplier>(`/suppliers/${id}`);
+      const response = await axiosV1.get<Supplier>(`/suppliers/${id}`);
       // @ts-ignore - handle both formats
       return response.data.data || response.data;
     } catch (error) {
@@ -729,7 +730,7 @@ export const warehouseService = {
 
   // Create supplier
   createSupplier: async (data: CreateSupplierDto): Promise<Supplier> => {
-    const response = await axios.post<Supplier>(
+    const response = await axiosV1.post<Supplier>(
       '/suppliers',
       data
     );
@@ -741,7 +742,7 @@ export const warehouseService = {
 
   // Update supplier
   updateSupplier: async (id: number, data: UpdateSupplierDto): Promise<Supplier> => {
-    const response = await axios.put<Supplier>(
+    const response = await axiosV1.put<Supplier>(
       `/suppliers/${id}`,
       data
     );
@@ -752,7 +753,7 @@ export const warehouseService = {
 
   // Delete supplier
   deleteSupplier: async (id: number): Promise<void> => {
-    await axios.delete(`/suppliers/${id}`);
+    await axiosV1.delete(`/suppliers/${id}`);
   },
 
   // ============================================
@@ -774,7 +775,7 @@ export const warehouseService = {
       queryParams.append('itemName', filters.itemName.trim());
     }
 
-    const response = await axios.get<PageResponse<Inventory>>(
+    const response = await axiosV1.get<PageResponse<Inventory>>(
       `/inventory?${queryParams.toString()}`
     );
     // BE trả trực tiếp PageResponse
@@ -784,7 +785,7 @@ export const warehouseService = {
   // Get inventory by ID
   getInventoryById: async (id: number): Promise<Inventory | null> => {
     try {
-      const response = await axios.get<Inventory>(`/inventory/${id}`);
+      const response = await axiosV1.get<Inventory>(`/inventory/${id}`);
       // @ts-ignore - handle both formats
       return response.data.data || response.data;
     } catch (error) {
@@ -794,7 +795,7 @@ export const warehouseService = {
 
   // Create inventory
   createInventory: async (data: CreateInventoryDto): Promise<Inventory> => {
-    const response = await axios.post<Inventory>('/inventory', data);
+    const response = await axiosV1.post<Inventory>('/inventory', data);
     console.log('Create inventory response:', response.data);
     // @ts-ignore - handle both formats
     return response.data.data || response.data;
@@ -802,7 +803,7 @@ export const warehouseService = {
 
   // Update inventory
   updateInventory: async (id: number, data: UpdateInventoryDto): Promise<Inventory> => {
-    const response = await axios.put<Inventory>(`/inventory/${id}`, data);
+    const response = await axiosV1.put<Inventory>(`/inventory/${id}`, data);
     console.log('Update inventory response:', response.data);
     // @ts-ignore - handle both formats
     return response.data.data || response.data;
@@ -810,7 +811,7 @@ export const warehouseService = {
 
   // Delete inventory
   deleteInventory: async (id: number): Promise<void> => {
-    await axios.delete(`/inventory/${id}`);
+    await axiosV1.delete(`/inventory/${id}`);
   },
 
   // ============================================
@@ -1202,8 +1203,26 @@ import {
   LossRecord,
 } from '@/types/warehouse';
 
-// Get axios instance
+// Get axios instance for V1 (suppliers, inventory)
 const api = apiClient.getAxiosInstance();
+
+// Create separate axios instance for V3 warehouse APIs
+const apiV3 = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '/api/v3') || 'http://localhost:8080/api/v3',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
+
+// Add auth interceptor for V3 instance
+apiV3.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 /**
  * ITEM MASTER SERVICE (V3 - Vật Tư Master Data)
@@ -1211,36 +1230,36 @@ const api = apiClient.getAxiosInstance();
  */
 export const itemMasterService = {
   getSummary: async (filter?: ItemMasterFilter): Promise<ItemMaster[]> => {
-    const response = await api.get<ItemMaster[]>('/api/v3/warehouse/summary', {
+    const response = await apiV3.get<ItemMaster[]>('/warehouse/summary', {
       params: filter,
     });
     return response.data;
   },
 
   getAll: async (filter?: ItemMasterFilter): Promise<PageResponse<ItemMaster>> => {
-    const response = await api.get<PageResponse<ItemMaster>>('/api/v3/warehouse/item-masters', {
+    const response = await apiV3.get<PageResponse<ItemMaster>>('/warehouse/item-masters', {
       params: filter,
     });
     return response.data;
   },
 
   getById: async (id: number): Promise<ItemMaster> => {
-    const response = await api.get<ItemMaster>(`/api/v3/warehouse/item-masters/${id}`);
+    const response = await apiV3.get<ItemMaster>(`/warehouse/item-masters/${id}`);
     return response.data;
   },
 
   create: async (data: CreateItemMasterDto): Promise<ItemMaster> => {
-    const response = await api.post<ItemMaster>('/api/v3/warehouse/item-masters', data);
+    const response = await apiV3.post<ItemMaster>('/warehouse/item-masters', data);
     return response.data;
   },
 
   update: async (id: number, data: UpdateItemMasterDto): Promise<ItemMaster> => {
-    const response = await api.put<ItemMaster>(`/api/v3/warehouse/item-masters/${id}`, data);
+    const response = await apiV3.put<ItemMaster>(`/warehouse/item-masters/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/v3/warehouse/item-masters/${id}`);
+    await apiV3.delete(`/warehouse/item-masters/${id}`);
   },
 };
 
@@ -1250,19 +1269,19 @@ export const itemMasterService = {
  */
 export const itemBatchService = {
   getBatchesByItemId: async (itemId: number, filter?: BatchFilter): Promise<ItemBatch[]> => {
-    const response = await api.get<ItemBatch[]>(`/api/v3/warehouse/item-masters/${itemId}/batches`, {
+    const response = await apiV3.get<ItemBatch[]>(`/warehouse/item-masters/${itemId}/batches`, {
       params: { ...filter, sortBy: 'expiryDate', sortDirection: 'ASC' },
     });
     return response.data;
   },
 
   getById: async (batchId: number): Promise<ItemBatch> => {
-    const response = await api.get<ItemBatch>(`/api/v3/warehouse/batches/${batchId}`);
+    const response = await apiV3.get<ItemBatch>(`/warehouse/batches/${batchId}`);
     return response.data;
   },
 
   getExpiringSoon: async (days: number = 30): Promise<ExpiringBatch[]> => {
-    const response = await api.get<ExpiringBatch[]>('/api/v3/warehouse/batches/expiring-soon', {
+    const response = await apiV3.get<ExpiringBatch[]>('/warehouse/batches/expiring-soon', {
       params: { days },
     });
     return response.data;
@@ -1275,34 +1294,34 @@ export const itemBatchService = {
  */
 export const storageTransactionService = {
   getAll: async (filter?: StorageTransactionFilter): Promise<PageResponse<StorageTransactionV3>> => {
-    const response = await api.get<PageResponse<StorageTransactionV3>>('/api/v3/warehouse/transactions', {
+    const response = await apiV3.get<PageResponse<StorageTransactionV3>>('/warehouse/transactions', {
       params: filter,
     });
     return response.data;
   },
 
   getById: async (id: number): Promise<StorageTransactionV3> => {
-    const response = await api.get<StorageTransactionV3>(`/api/v3/warehouse/transactions/${id}`);
+    const response = await apiV3.get<StorageTransactionV3>(`/warehouse/transactions/${id}`);
     return response.data;
   },
 
   createImport: async (data: CreateImportTransactionDto): Promise<StorageTransactionV3> => {
-    const response = await api.post<StorageTransactionV3>('/api/v3/warehouse/transactions/import', data);
+    const response = await apiV3.post<StorageTransactionV3>('/warehouse/transactions/import', data);
     return response.data;
   },
 
   createExport: async (data: CreateExportTransactionDto): Promise<StorageTransactionV3> => {
-    const response = await api.post<StorageTransactionV3>('/api/v3/warehouse/transactions/export', data);
+    const response = await apiV3.post<StorageTransactionV3>('/warehouse/transactions/export', data);
     return response.data;
   },
 
   createAdjustment: async (data: CreateAdjustmentDto): Promise<StorageTransactionV3> => {
-    const response = await api.post<StorageTransactionV3>('/api/v3/warehouse/transactions/adjustment', data);
+    const response = await apiV3.post<StorageTransactionV3>('/warehouse/transactions/adjustment', data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/v3/warehouse/transactions/${id}`);
+    await apiV3.delete(`/warehouse/transactions/${id}`);
   },
 };
 
@@ -1312,32 +1331,32 @@ export const storageTransactionService = {
  */
 export const supplierServiceV3 = {
   getAll: async (params?: { search?: string; status?: string }): Promise<any[]> => {
-    const response = await api.get<any[]>('/api/v3/warehouse/suppliers', { params });
+    const response = await apiV3.get<any[]>('/warehouse/suppliers', { params });
     return response.data;
   },
 
   getById: async (id: number): Promise<any> => {
-    const response = await api.get<any>(`/api/v3/warehouse/suppliers/${id}`);
+    const response = await apiV3.get<any>(`/warehouse/suppliers/${id}`);
     return response.data;
   },
 
   getSuppliedItems: async (supplierId: number): Promise<SupplierItem[]> => {
-    const response = await api.get<SupplierItem[]>(`/api/v3/warehouse/suppliers/${supplierId}/items`);
+    const response = await apiV3.get<SupplierItem[]>(`/warehouse/suppliers/${supplierId}/items`);
     return response.data;
   },
 
   create: async (data: any): Promise<any> => {
-    const response = await api.post<any>('/api/v3/warehouse/suppliers', data);
+    const response = await apiV3.post<any>('/warehouse/suppliers', data);
     return response.data;
   },
 
   update: async (id: number, data: any): Promise<any> => {
-    const response = await api.put<any>(`/api/v3/warehouse/suppliers/${id}`, data);
+    const response = await apiV3.put<any>(`/warehouse/suppliers/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/v3/warehouse/suppliers/${id}`);
+    await apiV3.delete(`/warehouse/suppliers/${id}`);
   },
 };
 
@@ -1347,27 +1366,27 @@ export const supplierServiceV3 = {
  */
 export const categoryService = {
   getAll: async (): Promise<any[]> => {
-    const response = await api.get<any[]>('/api/v3/warehouse/categories');
+    const response = await apiV3.get<any[]>('/warehouse/categories');
     return response.data;
   },
 
   getById: async (id: number): Promise<any> => {
-    const response = await api.get<any>(`/api/v3/warehouse/categories/${id}`);
+    const response = await apiV3.get<any>(`/warehouse/categories/${id}`);
     return response.data;
   },
 
   create: async (data: any): Promise<any> => {
-    const response = await api.post<any>('/api/v3/warehouse/categories', data);
+    const response = await apiV3.post<any>('/warehouse/categories', data);
     return response.data;
   },
 
   update: async (id: number, data: any): Promise<any> => {
-    const response = await api.put<any>(`/api/v3/warehouse/categories/${id}`, data);
+    const response = await apiV3.put<any>(`/warehouse/categories/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/v3/warehouse/categories/${id}`);
+    await apiV3.delete(`/warehouse/categories/${id}`);
   },
 };
 
@@ -1377,26 +1396,26 @@ export const categoryService = {
  */
 export const warehouseAnalyticsService = {
   getInventoryStats: async (): Promise<InventoryStats> => {
-    const response = await api.get<InventoryStats>('/api/v3/warehouse/analytics/inventory-stats');
+    const response = await apiV3.get<InventoryStats>('/warehouse/analytics/inventory-stats');
     return response.data;
   },
 
   getStorageStats: async (month?: string): Promise<StorageStats> => {
-    const response = await api.get<StorageStats>('/api/v3/warehouse/analytics/storage-stats', {
+    const response = await apiV3.get<StorageStats>('/warehouse/analytics/storage-stats', {
       params: { month },
     });
     return response.data;
   },
 
   getLossRecords: async (month?: string): Promise<LossRecord[]> => {
-    const response = await api.get<LossRecord[]>('/api/v3/warehouse/analytics/loss-records', {
+    const response = await apiV3.get<LossRecord[]>('/warehouse/analytics/loss-records', {
       params: { month },
     });
     return response.data;
   },
 
   getExpiringBatches: async (days: number = 30): Promise<ExpiringBatch[]> => {
-    const response = await api.get<ExpiringBatch[]>('/api/v3/warehouse/analytics/expiring-batches', {
+    const response = await apiV3.get<ExpiringBatch[]>('/warehouse/analytics/expiring-batches', {
       params: { days },
     });
     return response.data;
