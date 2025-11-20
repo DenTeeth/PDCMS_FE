@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Inventory Page - V3 API (Item Master Management)
- * ✅ Verified against Swagger API
+ * Inventory Page - API V1 (Item Master Management)
+ * ✅ Using /api/v1/inventory endpoints
  */
 
 import { useState } from 'react';
@@ -23,8 +23,7 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import { itemMasterService, warehouseAnalyticsService } from '@/services/warehouseService';
-import { ItemMaster } from '@/types/warehouse';
+import { inventoryService, type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import CreateItemMasterModal from '../components/CreateItemMasterModal';
 
 type FilterTab = 'ALL' | 'COLD' | 'NORMAL' | 'LOW_STOCK' | 'EXPIRING_SOON';
@@ -41,37 +40,37 @@ export default function InventoryPage() {
     searchQuery: '',
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ItemMaster | null>(null);
+  const [editingItem, setEditingItem] = useState<ItemMasterV1 | null>(null);
 
-  // Dashboard Stats
+  // Dashboard Stats - API V1
   const { data: stats } = useQuery({
     queryKey: ['inventoryStats'],
-    queryFn: () => warehouseAnalyticsService.getInventoryStats(),
+    queryFn: () => inventoryService.getStats(),
   });
 
-  // Main Inventory Data
+  // Main Inventory Data - API V1
   const { data: inventory = [], isLoading } = useQuery({
-    queryKey: ['itemMasterSummary', tabState],
+    queryKey: ['inventorySummary', tabState],
     queryFn: () => {
       const filter: any = {
         search: tabState.searchQuery || undefined,
       };
 
       // Apply tab filters
-      if (tabState.activeFilter === 'COLD') filter.warehouse_type = 'COLD';
-      if (tabState.activeFilter === 'NORMAL') filter.warehouse_type = 'NORMAL';
-      if (tabState.activeFilter === 'LOW_STOCK') filter.stock_status = 'LOW_STOCK';
-      if (tabState.activeFilter === 'EXPIRING_SOON') filter.is_expiring_soon = true;
+      if (tabState.activeFilter === 'COLD') filter.warehouseType = 'COLD';
+      if (tabState.activeFilter === 'NORMAL') filter.warehouseType = 'NORMAL';
+      if (tabState.activeFilter === 'LOW_STOCK') filter.stockStatus = 'LOW_STOCK';
+      if (tabState.activeFilter === 'EXPIRING_SOON') filter.isExpiringSoon = true;
 
-      return itemMasterService.getSummary(filter);
+      return inventoryService.getSummary(filter);
     },
   });
 
-  // Delete mutation
+  // Delete mutation - API V1
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => itemMasterService.delete(id),
+    mutationFn: (id: number) => inventoryService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['itemMasterSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       toast.success('Xóa vật tư thành công!');
     },
@@ -85,8 +84,23 @@ export default function InventoryPage() {
     await deleteMutation.mutateAsync(id);
   };
 
-  const handleEdit = (item: ItemMaster) => {
-    setEditingItem(item);
+  const handleEdit = (item: InventorySummary) => {
+    // Convert InventorySummary to ItemMasterV1 for editing
+    const itemMaster: ItemMasterV1 = {
+      id: item.itemMasterId,
+      itemCode: item.itemCode,
+      itemName: item.itemName,
+      categoryId: 0, // Will be fetched from categories
+      categoryName: item.categoryName,
+      unitOfMeasure: item.unitOfMeasure,
+      warehouseType: item.warehouseType,
+      minStockLevel: item.minStockLevel,
+      maxStockLevel: item.maxStockLevel,
+      currentStock: item.totalQuantity,
+      stockStatus: item.stockStatus,
+      isTool: item.isTool,
+    };
+    setEditingItem(itemMaster);
     setIsCreateModalOpen(true);
   };
 
@@ -137,7 +151,7 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_items || 0}</div>
+            <div className="text-2xl font-bold">{stats?.totalItems || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -148,7 +162,7 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats?.low_stock_count || 0}</div>
+            <div className="text-2xl font-bold text-red-600">{stats?.lowStockCount || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -159,7 +173,7 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats?.expiring_soon_count || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats?.expiringWithin30Days || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -170,7 +184,7 @@ export default function InventoryPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {(stats?.total_inventory_value || 0).toLocaleString('vi-VN')} ₫
+              {(stats?.totalValue || 0).toLocaleString('vi-VN')} ₫
             </div>
           </CardContent>
         </Card>
@@ -229,23 +243,23 @@ export default function InventoryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {inventory.map((item) => (
-                        <tr key={item.item_master_id} className="border-b hover:bg-gray-50">
+                      {inventory.map((item: InventorySummary) => (
+                        <tr key={item.itemMasterId} className="border-b hover:bg-gray-50">
                           <td className="p-3">
-                            <span className="font-mono text-sm">{item.item_code}</span>
+                            <span className="font-mono text-sm">{item.itemCode}</span>
                           </td>
-                          <td className="p-3 font-medium">{item.item_name}</td>
-                          <td className="p-3">{getWarehouseTypeBadge(item.warehouse_type)}</td>
-                          <td className="p-3">{item.category?.name || '-'}</td>
+                          <td className="p-3 font-medium">{item.itemName}</td>
+                          <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
+                          <td className="p-3">{item.categoryName || '-'}</td>
                           <td className="p-3 text-right">
-                            <span className={`font-bold ${item.stock_status === 'LOW_STOCK' ? 'text-red-600' : ''}`}>
-                              {item.total_quantity_on_hand} {item.unit_of_measure}
+                            <span className={`font-bold ${item.stockStatus === 'LOW_STOCK' ? 'text-red-600' : ''}`}>
+                              {item.totalQuantity} {item.unitOfMeasure}
                             </span>
                           </td>
                           <td className="p-3 text-right text-sm text-gray-600">
-                            {item.min_stock_level} / {item.max_stock_level}
+                            {item.minStockLevel} / {item.maxStockLevel}
                           </td>
-                          <td className="p-3">{getStockStatusBadge(item.stock_status)}</td>
+                          <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
                           <td className="p-3 text-right space-x-2">
                             <Button
                               variant="ghost"
@@ -257,7 +271,7 @@ export default function InventoryPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(item.item_master_id)}
+                              onClick={() => handleDelete(item.itemMasterId)}
                             >
                               <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
                             </Button>
