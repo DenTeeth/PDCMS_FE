@@ -13,9 +13,15 @@ import {
   faTimesCircle,
   faSnowflake,
   faWarehouse,
+  faHistory,
+  faArrowUp,
+  faArrowDown,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryService, type ItemMasterV1, type ItemBatchV1 } from '@/services/inventoryService';
 import { useQuery } from '@tanstack/react-query';
+
+// Import storage service for transaction history
+import { storageService, type StorageTransaction, type StorageTransactionItem } from '@/services/storageService';
 
 interface ItemDetailModalProps {
   isOpen: boolean;
@@ -39,6 +45,22 @@ export default function ItemDetailModal({
   const { data: batches = [], isLoading: loadingBatches } = useQuery({
     queryKey: ['itemBatches', itemId],
     queryFn: () => inventoryService.getBatchesByItemId(itemId!),
+    enabled: !!itemId,
+  });
+
+  // Fetch transaction history for this item
+  const { data: transactions = [], isLoading: loadingHistory } = useQuery({
+    queryKey: ['itemHistory', itemId],
+    queryFn: async () => {
+      if (!itemId) return [];
+      // Get all transactions and filter by itemMasterId
+      const allTransactions = await storageService.getAll({});
+      return allTransactions.filter((tx: StorageTransaction) => 
+        tx.items?.some((item: StorageTransactionItem) => item.itemMasterId === itemId)
+      ).sort((a: StorageTransaction, b: StorageTransaction) => 
+        new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+      );
+    },
     enabled: !!itemId,
   });
 
@@ -125,7 +147,7 @@ export default function ItemDetailModal({
           <div className="text-center py-8 text-red-500">Không tìm thấy vật tư</div>
         ) : (
           <Tabs defaultValue="info" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="info" className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
                 Thông tin
@@ -133,6 +155,10 @@ export default function ItemDetailModal({
               <TabsTrigger value="batches" className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faBoxes} className="h-4 w-4" />
                 Danh sách lô hàng ({batches.length})
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faHistory} className="h-4 w-4" />
+                Lịch sử ({transactions.length})
               </TabsTrigger>
             </TabsList>
 
@@ -310,13 +336,123 @@ export default function ItemDetailModal({
                       <div>
                         <p className="text-sm text-gray-600">Tổng tồn kho</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {batches.reduce((sum, b) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
+                          {batches.reduce((sum: number, b: ItemBatchV1) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Giá trị tồn</p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {formatCurrency(batches.reduce((sum, b) => sum + (b.quantityOnHand * b.importPrice), 0))}
+                          {formatCurrency(batches.reduce((sum: number, b: ItemBatchV1) => sum + (b.quantityOnHand * b.importPrice), 0))}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab 3: Lịch sử xuất nhập */}
+            <TabsContent value="history" className="mt-6">
+              {loadingHistory ? (
+                <div className="text-center py-8">Đang tải lịch sử...</div>
+              ) : transactions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <FontAwesomeIcon icon={faHistory} className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Chưa có lịch sử xuất nhập</p>
+                  <p className="text-sm mt-1">Vật tư này chưa được sử dụng trong giao dịch nào</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                    <p className="font-medium text-blue-800">
+                      📜 Lịch sử các giao dịch xuất/nhập kho của vật tư này
+                    </p>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full border">
+                      <thead className="bg-slate-100">
+                        <tr>
+                          <th className="text-left p-3 border">Ngày</th>
+                          <th className="text-left p-3 border">Loại</th>
+                          <th className="text-left p-3 border">Mã phiếu</th>
+                          <th className="text-right p-3 border">Số lượng</th>
+                          <th className="text-left p-3 border">Số lô</th>
+                          <th className="text-left p-3 border">Người tạo</th>
+                          <th className="text-left p-3 border">Ghi chú</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map((tx: StorageTransaction) => {
+                          // Find items in this transaction that match our itemId
+                          const relevantItems = tx.items?.filter((item: StorageTransactionItem) => item.itemMasterId === itemId) || [];
+                          
+                          return relevantItems.map((item, idx) => (
+                            <tr 
+                              key={`${tx.transactionId}-${idx}`}
+                              className="hover:bg-gray-50 border"
+                            >
+                              <td className="p-3 border">
+                                <span className="text-sm">{formatDate(tx.transactionDate)}</span>
+                              </td>
+                              <td className="p-3 border">
+                                {tx.transactionType === 'IMPORT' ? (
+                                  <Badge className="bg-green-100 text-green-800 flex items-center gap-1 w-fit">
+                                    <FontAwesomeIcon icon={faArrowDown} className="w-3 h-3" />
+                                    Nhập kho
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1 w-fit">
+                                    <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3" />
+                                    Xuất kho
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3 border">
+                                <span className="font-mono text-sm">{tx.transactionCode || '-'}</span>
+                              </td>
+                              <td className="p-3 border text-right">
+                                <span className={`font-semibold ${tx.transactionType === 'IMPORT' ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {tx.transactionType === 'IMPORT' ? '+' : '-'}{item.quantityChange} {itemDetail?.unitOfMeasure}
+                                </span>
+                              </td>
+                              <td className="p-3 border">
+                                <span className="font-mono text-sm">{item.lotNumber || '-'}</span>
+                              </td>
+                              <td className="p-3 border">
+                                <span className="text-sm">{tx.createdByName || '-'}</span>
+                              </td>
+                              <td className="p-3 border">
+                                <span className="text-sm text-gray-600">{tx.notes || '-'}</span>
+                              </td>
+                            </tr>
+                          ));
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-sm text-gray-600">Tổng giao dịch</p>
+                        <p className="text-2xl font-bold text-blue-600">{transactions.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Lần nhập gần nhất</p>
+                        <p className="text-sm font-medium">
+                          {transactions.find((tx: StorageTransaction) => tx.transactionType === 'IMPORT')
+                            ? formatDate(transactions.find((tx: StorageTransaction) => tx.transactionType === 'IMPORT')?.transactionDate)
+                            : 'Chưa có'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Lần xuất gần nhất</p>
+                        <p className="text-sm font-medium">
+                          {transactions.find((tx: StorageTransaction) => tx.transactionType === 'EXPORT')
+                            ? formatDate(transactions.find((tx: StorageTransaction) => tx.transactionType === 'EXPORT')?.transactionDate)
+                            : 'Chưa có'}
                         </p>
                       </div>
                     </div>
