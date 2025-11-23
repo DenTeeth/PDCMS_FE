@@ -29,6 +29,7 @@ import CustomSelect from '@/components/ui/custom-select';
 import { OvertimeService } from '@/services/overtimeService';
 import { workShiftService } from '@/services/workShiftService';
 import { validateOvertimeForm, showOvertimeError } from '@/utils/overtimeErrorHandler';
+import { toast } from 'sonner';
 import {
   OvertimeRequest,
   OvertimeStatus,
@@ -124,17 +125,17 @@ export default function EmployeeOvertimeRequestsPage() {
     e.preventDefault();
     try {
       // Employee tạo cho chính mình - KHÔNG gửi employeeId (backend tự lấy từ JWT)
-      const requestData = {
-        employeeId: undefined, // ❌ KHÔNG gửi employeeId - backend sẽ tự lấy từ JWT token
+      const requestData: any = {
         workDate: formData.workDate,
         workShiftId: formData.workShiftId,
         reason: formData.reason
+        // ✅ KHÔNG gửi employeeId - backend tự động lấy từ JWT token
       };
 
       // Validate form data (không cần employeeId)
       const validationError = validateOvertimeForm(requestData);
       if (validationError) {
-        alert(validationError);
+        toast.error(validationError);
         return;
       }
 
@@ -146,7 +147,24 @@ export default function EmployeeOvertimeRequestsPage() {
           fullName: 'N/A' // User type doesn't have firstName/lastName
         }
       });
+
+      // Show loading toast
+      const loadingToast = toast.loading('Đang tạo yêu cầu làm thêm giờ...');
+
       const response = await OvertimeService.createOvertimeRequest(requestData);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      // Success notification
+      toast.success('Tạo yêu cầu làm thêm giờ thành công!', {
+        description: `Mã yêu cầu: ${response.requestId} - Trạng thái: ${response.status}`,
+        duration: 5000,
+      });
+
       setShowCreateForm(false);
       setFormData({
         employeeId: 0,
@@ -155,7 +173,6 @@ export default function EmployeeOvertimeRequestsPage() {
         reason: '',
       });
       loadOvertimeRequests();
-      alert(`Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nTrạng thái: ${response.status}`);
     } catch (error: any) {
       console.error('Error creating overtime request:', error);
       showOvertimeError(error);
@@ -166,12 +183,25 @@ export default function EmployeeOvertimeRequestsPage() {
     if (!selectedRequest) return;
 
     try {
+      if (!cancelReason.trim()) {
+        toast.error('Vui lòng nhập lý do hủy');
+        return;
+      }
+
+      const loadingToast = toast.loading('Đang hủy yêu cầu...');
+
       await OvertimeService.cancelOvertimeRequest(selectedRequest.requestId, cancelReason);
+
+      toast.dismiss(loadingToast);
+      toast.success('Hủy yêu cầu thành công!');
+
       setShowCancelModal(false);
       setCancelReason('');
+      setSelectedRequest(null);
       loadOvertimeRequests();
     } catch (error) {
       console.error('Error cancelling request:', error);
+      showOvertimeError(error);
     }
   };
 
@@ -187,12 +217,19 @@ export default function EmployeeOvertimeRequestsPage() {
 
     try {
       setProcessing(true);
+
+      const loadingToast = toast.loading('Đang duyệt yêu cầu...');
+
       await OvertimeService.approveOvertimeRequest(selectedRequest.requestId);
+
+      toast.dismiss(loadingToast);
+      toast.success('Duyệt yêu cầu thành công!', {
+        description: `Mã: ${selectedRequest.requestId}`,
+      });
 
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadOvertimeRequests();
-      alert('Đã duyệt yêu cầu làm thêm giờ thành công!');
     } catch (error: any) {
       console.error('Error approving request:', error);
       showOvertimeError(error);
@@ -203,13 +240,19 @@ export default function EmployeeOvertimeRequestsPage() {
 
   const handleReject = async () => {
     if (!selectedRequest || !rejectReason.trim()) {
-      alert('Vui lòng nhập lý do');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
 
     try {
       setProcessing(true);
+
+      const loadingToast = toast.loading('Đang từ chối yêu cầu...');
+
       await OvertimeService.rejectOvertimeRequest(selectedRequest.requestId, rejectReason);
+
+      toast.dismiss(loadingToast);
+      toast.success('Từ chối yêu cầu thành công!');
 
       setShowRejectModal(false);
       setSelectedRequest(null);

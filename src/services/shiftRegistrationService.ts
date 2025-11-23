@@ -342,19 +342,18 @@ class ShiftRegistrationService {
 
   /**
    * Get registrations for current user (employee)
-   * Uses different endpoints based on registration type:
-   * - Part-time-flex: GET /registrations/part-time-flex
-   * - General (all types): GET /registrations
    * 
-   * According to API spec: Returns array directly (NOT paginated) for employee view
-   * @param params Query parameters
-   * @param type Registration type filter ('part-time-flex' | 'all')
-   * @returns User's shift registrations (array OR paginated)
+   * ✅ UPDATED: Backend now supports pagination!
+   * API: GET /registrations/part-time-flex?page=0&size=10&sort=effectiveFrom,desc
+   * 
+   * @param params Query parameters (page, size, sortBy, sortDirection)
+   * @param type Registration type filter (ignored for now, always uses part-time-flex)
+   * @returns Paginated shift registrations
    */
   async getMyRegistrations(
     params: ShiftRegistrationQueryParams = {},
     type: 'part-time-flex' | 'all' = 'all'
-  ): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
+  ): Promise<PaginatedShiftRegistrationResponse> {
     const {
       page = 0,
       size = 10,
@@ -365,15 +364,13 @@ class ShiftRegistrationService {
 
     const axiosInstance = apiClient.getAxiosInstance();
 
-    // Use different endpoints based on type
-    const endpoint = type === 'part-time-flex'
-      ? '/registrations/part-time-flex'
-      : this.endpoint;
+    // ✅ UPDATED: Backend now has /part-time-flex endpoint with pagination
+    const endpoint = `${this.endpoint}/part-time-flex`;
 
-    console.log(`📡 [getMyRegistrations] Fetching ${type} registrations from ${endpoint}...`);
+    console.log(`📡 [getMyRegistrations] Fetching registrations from ${endpoint}...`);
 
     try {
-      const response = await axiosInstance.get(endpoint, {
+      const response = await axiosInstance.get<PaginatedShiftRegistrationResponse>(endpoint, {
         params: {
           page,
           size,
@@ -382,37 +379,18 @@ class ShiftRegistrationService {
         }
       });
 
-      console.log('📥 [getMyRegistrations] Response:', {
+      console.log('✅ [getMyRegistrations] Success:', {
         endpoint,
         status: response.status,
-        dataType: Array.isArray(response.data) ? 'array' : 'object',
-        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : 'N/A'
+        totalElements: response.data.totalElements,
+        totalPages: response.data.totalPages,
+        currentPage: response.data.pageable?.pageNumber ?? page,
+        itemsInPage: response.data.content?.length ?? 0
       });
 
-      // Handle both response structures
-      // Case 1: Direct array response (Employee view, Admin view)
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
+      // Backend now ALWAYS returns Spring Data Page object
+      return response.data;
 
-      // Case 2: Wrapped array response { statusCode, data: [...] }
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
-
-      // Case 3: Paginated response { content: [...], totalPages, ... }
-      if (response.data?.content && Array.isArray(response.data.content)) {
-        return response.data;
-      }
-
-      // Case 4: Wrapped paginated response { statusCode, data: { content: [...] } }
-      if (response.data?.data?.content && Array.isArray(response.data.data.content)) {
-        return response.data.data;
-      }
-
-      // Fallback: return empty array
-      console.warn('⚠️ [getMyRegistrations] Unexpected response structure, returning empty array');
-      return [];
     } catch (error: any) {
       console.error('❌ [getMyRegistrations] Error:', {
         endpoint,
@@ -420,7 +398,27 @@ class ShiftRegistrationService {
         status: error.response?.status,
         data: error.response?.data
       });
-      throw error;
+
+      // Return empty paginated response on error
+      return {
+        content: [],
+        pageable: {
+          pageNumber: page,
+          pageSize: size,
+          sort: { sorted: false, unsorted: true },
+          offset: 0,
+          paged: true,
+          unpaged: false
+        },
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+        first: true,
+        size: size,
+        number: page,
+        numberOfElements: 0,
+        empty: true
+      };
     }
   }
 

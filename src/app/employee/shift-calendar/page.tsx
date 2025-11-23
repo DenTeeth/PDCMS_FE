@@ -98,6 +98,7 @@ export default function ShiftCalendarPage() {
   console.log('Can view own:', canViewOwn);
   console.log('Is manager:', isManager);
   console.log('Can view shifts:', canViewShifts);
+  console.log('🔍 User employeeId:', user?.employeeId); // Debug employeeId
 
   // Load data
   useEffect(() => {
@@ -148,10 +149,12 @@ export default function ShiftCalendarPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading shift calendar data...');
 
       // Load work shifts
       const workShiftsData = await workShiftService.getAll();
       setWorkShifts(workShiftsData);
+      console.log('✅ Work shifts loaded:', workShiftsData.length);
 
       // Load employees if can view all or is manager
       if (canViewAll || isManager) {
@@ -159,8 +162,10 @@ export default function ShiftCalendarPage() {
           const employeeService = new EmployeeService();
           const employeesResponse = await employeeService.getEmployees({});
           setEmployees(employeesResponse.content || []);
+          console.log('✅ Employees loaded:', employeesResponse.content?.length || 0);
         } catch (error: any) {
           console.warn('Cannot load employees list:', error.message);
+          toast.warning('Không thể tải danh sách nhân viên');
           // Nếu không load được employees, vẫn tiếp tục với shifts
           setEmployees([]);
         }
@@ -169,6 +174,8 @@ export default function ShiftCalendarPage() {
       // Load shifts
       await loadShifts();
     } catch (error: any) {
+      console.error('❌ Error loading data:', error);
+      toast.error('Không thể tải dữ liệu lịch làm việc');
       handleError(error);
     } finally {
       setLoading(false);
@@ -177,19 +184,45 @@ export default function ShiftCalendarPage() {
 
   const loadShifts = async () => {
     try {
+      setLoading(true); // ⭐ Set loading state để hiển thị spinner
+
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
-      const shiftsData = await EmployeeShiftService.getShifts({
+      // Build params object
+      const params: any = {
         start_date: startDate,
         end_date: endDate,
-        employee_id: selectedEmployee || undefined,
-      });
+      };
 
+      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
+      if ((canViewAll || isManager) && selectedEmployee) {
+        params.employee_id = selectedEmployee;
+        console.log('🔍 Admin/Manager viewing employee_id:', selectedEmployee);
+      } else if (canViewOwn) {
+        // Employee with VIEW_SHIFTS_OWN:
+        // KHÔNG truyền employee_id - Backend tự động filter theo JWT token
+        console.log('🔍 Employee with VIEW_SHIFTS_OWN - Backend will auto-filter by JWT token');
+      }
+
+      console.log('🔍 API params:', params);
+      console.log('🔄 Fetching shifts from API...');
+
+      const shiftsData = await EmployeeShiftService.getShifts(params);
+
+      console.log('✅ Shifts loaded:', shiftsData.length, 'shifts');
+      console.log('📊 Shifts data:', shiftsData);
       setShifts(shiftsData);
+
+      if (shiftsData.length === 0) {
+        toast.info(`Không có ca làm việc nào trong tháng ${format(currentDate, 'MM/yyyy')}`);
+      }
     } catch (error: any) {
-      console.error('Error loading shifts:', error);
+      console.error('❌ Error loading shifts:', error);
+      toast.error('Không thể tải danh sách ca làm việc');
       handleError(error);
+    } finally {
+      setLoading(false); // ⭐ Clear loading state
     }
   };
 
@@ -205,23 +238,35 @@ export default function ShiftCalendarPage() {
       setSummaryLoading(true);
       setSummaryError(null);
 
-      console.log('Loading summary with params:', {
+      // Build params object for summary
+      const params: any = {
         start_date: summaryDateRange.startDate,
         end_date: summaryDateRange.endDate,
-        employee_id: selectedEmployee || undefined,
-      });
+      };
 
-      const summaryData = await EmployeeShiftService.getShiftSummary({
-        start_date: summaryDateRange.startDate,
-        end_date: summaryDateRange.endDate,
-        ...(selectedEmployee && { employee_id: selectedEmployee }),
-      });
+      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
+      if ((canViewAll || isManager) && selectedEmployee) {
+        params.employee_id = selectedEmployee;
+      }
+      // Nếu VIEW_SHIFTS_OWN: KHÔNG truyền employee_id, backend tự filter
 
-      console.log('Summary data received:', summaryData);
+      console.log('Loading summary with params:', params);
+
+      const summaryData = await EmployeeShiftService.getShiftSummary(params);
+
+      console.log('✅ Summary data received:', summaryData);
       setSummaryData(summaryData);
+
+      if (summaryData.length > 0) {
+        const totalShifts = summaryData.reduce((sum, item) => sum + item.total_shifts, 0);
+        toast.success(`Đã tải thống kê: ${totalShifts} ca làm việc`);
+      } else {
+        toast.info('Không có dữ liệu ca làm việc trong khoảng thời gian này');
+      }
     } catch (error: any) {
-      console.error('Error loading summary:', error);
+      console.error('❌ Error loading summary:', error);
       setSummaryError('Không thể tải dữ liệu thống kê');
+      toast.error('Không thể tải dữ liệu thống kê');
     } finally {
       setSummaryLoading(false);
     }
@@ -301,7 +346,10 @@ export default function ShiftCalendarPage() {
   // Handle create shift
   const handleCreateShift = async () => {
     try {
-      console.log('Creating shift:', createForm);
+      console.log('🔄 Creating shift:', createForm);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang tạo ca làm việc...");
 
       const shiftData = {
         employee_id: parseInt(createForm.employee_id),
@@ -310,7 +358,11 @@ export default function ShiftCalendarPage() {
         notes: createForm.notes || undefined,
       };
 
-      await EmployeeShiftService.createShift(shiftData);
+      const createdShift = await EmployeeShiftService.createShift(shiftData);
+      console.log('✅ Shift created:', createdShift);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
 
       // Reset form
       setCreateForm({
@@ -323,15 +375,18 @@ export default function ShiftCalendarPage() {
       // Close modal
       setShowCreateModal(false);
 
-      // Reload shifts
-      await loadShifts();
+      // Show success message với thông tin chi tiết
+      const employeeName = employees.find(emp => emp.employeeId === createForm.employee_id)?.fullName || 'nhân viên';
+      const shiftName = workShifts.find(ws => ws.workShiftId === createForm.work_shift_id)?.shiftName || createForm.work_shift_id;
+      toast.success(`Đã tạo ca làm cho ${employeeName} - ${shiftName} vào ngày ${format(new Date(createForm.work_date), 'dd/MM/yyyy')}`);
 
-      // Show success message
-      console.log('✅ Shift created successfully');
-      toast.success("Tạo ca làm việc thành công!");
+      // Reload shifts để hiển thị ca làm mới lên calendar
+      console.log('🔄 Reloading shifts to display new shift on calendar...');
+      await loadShifts();
+      console.log('✅ Calendar updated with new shift');
 
     } catch (error: any) {
-      console.error('Error creating shift:', error);
+      console.error('❌ Error creating shift:', error);
       handleCreateError(error);
     }
   };
@@ -370,14 +425,21 @@ export default function ShiftCalendarPage() {
     if (!selectedShift) return;
 
     try {
-      console.log('Updating shift:', selectedShift.employeeShiftId, updateForm);
+      console.log('🔄 Updating shift:', selectedShift.employeeShiftId, updateForm);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang cập nhật ca làm việc...");
 
       const updateData = {
         status: updateForm.status || undefined,
         notes: updateForm.notes || undefined,
       };
 
-      await EmployeeShiftService.updateShift(selectedShift.employeeShiftId, updateData);
+      const updatedShift = await EmployeeShiftService.updateShift(selectedShift.employeeShiftId, updateData);
+      console.log('✅ Shift updated:', updatedShift);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
 
       // Reset form
       setUpdateForm({
@@ -389,15 +451,19 @@ export default function ShiftCalendarPage() {
       setShowUpdateModal(false);
       setShowDetailModal(false);
 
-      // Reload shifts
-      await loadShifts();
+      // Show success message với thông tin chi tiết
+      const statusText = updateForm.status === 'COMPLETED' ? 'Hoàn thành' :
+        updateForm.status === 'CANCELLED' ? 'Đã hủy' :
+          updateForm.status === 'ABSENT' ? 'Vắng mặt' : updateForm.status;
+      toast.success(`Đã cập nhật ca làm thành: ${statusText}`);
 
-      // Show success message
-      console.log('✅ Shift updated successfully');
-      toast.success("Cập nhật ca làm việc thành công!");
+      // Reload shifts để hiển thị trạng thái mới lên calendar
+      console.log('🔄 Reloading shifts to display updated status on calendar...');
+      await loadShifts();
+      console.log('✅ Calendar updated with new status');
 
     } catch (error: any) {
-      console.error('Error updating shift:', error);
+      console.error('❌ Error updating shift:', error);
       handleUpdateError(error);
     }
   };
@@ -430,23 +496,33 @@ export default function ShiftCalendarPage() {
     if (!selectedShift) return;
 
     try {
-      console.log('Deleting shift:', selectedShift.employeeShiftId);
+      console.log('🔄 Deleting shift:', selectedShift.employeeShiftId);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang hủy ca làm việc...");
 
       await EmployeeShiftService.deleteShift(selectedShift.employeeShiftId);
+      console.log('✅ Shift deleted');
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
 
       // Close modals
       setShowDeleteModal(false);
       setShowDetailModal(false);
 
-      // Reload shifts
-      await loadShifts();
-
       // Show success message
-      console.log('✅ Shift deleted successfully');
-      toast.success("Hủy ca làm việc thành công!");
+      const employeeName = selectedShift.employee?.fullName || 'nhân viên';
+      const shiftName = selectedShift.workShift?.shiftName || selectedShift.workShiftId;
+      toast.success(`Đã hủy ca làm của ${employeeName} - ${shiftName}`);
+
+      // Reload shifts để cập nhật calendar (xóa shift khỏi calendar)
+      console.log('🔄 Reloading shifts to remove deleted shift from calendar...');
+      await loadShifts();
+      console.log('✅ Calendar updated - shift removed');
 
     } catch (error: any) {
-      console.error('Error deleting shift:', error);
+      console.error('❌ Error deleting shift:', error);
       handleDeleteError(error);
     }
   };
