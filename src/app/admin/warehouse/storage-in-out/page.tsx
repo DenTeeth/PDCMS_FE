@@ -29,6 +29,10 @@ import CreateImportModal from '../components/CreateImportModal';
 import CreateExportModal from '../components/CreateExportModal';
 import StorageDetailModal from '../components/StorageDetailModal';
 import UpdateStorageNotesModal from '../components/UpdateStorageNotesModal';
+import EditImportModal from '../components/EditImportModal';
+import EditExportModal from '../components/EditExportModal';
+import EmptyState from '../components/EmptyState';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 type TransactionFilter = 'ALL' | 'IMPORT' | 'EXPORT' | 'ADJUSTMENT' | 'LOSS';
 
@@ -49,6 +53,9 @@ export default function StorageInOutPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<StorageTransaction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editImportId, setEditImportId] = useState<number | null>(null);
+  const [editExportId, setEditExportId] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; transaction: StorageTransaction | null }>({ isOpen: false, transaction: null });
 
   const queryClient = useQueryClient();
 
@@ -134,8 +141,15 @@ export default function StorageInOutPage() {
   };
 
   const handleEdit = (transaction: StorageTransaction) => {
-    setEditingTransaction(transaction);
-    setIsEditModalOpen(true);
+    if (transaction.transactionType === 'IMPORT') {
+      setEditImportId(transaction.transactionId);
+    } else if (transaction.transactionType === 'EXPORT') {
+      setEditExportId(transaction.transactionId);
+    } else {
+      // For ADJUSTMENT/LOSS: fallback to edit notes only
+      setEditingTransaction(transaction);
+      setIsEditModalOpen(true);
+    }
   };
 
   const handleUpdateNotes = async (notes: string) => {
@@ -148,8 +162,12 @@ export default function StorageInOutPage() {
   };
 
   const handleDelete = async (transaction: StorageTransaction) => {
-    if (confirm(`Bạn có chắc muốn xóa phiếu ${transaction.transactionCode}?`)) {
-      await deleteMutation.mutateAsync(transaction.transactionId);
+    setDeleteConfirm({ isOpen: true, transaction });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirm.transaction) {
+      await deleteMutation.mutateAsync(deleteConfirm.transaction.transactionId);
     }
   };
 
@@ -305,9 +323,13 @@ export default function StorageInOutPage() {
           {isLoading ? (
             <div className="text-center py-8">Đang tải...</div>
           ) : paginatedTransactions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Không tìm thấy giao dịch nào
-            </div>
+            <EmptyState
+              icon={faUpload}
+              title={debouncedSearch ? "Không tìm thấy giao dịch" : "Chưa có giao dịch nào"}
+              description={debouncedSearch ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc" : "Tạo phiếu nhập hoặc xuất kho đầu tiên"}
+              actionLabel={!debouncedSearch ? "Tạo phiếu nhập" : undefined}
+              onAction={!debouncedSearch ? () => setIsImportModalOpen(true) : undefined}
+            />
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -453,6 +475,27 @@ export default function StorageInOutPage() {
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleUpdateNotes}
         transaction={editingTransaction}
+      />
+      <EditImportModal
+        isOpen={!!editImportId}
+        onClose={() => setEditImportId(null)}
+        transactionId={editImportId}
+      />
+      <EditExportModal
+        isOpen={!!editExportId}
+        onClose={() => setEditExportId(null)}
+        transactionId={editExportId}
+      />
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, transaction: null })}
+        onConfirm={confirmDelete}
+        title="Xác nhận xóa phiếu"
+        description={`Bạn có chắc chắc muốn xóa phiếu ${deleteConfirm.transaction?.transactionCode}? Hành động này không thể khôi phục.`}
+        confirmLabel="Xóa"
+        variant="destructive"
       />
     </div>
   );
