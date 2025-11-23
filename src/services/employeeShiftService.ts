@@ -67,7 +67,7 @@ export class EmployeeShiftService {
     sort?: string;
   }): Promise<EmployeeShift[]> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.start_date) {
       queryParams.append('start_date', params.start_date);
     }
@@ -90,7 +90,7 @@ export class EmployeeShiftService {
       queryParams.append('sort', params.sort);
     }
 
-    const url = queryParams.toString() 
+    const url = queryParams.toString()
       ? `${this.BASE_URL}?${queryParams.toString()}`
       : this.BASE_URL;
 
@@ -102,17 +102,26 @@ export class EmployeeShiftService {
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<PaginatedResponse<EmployeeShiftApiResponse>>(url);
-    
+
     console.log('✅ EmployeeShiftService.getShifts - Response:', {
       status: response.status,
-      data: response.data
+      totalElements: response.data.totalElements,
+      totalPages: response.data.totalPages,
+      contentLength: response.data.content?.length || 0,
+      firstShift: response.data.content?.[0] || null,
+      allContent: response.data.content // ⭐ Log full data để debug
     });
-    
+
     // Convert API response to frontend format
-    const convertedShifts = (response.data.content || []).map(apiShift => 
+    const convertedShifts = (response.data.content || []).map(apiShift =>
       this.convertApiResponse(apiShift)
     );
-    
+
+    console.log('📊 Converted shifts:', {
+      count: convertedShifts.length,
+      shifts: convertedShifts
+    });
+
     return convertedShifts;
   }
 
@@ -136,11 +145,11 @@ export class EmployeeShiftService {
     employee_id?: number;
   }): Promise<ShiftSummaryResponse> {
     const queryParams = new URLSearchParams();
-    
+
     // start_date và end_date là bắt buộc
     queryParams.append('start_date', params.start_date);
     queryParams.append('end_date', params.end_date);
-    
+
     // employee_id là optional
     if (params.employee_id) {
       queryParams.append('employee_id', params.employee_id.toString());
@@ -152,9 +161,9 @@ export class EmployeeShiftService {
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get(url);
-    
+
     console.log('Summary API Response:', response.data);
-    
+
     // Handle both wrapped and direct response formats
     if (response.data && Array.isArray(response.data)) {
       // Direct array response
@@ -171,14 +180,14 @@ export class EmployeeShiftService {
 
   // Helper methods for backward compatibility
   static async getShiftsByDate(date: string): Promise<EmployeeShift[]> {
-    const response = await this.getShifts({ 
-      start_date: date, 
-      end_date: date 
+    const response = await this.getShifts({
+      start_date: date,
+      end_date: date
     });
     return response;
   }
 
-  static   async getShiftsByDateRange(
+  static async getShiftsByDateRange(
     startDate: string,
     endDate: string,
     employeeId?: number

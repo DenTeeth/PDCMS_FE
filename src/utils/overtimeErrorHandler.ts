@@ -4,6 +4,7 @@
  */
 
 import { OvertimeErrorCode } from '@/types/overtime';
+import { toast } from 'sonner';
 
 export interface OvertimeError {
   status: number;
@@ -76,7 +77,11 @@ export const showOvertimeError = (error: any): void => {
     userMessage: message
   });
 
-  alert(message);
+  // Show error toast with appropriate styling
+  toast.error('Lỗi', {
+    description: message,
+    duration: 5000,
+  });
 };
 
 export const validateOvertimeForm = (formData: {
