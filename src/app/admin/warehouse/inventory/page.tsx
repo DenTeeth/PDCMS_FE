@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import EmptyState from '../components/EmptyState';
+import ConfirmDialog from '../components/ConfirmDialog';
 import {
   faPlus,
   faSearch,
@@ -52,6 +54,7 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState<ItemMasterV1 | null>(null);
   const [viewingItemId, setViewingItemId] = useState<number | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; itemId: number | null; itemName: string }>({ isOpen: false, itemId: null, itemName: '' });
 
   // Dashboard Stats - API V1
   const { data: stats } = useQuery({
@@ -97,9 +100,14 @@ export default function InventoryPage() {
     },
   });
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc muốn xóa vật tư này?')) return;
-    await deleteMutation.mutateAsync(id);
+  const handleDelete = async (id: number, itemName: string) => {
+    setDeleteConfirm({ isOpen: true, itemId: id, itemName });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirm.itemId) {
+      await deleteMutation.mutateAsync(deleteConfirm.itemId);
+    }
   };
 
   const handleEdit = (item: InventorySummary) => {
@@ -255,10 +263,13 @@ export default function InventoryPage() {
               {isLoading ? (
                 <div className="text-center py-8">Đang tải...</div>
               ) : inventory.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FontAwesomeIcon icon={faBoxes} className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Không tìm thấy vật tư</p>
-                </div>
+                <EmptyState
+                  icon={faBoxes}
+                  title={tabState.searchQuery ? "Không tìm thấy vật tư" : "Chưa có vật tư nào"}
+                  description={tabState.searchQuery ? "Thử thay đổi từ khóa tìm kiếm" : "Bắt đầu thêm vật tư mới vào kho"}
+                  actionLabel={!tabState.searchQuery ? "Thêm vật tư" : undefined}
+                  onAction={!tabState.searchQuery ? () => setIsCreateModalOpen(true) : undefined}
+                />
               ) : (
                 <>
                   <div className="overflow-x-auto">
@@ -337,7 +348,7 @@ export default function InventoryPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(item.itemMasterId)}
+                              onClick={() => handleDelete(item.itemMasterId, item.itemName)}
                               title="Xóa"
                             >
                               <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
@@ -409,6 +420,17 @@ export default function InventoryPage() {
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         itemId={viewingItemId}
+      />
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, itemId: null, itemName: '' })}
+        onConfirm={confirmDelete}
+        title="Xác nhận xóa vật tư"
+        description={`Bạn có chắc chắn muốn xóa vật tư "${deleteConfirm.itemName}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa"
+        variant="destructive"
       />
     </div>
   );

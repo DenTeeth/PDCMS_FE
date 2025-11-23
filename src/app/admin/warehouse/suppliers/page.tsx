@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { toast } from 'sonner';
 import {
   faPlus,
   faSearch,
@@ -32,6 +33,9 @@ import {
 import { formatDate, getStatusColor, getStatusLabel } from '@/utils/formatters';
 import SupplierFormModal from '../components/SupplierFormModal';
 import SupplierDetailModal from '../components/SupplierDetailModal';
+import EmptyState from '../components/EmptyState';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { supplierService } from '@/services/supplierService';
 
 export default function SuppliersPage() {
   // Pagination & Search state
@@ -47,6 +51,7 @@ export default function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<SupplierDetailResponse | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<SupplierSummaryResponse | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; supplierId: number | null; supplierName: string }>({ isOpen: false, supplierId: null, supplierName: '' });
 
   // Debounce search
   useEffect(() => {
@@ -116,9 +121,22 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc muốn xóa nhà cung cấp này?')) return;
-    deleteMutation.mutate(id);
+  const handleDelete = async (supplierId: number, supplierName: string) => {
+    setDeleteConfirm({ isOpen: true, supplierId, supplierName });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.supplierId) return;
+    try {
+      await supplierService.delete(deleteConfirm.supplierId);
+      toast.success('Đã xóa nhà cung cấp thành công');
+      // Trigger re-fetch by resetting page
+      setPage(0);
+      setDeleteConfirm({ isOpen: false, supplierId: null, supplierName: '' });
+    } catch (error: any) {
+      console.error('Error deleting supplier:', error);
+      toast.error(error.response?.data?.message || 'Không thể xóa nhà cung cấp');
+    }
   };
 
   const handleViewDetail = async (supplier: SupplierSummaryResponse) => {
@@ -231,10 +249,13 @@ export default function SuppliersPage() {
           {isLoading ? (
             <div className="text-center py-8">Đang tải...</div>
           ) : suppliers.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FontAwesomeIcon icon={faUsers} className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Không tìm thấy nhà cung cấp</p>
-            </div>
+            <EmptyState
+              icon={faUsers}
+              title={debouncedSearch ? "Không tìm thấy nhà cung cấp" : "Chưa có nhà cung cấp"}
+              description={debouncedSearch ? "Thử thay đổi từ khóa tìm kiếm" : "Thêm nhà cung cấp đầu tiên"}
+              actionLabel={!debouncedSearch ? "Thêm nhà cung cấp" : undefined}
+              onAction={!debouncedSearch ? () => handleOpenFormModal() : undefined}
+            />
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -293,7 +314,7 @@ export default function SuppliersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(supplier.supplierId)}
+                            onClick={() => handleDelete(supplier.supplierId, supplier.supplierName)}
                           >
                             <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
                           </Button>
@@ -364,6 +385,17 @@ export default function SuppliersPage() {
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         supplier={viewingSupplier}
+      />
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, supplierId: null, supplierName: '' })}
+        onConfirm={confirmDelete}
+        title="Xác nhận xóa nhà cung cấp"
+        description={`Bạn có chắc chắc muốn xóa nhà cung cấp "${deleteConfirm.supplierName}"? Xóa NCC sẽ ảnh hưởng đến lịch sử nhập hàng.`}
+        confirmLabel="Xóa"
+        variant="destructive"
       />
     </div>
   );
