@@ -122,10 +122,6 @@ export default function CreateExportModal({
     mutation.mutate(payload);
   };
 
-  const calculateTotalValue = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.import_price), 0);
-  };
-
   const getDaysUntilExpiry = (expiryDate?: string) => {
     if (!expiryDate) return null;
     const today = new Date();
@@ -226,11 +222,10 @@ export default function CreateExportModal({
                     <thead className="bg-slate-100">
                       <tr className="text-xs font-semibold text-slate-700">
                         <th className="p-3 text-left w-[5%]">STT</th>
-                        <th className="p-3 text-left w-[25%]">Vật Tư</th>
-                        <th className="p-3 text-left w-[15%]">Số Lô</th>
-                        <th className="p-3 text-left w-[12%]">Số Lượng</th>
-                        <th className="p-3 text-left w-[15%]">Giá Trị</th>
-                        <th className="p-3 text-left w-[18%]">Hạn Sử Dụng</th>
+                        <th className="p-3 text-left w-[30%]">Vật Tư</th>
+                        <th className="p-3 text-left w-[20%]">Số Lô</th>
+                        <th className="p-3 text-left w-[15%]">Số Lượng</th>
+                        <th className="p-3 text-left w-[20%]">Hạn Sử Dụng</th>
                         <th className="p-3 text-center w-[10%]">Hành Động</th>
                       </tr>
                     </thead>
@@ -249,14 +244,6 @@ export default function CreateExportModal({
                             </Badge>
                           </td>
                           <td className="p-3 font-semibold">{item.quantity}</td>
-                          <td className="p-3">
-                            <div className="text-sm">
-                              {(item.quantity * item.import_price).toLocaleString('vi-VN')} đ
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {item.import_price.toLocaleString('vi-VN')} đ/đvt
-                            </div>
-                          </td>
                           <td className="p-3">
                             {getExpiryBadge(item.expiry_date)}
                           </td>
@@ -283,16 +270,6 @@ export default function CreateExportModal({
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-slate-100 border-t-2">
-                      <tr>
-                        <td colSpan={4} className="p-3 text-right font-semibold">
-                          Tổng Giá Trị:
-                        </td>
-                        <td colSpan={3} className="p-3 font-bold text-blue-600">
-                          {calculateTotalValue().toLocaleString('vi-VN')} đ
-                        </td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
               )}

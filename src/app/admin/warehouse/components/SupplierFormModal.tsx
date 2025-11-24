@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CreateSupplierRequest, UpdateSupplierRequest, SupplierDetailResponse } from '@/types/supplier';
-import { inventoryService } from '@/services/inventoryService';
+import { inventoryService, InventorySummary } from '@/services/inventoryService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faBox } from '@fortawesome/free-solid-svg-icons';
 
@@ -39,14 +39,16 @@ export default function SupplierFormModal({
   const [itemSearchQuery, setItemSearchQuery] = useState('');
 
   // Fetch all inventory items
-  const { data: allItems = [] } = useQuery({
+  const { data: allItemsResponse = [] } = useQuery({
     queryKey: ['inventorySummary', { search: itemSearchQuery }],
     queryFn: () => inventoryService.getSummary({ search: itemSearchQuery || undefined }),
     enabled: isOpen,
   });
 
-  // Filter items by search
-  const filteredItems = allItems;
+  // Extract array from Page<T> response
+  const filteredItems: InventorySummary[] = Array.isArray(allItemsResponse) 
+    ? allItemsResponse 
+    : (allItemsResponse as any)?.content || [];
 
   useEffect(() => {
     if (supplier) {

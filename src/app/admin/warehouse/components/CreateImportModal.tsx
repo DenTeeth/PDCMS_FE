@@ -65,13 +65,16 @@ export default function CreateImportModal({
   });
 
   // Fetch Suppliers
-  const { data: suppliersData } = useQuery({
+  const { data: suppliersResponse = [] } = useQuery({
     queryKey: ['suppliers'],
     queryFn: () => supplierServiceV3.getAll(),
     enabled: isOpen,
   });
 
-  const suppliers = suppliersData || [];
+  // Extract suppliers array from Page response
+  const suppliers = Array.isArray(suppliersResponse)
+    ? suppliersResponse
+    : (suppliersResponse as any)?.content || [];
 
   // Fetch Item Masters
   const { data: items = [] } = useQuery<ItemMaster[]>({
@@ -134,11 +137,6 @@ export default function CreateImportModal({
         return;
       }
 
-      if (item.import_price <= 0) {
-        toast.error(`Dòng ${i + 1}: Giá nhập phải > 0!`);
-        return;
-      }
-
       // HSD validation for COLD storage non-tools
       if (itemMaster?.warehouse_type === 'COLD' && !itemMaster.is_tool && !item.expiry_date) {
         toast.error(`Dòng ${i + 1}: Hạn sử dụng là bắt buộc cho kho lạnh (trừ dụng cụ)!`);
@@ -173,11 +171,6 @@ export default function CreateImportModal({
       return;
     }
     remove(index);
-  };
-
-  const calculateTotalValue = () => {
-    const items = watch('items');
-    return items.reduce((sum, item) => sum + (item.quantity * item.import_price), 0);
   };
 
   return (
@@ -251,11 +244,10 @@ export default function CreateImportModal({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[25%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[15%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[12%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[15%]">Giá Nhập *</th>
-                      <th className="p-3 text-left w-[18%]">Hạn Sử Dụng</th>
+                      <th className="p-3 text-left w-[30%]">Vật Tư *</th>
+                      <th className="p-3 text-left w-[20%]">Số Lô *</th>
+                      <th className="p-3 text-left w-[15%]">Số Lượng *</th>
+                      <th className="p-3 text-left w-[20%]">Hạn Sử Dụng</th>
                       <th className="p-3 text-left w-[10%]">Hành Động</th>
                     </tr>
                   </thead>
@@ -306,16 +298,6 @@ export default function CreateImportModal({
                           </td>
                           <td className="p-3">
                             <Input
-                              type="number"
-                              min="0"
-                              step="1000"
-                              {...register(`items.${index}.import_price`, { valueAsNumber: true })}
-                              placeholder="0"
-                              required
-                            />
-                          </td>
-                          <td className="p-3">
-                            <Input
                               type="date"
                               {...register(`items.${index}.expiry_date`)}
                               required={isHSDRequired}
@@ -341,16 +323,6 @@ export default function CreateImportModal({
                       );
                     })}
                   </tbody>
-                  <tfoot className="bg-slate-100 border-t-2">
-                    <tr>
-                      <td colSpan={6} className="p-3 text-right font-semibold">
-                        Tổng Giá Trị:
-                      </td>
-                      <td className="p-3 font-bold text-emerald-600">
-                        {calculateTotalValue().toLocaleString('vi-VN')} đ
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
             </div>

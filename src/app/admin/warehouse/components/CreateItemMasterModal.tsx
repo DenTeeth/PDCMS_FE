@@ -184,8 +184,10 @@ export default function CreateItemMasterModal({
                   <SelectValue placeholder="Chọn nhóm" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>
+                  {categories.map((cat, idx) => (
+                    <SelectItem 
+                      key={`cat-${cat.id}-${idx}`} 
+                      value={String(cat.id || 0)}>
                       {cat.name}
                     </SelectItem>
                   ))}
@@ -227,14 +229,14 @@ export default function CreateItemMasterModal({
               }
               className="flex gap-6"
             >
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-slate-50 cursor-pointer">
+              <div key="normal-warehouse" className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-slate-50 cursor-pointer">
                 <RadioGroupItem value="NORMAL" id="normal" />
                 <Label htmlFor="normal" className="cursor-pointer flex items-center gap-2">
                   <Box className="h-4 w-4 text-slate-600" />
                   Kho Thường
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-blue-50 cursor-pointer">
+              <div key="cold-warehouse" className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-blue-50 cursor-pointer">
                 <RadioGroupItem value="COLD" id="cold" />
                 <Label htmlFor="cold" className="cursor-pointer flex items-center gap-2">
                   <Snowflake className="h-4 w-4 text-blue-600" />
@@ -300,7 +302,7 @@ export default function CreateItemMasterModal({
             </Label>
             <Textarea
               id="notes"
-              value={formData.notes}
+              value={formData.notes || ''}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Nhập ghi chú (nếu có)"
               rows={3}

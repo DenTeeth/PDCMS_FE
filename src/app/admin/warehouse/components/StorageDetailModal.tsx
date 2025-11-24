@@ -47,10 +47,6 @@ export default function StorageDetailModal({
     return new Date(dateString).toLocaleString('vi-VN');
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' ₫';
-  };
-
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'IMPORT': return 'bg-green-100 text-green-800';
@@ -214,7 +210,7 @@ export default function StorageDetailModal({
                         <th className="p-3 text-left">Số lô</th>
                         <th className="p-3 text-right">Số lượng</th>
                         {transaction.transactionType === 'IMPORT' && (
-                          <th className="p-3 text-center">Hạn dùng</th>
+                          <th className="p-3 text-center bg-amber-50 text-amber-900 font-bold">⚠️ Hạn sử dụng</th>
                         )}
                       </tr>
                     </thead>
