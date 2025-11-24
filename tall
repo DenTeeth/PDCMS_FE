@@ -1,0 +1,33 @@
+  Admin_UI_Update                          [m f8d6800 [behind 8] Merge branch '302_Test_FixUI' into API_Test_UI_Fix
+  CRUD_Employee                            [m 5c45f88 FE/Admin/Update specialization v1 . Implement specialization in create new doctor/nurse
+  Dentist_codebase                         [m 39b924f Merge branch 'adminRole' into Manager
+  Develop                                  [m e0ecb70 Debug solving accessToken and refreshToken
+  Develop_03                               [m b4506b3 [behind 2] refactor: Remove receptionist folder and consolidate into employee role
+  Develop_2                                [m 3e5cc7f BIG FIX. BE fixed and added new fields
+  Login                                    [m 68ba7eb Integrate API & handling RefreToken/AccessToken
+  Manager                                  [m 68ba7eb Integrate API & handling RefreToken/AccessToken
+  Manager_UI_Fix                           [m 0f0adb4 Add Manager Feedback & Ratings page with all requested features
+* [32mMerge_501_with_warehouse                 [m 425ef9c Update package-lock.json after merging both radix-ui packages
+  Receptionist_CustomerCareService         [m 739a9ba CustomerContactDetail
+  Receptionist_Develop                     [m 7756f45 [behind 2] feat: Add feedback management components and services
+  Roles-management                         [m 351dcd4 FE/Roles-management / Upload delete roles message and paginations for employee and patient pages. Integrate API update patient information
+  User                                     [m 39b924f Merge branch 'adminRole' into Manager
+  adminRole                                [m 39b924f Merge branch 'adminRole' into Manager
+  backup-develop-03                        [m 64863a1 backup: Save Develop_03 state before merge
+  backup/feat/FE-301-manage-work-shift     [m c0b63c0 refactor: Remove receptionist folder and consolidate into employee role
+  debug/Migrate-structure                  [m 596b27b Authorize BasedRole before login
+  debug/getALL_modules                     [m d4deac7 Remove statusCode from FE schema
+  debug/permissions_Authorization          [m e0ecb70 Debug solving accessToken and refreshToken
+  fe_305_Time_Off_Request                  [m de8e3ae [behind 5] Merge API_Test_UI_Fix into fe_305_Time_Off_Request - Resolved conflicts: kept redirect for part_time_management and array response for work-slots
+  feat/303-P2-hot-fix                      [m c01915a [behind 3] no message
+  feat/304-Overtimme-Request-Management    [m 82c58b0 update dynamic sidebar
+  feat/FE-301-manage-work-shift            [m c7062b9 feat: Implement Time Off Management System
+  feat/FE-302-Employee-Shift-Management    [m 5317347 fix: Prevent 400 errors by adding validation before API calls
+  feat/FE-303-P2-Manage-Registration       [m 20ff3bc feat: Implement Fixed Shift Registration (FE-303v2) and improve UI/UX
+  feat/FE-303-manage-part-time-registration[m 78ba774 feat(admin): simplify Work Slots and Part-Time Registration pages
+  feat/FE-401-Room-Management              [m 3e5d3e4 feat: implement Room Management (Booking P1)
+  feat/FE-402-Dental-Services-Management   [m af72746 Hot fix
+  feat/FE-403-Appointments-Management      [m ccbbcd3 no message
+  feat/FE-403-hot-fix                      [m 3ea3730 Fix appointment creation: improve specialization matching, service category integration, and date range handling
+  feat/FE-501-Treatment-plan-module        [m a3399fa Fix: Update Service API to use Booking API, add missing BE permissions, update documentation
+  main                                     [m b940e35 [behind 2] Refactor: Migrate receptionist to employee structure with RBAC

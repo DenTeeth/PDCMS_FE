@@ -1227,13 +1227,53 @@ apiV3.interceptors.request.use((config) => {
 /**
  * ITEM MASTER SERVICE (V3 - Vật Tư Master Data)
  * ✅ Verified against Swagger API
+ * 
+ * Note: V3 API currently returns 500 error (BE issue documented in BE_OPEN_ISSUES.md)
+ * Fallback to V1 API (/api/v1/inventory) until BE fixes V3
  */
 export const itemMasterService = {
   getSummary: async (filter?: ItemMasterFilter): Promise<ItemMaster[]> => {
-    const response = await apiV3.get<ItemMaster[]>('/warehouse/summary', {
-      params: filter,
-    });
-    return response.data;
+    try {
+      // Try V3 API first (advanced features: stockStatus, totalQuantity, etc.)
+      const response = await apiV3.get<any>('/warehouse/summary', {
+        params: filter,
+      });
+      // V3 returns InventorySummaryResponse with content array
+      return response.data.content || response.data || [];
+    } catch (error: any) {
+      // Fallback to V1 API if V3 fails
+      console.warn('⚠️ V3 Warehouse API failed, falling back to V1 API:', error.message);
+      
+      // V1 API: GET /api/v1/inventory
+      const v1Response = await api.get<any>('/inventory', {
+        params: {
+          page: filter?.page || 0,
+          size: filter?.size || 100,
+          search: filter?.search,
+          warehouseType: filter?.warehouseType,
+          categoryId: filter?.categoryId,
+        },
+      });
+      
+      // V1 returns Page<ItemMasterResponse> with content array
+      const items = v1Response.data.content || [];
+      
+      // Map V1 response to V3 ItemMaster format
+      return items.map((item: any) => ({
+        itemMasterId: item.id || item.itemMasterId,
+        itemCode: item.itemCode,
+        itemName: item.itemName,
+        categoryName: item.category?.name || item.categoryName,
+        warehouseType: item.warehouseType,
+        unitName: item.unit?.name || item.unitName,
+        minStockLevel: item.minStockLevel,
+        maxStockLevel: item.maxStockLevel,
+        // V1 doesn't have these computed fields, set to defaults
+        totalQuantity: 0,
+        stockStatus: 'NORMAL',
+        nearestExpiryDate: null,
+      }));
+    }
   },
 
   getAll: async (filter?: ItemMasterFilter): Promise<PageResponse<ItemMaster>> => {

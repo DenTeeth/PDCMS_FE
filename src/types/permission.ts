@@ -163,6 +163,12 @@ export enum Permission {
   // Employee related (BE uses different naming)
   READ_ALL_EMPLOYEES = 'READ_ALL_EMPLOYEES', // ✅ Added - BE uses READ instead of VIEW
   READ_EMPLOYEE_BY_CODE = 'READ_EMPLOYEE_BY_CODE', // ✅ Added
+  
+  // Warehouse Management permissions (V23 - NEW MODULE)
+  VIEW_WAREHOUSE = 'VIEW_WAREHOUSE', // ✅ Added - View inventory summary and batches
+  CREATE_WAREHOUSE = 'CREATE_WAREHOUSE', // ✅ Added - Create item masters, import items
+  UPDATE_WAREHOUSE = 'UPDATE_WAREHOUSE', // ✅ Added - Update item masters, export items
+  DELETE_WAREHOUSE = 'DELETE_WAREHOUSE', // ✅ Added - Delete item masters
 }
 
 /**
