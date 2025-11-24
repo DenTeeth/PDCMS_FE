@@ -80,6 +80,18 @@ export default function EmployeeOvertimeRequestsPage() {
     reason: '',
   });
 
+  // Check if user already has PENDING or APPROVED overtime for selected date
+  const hasExistingOvertimeForDate = (date: string): boolean => {
+    if (!date || !user?.employeeId) return false;
+    return overtimeRequests.some(
+      req => req.workDate === date &&
+        req.employeeId === Number(user.employeeId) &&
+        (req.status === 'PENDING' || req.status === 'APPROVED')
+    );
+  };
+
+  const canSubmitOvertime = !hasExistingOvertimeForDate(formData.workDate);
+
   // Update formData when user changes
   useEffect(() => {
     if (user?.employeeId) {
@@ -532,6 +544,16 @@ export default function EmployeeOvertimeRequestsPage() {
                     min={new Date().toISOString().split('T')[0]}
                     required
                   />
+                  {formData.workDate && hasExistingOvertimeForDate(formData.workDate) && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ Bạn đã có đơn overtime cho ngày này rồi!
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Chỉ được gửi 1 đơn overtime cho mỗi ngày. Vui lòng kiểm tra danh sách đơn hiện tại.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -559,8 +581,12 @@ export default function EmployeeOvertimeRequestsPage() {
                 </div>
 
                 <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">
-                    Tạo yêu cầu
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={!canSubmitOvertime || !formData.workDate || !formData.workShiftId || !formData.reason}
+                  >
+                    {!canSubmitOvertime ? 'Đã có đơn cho ngày này' : 'Tạo yêu cầu'}
                   </Button>
                   <Button
                     type="button"

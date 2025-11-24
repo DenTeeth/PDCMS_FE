@@ -19,8 +19,6 @@ import {
   Search,
   Filter,
   RotateCcw,
-  ThumbsUp,
-  ThumbsDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -29,21 +27,19 @@ import { format, parseISO } from 'date-fns';
 import {
   ShiftRegistration,
   ShiftRegistrationQueryParams,
-  PaginatedShiftRegistrationResponse,
-  DayOfWeek
 } from '@/types/shiftRegistration';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 
-// Day labels mapping
+// Day labels mapping - Short version
 const getDayOfWeekLabel = (day: string): string => {
   const dayMap: Record<string, string> = {
-    'MONDAY': 'Thứ 2',
-    'TUESDAY': 'Thứ 3',
-    'WEDNESDAY': 'Thứ 4',
-    'THURSDAY': 'Thứ 5',
-    'FRIDAY': 'Thứ 6',
-    'SATURDAY': 'Thứ 7',
-    'SUNDAY': 'Chủ nhật'
+    'MONDAY': 'T2',
+    'TUESDAY': 'T3',
+    'WEDNESDAY': 'T4',
+    'THURSDAY': 'T5',
+    'FRIDAY': 'T6',
+    'SATURDAY': 'T7',
+    'SUNDAY': 'CN'
   };
   return dayMap[day] || day;
 };
@@ -170,6 +166,22 @@ export default function RegistrationRequestsPage() {
       );
       toast.success('Registration approved successfully!');
       setShowApproveModal(false);
+
+      // ✅ Refresh slot details to update quota immediately
+      const slotId = selectedRegistration.partTimeSlotId;
+      if (slotId) {
+        try {
+          const updatedDetails = await shiftRegistrationService.getSlotDetails(slotId);
+          setSlotDetailsMap(prev => ({
+            ...prev,
+            [slotId]: updatedDetails
+          }));
+          console.log('✅ Slot details refreshed after approval:', updatedDetails);
+        } catch (error) {
+          console.error('Failed to refresh slot details:', error);
+        }
+      }
+
       setSelectedRegistration(null);
       await fetchRegistrations();
     } catch (error: any) {
@@ -196,6 +208,22 @@ export default function RegistrationRequestsPage() {
       );
       toast.success('Registration rejected successfully!');
       setShowRejectModal(false);
+
+      // ✅ Refresh slot details to update quota immediately (in case rejection frees up slots)
+      const slotId = selectedRegistration.partTimeSlotId;
+      if (slotId) {
+        try {
+          const updatedDetails = await shiftRegistrationService.getSlotDetails(slotId);
+          setSlotDetailsMap(prev => ({
+            ...prev,
+            [slotId]: updatedDetails
+          }));
+          console.log('✅ Slot details refreshed after rejection:', updatedDetails);
+        } catch (error) {
+          console.error('Failed to refresh slot details:', error);
+        }
+      }
+
       setSelectedRegistration(null);
       setRejectReason('');
       await fetchRegistrations();
@@ -258,14 +286,13 @@ export default function RegistrationRequestsPage() {
       return false;
     }
 
-    // Search filter (search by registration ID, employee ID, shift name)
+    // Search filter (search by employee name, shift name)
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      const matchesId = reg.registrationId.toString().includes(search);
-      const matchesEmployeeId = reg.employeeId.toString().includes(search);
+      const matchesEmployeeName = reg.employeeName?.toLowerCase().includes(search);
       const matchesShiftName = reg.shiftName?.toLowerCase().includes(search);
 
-      if (!matchesId && !matchesEmployeeId && !matchesShiftName) {
+      if (!matchesEmployeeName && !matchesShiftName) {
         return false;
       }
     }
@@ -359,7 +386,7 @@ export default function RegistrationRequestsPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="search"
-                    placeholder="ID, Employee, Shift..."
+                    placeholder="Tên nhân viên, ca làm việc..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -410,14 +437,12 @@ export default function RegistrationRequestsPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b bg-gray-50">
-                      <th className="text-left p-3 font-medium">ID</th>
-                      <th className="text-left p-3 font-medium">Employee</th>
-                      <th className="text-left p-3 font-medium">Shift</th>
-                      <th className="text-left p-3 font-medium">Day</th>
-                      <th className="text-left p-3 font-medium">Period</th>
-                      <th className="text-left p-3 font-medium">Status</th>
-                      <th className="text-left p-3 font-medium">Created</th>
-                      <th className="text-left p-3 font-medium">Actions</th>
+                      <th className="text-left p-3 font-medium">Nhân viên</th>
+                      <th className="text-left p-3 font-medium">Ca làm</th>
+                      <th className="text-left p-3 font-medium">Thứ</th>
+                      <th className="text-left p-3 font-medium">Trạng thái</th>
+                      <th className="text-left p-3 font-medium">Đăng ký lúc</th>
+                      <th className="text-left p-3 font-medium">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -426,45 +451,21 @@ export default function RegistrationRequestsPage() {
 
                       return (
                         <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
-                          <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
                           <td className="p-3">
-                            <div>
-                              <div className="font-medium">ID: {registration.employeeId}</div>
-                              {registration.employeeName && (
-                                <div className="text-sm text-gray-500">{registration.employeeName}</div>
-                              )}
+                            <div className="font-medium text-gray-900">
+                              {registration.employeeName || `Nhân viên #${registration.employeeId}`}
                             </div>
                           </td>
                           <td className="p-3">
-                            <div className="text-sm">{registration.shiftName}</div>
-                            <div className="text-xs text-gray-500">{registration.workShiftId}</div>
+                            <div className="text-sm font-medium text-gray-900">{registration.shiftName}</div>
                           </td>
                           <td className="p-3">
-                            <Badge variant="outline">
-                              {getDayOfWeekLabel(registration.dayOfWeek)}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <div className="text-sm">
-                              <div>{formatDate(registration.effectiveFrom)}</div>
-                              <div className="text-gray-500">to {formatDate(registration.effectiveTo)}</div>
-                            </div>
+                            <span className="text-sm text-gray-700">
+                              {registration.dayOfWeek.split(',').map(d => getDayOfWeekLabel(d.trim())).join(', ')}
+                            </span>
                           </td>
                           <td className="p-3">
                             {getStatusBadge(registration.status)}
-                            {registration.processedBy && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                by {registration.processedBy}
-                                {registration.processedAt && (
-                                  <div>{formatDateTime(registration.processedAt)}</div>
-                                )}
-                              </div>
-                            )}
-                            {registration.reason && (
-                              <div className="text-xs text-red-600 mt-1 max-w-xs truncate" title={registration.reason}>
-                                {registration.reason}
-                              </div>
-                            )}
                           </td>
                           <td className="p-3 text-sm text-gray-600">
                             {formatDateTime(registration.createdAt)}
@@ -702,24 +703,23 @@ export default function RegistrationRequestsPage() {
               <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Employee ID</p>
-                    <p className="font-medium">{selectedRegistration.employeeId}</p>
+                    <p className="text-sm text-gray-600">Nhân viên</p>
+                    <p className="font-medium">{selectedRegistration.employeeName || `Nhân viên #${selectedRegistration.employeeId}`}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Shift</p>
+                    <p className="text-sm text-gray-600">Ca làm việc</p>
                     <p className="font-medium">{selectedRegistration.shiftName}</p>
-                    <p className="text-xs text-gray-500">{selectedRegistration.workShiftId}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Day of Week</p>
-                    <p className="font-medium">{getDayOfWeekLabel(selectedRegistration.dayOfWeek)}</p>
+                    <p className="text-sm text-gray-600">Thứ trong tuần</p>
+                    <p className="font-medium">{selectedRegistration.dayOfWeek.split(',').map(d => getDayOfWeekLabel(d.trim())).join(', ')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="text-sm text-gray-600">Trạng thái</p>
                     {getStatusBadge(selectedRegistration.status)}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Period</p>
+                    <p className="text-sm text-gray-600">Thời gian</p>
                     <p className="font-medium">
                       {formatDate(selectedRegistration.effectiveFrom)} - {formatDate(selectedRegistration.effectiveTo)}
                     </p>
