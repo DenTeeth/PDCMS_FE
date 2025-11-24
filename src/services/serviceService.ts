@@ -148,6 +148,59 @@ export class ServiceService {
         return response.data;
     }
 
+    // Get services for current doctor (V21.4 - NEW)
+    // GET /api/v1/booking/services/my-specializations
+    // Automatically filters services based on logged-in doctor's specializations
+    static async getServicesForCurrentDoctor(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
+        const params = new URLSearchParams();
+        
+        // Add pagination
+        params.append('page', String(filters.page || 0));
+        params.append('size', String(filters.size || 10));
+        
+        // Add sorting
+        if (filters.sortBy) {
+            params.append('sortBy', filters.sortBy);
+        }
+        if (filters.sortDirection) {
+            params.append('sortDirection', filters.sortDirection);
+        }
+        
+        // Add optional filters
+        if (filters.isActive !== undefined && filters.isActive !== '') {
+            params.append('isActive', filters.isActive);
+        }
+        if (filters.keyword) {
+            params.append('keyword', filters.keyword);
+        }
+        
+        const url = `${this.BASE_URL}/my-specializations?${params.toString()}`;
+        console.log('ServiceService.getServicesForCurrentDoctor - URL:', url);
+        console.log('ServiceService.getServicesForCurrentDoctor - Params:', Object.fromEntries(params));
+
+        const axios = apiClient.getAxiosInstance();
+        const response = await axios.get<any>(url);
+        console.log('ServiceService.getServicesForCurrentDoctor - Response:', response.data);
+
+        // BE returns response wrapped in { message, status, data: { content, pageable, ... } }
+        // Extract the actual Page data from response.data.data
+        const responseData = response.data;
+        
+        // Check if response is wrapped in { data: ... } (from BE docs example)
+        if (responseData.data && Array.isArray(responseData.data.content)) {
+            return responseData.data as ServiceListResponse;
+        }
+        
+        // If response.data is already the Page format (direct Spring Page response)
+        if (Array.isArray(responseData.content)) {
+            return responseData as ServiceListResponse;
+        }
+        
+        // Fallback: return as-is (might need adjustment)
+        console.warn('Unexpected response format from /my-specializations:', responseData);
+        return responseData as ServiceListResponse;
+    }
+
     // Activate service (Legacy - V1)
     // @deprecated Use toggleServiceStatus instead
     static async activateService(serviceId: number): Promise<Service> {
