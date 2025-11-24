@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Navigation from "@/components/layout/Navigation";
 import DynamicBreadcrumb from "@/components/ui/DynamicBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
+import { useTranslations } from "next-intl";
 
 interface Doctor {
 	id: number;
@@ -86,6 +89,8 @@ const doctors: Doctor[] = [
 ];
 
 export default function DoctorsPage() {
+	const t = useTranslations('Doctors');
+
 	return (
 		<>
 			<main className="min-h-screen bg-white">
@@ -93,9 +98,9 @@ export default function DoctorsPage() {
 				<section className="bg-gradient-to-r from-accent to-secondary py-10">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 						<DynamicBreadcrumb />
-						<h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-4">Our Medical Team</h1>
+						<h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-4">{t('title')}</h1>
 						<p className="text-gray-600 mt-2 max-w-2xl">
-							Experienced doctors with specialized training and the most modern equipment.
+							{t('subtitle')}
 						</p>
 					</div>
 				</section>
@@ -106,61 +111,61 @@ export default function DoctorsPage() {
 							{doctors.map((doctor) => (
 								<Card key={doctor.id} className="hover:shadow-lg transition-shadow duration-300">
 									<CardHeader className="text-center">
-												<div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
+										<div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
 											<span className="text-4xl text-white font-bold">
 												{doctor.name.split(' ').pop()?.charAt(0)}
 											</span>
 										</div>
 										<CardTitle className="text-xl text-gray-900">{doctor.name}</CardTitle>
-												<CardDescription className="text-primary font-semibold">
+										<CardDescription className="text-primary font-semibold">
 											{doctor.specialty}
 										</CardDescription>
 									</CardHeader>
 									<CardContent className="space-y-4">
 										<div>
-											<h4 className="font-semibold text-gray-900 mb-1">Experience:</h4>
+											<h4 className="font-semibold text-gray-900 mb-1">{t('experience')}</h4>
 											<p className="text-gray-600 text-sm">{doctor.experience}</p>
 										</div>
-										
+
 										<div>
-											<h4 className="font-semibold text-gray-900 mb-1">Education:</h4>
+											<h4 className="font-semibold text-gray-900 mb-1">{t('education')}</h4>
 											<p className="text-gray-600 text-sm">{doctor.education}</p>
 										</div>
-										
+
 										<div>
-											<h4 className="font-semibold text-gray-900 mb-1">Description:</h4>
+											<h4 className="font-semibold text-gray-900 mb-1">{t('description')}</h4>
 											<p className="text-gray-600 text-sm">{doctor.description}</p>
 										</div>
-										
+
 										<div>
-											<h4 className="font-semibold text-gray-900 mb-1">Schedule:</h4>
+											<h4 className="font-semibold text-gray-900 mb-1">{t('schedule')}</h4>
 											<ul className="text-gray-600 text-sm space-y-1">
 												{doctor.schedule.map((time, index) => (
 													<li key={index}>• {time}</li>
 												))}
 											</ul>
 										</div>
-										
+
 										<div>
-											<h4 className="font-semibold text-gray-900 mb-1">Languages:</h4>
+											<h4 className="font-semibold text-gray-900 mb-1">{t('languages')}</h4>
 											<div className="flex flex-wrap gap-1">
 												{doctor.languages.map((lang, index) => (
-													<span 
+													<span
 														key={index}
-																		className="px-2 py-1 bg-accent text-primary rounded-full text-xs"
+														className="px-2 py-1 bg-accent text-primary rounded-full text-xs"
 													>
 														{lang}
 													</span>
 												))}
 											</div>
 										</div>
-										
+
 										<div className="pt-4">
-											<Link 
+											<Link
 												href={`/appointment?doctor=${doctor.id}`}
-																className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-block text-center"
+												className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-block text-center"
 											>
-												Book Appointment
+												{t('bookAppointment')}
 											</Link>
 										</div>
 									</CardContent>
@@ -180,26 +185,26 @@ export default function DoctorsPage() {
 						</div>
 						<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 							<div className="text-center">
-										<div className="text-3xl font-bold text-primary mb-2">15+</div>
+								<div className="text-3xl font-bold text-primary mb-2">15+</div>
 								<p className="text-gray-600">Years average experience</p>
 							</div>
 							<div className="text-center">
-										<div className="text-3xl font-bold text-primary mb-2">10,000+</div>
+								<div className="text-3xl font-bold text-primary mb-2">10,000+</div>
 								<p className="text-gray-600">Patients treated</p>
 							</div>
 							<div className="text-center">
-										<div className="text-3xl font-bold text-primary mb-2">98%</div>
+								<div className="text-3xl font-bold text-primary mb-2">98%</div>
 								<p className="text-gray-600">Customer satisfaction rate</p>
 							</div>
 							<div className="text-center">
-										<div className="text-3xl font-bold text-primary mb-2">24/7</div>
+								<div className="text-3xl font-bold text-primary mb-2">24/7</div>
 								<p className="text-gray-600">Emergency support</p>
 							</div>
 						</div>
 					</div>
 				</section>
 			</main>
-            <Footer/>
+			<Footer />
 		</>
 	);
 }

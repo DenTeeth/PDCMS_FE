@@ -284,4 +284,20 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Warehouse V3 - Modern Animations */
+  @keyframes border-pulse {
+    0%, 100% {
+      border-color: rgb(251 191 36);
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3);
+    }
+    50% {
+      border-color: rgb(245 158 11);
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15);
+    }
+  }
+
+  .animate-border-pulse {
+    animation: border-pulse 2s ease-in-out infinite;
+  }
 }
