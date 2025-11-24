@@ -171,10 +171,9 @@ export default function EmployeesPage() {
         params.roleId = filterRole;
       }
 
-      // Add status filter if not 'all' - BE filter
-      if (filterStatus && filterStatus !== 'all') {
-        params.isActive = filterStatus === 'active';
-      }
+      // Note: BE endpoint /employees only returns active employees by default
+      // isActive filter is not needed for this endpoint (always active=true)
+      // If we need to show inactive employees, use /employees/admin/all endpoint
 
       console.log('Fetching employees with params:', params);
       const response = await employeeService.getEmployees(params);

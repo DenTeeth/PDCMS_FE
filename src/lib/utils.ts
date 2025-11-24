@@ -90,3 +90,67 @@ export function getEmployeeIdFromToken(token: string): string | null {
     return null;
   }
 }
+
+/**
+ * Extract patientCode from JWT token
+ * Backend now includes patient_code in token claims (Issue 3.3 - FIXED)
+ * @param token JWT token string
+ * @returns patientCode as string or null if not found
+ */
+export function getPatientCodeFromToken(token: string): string | null {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload) {
+      console.warn('⚠️ [getPatientCodeFromToken] Failed to decode token payload');
+      return null;
+    }
+
+    // Backend now includes patient_code in JWT claims (snake_case)
+    // Also check camelCase for backward compatibility
+    const patientCode = payload.patient_code || payload.patientCode || null;
+
+    if (patientCode) {
+      const patientCodeStr = String(patientCode).trim();
+      console.log('✅ [getPatientCodeFromToken] Found patientCode:', patientCodeStr);
+      return patientCodeStr;
+    } else {
+      console.warn('⚠️ [getPatientCodeFromToken] No patientCode found in token payload. Available fields:', Object.keys(payload));
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ [getPatientCodeFromToken] Failed to extract patientCode:', error);
+    return null;
+  }
+}
+
+/**
+ * Extract employeeCode from JWT token
+ * Backend now includes employee_code in token claims (Issue 3.3 - FIXED)
+ * @param token JWT token string
+ * @returns employeeCode as string or null if not found
+ */
+export function getEmployeeCodeFromToken(token: string): string | null {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload) {
+      console.warn('⚠️ [getEmployeeCodeFromToken] Failed to decode token payload');
+      return null;
+    }
+
+    // Backend now includes employee_code in JWT claims (snake_case)
+    // Also check camelCase for backward compatibility
+    const employeeCode = payload.employee_code || payload.employeeCode || null;
+
+    if (employeeCode) {
+      const employeeCodeStr = String(employeeCode).trim();
+      console.log('✅ [getEmployeeCodeFromToken] Found employeeCode:', employeeCodeStr);
+      return employeeCodeStr;
+    } else {
+      console.warn('⚠️ [getEmployeeCodeFromToken] No employeeCode found in token payload. Available fields:', Object.keys(payload));
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ [getEmployeeCodeFromToken] Failed to extract employeeCode:', error);
+    return null;
+  }
+}

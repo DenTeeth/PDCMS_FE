@@ -44,6 +44,7 @@ import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { specializationService } from '@/services/specializationService';
 import { ServiceCategoryService } from '@/services/serviceCategoryService';
 import { ServiceCategory } from '@/types/serviceCategory';
+import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -79,6 +80,10 @@ interface CreateAppointmentModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  // Phase 5: Pre-filled data from treatment plan items
+  initialPatientCode?: string;
+  initialServiceCodes?: string[];
+  initialPlanItemIds?: number[];
 }
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -240,6 +245,9 @@ export default function CreateAppointmentModal({
   open,
   onClose,
   onSuccess,
+  initialPatientCode,
+  initialServiceCodes,
+  initialPlanItemIds,
 }: CreateAppointmentModalProps) {
   const { user } = useAuth();
   
@@ -257,6 +265,10 @@ export default function CreateAppointmentModal({
   const [appointmentStartTime, setAppointmentStartTime] = useState<string>('');
   const [participantCodes, setParticipantCodes] = useState<string[]>([]);
   const [notes, setNotes] = useState<string>('');
+  // Phase 5: Treatment plan item IDs (for linking appointments to plan items)
+  const [planItemIds, setPlanItemIds] = useState<number[]>([]);
+  // Phase 5: Service codes extracted from plan items (for doctor filtering)
+  const [planItemServiceCodes, setPlanItemServiceCodes] = useState<string[]>([]);
 
   // Data states
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -317,6 +329,37 @@ export default function CreateAppointmentModal({
       resetForm();
     }
   }, [open]);
+
+  // Phase 5: Pre-fill data from treatment plan items when modal opens
+  useEffect(() => {
+    if (open && (initialPatientCode || initialServiceCodes || initialPlanItemIds)) {
+      // Pre-fill patient code
+      if (initialPatientCode) {
+        setPatientCode(initialPatientCode);
+        // Load patient data
+        loadPatientByCode(initialPatientCode);
+      }
+      
+      // Pre-fill service codes
+      if (initialServiceCodes && initialServiceCodes.length > 0) {
+        setServiceCodes(initialServiceCodes);
+        // Auto-advance to step 2 (date selection) if patient and services are pre-filled
+        if (initialPatientCode) {
+          setCurrentStep(2);
+        }
+      }
+      
+      // Pre-fill plan item IDs
+      if (initialPlanItemIds && initialPlanItemIds.length > 0) {
+        setPlanItemIds(initialPlanItemIds);
+        // Phase 5: When booking from plan items, skip step 1 (patient) and step 3 (services)
+        // Auto-advance to step 2 (date selection) if patient is also pre-filled
+        if (initialPatientCode) {
+          setCurrentStep(2);
+        }
+      }
+    }
+  }, [open, initialPatientCode, initialServiceCodes, initialPlanItemIds]);
 
   // Search patients with debounce
   useEffect(() => {
@@ -390,6 +433,21 @@ export default function CreateAppointmentModal({
     setSelectedSpecializationFilter('all');
     setSelectedCategoryFilter('all');
     setSelectedMonth(startOfMonth(new Date()));
+    // Phase 5: Reset plan item IDs
+    setPlanItemIds([]);
+  };
+
+  // Phase 5: Load patient by code (for pre-filled data from treatment plan)
+  const loadPatientByCode = async (code: string) => {
+    try {
+      const patient = await patientService.getPatientByCode(code);
+      if (patient) {
+        handleSelectPatient(patient);
+      }
+    } catch (error: any) {
+      console.error('Failed to load patient by code:', error);
+      // Don't show error toast - just log it
+    }
   };
 
 
@@ -772,10 +830,13 @@ export default function CreateAppointmentModal({
 
     setLoadingAvailableSlots(true);
     try {
+      // Phase 5: Use serviceCodes if available, otherwise use planItemServiceCodes
+      const codesToUse = serviceCodes.length > 0 ? serviceCodes : planItemServiceCodes;
+      
       const request: AvailableTimesRequest = {
         date: appointmentDate,
         employeeCode,
-        serviceCodes,
+        serviceCodes: codesToUse,
         participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
       };
 
@@ -922,13 +983,33 @@ export default function CreateAppointmentModal({
 
   // Step 4: Get compatible doctors (ROLE_DENTIST + specialization match)
   const getCompatibleDoctors = (): Employee[] => {
-    if (serviceCodes.length === 0) return [];
+    // Use serviceCodes if available (either from direct selection or extracted from plan items)
+    const codesToUse = serviceCodes.length > 0 ? serviceCodes : planItemServiceCodes;
+    
+    if (codesToUse.length === 0) {
+      // If booking from plan items but serviceCodes not loaded yet, show all doctors with specializations
+      if (planItemIds.length > 0) {
+        console.log('🔍 getCompatibleDoctors - Booking from plan items, serviceCodes not loaded yet, showing all doctors');
+        return employees.filter((employee) => {
+          // Must be ROLE_DENTIST or ROLE_DOCTOR
+          if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
+            return false;
+          }
+          // Must have specializations
+          if (!employee.specializations || employee.specializations.length === 0) {
+            return false;
+          }
+          return true;
+        });
+      }
+      return [];
+    }
 
     // Get required specialization IDs from selected services
     const requiredSpecializationIds = new Set<number>();
     const servicesWithoutSpecialization: Service[] = [];
     
-    serviceCodes.forEach((code) => {
+    codesToUse.forEach((code) => {
       const service = services.find((s) => s.serviceCode === code);
       if (service) {
         if (service.specializationId) {
@@ -1039,12 +1120,18 @@ export default function CreateAppointmentModal({
       toast.error('Please select a date');
       return;
     }
-    if (currentStep === 3) {
-      if (serviceCodes.length === 0) {
-        toast.error('Please select at least one service');
-        return;
-      }
+    // Phase 5: Skip step 3 (services) if booking from plan items
+    if (currentStep === 2 && planItemIds.length > 0) {
+      // Skip to step 4 (doctor + time slots) when booking from plan items
+      setCurrentStep(4);
+      return;
     }
+    // Phase 5: Validate step 3 only if NOT booking from plan items
+    if (currentStep === 3 && planItemIds.length === 0 && serviceCodes.length === 0) {
+      toast.error('Please select at least one service');
+      return;
+    }
+    // Step 3 validation is already handled above (line 1104)
     if (currentStep === 4) {
       if (!employeeCode) {
         toast.error('Please select a doctor');
@@ -1081,8 +1168,24 @@ export default function CreateAppointmentModal({
   };
 
   const handleCreate = async () => {
-    if (!patientCode || !employeeCode || !roomCode || serviceCodes.length === 0 || !appointmentStartTime) {
+    // Phase 5: XOR validation - Need EITHER serviceCodes OR patientPlanItemIds
+    const hasServices = serviceCodes.length > 0;
+    const hasPlanItems = planItemIds.length > 0;
+    
+    if (!patientCode || !employeeCode || !roomCode || !appointmentStartTime) {
       toast.error('Please complete all required fields');
+      return;
+    }
+    
+    // Validate: Must have either services or plan items (XOR)
+    if (!hasServices && !hasPlanItems) {
+      toast.error('Please select services or book from treatment plan items');
+      return;
+    }
+    
+    if (hasServices && hasPlanItems) {
+      // This shouldn't happen in normal flow, but handle it
+      toast.error('Cannot provide both services and plan items. Please use one method.');
       return;
     }
 
@@ -1117,15 +1220,34 @@ export default function CreateAppointmentModal({
         // No change needed
       }
 
-      const request: CreateAppointmentRequest = {
-        patientCode,
-        employeeCode,
-        roomCode,
-        serviceCodes,
-        appointmentStartTime: formattedStartTime,
-        participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
-        notes: notes.trim() || undefined,
-      };
+      // Phase 5: XOR validation - BE requires EITHER serviceCodes OR patientPlanItemIds, not both
+      // If booking from treatment plan (has planItemIds), BE will extract serviceCodes from items
+      // So we should NOT send serviceCodes when planItemIds are provided
+      let request: CreateAppointmentRequest;
+      
+      if (planItemIds.length > 0) {
+        // Booking from treatment plan items - BE extracts serviceCodes from items
+        request = {
+          patientCode,
+          employeeCode,
+          roomCode,
+          appointmentStartTime: formattedStartTime,
+          participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
+          notes: notes.trim() || undefined,
+          patientPlanItemIds: planItemIds, // Only send planItemIds, BE extracts serviceCodes
+        };
+      } else {
+        // Standalone booking - send serviceCodes
+        request = {
+          patientCode,
+          employeeCode,
+          roomCode,
+          serviceCodes: serviceCodes, // Only send serviceCodes
+          appointmentStartTime: formattedStartTime,
+          participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
+          notes: notes.trim() || undefined,
+        };
+      }
 
       await appointmentService.createAppointment(request);
 
@@ -1765,7 +1887,8 @@ export default function CreateAppointmentModal({
           )}
 
           {/* Step 4: Select Doctor + Time Slots (grouped by morning/afternoon/evening) + Participants */}
-          {currentStep === 4 && appointmentDate && serviceCodes.length > 0 && (
+          {/* Phase 5: Show step 4 if either serviceCodes OR planItemIds are present */}
+          {currentStep === 4 && appointmentDate && (serviceCodes.length > 0 || planItemIds.length > 0) && (
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column: Doctor Selection & Time Slots */}
               <div className="space-y-4">

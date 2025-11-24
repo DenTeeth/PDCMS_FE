@@ -212,7 +212,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faClipboardList,
       hasSubmenu: true,
       // Show if user has any of these permission groups
-      requiredPermissions: ['VIEW_ROOM', 'VIEW_SERVICE', 'VIEW_APPOINTMENT'],
+      requiredPermissions: ['VIEW_ROOM', 'VIEW_SERVICE', 'VIEW_APPOINTMENT', 'VIEW_TREATMENT_PLAN_ALL'],
       requireAll: false,
       submenu: [
         {
@@ -232,6 +232,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/admin/booking/appointments',
           icon: faCalendarAlt,
           requiredPermissionGroup: 'APPOINTMENT',
+        },
+        {
+          name: 'Treatment Plans',
+          href: '/admin/treatment-plans',
+          icon: faListCheck,
+          requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL'],
         },
       ],
     },
@@ -272,6 +278,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           requireAll: false,
         },
       ],
+    },
+    // Treatment Plans (separate from Booking Management)
+    {
+      name: 'Treatment Plans',
+      href: '/employee/treatment-plans',
+      icon: faListCheck,
+      requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
+      requireAll: false, // Accept ANY permission (Employee can have VIEW_TREATMENT_PLAN_OWN)
     },
     // Schedule Management
     {
@@ -406,6 +420,12 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'My Appointments',
       href: '/patient/appointments',
       icon: faCalendarAlt,
+    },
+    {
+      name: 'Treatment Plans',
+      href: '/patient/treatment-plans',
+      icon: faListCheck,
+      requiredPermissions: ['VIEW_TREATMENT_PLAN_OWN'],
     },
     {
       name: 'Medical Records',

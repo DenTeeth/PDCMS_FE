@@ -30,11 +30,17 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { appointmentService } from '@/services/appointmentService';
+import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
   APPOINTMENT_STATUS_COLORS,
 } from '@/types/appointment';
+import {
+  TreatmentPlanDetailResponse,
+  TreatmentPlanSummaryDTO,
+} from '@/types/treatmentPlan';
+import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import {
   ArrowLeft,
   Calendar,
@@ -45,6 +51,7 @@ import {
   FileText,
   Stethoscope,
   ClipboardList,
+  AlertCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -59,6 +66,12 @@ export default function PatientAppointmentDetailPage() {
   // State
   const [appointment, setAppointment] = useState<AppointmentDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Treatment Plan state (lazy loading)
+  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
+  const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
+  const [treatmentPlanError, setTreatmentPlanError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('details');
 
   // Permissions
   // Patients only have VIEW_APPOINTMENT_OWN - backend automatically filters by patientId
@@ -128,6 +141,97 @@ export default function PatientAppointmentDetailPage() {
       }
     };
   }, [appointmentCode, canView]);
+
+  // Load treatment plan when Treatment Plan tab is activated (lazy loading)
+  const loadTreatmentPlan = async () => {
+    if (!appointment?.patient?.patientCode) {
+      setTreatmentPlanError('Không tìm thấy thông tin bệnh nhân');
+      return;
+    }
+
+    setLoadingTreatmentPlan(true);
+    setTreatmentPlanError(null);
+
+    try {
+      // OPTIMIZATION: If BE provides linkedTreatmentPlanCode, use it directly (1 API call instead of N+1)
+      if (appointment.linkedTreatmentPlanCode) {
+        try {
+          const planDetail = await TreatmentPlanService.getTreatmentPlanDetail(
+            appointment.patient.patientCode,
+            appointment.linkedTreatmentPlanCode
+          );
+          setTreatmentPlan(planDetail);
+          return;
+        } catch (error: any) {
+          // If 403, patient doesn't have permission (shouldn't happen for own plans)
+          if (error.response?.status === 403) {
+            setTreatmentPlanError('Bạn không có quyền xem lộ trình điều trị này.');
+            return;
+          }
+          // If 404, plan not found, fallback to old logic
+          if (error.response?.status === 404) {
+            console.warn('Linked plan not found, falling back to loop method');
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      // FALLBACK: If linkedTreatmentPlanCode is not available, use old logic (loop through plans)
+      // Patient with VIEW_TREATMENT_PLAN_OWN: Use API 5.5 (auto-filtered by RBAC)
+      const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
+        patientCode: appointment.patient.patientCode,
+        page: 0,
+        size: 100,
+      });
+      const plans = pageResponse.content;
+
+      // Step 2: Find the plan that has items linked to this appointment
+      let foundPlan: TreatmentPlanDetailResponse | null = null;
+
+      for (const planSummary of plans) {
+        try {
+          const planDetail = await TreatmentPlanService.getTreatmentPlanDetail(
+            appointment.patient.patientCode,
+            planSummary.planCode
+          );
+
+          // Check if any item in this plan has this appointment linked
+          const hasLinkedAppointment = planDetail.phases.some(phase =>
+            phase.items.some(item =>
+              item.linkedAppointments?.some(apt => apt.code === appointment.appointmentCode)
+            )
+          );
+
+          if (hasLinkedAppointment) {
+            foundPlan = planDetail;
+            break;
+          }
+        } catch (error: any) {
+          console.warn(`Failed to load plan ${planSummary.planCode}:`, error);
+          // Continue to next plan
+        }
+      }
+
+      if (foundPlan) {
+        setTreatmentPlan(foundPlan);
+      } else {
+        setTreatmentPlanError('Không tìm thấy lộ trình điều trị liên quan đến lịch hẹn này.');
+      }
+    } catch (error: any) {
+      console.error('Error loading treatment plan:', error);
+      setTreatmentPlanError('Không thể tải lộ trình điều trị. Vui lòng thử lại sau.');
+    } finally {
+      setLoadingTreatmentPlan(false);
+    }
+  };
+
+  // Load treatment plan when Treatment Plan tab is activated (lazy loading)
+  useEffect(() => {
+    if (activeTab === 'treatment-plan' && appointment && !treatmentPlan && !loadingTreatmentPlan) {
+      loadTreatmentPlan();
+    }
+  }, [activeTab, appointment, treatmentPlan, loadingTreatmentPlan]);
 
   const getStatusBadge = (status: AppointmentStatus) => {
     const statusInfo = APPOINTMENT_STATUS_COLORS[status];
@@ -215,7 +319,7 @@ export default function PatientAppointmentDetailPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="details" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="details">
               <FileText className="h-4 w-4 mr-2" />
@@ -229,7 +333,7 @@ export default function PatientAppointmentDetailPage() {
               <Stethoscope className="h-4 w-4 mr-2" />
               Bệnh Án
             </TabsTrigger>
-            <TabsTrigger value="treatment-plan" disabled>
+            <TabsTrigger value="treatment-plan">
               <ClipboardList className="h-4 w-4 mr-2" />
               Kế Hoạch Điều Trị
             </TabsTrigger>
@@ -426,20 +530,81 @@ export default function PatientAppointmentDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Treatment Plan Tab (Placeholder) */}
-          <TabsContent value="treatment-plan">
-            <Card className="p-6">
-              <div className="text-center py-12">
-                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Kế Hoạch Điều Trị</h3>
-                <p className="text-muted-foreground mb-4">
-                  Tính năng này sẽ sớm có sẵn. Kế hoạch điều trị sẽ được hiển thị ở đây.
-                </p>
-                <Button variant="outline" disabled>
-                  Xem Kế Hoạch Điều Trị
-                </Button>
+          {/* Treatment Plan Tab */}
+          <TabsContent value="treatment-plan" className="space-y-4">
+            {loadingTreatmentPlan ? (
+              <Card className="p-6">
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-muted-foreground">Đang tải lộ trình điều trị...</p>
+                  </div>
+                </div>
+              </Card>
+            ) : treatmentPlanError ? (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
+                  <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
+                  <Button variant="outline" onClick={loadTreatmentPlan}>
+                    Thử lại
+                  </Button>
+                </div>
+              </Card>
+            ) : treatmentPlan ? (
+              <div className="space-y-4">
+                {/* Plan Header */}
+                <Card className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">{treatmentPlan.planName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Mã lộ trình: <span className="font-mono">{treatmentPlan.planCode}</span>
+                      </p>
+                      {treatmentPlan.progressSummary && (
+                        <div className="mt-3 flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">
+                            Tiến độ: {treatmentPlan.progressSummary.completedItems}/{treatmentPlan.progressSummary.totalItems} hạng mục
+                          </span>
+                          <span className="text-muted-foreground">
+                            Giai đoạn: {treatmentPlan.progressSummary.completedPhases}/{treatmentPlan.progressSummary.totalPhases}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push(`/patient/treatment-plans/${treatmentPlan.planCode}`)}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Timeline */}
+                <TreatmentPlanTimeline
+                  plan={treatmentPlan}
+                  onItemClick={(item) => {
+                    // Navigate to appointment if item has linked appointments
+                    if (item.linkedAppointments && item.linkedAppointments.length > 0) {
+                      const firstAppointment = item.linkedAppointments[0];
+                      router.push(`/patient/appointments/${firstAppointment.code}`);
+                    }
+                  }}
+                />
               </div>
-            </Card>
+            ) : (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Kế Hoạch Điều Trị</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Lịch hẹn này chưa được liên kết với lộ trình điều trị nào.
+                  </p>
+                </div>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
