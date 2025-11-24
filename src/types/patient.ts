@@ -77,6 +77,9 @@ export type CreatePatientRequest = CreatePatientWithAccountRequest | CreatePatie
 /**
  * Request payload for updating patient (PATCH - partial update)
  * All fields are optional for partial updates
+ * NOTE: Account fields (username, password) are NOT supported in update endpoint
+ * Account can only be created when creating patient, not updated separately
+ * Email is part of patient record, not account
  */
 export interface UpdatePatientRequest {
   firstName?: string;

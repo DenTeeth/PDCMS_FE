@@ -3,27 +3,36 @@ import { specializationService } from './specializationService';
 import { apiClient } from '@/lib/api';
 
 export class ServiceService {
+    // ⚠️ IMPORTANT: BE has 2 Service APIs:
+    // 1. V17 READ-ONLY: /api/v1/services (DentalServiceController) - has categoryId, no CRUD
+    // 2. Booking CRUD: /api/v1/booking/services (ServiceController) - has specializationId, full CRUD
+    // Using Booking API for now because it has CREATE/UPDATE/DELETE endpoints
     private static readonly BASE_URL = 'booking/services';
     
     // Get paginated services with filters
+    // ✅ Updated to match Booking API params (ServiceController.java line 28-44)
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
         const params = new URLSearchParams();
         
-        // Add pagination (required by backend)
+        // Add pagination
         params.append('page', String(filters.page || 0));
         params.append('size', String(filters.size || 10));
         
-        // Add sorting (required by backend)
-        params.append('sortBy', filters.sortBy || 'serviceName');
+        // Add sorting - Booking API uses 'sortBy' and 'sortDirection'
+        params.append('sortBy', filters.sortBy || 'serviceId');
         params.append('sortDirection', filters.sortDirection || 'ASC');
         
         // Add optional filters
         if (filters.isActive !== undefined && filters.isActive !== '') {
-            params.append('isActive', filters.isActive);
+            params.append('isActive', String(filters.isActive));
         }
+        
+        // Booking API uses specializationId
         if (filters.specializationId !== undefined && filters.specializationId !== '') {
             params.append('specializationId', String(filters.specializationId));
         }
+        
+        // Booking API uses 'keyword' param
         if (filters.keyword) {
             params.append('keyword', filters.keyword);
         }
