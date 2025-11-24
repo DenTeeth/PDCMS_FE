@@ -36,15 +36,22 @@ export class LeaveBalanceService {
     cycleYear?: number
   ): Promise<EmployeeLeaveBalancesResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<EmployeeLeaveBalancesResponse>(
-      `${this.BASE_URL}/employees/${employeeId}/leave-balances`,
-      {
-        params: {
-          cycle_year: cycleYear || new Date().getFullYear()
+    try {
+      const response = await axios.get<EmployeeLeaveBalancesResponse>(
+        `${this.BASE_URL}/employees/${employeeId}/leave-balances`,
+        {
+          params: {
+            cycle_year: cycleYear || new Date().getFullYear()
+          }
         }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('LeaveBalanceService.getEmployeeBalances error:', error.response?.data);
       }
-    );
-    return response.data;
+      throw error;
+    }
   }
 
   /**

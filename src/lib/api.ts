@@ -221,7 +221,9 @@ class ApiClient {
       return response.data;
     } catch (error: any) {
       const message = error.response?.data?.message || 'Token refresh failed';
-      console.error('❌ Refresh token failed:', message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Refresh token failed:', message);
+      }
       throw new Error(message);
     }
   }

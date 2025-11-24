@@ -168,15 +168,16 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
     return user ? generateNavigationConfig(user.baseRole, user.groupedPermissions) : null;
   }, [user?.baseRole, user?.groupedPermissions]);
 
-  // Memoize filtered items
+  // Memoize filtered items with employment type filtering
   const filteredItems = useMemo(() => {
     return navigationConfig && user ?
       filterNavigationItems(
         navigationConfig.items,
         user.permissions,
-        user.groupedPermissions
+        user.groupedPermissions,
+        user.employmentType // Pass employment type for filtering
       ) : [];
-  }, [navigationConfig, user?.permissions, user?.groupedPermissions]);
+  }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.employmentType]);
 
   // Memoize toggle function
   const toggleItem = useCallback((itemName: string) => {

@@ -84,7 +84,9 @@ export class TimeOffDataEnricher {
             // If it's a half-day shift, divide by 2
             return isHalfDay ? 0.5 : days;
         } catch (error) {
-            console.error('Error calculating total days:', error);
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error calculating total days:', error);
+            }
             return 0;
         }
     }

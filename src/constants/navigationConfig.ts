@@ -52,6 +52,7 @@ export interface NavigationItem {
   requireAll?: boolean; // true = cần tất cả permissions, false = chỉ cần 1
   hasSubmenu?: boolean;
   submenu?: NavigationItem[];
+  employmentTypes?: string[]; // Restrict to specific employment types (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)
 }
 
 export interface NavigationConfig {
@@ -293,12 +294,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faCalendarCheck,
           requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
           requireAll: false,
+          // Show for all employment types (has tabs inside)
         },
         {
           name: 'Shift Calendar',
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SHIFTS_OWN'],
+          // Show for all employment types
         },
         {
           name: 'My Calendar',
@@ -306,30 +309,21 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faCalendarDays,
           requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_APPOINTMENT_OWN'],
           requireAll: false,
+          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
           name: 'Fixed Registrations',
           href: '/employee/fixed-registrations',
           icon: faListCheck,
           requiredPermissions: ['VIEW_FIXED_REGISTRATIONS_OWN'],
-        },
-        {
-          name: 'Part-Time Management',
-          href: '/employee/part_time_management',
-          icon: faBusinessTime,
-          requiredPermissions: ['VIEW_REGISTRATION_OWN'],
-        },
-        {
-          name: 'Slot Registration',
-          href: '/employee/slot-registration',
-          icon: faClock,
-          requiredPermissions: ['VIEW_REGISTRATION_OWN'],
+          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
           name: 'Shift Renewals',
           href: '/employee/renewals',
           icon: faClockRotateLeft,
           requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+          employmentTypes: ['PART_TIME_FLEX'], // Only for Part-time Flex
         },
       ],
     },
@@ -345,12 +339,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/employee/overtime-requests',
           icon: faClockFour,
           requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
           name: 'Time Off Requests',
           href: '/employee/time-off-requests',
           icon: faUmbrellaBeach,
           requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
       ],
     },
@@ -468,14 +464,22 @@ export const hasPermissions = (
 };
 
 /**
- * Helper function: Filter navigation items based on user permissions
+ * Helper function: Filter navigation items based on user permissions and employment type
  */
 export const filterNavigationItems = (
   items: NavigationItem[],
   userPermissions: string[] | undefined,
-  groupedPermissions: GroupedPermissions | undefined
+  groupedPermissions: GroupedPermissions | undefined,
+  employmentType?: string
 ): NavigationItem[] => {
   return items.filter(item => {
+    // Check employment type restriction
+    if (item.employmentTypes && item.employmentTypes.length > 0 && employmentType) {
+      if (!item.employmentTypes.includes(employmentType)) {
+        return false;
+      }
+    }
+
     // Check permission group
     if (item.requiredPermissionGroup) {
       if (!hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup)) {
@@ -492,7 +496,7 @@ export const filterNavigationItems = (
 
     // Filter submenu items
     if (item.hasSubmenu && item.submenu) {
-      const filteredSubmenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions);
+      const filteredSubmenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions, employmentType);
       if (filteredSubmenu.length === 0) {
         return false; // Hide parent if no submenu items are visible
       }

@@ -21,14 +21,16 @@ export class TimeOffErrorHandler {
         const errorMsg = errorData?.message || errorData?.error || error.message;
 
         // Log for debugging
-        console.error('❌ Approve Error Details:', {
-            requestId,
-            status: errorStatus,
-            statusText: error.response?.statusText,
-            data: errorData,
-            message: errorMsg,
-            stack: error.stack,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            console.error('❌ Approve Error Details:', {
+                requestId,
+                status: errorStatus,
+                statusText: error.response?.statusText,
+                data: errorData,
+                message: errorMsg,
+                stack: error.stack,
+            });
+        }
 
         switch (errorStatus) {
             case 500:
@@ -96,14 +98,16 @@ export class TimeOffErrorHandler {
         const errorData = error.response?.data;
         const errorMsg = errorData?.message || errorData?.error || error.message;
 
-        console.error('❌ Reject Error Details:', {
-            requestId,
-            reason,
-            status: errorStatus,
-            statusText: error.response?.statusText,
-            data: errorData,
-            message: errorMsg,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            console.error('❌ Reject Error Details:', {
+                requestId,
+                reason,
+                status: errorStatus,
+                statusText: error.response?.statusText,
+                data: errorData,
+                message: errorMsg,
+            });
+        }
 
         switch (errorStatus) {
             case 500:
@@ -169,14 +173,16 @@ export class TimeOffErrorHandler {
         const errorData = error.response?.data;
         const errorMsg = errorData?.message || errorData?.error || error.message;
 
-        console.error('❌ Cancel Error Details:', {
-            requestId,
-            reason,
-            status: errorStatus,
-            statusText: error.response?.statusText,
-            data: errorData,
-            message: errorMsg,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            console.error('❌ Cancel Error Details:', {
+                requestId,
+                reason,
+                status: errorStatus,
+                statusText: error.response?.statusText,
+                data: errorData,
+                message: errorMsg,
+            });
+        }
 
         switch (errorStatus) {
             case 500:

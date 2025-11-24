@@ -33,18 +33,20 @@ export const workShiftService = {
     try {
       const params = isActive !== undefined ? { isActive } : {};
       const response = await api.get<WorkShiftListResponse | WorkShift[]>('/work-shifts', { params });
-      
+
       // Handle both response structures
       // Case 1: { statusCode, data: [...] }
       // Case 2: [...]
       if (Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       // @ts-ignore - Type assertion for wrapped response
       return response.data.data || [];
     } catch (error) {
-      console.error('Error fetching work shifts:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching work shifts:', error);
+      }
       return [];
     }
   },

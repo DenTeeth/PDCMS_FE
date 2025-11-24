@@ -719,14 +719,14 @@ export default function RegistrationRequestsPage() {
                     {getStatusBadge(selectedRegistration.status)}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Thời gian</p>
+                    <p className="text-sm text-gray-600">Thời gian đăng ký</p>
                     <p className="font-medium">
                       {formatDate(selectedRegistration.effectiveFrom)} - {formatDate(selectedRegistration.effectiveTo)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Total Working Days</p>
-                    <p className="font-medium">{selectedRegistration.dates.length} days</p>
+                    <p className="text-sm text-gray-600">Tổng số ngày làm việc</p>
+                    <p className="font-medium">{selectedRegistration.dates?.length || 0} ngày</p>
                   </div>
                 </div>
 
