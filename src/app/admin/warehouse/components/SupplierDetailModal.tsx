@@ -15,7 +15,6 @@ import { useSupplier, useSuppliedItems } from '@/hooks/useSuppliers';
 import {
   formatDateTime,
   formatDate,
-  formatCurrency,
   formatPhone,
   getStatusColor,
   getStatusLabel,
@@ -57,15 +56,9 @@ export default function SupplierDetailModal({
     supplier?.supplierId || null
   );
 
-  // Fetch supplied items history using API V1
-  // Note: Temporarily disabled due to BE 500 error - using data from detail endpoint instead
-  const { data: suppliedItems = [], isLoading: loadingItems } = useSuppliedItems(
-    null // Disabled: supplier?.supplierId || null
-  );
-
   if (!supplier) return null;
 
-  // Filter supplied items by search keyword
+  // Filter supplied items from detail response by search keyword
   const filteredItems = supplierDetail?.suppliedItems?.filter((item) => {
     const keyword = searchKeyword.toLowerCase();
     return (
@@ -73,6 +66,11 @@ export default function SupplierDetailModal({
       item.itemCode?.toLowerCase().includes(keyword)
     );
   }) || [];
+
+  // Debug: Log each item detail
+  if (supplierDetail?.suppliedItems?.length) {
+    console.log('First supplied item:', supplierDetail.suppliedItems[0]);
+  }
 
   const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
     return (

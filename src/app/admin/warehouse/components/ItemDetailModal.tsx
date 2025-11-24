@@ -71,10 +71,6 @@ export default function ItemDetailModal({
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' ₫';
-  };
-
   const getStockStatusBadge = (status?: string) => {
     const variants: Record<string, { className: string; label: string; icon: any }> = {
       NORMAL: { className: 'bg-green-100 text-green-800', label: 'Bình thường', icon: faCheckCircle },
@@ -278,7 +274,6 @@ export default function ItemDetailModal({
                         <tr>
                           <th className="text-left p-3 border">Số lô</th>
                           <th className="text-right p-3 border">Tồn kho</th>
-                          <th className="text-right p-3 border">Giá nhập</th>
                           <th className="text-left p-3 border">Hạn sử dụng</th>
                           <th className="text-left p-3 border">Ngày nhập</th>
                           <th className="text-left p-3 border">Trạng thái</th>
@@ -300,9 +295,6 @@ export default function ItemDetailModal({
                               <span className="font-semibold">
                                 {batch.quantityOnHand} {itemDetail.unitOfMeasure}
                               </span>
-                            </td>
-                            <td className="p-3 border text-right">
-                              <span className="font-medium">{formatCurrency(batch.importPrice)}</span>
                             </td>
                             <td className="p-3 border">
                               {batch.expiryDate ? (
@@ -328,7 +320,7 @@ export default function ItemDetailModal({
 
                   {/* Summary */}
                   <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-2 gap-4 text-center">
                       <div>
                         <p className="text-sm text-gray-600">Tổng số lô</p>
                         <p className="text-2xl font-bold text-blue-600">{batches.length}</p>
@@ -337,12 +329,6 @@ export default function ItemDetailModal({
                         <p className="text-sm text-gray-600">Tổng tồn kho</p>
                         <p className="text-2xl font-bold text-green-600">
                           {batches.reduce((sum: number, b: ItemBatchV1) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Giá trị tồn</p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {formatCurrency(batches.reduce((sum: number, b: ItemBatchV1) => sum + (b.quantityOnHand * b.importPrice), 0))}
                         </p>
                       </div>
                     </div>

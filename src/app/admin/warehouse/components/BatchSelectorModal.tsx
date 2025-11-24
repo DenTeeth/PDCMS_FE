@@ -149,16 +149,41 @@ export default function BatchSelectorModal({
                 <SelectValue placeholder="Chọn vật tư cần xuất" />
               </SelectTrigger>
               <SelectContent>
-                {items.map((item) => (
-                  <SelectItem key={item.item_master_id} value={String(item.item_master_id)}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{item.item_code} - {item.item_name}</span>
-                      <Badge variant={item.total_quantity_on_hand > 0 ? 'default' : 'secondary'} className="ml-2">
-                        Tồn: {item.total_quantity_on_hand}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
+                {items.map((item) => {
+                  const isLowStock = item.total_quantity_on_hand <= (item.min_stock_level || 0);
+                  const isOutOfStock = item.total_quantity_on_hand <= 0;
+                  
+                  return (
+                    <SelectItem 
+                      key={item.item_master_id} 
+                      value={String(item.item_master_id)}
+                      disabled={isOutOfStock}
+                    >
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <span className={isOutOfStock ? 'text-gray-400 line-through' : ''}>
+                          {item.item_code} - {item.item_name}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Badge 
+                            variant={isOutOfStock ? 'destructive' : isLowStock ? 'secondary' : 'default'}
+                            className={
+                              isOutOfStock 
+                                ? 'bg-red-100 text-red-800' 
+                                : isLowStock 
+                                ? 'bg-orange-100 text-orange-800' 
+                                : 'bg-green-100 text-green-800'
+                            }
+                          >
+                            <span className="font-bold">{item.total_quantity_on_hand}</span>
+                          </Badge>
+                          {item.min_stock_level && (
+                            <span className="text-xs text-gray-500">(Min: {item.min_stock_level})</span>
+                          )}
+                        </div>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -205,9 +230,21 @@ export default function BatchSelectorModal({
                                   </Badge>
                                 )}
                               </div>
-                              <div className="text-sm text-slate-600 flex items-center gap-4">
-                                <span>Tồn: <strong>{batch.quantity_on_hand}</strong></span>
-                                <span>Giá: <strong>{batch.import_price.toLocaleString('vi-VN')} đ</strong></span>
+                              <div className="text-sm flex items-center gap-3">
+                                <span className={`font-bold text-lg ${
+                                  batch.quantity_on_hand <= 0 
+                                    ? 'text-red-600' 
+                                    : batch.quantity_on_hand <= 10 
+                                    ? 'text-orange-600' 
+                                    : 'text-green-600'
+                                }`}>
+                                  Tồn kho: {batch.quantity_on_hand}
+                                </span>
+                                {batch.item_master && batch.item_master.min_stock_level && (
+                                  <span className="text-xs text-gray-500">
+                                    (Min: {batch.item_master.min_stock_level})
+                                  </span>
+                                )}
                               </div>
                               {batch.expiry_date && (
                                 <div className="text-xs text-slate-500 flex items-center gap-1">
@@ -233,26 +270,61 @@ export default function BatchSelectorModal({
               <Label className="text-sm font-medium mb-2 block">
                 Bước 3: Nhập Số Lượng Xuất <span className="text-red-500">*</span>
               </Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min="1"
-                  max={selectedBatch.quantity_on_hand}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  placeholder="Nhập số lượng"
-                  className="flex-1"
-                />
-                <Badge variant="outline" className="text-sm">
-                  Max: {selectedBatch.quantity_on_hand}
-                </Badge>
+              <div className="space-y-2">
+                {/* Stock Info Highlight */}
+                <div className={`border-2 rounded-lg p-3 ${
+                  quantity > selectedBatch.quantity_on_hand 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-blue-300 bg-blue-50'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Tồn kho hiện tại:</span>
+                    <span className="text-2xl font-bold text-blue-600">
+                      {selectedBatch.quantity_on_hand}
+                    </span>
+                  </div>
+                  {selectedBatch.item_master?.min_stock_level && (
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-gray-500">Mức tối thiểu:</span>
+                      <span className="text-sm font-medium text-orange-600">
+                        {selectedBatch.item_master.min_stock_level}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Quantity Input */}
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={selectedBatch.quantity_on_hand}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    placeholder="Nhập số lượng"
+                    className="flex-1 text-lg font-semibold"
+                  />
+                  <Badge variant="outline" className="text-sm whitespace-nowrap">
+                    Max: {selectedBatch.quantity_on_hand}
+                  </Badge>
+                </div>
+                
+                {/* Validation Messages */}
+                {quantity > selectedBatch.quantity_on_hand && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Số lượng vượt quá tồn kho!
+                  </p>
+                )}
+                {selectedBatch.item_master?.min_stock_level && 
+                 quantity > 0 && 
+                 (selectedBatch.quantity_on_hand - quantity) < selectedBatch.item_master.min_stock_level && (
+                  <p className="text-xs text-orange-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Cảnh báo: Sau khi xuất sẽ dưới mức tối thiểu ({selectedBatch.item_master.min_stock_level})
+                  </p>
+                )}
               </div>
-              {quantity > selectedBatch.quantity_on_hand && (
-                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Số lượng vượt quá tồn kho!
-                </p>
-              )}
             </div>
           )}
 
@@ -265,8 +337,7 @@ export default function BatchSelectorModal({
                   <p className="font-semibold text-emerald-900">✓ Sẵn sàng xuất kho</p>
                   <p className="text-emerald-700">
                     Lô: <strong>{selectedBatch.lot_number}</strong> | 
-                    Số lượng: <strong>{quantity}</strong> | 
-                    Tổng giá trị: <strong>{(quantity * selectedBatch.import_price).toLocaleString('vi-VN')} đ</strong>
+                    Số lượng: <strong>{quantity}</strong>
                   </p>
                 </div>
               </div>

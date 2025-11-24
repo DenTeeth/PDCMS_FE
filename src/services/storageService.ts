@@ -27,7 +27,7 @@ export interface StorageTransactionItem {
 export interface StorageTransaction {
   transactionId: number;
   transactionCode: string;
-  transactionType: 'IMPORT' | 'EXPORT' | 'ADJUSTMENT' | 'LOSS';
+  transactionType: 'IMPORT' | 'EXPORT';
   transactionDate: string;
   supplierId?: number;
   supplierName?: string;
@@ -71,7 +71,7 @@ export interface StorageStats {
 }
 
 export interface StorageFilter {
-  transactionType?: 'IMPORT' | 'EXPORT' | 'ADJUSTMENT' | 'LOSS';
+  transactionType?: 'IMPORT' | 'EXPORT';
   month?: number;
   year?: number;
   search?: string;
@@ -157,13 +157,11 @@ export const storageService = {
   },
 
   /**
-   * PUT /api/v1/storage/{id} - Cập nhật notes (NEW)
+   * PUT /api/v1/storage/{id} - Cập nhật phiếu nhập/xuất kho
    */
   updateNotes: async (id: number, notes: string): Promise<StorageTransaction> => {
     try {
-      const response = await api.put<StorageTransaction>(`/storage/${id}`, null, {
-        params: { notes },
-      });
+      const response = await api.put<StorageTransaction>(`/storage/${id}`, { notes });
       console.log('✅ Update transaction notes:', response.data);
       return response.data;
     } catch (error: any) {

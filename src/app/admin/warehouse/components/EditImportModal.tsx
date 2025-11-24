@@ -128,7 +128,7 @@ export default function EditImportModal({
     // Check for empty items
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i];
-      if (!item.item_master_id || !item.lot_number || item.quantity <= 0 || item.import_price < 0) {
+      if (!item.item_master_id || !item.lot_number || item.quantity <= 0) {
         toast.error(`Vui lòng điền đầy đủ thông tin vật tư dòng ${i + 1}!`);
         return;
       }
