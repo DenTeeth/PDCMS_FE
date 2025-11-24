@@ -2022,7 +2022,7 @@ export default function EmployeeRegistrationsPage() {
                     <>
                       {/* PART_TIME_FLEX: Use available slots */}
                       <div>
-                        <Label htmlFor="createSlot" className="text-sm">Chọn Suất Làm Việc *</Label>
+                        <Label htmlFor="createSlot" className="text-sm">Chọn Suất Làm Việc <span className="text-red-500">*</span></Label>
                         {loadingAvailableSlots ? (
                           <div className="flex items-center justify-center py-2">
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />

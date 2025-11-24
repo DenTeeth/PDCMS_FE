@@ -346,7 +346,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                     )}
 
                     <div>
-                        <Label htmlFor="reason">Reason for Rescheduling *</Label>
+                        <Label htmlFor="reason">Reason for Rescheduling <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="reason"
                             placeholder="Please provide a reason for rescheduling..."
@@ -447,7 +447,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                     </div>
 
                     <div>
-                        <Label htmlFor="cancelReason">Reason for Cancellation *</Label>
+                        <Label htmlFor="cancelReason">Reason for Cancellation <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="cancelReason"
                             placeholder="Please provide a reason for cancelling this appointment..."

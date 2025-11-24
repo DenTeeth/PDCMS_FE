@@ -68,14 +68,16 @@ export const showOvertimeError = (error: any): void => {
   const overtimeError = handleOvertimeError(error);
   const message = getOvertimeErrorMessage(overtimeError);
 
-  // Log chi tiết error để debug
-  console.error('🔴 Overtime Error Details:', {
-    status: overtimeError.status,
-    code: overtimeError.code,
-    message: overtimeError.message,
-    fullError: error.response?.data,
-    userMessage: message
-  });
+  // Log chi tiết error để debug (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.error('🔴 Overtime Error Details:', {
+      status: overtimeError.status,
+      code: overtimeError.code,
+      message: overtimeError.message,
+      fullError: error.response?.data,
+      userMessage: message
+    });
+  }
 
   // Show error toast with appropriate styling
   toast.error('Lỗi', {

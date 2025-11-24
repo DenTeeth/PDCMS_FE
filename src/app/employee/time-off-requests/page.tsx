@@ -5,16 +5,12 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
-  faCheck,
-  faTimes,
   faBan,
   faEye,
   faCalendarAlt,
-  faUser,
   faClock,
   faSearch,
   faPlus,
-  faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -88,7 +84,9 @@ export default function EmployeeTimeOffRequestsPage() {
         loadLeaveBalances()
       ]);
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading data:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,7 +103,9 @@ export default function EmployeeTimeOffRequestsPage() {
       );
       setLeaveBalances(balances);
     } catch (error: any) {
-      console.error('Error loading leave balances:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading leave balances:', error);
+      }
       // Don't show error if 404 (no balances yet)
       if (error?.response?.status !== 404) {
         handleError(error, 'Không thể tải số dư ngày nghỉ');
@@ -123,7 +123,9 @@ export default function EmployeeTimeOffRequestsPage() {
       });
       setTimeOffRequests(response.content || []);
     } catch (error: any) {
-      console.error('Error loading time off requests:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading time off requests:', error);
+      }
       handleError(error, 'Không thể tải danh sách yêu cầu nghỉ phép. Vui lòng kiểm tra quyền truy cập.');
     }
   };
@@ -133,7 +135,9 @@ export default function EmployeeTimeOffRequestsPage() {
       const types = await TimeOffTypeService.getActiveTimeOffTypes();
       setTimeOffTypes(types);
     } catch (error) {
-      console.error('Error loading time off types:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading time off types:', error);
+      }
     }
   };
 
@@ -142,7 +146,9 @@ export default function EmployeeTimeOffRequestsPage() {
       const shifts = await workShiftService.getAll(true);
       setWorkShifts(shifts);
     } catch (error) {
-      console.error('Error loading work shifts:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading work shifts:', error);
+      }
       setWorkShifts([]);
     }
   };
@@ -192,20 +198,57 @@ export default function EmployeeTimeOffRequestsPage() {
       }
     }
 
+    // Validate required fields first
+    if (!createForm.timeOffTypeId) {
+      alert('Vui lòng chọn loại nghỉ phép');
+      return;
+    }
+    if (!createForm.startDate) {
+      alert('Vui lòng chọn ngày bắt đầu');
+      return;
+    }
+    if (!createForm.endDate) {
+      alert('Vui lòng chọn ngày kết thúc');
+      return;
+    }
+    if (!createForm.reason || !createForm.reason.trim()) {
+      alert('Vui lòng nhập lý do nghỉ phép');
+      return;
+    }
+    if (!user?.employeeId) {
+      alert('Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    // For employee self-requests, send employeeId from auth context
+    const employeeId = Number(user.employeeId);
+
+    // Double check employeeId is valid
+    if (!employeeId || isNaN(employeeId)) {
+      alert(`Lỗi: Employee ID không hợp lệ (${user.employeeId}). Vui lòng đăng nhập lại.`);
+      return;
+    }
+
+    const requestData = {
+      employeeId: employeeId, // Required by backend API
+      timeOffTypeId: createForm.timeOffTypeId,
+      startDate: createForm.startDate,
+      endDate: createForm.endDate,
+      slotId: createForm.slotId,
+      reason: createForm.reason.trim()
+    };
+
     try {
       setProcessing(true);
 
-      // For employee self-requests, use employeeId from auth context
-      const requestData = {
-        timeOffTypeId: createForm.timeOffTypeId,
-        startDate: createForm.startDate,
-        endDate: createForm.endDate,
-        slotId: createForm.slotId,
-        reason: createForm.reason,
-        employeeId: Number(user?.employeeId) // Get from logged-in user
-      };
-
-      console.log('🔍 Creating time-off request:', requestData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Creating time-off request:', requestData);
+        console.log('🔍 User context:', {
+          employeeId: user?.employeeId,
+          type: typeof user?.employeeId,
+          user: user
+        });
+      }
       const response = await TimeOffRequestService.createTimeOffRequest(requestData);
 
       setShowCreateModal(false);
@@ -218,36 +261,51 @@ export default function EmployeeTimeOffRequestsPage() {
         reason: ''
       });
       loadTimeOffRequests();
-      alert(`✅ Tạo yêu cầu nghỉ phép thành công! Mã yêu cầu: ${response.requestId}`);
+      alert(`Tạo yêu cầu nghỉ phép thành công!\n\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
-      console.error('❌ Error creating time off request:', error);
-      console.error('📋 Error details:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.response?.data?.message,
-        detail: error.response?.data?.detail
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Error creating time off request:', error);
+        console.error('📋 Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.response?.data?.message,
+          detail: error.response?.data?.detail
+        });
+      }
 
       const status = error.response?.status;
+      const errorData = error.response?.data;
       let errorMsg = '';
 
       if (status === 409) {
         // Conflict - overlapping requests or duplicate
-        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+        errorMsg = errorData?.detail || errorData?.message ||
           'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
       } else if (status === 400) {
-        // Bad request - validation error
-        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
-          'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        // Bad request - validation error - show detailed errors
+        const detail = errorData?.detail || errorData?.message;
+        const errors = errorData?.errors;
+
+        if (errors && Array.isArray(errors) && errors.length > 0) {
+          // Show validation errors
+          const errorList = errors.map((err: any) => `• ${err.field || 'Field'}: ${err.message || err.defaultMessage || 'Invalid'}`).join('\n');
+          errorMsg = `Lỗi validation:\n\n${errorList}`;
+        } else if (detail) {
+          errorMsg = detail;
+        } else {
+          // Show full error data for debugging
+          errorMsg = `Dữ liệu không hợp lệ:\n\n${JSON.stringify(errorData, null, 2)}`;
+        }
       } else if (status === 403) {
         // Forbidden
         errorMsg = 'Bạn không có quyền tạo yêu cầu này.';
       } else {
-        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+        errorMsg = errorData?.detail || errorData?.message ||
           error.message || 'Không thể tạo yêu cầu nghỉ phép';
       }
 
-      alert(`❌ Lỗi (${status || 'Unknown'}): ${errorMsg}`);
+      // Show simple error message to user
+      alert(`Không thể tạo đơn nghỉ phép\n\n${errorMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -269,10 +327,13 @@ export default function EmployeeTimeOffRequestsPage() {
       setSelectedRequest(null);
       setCancelReason('');
       loadTimeOffRequests();
-      alert('Đã hủy yêu cầu nghỉ phép!');
+      alert('Đã hủy yêu cầu nghỉ phép thành công!');
     } catch (error: any) {
-      console.error('Error cancelling request:', error);
-      alert(`Lỗi: ${error.response?.data?.message || 'Không thể hủy yêu cầu'}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error cancelling request:', error);
+      }
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || 'Không thể hủy yêu cầu';
+      alert(`Lỗi: ${errorMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -324,7 +385,7 @@ export default function EmployeeTimeOffRequestsPage() {
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
         >
           <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
           Tạo Yêu Cầu Nghỉ Phép
@@ -367,8 +428,8 @@ export default function EmployeeTimeOffRequestsPage() {
                     <div className="flex justify-between pt-2 border-t border-gray-200">
                       <span className="text-gray-600 font-medium">Còn lại:</span>
                       <span className={`font-bold text-lg ${balance.days_remaining > 5 ? 'text-green-600' :
-                          balance.days_remaining > 0 ? 'text-yellow-600' :
-                            'text-red-600'
+                        balance.days_remaining > 0 ? 'text-yellow-600' :
+                          'text-red-600'
                         }`}>
                         {balance.days_remaining} ngày
                       </span>
@@ -382,47 +443,42 @@ export default function EmployeeTimeOffRequestsPage() {
       )}
 
       {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="search">Tìm kiếm</Label>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="search">Tìm kiếm</Label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
+              />
               <Input
                 id="search"
                 placeholder="Tìm theo mã yêu cầu..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
-            </div>
-            <div>
-              <CustomSelect
-                label="Trạng thái"
-                value={statusFilter}
-                onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
-                options={[
-                  { value: 'ALL', label: 'Tất cả' },
-                  { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                  { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                  { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                  { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
-                ]}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                onClick={loadTimeOffRequests}
-                variant="outline"
-                className="w-full"
-              >
-                <FontAwesomeIcon icon={faFilter} className="h-4 w-4 mr-2" />
-                Lọc
-              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <CustomSelect
+              label="Trạng thái"
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+              options={[
+                { value: 'ALL', label: 'Tất cả' },
+                { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
 
-      {/* Time Off Requests List */}
+      {/* Time Off Requests List - Card Layout giống Admin */}
       <div className="grid gap-4">
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
@@ -442,12 +498,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
-                        <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                        <span>{request.employee?.fullName || request.employee?.firstName}</span>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
                         <span>
@@ -462,27 +513,28 @@ export default function EmployeeTimeOffRequestsPage() {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{request.totalDays} ngày</span>
+                        <span className="font-semibold">{request.totalDays || 0} ngày</span>
                         {request.workShiftName && (
                           <Badge variant="outline">{request.workShiftName}</Badge>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-700">
-                        <strong>Lý do:</strong> {request.reason}
-                      </p>
+                    <div className="mt-3 text-sm">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-gray-500 font-medium">Lý do:</span>
+                        <span className="text-gray-700">{request.reason || 'Không có lý do'}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 justify-end ml-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => router.push(`/employee/time-off-requests/${request.requestId}`)}
                     >
-                      <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
+                      <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
                       Chi tiết
                     </Button>
 
@@ -491,9 +543,9 @@ export default function EmployeeTimeOffRequestsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => openCancelModal(request)}
-                        className="text-orange-600 hover:text-orange-700"
+                        className="text-orange-600 hover:bg-orange-50 border-orange-300"
                       >
-                        <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
+                        <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
                         Hủy
                       </Button>
                     )}
@@ -504,6 +556,14 @@ export default function EmployeeTimeOffRequestsPage() {
           );
         })}
       </div>
+
+      {filteredRequests.length === 0 && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-gray-500">Bạn chưa có yêu cầu nghỉ phép nào.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create Modal */}
       {showCreateModal && (
@@ -516,8 +576,8 @@ export default function EmployeeTimeOffRequestsPage() {
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="timeOffTypeId">Loại nghỉ phép <span className="text-red-500">*</span></Label>
                   <CustomSelect
-                    label="Loại nghỉ phép *"
                     value={createForm.timeOffTypeId}
                     onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
                     options={timeOffTypes?.map(type => ({
@@ -545,7 +605,7 @@ export default function EmployeeTimeOffRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="startDate">Ngày bắt đầu *</Label>
+                  <Label htmlFor="startDate">Ngày bắt đầu <span className="text-red-500">*</span></Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -556,7 +616,7 @@ export default function EmployeeTimeOffRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="endDate">Ngày kết thúc *</Label>
+                  <Label htmlFor="endDate">Ngày kết thúc <span className="text-red-500">*</span></Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -591,7 +651,7 @@ export default function EmployeeTimeOffRequestsPage() {
               </div>
 
               <div>
-                <Label htmlFor="reason">Lý do nghỉ phép *</Label>
+                <Label htmlFor="reason">Lý do nghỉ phép <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="reason"
                   value={createForm.reason}
@@ -658,7 +718,7 @@ export default function EmployeeTimeOffRequestsPage() {
                 <Button
                   onClick={handleCreateTimeOffRequest}
                   disabled={processing}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
                 >
                   {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
                 </Button>
@@ -672,7 +732,7 @@ export default function EmployeeTimeOffRequestsPage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
             <div className="mb-4">
-              <Label htmlFor="cancelReason">Lý do hủy *</Label>
+              <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
               <Textarea
                 id="cancelReason"
                 value={cancelReason}

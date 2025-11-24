@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, subDays, addDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSyncAlt, faCalendarAlt, faUser, faPlus, faChartBar, faClock, faUserCheck, faUserTimes, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faSyncAlt, faCalendarAlt, faUser, faPlus, faChartBar, faClock, faUserCheck, faUserTimes, faExclamationTriangle, faListAlt } from '@fortawesome/free-solid-svg-icons';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -126,19 +126,24 @@ export default function ShiftCalendarPage() {
   // Handle FullCalendar view changes
   const handleDatesSet = (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
-    const newDate = new Date(dateInfo.start);
+
+    // Get the middle date of the view to determine the correct month/year
+    // This fixes the issue where start date might be from previous month
+    const startDate = new Date(dateInfo.start);
+    const endDate = new Date(dateInfo.end);
+    const middleDate = new Date((startDate.getTime() + endDate.getTime()) / 2);
 
     // Update currentDate to keep title in sync with calendar
     setCurrentDate(prevDate => {
       const prevMonth = prevDate.getMonth();
       const prevYear = prevDate.getFullYear();
-      const newMonth = newDate.getMonth();
-      const newYear = newDate.getFullYear();
+      const newMonth = middleDate.getMonth();
+      const newYear = middleDate.getFullYear();
 
       // Only update if month/year actually changed to avoid unnecessary re-renders
       if (prevMonth !== newMonth || prevYear !== newYear) {
         console.log('Month/Year changed from', prevMonth + 1, prevYear, 'to', newMonth + 1, newYear);
-        return newDate;
+        return middleDate;
       }
 
       // Return prevDate to avoid triggering useEffect
@@ -746,21 +751,23 @@ export default function ShiftCalendarPage() {
         )}
 
         {/* Calendar */}
-        <Card>
-          <CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-white">
             <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCalendarAlt} />
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600 text-sm" />
+                </div>
                 {format(currentDate, 'MMMM yyyy', { locale: vi })}
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="h-[600px]">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <div className="text-gray-600">Đang tải lịch làm việc...</div>
                   </div>
                 </div>
@@ -788,13 +795,14 @@ export default function ShiftCalendarPage() {
                   eventOverlap={false}
                   eventDisplay="block"
                   eventMaxStack={10}
+                  dayMaxEvents={3}
+                  moreLinkClick="popover"
                   eventTimeFormat={{
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
                   }}
                   slotLabelContent={(arg) => {
-                    // Format as HH:mm (24h format without "giờ")
                     const date = arg.date;
                     const hours = date.getHours().toString().padStart(2, '0');
                     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -808,33 +816,89 @@ export default function ShiftCalendarPage() {
           </CardContent>
         </Card>
 
+        {/* Custom Calendar Styles */}
+        <style jsx global>{`
+          .fc {
+            font-family: inherit;
+          }
+          .fc .fc-button-primary {
+            background-color: #8b5fbf;
+            border-color: #8b5fbf;
+            transition: all 0.2s;
+          }
+          .fc .fc-button-primary:hover {
+            background-color: #7a4fb0;
+            border-color: #7a4fb0;
+          }
+          .fc .fc-button-primary:not(:disabled):active,
+          .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #6a3f9e;
+            border-color: #6a3f9e;
+          }
+          .fc .fc-daygrid-day.fc-day-today {
+            background-color: #faf5ff !important;
+          }
+          .fc .fc-daygrid-day-number {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 4px;
+          }
+          .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            background-color: #8b5fbf;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .fc-event:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+          }
+        `}</style>
+
 
         {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chú thích</CardTitle>
+        <Card className="shadow-sm border-purple-100">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
+                <FontAwesomeIcon icon={faListAlt} className="text-purple-600 text-xs" />
+              </div>
+              Chú thích trạng thái
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Đã lên lịch</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-blue-500"></div>
+                <span className="text-sm font-medium text-gray-700">Đã lên lịch</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-gray-600">Hoàn thành</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-700">Hoàn thành</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-gray-500"></div>
-                <span className="text-sm text-gray-600">Đã hủy</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-gray-500"></div>
+                <span className="text-sm font-medium text-gray-700">Đã hủy</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-500"></div>
-                <span className="text-sm text-gray-600">Nghỉ phép</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                <span className="text-sm font-medium text-gray-700">Nghỉ phép</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span className="text-sm text-gray-600">Vắng mặt</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-red-500"></div>
+                <span className="text-sm font-medium text-gray-700">Vắng mặt</span>
               </div>
             </div>
           </CardContent>

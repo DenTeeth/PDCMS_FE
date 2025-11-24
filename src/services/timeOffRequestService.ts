@@ -38,7 +38,7 @@ export class TimeOffRequestService {
 
     // Transform slotId → workShiftId to match backend API
     const requestBody = {
-      employeeId: data.employeeId,
+      employeeId: data.employeeId, // Required by backend
       timeOffTypeId: data.timeOffTypeId,
       startDate: data.startDate,
       endDate: data.endDate,
@@ -46,16 +46,30 @@ export class TimeOffRequestService {
       reason: data.reason
     };
 
-    console.log('🔍 TimeOffRequestService.createTimeOffRequest:', {
-      original: data,
-      transformed: requestBody
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 TimeOffRequestService.createTimeOffRequest:', {
+        original: data,
+        transformed: requestBody
+      });
+    }
 
-    const response = await axios.post<TimeOffRequestDetail>(
-      this.BASE_URL,
-      requestBody
-    );
-    return response.data;
+    try {
+      const response = await axios.post<TimeOffRequestDetail>(
+        this.BASE_URL,
+        requestBody
+      );
+      return response.data;
+    } catch (error: any) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ TimeOffRequestService.createTimeOffRequest failed:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          requestBody
+        });
+      }
+      throw error;
+    }
   }
 
   /**

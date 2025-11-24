@@ -482,17 +482,17 @@ export default function AppointmentsPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                      <div className="flex items-start gap-2 ml-4 flex-shrink-0">
+                        <Button variant="outline" size="sm" className="h-9 w-9 p-0">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="h-9 w-9 p-0">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>

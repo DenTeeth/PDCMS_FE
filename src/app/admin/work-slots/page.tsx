@@ -524,7 +524,7 @@ export default function WorkSlotsManagementPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="createQuota">Số lượng cần<span className="text-red-500">*</span></Label>
+                  <Label htmlFor="createQuota">Số lượng cần <span className="text-red-500">*</span></Label>
                   <Input
                     id="createQuota"
                     type="number"
@@ -554,7 +554,7 @@ export default function WorkSlotsManagementPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="createEffectiveTo">Ngày kết thúc<span className="text-red-500">*</span></Label>
+                  <Label htmlFor="createEffectiveTo">Ngày kết thúc <span className="text-red-500">*</span></Label>
                   <Input
                     id="createEffectiveTo"
                     type="date"
