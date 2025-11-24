@@ -236,6 +236,47 @@ export const inventoryService = {
       throw error;
     }
   },
+
+  /**
+   * POST /api/v1/inventory/categories - Tạo danh mục mới
+   */
+  createCategory: async (data: { name: string; description?: string; warehouseType: 'COLD' | 'NORMAL' }): Promise<CategoryV1> => {
+    try {
+      const response = await api.post<CategoryV1>('/inventory/categories', data);
+      console.log('✅ Create category:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Create category error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * PUT /api/v1/inventory/categories/{id} - Cập nhật danh mục
+   */
+  updateCategory: async (id: number, data: { name?: string; description?: string }): Promise<CategoryV1> => {
+    try {
+      const response = await api.put<CategoryV1>(`/inventory/categories/${id}`, data);
+      console.log('✅ Update category:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Update category error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * DELETE /api/v1/inventory/categories/{id} - Xóa danh mục
+   */
+  deleteCategory: async (id: number): Promise<void> => {
+    try {
+      await api.delete(`/inventory/categories/${id}`);
+      console.log('✅ Delete category:', id);
+    } catch (error: any) {
+      console.error('❌ Delete category error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
 
 export default inventoryService;

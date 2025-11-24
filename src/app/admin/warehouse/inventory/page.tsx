@@ -171,14 +171,59 @@ export default function InventoryPage() {
   };
 
   const getStockStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; label: string }> = {
+    const variants: Record<string, { variant: any; label: string; className?: string }> = {
       NORMAL: { variant: 'default', label: 'Bình thường' },
-      LOW_STOCK: { variant: 'destructive', label: 'Sắp hết' },
-      OUT_OF_STOCK: { variant: 'secondary', label: 'Hết hàng' },
-      OVERSTOCK: { variant: 'outline', label: 'Dư thừa' },
+      LOW_STOCK: { variant: 'destructive', label: 'Sắp hết hàng', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+      OUT_OF_STOCK: { variant: 'secondary', label: 'Hết hàng', className: 'bg-red-100 text-red-800 border-red-300' },
+      OVERSTOCK: { variant: 'outline', label: 'Dư thừa', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      EXPIRING_SOON: { variant: 'destructive', label: 'Sắp hết hạn', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+      EXPIRED: { variant: 'secondary', label: 'Hết hạn', className: 'bg-gray-100 text-gray-800 border-gray-300' },
     };
     const config = variants[status] || variants.NORMAL;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return (
+      <Badge variant={config.variant} className={config.className}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getQuantityColor = (item: InventorySummary) => {
+    if (item.totalQuantity <= 0) return 'text-red-600';
+    if (item.totalQuantity <= item.minStockLevel) return 'text-orange-600';
+    return 'text-green-600';
+  };
+
+  const getExpiryDateDisplay = (item: InventorySummary) => {
+    // Only show for COLD storage items
+    if (item.warehouseType !== 'COLD') {
+      return <span className="text-sm text-gray-500">-</span>;
+    }
+    
+    // Show nearest expiry date if available
+    if (item.nearestExpiryDate) {
+      const expiryDate = new Date(item.nearestExpiryDate);
+      const today = new Date();
+      const daysUntilExpiry = Math.floor((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Show warning if expiring soon
+      if (daysUntilExpiry <= 30 && daysUntilExpiry > 0) {
+        return (
+          <span className="text-sm text-orange-600 font-medium">
+            {expiryDate.toLocaleDateString('vi-VN')}
+          </span>
+        );
+      } else if (daysUntilExpiry <= 0) {
+        return (
+          <span className="text-sm text-red-600 font-bold">
+            {expiryDate.toLocaleDateString('vi-VN')}
+          </span>
+        );
+      }
+      
+      return <span className="text-sm text-gray-700">{expiryDate.toLocaleDateString('vi-VN')}</span>;
+    }
+    
+    return <span className="text-sm text-gray-500">-</span>;
   };
 
   const getWarehouseTypeBadge = (type: string) => {
@@ -273,86 +318,98 @@ export default function InventoryPage() {
               ) : (
                 <>
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-max">
                       <thead>
-                        <tr className="border-b">
+                        <tr className="border-b bg-gray-50">
                           <th 
-                            className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                            className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
                             onClick={() => handleSort('itemCode')}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 font-semibold text-sm">
                               Mã vật tư
                               <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                             </div>
                           </th>
                           <th 
-                            className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                            className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
                             onClick={() => handleSort('itemName')}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 font-semibold text-sm">
                               Tên vật tư
                               <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                             </div>
                           </th>
-                          <th className="text-left p-3">Loại kho</th>
-                          <th className="text-left p-3">Danh mục</th>
+                          <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
+                          <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
+                          <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
                           <th 
-                            className="text-right p-3 cursor-pointer hover:bg-gray-50"
+                            className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
                             onClick={() => handleSort('totalQuantity')}
                           >
-                            <div className="flex items-center justify-end gap-2">
-                              Tồn kho
+                            <div className="flex items-center justify-end gap-2 font-semibold text-sm">
+                              Số lượng
                               <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                             </div>
                           </th>
-                          <th className="text-right p-3">Min/Max</th>
-                          <th className="text-left p-3">Trạng thái</th>
-                          <th className="text-right p-3">Thao tác</th>
+                          <th className="text-left p-3 font-semibold text-sm">HSD</th>
+                          <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
+                          <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody>
                         {inventory.map((item: InventorySummary) => (
-                          <tr key={item.itemMasterId} className="border-b hover:bg-gray-50">
+                          <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
                           <td className="p-3">
-                            <span className="font-mono text-sm">{item.itemCode}</span>
+                            <span className="font-mono text-sm font-medium">{item.itemCode}</span>
                           </td>
                           <td className="p-3 font-medium">{item.itemName}</td>
                           <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
-                          <td className="p-3">{item.categoryName || '-'}</td>
-                          <td className="p-3 text-right">
-                            <span className={`font-bold ${item.stockStatus === 'LOW_STOCK' ? 'text-red-600' : ''}`}>
-                              {item.totalQuantity} {item.unitOfMeasure}
-                            </span>
+                          <td className="p-3 text-sm">{item.categoryName || '-'}</td>
+                          <td className="p-3">
+                            <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
                           </td>
-                          <td className="p-3 text-right text-sm text-gray-600">
-                            {item.minStockLevel} / {item.maxStockLevel}
+                          <td className="p-3 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className={`font-bold ${getQuantityColor(item)}`}>
+                                {item.totalQuantity}
+                              </span>
+                              <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            {getExpiryDateDisplay(item)}
                           </td>
                           <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
-                          <td className="p-3 text-right space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetail(item.itemMasterId)}
-                              title="Xem chi tiết"
-                            >
-                              <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-500" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(item)}
-                              title="Chỉnh sửa"
-                            >
-                              <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(item.itemMasterId, item.itemName)}
-                              title="Xóa"
-                            >
-                              <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
-                            </Button>
+                          <td className="p-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDetail(item.itemMasterId)}
+                                title="Xem chi tiết"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(item)}
+                                title="Chỉnh sửa"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(item.itemMasterId, item.itemName)}
+                                title="Xóa"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}

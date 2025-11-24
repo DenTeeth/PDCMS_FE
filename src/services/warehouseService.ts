@@ -1331,8 +1331,11 @@ export const storageTransactionService = {
  */
 export const supplierServiceV3 = {
   getAll: async (params?: { search?: string; status?: string }): Promise<any[]> => {
-    const response = await apiV3.get<any[]>('/warehouse/suppliers', { params });
-    return response.data;
+    const response = await apiV3.get<any>('/warehouse/suppliers', { params });
+    // BE returns Page<SupplierSummaryResponse> (Spring Data Pagination)
+    // Extract content array from Page object
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.content || []);
   },
 
   getById: async (id: number): Promise<any> => {
