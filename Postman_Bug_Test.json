@@ -1,0 +1,271 @@
+{
+  "info": {
+    "name": "Part-Time Slot Bug Testing",
+    "description": "Test cases để verify lỗi không cập nhật availability",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Setup - Get Slot Details Before",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/registrations/part-time-flex/slots/{{slot_id}}/details",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "registrations",
+            "part-time-flex",
+            "slots",
+            "{{slot_id}}",
+            "details"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Save initial values",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set('initial_remaining', jsonData.overallRemaining);",
+              "pm.environment.set('initial_nov_available', jsonData.availabilityByMonth.find(m => m.month === '2025-11')?.totalDatesAvailable || 0);",
+              "pm.environment.set('initial_dec_available', jsonData.availabilityByMonth.find(m => m.month === '2025-12')?.totalDatesAvailable || 0);",
+              "",
+              "console.log('📊 BEFORE REGISTRATION:');",
+              "console.log('Overall Remaining:', jsonData.overallRemaining);",
+              "console.log('November Available:', pm.environment.get('initial_nov_available'));",
+              "console.log('December Available:', pm.environment.get('initial_dec_available'));",
+              "",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Has overallRemaining', function () {",
+              "    pm.expect(jsonData.overallRemaining).to.be.a('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test - Create Registration",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"partTimeSlotId\": {{slot_id}},\n  \"effectiveFrom\": \"2025-11-26\",\n  \"effectiveTo\": \"2025-12-09\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/registrations/part-time-flex",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "registrations",
+            "part-time-flex"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "pm.test('Status code is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Registration created', function () {",
+              "    pm.expect(jsonData.registrationId).to.exist;",
+              "    pm.environment.set('registration_id', jsonData.registrationId);",
+              "});",
+              "",
+              "console.log('✅ Registration created:', jsonData.registrationId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verify - Get Slot Details After",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/registrations/part-time-flex/slots/{{slot_id}}/details",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "registrations",
+            "part-time-flex",
+            "slots",
+            "{{slot_id}}",
+            "details"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "var initialRemaining = parseInt(pm.environment.get('initial_remaining'));",
+              "var currentRemaining = jsonData.overallRemaining;",
+              "",
+              "console.log('📊 AFTER REGISTRATION:');",
+              "console.log('Initial Remaining:', initialRemaining);",
+              "console.log('Current Remaining:', currentRemaining);",
+              "console.log('Expected Decrease:', '4 lượt (2 weeks × 2 quota)');",
+              "",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// 🐛 BUG TEST: Should decrease but doesn't",
+              "pm.test('🐛 BUG: overallRemaining should decrease by 4', function () {",
+              "    var expectedRemaining = initialRemaining - 4;",
+              "    if (currentRemaining === initialRemaining) {",
+              "        console.error('❌ BUG CONFIRMED: overallRemaining NOT updated!');",
+              "        console.error('   Expected:', expectedRemaining);",
+              "        console.error('   Actual:', currentRemaining);",
+              "    } else if (currentRemaining === expectedRemaining) {",
+              "        console.log('✅ FIXED: overallRemaining correctly updated!');",
+              "    } else {",
+              "        console.warn('⚠️ UNEXPECTED: Different calculation logic');",
+              "        console.warn('   Expected:', expectedRemaining);",
+              "        console.warn('   Actual:', currentRemaining);",
+              "    }",
+              "    // This test will FAIL if bug exists",
+              "    pm.expect(currentRemaining).to.equal(expectedRemaining);",
+              "});",
+              "",
+              "// Check monthly availability",
+              "var novAvailable = jsonData.availabilityByMonth.find(m => m.month === '2025-11')?.totalDatesAvailable;",
+              "var decAvailable = jsonData.availabilityByMonth.find(m => m.month === '2025-12')?.totalDatesAvailable;",
+              "",
+              "console.log('November Available - Before:', pm.environment.get('initial_nov_available'), 'After:', novAvailable);",
+              "console.log('December Available - Before:', pm.environment.get('initial_dec_available'), 'After:', decAvailable);",
+              "",
+              "pm.test('🐛 BUG: November availability should decrease', function () {",
+              "    var initialNov = parseInt(pm.environment.get('initial_nov_available'));",
+              "    if (novAvailable === initialNov) {",
+              "        console.error('❌ BUG: November availability NOT updated!');",
+              "    }",
+              "    // Expected: decrease by 1 (26/11 used)",
+              "    pm.expect(novAvailable).to.be.lessThan(initialNov);",
+              "});",
+              "",
+              "pm.test('🐛 BUG: December availability should decrease', function () {",
+              "    var initialDec = parseInt(pm.environment.get('initial_dec_available'));",
+              "    if (decAvailable === initialDec) {",
+              "        console.error('❌ BUG: December availability NOT updated!');",
+              "    }",
+              "    // Expected: decrease by 1 (03/12 used)",
+              "    pm.expect(decAvailable).to.be.lessThan(initialDec);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup - Delete Registration",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/registrations/part-time-flex/{{registration_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "registrations",
+            "part-time-flex",
+            "{{registration_id}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 or 204', function () {",
+              "    pm.expect([200, 204]).to.include(pm.response.code);",
+              "});",
+              "",
+              "console.log('🗑️ Registration deleted:', pm.environment.get('registration_id'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "slot_id",
+      "value": "123",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/types/permission';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { toast } from 'sonner';
@@ -131,6 +131,234 @@ const calculateShiftHours = (shiftName: string): number => {
   return 0;
 };
 
+// ==================== DATE PICKER COMPONENT ====================
+interface DatePickerProps {
+  value: string; // ISO date string (yyyy-MM-dd)
+  onChange: (date: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  minDate?: string; // ISO date string (yyyy-MM-dd)
+  selectWeek?: boolean; // New prop for week selection mode
+}
+
+function DatePicker({ value, onChange, placeholder = 'Chọn ngày', required = false, minDate, selectWeek = false }: DatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(value ? parseISO(value) : null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(value ? parseISO(value) : new Date());
+  const [hoveredWeek, setHoveredWeek] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Update selectedDate when value prop changes
+  useEffect(() => {
+    if (value) {
+      const date = parseISO(value);
+      setSelectedDate(date);
+      setCurrentMonth(date);
+    } else {
+      setSelectedDate(null);
+    }
+  }, [value]);
+
+  const handleDateSelect = (date: Date) => {
+    const minDateTime = minDate ? parseISO(minDate).getTime() : 0;
+
+    // If week selection mode, select the Monday of that week
+    if (selectWeek) {
+      const monday = startOfWeek(date, { weekStartsOn: 1 });
+      if (monday.getTime() < minDateTime) {
+        toast.error('Không thể chọn tuần trong quá khứ');
+        return;
+      }
+      setSelectedDate(monday);
+      onChange(format(monday, 'yyyy-MM-dd'));
+    } else {
+      if (date.getTime() < minDateTime) {
+        toast.error('Không thể chọn ngày trong quá khứ');
+        return;
+      }
+      setSelectedDate(date);
+      onChange(format(date, 'yyyy-MM-dd'));
+    }
+    setIsOpen(false);
+  };
+
+  const getWeekNumber = (date: Date): number => {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstMonday = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+    const currentMonday = startOfWeek(date, { weekStartsOn: 1 });
+    return Math.floor((currentMonday.getTime() - firstMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
+  };
+
+  const isInSelectedWeek = (date: Date): boolean => {
+    if (!selectedDate) return false;
+    const selectedMonday = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const selectedSunday = endOfWeek(selectedDate, { weekStartsOn: 1 });
+    return date >= selectedMonday && date <= selectedSunday;
+  };
+
+  const isInHoveredWeek = (date: Date): boolean => {
+    if (hoveredWeek === null) return false;
+    return getWeekNumber(date) === hoveredWeek;
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+
+    const days: (Date | null)[] = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
+    }
+
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    return days;
+  };
+
+  const days = getDaysInMonth(currentMonth);
+  const minDateTime = minDate ? parseISO(minDate).getTime() : 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Get display text for week selection
+  const getDisplayText = () => {
+    if (!selectedDate) return placeholder;
+    if (selectWeek) {
+      const monday = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const sunday = endOfWeek(selectedDate, { weekStartsOn: 1 });
+      return `${format(monday, 'dd/MM/yyyy', { locale: vi })} - ${format(sunday, 'dd/MM/yyyy', { locale: vi })}`;
+    }
+    return format(selectedDate, 'dd/MM/yyyy', { locale: vi });
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2 text-left border border-gray-300 rounded-md bg-white hover:border-[#8b5fbf] focus:outline-none focus:ring-2 focus:ring-[#8b5fbf] focus:border-transparent transition-all duration-200 flex items-center justify-between"
+      >
+        <span className={selectedDate ? 'text-gray-900' : 'text-gray-500'}>
+          {getDisplayText()}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Month/Year Header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#8b5fbf] to-[#6a4a9e] text-white">
+            <button
+              type="button"
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
+              className="p-1 hover:bg-white/20 rounded transition-colors"
+            >
+              <ChevronDown className="h-4 w-4 rotate-90" />
+            </button>
+            <span className="font-semibold text-sm">
+              Tháng {currentMonth.getMonth() + 1}/{currentMonth.getFullYear()}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+              className="p-1 hover:bg-white/20 rounded transition-colors"
+            >
+              <ChevronDown className="h-4 w-4 -rotate-90" />
+            </button>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="p-3">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-0.5 mb-1">
+              {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day) => (
+                <div key={day} className="text-center text-[10px] font-semibold text-gray-600 py-0.5">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 gap-0.5">
+              {days.map((day, index) => {
+                if (!day) {
+                  return <div key={`empty-${index}`} className="aspect-square" />;
+                }
+
+                const isInWeek = selectWeek ? (isInSelectedWeek(day) || isInHoveredWeek(day)) : false;
+                const isSelected = !selectWeek && selectedDate && day.getTime() === selectedDate.getTime();
+                const isToday = day.getTime() === today.getTime();
+                const isDisabled = selectWeek
+                  ? startOfWeek(day, { weekStartsOn: 1 }).getTime() < minDateTime
+                  : day.getTime() < minDateTime;
+
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => !isDisabled && handleDateSelect(day)}
+                    onMouseEnter={() => selectWeek && setHoveredWeek(getWeekNumber(day))}
+                    onMouseLeave={() => selectWeek && setHoveredWeek(null)}
+                    disabled={isDisabled}
+                    className={`aspect-square rounded text-[11px] font-medium transition-all duration-150
+                      ${isInWeek && isInSelectedWeek(day)
+                        ? 'bg-[#8b5fbf] text-white shadow-sm'
+                        : isInWeek && !isInSelectedWeek(day)
+                          ? 'bg-[#8b5fbf]/30 text-[#8b5fbf]'
+                          : isSelected
+                            ? 'bg-[#8b5fbf] text-white shadow-sm'
+                            : isToday
+                              ? 'bg-[#8b5fbf]/10 text-[#8b5fbf] font-bold'
+                              : isDisabled
+                                ? 'text-gray-300 cursor-not-allowed'
+                                : 'text-gray-700 hover:bg-[#8b5fbf]/20'
+                      }
+                    `}
+                  >
+                    {day.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Today Button */}
+            <button
+              type="button"
+              onClick={() => handleDateSelect(new Date())}
+              className="w-full mt-2 px-2 py-1.5 text-xs font-medium text-[#8b5fbf] bg-[#8b5fbf]/10 hover:bg-[#8b5fbf]/20 rounded-md transition-colors"
+            >
+              Hôm nay
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Validate that the date range [from,to] includes at least one occurrence of each day in slotDays
 const validateDateRangeFullCycle = (fromStr: string, toStr: string, slotDays: string[]) => {
   const result = { valid: false, missingDays: [] as string[] };
@@ -229,11 +457,10 @@ export default function EmployeeRegistrationsPage() {
     effectiveTo: ''
   });
   const [selectedSlotDays, setSelectedSlotDays] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [formErrors, setFormErrors] = useState<{ effectiveFrom?: string; effectiveTo?: string; general?: string }>({});
 
-  // Week-based registration state
-  const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
-  const [numberOfWeeks, setNumberOfWeeks] = useState<number>(1);
+  // Part-time registration state
   const [hoursPerWeek, setHoursPerWeek] = useState<number>(0);
   const [currentApprovedHours, setCurrentApprovedHours] = useState<number>(0);
 
@@ -497,27 +724,84 @@ export default function EmployeeRegistrationsPage() {
   const fetchAvailableSlots = async () => {
     try {
       console.log('🚀 [fetchAvailableSlots] Starting fetch...');
+      console.log('📊 [fetchAvailableSlots] Current state:', {
+        slotMonthFilter,
+        isPartTimeFlex,
+        hasViewPermission: hasPermission(Permission.VIEW_AVAILABLE_SLOTS)
+      });
       setLoadingAvailableSlots(true);
 
-      // Pass month filter to API if selected
+      // ⚠️ IMPORTANT: Month filter might hide slots that are still available
+      // Backend filters by effectiveFrom month, but slots can span multiple months
       const monthParam = slotMonthFilter !== 'ALL' ? slotMonthFilter : undefined;
-      console.log(`📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots(${monthParam || 'no filter'})...`);
+      console.log(`📡 [fetchAvailableSlots] Calling API with month filter: ${monthParam || 'NO FILTER (showing all)'}`);
+
       const slots = await shiftRegistrationService.getAvailableSlots(monthParam);
 
       console.log('✅ [fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
-        firstItem: Array.isArray(slots) && slots.length > 0 ? slots[0] : 'no items'
+        firstItem: Array.isArray(slots) && slots.length > 0 ? slots[0] : 'no items',
+        allSlots: slots
       });
 
       const slotsArray = slots || [];
-      console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
-        count: slotsArray.length,
-        slots: slotsArray
+
+      // 🔍 DEBUG: Check each slot's availability
+      console.log('🔍 [fetchAvailableSlots] Analyzing slot availability:');
+
+      // 🔧 Map backend field names to frontend
+      // Backend uses: totalWeeksAvailable, availableWeeks, fullWeeks
+      // Frontend expects: totalDatesAvailable, totalDatesEmpty, totalDatesFull
+      const slotsWithMappedFields = slotsArray.map(slot => {
+        const slotAny = slot as any; // Cast to any to access backend field names
+        return {
+          ...slot,
+          // Map backend fields to frontend field names
+          totalDatesAvailable: slotAny.totalWeeksAvailable || slot.totalDatesAvailable,
+          totalDatesEmpty: slotAny.availableWeeks !== undefined ? slotAny.availableWeeks : slot.totalDatesEmpty,
+          totalDatesFull: slotAny.fullWeeks !== undefined ? slotAny.fullWeeks : slot.totalDatesFull
+        };
       });
 
-      setAvailableSlots(slotsArray);
+      slotsWithMappedFields.forEach((slot, index) => {
+        const isFull = slot.totalDatesEmpty === 0;
+        const hasSpace = slot.totalDatesEmpty > 0;
+
+        console.log(`  Slot ${index + 1}:`, {
+          slotId: slot.slotId,
+          shiftName: slot.shiftName,
+          dayOfWeek: slot.dayOfWeek,
+          effectiveFrom: slot.effectiveFrom,
+          effectiveTo: slot.effectiveTo,
+          // Mapped values from backend
+          totalDatesAvailable: slot.totalDatesAvailable,  // = totalWeeksAvailable
+          totalDatesEmpty: slot.totalDatesEmpty,          // = availableWeeks
+          totalDatesFull: slot.totalDatesFull,            // = fullWeeks
+          availabilitySummary: slot.availabilitySummary,
+          isFull,
+          hasSpace,
+          percentageFull: slot.totalDatesAvailable > 0
+            ? Math.round((slot.totalDatesFull / slot.totalDatesAvailable) * 100) + '%'
+            : 'N/A'
+        });
+
+        if (isFull) {
+          console.warn(`  ⚠️ Slot ${slot.slotId} (${slot.shiftName}) is FULL (0 weeks available)!`);
+        } else if (hasSpace) {
+          console.log(`  ✅ Slot ${slot.slotId} has ${slot.totalDatesEmpty}/${slot.totalDatesAvailable} weeks available!`);
+        }
+      });
+
+      console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
+        count: slotsWithMappedFields.length,
+        fullSlots: slotsWithMappedFields.filter(s => s.totalDatesEmpty === 0).length,
+        partialSlots: slotsWithMappedFields.filter(s => s.totalDatesEmpty > 0 && s.totalDatesEmpty < s.totalDatesAvailable).length,
+        emptySlots: slotsWithMappedFields.filter(s => s.totalDatesEmpty === s.totalDatesAvailable).length
+      });
+
+      setAvailableSlots(slotsWithMappedFields);
 
       // Fetch slot details for each slot
       const detailsMap: Record<number, SlotDetailsResponse> = {};
@@ -610,25 +894,41 @@ export default function EmployeeRegistrationsPage() {
   // ==================== PART-TIME REGISTRATION HANDLERS ====================
   const handlePartTimeCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🚀 [handlePartTimeCreate] Starting registration creation...');
+    console.log('📋 Form data:', partTimeCreateFormData);
+    console.log('👤 User type:', { isPartTimeFlex, employeeType: user?.employmentType });
 
     // Validate based on employee type
     if (isPartTimeFlex) {
       // PART_TIME_FLEX: Need all required fields
       if (!partTimeCreateFormData.partTimeSlotId) {
+        console.error('❌ Validation failed: No slot selected');
         toast.error('Vui lòng chọn suất làm việc');
+        setFormErrors({ general: 'Vui lòng chọn suất làm việc' });
         return;
       }
       // Use selected slot days from selected slot instead of form dayOfWeek
       const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
+      console.log('🎯 Selected slot:', selectedSlot);
+
       const slotDays = selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
       if (!slotDays || slotDays.length === 0) {
+        console.error('❌ Validation failed: No days configured for slot');
         toast.error('Suất này chưa cấu hình ngày làm việc. Vui lòng chọn suất khác.');
+        setFormErrors({ general: 'Suất này chưa cấu hình ngày làm việc' });
         return;
       }
+
       if (!partTimeCreateFormData.effectiveFrom) {
+        console.error('❌ Validation failed: No start date');
         toast.error('Vui lòng chọn tuần bắt đầu');
+        setFormErrors({ general: 'Vui lòng chọn tuần bắt đầu' });
         return;
       }
+
+      console.log('✅ Basic validation passed');
+      console.log('📅 Slot days:', slotDays);
+      console.log('📅 Date range:', { from: partTimeCreateFormData.effectiveFrom, to: partTimeCreateFormData.effectiveTo });
 
       // ✅ VALIDATE 21H WEEKLY LIMIT (CLIENT-SIDE)
       if (hoursPerWeek > 0 && currentApprovedHours + hoursPerWeek > 21) {
@@ -672,6 +972,7 @@ export default function EmployeeRegistrationsPage() {
 
     try {
       setPartTimeCreating(true);
+      setFormErrors({}); // Clear previous errors
 
       // If effectiveTo is not provided, use slot's effectiveTo
       // Build request payload: only the three required fields
@@ -687,11 +988,18 @@ export default function EmployeeRegistrationsPage() {
         }
       }
 
-      await shiftRegistrationService.createRegistration(requestData);
-      toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.');
+      console.log('📤 Sending request to API:', requestData);
+
+      const result = await shiftRegistrationService.createRegistration(requestData);
+
+      console.log('✅ Registration created successfully:', result);
+      toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.', { duration: 5000 });
+
       setShowPartTimeCreateModal(false);
       setPartTimeCreateFormData({ partTimeSlotId: 0, effectiveFrom: '', effectiveTo: '' });
       setSelectedSlotDays([]);
+      setSelectedSlot(null);
+      setFormErrors({});
       setFormErrors({});
       // Refresh data
       await fetchPartTimeRegistrations();
@@ -832,8 +1140,21 @@ export default function EmployeeRegistrationsPage() {
   const sortedAvailableSlots = useMemo(() => {
     let slots = [...availableSlots];
 
-    // Hide FULL slots (no empty dates)
-    slots = slots.filter(slot => slot.totalDatesEmpty > 0);
+    // ❌ TEMPORARILY DISABLED - Backend may return totalDatesEmpty=0 even when slots available
+    // ✅ TODO: Fix after confirming backend field names
+    // slots = slots.filter(slot => slot.totalDatesEmpty > 0);
+
+    // Show ALL slots for now - users can see availability in details
+    console.log('🔍 [sortedAvailableSlots] Processing slots:', {
+      total: slots.length,
+      slots: slots.map(s => ({
+        id: s.slotId,
+        name: s.shiftName,
+        totalDatesEmpty: s.totalDatesEmpty,
+        totalDatesAvailable: s.totalDatesAvailable,
+        availabilitySummary: s.availabilitySummary
+      }))
+    });
 
     // NO NEED to filter by month - BE already filtered via API parameter
     // Month filter is handled by passing ?month=YYYY-MM to API
@@ -947,14 +1268,48 @@ export default function EmployeeRegistrationsPage() {
     setSlotDayFilter([]);
   };
 
+  // ==================== REFRESH HANDLER ====================
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    try {
+      // Refresh all data based on active tab
+      if (activeTab === 'part-time') {
+        await Promise.all([
+          fetchPartTimeRegistrations(),
+          isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS) ? fetchAvailableSlots() : Promise.resolve()
+        ]);
+        toast.success('Đã cập nhật dữ liệu mới nhất!');
+      } else {
+        await fetchFixedRegistrations();
+        toast.success('Đã cập nhật dữ liệu mới nhất!');
+      }
+    } catch (error) {
+      toast.error('Không thể cập nhật dữ liệu');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // ==================== RENDER ====================
   return (
     <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_OWN, Permission.VIEW_FIXED_REGISTRATIONS_OWN]}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* Header - Đơn giản hóa */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Đăng Ký Ca Làm Việc</h1>
-          <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm việc của bạn</p>
+        {/* Header with Refresh Button */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Đăng Ký Ca Làm Việc</h1>
+            <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm việc của bạn</p>
+          </div>
+          <Button
+            onClick={handleRefreshAll}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Đang cập nhật...' : 'Làm mới'}
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -984,11 +1339,33 @@ export default function EmployeeRegistrationsPage() {
                   {/* Header & Controls */}
                   <Card>
                     <CardHeader className="pb-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Clock className="w-5 h-5 text-purple-600" />
-                        <CardTitle className="text-lg">
-                          Các Suất Làm Việc Có Sẵn
-                        </CardTitle>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-purple-600" />
+                          <CardTitle className="text-lg">
+                            Các Suất Làm Việc Có Sẵn
+                          </CardTitle>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            setLoadingAvailableSlots(true);
+                            try {
+                              await fetchAvailableSlots();
+                              toast.success('Đã cập nhật danh sách suất!');
+                            } catch (error) {
+                              toast.error('Không thể cập nhật');
+                            } finally {
+                              setLoadingAvailableSlots(false);
+                            }
+                          }}
+                          disabled={loadingAvailableSlots}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${loadingAvailableSlots ? 'animate-spin' : ''}`} />
+                          Làm mới
+                        </Button>
                       </div>
 
                       {/* Sort & Legend Controls */}
@@ -1087,7 +1464,7 @@ export default function EmployeeRegistrationsPage() {
                             <span className="text-gray-600">Sắp đầy (20-50%)</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                            <span className="w-3 h-3 rounded-full bg-gray-400"></span>
                             <span className="text-gray-600">Đầy (0-20%)</span>
                           </div>
                         </div>
@@ -1095,39 +1472,39 @@ export default function EmployeeRegistrationsPage() {
                     </CardHeader>
                   </Card>
 
-                  {/* Available Slots Table */}
+                  {/* Available Slots Table - Redesigned */}
                   {loadingAvailableSlots ? (
-                    <Card>
-                      <CardContent className="flex items-center justify-center py-12">
-                        <Loader2 className="h-6 w-6 animate-spin text-purple-500 mr-2" />
-                        <span className="text-gray-600">Đang tải...</span>
-                      </CardContent>
-                    </Card>
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <Loader2 className="h-8 w-8 animate-spin text-purple-600 mb-3" />
+                        <span className="text-gray-600 font-medium">Đang tải suất làm việc...</span>
+                      </div>
+                    </div>
                   ) : sortedAvailableSlots.length === 0 ? (
-                    <Card>
-                      <CardContent className="text-center py-12">
-                        <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200 shadow-sm">
+                      <div className="text-center py-16 px-6">
+                        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <AlertCircle className="h-8 w-8 text-purple-600" />
+                        </div>
                         {availableSlots.length === 0 ? (
                           <>
-                            <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
-                            <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Không có suất nào còn trống</h3>
+                            <p className="text-sm text-gray-600">Vui lòng quay lại sau hoặc liên hệ quản lý</p>
                           </>
                         ) : (
                           <>
-                            <p className="text-gray-700 font-medium mb-1">Không tìm thấy suất phù hợp</p>
-                            <p className="text-sm text-gray-500">Thử điều chỉnh bộ lọc của bạn</p>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Không tìm thấy suất phù hợp</h3>
+                            <p className="text-sm text-gray-600 mb-4">Thử điều chỉnh bộ lọc của bạn</p>
                             <Button
-                              variant="outline"
-                              size="sm"
                               onClick={clearAllFilters}
-                              className="mt-3"
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
                             >
                               Xóa bộ lọc
                             </Button>
                           </>
                         )}
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   ) : (
                     <Card>
                       <CardContent className="p-0">
@@ -1159,9 +1536,40 @@ export default function EmployeeRegistrationsPage() {
                               {sortedAvailableSlots.map((slot) => {
                                 const slotDetails = slotDetailsMap[slot.slotId];
                                 const shiftHours = calculateShiftHours(slot.shiftName);
-                                const totalWeeks = slot.totalDatesAvailable; // Reusing as week count
-                                const availableWeeks = slot.totalDatesEmpty; // Reusing as available weeks
-                                const availablePercent = totalWeeks > 0 ? (availableWeeks / totalWeeks) * 100 : 0;
+
+                                // ✅ FIX: Calculate TOTAL working days from slotDetails
+                                // totalDatesAvailable = days with space (CHANGES with bookings)
+                                // We need: TOTAL working days (NEVER changes)
+                                let totalWorkingDays = 0;
+                                if (slotDetails && slotDetails.availabilityByMonth) {
+                                  // Sum up totalWorkingDays from all months
+                                  totalWorkingDays = slotDetails.availabilityByMonth.reduce(
+                                    (sum, month) => sum + month.totalWorkingDays, 0
+                                  );
+                                } else {
+                                  // Fallback: Use totalDatesAvailable (may be inaccurate)
+                                  totalWorkingDays = slot.totalDatesAvailable || 0;
+                                }
+
+                                // Calculate availability based on actual slots, not weeks
+                                // ⚠️ IMPORTANT: Backend only counts APPROVED registrations
+                                // Pending registrations do NOT reduce quota until approved by admin
+                                let totalSlots, availableSlots, approvedSlots, availablePercent;
+
+                                if (slotDetails && slotDetails.quota && slotDetails.availabilityByMonth) {
+                                  // ✅ CORRECT: Calculate from monthly breakdown (not overallRemaining which is wrong)
+                                  totalSlots = slotDetails.availabilityByMonth.reduce((sum, m) => sum + (m.totalWorkingDays * slotDetails.quota), 0);
+                                  availableSlots = slotDetails.availabilityByMonth.reduce((sum, m) => sum + (m.totalDatesAvailable * slotDetails.quota), 0);
+                                  approvedSlots = totalSlots - availableSlots;
+                                  availablePercent = totalSlots > 0 ? (availableSlots / totalSlots) * 100 : 0;
+                                } else {
+                                  // Fallback to weeks (less accurate)
+                                  const availableWeeks = slot.totalDatesEmpty || 0;
+                                  totalSlots = totalWorkingDays;
+                                  availableSlots = availableWeeks;
+                                  approvedSlots = totalWorkingDays - availableWeeks;
+                                  availablePercent = totalWorkingDays > 0 ? (availableWeeks / totalWorkingDays) * 100 : 0;
+                                }
 
                                 const getColorClass = () => {
                                   if (availablePercent >= 50) return 'bg-green-500';
@@ -1175,38 +1583,42 @@ export default function EmployeeRegistrationsPage() {
                                   return 'bg-red-100 text-red-800';
                                 };
 
+                                const getStatusText = () => {
+                                  if (availablePercent >= 50) return 'Còn nhiều';
+                                  if (availablePercent >= 20) return 'Sắp đầy';
+                                  if (availablePercent > 0) return 'Gần đầy';
+                                  return 'Đầy';
+                                };
+
                                 const isExpanded = expandedSlotId === slot.slotId;
 
                                 return (
-                                  <>
-                                    <tr key={slot.slotId} className="hover:bg-gray-50 transition-colors">
+                                  <React.Fragment key={slot.slotId}>
+                                    <tr className="hover:bg-gray-50 transition-colors">
                                       <td className="px-4 py-3">
                                         <div className="font-medium text-gray-900">{slot.shiftName}</div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
-                                          {getDayOfWeekLabel(slot.dayOfWeek as DayOfWeek)}
-                                        </Badge>
+                                        <div className="text-sm text-gray-700">
+                                          {slot.dayOfWeek.split(',').map((day, idx) =>
+                                            getDayOfWeekLabel(day.trim() as DayOfWeek)
+                                          ).join(', ')}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-3">
                                         <div className="text-sm font-semibold text-gray-900">{shiftHours}h</div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-600">{totalWeeks} tuần</div>
+                                        <div className="text-sm text-gray-600">{totalWorkingDays} tuần</div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <div className="space-y-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge()}`}>
-                                              {slot.availabilitySummary || `${availableWeeks}/${totalWeeks}`}
-                                            </span>
+                                        <div className="space-y-1.5">
+                                          {/* Slot availability display */}
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {availableSlots}/{totalSlots} slots
                                           </div>
-                                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div
-                                              className={`h-1.5 rounded-full ${getColorClass()}`}
-                                              style={{ width: `${availablePercent}%` }}
-                                            />
-                                          </div>
+
+                                          {/* Details Button */}
                                           {slotDetails?.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
                                             <button
                                               onClick={() => setExpandedSlotId(isExpanded ? null : slot.slotId)}
@@ -1228,96 +1640,93 @@ export default function EmployeeRegistrationsPage() {
                                             const firstDay = daysOfWeek[0];
                                             const calculatedDate = firstDay ? getNextDateForDayOfWeek(firstDay) : '';
 
+                                            setSelectedSlot(slot);
+
+                                            // Mặc định = max(hôm nay, slot.effectiveFrom)
+                                            const today = format(new Date(), 'yyyy-MM-dd');
+                                            const slotStart = slot.effectiveFrom;
+                                            const defaultDate = slotStart > today ? slotStart : today;
+
                                             setPartTimeCreateFormData({
                                               partTimeSlotId: slot.slotId,
-                                              effectiveFrom: calculatedDate,
+                                              effectiveFrom: defaultDate,
                                               effectiveTo: undefined
                                             });
                                             setSelectedSlotDays(daysOfWeek.map(d => String(d)));
                                             setShowPartTimeCreateModal(true);
                                           }}
-                                          disabled={availableWeeks === 0}
+                                          disabled={availableSlots === 0}
                                           size="sm"
-                                          className={availableWeeks === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                                          className={availableSlots === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                                          }
                                         >
-                                          {availableWeeks > 0 ? '+ Đăng Ký' : 'Đã Đầy'}
+                                          {availableSlots > 0 ? '+ Đăng Ký' : 'Đã Đầy'}
                                         </Button>
                                       </td>
                                     </tr>
-                                    {isExpanded && slotDetails?.availabilityByMonth && (
+                                    {isExpanded && slotDetails && (
                                       <tr>
-                                        <td colSpan={6} className="px-4 py-3 bg-purple-50">
-                                          <div className="space-y-2">
-                                            <h4 className="text-xs font-semibold text-purple-900 mb-2">Tình trạng theo tháng:</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                              {slotDetails.availabilityByMonth.map((month, idx) => {
-                                                const percentAvailable = (month.totalDatesAvailable / month.totalWorkingDays) * 100;
-                                                const percentPartial = (month.totalDatesPartial / month.totalWorkingDays) * 100;
-                                                const percentFull = (month.totalDatesFull / month.totalWorkingDays) * 100;
+                                        <td colSpan={6} className="px-4 py-3 bg-gray-50 border-t">
+                                          <div className="text-xs font-semibold text-gray-700 mb-2"> Thông tin chi tiết</div>
 
-                                                return (
-                                                  <div
-                                                    key={idx}
-                                                    className="bg-white rounded-lg border border-purple-200 p-2.5 hover:shadow-sm transition-all"
-                                                  >
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                      <span className="text-xs font-semibold text-gray-700">
-                                                        {month.monthName}
-                                                      </span>
-                                                      <span className="text-xs font-bold text-purple-600">
-                                                        {month.totalDatesAvailable}/{month.totalWorkingDays}
-                                                      </span>
-                                                    </div>
-                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex">
-                                                      {percentAvailable > 0 && (
-                                                        <div
-                                                          className="bg-green-500 h-full"
-                                                          style={{ width: `${percentAvailable}%` }}
-                                                          title={`${month.totalDatesAvailable} ngày còn trống`}
-                                                        />
-                                                      )}
-                                                      {percentPartial > 0 && (
-                                                        <div
-                                                          className="bg-yellow-500 h-full"
-                                                          style={{ width: `${percentPartial}%` }}
-                                                          title={`${month.totalDatesPartial} ngày gần đầy`}
-                                                        />
-                                                      )}
-                                                      {percentFull > 0 && (
-                                                        <div
-                                                          className="bg-red-500 h-full"
-                                                          style={{ width: `${percentFull}%` }}
-                                                          title={`${month.totalDatesFull} ngày đã đầy`}
-                                                        />
-                                                      )}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 mt-1.5 text-[10px]">
-                                                      <div className="flex items-center gap-1">
-                                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                                        <span className="text-gray-600">{month.totalDatesAvailable}</span>
-                                                      </div>
-                                                      {month.totalDatesPartial > 0 && (
-                                                        <div className="flex items-center gap-1">
-                                                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                                                          <span className="text-gray-600">{month.totalDatesPartial}</span>
-                                                        </div>
-                                                      )}
-                                                      {month.totalDatesFull > 0 && (
-                                                        <div className="flex items-center gap-1">
-                                                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                                          <span className="text-gray-600">{month.totalDatesFull}</span>
-                                                        </div>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
+                                          {/* Summary Info - Simple Text */}
+                                          <div className="mb-3 text-xs text-gray-600">
+                                            {(() => {
+                                              // ✅ FIX: Calculate from monthly breakdown instead of overallRemaining
+                                              const totalSlots = slotDetails.availabilityByMonth?.reduce((sum, m) => sum + (m.totalWorkingDays * slotDetails.quota), 0) || 0;
+                                              const availableSlots = slotDetails.availabilityByMonth?.reduce((sum, m) => sum + (m.totalDatesAvailable * slotDetails.quota), 0) || 0;
+
+                                              return (
+                                                <>
+                                                  <span className="font-medium">Quota/ngày:</span> {slotDetails.quota} slot/ngày •
+                                                  <span className="font-medium ml-2">Tổng slots:</span> {totalSlots} •
+                                                  <span className="font-medium ml-2 text-green-600">Còn có thể đăng ký:</span> {availableSlots} slots
+                                                </>
+                                              );
+                                            })()}
                                           </div>
+
+                                          {/* Monthly Breakdown Table */}
+                                          {slotDetails.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
+                                            <table className="w-full text-xs">
+                                              <thead className="bg-white border-b">
+                                                <tr>
+                                                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Tháng</th>
+                                                  <th className="px-3 py-2 text-right font-semibold text-gray-700">Khả dụng</th>
+                                                  <th className="px-3 py-2 text-right font-semibold text-gray-700">%</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody className="bg-white divide-y divide-gray-100">
+                                                {slotDetails.availabilityByMonth.map((month, idx) => {
+                                                  // ✅ LOGIC: Slot khả dụng = Tổng slot - Slot đã duyệt
+                                                  // totalWorkingDays = tổng ngày làm việc trong tháng
+                                                  // totalDatesAvailable = số ngày còn slot trống
+                                                  const totalSlots = month.totalWorkingDays * slotDetails.quota;
+                                                  const availableSlots = month.totalDatesAvailable * slotDetails.quota;
+                                                  const approvedSlots = totalSlots - availableSlots;
+                                                  const percentAvailable = totalSlots > 0 ? (availableSlots / totalSlots) * 100 : 0;
+
+                                                  return (
+                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                      <td className="px-3 py-2 text-gray-700">{month.monthName}</td>
+                                                      <td className="px-3 py-2 text-right">
+                                                        <span className={`font-semibold ${percentAvailable > 70 ? 'text-green-600' : percentAvailable > 30 ? 'text-yellow-600' : percentAvailable > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                                                          {availableSlots}/{totalSlots} slot
+                                                        </span>
+                                                      </td>
+                                                      <td className="px-3 py-2 text-right text-gray-500">
+                                                        {percentAvailable.toFixed(0)}%
+                                                      </td>
+                                                    </tr>
+                                                  );
+                                                })}
+                                              </tbody>
+                                            </table>
+                                          )}
                                         </td>
                                       </tr>
                                     )}
-                                  </>
+                                  </React.Fragment>
                                 );
                               })}
                             </tbody>
@@ -1408,82 +1817,85 @@ export default function EmployeeRegistrationsPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {sortedPartTimeRegistrations.map((registration) => {
-                        const statusConfig = {
-                          PENDING: { color: 'bg-yellow-50 border-yellow-200', icon: <AlertCircle className="w-4 h-4" />, text: 'Chờ duyệt', textColor: 'text-yellow-700' },
-                          APPROVED: { color: 'bg-green-50 border-green-200', icon: <CheckCircle className="w-4 h-4" />, text: 'Đã duyệt', textColor: 'text-green-700' },
-                          REJECTED: { color: 'bg-red-50 border-red-200', icon: <XCircle className="w-4 h-4" />, text: 'Từ chối', textColor: 'text-red-700' }
-                        }[registration.status];
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Ca làm</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Thời gian</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Trạng thái</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Đăng ký lúc</th>
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Hành động</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {sortedPartTimeRegistrations.map((registration) => {
+                            const statusConfig = {
+                              PENDING: {
+                                icon: <Clock className="w-4 h-4" />,
+                                text: 'Chờ duyệt',
+                                badgeColor: 'bg-orange-100 text-orange-700'
+                              },
+                              APPROVED: {
+                                icon: <CheckCircle className="w-4 h-4" />,
+                                text: 'Đã duyệt',
+                                badgeColor: 'bg-green-100 text-green-700'
+                              },
+                              REJECTED: {
+                                icon: <XCircle className="w-4 h-4" />,
+                                text: 'Từ chối',
+                                badgeColor: 'bg-red-100 text-red-700'
+                              }
+                            }[registration.status];
 
-                        return (
-                          <Card key={registration.registrationId} className="hover:shadow-lg transition-shadow">
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <CardTitle className="text-base truncate">{getRegistrationShiftName(registration)}</CardTitle>
-                                <Badge variant="outline" className={`${statusConfig.color} ${statusConfig.textColor} shrink-0`}>
-                                  {statusConfig.text}
-                                </Badge>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Bắt đầu:</span>
-                                  <span className="font-medium">{formatDate(registration.effectiveFrom)}</span>
-                                </div>
-                                {registration.effectiveTo && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Kết thúc:</span>
-                                    <span className="font-medium">{formatDate(registration.effectiveTo)}</span>
+                            return (
+                              <tr key={registration.registrationId} className="hover:bg-gray-50">
+                                <td className="px-4 py-3">
+                                  <div className="font-medium text-gray-900">{getRegistrationShiftName(registration)}</div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-gray-700">
+                                    {formatDate(registration.effectiveFrom)}
+                                    {registration.effectiveTo && (
+                                      <span className="text-gray-500"> → {formatDate(registration.effectiveTo)}</span>
+                                    )}
                                   </div>
-                                )}
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Đăng ký:</span>
-                                  <span className="font-medium">
-                                    {format(parseISO(registration.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {registration.status === 'REJECTED' && registration.reason && (
-                                <div className="bg-red-50 border border-red-200 rounded p-2">
-                                  <p className="text-xs font-semibold text-red-800 mb-1">Lý do:</p>
-                                  <p className="text-xs text-red-700">{registration.reason}</p>
-                                </div>
-                              )}
-
-                              {registration.processedBy && (
-                                <div className="text-xs text-gray-500 border-t pt-2">
-                                  <p>Xử lý: #{registration.processedBy}</p>
-                                  {registration.processedAt && (
-                                    <p>{format(parseISO(registration.processedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</p>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Badge className={`${statusConfig.badgeColor} flex items-center gap-1 w-fit`}>
+                                    {statusConfig.icon}
+                                    {statusConfig.text}
+                                  </Badge>
+                                  {registration.status === 'REJECTED' && registration.reason && (
+                                    <div className="mt-1 text-xs text-red-600">
+                                      {registration.reason}
+                                    </div>
                                   )}
-                                </div>
-                              )}
-
-                              {registration.status === 'PENDING' && (
-                                <div className="flex gap-2 pt-2 border-t">
-                                  {/* ❌ REMOVED EDIT BUTTON - Registrations are immutable per backend design */}
-                                  {/* To modify: Delete and create new registration */}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setPartTimeDeletingRegistration(registration);
-                                      setShowPartTimeDeleteModal(true);
-                                    }}
-                                    className="flex-1 text-red-600 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Xóa
-                                  </Button>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600">
+                                  {format(parseISO(registration.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  {registration.status === 'PENDING' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setPartTimeDeletingRegistration(registration);
+                                        setShowPartTimeDeleteModal(true);
+                                      }}
+                                      className="text-red-600 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Xóa
+                                    </Button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
 
@@ -1588,222 +2000,303 @@ export default function EmployeeRegistrationsPage() {
 
         {/* PART-TIME CREATE MODAL */}
         {showPartTimeCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Đăng Ký Ca Làm Việc</h2>
-              <form onSubmit={handlePartTimeCreate} className="space-y-4">
-                {isPartTimeFlex ? (
-                  <>
-                    {/* PART_TIME_FLEX: Use available slots */}
-                    <div>
-                      <Label htmlFor="createSlot">Chọn Suất Làm Việc *</Label>
-                      {loadingAvailableSlots ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          <span className="text-sm text-gray-600">Đang tải danh sách suất...</span>
-                        </div>
-                      ) : availableSlots.length === 0 ? (
-                        <div className="text-center py-4 text-sm text-gray-500 border rounded-md p-4">
-                          Không có suất nào còn trống. Vui lòng thử lại sau.
-                        </div>
-                      ) : (
-                        <select
-                          id="createSlot"
-                          value={partTimeCreateFormData.partTimeSlotId || ''}
-                          onChange={(e) => {
-                            const selectedSlot = availableSlots.find(s => s.slotId === parseInt(e.target.value));
-                            const availableDays = selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
-                            setPartTimeCreateFormData(prev => ({
-                              ...prev,
-                              partTimeSlotId: parseInt(e.target.value) || 0,
-                              effectiveFrom: selectedSlot?.effectiveFrom || '',
-                              effectiveTo: undefined
-                            }));
-                            setSelectedSlotDays(availableDays.map(d => String(d)));
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-2xl my-4">
+              {/* Fixed Header */}
+              <div className="px-4 py-2.5 border-b border-gray-200">
+                <h2 className="text-base font-bold text-gray-900">Đăng Ký Ca Làm Việc</h2>
+              </div>
 
-                            // Calculate hours per week from shift duration
-                            if (selectedSlot) {
-                              const hours = calculateShiftHours(selectedSlot.shiftName);
-                              setHoursPerWeek(hours);
-                            }
-                          }}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        >
-                          <option value="">Chọn suất làm việc</option>
-                          {availableSlots.map(slot => (
-                            <option key={slot.slotId} value={slot.slotId}>
-                              {slot.shiftName} - {slot.dayOfWeek} - {slot.availabilitySummary || `${slot.totalDatesEmpty}/${slot.totalDatesAvailable} ngày còn trống`}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label>
-                        Thứ trong tuần
-                      </Label>
-                      <div className="mt-2 text-sm text-gray-700">
-                        {selectedSlotDays && selectedSlotDays.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {selectedSlotDays.map(d => (
-                              <Badge key={d} variant="outline">{getDayName(d as DayOfWeek)}</Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">Vui lòng chọn suất làm việc trước</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Week Picker */}
-                    <div>
-                      <Label htmlFor="weekStart">
-                        Tuần bắt đầu <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="weekStart"
-                        type="week"
-                        min={format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-'W'ww")} // ✅ Chặn chọn tuần trong quá khứ
-                        value={selectedWeekStart ? format(selectedWeekStart, "yyyy-'W'ww") : ''}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            // Parse week input (YYYY-Www format)
-                            const [year, week] = e.target.value.split('-W');
-                            const firstDayOfYear = new Date(parseInt(year), 0, 1);
-                            const daysOffset = (parseInt(week) - 1) * 7;
-                            const weekStart = addDays(firstDayOfYear, daysOffset);
-                            const monday = startOfWeek(weekStart, { weekStartsOn: 1 });
-
-                            // ✅ Validate: Không cho chọn tuần trong quá khứ
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            if (monday < today) {
-                              toast.error('Không thể chọn tuần trong quá khứ. Vui lòng chọn tuần hiện tại hoặc tương lai.');
-                              return;
-                            }
-
-                            setSelectedWeekStart(monday);
-
-                            // Auto-calculate effectiveFrom
-                            const from = format(monday, 'yyyy-MM-dd');
-                            setPartTimeCreateFormData(prev => ({
-                              ...prev,
-                              effectiveFrom: from
-                            }));
-                          }
-                        }}
-                        required
-                      />
-                      {selectedWeekStart && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          {format(selectedWeekStart, 'dd/MM/yyyy', { locale: vi })} - {format(endOfWeek(selectedWeekStart, { weekStartsOn: 1 }), 'dd/MM/yyyy', { locale: vi })}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Number of Weeks Selector */}
-                    <div>
-                      <Label>
-                        Số tuần đăng ký <span className="text-red-500">*</span>
-                      </Label>
-                      <div className="mt-2 grid grid-cols-6 gap-2">
-                        {[1, 2, 3, 4, 6, 8].map(weeks => (
-                          <button
-                            key={weeks}
-                            type="button"
-                            onClick={() => {
-                              setNumberOfWeeks(weeks);
-                              // Auto-calculate effectiveTo
-                              if (selectedWeekStart) {
-                                const to = format(addWeeks(selectedWeekStart, weeks), 'yyyy-MM-dd');
-                                setPartTimeCreateFormData(prev => ({
-                                  ...prev,
-                                  effectiveTo: to
-                                }));
-                              }
-                            }}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${numberOfWeeks === weeks
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                          >
-                            {weeks}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Chọn số tuần bạn muốn đăng ký
-                      </p>
-                    </div>
-
-                    {/* Hours Summary */}
-                    {hoursPerWeek > 0 && numberOfWeeks > 0 && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                        <h3 className="font-semibold text-sm text-gray-900">📊 Tổng quan giờ làm</h3>
-                        <div className="text-sm space-y-1">
-                          <p>
-                            <span className="text-gray-600">Giờ/tuần:</span>{' '}
-                            <span className="font-semibold">{hoursPerWeek}h</span>
-                          </p>
-                          <p>
-                            <span className="text-gray-600">Số tuần:</span>{' '}
-                            <span className="font-semibold">{numberOfWeeks} tuần</span>
-                          </p>
-                          <p className="text-lg font-bold text-blue-600">
-                            Tổng: {hoursPerWeek} × {numberOfWeeks} = {hoursPerWeek * numberOfWeeks}h
-                          </p>
-                        </div>
-
-                        {/* Weekly limit warning */}
-                        <div className="mt-3 pt-3 border-t border-blue-200">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-600">Đã dùng (đã duyệt):</span>
-                            <span className="font-semibold">{currentApprovedHours}h/tuần</span>
-                          </div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-600">Đăng ký mới:</span>
-                            <span className="font-semibold">+{hoursPerWeek}h/tuần</span>
-                          </div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-600">Tổng nếu duyệt:</span>
-                            <span className={`font-bold ${currentApprovedHours + hoursPerWeek > 21 ? 'text-red-600' : 'text-green-600'}`}>
-                              {currentApprovedHours + hoursPerWeek}h/tuần
-                            </span>
-                          </div>
-
-                          {/* Progress bar */}
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${currentApprovedHours + hoursPerWeek > 21 ? 'bg-red-500' : 'bg-green-500'
-                                }`}
-                              style={{ width: `${Math.min(100, ((currentApprovedHours + hoursPerWeek) / 21) * 100)}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">Giới hạn: 21h/tuần</p>
-
-                          {/* Warning message */}
-                          {currentApprovedHours + hoursPerWeek > 21 && (
-                            <div className="mt-2 flex items-start gap-2 text-red-600 text-sm">
-                              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                              <p>
-                                <strong>Cảnh báo:</strong> Vượt quá giới hạn 21h/tuần!
-                                Đăng ký này có thể bị từ chối.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-4 text-sm text-gray-500">
-                    Chức năng này chỉ dành cho nhân viên PART_TIME_FLEX.
+              {/* Content - NO SCROLL */}
+              <div className="px-4 py-3">
+                {/* Validation Errors */}
+                {formErrors.general && (
+                  <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-red-700">{formErrors.general}</p>
                   </div>
                 )}
 
-                <div className="flex justify-end gap-2 pt-4">
+                <form onSubmit={(e) => { e.preventDefault(); handlePartTimeCreate(e); }} className="space-y-2.5">
+                  {isPartTimeFlex ? (
+                    <>
+                      {/* PART_TIME_FLEX: Use available slots */}
+                      <div>
+                        <Label htmlFor="createSlot" className="text-sm">Chọn Suất Làm Việc *</Label>
+                        {loadingAvailableSlots ? (
+                          <div className="flex items-center justify-center py-2">
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <span className="text-xs text-gray-600">Đang tải...</span>
+                          </div>
+                        ) : availableSlots.length === 0 ? (
+                          <div className="text-center py-2 text-xs text-gray-500 border rounded-md p-2">
+                            <p>Không có suất nào còn trống</p>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              (Thử bỏ filter tháng nếu đang chọn)
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <select
+                              id="createSlot"
+                              value={partTimeCreateFormData.partTimeSlotId || ''}
+                              onChange={(e) => {
+                                const foundSlot = availableSlots.find(s => s.slotId === parseInt(e.target.value));
+                                setSelectedSlot(foundSlot || null);
+                                setFormErrors({}); // Clear errors
+
+                                const availableDays = foundSlot?.dayOfWeek ? foundSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
+                                setPartTimeCreateFormData(prev => ({
+                                  ...prev,
+                                  partTimeSlotId: parseInt(e.target.value) || 0,
+                                  effectiveFrom: foundSlot?.effectiveFrom || '',
+                                  effectiveTo: undefined
+                                }));
+                                setSelectedSlotDays(availableDays.map(d => String(d)));
+
+                                // Calculate hours per week from shift duration
+                                if (foundSlot) {
+                                  const hours = calculateShiftHours(foundSlot.shiftName);
+                                  setHoursPerWeek(hours);
+                                }
+                              }}
+                              className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8b5fbf] focus:border-transparent"
+                              required
+                            >
+                              <option value="">Chọn suất làm việc ({availableSlots.length} suất khả dụng)</option>
+                              {availableSlots.map(slot => {
+                                // Check if slot is full
+                                const isFull = slot.totalDatesEmpty === 0;
+                                const availabilityText = slot.availabilitySummary ||
+                                  `${slot.totalDatesEmpty || 0}/${slot.totalDatesAvailable || 0} ngày còn trống`;
+
+                                // Calculate availability percentage
+                                const totalDates = slot.totalDatesAvailable || 0;
+                                const availableDates = slot.totalDatesEmpty || 0;
+                                const availPercent = totalDates > 0
+                                  ? Math.round((availableDates / totalDates) * 100)
+                                  : 0;
+
+                                // Color indicator
+                                const indicator = isFull ? '🔴' : availPercent > 70 ? '🟢' : availPercent > 30 ? '🟡' : '🟠';
+
+                                return (
+                                  <option
+                                    key={slot.slotId}
+                                    value={slot.slotId}
+                                    disabled={isFull}
+                                  >
+                                    {slot.shiftName} - {slot.dayOfWeek.split(',').map(d => getDayOfWeekLabel(d.trim() as DayOfWeek)).join(', ')}
+                                  </option>
+                                );
+                              })}
+                            </select>
+
+                            {selectedSlot && (
+                              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                <p className="text-xs font-semibold text-blue-900">{selectedSlot.shiftName}</p>
+                                <p className="text-[10px] text-gray-600 mt-0.5">
+                                  {format(parseISO(selectedSlot.effectiveFrom), 'dd/MM/yyyy', { locale: vi })} → {format(parseISO(selectedSlot.effectiveTo), 'dd/MM/yyyy', { locale: vi })}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label className="text-sm">Thứ trong tuần</Label>
+                        <div className="mt-1 text-sm text-gray-700">
+                          {selectedSlotDays && selectedSlotDays.length > 0 ? (
+                            selectedSlotDays.map(d => getDayOfWeekLabel(d as DayOfWeek)).join(', ')
+                          ) : (
+                            <span className="text-xs text-gray-500">Vui lòng chọn suất làm việc trước</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Week Calendar Picker */}
+                      <div>
+                        <Label htmlFor="weekSelect" className="text-sm">
+                          Chọn ngày bắt đầu <span className="text-red-500">*</span>
+                        </Label>
+                        <DatePicker
+                          value={partTimeCreateFormData.effectiveFrom}
+                          onChange={(date) => {
+                            setPartTimeCreateFormData(prev => ({
+                              ...prev,
+                              effectiveFrom: date,
+                              effectiveTo: '' // Reset end date when start week changes
+                            }));
+                          }}
+                          placeholder="Chọn ngày bắt đầu"
+                          required={true}
+                          minDate={format(new Date(), 'yyyy-MM-dd')}
+                          selectWeek={true}
+                        />
+                        {partTimeCreateFormData.effectiveFrom && (
+                          <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Tuần từ {format(startOfWeek(parseISO(partTimeCreateFormData.effectiveFrom), { weekStartsOn: 1 }), 'dd/MM', { locale: vi })} đến {format(endOfWeek(parseISO(partTimeCreateFormData.effectiveFrom), { weekStartsOn: 1 }), 'dd/MM/yyyy', { locale: vi })}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Duration Dropdown */}
+                      {partTimeCreateFormData.effectiveFrom && (
+                        <div>
+                          <Label htmlFor="durationWeeks">
+                            Số tuần đăng ký <span className="text-red-500">*</span>
+                          </Label>
+                          <select
+                            id="durationWeeks"
+                            value={partTimeCreateFormData.effectiveTo || ''}
+                            onChange={(e) => {
+                              setPartTimeCreateFormData(prev => ({
+                                ...prev,
+                                effectiveTo: e.target.value
+                              }));
+                            }}
+                            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8b5fbf] focus:border-transparent transition-all duration-200 bg-white hover:border-[#8b5fbf]"
+                            required
+                          >
+                            <option value="">Chọn số tuần</option>
+                            {(() => {
+                              const startDate = parseISO(partTimeCreateFormData.effectiveFrom);
+                              const slotEndDate = selectedSlot?.effectiveTo ? parseISO(selectedSlot.effectiveTo) : null;
+
+                              if (!slotEndDate) {
+                                // If no slot end date, allow up to 8 weeks
+                                return [1, 2, 3, 4, 5, 6, 7, 8].map(weeks => {
+                                  const lastWeekEnd = endOfWeek(addWeeks(startDate, weeks - 1), { weekStartsOn: 1 });
+                                  const endDateStr = format(lastWeekEnd, 'yyyy-MM-dd');
+
+                                  return (
+                                    <option key={weeks} value={endDateStr}>
+                                      {weeks} tuần ({format(startDate, 'dd/MM', { locale: vi })} - {format(lastWeekEnd, 'dd/MM/yyyy', { locale: vi })})
+                                    </option>
+                                  );
+                                });
+                              }
+
+                              // Calculate max weeks available from start date to slot end date
+                              const maxWeeks = Math.ceil(differenceInWeeks(slotEndDate, startDate, { roundingMethod: 'ceil' })) + 1;
+
+                              // Generate options only for weeks that don't exceed slot end date
+                              const options = [];
+                              for (let weeks = 1; weeks <= Math.min(maxWeeks, 8); weeks++) {
+                                const lastWeekEnd = endOfWeek(addWeeks(startDate, weeks - 1), { weekStartsOn: 1 });
+
+                                // Only include this option if the end date doesn't exceed slot end date
+                                if (lastWeekEnd <= slotEndDate) {
+                                  const endDateStr = format(lastWeekEnd, 'yyyy-MM-dd');
+                                  options.push(
+                                    <option key={weeks} value={endDateStr}>
+                                      {weeks} tuần ({format(startDate, 'dd/MM', { locale: vi })} - {format(lastWeekEnd, 'dd/MM/yyyy', { locale: vi })})
+                                    </option>
+                                  );
+                                }
+                              }
+
+                              return options.length > 0 ? options : (
+                                <option disabled>Không có tuần nào khả dụng</option>
+                              );
+                            })()}
+                          </select>
+                          {selectedSlot?.effectiveTo && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Tối đa có thể đăng ký đến: <strong>{format(parseISO(selectedSlot.effectiveTo), 'dd/MM/yyyy', { locale: vi })}</strong>
+                            </p>
+                          )}
+                          {partTimeCreateFormData.effectiveTo && (
+                            <div className="mt-1.5 p-2 bg-[#8b5fbf]/5 border border-[#8b5fbf]/20 rounded-md">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <Calendar className="h-3 w-3 text-[#8b5fbf]" />
+                                <span className="text-gray-700">
+                                  <strong className="text-[#8b5fbf]">Khoảng thời gian:</strong>{' '}
+                                  {format(parseISO(partTimeCreateFormData.effectiveFrom), 'dd/MM/yyyy', { locale: vi })} - {format(parseISO(partTimeCreateFormData.effectiveTo), 'dd/MM/yyyy', { locale: vi })}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Hours Summary */}
+                      {hoursPerWeek > 0 && partTimeCreateFormData.effectiveFrom && partTimeCreateFormData.effectiveTo && (
+                        <div className="bg-gradient-to-br from-[#8b5fbf]/10 to-[#6a4a9e]/10 border border-[#8b5fbf]/30 rounded-md p-2.5 space-y-1.5">
+                          <h3 className="font-semibold text-xs text-[#6a4a9e] flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            Tổng quan giờ làm
+                          </h3>
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Giờ/tuần:</span>
+                              <span className="font-semibold text-[#6a4a9e]">{hoursPerWeek}h</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Số tuần:</span>
+                              <span className="font-semibold text-[#6a4a9e]">
+                                {differenceInWeeks(parseISO(partTimeCreateFormData.effectiveTo), parseISO(partTimeCreateFormData.effectiveFrom))} tuần
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm font-bold text-[#8b5fbf] pt-1 border-t border-[#8b5fbf]/20">
+                              <span>Tổng:</span>
+                              <span>{hoursPerWeek * differenceInWeeks(parseISO(partTimeCreateFormData.effectiveTo), parseISO(partTimeCreateFormData.effectiveFrom))}h</span>
+                            </div>
+                          </div>
+
+                          {/* Weekly limit warning */}
+                          <div className="mt-2 pt-2 border-t border-[#8b5fbf]/20 space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Đã dùng:</span>
+                              <span className="font-semibold text-gray-700">{currentApprovedHours}h/tuần</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Đăng ký mới:</span>
+                              <span className="font-semibold text-[#8b5fbf]">+{hoursPerWeek}h/tuần</span>
+                            </div>
+                            <div className="flex justify-between text-xs mb-1.5">
+                              <span className="text-gray-600">Tổng nếu duyệt:</span>
+                              <span className={`font-bold ${currentApprovedHours + hoursPerWeek > 21 ? 'text-red-600' : 'text-green-600'}`}>
+                                {currentApprovedHours + hoursPerWeek}h/tuần
+                              </span>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className={`h-1.5 rounded-full transition-all ${currentApprovedHours + hoursPerWeek > 21 ? 'bg-red-500' : 'bg-green-500'
+                                  }`}
+                                style={{ width: `${Math.min(100, ((currentApprovedHours + hoursPerWeek) / 21) * 100)}%` }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-gray-500">Giới hạn: 21h/tuần</p>
+
+                            {/* Warning message */}
+                            {currentApprovedHours + hoursPerWeek > 21 && (
+                              <div className="mt-1.5 flex items-start gap-1.5 text-red-600 text-xs">
+                                <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                                <p>
+                                  <strong>Cảnh báo:</strong> Vượt quá giới hạn 21h/tuần!
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-gray-500">
+                      Chức năng này chỉ dành cho nhân viên PART_TIME_FLEX.
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Fixed Footer */}
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50">
+                <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1811,11 +2304,17 @@ export default function EmployeeRegistrationsPage() {
                       setShowPartTimeCreateModal(false);
                       setPartTimeCreateFormData({ partTimeSlotId: 0, effectiveFrom: '', effectiveTo: '' });
                       setSelectedSlotDays([]);
+                      setSelectedSlot(null);
                     }}
                   >
                     Hủy
                   </Button>
-                  <Button type="submit" disabled={partTimeCreating}>
+                  <Button
+                    type="button"
+                    disabled={partTimeCreating || !partTimeCreateFormData.partTimeSlotId || !partTimeCreateFormData.effectiveFrom}
+                    onClick={handlePartTimeCreate}
+                    className="bg-[#8b5fbf] hover:bg-[#6a4a9e]"
+                  >
                     {partTimeCreating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1826,7 +2325,7 @@ export default function EmployeeRegistrationsPage() {
                     )}
                   </Button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
@@ -1915,7 +2414,7 @@ export default function EmployeeRegistrationsPage() {
           </div>
         )}
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 }
 

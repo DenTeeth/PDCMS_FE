@@ -141,6 +141,7 @@ export default function ShiftCalendarPage() {
         return newDate;
       }
 
+      // Return prevDate to avoid triggering useEffect
       return prevDate;
     });
   };
@@ -184,7 +185,8 @@ export default function ShiftCalendarPage() {
 
   const loadShifts = async () => {
     try {
-      setLoading(true); // ⭐ Set loading state để hiển thị spinner
+      // Don't set loading here to avoid re-render loop
+      // setLoading(true); // ⭐ REMOVED to prevent infinite loop
 
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
@@ -221,9 +223,8 @@ export default function ShiftCalendarPage() {
       console.error('❌ Error loading shifts:', error);
       toast.error('Không thể tải danh sách ca làm việc');
       handleError(error);
-    } finally {
-      setLoading(false); // ⭐ Clear loading state
     }
+    // Don't set loading false here - let loadData handle it
   };
 
   // Load summary data
