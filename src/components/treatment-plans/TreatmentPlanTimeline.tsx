@@ -11,22 +11,32 @@ import { TreatmentPlanDetailResponse, PhaseDetailDTO, ItemDetailDTO, PlanItemSta
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { CheckCircle2, Clock, AlertCircle, Calendar, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Calendar, ArrowRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface TreatmentPlanTimelineProps {
   plan: TreatmentPlanDetailResponse;
   onItemClick?: (item: ItemDetailDTO) => void;
   onPhaseClick?: (phase: PhaseDetailDTO) => void;
+  onAppointmentClick?: (appointmentCode: string) => void;
 }
 
 export default function TreatmentPlanTimeline({
   plan,
   onItemClick,
   onPhaseClick,
+  onAppointmentClick,
 }: TreatmentPlanTimelineProps) {
+  const [openPopoverItemId, setOpenPopoverItemId] = useState<number | null>(null);
+
   const getItemStatusIcon = (status: PlanItemStatus) => {
     switch (status) {
       case PlanItemStatus.COMPLETED:
@@ -156,57 +166,123 @@ export default function TreatmentPlanTimeline({
                       {phase.items && phase.items.length > 0 && (
                         <div className="space-y-2 mt-4 pt-4 border-t">
                           <h4 className="text-sm font-semibold mb-2">Hạng mục ({phase.items.length})</h4>
-                          {phase.items.map((item, itemIndex) => (
-                            <div
-                              key={item.itemId}
-                              className={cn(
-                                "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                                getItemStatusColor(item.status),
-                                onItemClick && "cursor-pointer hover:shadow-sm"
-                              )}
-                              onClick={() => onItemClick?.(item)}
-                            >
-                              <div className="flex-shrink-0 mt-0.5">
-                                {getItemStatusIcon(item.status)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm">
-                                      {item.sequenceNumber}. {item.itemName}
-                                    </p>
-                                    {item.serviceCode && (
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {item.serviceCode}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Badge 
-                                    variant="outline" 
-                                    className={cn("text-xs shrink-0", getItemStatusColor(item.status))}
-                                  >
-                                    {item.status === PlanItemStatus.COMPLETED ? 'Hoàn thành' :
-                                     item.status === PlanItemStatus.IN_PROGRESS ? 'Đang thực hiện' :
-                                     item.status === PlanItemStatus.SCHEDULED ? 'Đã đặt lịch' :
-                                     item.status === PlanItemStatus.READY_FOR_BOOKING ? 'Sẵn sàng đặt lịch' :
-                                     item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE ? 'Chờ điều kiện' :
-                                     'Chưa bắt đầu'}
-                                  </Badge>
+                          {phase.items.map((item, itemIndex) => {
+                            const hasLinkedAppointments = item.linkedAppointments && item.linkedAppointments.length > 0;
+                            const isPopoverOpen = openPopoverItemId === item.itemId;
+
+                            return (
+                              <div
+                                key={item.itemId}
+                                className={cn(
+                                  "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+                                  getItemStatusColor(item.status),
+                                  (onItemClick || hasLinkedAppointments) && "cursor-pointer hover:shadow-sm"
+                                )}
+                                onClick={() => {
+                                  if (hasLinkedAppointments) {
+                                    setOpenPopoverItemId(isPopoverOpen ? null : item.itemId);
+                                  } else {
+                                    onItemClick?.(item);
+                                  }
+                                }}
+                              >
+                                <div className="flex-shrink-0 mt-0.5">
+                                  {getItemStatusIcon(item.status)}
                                 </div>
-                                {item.linkedAppointments && item.linkedAppointments.length > 0 && (
-                                  <div className="flex items-center gap-2 mt-2 text-xs">
-                                    <Calendar className="h-3 w-3" />
-                                    <span className="text-muted-foreground">
-                                      {item.linkedAppointments.length} lịch hẹn
-                                    </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-sm">
+                                        {item.sequenceNumber}. {item.itemName}
+                                      </p>
+                                      {item.serviceCode && (
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {item.serviceCode}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={cn("text-xs shrink-0", getItemStatusColor(item.status))}
+                                    >
+                                      {item.status === PlanItemStatus.COMPLETED ? 'Hoàn thành' :
+                                       item.status === PlanItemStatus.IN_PROGRESS ? 'Đang thực hiện' :
+                                       item.status === PlanItemStatus.SCHEDULED ? 'Đã đặt lịch' :
+                                       item.status === PlanItemStatus.READY_FOR_BOOKING ? 'Sẵn sàng đặt lịch' :
+                                       item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE ? 'Chờ điều kiện' :
+                                       'Chưa bắt đầu'}
+                                    </Badge>
                                   </div>
+                                  {hasLinkedAppointments && (
+                                    <Popover open={isPopoverOpen} onOpenChange={(open) => setOpenPopoverItemId(open ? item.itemId : null)}>
+                                      <PopoverTrigger asChild>
+                                        <div className="flex items-center gap-2 mt-2 text-xs cursor-pointer hover:text-primary transition-colors">
+                                          <Calendar className="h-3 w-3" />
+                                          <span className="text-muted-foreground hover:text-primary">
+                                            {item.linkedAppointments.length} lịch hẹn
+                                          </span>
+                                          <ChevronDown className={cn("h-3 w-3 transition-transform", isPopoverOpen && "rotate-180")} />
+                                        </div>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80 p-0" align="start" onClick={(e) => e.stopPropagation()}>
+                                        <div className="p-3 border-b">
+                                          <h4 className="font-semibold text-sm">Lịch sử lịch hẹn</h4>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {item.itemName}
+                                          </p>
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto">
+                                          {item.linkedAppointments.map((apt, aptIndex) => (
+                                            <div
+                                              key={aptIndex}
+                                              className="p-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onAppointmentClick) {
+                                                  onAppointmentClick(apt.code);
+                                                } else if (onItemClick) {
+                                                  // Fallback: navigate to first appointment
+                                                  onItemClick(item);
+                                                }
+                                              }}
+                                            >
+                                              <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-mono text-xs font-semibold">{apt.code}</span>
+                                                    <Badge variant="outline" className="text-xs">
+                                                      {apt.status === 'COMPLETED' ? 'Hoàn thành' :
+                                                       apt.status === 'SCHEDULED' ? 'Đã đặt lịch' :
+                                                       apt.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+                                                       apt.status === 'CANCELLED' ? 'Đã hủy' :
+                                                       apt.status === 'NO_SHOW' ? 'Không đến' :
+                                                       apt.status || 'Chưa xác định'}
+                                                    </Badge>
+                                                  </div>
+                                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <Calendar className="h-3 w-3" />
+                                                    <span>
+                                                      {apt.scheduledDate 
+                                                        ? format(new Date(apt.scheduledDate), 'dd/MM/yyyy HH:mm', { locale: vi })
+                                                        : 'Chưa có ngày'}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
+                                  )}
+                                </div>
+                                {onItemClick && !hasLinkedAppointments && (
+                                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                                 )}
                               </div>
-                              {onItemClick && (
-                                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

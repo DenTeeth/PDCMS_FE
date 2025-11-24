@@ -71,6 +71,7 @@ export default function PatientAppointmentDetailPage() {
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
   const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
   const [treatmentPlanError, setTreatmentPlanError] = useState<string | null>(null);
+  const [hasTriedLoadingTreatmentPlan, setHasTriedLoadingTreatmentPlan] = useState(false); // Flag to prevent infinite API calls
   const [activeTab, setActiveTab] = useState<string>('details');
 
   // Permissions
@@ -146,11 +147,18 @@ export default function PatientAppointmentDetailPage() {
   const loadTreatmentPlan = async () => {
     if (!appointment?.patient?.patientCode) {
       setTreatmentPlanError('Không tìm thấy thông tin bệnh nhân');
+      setHasTriedLoadingTreatmentPlan(true);
+      return;
+    }
+
+    // Prevent multiple simultaneous calls
+    if (loadingTreatmentPlan) {
       return;
     }
 
     setLoadingTreatmentPlan(true);
     setTreatmentPlanError(null);
+    setHasTriedLoadingTreatmentPlan(true);
 
     try {
       // OPTIMIZATION: If BE provides linkedTreatmentPlanCode, use it directly (1 API call instead of N+1)
@@ -216,7 +224,8 @@ export default function PatientAppointmentDetailPage() {
       if (foundPlan) {
         setTreatmentPlan(foundPlan);
       } else {
-        setTreatmentPlanError('Không tìm thấy lộ trình điều trị liên quan đến lịch hẹn này.');
+        const patientName = appointment.patient?.fullName || 'bệnh nhân này';
+        setTreatmentPlanError(`Không tìm thấy lộ trình điều trị nào của ${patientName} liên quan đến lịch hẹn này.`);
       }
     } catch (error: any) {
       console.error('Error loading treatment plan:', error);
@@ -228,10 +237,22 @@ export default function PatientAppointmentDetailPage() {
 
   // Load treatment plan when Treatment Plan tab is activated (lazy loading)
   useEffect(() => {
-    if (activeTab === 'treatment-plan' && appointment && !treatmentPlan && !loadingTreatmentPlan) {
+    // Only load if:
+    // 1. Treatment Plan tab is active
+    // 2. Appointment is loaded
+    // 3. Treatment plan hasn't been loaded yet
+    // 4. Not currently loading
+    // 5. Haven't tried loading before
+    if (
+      activeTab === 'treatment-plan' && 
+      appointment && 
+      !treatmentPlan && 
+      !loadingTreatmentPlan &&
+      !hasTriedLoadingTreatmentPlan
+    ) {
       loadTreatmentPlan();
     }
-  }, [activeTab, appointment, treatmentPlan, loadingTreatmentPlan]);
+  }, [activeTab, appointment?.appointmentCode, treatmentPlan, loadingTreatmentPlan, hasTriedLoadingTreatmentPlan]);
 
   const getStatusBadge = (status: AppointmentStatus) => {
     const statusInfo = APPOINTMENT_STATUS_COLORS[status];
@@ -547,7 +568,14 @@ export default function PatientAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
                   <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
-                  <Button variant="outline" onClick={loadTreatmentPlan}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setHasTriedLoadingTreatmentPlan(false);
+                      setTreatmentPlanError(null);
+                      loadTreatmentPlan();
+                    }}
+                  >
                     Thử lại
                   </Button>
                 </div>
@@ -585,12 +613,8 @@ export default function PatientAppointmentDetailPage() {
                 {/* Timeline */}
                 <TreatmentPlanTimeline
                   plan={treatmentPlan}
-                  onItemClick={(item) => {
-                    // Navigate to appointment if item has linked appointments
-                    if (item.linkedAppointments && item.linkedAppointments.length > 0) {
-                      const firstAppointment = item.linkedAppointments[0];
-                      router.push(`/patient/appointments/${firstAppointment.code}`);
-                    }
+                  onAppointmentClick={(appointmentCode) => {
+                    router.push(`/patient/appointments/${appointmentCode}`);
                   }}
                 />
               </div>

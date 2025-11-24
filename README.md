@@ -12,13 +12,15 @@ A modern, high-performance dental clinic management system built with Next.js 14
 - Sections: Hero, About, Stats, Services, Doctors, Testimonials, FAQ, Appointment
 
 ### Management System
-Multiple role-based dashboards:
-- **Admin**: System management, accounts, appointments, blogs, roles, settings
-- **Manager**: Analytics, appointments, employees, feedback, patients, settings
-- **Dentist**: Schedule, patients, treatments, stages, follow-ups
-- **Receptionist**: Appointments, customer management (groups & contacts), patient records, KPI, settings
-- **Accountant**: Performance monitoring and financial management
-- **Warehouse**: Inventory, products, statistics
+Three main route groups with role-based access control:
+- **Admin** (`/admin`): System management, accounts, appointments, blogs, roles, permissions, schedules, settings
+- **Employee** (`/employee`): Unified dashboard for all employee roles (Manager, Dentist, Receptionist, Accountant, Warehouse) with permission-based menu filtering:
+  - **Manager**: Analytics, appointments, employees, feedback, patients, settings
+  - **Dentist**: Schedule, patients, treatments, stages, follow-ups
+  - **Receptionist**: Appointments, customer management (groups & contacts), patient records, KPI, settings
+  - **Accountant**: Performance monitoring and financial management
+  - **Warehouse**: Inventory, products, statistics
+- **Patient** (`/patient`): Patient portal for appointments, treatment plans, medical records, billing, notifications
 
 ### Customer Management
 - **Integrated Tabs Interface** for Customer Groups and Customer Contacts
@@ -138,14 +140,10 @@ npm run analyze
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── (public)/          # Public pages (About, Contact, Services, Doctors)
-│   ├── admin/             # Admin dashboard
-│   ├── manager/           # Manager dashboard
-│   ├── dentist/           # Dentist dashboard
-│   ├── receptionist/      # Receptionist dashboard
-│   ├── accountant/        # Accountant dashboard
-│   ├── warehouse/         # Warehouse dashboard
-│   └── patient/           # Patient dashboard
+│   ├── (public)/          # Public pages (About, Contact, Services, Doctors, Login)
+│   ├── admin/             # Admin dashboard (full system access)
+│   ├── employee/          # Employee dashboard (unified for all employee roles: Manager, Dentist, Receptionist, Accountant, Warehouse)
+│   └── patient/           # Patient dashboard (patient portal)
 ├── components/            # React components
 │   ├── accountant/        # Accountant-specific components
 │   ├── admin/             # Admin-specific components

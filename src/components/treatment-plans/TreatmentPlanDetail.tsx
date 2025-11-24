@@ -636,90 +636,12 @@ export default function TreatmentPlanDetail({
             );
           })()}
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Trạng thái điều trị
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge
-                  style={{
-                    backgroundColor: statusInfo.bg,
-                    borderColor: statusInfo.border,
-                    color: 'white',
-                  }}
-                  className="text-xs"
-                >
-                  {statusInfo.text}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {plan.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {treatmentStatusDescriptions[plan.status] || 'Trạng thái được cập nhật từ hệ thống.'}
-              </p>
+          <div className="mt-8 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+              <RefreshCw className="h-4 w-4" />
+              Thống kê tiến độ điều trị
             </div>
-
-            <div className="rounded-xl border bg-white p-4 shadow-sm space-y-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Trạng thái phê duyệt
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span
-                  className={cn(
-                    'px-3 py-1 rounded-full text-xs font-semibold border',
-                    approvalBadge.bg,
-                  )}
-                >
-                  {approvalBadge.label}
-                </span>
-                <span className={cn('text-xs', approvalBadge.text)}>
-                  {normalizedApprovalStatus}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {approvalStatusDescriptions[normalizedApprovalStatus]}
-              </p>
-              <div className="text-xs text-muted-foreground space-y-1">
-                {normalizedApprovalStatus === ApprovalStatus.APPROVED &&
-                  plan.approvalMetadata?.approvedBy && (
-                    <p>
-                      Đã duyệt bởi:{' '}
-                      <span className="font-semibold text-foreground">
-                        {typeof plan.approvalMetadata.approvedBy === 'string'
-                          ? plan.approvalMetadata.approvedBy
-                          : plan.approvalMetadata.approvedBy.fullName ||
-                            plan.approvalMetadata.approvedBy.employeeCode}
-                      </span>
-                      {plan.approvalMetadata.approvedAt && (
-                        <span className="ml-2">
-                          (
-                          {new Date(plan.approvalMetadata.approvedAt).toLocaleDateString('vi-VN')}
-                          )
-                        </span>
-                      )}
-                    </p>
-                  )}
-                {isRejectedState && plan.approvalMetadata?.approvedBy && (
-                  <p>
-                    Người xử lý:{' '}
-                    <span className="font-semibold text-foreground">
-                      {typeof plan.approvalMetadata.approvedBy === 'string'
-                        ? plan.approvalMetadata.approvedBy
-                        : plan.approvalMetadata.approvedBy.fullName ||
-                          plan.approvalMetadata.approvedBy.employeeCode}
-                    </span>
-                  </p>
-                )}
-                {plan.approvalMetadata?.approvedAt && (
-                  <p>
-                    Cập nhật:{' '}
-                    {new Date(plan.approvalMetadata.approvedAt).toLocaleString('vi-VN')}
-                  </p>
-                )}
-              </div>
-            </div>
+            <ProgressSummary progress={plan.progressSummary} />
           </div>
 
           <div className="mt-8">
@@ -961,16 +883,6 @@ export default function TreatmentPlanDetail({
               <p>Chưa có giai đoạn nào trong lộ trình này</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Progress Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Thống Kê Tiến Độ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProgressSummary progress={plan.progressSummary} />
         </CardContent>
       </Card>
 

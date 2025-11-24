@@ -129,7 +129,40 @@ export enum Permission {
   VIEW_TREATMENT_PLAN_OWN = 'VIEW_TREATMENT_PLAN_OWN',
   CREATE_TREATMENT_PLAN = 'CREATE_TREATMENT_PLAN',
   UPDATE_TREATMENT_PLAN = 'UPDATE_TREATMENT_PLAN',
+  DELETE_TREATMENT_PLAN = 'DELETE_TREATMENT_PLAN', // ✅ Added from BE
   APPROVE_TREATMENT_PLAN = 'APPROVE_TREATMENT_PLAN', // Phase 3.5: Manager approval workflow
+  VIEW_ALL_TREATMENT_PLANS = 'VIEW_ALL_TREATMENT_PLANS', // ✅ Added from BE - Manager view all plans across patients
+  MANAGE_PLAN_PRICING = 'MANAGE_PLAN_PRICING', // ✅ Added from BE - V21.4: Finance/Accountant adjusts prices
+  
+  // Additional BE permissions missing in FE
+  VIEW_APPOINTMENT_ALL = 'VIEW_APPOINTMENT_ALL', // ✅ Added - View all clinic appointments
+  VIEW_APPOINTMENT_OWN = 'VIEW_APPOINTMENT_OWN', // ✅ Added - View own appointments
+  UPDATE_APPOINTMENT_STATUS = 'UPDATE_APPOINTMENT_STATUS', // ✅ Added - Change appointment status
+  DELAY_APPOINTMENT = 'DELAY_APPOINTMENT', // ✅ Added - Delay within same day
+  RESCHEDULE_APPOINTMENT = 'RESCHEDULE_APPOINTMENT', // ✅ Added - Cancel and rebook
+  CANCEL_APPOINTMENT = 'CANCEL_APPOINTMENT', // ✅ Added - Cancel appointment
+  
+  VIEW_SPECIALIZATION = 'VIEW_SPECIALIZATION', // ✅ Added
+  CREATE_SPECIALIZATION = 'CREATE_SPECIALIZATION', // ✅ Added
+  
+  UPDATE_ROOM_SERVICES = 'UPDATE_ROOM_SERVICES', // ✅ Added - V16: Assign services to rooms
+  
+  VIEW_TIMEOFF_ALL = 'VIEW_TIMEOFF_ALL', // ✅ Added - BE uses TIMEOFF (not TIME_OFF)
+  VIEW_TIMEOFF_OWN = 'VIEW_TIMEOFF_OWN', // ✅ Added
+  CREATE_TIMEOFF = 'CREATE_TIMEOFF', // ✅ Added
+  APPROVE_TIMEOFF = 'APPROVE_TIMEOFF', // ✅ Added
+  REJECT_TIMEOFF = 'REJECT_TIMEOFF', // ✅ Added
+  CANCEL_TIMEOFF_OWN = 'CANCEL_TIMEOFF_OWN', // ✅ Added
+  CANCEL_TIMEOFF_PENDING = 'CANCEL_TIMEOFF_PENDING', // ✅ Added
+  
+  VIEW_TIMEOFF_TYPE_ALL = 'VIEW_TIMEOFF_TYPE_ALL', // ✅ Added
+  
+  VIEW_LEAVE_BALANCE_ALL = 'VIEW_LEAVE_BALANCE_ALL', // ✅ Added
+  ADJUST_LEAVE_BALANCE = 'ADJUST_LEAVE_BALANCE', // ✅ Added
+  
+  // Employee related (BE uses different naming)
+  READ_ALL_EMPLOYEES = 'READ_ALL_EMPLOYEES', // ✅ Added - BE uses READ instead of VIEW
+  READ_EMPLOYEE_BY_CODE = 'READ_EMPLOYEE_BY_CODE', // ✅ Added
 }
 
 /**
