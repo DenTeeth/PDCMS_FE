@@ -2,37 +2,36 @@
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-
-const features = [
-  {
-    icon: "�",
-    title: "Personalized Treatment Plans",
-    description: "Customized care tailored to your unique dental needs",
-  },
-  {
-    icon: "🩺",
-    title: "Gentle Care for Kids and Adults",
-    description: "Compassionate approach for patients of all ages",
-  },
-  {
-    icon: "🔬",
-    title: "State-of-the-Art Technology",
-    description: "Latest equipment for precise and comfortable treatment",
-  },
-  {
-    icon: "📅",
-    title: "Flexible Appointment Scheduling",
-    description: "Convenient booking options to fit your busy lifestyle",
-  },
-];
 
 export default function AboutSection() {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  const t = useTranslations('About');
+
+  const features = [
+    {
+      title: t('features.personalizedPlans'),
+      description: t('features.personalizedPlansDesc'),
+    },
+    {
+      title: t('features.gentleCare'),
+      description: t('features.gentleCareDesc'),
+    },
+    {
+      title: t('features.technology'),
+      description: t('features.technologyDesc'),
+    },
+    {
+      title: t('features.scheduling'),
+      description: t('features.schedulingDesc'),
+    },
+  ];
 
   return (
     <section className="py-20 bg-background relative overflow-hidden" ref={ref}>
@@ -66,7 +65,7 @@ export default function AboutSection() {
               >
                 <Image
                   src="/images/dentist1.webp"
-                  alt="Dental Professional"
+                  alt={t('images.professional')}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -78,7 +77,7 @@ export default function AboutSection() {
               >
                 <Image
                   src="/images/dentist2.webp"
-                  alt="Expert Dentist"
+                  alt={t('images.expert')}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -92,7 +91,7 @@ export default function AboutSection() {
               >
                 <Image
                   src="/images/dentist3.webp"
-                  alt="Dental Care Specialist"
+                  alt={t('images.specialist')}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -104,7 +103,7 @@ export default function AboutSection() {
               >
                 <Image
                   src="/images/dentist4.webp"
-                  alt="Dental Expert"
+                  alt={t('images.dentist')}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -120,13 +119,13 @@ export default function AboutSection() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-              Professional and Personalized
+              {t('title')}
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mt-2">
-                Dental Excellence
+                {t('subtitle')}
               </span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              We provide high-quality dental care with a personal touch for you and your entire family. Our experienced team is dedicated to creating beautiful, healthy smiles in a comfortable environment.
+              {t('description')}
             </p>
 
             <div className="space-y-4 mb-8">
@@ -158,7 +157,7 @@ export default function AboutSection() {
                 href="#appointment"
                 className="inline-block bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl font-medium"
               >
-                Book Appointment
+                {t('cta')}
               </Link>
             </motion.div>
           </motion.div>
