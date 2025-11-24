@@ -202,6 +202,32 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
+      name: 'Warehouse Management',
+      icon: faWarehouse,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'WAREHOUSE',
+      submenu: [
+        {
+          name: 'Vật Tư (Inventory)',
+          href: '/admin/warehouse/inventory',
+          icon: faBoxes,
+          requiredPermissions: ['VIEW_ITEM_MASTER'],
+        },
+        {
+          name: 'Xuất/Nhập Kho',
+          href: '/admin/warehouse/storage-in-out',
+          icon: faClipboard,
+          requiredPermissions: ['VIEW_STORAGE_TRANSACTION'],
+        },
+        {
+          name: 'Nhà Cung Cấp',
+          href: '/admin/warehouse/suppliers',
+          icon: faUsers,
+          requiredPermissions: ['VIEW_SUPPLIER'],
+        },
+      ],
+    },
+    {
       name: 'Customer Contacts',
       href: '/admin/customer-contacts',
       icon: faPhone,

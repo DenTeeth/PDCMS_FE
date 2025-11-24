@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   // Performance optimizations
@@ -18,18 +21,18 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  
+
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  
+
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
   },
-  
+
   // Bundle analyzer for debugging
   webpack: (config, { dev, isServer }) => {
     // Optimize chunks
@@ -51,10 +54,10 @@ const nextConfig: NextConfig = {
         },
       };
     }
-    
+
     return config;
   },
-  
+
   // Headers for better caching
   async headers() {
     return [
@@ -79,4 +82,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

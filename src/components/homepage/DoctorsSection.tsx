@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { useTranslations } from "next-intl";
 
 interface Doctor {
   id: number;
@@ -14,46 +15,22 @@ interface Doctor {
   avatar: string;
 }
 
-const doctors: Doctor[] = [
-  {
-    id: 1,
-    name: "Dr. Sarah Bennett",
-    specialty: "General Dentistry",
-    experience: "15+ years of experience",
-    description: "Leading specialist in general dentistry with extensive experience in comprehensive oral care.",
-    avatar: "/images/dentist1.webp",
-  },
-  {
-    id: 2,
-    name: "Dr. Maya Lin",
-    specialty: "Cosmetic Dentistry",
-    experience: "12+ years of experience",
-    description: "Expert in smile makeovers, veneers, and advanced cosmetic procedures.",
-    avatar: "/images/dentist2.webp",
-  },
-  {
-    id: 3,
-    name: "Dr. Michael Reyes",
-    specialty: "Orthodontics",
-    experience: "18+ years of experience",
-    description: "Specialist in braces and aligners with cutting-edge orthodontic techniques.",
-    avatar: "/images/dentist3.webp",
-  },
-  {
-    id: 4,
-    name: "Dr. James Carter",
-    specialty: "Pediatric Dentistry",
-    experience: "10+ years of experience",
-    description: "Gentle care specialist for children with a fun, compassionate approach.",
-    avatar: "/images/dentist4.webp",
-  }
-];
-
 export default function DoctorsSection() {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  const t = useTranslations('Doctors');
+
+  const doctors: Doctor[] = [0, 1, 2, 3].map(i => ({
+    id: i + 1,
+    name: t(`homeDoctors.${i}.name`),
+    specialty: t(`homeDoctors.${i}.specialty`),
+    experience: t(`homeDoctors.${i}.experience`),
+    description: t(`homeDoctors.${i}.description`),
+    avatar: `/images/dentist${i + 1}.webp`,
+  }));
 
   return (
     <section className="py-20 bg-background relative overflow-hidden" ref={ref}>
@@ -79,10 +56,10 @@ export default function DoctorsSection() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Meet Our Dental Team
+            {t('sectionTitle')}
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Committed to Your Smile - Experienced professionals dedicated to your oral health
+            {t('sectionSubtitle')}
           </p>
         </motion.div>
 
@@ -126,7 +103,7 @@ export default function DoctorsSection() {
                       {/* Medical cross badge */}
                       <div className="absolute top-4 right-4 w-16 h-16 flex items-center justify-center">
                         <Image
-                          src="/logo1.png"
+                          src="/denteeth-logo.png"
                           alt="DenTeeth Logo"
                           width={64}
                           height={64}
