@@ -966,10 +966,7 @@ export default function BookingServicesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </ProtectedRoute>
-  );
-}
+
         {/* Update Modal */}
         <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1243,4 +1240,7 @@ export default function BookingServicesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
+      </div>
+    </ProtectedRoute>
+  );
+}

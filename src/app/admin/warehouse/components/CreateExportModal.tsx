@@ -8,11 +8,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ItemBatch, CreateExportTransactionDto, CreateExportItemDto } from '@/types/warehouse';
-import { storageTransactionService } from '@/services/warehouseService';
+import inventoryService, {
+  type BatchResponse,
+} from '@/services/inventoryService';
+import type {
+  CreateExportTransactionDto,
+  ExportType,
+} from '@/types/warehouse';
+import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, TruckIcon, AlertCircle } from 'lucide-react';
-import BatchSelectorModal from './BatchSelectorModal';
+import BatchSelectorModal, { type SelectedBatchPayload } from './BatchSelectorModal';
 
 interface CreateExportModalProps {
   isOpen: boolean;
@@ -21,12 +34,15 @@ interface CreateExportModalProps {
 }
 
 interface ExportItem {
-  batch_id: number;
-  batch_lot_number: string;
-  item_name?: string;
+  batchId: number;
+  batchLotNumber: string;
+  itemName?: string;
+  itemCode?: string;
+  itemMasterId: number;
+  unitId?: number;
   quantity: number;
-  import_price: number;
-  expiry_date?: string;
+  importPrice?: number;
+  expiryDate?: string;
 }
 
 export default function CreateExportModal({
@@ -36,15 +52,20 @@ export default function CreateExportModal({
 }: CreateExportModalProps) {
   const queryClient = useQueryClient();
   const [transactionDate, setTransactionDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [exportType, setExportType] = useState<ExportType>('USAGE');
+  const [departmentName, setDepartmentName] = useState<string>('');
+  const [requestedBy, setRequestedBy] = useState<string>('');
+  const [referenceCode, setReferenceCode] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [items, setItems] = useState<ExportItem[]>([]);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [unitCache, setUnitCache] = useState<Record<number, number>>({});
 
   // Create Export Mutation
   const mutation = useMutation({
     mutationFn: (data: CreateExportTransactionDto) =>
-      storageTransactionService.createExport(data),
+      inventoryService.createExportTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storageTransactions'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
@@ -59,11 +80,35 @@ export default function CreateExportModal({
     },
   });
 
+  const ensureUnitId = async (itemMasterId: number): Promise<number> => {
+    if (unitCache[itemMasterId]) {
+      return unitCache[itemMasterId];
+    }
+    try {
+      const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit.unitId }));
+      return baseUnit.unitId;
+    } catch (error: any) {
+      console.error('❌ Failed to fetch base unit for export:', error);
+      toast.error('Không thể lấy đơn vị cơ sở của vật tư', {
+        description: error.response?.data?.message || 'Vui lòng thử lại hoặc liên hệ admin',
+      });
+      throw error;
+    } finally {
+      // no-op
+    }
+  };
+
   const handleReset = () => {
     setTransactionDate(new Date().toISOString().split('T')[0]);
+    setExportType('USAGE');
+    setDepartmentName('');
+    setRequestedBy('');
+    setReferenceCode('');
     setNotes('');
     setItems([]);
     setEditingIndex(null);
+    setUnitCache({});
   };
 
   const handleAddBatch = () => {
@@ -76,27 +121,38 @@ export default function CreateExportModal({
     setIsBatchModalOpen(true);
   };
 
-  const handleBatchSelected = (batch: ItemBatch, quantity: number) => {
-    const newItem: ExportItem = {
-      batch_id: batch.batch_id,
-      batch_lot_number: batch.lot_number,
-      item_name: batch.item_name ?? '',
-      quantity,
-      import_price: batch.import_price,
-      expiry_date: batch.expiry_date,
-    };
-
-    if (editingIndex !== null) {
-      // Edit existing item
-      const updatedItems = [...items];
-      updatedItems[editingIndex] = newItem;
-      setItems(updatedItems);
-    } else {
-      // Add new item
-      setItems([...items, newItem]);
+  const handleBatchSelected = async (selection: SelectedBatchPayload, quantity: number) => {
+    if (!selection.itemMasterId) {
+      toast.error('Không xác định được vật tư đã chọn');
+      return;
     }
 
-    setEditingIndex(null);
+    try {
+      const unitId = await ensureUnitId(selection.itemMasterId);
+      const newItem: ExportItem = {
+        batchId: selection.batch.batchId,
+        batchLotNumber: selection.batch.lotNumber,
+        itemName: selection.itemName ?? selection.itemCode ?? '',
+        itemCode: selection.itemCode,
+        itemMasterId: selection.itemMasterId,
+        unitId,
+        quantity,
+        importPrice: undefined,
+        expiryDate: selection.batch.expiryDate,
+      };
+
+      if (editingIndex !== null) {
+        const updatedItems = [...items];
+        updatedItems[editingIndex] = newItem;
+        setItems(updatedItems);
+      } else {
+        setItems((prev) => [...prev, newItem]);
+      }
+
+      setEditingIndex(null);
+    } catch {
+      // ensureUnitId already handles toast
+    }
   };
 
   const handleRemoveItem = (index: number) => {
@@ -110,11 +166,24 @@ export default function CreateExportModal({
       return;
     }
 
+    for (const item of items) {
+      if (!item.unitId) {
+        toast.error(`Không tìm thấy đơn vị cơ sở cho vật tư ${item.itemName || ''}`);
+        return;
+      }
+    }
+
     const payload: CreateExportTransactionDto = {
-      transaction_date: transactionDate,
-      notes: notes || undefined,
-      items: items.map((item): CreateExportItemDto => ({
-        batch_id: item.batch_id,
+      transactionDate: `${transactionDate}T00:00:00`,
+      exportType,
+      referenceCode: referenceCode.trim() || undefined,
+      departmentName: departmentName.trim() || undefined,
+      requestedBy: requestedBy.trim() || undefined,
+      notes: notes.trim() || undefined,
+      allowExpired: exportType === 'DISPOSAL' ? true : undefined,
+      items: items.map((item) => ({
+        itemMasterId: item.itemMasterId,
+        unitId: item.unitId as number,
         quantity: item.quantity,
       })),
     };
@@ -163,8 +232,8 @@ export default function CreateExportModal({
 
           <div className="space-y-6">
             {/* Header Info */}
-            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
+              <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">
                   Ngày Xuất <span className="text-red-500">*</span>
                 </Label>
@@ -176,7 +245,50 @@ export default function CreateExportModal({
                 />
               </div>
 
-              <div>
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">
+                  Loại Phiếu <span className="text-red-500">*</span>
+                </Label>
+                <Select value={exportType} onValueChange={(value) => setExportType(value as ExportType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn loại xuất" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USAGE">Xuất dùng (USAGE)</SelectItem>
+                    <SelectItem value="DISPOSAL">Xuất hủy (DISPOSAL)</SelectItem>
+                    <SelectItem value="RETURN">Trả NCC (RETURN)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">Bộ Phận / Khoa Yêu Cầu</Label>
+                <Input
+                  value={departmentName}
+                  onChange={(e) => setDepartmentName(e.target.value)}
+                  placeholder="VD: Khoa Nội, Phòng khám tổng quát"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">Người Yêu Cầu</Label>
+                <Input
+                  value={requestedBy}
+                  onChange={(e) => setRequestedBy(e.target.value)}
+                  placeholder="VD: BS. Nguyễn Văn A"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">Mã Tham Chiếu / Ca Điều Trị</Label>
+                <Input
+                  value={referenceCode}
+                  onChange={(e) => setReferenceCode(e.target.value)}
+                  placeholder="VD: CASE-2025-001"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">Ghi Chú</Label>
                 <Input
                   value={notes}
@@ -236,16 +348,16 @@ export default function CreateExportModal({
                             {index + 1}
                           </td>
                           <td className="p-3">
-                            <div className="font-medium">{item.item_name}</div>
+                            <div className="font-medium">{item.itemName}</div>
                           </td>
                           <td className="p-3">
                             <Badge variant="outline" className="font-mono text-xs">
-                              {item.batch_lot_number}
+                              {item.batchLotNumber}
                             </Badge>
                           </td>
                           <td className="p-3 font-semibold">{item.quantity}</td>
                           <td className="p-3">
-                            {getExpiryBadge(item.expiry_date)}
+                            {getExpiryBadge(item.expiryDate)}
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">

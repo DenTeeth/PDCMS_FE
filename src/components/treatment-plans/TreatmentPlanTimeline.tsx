@@ -195,11 +195,17 @@ export default function TreatmentPlanTimeline({
                                       <p className="font-medium text-sm">
                                         {item.sequenceNumber}. {item.itemName}
                                       </p>
-                                      {item.serviceCode && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                          {item.serviceCode}
-                                        </p>
-                                      )}
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                        {item.serviceCode && (
+                                          <span className="font-mono">{item.serviceCode}</span>
+                                        )}
+                                        {item.estimatedTimeMinutes && (
+                                          <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            {item.estimatedTimeMinutes} phút
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                     <Badge 
                                       variant="outline" 

@@ -45,8 +45,8 @@ export enum WarehouseType {
 }
 
 export enum TransactionType {
-  IN = 'IN',   // Phiếu nhập
-  OUT = 'OUT', // Phiếu xuất
+  IMPORT = 'IMPORT',   // Phiếu nhập
+  EXPORT = 'EXPORT', // Phiếu xuất
 }
 
 export enum UnitType {
@@ -123,20 +123,30 @@ export interface UpdateSupplierDto {
 // CATEGORY (Danh mục/Nhóm vật tư) - V3 Enhanced
 // ============================================
 
+// ============================================
+// CATEGORY (Matching BE ItemCategoryResponse)
+// ============================================
+
 export interface Category {
-  id?: string; // Old format compatibility
-  category_id?: number; // V3 format
-  name?: string; // Old format
-  category_name?: string; // V3 format
-  parent_category_id?: number; // V3: Support nested categories
+  categoryId: number;
+  categoryCode: string;
+  categoryName: string;
   description?: string;
-  warehouseType?: WarehouseType; // Old format
-  warehouse_type?: 'COLD' | 'NORMAL'; // V3 format
-  sub_categories?: Category[]; // V3: Support nested
-  createdAt?: string; // Old format
-  updatedAt?: string; // Old format
-  created_at?: string; // V3 format
-  updated_at?: string; // V3 format
+  isActive?: boolean;
+  
+  // Legacy fields for backward compatibility
+  id?: string;
+  category_id?: number;
+  name?: string;
+  category_name?: string;
+  parent_category_id?: number;
+  warehouseType?: WarehouseType;
+  warehouse_type?: 'COLD' | 'NORMAL';
+  sub_categories?: Category[];
+  createdAt?: string;
+  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateCategoryDto {
@@ -286,11 +296,18 @@ export interface UpdateTransactionDto extends Partial<CreateTransactionDto> {}
 // RESPONSE TYPES
 // ============================================
 
+// ============================================
+// STATS (Matching BE WarehouseStatsResponse)
+// ============================================
+
 export interface WarehouseStats {
   totalItems: number;
-  totalValue: number;
   lowStockItems: number;
-  expiringSoonItems?: number; // Chỉ có cho kho lạnh
+  expiringSoonItems: number;
+  outOfStockItems: number;
+  
+  // Legacy fields
+  totalValue?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -338,23 +355,39 @@ export interface InventoryFilter {
 // V3 ENHANCED TYPES (Item Master + Batch Management)
 // ============================================
 
+// ============================================
+// ITEM MASTER (Matching BE ItemMasterSummaryResponse)
+// ============================================
+
 export interface ItemMaster {
-  item_master_id: number;
-  item_code: string; // e.g., "LIDO_2P"
-  item_name: string;
-  unit_of_measure: string; // 'ống', 'cái', 'hộp', 'lọ'
-  warehouse_type: 'COLD' | 'NORMAL';
-  min_stock_level: number;
-  max_stock_level: number;
-  category_id: number;
-  category?: Category; // Joined data
-  total_quantity: number; // Calculated from item_batches (SUM)
-  total_quantity_on_hand: number; // Alias for UI (same as total_quantity)
-  stock_status: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK';
-  is_tool: boolean; // true = Dụng cụ (no expiry needed)
+  itemMasterId: number;
+  itemCode: string; // e.g., "LIDO_2P"
+  itemName: string;
+  categoryName?: string;
+  warehouseType: 'COLD' | 'NORMAL';
+  unitOfMeasure: string; // 'ống', 'cái', 'hộp', 'lọ'
+  totalQuantityOnHand: number; // Calculated by BE
+  stockStatus: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK';
+  isExpiringSoon?: boolean;
+  minStockLevel: number;
+  maxStockLevel: number;
+  isTool: boolean; // Deprecated - all items require expiry
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Legacy fields for backward compatibility
+  item_master_id?: number;
+  item_code?: string;
+  item_name?: string;
+  category_id?: number;
+  category?: Category;
+  total_quantity?: number;
+  total_quantity_on_hand?: number;
+  stock_status?: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK';
+  is_tool?: boolean;
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ItemBatch {
@@ -374,36 +407,81 @@ export interface ItemBatch {
   updated_at: string;
 }
 
+// ============================================
+// BATCH RESPONSE (Matching BE BatchResponse)
+// ============================================
+
+export interface BatchResponse {
+  batchId: number;
+  lotNumber: string;
+  quantityOnHand: number;
+  expiryDate: string; // REQUIRED - LocalDate (YYYY-MM-DD)
+  importedAt: string; // LocalDateTime
+  supplierName?: string;
+  isExpiringSoon?: boolean;
+  isExpired?: boolean;
+}
+
+export interface ItemUnitResponse {
+  unitId: number;
+  unitName: string;
+  conversionRate: number;
+  isBaseUnit: boolean;
+  displayOrder: number;
+}
+
+// ============================================
+// STORAGE TRANSACTION (Matching BE TransactionResponse)
+// ============================================
+
 export interface StorageTransactionV3 {
-  transaction_id: number;
-  transaction_code: string; // e.g., "PN-2025-001", "PX-2025-001"
-  transaction_type: 'IMPORT' | 'EXPORT' | 'ADJUST' | 'DESTROY';
-  transaction_date: string; // YYYY-MM-DD
-  supplier_id?: number; // For IMPORT only
-  supplier_name?: string; // Joined data
-  reference_code?: string; // External reference (invoice, etc.)
-  total_value: number; // Total transaction value
+  transactionId: number;
+  transactionCode: string; // e.g., "PN-2025-001", "PX-2025-001"
+  transactionType: 'IMPORT' | 'EXPORT';
+  transactionDate: string; // LocalDateTime
+  supplierId?: number; // For IMPORT only
+  supplierName?: string;
   notes?: string;
-  performed_by: number; // User ID
-  performed_by_name?: string; // Joined from users
-  items: StorageTransactionItemV3[]; // Line items
-  created_at: string;
-  updated_at: string;
+  createdByName?: string;
+  createdAt: string;
+  items: StorageTransactionItemV3[];
+  
+  // Legacy fields
+  transaction_id?: number;
+  transaction_code?: string;
+  transaction_type?: 'IMPORT' | 'EXPORT' | 'ADJUST' | 'DESTROY';
+  transaction_date?: string;
+  supplier_id?: number;
+  supplier_name?: string;
+  reference_code?: string;
+  total_value?: number;
+  performed_by?: number;
+  performed_by_name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface StorageTransactionItemV3 {
-  transaction_item_id: number;
-  transaction_id: number;
-  batch_id: number;
-  item_master_id: number;
-  item_code?: string; // Joined data
-  item_name?: string; // Joined data
-  lot_number?: string; // Joined data
-  quantity_change: number; // Positive for IMPORT/ADJUST+, Negative for EXPORT/DESTROY
-  unit_price: number;
-  total_price: number; // quantity * unit_price
-  expiry_date?: string; // For IMPORT (new batch)
+  transactionItemId?: number;
+  itemCode?: string;
+  itemName?: string;
+  unitName?: string;
+  lotNumber?: string;
+  quantityChange: number; // Positive for IMPORT, Negative for EXPORT
   notes?: string;
+  
+  // Legacy fields
+  transaction_item_id?: number;
+  transaction_id?: number;
+  batch_id?: number;
+  item_master_id?: number;
+  item_code?: string;
+  item_name?: string;
+  lot_number?: string;
+  quantity_change?: number;
+  unit_price?: number;
+  total_price?: number;
+  expiry_date?: string;
 }
 
 export interface SupplierItem {
@@ -427,12 +505,27 @@ export interface InventoryStats {
   total_inventory_value: number; // SUM(quantity * import_price) across all batches
 }
 
+// ============================================
+// STORAGE STATS (Matching BE StorageStatsResponse)
+// ============================================
+
 export interface StorageStats {
-  monthly_import_value: number; // Total IMPORT value this month
-  monthly_export_value: number; // Total EXPORT value this month
-  import_growth_percent: number; // % change vs last month
-  export_growth_percent: number; // % change vs last month
-  total_transactions_count: number;
+  monthlyImportCount: number; // Number of import transactions this month
+  monthlyExportCount: number; // Number of export transactions this month
+  importGrowthPercent: number; // % change vs last month
+  exportGrowthPercent: number; // % change vs last month
+  totalTransactionsCount: number;
+  expiredItemsCount?: number; // Number of expired items
+  
+  // Legacy fields
+  monthly_import_value?: number;
+  monthly_export_value?: number;
+  monthly_import_count?: number;
+  monthly_export_count?: number;
+  import_growth_percent?: number;
+  export_growth_percent?: number;
+  total_transactions_count?: number;
+  expired_items_count?: number;
 }
 
 export interface ExpiringBatch {
@@ -463,47 +556,182 @@ export interface LossRecord {
 // DTOs (V3)
 // ============================================
 
+// ============================================
+// CREATE/UPDATE ITEM MASTER (Matching BE DTOs)
+// ============================================
+
 export interface CreateItemMasterDto {
-  item_code: string;
-  item_name: string;
-  unit_of_measure: string;
-  warehouse_type: 'COLD' | 'NORMAL';
-  category_id: number;
-  min_stock_level: number;
-  max_stock_level: number;
-  is_tool: boolean;
+  itemCode: string;
+  itemName: string;
+  description?: string;
+  categoryId: number;
+  unitOfMeasure: string;
+  warehouseType: 'COLD' | 'NORMAL';
+  minStockLevel: number;
+  maxStockLevel: number;
+  isTool?: boolean; // Deprecated but kept for backward compatibility
+  
+  // Legacy fields
+  item_code?: string;
+  item_name?: string;
+  unit_of_measure?: string;
+  warehouse_type?: 'COLD' | 'NORMAL';
+  category_id?: number;
+  min_stock_level?: number;
+  max_stock_level?: number;
+  is_tool?: boolean;
   notes?: string;
 }
 
-export interface UpdateItemMasterDto extends Partial<CreateItemMasterDto> {
+export interface UpdateItemMasterDto {
+  itemName?: string;
+  description?: string;
+  categoryId?: number;
+  unitOfMeasure?: string;
+  minStockLevel?: number;
+  maxStockLevel?: number;
+  isTool?: boolean;
+  
+  // Legacy fields
+  item_name?: string;
+  category_id?: number;
+  unit_of_measure?: string;
+  min_stock_level?: number;
+  max_stock_level?: number;
+  is_tool?: boolean;
   stock_status?: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK';
 }
 
+// ============================================
+// IMPORT TRANSACTION (API 6.4)
+// ============================================
+
 export interface CreateImportTransactionDto {
-  transaction_date: string;
-  supplier_id: number;
-  reference_code?: string;
+  supplierId: number;
+  transactionDate: string; // ISO string (LocalDateTime) - e.g., "2025-01-17T10:30:00"
+  invoiceNumber: string;
+  expectedDeliveryDate?: string; // ISO string (LocalDate) - e.g., "2025-01-20"
   notes?: string;
   items: CreateImportItemDto[];
 }
 
 export interface CreateImportItemDto {
-  item_master_id: number;
-  lot_number: string;
+  itemMasterId: number;
+  lotNumber: string;
+  expiryDate: string; // LocalDate (YYYY-MM-DD) - REQUIRED for all items
   quantity: number;
-  import_price: number;
-  expiry_date?: string; // Required for non-tools in COLD storage
+  unitId: number;
+  purchasePrice: number; // BigDecimal
+  binLocation?: string;
+  notes?: string;
 }
 
+export interface ImportTransactionResponse {
+  transactionId: number;
+  transactionCode: string;
+  transactionDate: string;
+  supplierName: string;
+  invoiceNumber: string;
+  createdBy: string;
+  createdAt: string;
+  status: string; // COMPLETED, DRAFT, CANCELLED
+  totalItems: number;
+  totalValue: number; // BigDecimal
+  items: ImportItemResponse[];
+  warnings?: ImportWarningDTO[];
+}
+
+export interface ImportItemResponse {
+  itemCode: string;
+  itemName: string;
+  batchId: number;
+  batchStatus: string; // CREATED | UPDATED
+  lotNumber: string;
+  expiryDate: string;
+  quantityChange: number;
+  unitName: string;
+  purchasePrice: number;
+  totalLineValue: number;
+  binLocation?: string;
+  currentStock: number;
+}
+
+export interface ImportWarningDTO {
+  itemCode: string;
+  warningType: string; // NEAR_EXPIRY | PRICE_VARIANCE | LOW_STOCK
+  message: string;
+}
+
+// ============================================
+// EXPORT TRANSACTION (API 6.5)
+// ============================================
+
+export type ExportType = 'USAGE' | 'DISPOSAL' | 'RETURN';
+
 export interface CreateExportTransactionDto {
-  transaction_date: string;
+  transactionDate: string; // ISO string (LocalDateTime)
+  exportType: ExportType;
+  referenceCode?: string;
+  departmentName?: string;
+  requestedBy?: string;
   notes?: string;
+  allowExpired?: boolean; // true for DISPOSAL
   items: CreateExportItemDto[];
 }
 
 export interface CreateExportItemDto {
-  batch_id: number; // FEFO: Must select specific batch
+  itemMasterId: number;
   quantity: number;
+  unitId: number;
+  notes?: string;
+}
+
+export interface ExportTransactionResponse {
+  transactionId: number;
+  transactionCode: string;
+  transactionDate: string;
+  exportType: ExportType;
+  referenceCode?: string;
+  departmentName?: string;
+  requestedBy?: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+  totalItems?: number;
+  totalValue?: number; // COGS
+  items: ExportItemResponse[];
+  warnings?: ExportWarningDTO[];
+}
+
+export interface ExportItemResponse {
+  itemCode: string;
+  itemName: string;
+  batchId: number;
+  lotNumber: string;
+  expiryDate?: string;
+  binLocation?: string;
+  quantityChange: number; // Negative value
+  unitName?: string;
+  unitPrice?: number; // COGS unit price
+  totalLineValue?: number; // COGS line total
+  unpackingInfo?: UnpackingInfo;
+  notes?: string;
+}
+
+export interface UnpackingInfo {
+  wasUnpacked: boolean;
+  parentBatchId?: number;
+  parentUnitName?: string;
+  remainingInBatch?: number;
+}
+
+export interface ExportWarningDTO {
+  batchId?: number;
+  itemCode?: string;
+  warningType?: string; // NEAR_EXPIRY, EXPIRED_USED, LOW_STOCK
+  expiryDate?: string;
+  daysUntilExpiry?: number;
+  message?: string;
 }
 
 export interface CreateAdjustmentDto {

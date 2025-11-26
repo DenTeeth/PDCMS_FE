@@ -4,6 +4,13 @@
  */
 
 import { apiClient } from '@/lib/api';
+import type {
+  CreateImportTransactionDto,
+  ImportTransactionResponse,
+  CreateExportTransactionDto,
+  ExportTransactionResponse,
+  BatchResponse,
+} from '@/types/warehouse';
 
 const api = apiClient.getAxiosInstance();
 
@@ -29,16 +36,7 @@ export interface ItemMasterV1 {
   updatedAt?: string;
 }
 
-export interface ItemBatchV1 {
-  batchId: number;
-  itemMasterId: number;
-  lotNumber: string;
-  quantityOnHand: number;
-  importPrice: number;
-  expiryDate?: string;
-  importDate: string;
-  warehouseType: 'COLD' | 'NORMAL';
-}
+// BatchResponse is now imported from @/types/warehouse
 
 export interface CategoryV1 {
   id: number;
@@ -56,21 +54,33 @@ export interface InventorySummary {
   unitOfMeasure: string;
   warehouseType: 'COLD' | 'NORMAL';
   totalQuantity: number;
+  totalQuantityOnHand?: number;
   minStockLevel: number;
   maxStockLevel: number;
   stockStatus: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK';
-  isTool: boolean;
+  isTool?: boolean;
+  isExpiringSoon?: boolean;
   nearestExpiryDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InventorySummaryPage {
+  content: InventorySummary[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 export interface InventoryStats {
   totalItems: number;
-  totalValue: number;
+  totalValue?: number;
   lowStockCount: number;
-  outOfStockCount: number;
+  outOfStockCount?: number;
   expiringWithin30Days?: number;
-  coldStorageItems: number;
-  normalStorageItems: number;
+  coldStorageItems?: number;
+  normalStorageItems?: number;
 }
 
 export interface CreateItemMasterRequest {
@@ -101,7 +111,14 @@ export interface InventoryFilter {
   categoryId?: number;
   search?: string;
   isExpiringSoon?: boolean;
+  sort?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  size?: number;
 }
+
+// Export types are now imported from @/types/warehouse
 
 // ============================================
 // INVENTORY SERVICE
@@ -141,13 +158,68 @@ export const inventoryService = {
   /**
    * GET /api/v1/inventory/summary - Lấy danh sách tồn kho (Inventory Dashboard)
    */
-  getSummary: async (filter?: InventoryFilter): Promise<InventorySummary[]> => {
+  getSummary: async (filter?: InventoryFilter): Promise<InventorySummaryPage> => {
     try {
-      const response = await api.get<InventorySummary[]>('/inventory/summary', {
-        params: filter,
+      const params: Record<string, any> = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 10,
+      };
+
+      if (filter?.sort) {
+        params.sort = filter.sort;
+      } else if (filter?.sortBy) {
+        params.sort = `${filter.sortBy},${filter.sortDirection ?? 'asc'}`;
+      }
+      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+      if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
+      if (filter?.categoryId) params.categoryId = filter.categoryId;
+      if (filter?.isExpiringSoon) params.isExpiringSoon = filter.isExpiringSoon;
+      if (filter?.search) params.search = filter.search;
+
+      const response = await api.get('/inventory/summary', { params });
+      const raw = response.data;
+
+      const mapItem = (item: any): InventorySummary => ({
+        itemMasterId: item.itemMasterId ?? item.item_master_id,
+        itemCode: item.itemCode ?? item.item_code,
+        itemName: item.itemName ?? item.item_name,
+        categoryName: item.categoryName ?? item.category_name ?? '',
+        unitOfMeasure: item.unitOfMeasure ?? item.unit_name ?? '',
+        warehouseType: item.warehouseType ?? item.warehouse_type ?? 'NORMAL',
+        minStockLevel: item.minStockLevel ?? item.min_stock_level ?? 0,
+        maxStockLevel: item.maxStockLevel ?? item.max_stock_level ?? 0,
+        stockStatus: item.stockStatus ?? item.stock_status ?? 'NORMAL',
+        isTool: item.isTool ?? item.is_tool ?? false,
+        isExpiringSoon: item.isExpiringSoon ?? item.is_expiring_soon ?? false,
+        totalQuantity:
+          item.totalQuantity ??
+          item.total_quantity ??
+          item.totalQuantityOnHand ??
+          item.total_quantity_on_hand ??
+          0,
+        totalQuantityOnHand:
+          item.totalQuantityOnHand ?? item.total_quantity_on_hand ?? item.totalQuantity ?? item.total_quantity ?? 0,
+        nearestExpiryDate: item.nearestExpiryDate ?? item.nearest_expiry_date,
+        createdAt: item.createdAt ?? item.created_at,
+        updatedAt: item.updatedAt ?? item.updated_at,
       });
-      console.log('✅ Get inventory summary:', response.data);
-      return response.data;
+
+      if (Array.isArray(raw)) {
+        const content = raw.map(mapItem);
+        return {
+          content,
+          totalElements: content.length,
+          totalPages: 1,
+          size: content.length,
+          number: 0,
+        };
+      }
+
+      const content = (raw.content || raw.data || []).map(mapItem);
+      return {
+        ...raw,
+        content,
+      };
     } catch (error: any) {
       console.error('❌ Get inventory summary error:', error.response?.data || error.message);
       throw error;
@@ -159,9 +231,19 @@ export const inventoryService = {
    */
   getStats: async (): Promise<InventoryStats> => {
     try {
-      const response = await api.get<InventoryStats>('/inventory/stats');
-      console.log('✅ Get inventory stats:', response.data);
-      return response.data;
+      const response = await api.get('/inventory/stats');
+      const data = response.data || {};
+      const mapped: InventoryStats = {
+        totalItems: data.totalItems ?? data.total_items ?? 0,
+        totalValue: data.totalValue ?? data.total_value,
+        lowStockCount: data.lowStockCount ?? data.lowStockItems ?? 0,
+        outOfStockCount: data.outOfStockCount ?? data.outOfStockItems ?? 0,
+        expiringWithin30Days: data.expiringWithin30Days ?? data.expiringSoonItems ?? 0,
+        coldStorageItems: data.coldStorageItems ?? data.cold_storage_items,
+        normalStorageItems: data.normalStorageItems ?? data.normal_storage_items,
+      };
+      console.log('✅ Get inventory stats:', mapped);
+      return mapped;
     } catch (error: any) {
       console.error('❌ Get inventory stats error:', error.response?.data || error.message);
       throw error;
@@ -185,9 +267,9 @@ export const inventoryService = {
   /**
    * GET /api/v1/inventory/batches/{itemMasterId} - Lấy danh sách lô hàng theo FEFO
    */
-  getBatchesByItemId: async (itemMasterId: number): Promise<ItemBatchV1[]> => {
+  getBatchesByItemId: async (itemMasterId: number): Promise<BatchResponse[]> => {
     try {
-      const response = await api.get<ItemBatchV1[]>(`/inventory/batches/${itemMasterId}`);
+      const response = await api.get<BatchResponse[]>(`/inventory/batches/${itemMasterId}`);
       console.log('✅ Get batches (FEFO):', response.data);
       return response.data;
     } catch (error: any) {
@@ -274,6 +356,38 @@ export const inventoryService = {
       console.log('✅ Delete category:', id);
     } catch (error: any) {
       console.error('❌ Delete category error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * POST /api/v1/inventory/import - Tạo phiếu nhập kho nâng cấp
+   */
+  createImportTransaction: async (
+    data: CreateImportTransactionDto
+  ): Promise<ImportTransactionResponse> => {
+    try {
+      const response = await api.post<ImportTransactionResponse>('/inventory/import', data);
+      console.log('✅ Create import transaction:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Create import transaction error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * POST /api/v1/inventory/export - Tạo phiếu xuất kho (FEFO)
+   */
+  createExportTransaction: async (
+    data: CreateExportTransactionDto
+  ): Promise<ExportTransactionResponse> => {
+    try {
+      const response = await api.post<ExportTransactionResponse>('/inventory/export', data);
+      console.log('✅ Create export transaction:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Create export transaction error:', error.response?.data || error.message);
       throw error;
     }
   },

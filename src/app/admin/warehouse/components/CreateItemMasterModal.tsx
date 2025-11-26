@@ -31,6 +31,7 @@ export default function CreateItemMasterModal({
   item,
 }: CreateItemMasterModalProps) {
   const queryClient = useQueryClient();
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [formData, setFormData] = useState<CreateItemMasterRequest>({
     itemCode: '',
     itemName: '',
@@ -68,35 +69,60 @@ export default function CreateItemMasterModal({
 
   // Reset form when modal opens
   useEffect(() => {
-    if (isOpen) {
-      if (item) {
-        setFormData({
-          itemCode: item.itemCode,
-          itemName: item.itemName,
-          unitOfMeasure: item.unitOfMeasure,
-          warehouseType: item.warehouseType,
-          categoryId: item.categoryId || 0,
-          minStockLevel: item.minStockLevel,
-          maxStockLevel: item.maxStockLevel,
-          isTool: item.isTool,
-          notes: item.notes || '',
-        });
-      } else {
-        setFormData({
-          itemCode: '',
-          itemName: '',
-          unitOfMeasure: 'Cái',
-          warehouseType: 'NORMAL',
-          categoryId: categories.length > 0 ? categories[0].id : 0,
-          minStockLevel: 10,
-          maxStockLevel: 100,
-          isTool: false,
-          notes: '',
-        });
-      }
+    if (!isOpen) {
+      setHasInitialized(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, item]); // ✅ Removed categories from deps to prevent infinite loop
+
+    if (item) {
+      setFormData({
+        itemCode: item.itemCode,
+        itemName: item.itemName,
+        unitOfMeasure: item.unitOfMeasure,
+        warehouseType: item.warehouseType,
+        categoryId: item.categoryId || 0,
+        minStockLevel: item.minStockLevel,
+        maxStockLevel: item.maxStockLevel,
+        isTool: item.isTool,
+        notes: item.notes || '',
+      });
+      setHasInitialized(true);
+      return;
+    }
+
+    if (!hasInitialized && categories.length > 0) {
+      const defaultCategoryId =
+        categories[0]?.id ??
+        // compatibility with different DTOs
+        (categories[0] as any)?.category_id ??
+        0;
+
+      setFormData({
+        itemCode: '',
+        itemName: '',
+        unitOfMeasure: 'Cái',
+        warehouseType: 'NORMAL',
+        categoryId: defaultCategoryId,
+        minStockLevel: 10,
+        maxStockLevel: 100,
+        isTool: false,
+        notes: '',
+      });
+      setHasInitialized(true);
+    } else if (!hasInitialized && categories.length === 0) {
+      setFormData({
+        itemCode: '',
+        itemName: '',
+        unitOfMeasure: 'Cái',
+        warehouseType: 'NORMAL',
+        categoryId: 0,
+        minStockLevel: 10,
+        maxStockLevel: 100,
+        isTool: false,
+        notes: '',
+      });
+    }
+  }, [isOpen, item, categories, hasInitialized]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +201,7 @@ export default function CreateItemMasterModal({
                 Nhóm Vật Tư <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={String(formData.categoryId)}
+                value={formData.categoryId ? String(formData.categoryId) : undefined}
                 onValueChange={(value) =>
                   setFormData({ ...formData, categoryId: Number(value) })
                 }
@@ -184,13 +210,20 @@ export default function CreateItemMasterModal({
                   <SelectValue placeholder="Chọn nhóm" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat, idx) => (
-                    <SelectItem 
-                      key={`cat-${cat.id}-${idx}`} 
-                      value={String(cat.id || 0)}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
+                  {categories.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-gray-500">
+                      Chưa có danh mục. Hãy tạo trong BE trước.
+                    </div>
+                  ) : (
+                    categories.map((cat) => {
+                      const optionId = cat.id ?? (cat as any).category_id ?? cat.name ?? 'cat';
+                      return (
+                        <SelectItem key={optionId} value={String(optionId)}>
+                          {cat.name}
+                        </SelectItem>
+                      );
+                    })
+                  )}
                 </SelectContent>
               </Select>
             </div>
