@@ -168,15 +168,20 @@ export interface PartTimeSlotDetailResponse {
 /**
  * Monthly Availability Information
  * Part of SlotDetailsResponse
+ * 
+ * Updated based on Frontend Integration Guide (Issue #1)
+ * - totalDatesAvailable: Dates with NO approved registrations (registered == 0)
+ * - totalDatesPartial: Dates with some approved registrations but not full (0 < registered < quota)
+ * - totalDatesFull: Dates at maximum capacity (registered >= quota)
  */
 export interface MonthlyAvailability {
   month: string; // Format: "YYYY-MM"
-  monthName: string; // Format: "Month YYYY" (e.g., "November 2025")
-  totalDatesAvailable: number;
-  totalDatesPartial: number;
-  totalDatesFull: number;
-  status: 'AVAILABLE' | 'PARTIAL' | 'FULL';
-  totalWorkingDays: number;
+  monthName?: string; // Format: "Month YYYY" (e.g., "November 2025") - optional for backward compatibility
+  totalWorkingDays: number; // Total working days in this month for this day of week
+  totalDatesAvailable: number; // Dates completely empty (registered == 0)
+  totalDatesPartial: number; // Dates with some slots available (0 < registered < quota)
+  totalDatesFull: number; // Dates at full capacity (registered >= quota)
+  status: 'AVAILABLE' | 'FULL'; // AVAILABLE if has space, FULL if all dates full
 }
 
 /**

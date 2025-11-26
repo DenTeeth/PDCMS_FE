@@ -530,8 +530,8 @@ export default function AdminOvertimeRequestsPage() {
             <CardContent>
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
                 <div>
+                  <Label>Nhân viên <span className="text-red-500">*</span></Label>
                   <CustomSelect
-                    label="Nhân viên *"
                     value={formData.employeeId ? formData.employeeId.toString() : ''}
                     onChange={(value: string) => setFormData({ ...formData, employeeId: parseInt(value) })}
                     options={employees.map((employee) => ({
@@ -539,7 +539,6 @@ export default function AdminOvertimeRequestsPage() {
                       label: `${employee.fullName} (${employee.employeeCode})`,
                     }))}
                     placeholder={employees.length === 0 ? "Đang tải danh sách nhân viên..." : "Chọn nhân viên"}
-                    required
                   />
                 </div>
 
@@ -556,8 +555,8 @@ export default function AdminOvertimeRequestsPage() {
                 </div>
 
                 <div>
+                  <Label>Ca làm việc <span className="text-red-500">*</span></Label>
                   <CustomSelect
-                    label="Ca làm việc *"
                     value={formData.workShiftId}
                     onChange={(value: string) => setFormData({ ...formData, workShiftId: value })}
                     placeholder={workShifts.length === 0 ? "Đang tải danh sách ca làm việc..." : "Chọn ca làm việc"}
@@ -565,7 +564,6 @@ export default function AdminOvertimeRequestsPage() {
                       value: shift.workShiftId,
                       label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`,
                     }))}
-                    required
                   />
                 </div>
 

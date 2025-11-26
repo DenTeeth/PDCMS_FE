@@ -584,7 +584,6 @@ export default function EmployeeTimeOffRequestsPage() {
                       value: type.typeId,
                       label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
                     })) || []}
-                    required
                   />
                   {createForm.timeOffTypeId && (
                     <div className="mt-2 text-sm text-gray-600">
