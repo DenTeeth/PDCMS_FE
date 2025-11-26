@@ -810,7 +810,7 @@ export default function AdminTimeOffRequestsPage() {
                     {canViewAll && (
                       <div>
                         <CustomSelect
-                          label="Nhân viên *"
+                          label="Nhân viên"
                           value={createForm.employeeId?.toString() || ''}
                           onChange={(value: string) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
                           options={employees?.map(emp => ({
@@ -824,7 +824,7 @@ export default function AdminTimeOffRequestsPage() {
 
                     <div>
                       <CustomSelect
-                        label="Loại nghỉ phép *"
+                        label="Loại nghỉ phép"
                         value={createForm.timeOffTypeId}
                         onChange={(value: string) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
                         options={timeOffTypes?.filter(type => type.isActive).map(type => ({

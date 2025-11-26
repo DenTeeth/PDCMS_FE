@@ -91,18 +91,22 @@ class ShiftRegistrationService {
 
   /**
    * Fetch a single shift registration by ID
-   * @param registrationId Unique registration ID (e.g., "REG-250120-001")
-   * @returns Shift registration details
+   * GET /api/v1/registrations/part-time-flex/{registrationId}
+   * 
+   * Security:
+   * - Employee can only view own registrations (403 if not owner)
+   * - Admin can view all registrations
+   * 
+   * @param registrationId Registration ID (numeric, e.g., "4")
+   * @returns Shift registration details with employeeName field
    */
   async getRegistrationById(registrationId: string): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`);
+    const response = await axiosInstance.get<ShiftRegistration>(
+      `${this.endpoint}/part-time-flex/${registrationId}`
+    );
 
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as ShiftRegistration;
+    return response.data;
   }
 
   /**
@@ -323,20 +327,32 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Delete (soft delete) a shift registration
+   * Delete (cancel) a shift registration
+   * DELETE /api/v1/registrations/part-time-flex/{registrationId}
+   * 
+   * What happens:
+   * - Sets status = "CANCELLED"
+   * - Sets isActive = false
+   * - Sets effectiveTo = today
+   * 
+   * Security:
+   * - Employee can only cancel PENDING status (409 if not PENDING)
+   * - Admin can cancel any status
+   * 
    * @param registrationId Registration ID to delete
+   * @returns Updated registration with CANCELLED status
    */
-  async deleteRegistration(registrationId: string): Promise<void> {
+  async deleteRegistration(registrationId: string): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
 
     try {
-      await axiosInstance.delete(`${this.endpoint}/${registrationId}`);
+      const response = await axiosInstance.delete<ShiftRegistration>(
+        `${this.endpoint}/part-time-flex/${registrationId}`
+      );
+      return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else {
-        throw new Error('Failed to delete shift registration');
-      }
+      // Re-throw with original error for proper error handling in component
+      throw error;
     }
   }
 

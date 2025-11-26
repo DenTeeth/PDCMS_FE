@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Eye } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { toast } from 'sonner';
@@ -502,6 +502,11 @@ export default function EmployeeRegistrationsPage() {
   const [partTimeDeletingRegistration, setPartTimeDeletingRegistration] = useState<ShiftRegistration | null>(null);
   const [partTimeDeleting, setPartTimeDeleting] = useState(false);
 
+  // View Details Modal
+  const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
+  const [viewingRegistration, setViewingRegistration] = useState<ShiftRegistration | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingWorkShifts, setLoadingWorkShifts] = useState(false);
 
@@ -518,7 +523,7 @@ export default function EmployeeRegistrationsPage() {
   const [slotMonthFilter, setSlotMonthFilter] = useState<string>('ALL'); // 'ALL' or 'YYYY-MM'
   const [slotDayFilter, setSlotDayFilter] = useState<DayOfWeek[]>([]); // Multi-select days
   const [registrationSortBy, setRegistrationSortBy] = useState<'status' | 'date'>('status');
-  const [registrationStatusFilter, setRegistrationStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [registrationStatusFilter, setRegistrationStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'>('ALL');
 
   // ==================== FIXED REGISTRATION STATE ====================
   const [fixedRegistrations, setFixedRegistrations] = useState<FixedShiftRegistration[]>([]);
@@ -1057,29 +1062,64 @@ export default function EmployeeRegistrationsPage() {
   // Registrations are immutable per backend design
   // Employees should delete and create new registration to modify
 
+  const handleViewDetails = async (registration: ShiftRegistration) => {
+    try {
+      setLoadingDetails(true);
+      setShowViewDetailsModal(true);
+
+      // Call API to get full details
+      const details = await shiftRegistrationService.getRegistrationById(registration.registrationId.toString());
+      setViewingRegistration(details);
+    } catch (error: any) {
+      console.error('Failed to load registration details:', error);
+
+      const status = error.response?.status;
+      const errorMessage = error.response?.data?.message || error.response?.data?.detail;
+
+      if (status === 403) {
+        toast.error('Bạn không có quyền xem đăng ký này');
+      } else if (status === 404) {
+        toast.error('Không tìm thấy đăng ký này');
+      } else {
+        toast.error(errorMessage || 'Không thể tải thông tin đăng ký');
+      }
+
+      setShowViewDetailsModal(false);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const handlePartTimeDelete = async () => {
     if (!partTimeDeletingRegistration) return;
 
     try {
       setPartTimeDeleting(true);
-      await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId.toString());
+      const response = await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId.toString());
+
+      // Response will have status = "CANCELLED"
       toast.success('Đã hủy đăng ký thành công');
       setShowPartTimeDeleteModal(false);
       setPartTimeDeletingRegistration(null);
+
+      // Refresh registrations to show updated status
       fetchPartTimeRegistrations();
     } catch (error: any) {
       console.error('Failed to delete registration:', error);
 
       // Handle specific error codes from backend
       const status = error.response?.status;
+      const errorMessage = error.response?.data?.message || error.response?.data?.detail;
+
       if (status === 409) {
-        toast.error('Đăng ký này đã được hủy trước đó rồi');
+        // 409 Conflict: Cannot cancel non-PENDING registration
+        toast.error(errorMessage || 'Chỉ có thể hủy đơn đăng ký ở trạng thái Chờ duyệt');
       } else if (status === 404) {
         toast.error('Không tìm thấy đăng ký này');
       } else if (status === 403) {
         toast.error('Bạn không có quyền hủy đăng ký này');
       } else {
-        toast.error(error.response?.data?.detail || 'Không thể hủy đăng ký. Vui lòng thử lại.');
+        toast.error(errorMessage || 'Không thể hủy đăng ký. Vui lòng thử lại.');
       }
     } finally {
       setPartTimeDeleting(false);
@@ -1198,8 +1238,8 @@ export default function EmployeeRegistrationsPage() {
 
     // Then sort
     if (registrationSortBy === 'status') {
-      // Sort by status: PENDING → APPROVED → REJECTED
-      const statusOrder = { 'PENDING': 1, 'APPROVED': 2, 'REJECTED': 3 };
+      // Sort by status: PENDING → APPROVED → REJECTED → CANCELLED
+      const statusOrder = { 'PENDING': 1, 'APPROVED': 2, 'REJECTED': 3, 'CANCELLED': 4 };
       return regs.sort((a, b) => {
         const orderA = statusOrder[a.status as keyof typeof statusOrder] || 999;
         const orderB = statusOrder[b.status as keyof typeof statusOrder] || 999;
@@ -1706,9 +1746,22 @@ export default function EmployeeRegistrationsPage() {
                                                   const approvedSlots = totalSlots - availableSlots;
                                                   const percentAvailable = totalSlots > 0 ? (availableSlots / totalSlots) * 100 : 0;
 
+                                                  // Convert month name to Vietnamese
+                                                  const getVietnameseMonth = (monthName: string) => {
+                                                    if (!monthName) return '';
+                                                    // Parse "November 2025" or "2025-11" format
+                                                    if (monthName.includes('-')) {
+                                                      const [year, month] = monthName.split('-');
+                                                      return `Tháng ${parseInt(month)}/${year}`;
+                                                    }
+                                                    const [englishMonth, year] = monthName.split(' ');
+                                                    const monthNumber = new Date(`${englishMonth} 1, ${year}`).getMonth() + 1;
+                                                    return `Tháng ${monthNumber}/${year}`;
+                                                  };
+
                                                   return (
                                                     <tr key={idx} className="hover:bg-gray-50">
-                                                      <td className="px-3 py-2 text-gray-700">{month.monthName}</td>
+                                                      <td className="px-3 py-2 text-gray-700">{getVietnameseMonth(month.monthName || month.month)}</td>
                                                       <td className="px-3 py-2 text-right">
                                                         <span className={`font-semibold ${percentAvailable > 70 ? 'text-green-600' : percentAvailable > 30 ? 'text-yellow-600' : percentAvailable > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
                                                           {availableSlots}/{totalSlots} slot
@@ -1784,6 +1837,14 @@ export default function EmployeeRegistrationsPage() {
                       >
                         Từ chối ({partTimeRegistrations.filter(r => r.status === 'REJECTED').length})
                       </Button>
+                      <Button
+                        variant={registrationStatusFilter === 'CANCELLED' ? 'default' : 'outline'}
+                        onClick={() => setRegistrationStatusFilter('CANCELLED')}
+                        size="sm"
+                        className={registrationStatusFilter === 'CANCELLED' ? 'bg-gray-600 hover:bg-gray-700' : ''}
+                      >
+                        Đã hủy ({partTimeRegistrations.filter(r => r.status === 'CANCELLED').length})
+                      </Button>
                     </div>
 
                     {/* Count Display */}
@@ -1833,18 +1894,23 @@ export default function EmployeeRegistrationsPage() {
                             const statusConfig = {
                               PENDING: {
                                 icon: <Clock className="w-4 h-4" />,
-                                text: 'Chờ duyệt',
+                                text: 'PENDING',
                                 badgeColor: 'bg-orange-100 text-orange-700'
                               },
                               APPROVED: {
                                 icon: <CheckCircle className="w-4 h-4" />,
-                                text: 'Đã duyệt',
+                                text: 'APPROVED',
                                 badgeColor: 'bg-green-100 text-green-700'
                               },
                               REJECTED: {
                                 icon: <XCircle className="w-4 h-4" />,
-                                text: 'Từ chối',
+                                text: 'REJECTED',
                                 badgeColor: 'bg-red-100 text-red-700'
+                              },
+                              CANCELLED: {
+                                icon: <XCircle className="w-4 h-4" />,
+                                text: 'CANCELLED',
+                                badgeColor: 'bg-gray-100 text-gray-700'
                               }
                             }[registration.status];
 
@@ -1866,30 +1932,36 @@ export default function EmployeeRegistrationsPage() {
                                     {statusConfig.icon}
                                     {statusConfig.text}
                                   </Badge>
-                                  {registration.status === 'REJECTED' && registration.reason && (
-                                    <div className="mt-1 text-xs text-red-600">
-                                      {registration.reason}
-                                    </div>
-                                  )}
                                 </td>
                                 <td className="px-4 py-3 text-gray-600">
                                   {format(parseISO(registration.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                                 </td>
-                                <td className="px-4 py-3 text-center">
-                                  {registration.status === 'PENDING' && (
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => {
-                                        setPartTimeDeletingRegistration(registration);
-                                        setShowPartTimeDeleteModal(true);
-                                      }}
-                                      className="text-red-600 hover:bg-red-50"
+                                      onClick={() => handleViewDetails(registration)}
+                                      className="text-blue-600 hover:bg-blue-50"
                                     >
-                                      <Trash2 className="h-3 w-3 mr-1" />
-                                      Xóa
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      View
                                     </Button>
-                                  )}
+                                    {registration.status === 'PENDING' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setPartTimeDeletingRegistration(registration);
+                                          setShowPartTimeDeleteModal(true);
+                                        }}
+                                        className="text-red-600 hover:bg-red-50"
+                                      >
+                                        <Trash2 className="h-3 w-3 mr-1" />
+                                        Cancel
+                                      </Button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -2364,6 +2436,149 @@ export default function EmployeeRegistrationsPage() {
                   ) : (
                     'Xóa'
                   )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW DETAILS MODAL */}
+        {showViewDetailsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Chi Tiết Đăng Ký</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowViewDetailsModal(false);
+                    setViewingRegistration(null);
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                </div>
+              ) : viewingRegistration ? (
+                <div className="space-y-4">
+                  {/* Registration ID */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm text-gray-600">Mã đăng ký</Label>
+                      <div className="font-semibold">{viewingRegistration.registrationId}</div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">Trạng thái</Label>
+                      <div>
+                        <Badge className={
+                          viewingRegistration.status === 'PENDING' ? 'bg-orange-100 text-orange-700' :
+                            viewingRegistration.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                              viewingRegistration.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                        }>
+                          {viewingRegistration.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Employee Info */}
+                  {viewingRegistration.employeeName && (
+                    <div>
+                      <Label className="text-sm text-gray-600">Nhân viên</Label>
+                      <div className="font-semibold">{viewingRegistration.employeeName}</div>
+                      <div className="text-sm text-gray-500">ID: {viewingRegistration.employeeId}</div>
+                    </div>
+                  )}
+
+                  {/* Shift Info */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm text-gray-600">Ca làm việc</Label>
+                      <div className="font-semibold">{viewingRegistration.shiftName}</div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">Thứ</Label>
+                      <div className="font-semibold">{getDayName(viewingRegistration.dayOfWeek as DayOfWeek)}</div>
+                    </div>
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm text-gray-600">Từ ngày</Label>
+                      <div className="font-semibold">{formatDate(viewingRegistration.effectiveFrom)}</div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">Đến ngày</Label>
+                      <div className="font-semibold">{formatDate(viewingRegistration.effectiveTo)}</div>
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  {viewingRegistration.dates && viewingRegistration.dates.length > 0 && (
+                    <div>
+                      <Label className="text-sm text-gray-600">Các ngày làm việc ({viewingRegistration.dates.length} ngày)</Label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {viewingRegistration.dates.map((date, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {formatDate(date)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rejection Reason */}
+                  {viewingRegistration.status === 'REJECTED' && viewingRegistration.reason && (
+                    <div>
+                      <Label className="text-sm text-gray-600">Lý do từ chối</Label>
+                      <div className="text-red-600 bg-red-50 p-3 rounded">{viewingRegistration.reason}</div>
+                    </div>
+                  )}
+
+                  {/* Processed Info */}
+                  {viewingRegistration.processedBy && (
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                      <div>
+                        <Label className="text-sm text-gray-600">Người xử lý</Label>
+                        <div className="text-sm">ID: {viewingRegistration.processedBy}</div>
+                      </div>
+                      {viewingRegistration.processedAt && (
+                        <div>
+                          <Label className="text-sm text-gray-600">Thời gian xử lý</Label>
+                          <div className="text-sm">{format(parseISO(viewingRegistration.processedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Created At */}
+                  <div className="pt-4 border-t">
+                    <Label className="text-sm text-gray-600">Ngày tạo</Label>
+                    <div className="text-sm">{format(parseISO(viewingRegistration.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Không có dữ liệu
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowViewDetailsModal(false);
+                    setViewingRegistration(null);
+                  }}
+                >
+                  Đóng
                 </Button>
               </div>
             </div>

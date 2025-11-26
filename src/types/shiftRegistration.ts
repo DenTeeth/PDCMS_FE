@@ -24,14 +24,14 @@ export enum DayOfWeek {
 export interface ShiftRegistration {
   registrationId: number; // Registration ID
   employeeId: number;
-  employeeName?: string;
+  employeeName: string; // Employee name (always present from API)
   partTimeSlotId: number; // The slot being registered
   workShiftId: string; // Work shift ID (e.g., "WKS_MORNING_02")
   shiftName: string; // Human-readable shift name
   dayOfWeek: string; // Day of week (e.g., "MONDAY")
   effectiveFrom: string; // YYYY-MM-DD format
   effectiveTo: string; // YYYY-MM-DD format
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'; // Registration status
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; // Registration status
   dates: string[]; // Array of actual work dates (YYYY-MM-DD format)
   reason: string | null; // Reason for rejection (if any)
   processedBy: number | null; // Admin who processed the registration
