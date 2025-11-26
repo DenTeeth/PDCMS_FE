@@ -1,0 +1,432 @@
+'use client';
+
+/**
+ * Warehouse Reports Page - Báo cáo & Thống kê kho
+ * Includes: Inventory reports, transaction reports, expiring alerts, loss records
+ */
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faChartLine,
+  faBoxes,
+  faClipboard,
+  faClock,
+  faTrash,
+  faExclamationTriangle,
+  faDownload,
+  faFilter,
+  faCalendar,
+} from '@fortawesome/free-solid-svg-icons';
+import { inventoryService } from '@/services/inventoryService';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+
+type ReportType = 'inventory' | 'transactions' | 'expiring' | 'loss';
+type TimeRange = '7days' | '30days' | '90days' | 'custom';
+
+export default function WarehouseReportsPage() {
+  const [activeReport, setActiveReport] = useState<ReportType>('inventory');
+  const [timeRange, setTimeRange] = useState<TimeRange>('30days');
+  const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | 'COLD' | 'NORMAL'>('ALL');
+
+  // Fetch inventory summary for reports
+  const { data: inventorySummary, isLoading: inventoryLoading } = useQuery({
+    queryKey: ['inventoryReportSummary', warehouseFilter],
+    queryFn: async () => {
+      const filter: any = {
+        page: 0,
+        size: 100,
+      };
+      if (warehouseFilter !== 'ALL') {
+        filter.warehouseType = warehouseFilter;
+      }
+      return await inventoryService.getSummary(filter);
+    },
+  });
+
+  // Fetch expiring items
+  const { data: expiringItems, isLoading: expiringLoading } = useQuery({
+    queryKey: ['expiringItemsReport'],
+    queryFn: async () => {
+      const result = await inventoryService.getSummary({
+        isExpiringSoon: true,
+        warehouseType: 'COLD',
+        page: 0,
+        size: 50,
+      });
+      return result.content || [];
+    },
+  });
+
+  // Mock transaction data (would come from real API)
+  const transactionData = {
+    imports: [
+      { date: '2025-11-20', items: 15, value: 45000000, supplier: 'Công ty A' },
+      { date: '2025-11-18', items: 8, value: 28000000, supplier: 'Công ty B' },
+      { date: '2025-11-15', items: 12, value: 36000000, supplier: 'Công ty C' },
+    ],
+    exports: [
+      { date: '2025-11-22', items: 10, value: 15000000, department: 'Phòng khám A' },
+      { date: '2025-11-21', items: 6, value: 8500000, department: 'Phòng khám B' },
+      { date: '2025-11-19', items: 8, value: 12000000, department: 'Phòng khám C' },
+    ],
+  };
+
+  // Mock loss records
+  const lossRecords = [
+    { date: '2025-11-20', itemName: 'Thuốc X', quantity: 5, reason: 'Hết hạn', value: 750000 },
+    { date: '2025-11-15', itemName: 'Vắc-xin Y', quantity: 3, reason: 'Hư hỏng', value: 900000 },
+    { date: '2025-11-10', itemName: 'Gạc y tế', quantity: 20, reason: 'Mất mát', value: 600000 },
+  ];
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
+  const getDaysUntilExpiry = (expiryDate: string) => {
+    return Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getExpiryBadge = (days: number) => {
+    if (days < 0) return <Badge variant="destructive">Đã hết hạn</Badge>;
+    if (days <= 7) return <Badge variant="destructive">Hết hạn trong {days} ngày</Badge>;
+    if (days <= 30) return <Badge className="bg-orange-500">Còn {days} ngày</Badge>;
+    return <Badge variant="outline">Còn {days} ngày</Badge>;
+  };
+
+  const getStockStatusBadge = (status: string) => {
+    const config: Record<string, { variant: any; label: string }> = {
+      OUT_OF_STOCK: { variant: 'destructive', label: 'Hết hàng' },
+      LOW_STOCK: { variant: 'destructive', label: 'Sắp hết' },
+      NORMAL: { variant: 'default', label: 'Bình thường' },
+      OVERSTOCK: { variant: 'outline', label: 'Dư thừa' },
+    };
+    const cfg = config[status] || config.NORMAL;
+    return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+  };
+
+  const inventoryItems = Array.isArray(inventorySummary) 
+    ? inventorySummary 
+    : (inventorySummary as any)?.content || [];
+
+  return (
+    // TODO: Re-enable permission check after BE adds VIEW_WAREHOUSE permission
+    // <ProtectedRoute requiredPermissions={['VIEW_WAREHOUSE']}>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Báo Cáo & Thống Kê Kho</h1>
+            <p className="text-slate-600 mt-1">Phân tích chi tiết về tồn kho, giao dịch và cảnh báo</p>
+          </div>
+          <div className="flex gap-2">
+            <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">7 ngày qua</SelectItem>
+                <SelectItem value="30days">30 ngày qua</SelectItem>
+                <SelectItem value="90days">90 ngày qua</SelectItem>
+                <SelectItem value="custom">Tùy chỉnh</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+              Xuất Excel
+            </Button>
+          </div>
+        </div>
+
+        {/* Report Tabs */}
+        <Tabs value={activeReport} onValueChange={(v) => setActiveReport(v as ReportType)}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="inventory" className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faBoxes} className="h-4 w-4" />
+              Tồn Kho
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faClipboard} className="h-4 w-4" />
+              Giao Dịch
+            </TabsTrigger>
+            <TabsTrigger value="expiring" className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
+              Sắp Hết Hạn
+            </TabsTrigger>
+            <TabsTrigger value="loss" className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+              Hao Hụt
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Inventory Report */}
+          <TabsContent value="inventory" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Báo Cáo Tồn Kho Chi Tiết</CardTitle>
+                  <Select value={warehouseFilter} onValueChange={(v) => setWarehouseFilter(v as any)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Tất cả kho</SelectItem>
+                      <SelectItem value="COLD">❄️ Kho lạnh</SelectItem>
+                      <SelectItem value="NORMAL">📦 Kho thường</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {inventoryLoading ? (
+                  <div className="text-center py-8">Đang tải...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4">Mã Vật Tư</th>
+                          <th className="text-left py-3 px-4">Tên Vật Tư</th>
+                          <th className="text-center py-3 px-4">Loại Kho</th>
+                          <th className="text-right py-3 px-4">Tồn Kho</th>
+                          <th className="text-right py-3 px-4">Min/Max</th>
+                          <th className="text-center py-3 px-4">Trạng Thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inventoryItems.map((item: any) => (
+                          <tr key={item.id || item.itemMasterId} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4 font-mono text-sm">{item.itemCode}</td>
+                            <td className="py-3 px-4">{item.itemName}</td>
+                            <td className="py-3 px-4 text-center">
+                              {item.warehouseType === 'COLD' ? '❄️ Lạnh' : '📦 Thường'}
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold">
+                              {item.currentStock || item.totalQuantity || 0}
+                            </td>
+                            <td className="py-3 px-4 text-right text-sm text-gray-600">
+                              {item.minStockLevel} / {item.maxStockLevel}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              {getStockStatusBadge(item.stockStatus || 'NORMAL')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {inventoryItems.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        Không có dữ liệu
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Transactions Report */}
+          <TabsContent value="transactions" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Import Transactions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faClipboard} className="h-5 w-5 text-blue-500" />
+                    Phiếu Nhập Kho
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {transactionsLoading ? (
+                    <div className="text-center py-6 text-gray-500 text-sm">Đang tải...</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions
+                        .filter((tx: StorageTransaction) => tx.transactionType === 'IMPORT')
+                        .map((txn) => {
+                          const totalItems =
+                            txn.items?.reduce(
+                              (sum, item) => sum + Math.max(item.quantityChange, 0),
+                              0
+                            ) ?? 0;
+                          return (
+                            <div
+                              key={txn.transactionId}
+                              className="p-4 bg-blue-50 rounded-lg border border-blue-200"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="font-semibold">{txn.supplierName || 'N/A'}</p>
+                                  <p className="text-sm text-gray-600">
+                                    {formatDate(txn.transactionDate)}
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="bg-white text-blue-700 border-blue-300">
+                                  +{totalItems} dòng vật tư
+                                </Badge>
+                              </div>
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>Mã phiếu</span>
+                                <span className="font-mono text-gray-800">
+                                  {txn.transactionCode || '-'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {transactions.filter((tx) => tx.transactionType === 'IMPORT').length === 0 && (
+                        <div className="text-center text-sm text-gray-500 py-4">
+                          Chưa có giao dịch nhập kho.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Export Transactions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faClipboard} className="h-5 w-5 text-orange-500" />
+                    Phiếu Xuất Kho
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {transactionsLoading ? (
+                    <div className="text-center py-6 text-gray-500 text-sm">Đang tải...</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions
+                        .filter((tx: StorageTransaction) => tx.transactionType === 'EXPORT')
+                        .map((txn) => {
+                          const totalItems =
+                            txn.items?.reduce(
+                              (sum, item) => sum + Math.abs(item.quantityChange),
+                              0
+                            ) ?? 0;
+                          return (
+                            <div
+                              key={txn.transactionId}
+                              className="p-4 bg-orange-50 rounded-lg border border-orange-200"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="font-semibold">{txn.notes || 'Phiếu xuất kho'}</p>
+                                  <p className="text-sm text-gray-600">
+                                    {formatDate(txn.transactionDate)}
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="bg-white text-orange-700 border-orange-300">
+                                  -{totalItems} dòng vật tư
+                                </Badge>
+                              </div>
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>Mã phiếu</span>
+                                <span className="font-mono text-gray-800">
+                                  {txn.transactionCode || '-'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {transactions.filter((tx) => tx.transactionType === 'EXPORT').length === 0 && (
+                        <div className="text-center text-sm text-gray-500 py-4">
+                          Chưa có giao dịch xuất kho.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Expiring Items Report */}
+          <TabsContent value="expiring" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-red-500" />
+                  Danh Sách Vật Tư Sắp Hết Hạn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {expiringLoading ? (
+                  <div className="text-center py-8">Đang tải...</div>
+                ) : expiringItems && expiringItems.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4">Mã Vật Tư</th>
+                          <th className="text-left py-3 px-4">Tên Vật Tư</th>
+                          <th className="text-right py-3 px-4">Số Lượng</th>
+                          <th className="text-center py-3 px-4">Hạn Sử Dụng</th>
+                          <th className="text-center py-3 px-4">Trạng Thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expiringItems.map((item: any) => {
+                          const expiryDate = item.expiryDate || item.nearestExpiryDate;
+                          const daysRemaining = expiryDate ? getDaysUntilExpiry(expiryDate) : null;
+
+                          return (
+                            <tr key={item.id || item.itemMasterId} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4 font-mono text-sm">{item.itemCode}</td>
+                              <td className="py-3 px-4">{item.itemName}</td>
+                              <td className="py-3 px-4 text-right font-semibold">
+                                {item.currentStock || item.totalQuantity || 0}
+                              </td>
+                              <td className="py-3 px-4 text-center text-sm">
+                                {expiryDate ? formatDate(expiryDate) : 'N/A'}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                {daysRemaining !== null ? getExpiryBadge(daysRemaining) : <Badge variant="outline">N/A</Badge>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FontAwesomeIcon icon={faClock} className="h-12 w-12 mb-2 opacity-20" />
+                    <p>Không có vật tư sắp hết hạn</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Loss Records Report */}
+          <TabsContent value="loss" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faTrash} className="h-5 w-5 text-red-500" />
+                  Báo Cáo Hao Hụt & Hư Hỏng
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600">
+                  API báo cáo hao hụt chưa được BE cung cấp. Khi có dữ liệu chính thức, tab này sẽ
+                  hiển thị danh sách phiếu hủy cùng thống kê giá trị mất mát.
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    // </ProtectedRoute>
+  );
+}
+
+

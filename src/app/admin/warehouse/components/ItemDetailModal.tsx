@@ -66,6 +66,11 @@ export default function ItemDetailModal({
 
   if (!itemId) return null;
 
+  const totalBatchQuantity = batches.reduce(
+    (sum: number, batch: ItemBatchV1) => sum + (batch.quantityOnHand ?? 0),
+    0
+  );
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('vi-VN');
@@ -204,7 +209,7 @@ export default function ItemDetailModal({
                   <div>
                     <p className="text-sm text-gray-600">Tồn kho hiện tại</p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {itemDetail.currentStock || 0} {itemDetail.unitOfMeasure}
+                      {totalBatchQuantity} {itemDetail.unitOfMeasure}
                     </p>
                   </div>
                   <div>

@@ -11,10 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import storageService, { StorageTransaction } from '@/services/storageService';
-import supplierServiceV3 from '@/services/supplierService';
-import { itemMasterService } from '@/services/warehouseService';
-import { ItemMaster } from '@/types/warehouse';
+import storageService from '@/services/storageService';
+import supplierService from '@/services/supplierService';
+import inventoryService, { type InventorySummary } from '@/services/inventoryService';
 
 interface EditImportModalProps {
   isOpen: boolean;
@@ -23,15 +22,15 @@ interface EditImportModalProps {
 }
 
 interface EditImportFormData {
-  supplier_id: number;
-  transaction_date: string;
+  supplierId: number;
+  transactionDate: string;
   notes: string;
   items: {
-    item_master_id: number;
-    lot_number: string;
+    itemMasterId: number;
+    lotNumber: string;
     quantity: number;
-    import_price: number;
-    expiry_date: string;
+    importPrice: number;
+    expiryDate: string;
   }[];
 }
 
@@ -51,28 +50,32 @@ export default function EditImportModal({
   });
 
   // Fetch suppliers
-  const { data: suppliersData } = useQuery({
+  const { data: suppliersPage } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => supplierServiceV3.getAll(),
+    queryFn: () =>
+      supplierService.getAll({
+        page: 0,
+        size: 1000,
+        sort: 'supplierName,asc',
+      }),
     enabled: isOpen,
   });
 
-  const suppliers = suppliersData || [];
+  const suppliers = suppliersPage?.content || [];
 
   // Fetch item masters
-  const { data: items = [] } = useQuery<ItemMaster[]>({
+  const { data: itemSummaryPage } = useQuery({
     queryKey: ['itemMasters'],
-    queryFn: async () => {
-      const result = await itemMasterService.getSummary({});
-      return result;
-    },
+    queryFn: async () => inventoryService.getSummary({ size: 1000, page: 0 }),
     enabled: isOpen,
   });
+
+  const items: InventorySummary[] = itemSummaryPage?.content || [];
 
   const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<EditImportFormData>({
     defaultValues: {
-      supplier_id: 0,
-      transaction_date: '',
+      supplierId: 0,
+      transactionDate: '',
       notes: '',
       items: [],
     },
@@ -87,15 +90,15 @@ export default function EditImportModal({
   useEffect(() => {
     if (transaction && isOpen) {
       reset({
-        supplier_id: transaction.supplierId || 0,
-        transaction_date: transaction.transactionDate?.split('T')[0] || '',
+        supplierId: transaction.supplierId || 0,
+        transactionDate: transaction.transactionDate?.split('T')[0] || '',
         notes: transaction.notes || '',
         items: transaction.items.map(item => ({
-          item_master_id: item.itemMasterId,
-          lot_number: item.lotNumber,
+          itemMasterId: item.itemMasterId,
+          lotNumber: item.lotNumber,
           quantity: item.quantityChange,
-          import_price: item.unitPrice,
-          expiry_date: item.expiryDate?.split('T')[0] || '',
+          importPrice: item.unitPrice,
+          expiryDate: item.expiryDate?.split('T')[0] || '',
         })),
       });
     }
@@ -128,7 +131,7 @@ export default function EditImportModal({
     // Check for empty items
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i];
-      if (!item.item_master_id || !item.lot_number || item.quantity <= 0) {
+      if (!item.itemMasterId || !item.lotNumber || item.quantity <= 0) {
         toast.error(`Vui lòng điền đầy đủ thông tin vật tư dòng ${i + 1}!`);
         return;
       }
@@ -158,11 +161,11 @@ export default function EditImportModal({
 
   const handleAddItem = () => {
     append({
-      item_master_id: items.length > 0 ? items[0].item_master_id : 0,
-      lot_number: '',
+      itemMasterId: items.length > 0 ? items[0].itemMasterId : 0,
+      lotNumber: '',
       quantity: 1,
-      import_price: 0,
-      expiry_date: '',
+      importPrice: 0,
+      expiryDate: '',
     });
   };
 
@@ -195,31 +198,31 @@ export default function EditImportModal({
             {/* Header Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="supplier_id">Nhà cung cấp *</Label>
+                <Label htmlFor="supplierId">Nhà cung cấp *</Label>
                 <select
-                  id="supplier_id"
-                  {...register('supplier_id', { required: true, valueAsNumber: true })}
+                  id="supplierId"
+                  {...register('supplierId', { required: true, valueAsNumber: true })}
                   className="w-full px-3 py-2 border rounded-md"
                 >
                   <option value={0}>-- Chọn nhà cung cấp --</option>
-                  {(Array.isArray(suppliers) ? suppliers : suppliers?.content || []).map((sup: any) => (
+                  {suppliers.map((sup) => (
                     <option key={sup.supplierId} value={sup.supplierId}>
                       {sup.supplierName}
                     </option>
                   ))}
                 </select>
-                {errors.supplier_id && (
+                {errors.supplierId && (
                   <p className="text-sm text-red-600 mt-1">Vui lòng chọn nhà cung cấp</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="transaction_date">Ngày nhập *</Label>
+                <Label htmlFor="transactionDate">Ngày nhập *</Label>
                 <div className="relative">
                   <Input
-                    id="transaction_date"
+                    id="transactionDate"
                     type="date"
-                    {...register('transaction_date', { required: true })}
+                    {...register('transactionDate', { required: true })}
                     className="pl-10"
                   />
                   <FontAwesomeIcon
@@ -227,7 +230,7 @@ export default function EditImportModal({
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"
                   />
                 </div>
-                {errors.transaction_date && (
+                {errors.transactionDate && (
                   <p className="text-sm text-red-600 mt-1">Vui lòng chọn ngày nhập</p>
                 )}
               </div>
@@ -259,19 +262,20 @@ export default function EditImportModal({
                       <tr key={field.id}>
                         <td className="px-4 py-2">
                           <select
-                            {...register(`items.${index}.item_master_id`, { valueAsNumber: true })}
+                            {...register(`items.${index}.itemMasterId`, { valueAsNumber: true })}
                             className="w-full px-2 py-1 border rounded text-sm"
                           >
+                            <option value={0}>-- Chọn vật tư --</option>
                             {items.map((item) => (
-                              <option key={item.item_master_id} value={item.item_master_id}>
-                                {item.item_code} - {item.item_name}
+                              <option key={item.itemMasterId} value={item.itemMasterId}>
+                                {item.itemCode} - {item.itemName}
                               </option>
                             ))}
                           </select>
                         </td>
                         <td className="px-4 py-2">
                           <Input
-                            {...register(`items.${index}.lot_number`)}
+                            {...register(`items.${index}.lotNumber`)}
                             placeholder="LOT123"
                             className="text-sm"
                           />
@@ -287,7 +291,7 @@ export default function EditImportModal({
                         <td className="px-4 py-2">
                           <Input
                             type="date"
-                            {...register(`items.${index}.expiry_date`)}
+                            {...register(`items.${index}.expiryDate`)}
                             className="text-sm"
                           />
                         </td>

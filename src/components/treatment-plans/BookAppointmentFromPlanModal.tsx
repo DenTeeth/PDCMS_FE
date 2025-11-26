@@ -38,6 +38,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { EmployeeService } from '@/services/employeeService';
 import { RoomService } from '@/services/roomService';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
+import { ServiceService } from '@/services/serviceService';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   CreateAppointmentRequest,
@@ -48,6 +49,7 @@ import { Employee } from '@/types/employee';
 import { Room } from '@/types/room';
 import { EmployeeShift } from '@/types/employeeShift';
 import { TreatmentPlanDetailResponse, ItemDetailDTO } from '@/types/treatmentPlan';
+import { Service } from '@/types/service';
 import {
   User,
   UserCog,
@@ -106,14 +108,51 @@ export default function BookAppointmentFromPlanModal({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [allEmployeeShifts, setAllEmployeeShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
-  // Removed services state - not needed for participant filtering
+  const [servicesMap, setServicesMap] = useState<Map<string, Service>>(new Map());
+  const [loadingServices, setLoadingServices] = useState(false);
 
   // Extract plan items being booked
   const planItems = useMemo(() => {
-    return plan.phases
+    const items = plan.phases
       .flatMap(phase => phase.items || [])
       .filter(item => planItemIds.includes(item.itemId));
+    
+    // Debug: Log plan items to check estimatedTimeMinutes
+    console.log('📋 Plan Items for Booking (RAW):', items.map(item => ({
+      itemId: item.itemId,
+      itemName: item.itemName,
+      serviceCode: item.serviceCode,
+      estimatedTimeMinutes: item.estimatedTimeMinutes,
+    })));
+    
+    return items;
   }, [plan, planItemIds]);
+
+  // 🛠️ FE WORKAROUND: Enrich plan items with duration from service master data
+  // This fixes BE bug where service/domain/DentalService.java maps to wrong column
+  const enrichedPlanItems = useMemo(() => {
+    return planItems.map(item => {
+      // If item already has duration, use it
+      if (item.estimatedTimeMinutes && item.estimatedTimeMinutes > 0) {
+        return item;
+      }
+
+      // Otherwise, try to get duration from services map
+      const service = servicesMap.get(item.serviceCode || '');
+      const durationFromService = service?.defaultDurationMinutes || 0;
+
+      if (durationFromService > 0) {
+        console.log(`✅ Enriched item ${item.itemId} with duration ${durationFromService} from service ${item.serviceCode}`);
+      } else {
+        console.warn(`⚠️ Item ${item.itemId} (${item.serviceCode}) has NO duration in plan AND service not found`);
+      }
+
+      return {
+        ...item,
+        estimatedTimeMinutes: durationFromService || 0,
+      };
+    });
+  }, [planItems, servicesMap]);
 
   // Extract service codes from plan items
   const serviceCodes = useMemo(() => {
@@ -122,10 +161,48 @@ export default function BookAppointmentFromPlanModal({
       .filter(code => !!code) as string[];
   }, [planItems]);
 
-  // Calculate total estimated time
+  // Calculate total estimated time (use enriched items)
   const totalEstimatedTime = useMemo(() => {
-    return planItems.reduce((sum, item) => sum + (item.estimatedTimeMinutes || 0), 0);
-  }, [planItems]);
+    const total = enrichedPlanItems.reduce((sum, item) => sum + (item.estimatedTimeMinutes || 0), 0);
+    console.log('⏱️  Total Estimated Time:', total, 'minutes (from enriched items)');
+    return total;
+  }, [enrichedPlanItems]);
+
+  // 🛠️ FE WORKAROUND: Fetch services to get duration (fixes BE column mapping bug)
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!open || serviceCodes.length === 0) return;
+
+      setLoadingServices(true);
+      try {
+        // Fetch all services (booking API has correct defaultDurationMinutes)
+        const response = await ServiceService.getAllServices({
+          page: 0,
+          size: 1000, // Get all to build map
+          isActive: true,
+        });
+
+        const services = response.content || [];
+        const map = new Map<string, Service>();
+        
+        services.forEach(service => {
+          if (service.serviceCode) {
+            map.set(service.serviceCode, service);
+          }
+        });
+
+        setServicesMap(map);
+        console.log(`✅ Loaded ${map.size} services for duration enrichment`);
+      } catch (error) {
+        console.error('⚠️ Failed to load services for duration enrichment:', error);
+        toast.error('Không thể tải thông tin dịch vụ');
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, [open, serviceCodes]);
 
   // Initialize form data from plan
   useEffect(() => {
@@ -611,10 +688,10 @@ export default function BookAppointmentFromPlanModal({
               </Card>
 
               <div>
-                <Label>Hạng mục sẽ được đặt lịch ({planItems.length})</Label>
+                <Label>Hạng mục sẽ được đặt lịch ({enrichedPlanItems.length})</Label>
                 <Card className="p-4 mt-2 max-h-96 overflow-y-auto">
                   <div className="space-y-3">
-                    {planItems.map((item) => (
+                    {enrichedPlanItems.map((item) => (
                       <div
                         key={item.itemId}
                         className="p-3 border rounded-lg bg-card"
@@ -623,9 +700,10 @@ export default function BookAppointmentFromPlanModal({
                           <div className="flex-1">
                             <div className="font-medium">{item.itemName}</div>
                             <div className="text-sm text-muted-foreground mt-1">
-                              <span>Mã dịch vụ: {item.serviceCode}</span>
+                              <span>Mã dịch vụ: {item.serviceCode || 'N/A'}</span>
                               <span className="ml-4">
-                                Thời gian dự kiến: {item.estimatedTimeMinutes} phút
+                                <Clock className="inline h-3 w-3 mr-1" />
+                                Thời gian: {item.estimatedTimeMinutes || 0} phút
                               </span>
                               {item.price != null && item.price > 0 && (
                                 <span className="ml-4">
@@ -640,8 +718,21 @@ export default function BookAppointmentFromPlanModal({
                     ))}
                   </div>
                 </Card>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Tổng thời gian dự kiến: <span className="font-medium">{totalEstimatedTime} phút</span>
+                <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Tổng thời gian dự kiến: 
+                  <span className="font-medium">
+                    {loadingServices ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Đang tính...
+                      </span>
+                    ) : totalEstimatedTime > 0 ? (
+                      `${totalEstimatedTime} phút`
+                    ) : (
+                      <span className="text-orange-600">0 phút (chưa có dữ liệu)</span>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1072,7 +1163,10 @@ export default function BookAppointmentFromPlanModal({
                     </div>
                     <div>
                       <span className="text-muted-foreground">Thời gian dự kiến:</span>
-                      <span className="ml-2 font-medium">{totalEstimatedTime} phút</span>
+                      <span className="ml-2 font-medium flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {totalEstimatedTime > 0 ? `${totalEstimatedTime} phút` : '0 phút (chưa có dữ liệu)'}
+                      </span>
                     </div>
                   </div>
                   {participantCode && (
@@ -1102,7 +1196,7 @@ export default function BookAppointmentFromPlanModal({
               <Card className="p-4">
                 <h4 className="font-semibold mb-2">Hạng mục sẽ được đặt lịch:</h4>
                 <div className="space-y-2">
-                  {planItems.map((item) => (
+                  {enrichedPlanItems.map((item) => (
                     <div key={item.itemId} className="text-sm p-2 border rounded">
                       <div className="font-medium">{item.itemName}</div>
                       <div className="text-muted-foreground">

@@ -1,5 +1,6 @@
 // Service Management Types
 // ✅ Match Booking API (ServiceResponse from booking_appointment/dto/response/ServiceResponse.java)
+// ✅ Updated 2025-01-26: Added categoryId, categoryCode, categoryName from BE
 export interface Service {
   serviceId: number;
   serviceCode: string;
@@ -10,6 +11,9 @@ export interface Service {
   price: number;
   specializationId?: number;
   specializationName?: string;
+  categoryId?: number; // ✅ NEW: Service Category (V17)
+  categoryCode?: string; // ✅ NEW: Category code (e.g., "GEN", "COS")
+  categoryName?: string; // ✅ NEW: Category name (e.g., "A. General Dentistry")
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -19,6 +23,7 @@ export interface ServiceFilters {
   keyword?: string;
   isActive?: string; // "true", "false", or empty string for "all"
   specializationId?: string; // "1", "2", or empty string for "all"
+  categoryId?: string; // ✅ NEW: "1", "2", or empty string for "all" (V17)
   sortBy?: string; // Default: "serviceId"
   sortDirection?: 'ASC' | 'DESC';
   page?: number; // Default: 0

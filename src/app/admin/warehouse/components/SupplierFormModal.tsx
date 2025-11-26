@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CreateSupplierRequest, UpdateSupplierRequest, SupplierDetailResponse } from '@/types/supplier';
 import { inventoryService, InventorySummary } from '@/services/inventoryService';
+import { supplierService } from '@/services/supplierService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faBox } from '@fortawesome/free-solid-svg-icons';
 
@@ -38,6 +39,13 @@ export default function SupplierFormModal({
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
 
+  // Fetch full supplier detail when editing
+  const { data: fullSupplierDetail, isLoading: loadingSupplierDetail } = useQuery({
+    queryKey: ['supplierDetail', supplier?.supplierId],
+    queryFn: () => supplierService.getById(supplier!.supplierId),
+    enabled: isOpen && !!supplier?.supplierId,
+  });
+
   // Fetch all inventory items
   const { data: allItemsResponse = [] } = useQuery({
     queryKey: ['inventorySummary', { search: itemSearchQuery }],
@@ -50,20 +58,24 @@ export default function SupplierFormModal({
     ? allItemsResponse 
     : (allItemsResponse as any)?.content || [];
 
+  // Use full supplier detail if available, otherwise fallback to passed supplier
+  const supplierData = fullSupplierDetail || supplier;
+
   useEffect(() => {
-    if (supplier) {
+    if (supplierData && isOpen) {
       setFormData({
-        supplierCode: supplier.supplierCode,
-        supplierName: supplier.supplierName,
-        address: supplier.address || '',
-        phoneNumber: supplier.phoneNumber || '',
-        email: supplier.email || '',
-        notes: supplier.notes || '',
+        supplierCode: supplierData.supplierCode || '',
+        supplierName: supplierData.supplierName || '',
+        address: supplierData.address || '',
+        phoneNumber: supplierData.phoneNumber || '',
+        email: supplierData.email || '',
+        notes: supplierData.notes || '',
       });
       // Set selected items from supplier detail
-      const itemIds = supplier.suppliedItems?.map(item => item.itemMasterId).filter(Boolean) || [];
+      const itemIds = supplierData.suppliedItems?.map(item => item.itemMasterId).filter(Boolean) || [];
       setSelectedItemIds(itemIds);
-    } else {
+    } else if (!supplierData && isOpen) {
+      // Reset form when creating new supplier
       setFormData({
         supplierCode: '',
         supplierName: '',
@@ -75,7 +87,7 @@ export default function SupplierFormModal({
       setSelectedItemIds([]);
     }
     setItemSearchQuery('');
-  }, [supplier, isOpen]);
+  }, [supplierData, isOpen]);
 
   const handleToggleItem = (itemId: number) => {
     setSelectedItemIds(prev => 
@@ -125,7 +137,12 @@ export default function SupplierFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className={supplier ? "grid grid-cols-2 gap-6 overflow-hidden flex-1" : "overflow-hidden flex-1"}>
+        {loadingSupplierDetail ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          </div>
+        ) : (
+          <div className={supplier ? "grid grid-cols-2 gap-6 overflow-hidden flex-1" : "overflow-hidden flex-1"}>
           {/* Left Column: Form */}
           <div className="overflow-y-auto pr-4">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -264,6 +281,7 @@ export default function SupplierFormModal({
           </div>
           )}
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );
