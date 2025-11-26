@@ -267,10 +267,10 @@ export default function SupplierDetailModal({
                           </td>
                           <td className="p-3 font-medium">{item.itemName || '-'}</td>
                           <td className="p-3 text-right font-semibold">
-                            {(item.totalQuantitySupplied || 0).toLocaleString()}
+                            {(item.totalQuantity || 0).toLocaleString()}
                           </td>
                           <td className="p-3 text-center text-sm text-slate-600">
-                            {item.lastSuppliedDate ? formatDate(item.lastSuppliedDate) : '-'}
+                            {item.lastImportDate ? formatDate(item.lastImportDate) : '-'}
                           </td>
                         </tr>
                       ))}

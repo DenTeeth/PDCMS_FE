@@ -65,8 +65,9 @@ export interface SuppliedItemSummary {
   itemMasterId: number;
   itemCode: string;
   itemName: string;
-  totalQuantitySupplied: number;
-  lastSuppliedDate: string; // ISO 8601: "2025-11-19T15:30:00"
+  categoryName?: string; // Tên danh mục vật tư
+  lastImportDate: string | null; // ISO 8601: "2025-11-19T15:30:00" hoặc null
+  totalQuantity: number; // Tổng số lượng tồn kho từ tất cả batches
 }
 
 export interface SupplierDetailResponse {

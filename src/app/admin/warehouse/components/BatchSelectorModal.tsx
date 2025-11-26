@@ -16,14 +16,20 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ItemMaster, ItemBatch } from '@/types/warehouse';
-import { itemMasterService, itemBatchService } from '@/services/warehouseService';
+import inventoryService, { type InventorySummary, type BatchResponse } from '@/services/inventoryService';
 import { Package, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+
+export interface SelectedBatchPayload {
+  batch: BatchResponse;
+  itemMasterId: number;
+  itemCode?: string;
+  itemName?: string;
+}
 
 interface BatchSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (batch: ItemBatch, quantity: number) => void;
+  onSelect: (selection: SelectedBatchPayload, quantity: number) => void;
   warehouseType?: 'COLD' | 'NORMAL';
 }
 
@@ -38,36 +44,35 @@ export default function BatchSelectorModal({
   const [quantity, setQuantity] = useState<number>(1);
 
   // Fetch Item Masters
-  const { data: items = [] } = useQuery<ItemMaster[]>({
+  const { data: summaryPage } = useQuery({
     queryKey: ['itemMasters', warehouseType],
-    queryFn: async () => {
-      const result = await itemMasterService.getSummary({
-        warehouse_type: warehouseType,
-      });
-      return result;
-    },
+    queryFn: () => inventoryService.getSummary({ warehouseType, size: 1000 }),
     enabled: isOpen,
   });
 
+  const items: InventorySummary[] = summaryPage?.content || [];
+
   // Fetch Batches for selected item (FEFO sorted from BE)
-  const { data: batches = [], isLoading: loadingBatches } = useQuery<ItemBatch[]>({
+  const { data: batches = [], isLoading: loadingBatches } = useQuery<BatchResponse[]>({
     queryKey: ['itemBatches', selectedItemId],
-    queryFn: () => itemBatchService.getBatchesByItemId(selectedItemId!),
+    queryFn: () => inventoryService.getBatchesByItemId(selectedItemId!),
     enabled: !!selectedItemId,
   });
 
   // Auto-select FEFO batch (first batch = earliest expiry)
   useEffect(() => {
     if (batches.length > 0 && !selectedBatchId) {
-      setSelectedBatchId(batches[0].batch_id);
+      setSelectedBatchId(batches[0].batchId);
     } else if (batches.length === 0) {
       setSelectedBatchId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batches.length]);
 
+  const selectedItem = items.find((item) => item.itemMasterId === selectedItemId);
+
   const handleConfirm = () => {
-    const selectedBatch = batches.find((b) => b.batch_id === selectedBatchId);
+    const selectedBatch = batches.find((b) => b.batchId === selectedBatchId);
     
     if (!selectedBatch) {
       toast.error('Vui lòng chọn lô hàng!');
@@ -79,12 +84,25 @@ export default function BatchSelectorModal({
       return;
     }
 
-    if (quantity > selectedBatch.quantity_on_hand) {
-      toast.error(`Số lượng vượt quá tồn kho (Max: ${selectedBatch.quantity_on_hand})!`);
+    if (quantity > selectedBatch.quantityOnHand) {
+      toast.error(`Số lượng vượt quá tồn kho (Max: ${selectedBatch.quantityOnHand})!`);
       return;
     }
 
-    onSelect(selectedBatch, quantity);
+    if (!selectedItemId) {
+      toast.error('Vui lòng chọn vật tư!');
+      return;
+    }
+
+    onSelect(
+      {
+        batch: selectedBatch,
+        itemMasterId: selectedItemId,
+        itemCode: selectedItem?.itemCode,
+        itemName: selectedItem?.itemName,
+      },
+      quantity
+    );
     handleClose();
   };
 
@@ -120,7 +138,7 @@ export default function BatchSelectorModal({
     }
   };
 
-  const selectedBatch = batches.find((b) => b.batch_id === selectedBatchId);
+  const selectedBatch = batches.find((b) => b.batchId === selectedBatchId);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -150,18 +168,19 @@ export default function BatchSelectorModal({
               </SelectTrigger>
               <SelectContent>
                 {items.map((item) => {
-                  const isLowStock = item.total_quantity_on_hand <= (item.min_stock_level || 0);
-                  const isOutOfStock = item.total_quantity_on_hand <= 0;
+                  const totalQty = item.totalQuantityOnHand ?? item.totalQuantity ?? 0;
+                  const isLowStock = totalQty <= (item.minStockLevel || 0);
+                  const isOutOfStock = totalQty <= 0;
                   
                   return (
                     <SelectItem 
-                      key={item.item_master_id} 
-                      value={String(item.item_master_id)}
+                      key={item.itemMasterId} 
+                      value={String(item.itemMasterId)}
                       disabled={isOutOfStock}
                     >
                       <div className="flex items-center justify-between w-full gap-2">
                         <span className={isOutOfStock ? 'text-gray-400 line-through' : ''}>
-                          {item.item_code} - {item.item_name}
+                          {item.itemCode} - {item.itemName}
                         </span>
                         <div className="flex items-center gap-1">
                           <Badge 
@@ -174,10 +193,10 @@ export default function BatchSelectorModal({
                                 : 'bg-green-100 text-green-800'
                             }
                           >
-                            <span className="font-bold">{item.total_quantity_on_hand}</span>
+                            <span className="font-bold">{totalQty}</span>
                           </Badge>
-                          {item.min_stock_level && (
-                            <span className="text-xs text-gray-500">(Min: {item.min_stock_level})</span>
+                          {item.minStockLevel && (
+                            <span className="text-xs text-gray-500">(Min: {item.minStockLevel})</span>
                           )}
                         </div>
                       </div>
@@ -212,18 +231,18 @@ export default function BatchSelectorModal({
                 >
                   {batches.map((batch, index) => (
                     <div
-                      key={batch.batch_id}
+                      key={batch.batchId}
                       className={`border rounded-lg p-4 hover:bg-slate-50 cursor-pointer transition ${
                         index === 0 ? 'border-violet-500 bg-violet-50' : ''
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <RadioGroupItem value={String(batch.batch_id)} id={`batch-${batch.batch_id}`} />
-                        <Label htmlFor={`batch-${batch.batch_id}`} className="flex-1 cursor-pointer">
+                        <RadioGroupItem value={String(batch.batchId)} id={`batch-${batch.batchId}`} />
+                        <Label htmlFor={`batch-${batch.batchId}`} className="flex-1 cursor-pointer">
                           <div className="flex items-start justify-between">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold">Lô: {batch.lot_number}</span>
+                                <span className="font-semibold">Lô: {batch.lotNumber}</span>
                                 {index === 0 && (
                                   <Badge className="bg-violet-600 text-white text-xs">
                                     🤖 FEFO Suggest
@@ -232,28 +251,28 @@ export default function BatchSelectorModal({
                               </div>
                               <div className="text-sm flex items-center gap-3">
                                 <span className={`font-bold text-lg ${
-                                  batch.quantity_on_hand <= 0 
+                                  batch.quantityOnHand <= 0 
                                     ? 'text-red-600' 
-                                    : batch.quantity_on_hand <= 10 
+                                    : batch.quantityOnHand <= 10 
                                     ? 'text-orange-600' 
                                     : 'text-green-600'
                                 }`}>
-                                  Tồn kho: {batch.quantity_on_hand}
+                                  Tồn kho: {batch.quantityOnHand}
                                 </span>
-                                {batch.item_master && batch.item_master.min_stock_level && (
+                                {selectedItem?.minStockLevel && (
                                   <span className="text-xs text-gray-500">
-                                    (Min: {batch.item_master.min_stock_level})
+                                    (Min: {selectedItem.minStockLevel})
                                   </span>
                                 )}
                               </div>
-                              {batch.expiry_date && (
+                              {batch.expiryDate && (
                                 <div className="text-xs text-slate-500 flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  HSD: {new Date(batch.expiry_date).toLocaleDateString('vi-VN')}
+                                  HSD: {new Date(batch.expiryDate).toLocaleDateString('vi-VN')}
                                 </div>
                               )}
                             </div>
-                            <div>{getExpiryBadge(batch.expiry_date)}</div>
+                            <div>{getExpiryBadge(batch.expiryDate)}</div>
                           </div>
                         </Label>
                       </div>
@@ -273,21 +292,21 @@ export default function BatchSelectorModal({
               <div className="space-y-2">
                 {/* Stock Info Highlight */}
                 <div className={`border-2 rounded-lg p-3 ${
-                  quantity > selectedBatch.quantity_on_hand 
+                  quantity > selectedBatch.quantityOnHand 
                     ? 'border-red-300 bg-red-50' 
                     : 'border-blue-300 bg-blue-50'
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">Tồn kho hiện tại:</span>
                     <span className="text-2xl font-bold text-blue-600">
-                      {selectedBatch.quantity_on_hand}
+                      {selectedBatch.quantityOnHand}
                     </span>
                   </div>
-                  {selectedBatch.item_master?.min_stock_level && (
+                  {selectedItem?.minStockLevel && (
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs text-gray-500">Mức tối thiểu:</span>
                       <span className="text-sm font-medium text-orange-600">
-                        {selectedBatch.item_master.min_stock_level}
+                        {selectedItem.minStockLevel}
                       </span>
                     </div>
                   )}
@@ -298,30 +317,30 @@ export default function BatchSelectorModal({
                   <Input
                     type="number"
                     min="1"
-                    max={selectedBatch.quantity_on_hand}
+                    max={selectedBatch.quantityOnHand}
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     placeholder="Nhập số lượng"
                     className="flex-1 text-lg font-semibold"
                   />
                   <Badge variant="outline" className="text-sm whitespace-nowrap">
-                    Max: {selectedBatch.quantity_on_hand}
+                    Max: {selectedBatch.quantityOnHand}
                   </Badge>
                 </div>
                 
                 {/* Validation Messages */}
-                {quantity > selectedBatch.quantity_on_hand && (
+                {quantity > selectedBatch.quantityOnHand && (
                   <p className="text-xs text-red-500 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Số lượng vượt quá tồn kho!
                   </p>
                 )}
-                {selectedBatch.item_master?.min_stock_level && 
+                {selectedItem?.minStockLevel && 
                  quantity > 0 && 
-                 (selectedBatch.quantity_on_hand - quantity) < selectedBatch.item_master.min_stock_level && (
+                 (selectedBatch.quantityOnHand - quantity) < selectedItem.minStockLevel && (
                   <p className="text-xs text-orange-600 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
-                    Cảnh báo: Sau khi xuất sẽ dưới mức tối thiểu ({selectedBatch.item_master.min_stock_level})
+                    Cảnh báo: Sau khi xuất sẽ dưới mức tối thiểu ({selectedItem.minStockLevel})
                   </p>
                 )}
               </div>
@@ -329,14 +348,14 @@ export default function BatchSelectorModal({
           )}
 
           {/* Summary */}
-          {selectedBatch && quantity > 0 && quantity <= selectedBatch.quantity_on_hand && (
+          {selectedBatch && quantity > 0 && quantity <= selectedBatch.quantityOnHand && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5" />
                 <div className="text-sm space-y-1">
                   <p className="font-semibold text-emerald-900">✓ Sẵn sàng xuất kho</p>
                   <p className="text-emerald-700">
-                    Lô: <strong>{selectedBatch.lot_number}</strong> | 
+                    Lô: <strong>{selectedBatch.lotNumber}</strong> | 
                     Số lượng: <strong>{quantity}</strong>
                   </p>
                 </div>
@@ -349,7 +368,7 @@ export default function BatchSelectorModal({
             <Button
               onClick={handleConfirm}
               className="flex-1"
-              disabled={!selectedBatchId || quantity <= 0 || quantity > (selectedBatch?.quantity_on_hand || 0)}
+              disabled={!selectedBatchId || quantity <= 0 || quantity > (selectedBatch?.quantityOnHand || 0)}
             >
               Xác Nhận
             </Button>

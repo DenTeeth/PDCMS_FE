@@ -1,13 +1,7 @@
-/**
- * Service Category Type Definitions
- * 
- * Based on ServiceCategory.md - Service Category Management API (V17)
- * Last updated: January 2025
- */
+// Service Category Types
+// ✅ Match V17 Service Category API (service/controller/ServiceCategoryController.java)
+// Created: 2025-01-26
 
-/**
- * Service Category entity returned from API
- */
 export interface ServiceCategory {
   categoryId: number;
   categoryCode: string;
@@ -19,60 +13,31 @@ export interface ServiceCategory {
   updatedAt?: string;
 }
 
-/**
- * Brief version of Service Category (for public/internal APIs)
- */
-export interface ServiceCategoryBrief {
-  categoryId: number;
-  categoryCode: string;
-  categoryName: string;
-  displayOrder: number;
-}
-
-/**
- * Request payload for creating a new service category
- */
 export interface CreateServiceCategoryRequest {
-  categoryCode: string;
-  categoryName: string;
-  displayOrder: number;
-  description?: string;
+  categoryCode: string; // Required, max 50 chars, unique (e.g., "GEN", "COS", "ORTH")
+  categoryName: string; // Required, max 255 chars (e.g., "A. General Dentistry")
+  displayOrder: number; // Required, min 0 (for ordering in UI)
+  description?: string; // Optional, max 1000 chars
 }
 
-/**
- * Request payload for updating an existing service category (partial update)
- */
 export interface UpdateServiceCategoryRequest {
-  categoryCode?: string;
-  categoryName?: string;
-  displayOrder?: number;
-  description?: string;
-  isActive?: boolean;
+  categoryCode?: string; // Optional - can change code
+  categoryName?: string; // Optional - can change name
+  displayOrder?: number; // Optional - can reorder
+  description?: string; // Optional - can update description
 }
 
-/**
- * Request payload for reordering service categories (bulk operation)
- */
 export interface ReorderServiceCategoriesRequest {
-  orders: CategoryOrder[];
+  orders: Array<{
+    categoryId: number;
+    displayOrder: number;
+  }>;
 }
 
-/**
- * Category order item for reorder request
- */
-export interface CategoryOrder {
-  categoryId: number;
-  displayOrder: number;
-}
-
-/**
- * Error codes for service category operations
- */
+// Error codes
 export enum ServiceCategoryErrorCode {
   CATEGORY_CODE_EXISTS = 'CATEGORY_CODE_EXISTS',
   CATEGORY_NOT_FOUND = 'CATEGORY_NOT_FOUND',
-  CATEGORY_HAS_ACTIVE_SERVICES = 'CATEGORY_HAS_ACTIVE_SERVICES',
-  BUSINESS_RULE_VIOLATION = 'BUSINESS_RULE_VIOLATION',
+  CATEGORY_HAS_ACTIVE_SERVICES = 'CATEGORY_HAS_ACTIVE_SERVICES', // Cannot delete category with active services
   INVALID_REQUEST = 'INVALID_REQUEST'
 }
-

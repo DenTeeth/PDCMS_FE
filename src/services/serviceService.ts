@@ -32,6 +32,11 @@ export class ServiceService {
             params.append('specializationId', String(filters.specializationId));
         }
         
+        // ✅ NEW: Booking API now supports categoryId (V17 update 2025-01-26)
+        if (filters.categoryId !== undefined && filters.categoryId !== '') {
+            params.append('categoryId', String(filters.categoryId));
+        }
+        
         // Booking API uses 'keyword' param
         if (filters.keyword) {
             params.append('keyword', filters.keyword);
