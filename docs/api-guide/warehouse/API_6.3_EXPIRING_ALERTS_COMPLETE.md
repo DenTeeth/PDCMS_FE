@@ -169,7 +169,7 @@ if (statusFilter != null) {
 
 ### 4. Controller Endpoint
 
-#### GET /api/v3/warehouse/alerts/expiring
+#### GET /api/v1/warehouse/alerts/expiring
 
 **Authorization:**
 ```java
@@ -258,7 +258,7 @@ if (statusFilter != null) {
 
 **Request:**
 ```bash
-GET /api/v3/warehouse/alerts/expiring?days=7
+GET /api/v1/warehouse/alerts/expiring?days=7
 ```
 
 **Action:**
@@ -272,7 +272,7 @@ GET /api/v3/warehouse/alerts/expiring?days=7
 
 **Request:**
 ```bash
-GET /api/v3/warehouse/alerts/expiring?days=60&warehouseType=COLD
+GET /api/v1/warehouse/alerts/expiring?days=60&warehouseType=COLD
 ```
 
 **Action:**
@@ -287,7 +287,7 @@ GET /api/v3/warehouse/alerts/expiring?days=60&warehouseType=COLD
 
 **Request:**
 ```bash
-GET /api/v3/warehouse/alerts/expiring?days=30&statusFilter=EXPIRED
+GET /api/v1/warehouse/alerts/expiring?days=30&statusFilter=EXPIRED
 ```
 
 **Action:**
@@ -302,7 +302,7 @@ GET /api/v3/warehouse/alerts/expiring?days=30&statusFilter=EXPIRED
 
 **Request:**
 ```bash
-GET /api/v3/warehouse/alerts/expiring?days=30&categoryId=5
+GET /api/v1/warehouse/alerts/expiring?days=30&categoryId=5
 ```
 
 **Action:**

@@ -145,9 +145,9 @@ export default function CreateImportModal({
       try {
         const result = await inventoryService.getAll({
           warehouseType,
-        });
+      });
         console.log('📦 Item Masters fetched:', result.length, 'items');
-        return result;
+      return result;
       } catch (error: any) {
         console.error('❌ Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
@@ -306,9 +306,9 @@ export default function CreateImportModal({
                     </div>
                   ) : (
                     suppliers.map((supplier: SupplierSummaryResponse) => (
-                      <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
-                        {supplier.supplierName}
-                      </SelectItem>
+                    <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
+                      {supplier.supplierName}
+                    </SelectItem>
                     ))
                   )}
                 </SelectContent>

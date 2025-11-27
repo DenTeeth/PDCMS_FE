@@ -132,11 +132,11 @@ export interface InventoryFilter {
 
 export const inventoryService = {
   /**
-   * GET /api/v1/inventory - Lấy danh sách tất cả vật tư
+   * GET /api/v1/warehouse/items - Lấy danh sách vật tư (API 6.8)
    */
   getAll: async (filter?: InventoryFilter): Promise<ItemMasterV1[]> => {
     try {
-      const response = await api.get<ItemMasterV1[]>('/inventory', {
+      const response = await api.get<ItemMasterV1[]>('/warehouse/items', {
         params: filter,
       });
       console.log('✅ Get all items:', response.data);
@@ -148,11 +148,11 @@ export const inventoryService = {
   },
 
   /**
-   * GET /api/v1/inventory/{id} - Lấy chi tiết 1 vật tư
+   * GET /api/v1/warehouse/items/{id} - Lấy chi tiết 1 vật tư
    */
   getById: async (id: number): Promise<ItemMasterV1> => {
     try {
-      const response = await api.get<ItemMasterV1>(`/inventory/${id}`);
+      const response = await api.get<ItemMasterV1>(`/warehouse/items/${id}`);
       console.log('✅ Get item detail:', response.data);
       return response.data;
     } catch (error: any) {
@@ -162,7 +162,7 @@ export const inventoryService = {
   },
 
   /**
-   * GET /api/v1/inventory/summary - Lấy danh sách tồn kho (Inventory Dashboard)
+   * GET /api/v1/warehouse/summary - Lấy danh sách tồn kho (Inventory Dashboard)
    */
   getSummary: async (filter?: InventoryFilter): Promise<InventorySummaryPage> => {
     try {
@@ -182,7 +182,7 @@ export const inventoryService = {
       if (filter?.isExpiringSoon) params.isExpiringSoon = filter.isExpiringSoon;
       if (filter?.search) params.search = filter.search;
 
-      const response = await api.get('/inventory/summary', { params });
+      const response = await api.get('/warehouse/summary', { params });
       const raw = response.data;
 
       const mapItem = (item: any): InventorySummary => ({
@@ -285,11 +285,11 @@ export const inventoryService = {
   },
 
   /**
-   * GET /api/v1/inventory/batches/{itemMasterId} - Lấy danh sách lô hàng theo FEFO
+   * GET /api/v1/warehouse/batches/{itemMasterId} - Lấy danh sách lô hàng theo FEFO
    */
   getBatchesByItemId: async (itemMasterId: number): Promise<BatchResponse[]> => {
     try {
-      const response = await api.get<BatchResponse[]>(`/inventory/batches/${itemMasterId}`);
+      const response = await api.get<BatchResponse[]>(`/warehouse/batches/${itemMasterId}`);
       console.log('✅ Get batches (FEFO):', response.data);
       return response.data;
     } catch (error: any) {
@@ -299,11 +299,11 @@ export const inventoryService = {
   },
 
   /**
-   * POST /api/v1/inventory/item-master - Tạo vật tư mới
+   * POST /api/v1/warehouse/items - Tạo vật tư mới
    */
   create: async (data: CreateItemMasterRequest): Promise<ItemMasterV1> => {
     try {
-      const response = await api.post<ItemMasterV1>('/inventory/item-master', data);
+      const response = await api.post<ItemMasterV1>('/warehouse/items', data);
       console.log('✅ Create item:', response.data);
       return response.data;
     } catch (error: any) {
@@ -313,11 +313,11 @@ export const inventoryService = {
   },
 
   /**
-   * PUT /api/v1/inventory/item-master/{id} - Cập nhật vật tư
+   * PUT /api/v1/warehouse/items/{id} - Cập nhật vật tư
    */
   update: async (id: number, data: UpdateItemMasterRequest): Promise<ItemMasterV1> => {
     try {
-      const response = await api.put<ItemMasterV1>(`/inventory/item-master/${id}`, data);
+      const response = await api.put<ItemMasterV1>(`/warehouse/items/${id}`, data);
       console.log('✅ Update item:', response.data);
       return response.data;
     } catch (error: any) {
@@ -327,11 +327,11 @@ export const inventoryService = {
   },
 
   /**
-   * DELETE /api/v1/inventory/item-master/{id} - Xóa vật tư
+   * DELETE /api/v1/warehouse/items/{id} - Xóa vật tư
    */
   delete: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/inventory/item-master/${id}`);
+      await api.delete(`/warehouse/items/${id}`);
       console.log('✅ Delete item:', id);
     } catch (error: any) {
       console.error('❌ Delete item error:', error.response?.data || error.message);
@@ -381,13 +381,13 @@ export const inventoryService = {
   },
 
   /**
-   * POST /api/v1/inventory/import - Tạo phiếu nhập kho nâng cấp
+   * POST /api/v1/warehouse/import - Tạo phiếu nhập kho nâng cấp (API 6.4)
    */
   createImportTransaction: async (
     data: CreateImportTransactionDto
   ): Promise<ImportTransactionResponse> => {
     try {
-      const response = await api.post<ImportTransactionResponse>('/inventory/import', data);
+      const response = await api.post<ImportTransactionResponse>('/warehouse/import', data);
       console.log('✅ Create import transaction:', response.data);
       return response.data;
     } catch (error: any) {

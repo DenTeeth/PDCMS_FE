@@ -39,7 +39,7 @@ TOKEN="your_jwt_token_here"
 ### Test 1: Get All Batches (FEFO Default)
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -102,7 +102,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?page=0&size=20" \
 ### Test 2: Hide Empty Batches
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=true&page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?hideEmpty=true&page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -115,7 +115,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=true&pag
 **Alternative (show all including empty):**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=false" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?hideEmpty=false" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -124,7 +124,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=false" \
 ### Test 3: Filter CRITICAL Batches (≤7 days)
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=CRITICAL" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?filterStatus=CRITICAL" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -142,7 +142,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=CRITI
 ### Test 4: Filter EXPIRED Batches
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIRED" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?filterStatus=EXPIRED" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -160,7 +160,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIR
 ### Test 5: Filter EXPIRING_SOON Batches (7-30 days)
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIRING_SOON" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?filterStatus=EXPIRING_SOON" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -178,7 +178,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIR
 ### Test 6: Filter VALID Batches (>30 days)
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=VALID" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?filterStatus=VALID" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -192,7 +192,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=VALID
 ### Test 7: Sort by Quantity Descending
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=quantityOnHand&sortDir=desc" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?sortBy=quantityOnHand&sortDir=desc" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -210,7 +210,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=quantityOnH
 ### Test 8: Sort by Import Date Descending
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=importedAt&sortDir=desc" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?sortBy=importedAt&sortDir=desc" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -228,7 +228,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=importedAt&
 ### Test 9: Pagination - Page 2
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?page=1&size=3" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?page=1&size=3" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -251,7 +251,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?page=1&size=3" \
 ### Test 10: Combined Filters
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=true&filterStatus=EXPIRING_SOON&sortBy=expiryDate&sortDir=asc&page=0&size=10" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/batches/1?hideEmpty=true&filterStatus=EXPIRING_SOON&sortBy=expiryDate&sortDir=asc&page=0&size=10" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
@@ -456,6 +456,6 @@ Look for these log messages:
 ---
 
 **Application Status**:  RUNNING on http://localhost:8080
-**API Endpoint**: GET /api/v3/warehouse/batches/{itemMasterId}
+**API Endpoint**: GET /api/v1/warehouse/batches/{itemMasterId}
 **Swagger UI**: http://localhost:8080/swagger-ui.html
 **Implementation Date**: 2024-11-24
