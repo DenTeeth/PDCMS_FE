@@ -185,6 +185,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faUmbrellaBeach,
           requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
+        {
+          name: 'Registration Requests',
+          href: '/admin/registration-requests',
+          icon: faClipboard,
+          requiredPermissions: ['VIEW_REGISTRATION_ALL'],
+        },
       ],
     },
     {

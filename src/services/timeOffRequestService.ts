@@ -35,9 +35,25 @@ export class TimeOffRequestService {
     data: CreateTimeOffRequestDto
   ): Promise<TimeOffRequestDetail> {
     const axios = apiClient.getAxiosInstance();
+
+    // Transform slotId → workShiftId to match backend API
+    const requestBody = {
+      employeeId: data.employeeId,
+      timeOffTypeId: data.timeOffTypeId,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      workShiftId: data.slotId || null, // Backend expects workShiftId not slotId
+      reason: data.reason
+    };
+
+    console.log('🔍 TimeOffRequestService.createTimeOffRequest:', {
+      original: data,
+      transformed: requestBody
+    });
+
     const response = await axios.post<TimeOffRequestDetail>(
       this.BASE_URL,
-      data
+      requestBody
     );
     return response.data;
   }

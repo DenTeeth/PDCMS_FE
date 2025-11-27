@@ -41,17 +41,17 @@ class WorkSlotService {
     if (Array.isArray(response.data)) {
       return response.data;
     }
-    
+
     // Case 2: Wrapped response { statusCode, data: [...] }
     if (response.data?.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
-    
+
     // Case 3: Paginated response (backward compatibility)
     if (response.data?.content && Array.isArray(response.data.content)) {
       return response.data.content;
     }
-    
+
     // Fallback: return empty array
     return [];
   }
@@ -64,7 +64,7 @@ class WorkSlotService {
   async getWorkSlotById(slotId: number): Promise<PartTimeSlot> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<WorkSlotResponse>(`${this.endpoint}/${slotId}`);
-    
+
     if (response.data?.data) {
       return response.data.data;
     }
@@ -78,10 +78,10 @@ class WorkSlotService {
    */
   async createWorkSlot(data: CreateWorkSlotRequest): Promise<PartTimeSlot> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
       const response = await axiosInstance.post<WorkSlotResponse>(this.endpoint, data);
-      
+
       if (response.data?.data) {
         return response.data.data;
       }
@@ -123,10 +123,10 @@ class WorkSlotService {
    */
   async updateWorkSlot(slotId: number, data: UpdateWorkSlotRequest): Promise<PartTimeSlot> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
       const response = await axiosInstance.put<WorkSlotResponse>(`${this.endpoint}/${slotId}`, data);
-      
+
       if (response.data?.data) {
         return response.data.data;
       }
@@ -164,7 +164,7 @@ class WorkSlotService {
    */
   async deleteWorkSlot(slotId: number): Promise<void> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
       await axiosInstance.delete(`${this.endpoint}/${slotId}`);
     } catch (error: any) {
@@ -183,12 +183,37 @@ class WorkSlotService {
   async getAvailableSlots(): Promise<AvailableSlot[]> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/registrations/available-slots');
-    
+
     // Handle both response structures
     if (response.data?.data) {
       return response.data.data;
     }
-    
+
+    return response.data;
+  }
+
+  /**
+   * Get slot daily availability for a specific date range
+   * API: GET /work-slots/{slotId}/availability?from=2025-01-01&to=2025-01-31
+   * @param slotId Work slot ID
+   * @param fromDate Start date (YYYY-MM-DD)
+   * @param toDate End date (YYYY-MM-DD)
+   * @returns Daily availability data
+   */
+  async getSlotDailyAvailability(slotId: number, fromDate: string, toDate: string): Promise<any> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get(`${this.endpoint}/${slotId}/availability`, {
+      params: {
+        from: fromDate,
+        to: toDate
+      }
+    });
+
+    // Handle both response structures
+    if (response.data?.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -201,12 +226,12 @@ class WorkSlotService {
   async getSlotDetail(slotId: number): Promise<PartTimeSlotDetailResponse> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<{ statusCode: number; data: PartTimeSlotDetailResponse }>(`${this.endpoint}/${slotId}`);
-    
+
     // Handle both response structures
     if (response.data?.data) {
       return response.data.data;
     }
-    
+
     return response.data as unknown as PartTimeSlotDetailResponse;
   }
 }

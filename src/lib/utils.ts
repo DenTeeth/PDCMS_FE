@@ -12,8 +12,8 @@ export function cn(...inputs: ClassValue[]) {
  * @returns true if employee can use fixed registration (FULL_TIME or PART_TIME_FIXED)
  */
 export function canUseFixedRegistration(employeeType: EmploymentType): boolean {
-  return employeeType === EmploymentType.FULL_TIME || 
-         employeeType === EmploymentType.PART_TIME_FIXED;
+  return employeeType === EmploymentType.FULL_TIME ||
+    employeeType === EmploymentType.PART_TIME_FIXED;
 }
 
 /**
@@ -32,11 +32,11 @@ export function decodeJWT(token: string): any | null {
 
     // Decode base64url payload (second part)
     const payload = parts[1];
-    
+
     // Base64URL decode: replace - with +, _ with /, add padding
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    
+
     const decoded = JSON.parse(atob(padded));
     console.log('✅ [decodeJWT] Decoded payload:', decoded);
     return decoded;
@@ -66,7 +66,7 @@ export function getEmployeeIdFromToken(token: string): string | null {
 
     // Try different possible field names for employeeId
     // Note: sub might be username, not employeeId, so check other fields first
-    const employeeId = 
+    const employeeId =
       payload.employeeId ||           // employeeId (most common)
       payload.employee_id ||          // employee_id (snake_case)
       payload.empId ||                // empId (short form)
@@ -153,4 +153,28 @@ export function getEmployeeCodeFromToken(token: string): string | null {
     console.error('❌ [getEmployeeCodeFromToken] Failed to extract employeeCode:', error);
     return null;
   }
+}
+
+/**
+ * Format time string to HH:mm (remove seconds)
+ * @param time Time string in HH:mm:ss or HH:mm format
+ * @returns Formatted time string HH:mm
+ * @example formatTimeToHHMM("08:30:00") => "08:30"
+ * @example formatTimeToHHMM("08:30") => "08:30"
+ */
+export function formatTimeToHHMM(time: string): string {
+  if (!time) return '';
+
+  // If already in HH:mm format (no seconds), return as is
+  if (time.length === 5 && time.match(/^\d{2}:\d{2}$/)) {
+    return time;
+  }
+
+  // If in HH:mm:ss format, remove seconds
+  if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+    return time.substring(0, 5);
+  }
+
+  // Fallback: return as is
+  return time;
 }

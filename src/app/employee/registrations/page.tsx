@@ -9,25 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 // Import types and services for Part-Time Registration
-import { 
-  ShiftRegistration, 
+import {
+  ShiftRegistration,
   CreateShiftRegistrationRequest,
   UpdateShiftRegistrationRequest,
-  DayOfWeek 
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { WorkShift } from '@/types/workShift';
-import { AvailableSlot, PartTimeSlot } from '@/types/workSlot';
+import { AvailableSlot, PartTimeSlot, SlotDetailsResponse } from '@/types/workSlot';
 import { shiftRegistrationService } from '@/services/shiftRegistrationService';
 import { workShiftService } from '@/services/workShiftService';
 import { workSlotService } from '@/services/workSlotService';
-import { getEmployeeIdFromToken } from '@/lib/utils';
+import { getEmployeeIdFromToken, formatTimeToHHMM } from '@/lib/utils';
 
 // Import types and services for Fixed Registration
 import {
@@ -52,7 +52,7 @@ const DAY_LABELS: { [key: number]: string } = {
 const getDayOfWeekLabel = (day: DayOfWeek): string => {
   const dayMap = {
     [DayOfWeek.MONDAY]: 'T2',
-    [DayOfWeek.TUESDAY]: 'T3', 
+    [DayOfWeek.TUESDAY]: 'T3',
     [DayOfWeek.WEDNESDAY]: 'T4',
     [DayOfWeek.THURSDAY]: 'T5',
     [DayOfWeek.FRIDAY]: 'T6',
@@ -79,16 +79,16 @@ const getDayName = (day: DayOfWeek): string => {
 // ==================== MAIN COMPONENT ====================
 export default function EmployeeRegistrationsPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // Determine which tabs to show based on permissions and employee type
   const hasManagePermission = hasPermission(Permission.MANAGE_WORK_SLOTS);
   const isPartTimeFlex = user?.employmentType === 'PART_TIME_FLEX';
-  
+
   // Determine available tabs and default tab using useMemo
   const { availableTabs, defaultTab } = useMemo(() => {
     let tabs: Array<'part-time' | 'fixed'> = [];
     let defaultTabValue: 'part-time' | 'fixed' = 'part-time';
-    
+
     if (hasManagePermission) {
       // Condition 1: Has MANAGE_WORK_SLOTS → Show both tabs
       tabs = ['part-time', 'fixed'];
@@ -102,13 +102,13 @@ export default function EmployeeRegistrationsPage() {
       tabs = ['fixed'];
       defaultTabValue = 'fixed';
     }
-    
+
     return { availableTabs: tabs, defaultTab: defaultTabValue };
   }, [hasManagePermission, isPartTimeFlex]);
-  
+
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>(defaultTab);
-  
+
   // Reset active tab if current tab is not available
   useEffect(() => {
     if (!availableTabs.includes(activeTab)) {
@@ -128,7 +128,9 @@ export default function EmployeeRegistrationsPage() {
   const [partTimeCreating, setPartTimeCreating] = useState(false);
   const [partTimeCreateFormData, setPartTimeCreateFormData] = useState<CreateShiftRegistrationRequest>({
     partTimeSlotId: 0,
-    effectiveFrom: ''
+    effectiveFrom: '',
+    effectiveTo: '',
+    dayOfWeek: []
   });
 
   const [showPartTimeEditModal, setShowPartTimeEditModal] = useState(false);
@@ -142,14 +144,16 @@ export default function EmployeeRegistrationsPage() {
 
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingWorkShifts, setLoadingWorkShifts] = useState(false);
-  
+
   // Work slots (PartTimeSlot[]) - for mapping partTimeSlotId to shiftName
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loadingWorkSlots, setLoadingWorkSlots] = useState(false);
-  
+
   // Available slots for PART_TIME_FLEX employees
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
+  const [slotDetailsMap, setSlotDetailsMap] = useState<Record<number, SlotDetailsResponse>>({});
+  const [expandedSlotId, setExpandedSlotId] = useState<number | null>(null);
 
   // ==================== FIXED REGISTRATION STATE ====================
   const [fixedRegistrations, setFixedRegistrations] = useState<FixedShiftRegistration[]>([]);
@@ -178,7 +182,7 @@ export default function EmployeeRegistrationsPage() {
         }
       }
     }
-    
+
     // If not in user object, try to decode from token
     if (user?.token) {
       try {
@@ -200,7 +204,7 @@ export default function EmployeeRegistrationsPage() {
         console.error('❌ [currentEmployeeId] Error extracting from token:', error);
       }
     }
-    
+
     // Return null if not found - backend will get from token
     return null;
   }, [user?.employeeId, user?.token]);
@@ -212,7 +216,7 @@ export default function EmployeeRegistrationsPage() {
       // So we can still fetch available slots even without currentEmployeeId
       console.log('📋 [useEffect] Fetching Part-Time Registrations...');
       fetchPartTimeRegistrations();
-      
+
       // Load available slots if user has VIEW_AVAILABLE_SLOTS permission (PART_TIME_FLEX)
       // Note: available slots API doesn't require employeeId in request
       if (isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) {
@@ -224,11 +228,11 @@ export default function EmployeeRegistrationsPage() {
           fetchWorkShifts();
         }
       }
-      
+
       // Always fetch workShifts and workSlots to get shift names for registrations
       fetchWorkShifts();
       fetchWorkSlotsData();
-      
+
       if (!currentEmployeeId) {
         console.warn('⚠️ [useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
       } else {
@@ -245,14 +249,14 @@ export default function EmployeeRegistrationsPage() {
   const fetchPartTimeRegistrations = async () => {
     try {
       setPartTimeLoading(true);
-      
+
       const response = await shiftRegistrationService.getMyRegistrations({
         page: partTimeCurrentPage,
         size: 10,
         sortBy: 'effectiveFrom',
         sortDirection: 'DESC'
-      });
-      
+      }, 'part-time-flex'); // ✅ Specify type to use /registrations/part-time-flex endpoint
+
       // Handle both array and paginated responses
       // According to API spec: Employee view typically returns array directly
       if (Array.isArray(response)) {
@@ -268,7 +272,22 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('❌ Failed to fetch part-time registrations:', error);
-      toast.error(error.response?.data?.detail || error.response?.data?.message || error.message || 'Failed to fetch your shift registrations');
+
+      // Extract detailed error message from 500 response
+      let errorMessage = 'Failed to fetch your shift registrations';
+      if (error.response?.status === 500) {
+        console.error('🔥 [Backend 500 Error] Server error details:', {
+          fullResponse: error.response,
+          data: error.response.data,
+          message: error.response.data?.message,
+          detail: error.response.data?.detail,
+          error: error.response.data?.error,
+          trace: error.response.data?.trace
+        });
+        errorMessage = `Server error: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Internal server error - check backend logs'}`;
+      }
+
+      toast.error(error.response?.data?.detail || error.response?.data?.message || error.message || errorMessage);
     } finally {
       setPartTimeLoading(false);
     }
@@ -279,7 +298,7 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkShifts(true);
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
-      
+
       if (!shiftsResponse || shiftsResponse.length === 0) {
         toast.warning('No work shifts available. Please contact admin to create work shifts.');
       }
@@ -319,7 +338,7 @@ export default function EmployeeRegistrationsPage() {
       });
     } catch (error: any) {
       console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
-      
+
       // Nếu lỗi 403 → User không có permission (expected cho employee)
       if (error.response?.status === 403) {
         console.log('ℹ️ [fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
@@ -328,7 +347,7 @@ export default function EmployeeRegistrationsPage() {
         // Các lỗi khác (500, network, etc.) - có thể log nhưng không hiển thị toast
         // vì đây là optional data
       }
-      
+
       setWorkSlots([]); // Set empty array on error
     } finally {
       setLoadingWorkSlots(false);
@@ -340,25 +359,39 @@ export default function EmployeeRegistrationsPage() {
     try {
       console.log('🚀 [fetchAvailableSlots] Starting fetch...');
       setLoadingAvailableSlots(true);
-      
+
       console.log('📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots()...');
       const slots = await shiftRegistrationService.getAvailableSlots();
-      
+
       console.log('✅ [fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
         firstItem: Array.isArray(slots) && slots.length > 0 ? slots[0] : 'no items'
       });
-      
+
       const slotsArray = slots || [];
       console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
         count: slotsArray.length,
         slots: slotsArray
       });
-      
+
       setAvailableSlots(slotsArray);
-      
+
+      // Fetch slot details for each slot
+      const detailsMap: Record<number, SlotDetailsResponse> = {};
+      await Promise.all(
+        slotsArray.map(async (slot) => {
+          try {
+            const details = await shiftRegistrationService.getSlotDetails(slot.slotId);
+            detailsMap[slot.slotId] = details;
+          } catch (error) {
+            console.error(`Failed to fetch details for slot ${slot.slotId}:`, error);
+          }
+        })
+      );
+      setSlotDetailsMap(detailsMap);
+
       if (!slots || slotsArray.length === 0) {
         console.warn('⚠️ [fetchAvailableSlots] No available slots found');
         toast.info('Hiện tại không có suất nào còn trống. Vui lòng thử lại sau.');
@@ -374,7 +407,22 @@ export default function EmployeeRegistrationsPage() {
         statusText: error.response?.statusText,
         data: error.response?.data
       });
-      toast.error(error.response?.data?.message || error.message || 'Failed to load available slots');
+
+      // Extract detailed error message from 500 response
+      let errorMessage = 'Failed to load available slots';
+      if (error.response?.status === 500) {
+        console.error('🔥 [Backend 500 Error] Server error details:', {
+          fullResponse: error.response,
+          data: error.response.data,
+          message: error.response.data?.message,
+          detail: error.response.data?.detail,
+          error: error.response.data?.error,
+          trace: error.response.data?.trace
+        });
+        errorMessage = `Server error: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Internal server error'}`;
+      }
+
+      toast.error(error.response?.data?.message || error.message || errorMessage);
     } finally {
       console.log('🏁 [fetchAvailableSlots] Finished (set loading to false)');
       setLoadingAvailableSlots(false);
@@ -385,7 +433,7 @@ export default function EmployeeRegistrationsPage() {
   const fetchFixedRegistrations = async () => {
     try {
       setFixedLoading(true);
-      
+
       // Build params - only include employeeId if we have it
       // If not provided, backend will get employeeId from token
       const params: FixedRegistrationQueryParams = {};
@@ -402,12 +450,12 @@ export default function EmployeeRegistrationsPage() {
       setFixedRegistrations(response);
     } catch (error: any) {
       console.error('Failed to fetch fixed registrations:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Failed to fetch fixed shift registrations';
+      const errorMessage = error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch fixed shift registrations';
       toast.error(errorMessage);
-      
+
       if (error.errorCode === 'EMPLOYEE_ID_REQUIRED' || error.response?.status === 400) {
         toast.error('Employee ID is required. Please contact administrator.');
       } else if (error.response?.status === 403) {
@@ -421,13 +469,31 @@ export default function EmployeeRegistrationsPage() {
   // ==================== PART-TIME REGISTRATION HANDLERS ====================
   const handlePartTimeCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate based on employee type
     if (isPartTimeFlex) {
-      // PART_TIME_FLEX: Need partTimeSlotId and effectiveFrom
-      if (!partTimeCreateFormData.partTimeSlotId || !partTimeCreateFormData.effectiveFrom) {
-        toast.error('Vui lòng chọn suất và ngày bắt đầu');
+      // PART_TIME_FLEX: Need all required fields
+      if (!partTimeCreateFormData.partTimeSlotId) {
+        toast.error('Vui lòng chọn suất làm việc');
         return;
+      }
+      if (!partTimeCreateFormData.dayOfWeek || partTimeCreateFormData.dayOfWeek.length === 0) {
+        toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
+        return;
+      }
+      if (!partTimeCreateFormData.effectiveFrom) {
+        toast.error('Vui lòng chọn ngày bắt đầu');
+        return;
+      }
+
+      // Validate dates if effectiveTo is provided
+      if (partTimeCreateFormData.effectiveTo) {
+        const from = new Date(partTimeCreateFormData.effectiveFrom);
+        const to = new Date(partTimeCreateFormData.effectiveTo);
+        if (to < from) {
+          toast.error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
+          return;
+        }
       }
     } else {
       // Admin/Manager with MANAGE_WORK_SLOTS: Use old form structure (if still needed)
@@ -438,11 +504,13 @@ export default function EmployeeRegistrationsPage() {
     try {
       setPartTimeCreating(true);
       await shiftRegistrationService.createRegistration(partTimeCreateFormData);
-      toast.success('Đăng ký ca làm việc thành công');
+      toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.');
       setShowPartTimeCreateModal(false);
       setPartTimeCreateFormData({
         partTimeSlotId: 0,
-        effectiveFrom: ''
+        effectiveFrom: '',
+        effectiveTo: '',
+        dayOfWeek: []
       });
       // Refresh data
       await fetchPartTimeRegistrations();
@@ -451,7 +519,7 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('❌ Failed to create registration:', error);
-      
+
       // Handle specific error codes
       if (error.errorCode === 'INVALID_EMPLOYEE_TYPE' || error.response?.data?.errorCode === 'INVALID_EMPLOYEE_TYPE') {
         toast.error('Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt.');
@@ -479,13 +547,13 @@ export default function EmployeeRegistrationsPage() {
 
   const handlePartTimeUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!partTimeEditingRegistration) return;
 
     try {
       setPartTimeUpdating(true);
       await shiftRegistrationService.updateRegistration(
-        partTimeEditingRegistration.registrationId, 
+        partTimeEditingRegistration.registrationId.toString(),
         partTimeEditFormData
       );
       toast.success('Shift registration updated successfully');
@@ -506,7 +574,7 @@ export default function EmployeeRegistrationsPage() {
 
     try {
       setPartTimeDeleting(true);
-      await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId);
+      await shiftRegistrationService.deleteRegistration(partTimeDeletingRegistration.registrationId.toString());
       toast.success('Shift registration deleted successfully');
       setShowPartTimeDeleteModal(false);
       setPartTimeDeletingRegistration(null);
@@ -527,28 +595,28 @@ export default function EmployeeRegistrationsPage() {
 
   const getWorkShiftTime = (slotId: string | number) => {
     const workShift = workShifts.find(ws => ws.workShiftId === slotId);
-    return workShift ? `${workShift.startTime} - ${workShift.endTime}` : '';
+    return workShift ? `${formatTimeToHHMM(workShift.startTime)} - ${formatTimeToHHMM(workShift.endTime)}` : '';
   };
 
   // Get shift name for registration - try multiple sources
   const getRegistrationShiftName = (registration: ShiftRegistration): string => {
-    // First, try registration.workShiftName (from API response)
-    if (registration.workShiftName && registration.workShiftName.trim() !== '') {
-      return registration.workShiftName;
+    // First, try registration.shiftName (from API response)
+    if (registration.shiftName && registration.shiftName.trim() !== '') {
+      return registration.shiftName;
     }
-    
+
     // Second, try to find from availableSlots by partTimeSlotId
     const availableSlot = availableSlots.find(slot => slot.slotId === registration.partTimeSlotId);
     if (availableSlot && availableSlot.shiftName && availableSlot.shiftName.trim() !== '') {
       return availableSlot.shiftName;
     }
-    
+
     // Third, try to find from workSlots (PartTimeSlot[]) by partTimeSlotId
     const workSlot = workSlots.find(slot => slot.slotId === registration.partTimeSlotId);
     if (workSlot && workSlot.workShiftName && workSlot.workShiftName.trim() !== '') {
       return workSlot.workShiftName;
     }
-    
+
     // Fallback: return generic name
     return `Ca làm việc (ID: ${registration.partTimeSlotId})`;
   };
@@ -598,102 +666,217 @@ export default function EmployeeRegistrationsPage() {
 
           {/* PART-TIME REGISTRATIONS TAB */}
           {availableTabs.includes('part-time') && (
-          <TabsContent value="part-time" className="space-y-6">
+            <TabsContent value="part-time" className="space-y-6">
 
-            {/* Available Slots Section - Carousel */}
-            {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Các Suất Làm Việc Có Sẵn ({availableSlots.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              {/* Available Slots Section - Improved Design */}
+              {(isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) && (
+                <>
+                  {/* Legend */}
+                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="w-5 h-5 text-purple-600" />
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Các Suất Làm Việc Có Sẵn ({availableSlots.length})
+                      </h2>
+                    </div>
+                    <div className="flex gap-4 text-sm flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span className="text-gray-600">Còn nhiều slot (&gt;50%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span className="text-gray-600">Sắp đầy (20-50%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span className="text-gray-600">Đã đầy</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Available Slots Cards */}
                   {loadingAvailableSlots ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                    <div className="flex items-center justify-center py-12 bg-white rounded-xl shadow-sm border">
+                      <Loader2 className="h-6 w-6 animate-spin text-purple-500 mr-2" />
                       <span className="text-gray-600">Đang tải...</span>
                     </div>
                   ) : availableSlots.length === 0 ? (
-                    <div className="text-center py-12">
+                    <div className="bg-white rounded-xl p-12 text-center shadow-sm border">
                       <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                       <p className="text-gray-700 font-medium mb-1">Không có suất nào còn trống</p>
                       <p className="text-sm text-gray-500">Vui lòng thử lại sau</p>
                     </div>
                   ) : (
-                    <Carousel className="w-full" autoplay={false}>
-                      <CarouselContent>
-                        {availableSlots.map((slot) => (
-                          <CarouselItem key={slot.slotId} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                            <Card className="border">
-                              <CardContent className="p-4">
-                                <div className="space-y-3">
-                                  <div>
-                                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                      {slot.shiftName}
-                                    </h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="outline">
-                                        <CalendarDays className="h-3 w-3 mr-1" />
-                                        {getDayOfWeekLabel(slot.dayOfWeek)}
-                                      </Badge>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={
-                                          slot.remaining > 0 
-                                            ? 'bg-green-50 text-green-700' 
-                                            : 'bg-red-50 text-red-700'
-                                        }
-                                      >
-                                        <Users className="h-3 w-3 mr-1" />
-                                        {slot.remaining > 0 ? `Còn ${slot.remaining} chỗ` : 'Đã đầy'}
-                                      </Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {availableSlots.map((slot) => {
+                        const availableCount = slot.totalDatesAvailable - slot.totalDatesFull;
+                        const availabilityPercent = slot.totalDatesAvailable > 0
+                          ? (availableCount / slot.totalDatesAvailable) * 100
+                          : 0;
+                        const isExpanded = expandedSlotId === slot.slotId;
+                        const slotDetails = slotDetailsMap[slot.slotId];
+
+                        return (
+                          <div
+                            key={slot.slotId}
+                            className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+                          >
+                            <div className="p-6">
+                              <div className="flex justify-between items-start mb-4">
+                                <h3 className="font-bold text-lg text-gray-800 leading-tight pr-2">
+                                  {slot.shiftName}
+                                </h3>
+                              </div>
+
+                              <div className="space-y-3 mb-4">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <Calendar className="w-4 h-4" />
+                                  <span className="font-medium">{slot.dayOfWeek}</span>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-gray-600">Slot khả dụng</span>
+                                    <span className="text-2xl font-bold text-purple-600">
+                                      {availableCount}
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                    <div
+                                      className={`h-2 rounded-full transition-all duration-500 ${availabilityPercent > 50 ? 'bg-green-500' :
+                                          availabilityPercent > 20 ? 'bg-yellow-500' : 'bg-red-500'
+                                        }`}
+                                      style={{ width: `${availabilityPercent}%` }}
+                                    ></div>
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    {slot.totalDatesFull}/{slot.totalDatesAvailable} ngày đã đầy
+                                  </p>
+                                </div>
+
+                                {/* Monthly Availability Summary */}
+                                {slotDetails?.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                      Tình trạng theo tháng
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {slotDetails.availabilityByMonth.slice(0, 3).map((month, idx) => {
+                                        const statusColor =
+                                          month.status === 'FULL' ? 'bg-red-50 border-red-200' :
+                                            month.status === 'PARTIAL' ? 'bg-yellow-50 border-yellow-200' :
+                                              'bg-green-50 border-green-200';
+
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className={`p-2 rounded-lg border text-center ${statusColor}`}
+                                          >
+                                            <p className="text-xs font-bold text-gray-700">{month.monthName}</p>
+                                            <p className="text-lg font-bold mt-1 text-gray-800">
+                                              {month.totalDatesAvailable}
+                                            </p>
+                                            <p className="text-xs text-gray-600">còn trống</p>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   </div>
-                                  <Button
-                                    onClick={() => {
-                                      setPartTimeCreateFormData({
-                                        partTimeSlotId: slot.slotId,
-                                        effectiveFrom: new Date().toISOString().split('T')[0]
-                                      });
-                                      setShowPartTimeCreateModal(true);
-                                    }}
-                                    className="w-full"
-                                    size="sm"
-                                    disabled={slot.remaining === 0}
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    {slot.remaining > 0 ? 'Đăng Ký' : 'Đã Đầy'}
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                                )}
 
-            {/* My Registrations Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5" />
+                                {slotDetails?.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
+                                  <>
+                                    <button
+                                      onClick={() => setExpandedSlotId(isExpanded ? null : slot.slotId)}
+                                      className="w-full flex items-center justify-between text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+                                    >
+                                      <span>Chi tiết từng tháng</span>
+                                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                    </button>
+
+                                    {isExpanded && (
+                                      <div className="space-y-2 pt-2 border-t border-gray-100 animate-in slide-in-from-top duration-300">
+                                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
+                                          {slotDetails.availabilityByMonth.map((month, idx) => {
+                                            const statusEmoji =
+                                              month.status === 'FULL' ? '🔴' :
+                                                month.status === 'PARTIAL' ? '🟡' : '🟢';
+                                            const statusColor =
+                                              month.status === 'FULL' ? 'bg-red-100 text-red-700 border-red-200' :
+                                                month.status === 'PARTIAL' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                  'bg-green-100 text-green-700 border-green-200';
+
+                                            return (
+                                              <div
+                                                key={idx}
+                                                className={`flex items-center justify-between p-3 rounded-lg border ${statusColor}`}
+                                              >
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-lg">{statusEmoji}</span>
+                                                  <div>
+                                                    <p className="font-medium text-sm">{month.monthName}</p>
+                                                    <p className="text-xs opacity-75">
+                                                      {month.totalWorkingDays} ngày làm việc
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                <div className="text-right">
+                                                  <p className="font-bold text-sm">
+                                                    {month.totalDatesAvailable}/{month.totalWorkingDays}
+                                                  </p>
+                                                  <p className="text-xs opacity-75">
+                                                    {month.status === 'FULL' ? 'Đã đầy' :
+                                                      month.status === 'PARTIAL' ? 'Sắp đầy' : 'Còn nhiều'}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              <Button
+                                onClick={() => {
+                                  setPartTimeCreateFormData({
+                                    partTimeSlotId: slot.slotId,
+                                    dayOfWeek: slot.dayOfWeek ? slot.dayOfWeek.split(',').map(d => d.trim()) : [],
+                                    effectiveFrom: slot.effectiveFrom,
+                                    effectiveTo: undefined
+                                  });
+                                  setShowPartTimeCreateModal(true);
+                                }}
+                                disabled={availableCount === 0}
+                                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <span>+</span>
+                                <span>{availableCount > 0 ? 'Đăng Ký' : 'Đã Đầy'}</span>
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* My Registrations Section */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 mb-6">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                  <h2 className="text-lg font-semibold text-gray-800">
                     Đăng Ký Của Tôi ({partTimeTotalElements})
-                  </CardTitle>
+                  </h2>
                 </div>
-              </CardHeader>
-              <CardContent>
+
                 {partTimeLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                    <Loader2 className="h-6 w-6 animate-spin text-purple-500 mr-2" />
                     <span className="text-gray-600">Đang tải...</span>
                   </div>
                 ) : partTimeRegistrations.length === 0 ? (
@@ -703,40 +886,87 @@ export default function EmployeeRegistrationsPage() {
                     <p className="text-sm text-gray-500">Vui lòng chọn suất ở trên để đăng ký</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {partTimeRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-2">
-                                {getRegistrationShiftName(registration)}
-                              </h3>
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <Badge variant="outline" className="font-mono">
-                                  Slot #{registration.partTimeSlotId}
-                                </Badge>
-                                <Badge variant="outline">
-                                  {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
-                                </Badge>
-                                <Badge className={registration.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
+                      <div
+                        key={registration.registrationId}
+                        className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+                      >
+                        <div className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <h3 className="font-bold text-lg text-gray-800 leading-tight pr-2">
+                              {getRegistrationShiftName(registration)}
+                            </h3>
+                            {registration.status === 'PENDING' && (
+                              <div className="flex items-center gap-1 text-yellow-700">
+                                <AlertCircle className="w-4 h-4" />
+                                <span className="text-xs">Chờ duyệt</span>
+                              </div>
+                            )}
+                            {registration.status === 'APPROVED' && (
+                              <div className="flex items-center gap-1 text-green-700">
+                                <CheckCircle className="w-4 h-4" />
+                                <span className="text-xs">Đã duyệt</span>
+                              </div>
+                            )}
+                            {registration.status === 'REJECTED' && (
+                              <div className="flex items-center gap-1 text-red-700">
+                                <XCircle className="w-4 h-4" />
+                                <span className="text-xs">Từ chối</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-3 mb-4">
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <span className="text-sm font-medium">Slot #{registration.partTimeSlotId}</span>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Ngày bắt đầu:</span>
+                                  <span className="font-medium text-gray-800">
+                                    {formatDate(registration.effectiveFrom)}
+                                  </span>
+                                </div>
+                                {registration.effectiveTo && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Ngày kết thúc:</span>
+                                    <span className="font-medium text-gray-800">
+                                      {formatDate(registration.effectiveTo)}
+                                    </span>
                                   </div>
-                                </Badge>
+                                )}
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Đăng ký lúc:</span>
+                                  <span className="font-medium text-gray-800">
+                                    {format(parseISO(registration.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
+
+                            {registration.status === 'REJECTED' && registration.reason && (
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-red-800 mb-1">Lý do từ chối:</p>
+                                <p className="text-sm text-red-700">{registration.reason}</p>
+                              </div>
+                            )}
+
+                            {registration.processedBy && (
+                              <div className="text-xs text-gray-500">
+                                <p>Xử lý bởi: #{registration.processedBy}</p>
+                                {registration.processedAt && (
+                                  <p>
+                                    Lúc: {format(parseISO(registration.processedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {registration.status === 'PENDING' && (
                             <div className="flex items-center gap-2 pt-2 border-t">
                               <Button
                                 variant="outline"
@@ -760,16 +990,16 @@ export default function EmployeeRegistrationsPage() {
                                 Xóa
                               </Button>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
 
                 {/* Pagination */}
                 {partTimeTotalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
+                  <div className="flex items-center justify-between mt-6 pt-6 border-t">
                     <div className="text-sm text-gray-700">
                       Hiển thị {partTimeCurrentPage * 10 + 1} - {Math.min((partTimeCurrentPage + 1) * 10, partTimeTotalElements)} trong {partTimeTotalElements} đăng ký
                     </div>
@@ -793,76 +1023,75 @@ export default function EmployeeRegistrationsPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
           )}
 
           {/* FIXED REGISTRATIONS TAB */}
           {availableTabs.includes('fixed') && (
-          <TabsContent value="fixed" className="space-y-6">
+            <TabsContent value="fixed" className="space-y-6">
 
-            {/* Fixed Registrations Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
-                  Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {fixedLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
-                    <span className="text-gray-600">Đang tải...</span>
-                  </div>
-                ) : fixedRegistrations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
-                    <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {fixedRegistrations.map((registration) => (
-                      <Card key={registration.registrationId}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-2">
-                                {registration.workShiftName}
-                              </h3>
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <Badge variant="outline">
-                                  {formatFixedDaysOfWeek(registration.daysOfWeek)}
-                                </Badge>
-                                <Badge variant={registration.isActive ? "default" : "secondary"}>
-                                  <div className="flex items-center space-x-1">
-                                    {registration.isActive ? (
-                                      <CheckCircle className="h-3 w-3" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3" />
-                                    )}
-                                    <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
-                                  </div>
-                                </Badge>
+              {/* Fixed Registrations Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5" />
+                    Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {fixedLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-green-500 mr-2" />
+                      <span className="text-gray-600">Đang tải...</span>
+                    </div>
+                  ) : fixedRegistrations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
+                      <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {fixedRegistrations.map((registration) => (
+                        <Card key={registration.registrationId}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                  {registration.workShiftName}
+                                </h3>
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                  <Badge variant="outline">
+                                    {formatFixedDaysOfWeek(registration.daysOfWeek)}
+                                  </Badge>
+                                  <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                    <div className="flex items-center space-x-1">
+                                      {registration.isActive ? (
+                                        <CheckCircle className="h-3 w-3" />
+                                      ) : (
+                                        <XCircle className="h-3 w-3" />
+                                      )}
+                                      <span className="text-xs">{registration.isActive ? 'Hoạt động' : 'Tạm dừng'}</span>
+                                    </div>
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
+                                {registration.effectiveTo && (
+                                  <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
+                                )}
                               </div>
                             </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>Từ: <strong>{formatDate(registration.effectiveFrom)}</strong></div>
-                              {registration.effectiveTo && (
-                                <div>Đến: <strong>{formatDate(registration.effectiveTo)}</strong></div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
         </Tabs>
 
@@ -890,17 +1119,23 @@ export default function EmployeeRegistrationsPage() {
                         <select
                           id="createSlot"
                           value={partTimeCreateFormData.partTimeSlotId || ''}
-                          onChange={(e) => setPartTimeCreateFormData(prev => ({
-                            ...prev,
-                            partTimeSlotId: parseInt(e.target.value) || 0
-                          }))}
+                          onChange={(e) => {
+                            const selectedSlot = availableSlots.find(s => s.slotId === parseInt(e.target.value));
+                            setPartTimeCreateFormData(prev => ({
+                              ...prev,
+                              partTimeSlotId: parseInt(e.target.value) || 0,
+                              dayOfWeek: selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [],
+                              effectiveFrom: selectedSlot?.effectiveFrom || '',
+                              effectiveTo: undefined
+                            }));
+                          }}
                           className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         >
                           <option value="">Chọn suất làm việc</option>
                           {availableSlots.map(slot => (
                             <option key={slot.slotId} value={slot.slotId}>
-                              {slot.shiftName} - {getDayOfWeekLabel(slot.dayOfWeek)} (Còn {slot.remaining}{slot.quota ? `/${slot.quota}` : ''} chỗ)
+                              {slot.shiftName} - {slot.dayOfWeek} ({slot.totalDatesEmpty} ngày còn trống)
                             </option>
                           ))}
                         </select>
@@ -908,11 +1143,59 @@ export default function EmployeeRegistrationsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="createEffectiveFrom">Từ ngày *</Label>
+                      <Label htmlFor="createDayOfWeek">
+                        Thứ trong tuần <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="space-y-2 mt-2">
+                        {partTimeCreateFormData.partTimeSlotId > 0 ? (
+                          // Show only days from selected slot
+                          (() => {
+                            const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
+                            const availableDays = selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
+
+                            return availableDays.length > 0 ? (
+                              availableDays.map(day => (
+                                <label key={day} className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    value={day}
+                                    checked={partTimeCreateFormData.dayOfWeek?.includes(day)}
+                                    onChange={(e) => {
+                                      const currentDays = partTimeCreateFormData.dayOfWeek || [];
+                                      if (e.target.checked) {
+                                        setPartTimeCreateFormData(prev => ({
+                                          ...prev,
+                                          dayOfWeek: [...currentDays, day]
+                                        }));
+                                      } else {
+                                        setPartTimeCreateFormData(prev => ({
+                                          ...prev,
+                                          dayOfWeek: currentDays.filter(d => d !== day)
+                                        }));
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <span>{getDayName(day as DayOfWeek)}</span>
+                                </label>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">Vui lòng chọn suất làm việc trước</p>
+                            );
+                          })()
+                        ) : (
+                          <p className="text-sm text-gray-500">Vui lòng chọn suất làm việc trước</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="createEffectiveFrom">
+                        Từ ngày <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="createEffectiveFrom"
                         type="date"
-                        min={new Date().toISOString().split('T')[0]}
                         value={partTimeCreateFormData.effectiveFrom}
                         onChange={(e) => setPartTimeCreateFormData(prev => ({
                           ...prev,
@@ -920,6 +1203,21 @@ export default function EmployeeRegistrationsPage() {
                         }))}
                         required
                       />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="createEffectiveTo">Đến ngày</Label>
+                      <Input
+                        id="createEffectiveTo"
+                        type="date"
+                        min={partTimeCreateFormData.effectiveFrom || ''}
+                        value={partTimeCreateFormData.effectiveTo || ''}
+                        onChange={(e) => setPartTimeCreateFormData(prev => ({
+                          ...prev,
+                          effectiveTo: e.target.value
+                        }))}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">Để trống nếu muốn dùng ngày kết thúc của suất</p>
                     </div>
                   </>
                 ) : (
@@ -936,7 +1234,9 @@ export default function EmployeeRegistrationsPage() {
                       setShowPartTimeCreateModal(false);
                       setPartTimeCreateFormData({
                         partTimeSlotId: 0,
-                        effectiveFrom: ''
+                        effectiveFrom: '',
+                        effectiveTo: '',
+                        dayOfWeek: []
                       });
                     }}
                   >
@@ -966,9 +1266,9 @@ export default function EmployeeRegistrationsPage() {
               <form onSubmit={handlePartTimeUpdate} className="space-y-4">
                 <div>
                   <Label>Ca làm việc</Label>
-                  <Input value={partTimeEditingRegistration?.workShiftName || 'N/A'} disabled className="bg-gray-50" />
+                  <Input value={partTimeEditingRegistration?.shiftName || 'N/A'} disabled className="bg-gray-50" />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="editEffectiveTo">Đến ngày</Label>
                   <Input
