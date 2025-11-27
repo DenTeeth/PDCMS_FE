@@ -81,11 +81,13 @@ export const storageService = {
             createdAt: item.createdAt ?? item.created_at,
             items: (item.items || []).map((it: any) => ({
               transactionItemId: it.transactionItemId ?? it.transaction_item_id,
+              itemMasterId: it.itemMasterId ?? it.item_master_id,
               itemCode: it.itemCode ?? it.item_code,
               itemName: it.itemName ?? it.item_name,
               unitName: it.unitName ?? it.unit_name,
               lotNumber: it.lotNumber ?? it.lot_number,
               quantityChange: it.quantityChange ?? it.quantity_change,
+              expiryDate: it.expiryDate ?? it.expiry_date,
               notes: it.notes,
             })),
           }))
@@ -106,6 +108,13 @@ export const storageService = {
     try {
       const response = await api.get(`/storage/${id}`);
       const item = response.data || {};
+      
+      // Debug: Log raw BE response to check itemCode and expiryDate
+      console.log('🔍 Raw BE response for transaction detail:', JSON.stringify(item, null, 2));
+      if (item.items && item.items.length > 0) {
+        console.log('🔍 First item from BE:', JSON.stringify(item.items[0], null, 2));
+      }
+      
       const mapped: StorageTransactionV3 = {
         transactionId: item.transactionId ?? item.transaction_id,
         transactionCode: item.transactionCode ?? item.transaction_code,
@@ -118,12 +127,14 @@ export const storageService = {
         createdAt: item.createdAt ?? item.created_at,
         items: (item.items || []).map((it: any) => ({
           transactionItemId: it.transactionItemId ?? it.transaction_item_id,
-          itemCode: it.itemCode ?? it.item_code,
-          itemName: it.itemName ?? it.item_name,
-          unitName: it.unitName ?? it.unit_name,
-          lotNumber: it.lotNumber ?? it.lot_number,
-          quantityChange: it.quantityChange ?? it.quantity_change,
-          notes: it.notes,
+          itemMasterId: it.itemMasterId ?? it.item_master_id,
+          itemCode: it.itemCode ?? it.item_code ?? null,
+          itemName: it.itemName ?? it.item_name ?? null,
+          unitName: it.unitName ?? it.unit_name ?? null,
+          lotNumber: it.lotNumber ?? it.lot_number ?? null,
+          quantityChange: it.quantityChange ?? it.quantity_change ?? 0,
+          expiryDate: it.expiryDate ?? it.expiry_date ?? null,
+          notes: it.notes ?? null,
         })),
       };
       console.log('✅ Get transaction detail:', mapped);
@@ -161,6 +172,7 @@ export const storageService = {
           unitName: it.unitName ?? it.unit_name,
           lotNumber: it.lotNumber ?? it.lot_number,
           quantityChange: it.quantityChange ?? it.quantity_change,
+          expiryDate: it.expiryDate ?? it.expiry_date,
           notes: it.notes,
         })),
       };

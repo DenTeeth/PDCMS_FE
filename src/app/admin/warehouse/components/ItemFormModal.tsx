@@ -86,8 +86,8 @@ export default function ItemFormModal({
   };
 
   const categoryOptions = categories.map((cat) => ({
-    value: cat.id || '',
-    label: cat.name || '',
+    value: String(cat.categoryId ?? cat.id ?? ''),
+    label: cat.categoryName ?? cat.name ?? '',
   }));
 
   return (

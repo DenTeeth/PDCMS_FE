@@ -33,9 +33,9 @@ export default function CategoryFormModal({
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name,
+        name: category.categoryName ?? category.name ?? '',
         description: category.description || '',
-        warehouseType: category.warehouseType,
+        warehouseType: category.warehouseType ?? warehouseType,
       });
     } else {
       setFormData({

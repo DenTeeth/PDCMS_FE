@@ -463,11 +463,13 @@ export interface StorageTransactionV3 {
 
 export interface StorageTransactionItemV3 {
   transactionItemId?: number;
+  itemMasterId?: number; // Added for transaction history filtering
   itemCode?: string;
   itemName?: string;
   unitName?: string;
   lotNumber?: string;
   quantityChange: number; // Positive for IMPORT, Negative for EXPORT
+  expiryDate?: string; // LocalDate (YYYY-MM-DD) - Added in BE fix for Issue #10
   notes?: string;
   
   // Legacy fields

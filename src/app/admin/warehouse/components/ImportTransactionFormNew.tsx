@@ -187,7 +187,7 @@ export default function ImportTransactionFormNew({
   }, [isOpen]);
 
   // Fetch base unit for item
-  const fetchBaseUnit = async (itemMasterId: number, rowIndex: number) => {
+  const fetchBaseUnit = async (itemMasterId: number, rowIndex: number, item?: ItemMasterV1) => {
     if (!itemMasterId || itemMasterId <= 0) return;
 
     // Check cache
@@ -227,9 +227,39 @@ export default function ImportTransactionFormNew({
         return updated;
       });
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit:', error);
-      toast.error('Không thể tải đơn vị cơ sở', {
-        description: error.response?.data?.message || error.message || 'Vui lòng thử lại',
+      console.warn('⚠️ Base unit not found, but BE will auto-create from unitOfMeasure when processing import transaction');
+      
+      // BE đã implement Issue #11 Priority 1: Auto-create base unit khi import transaction
+      // Nếu unitId không tìm thấy, BE sẽ tự động tạo base unit từ unitOfMeasure
+      // Solution: Use a temporary large unitId that doesn't exist, BE will auto-create base unit if not found
+      const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+      const tempUnitId = 999999; // Temporary ID - BE will auto-create base unit if not found
+      
+      // Cache the fallback unit with temp ID
+      const fallbackUnitWithTempId = {
+        unitId: tempUnitId,
+        unitName: fallbackUnitName,
+        conversionRate: 1,
+        isBaseUnit: true,
+        displayOrder: 1,
+      };
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: fallbackUnitWithTempId }));
+
+      // Update item with temp unitId (BE will auto-create base unit when processing import)
+      setItems((prev) => {
+        const updated = [...prev];
+        updated[rowIndex] = {
+          ...updated[rowIndex],
+          unitId: tempUnitId, // Temporary - BE will auto-create and use correct unitId
+          unitName: fallbackUnitName,
+        };
+        return updated;
+      });
+      
+      // Show info message (not error, as BE will handle it)
+      toast.info('Đơn vị sẽ được tạo tự động', {
+        description: `Đơn vị: ${fallbackUnitName}. Hệ thống sẽ tự động tạo đơn vị cơ sở khi bạn nhập kho. Bạn có thể tiếp tục điền thông tin và submit.`,
+        duration: 6000,
       });
     } finally {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: false }));
@@ -268,8 +298,8 @@ export default function ImportTransactionFormNew({
       return updated;
     });
 
-    // Fetch base unit
-    await fetchBaseUnit(itemId, rowIndex);
+    // Fetch base unit (pass item for fallback to unitOfMeasure)
+    await fetchBaseUnit(itemId, rowIndex, item);
 
     // Close popover
     setOpenPopovers((prev) => ({ ...prev, [rowIndex]: false }));
@@ -361,6 +391,18 @@ export default function ImportTransactionFormNew({
         toast.error('Xung đột hạn sử dụng', {
           description: 'Cùng số lô phải có cùng hạn sử dụng',
         });
+      } else if (errorCode === 'EXPIRED_ITEM') {
+        toast.error('Không thể nhập hàng hết hạn', {
+          description: 'Hạn sử dụng phải sau ngày hiện tại',
+        });
+      } else if (errorCode === 'EMPLOYEE_NOT_FOUND') {
+        toast.error('Không tìm thấy nhân viên', {
+          description: 'Tài khoản của bạn chưa được liên kết với nhân viên. Vui lòng liên hệ quản trị viên.',
+        });
+      } else if (errorCode === 'EMPLOYEE_INACTIVE') {
+        toast.error('Nhân viên không hoạt động', {
+          description: 'Tài khoản nhân viên của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
+        });
       } else {
         toast.error('Lỗi nhập kho', {
           description: errorMessage,
@@ -385,10 +427,13 @@ export default function ImportTransactionFormNew({
     }
 
     // Validate items
+    // Note: BE đã implement Issue #11 Priority 1 - sẽ auto-create base unit nếu unitId không tìm thấy
+    // FE có thể gửi unitId tạm thời (999999), BE sẽ tự động tạo base unit từ unitOfMeasure
     const validItems = items.filter((item) => {
       return (
         item.itemMasterId > 0 &&
-        item.unitId > 0 &&
+        item.unitId > 0 && // Must be positive (BE validation @Positive)
+        item.unitName && item.unitName.trim() !== '' && // Must have unitName
         item.lotNumber.trim() !== '' &&
         item.expiryDate !== '' &&
         item.quantity > 0 &&
@@ -429,7 +474,7 @@ export default function ImportTransactionFormNew({
         lotNumber: item.lotNumber.trim(),
         expiryDate: item.expiryDate,
         quantity: Number(item.quantity),
-        unitId: Number(item.unitId),
+        unitId: Number(item.unitId), // Must be > 0 (BE validation @Positive)
         purchasePrice: Number(item.purchasePrice),
         binLocation: item.binLocation.trim() || undefined,
         notes: item.notes.trim() || undefined,
