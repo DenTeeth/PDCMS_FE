@@ -12,6 +12,7 @@ import type {
 } from '@/types/warehouse';
 
 const api = apiClient.getAxiosInstance();
+const TRANSACTION_BASE = '/warehouse/transactions';
 
 // ============================================
 // TYPE DEFINITIONS (Matching BE)
@@ -33,12 +34,11 @@ export interface StorageFilter {
 
 export const storageService = {
   /**
-   * GET /api/v1/storage/stats - Lấy thống kê import/export
-   * BE: StorageStatsResponse
+   * GET /api/v1/warehouse/transactions/stats - Lấy thống kê import/export (API 6.6)
    */
   getStats: async (month?: number, year?: number): Promise<StorageStats> => {
     try {
-      const response = await api.get('/storage/stats', {
+      const response = await api.get(`${TRANSACTION_BASE}/stats`, {
         params: { month, year },
       });
       const data = response.data || {};
@@ -59,12 +59,11 @@ export const storageService = {
   },
 
   /**
-   * GET /api/v1/storage - Lấy danh sách phiếu nhập/xuất kho
-   * BE: List<TransactionResponse>
+   * GET /api/v1/warehouse/transactions - Lấy danh sách phiếu nhập/xuất kho (API 6.6)
    */
   getAll: async (filter?: StorageFilter): Promise<StorageTransactionV3[]> => {
     try {
-      const response = await api.get('/storage', {
+      const response = await api.get(TRANSACTION_BASE, {
         params: filter,
       });
       const data = response.data || [];
@@ -101,12 +100,11 @@ export const storageService = {
   },
 
   /**
-   * GET /api/v1/storage/{id} - Chi tiết phiếu nhập/xuất kho
-   * BE: TransactionResponse
+   * GET /api/v1/warehouse/transactions/{id} - Chi tiết phiếu nhập/xuất kho (API 6.6)
    */
   getById: async (id: number): Promise<StorageTransactionV3> => {
     try {
-      const response = await api.get(`/storage/${id}`);
+      const response = await api.get(`${TRANSACTION_BASE}/${id}`);
       const item = response.data || {};
       
       // Debug: Log raw BE response to check itemCode and expiryDate
@@ -146,12 +144,12 @@ export const storageService = {
   },
 
   /**
-   * PUT /api/v1/storage/{id}?notes=... - Cập nhật ghi chú phiếu
-   * BE: TransactionResponse (chỉ cho phép cập nhật notes)
+   * PUT /api/v1/warehouse/transactions/{id}?notes=... - Cập nhật ghi chú phiếu
+   * (Legacy behavior reimplemented via API 6.6 controller)
    */
   updateNotes: async (id: number, notes: string): Promise<StorageTransactionV3> => {
     try {
-      const response = await api.put(`/storage/${id}`, null, {
+      const response = await api.put(`${TRANSACTION_BASE}/${id}`, null, {
         params: { notes },
       });
       const item = response.data || {};
@@ -185,12 +183,11 @@ export const storageService = {
   },
 
   /**
-   * DELETE /api/v1/storage/{id} - Xóa phiếu nhập/xuất kho
-   * BE: 204 No Content (chỉ admin)
+   * DELETE /api/v1/warehouse/transactions/{id} - Xóa phiếu nhập/xuất kho (admin)
    */
   delete: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/storage/${id}`);
+      await api.delete(`${TRANSACTION_BASE}/${id}`);
       console.log('✅ Delete transaction:', id);
     } catch (error: any) {
       console.error('❌ Delete transaction error:', error.response?.data || error.message);
