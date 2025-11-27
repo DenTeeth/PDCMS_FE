@@ -7,7 +7,7 @@
 ##  API Endpoint
 
 ```
-GET /api/v3/warehouse/batches/{itemMasterId}
+GET /api/v1/warehouse/batches/{itemMasterId}
 ```
 
 ##  Features Implemented
@@ -166,7 +166,7 @@ Default: sortBy=expiryDate, sortDir=asc
    - Business logic: stats calculation, status calculation
 
 3. **WarehouseV3Controller.java**
-   - Added GET `/api/v3/warehouse/batches/{itemMasterId}` endpoint
+   - Added GET `/api/v1/warehouse/batches/{itemMasterId}` endpoint
    - Full Swagger documentation
    - Request validation and sorting
 
@@ -175,7 +175,7 @@ Default: sortBy=expiryDate, sortDir=asc
 ### Test 1: Get all batches (FEFO sorting)
 
 ```bash
-GET /api/v3/warehouse/batches/24?page=0&size=20
+GET /api/v1/warehouse/batches/24?page=0&size=20
 ```
 
 **Expected**: Lô hết hạn sớm nhất nằm trên cùng
@@ -183,7 +183,7 @@ GET /api/v3/warehouse/batches/24?page=0&size=20
 ### Test 2: Hide empty batches
 
 ```bash
-GET /api/v3/warehouse/batches/24?hideEmpty=true
+GET /api/v1/warehouse/batches/24?hideEmpty=true
 ```
 
 **Expected**: Chỉ thấy lô còn hàng (quantityOnHand > 0)
@@ -191,7 +191,7 @@ GET /api/v3/warehouse/batches/24?hideEmpty=true
 ### Test 3: Filter by CRITICAL status
 
 ```bash
-GET /api/v3/warehouse/batches/24?filterStatus=CRITICAL
+GET /api/v1/warehouse/batches/24?filterStatus=CRITICAL
 ```
 
 **Expected**: Chỉ thấy lô còn ≤7 ngày
@@ -199,7 +199,7 @@ GET /api/v3/warehouse/batches/24?filterStatus=CRITICAL
 ### Test 4: Filter by EXPIRED status
 
 ```bash
-GET /api/v3/warehouse/batches/24?filterStatus=EXPIRED
+GET /api/v1/warehouse/batches/24?filterStatus=EXPIRED
 ```
 
 **Expected**: Chỉ thấy lô đã hết hạn (để làm phiếu hủy)
@@ -207,7 +207,7 @@ GET /api/v3/warehouse/batches/24?filterStatus=EXPIRED
 ### Test 5: Sort by quantity DESC
 
 ```bash
-GET /api/v3/warehouse/batches/24?sortBy=quantityOnHand&sortDir=desc
+GET /api/v1/warehouse/batches/24?sortBy=quantityOnHand&sortDir=desc
 ```
 
 **Expected**: Lô có nhiều hàng nhất nằm trên cùng
@@ -215,7 +215,7 @@ GET /api/v3/warehouse/batches/24?sortBy=quantityOnHand&sortDir=desc
 ### Test 6: Sort by import date DESC
 
 ```bash
-GET /api/v3/warehouse/batches/24?sortBy=importedAt&sortDir=desc
+GET /api/v1/warehouse/batches/24?sortBy=importedAt&sortDir=desc
 ```
 
 **Expected**: Lô nhập gần đây nhất nằm trên cùng
@@ -223,7 +223,7 @@ GET /api/v3/warehouse/batches/24?sortBy=importedAt&sortDir=desc
 ### Test 7: Pagination
 
 ```bash
-GET /api/v3/warehouse/batches/24?page=1&size=5
+GET /api/v1/warehouse/batches/24?page=1&size=5
 ```
 
 **Expected**: Trang thứ 2, mỗi trang 5 items
@@ -231,7 +231,7 @@ GET /api/v3/warehouse/batches/24?page=1&size=5
 ### Test 8: Combined filters
 
 ```bash
-GET /api/v3/warehouse/batches/24?hideEmpty=true&filterStatus=EXPIRING_SOON&sortBy=expiryDate&sortDir=asc&page=0&size=10
+GET /api/v1/warehouse/batches/24?hideEmpty=true&filterStatus=EXPIRING_SOON&sortBy=expiryDate&sortDir=asc&page=0&size=10
 ```
 
 **Expected**: Lô còn hàng, sắp hết hạn (7-30 ngày), sắp xếp FEFO

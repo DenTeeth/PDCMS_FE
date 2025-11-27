@@ -2,7 +2,7 @@
 
 /**
  * Storage In/Out Page - API V1 (Transactions Management)
- * ✅ Using /api/v1/storage endpoints with full CRUD, pagination, search, sort
+ * ✅ Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
  */
 
 import { useState, useEffect } from 'react';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
@@ -29,9 +30,12 @@ import {
   faSnowflake,
   faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons';
-import { storageService, StorageTransaction } from '@/services/storageService';
+import { storageService, type StorageTransaction, type StorageTransactionListResult } from '@/services/storageService';
 import inventoryService, { InventorySummary } from '@/services/inventoryService';
+import { supplierService } from '@/services/supplierService';
+import type { TransactionType } from '@/types/warehouse';
 import categoryService from '@/services/categoryService';
+import { usePermission } from '@/hooks/usePermissions';
 import ImportTransactionFormNew from '../components/ImportTransactionFormNew';
 import ExportTransactionFormNew from '../components/ExportTransactionFormNew';
 import StorageDetailModal from '../components/StorageDetailModal';
@@ -45,6 +49,9 @@ type TransactionFilter = 'ALL' | 'IMPORT' | 'EXPORT';
 type ViewMode = 'transactions' | 'reports';
 
 export default function StorageInOutPage() {
+  // RBAC: Check VIEW_COST permission
+  const hasViewCost = usePermission('VIEW_COST');
+  
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('transactions');
   
@@ -56,6 +63,15 @@ export default function StorageInOutPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortField, setSortField] = useState<string>('transactionDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Advanced filters (API 6.6)
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+  const [supplierIdFilter, setSupplierIdFilter] = useState<number | undefined>(undefined);
+  const [appointmentIdFilter, setAppointmentIdFilter] = useState<number | undefined>(undefined);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Modal states
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -79,6 +95,17 @@ export default function StorageInOutPage() {
     return () => clearTimeout(timer);
   }, [searchKeyword]);
 
+  // Reset filters when transaction type changes
+  useEffect(() => {
+    if (activeFilter !== 'IMPORT') {
+      setPaymentStatusFilter('');
+      setSupplierIdFilter(undefined);
+    }
+    if (activeFilter !== 'EXPORT') {
+      setAppointmentIdFilter(undefined);
+    }
+  }, [activeFilter]);
+
   // Dashboard Stats - API V1 (Backend error)
   const { data: stats } = useQuery({
     queryKey: ['storageStats'],
@@ -86,25 +113,50 @@ export default function StorageInOutPage() {
     enabled: false, // Backend returning 500
   });
 
-  // Fetch transactions with filter (BE doesn't support search, so we do client-side filtering)
-  const { data: allTransactions = [], isLoading, error } = useQuery({
-    queryKey: ['transactions', activeFilter],
-    queryFn: async () => {
-      try {
-        return await storageService.getAll({
-          transactionType: activeFilter === 'ALL' ? undefined : activeFilter,
-          // Note: BE doesn't support search parameter, so we do client-side filtering
-        });
-      } catch (err: any) {
-        console.error('❌ Transaction fetch error:', err);
-        // Return empty array instead of throwing to prevent UI crash
-        if (err.response?.status === 500) {
-          return [];
-        }
-        throw err;
-      }
-    },
-    retry: false, // Don't retry on 500 errors
+  // Fetch suppliers for filter dropdown
+  const { data: suppliersData } = useQuery({
+    queryKey: ['suppliers', 'all'],
+    queryFn: () => supplierService.getAll({ page: 0, size: 100 }),
+    enabled: showAdvancedFilters,
+  });
+  const suppliers = suppliersData?.content || [];
+
+  // Fetch transactions with server-side pagination/filtering (API 6.6)
+  const {
+    data: transactionResult,
+    isLoading,
+    error,
+  } = useQuery<StorageTransactionListResult>({
+    queryKey: [
+      'transactions',
+      activeFilter,
+      page,
+      size,
+      debouncedSearch,
+      sortField,
+      sortDirection,
+      statusFilter,
+      paymentStatusFilter,
+      fromDate,
+      toDate,
+      supplierIdFilter,
+      appointmentIdFilter,
+    ],
+    queryFn: () =>
+      storageService.getAll({
+        transactionType: activeFilter === 'ALL' ? undefined : (activeFilter as TransactionType),
+        page,
+        size,
+        search: debouncedSearch || undefined,
+        sortBy: sortField,
+        sortDirection,
+        status: statusFilter || undefined,
+        paymentStatus: paymentStatusFilter || undefined,
+        fromDate: fromDate || undefined,
+        toDate: toDate || undefined,
+        supplierId: supplierIdFilter,
+        appointmentId: appointmentIdFilter,
+      }),
   });
 
   // Reports data (only fetch when viewing reports)
@@ -131,37 +183,13 @@ export default function StorageInOutPage() {
     enabled: viewMode === 'reports',
   });
 
-  // Client-side filtering, sorting, and pagination
-  const filteredTransactions = debouncedSearch
-    ? allTransactions.filter((txn) => {
-        const searchLower = debouncedSearch.toLowerCase();
-        return (
-          txn.transactionCode?.toLowerCase().includes(searchLower) ||
-          txn.supplierName?.toLowerCase().includes(searchLower) ||
-          txn.notes?.toLowerCase().includes(searchLower) ||
-          txn.createdByName?.toLowerCase().includes(searchLower)
-        );
-      })
-    : allTransactions;
-
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    let aValue: any = a[sortField as keyof StorageTransaction];
-    let bValue: any = b[sortField as keyof StorageTransaction];
-    
-    if (sortField === 'transactionDate') {
-      aValue = new Date(aValue).getTime();
-      bValue = new Date(bValue).getTime();
-    }
-    
-    if (sortDirection === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
-
-  const totalPages = Math.ceil(sortedTransactions.length / size);
-  const paginatedTransactions = sortedTransactions.slice(page * size, (page + 1) * size);
+  const transactions: StorageTransaction[] = transactionResult?.content ?? [];
+  const paginationMeta = transactionResult?.meta;
+  const transactionStats = transactionResult?.stats;
+  const totalPages = paginationMeta?.totalPages ?? 0;
+  const totalElements = paginationMeta?.totalElements ?? transactions.length;
+  const pageStart = totalElements === 0 ? 0 : page * size + 1;
+  const pageEnd = totalElements === 0 ? 0 : Math.min((page + 1) * size, totalElements);
 
   // Update mutation
   const updateMutation = useMutation({
@@ -193,6 +221,7 @@ export default function StorageInOutPage() {
       setSortField(field);
       setSortDirection('asc');
     }
+    setPage(0);
   };
 
   const handleViewDetail = (transactionId: number) => {
@@ -251,18 +280,32 @@ export default function StorageInOutPage() {
     }
   };
 
-  const getFilterStats = () => {
-    const importCount = allTransactions.filter(t => t.transactionType === 'IMPORT').length;
-    const exportCount = allTransactions.filter(t => t.transactionType === 'EXPORT').length;
-    
-    return {
-      ALL: allTransactions.length,
-      IMPORT: importCount,
-      EXPORT: exportCount,
-    };
-  };
+  const { data: importCount = 0 } = useQuery<StorageTransactionListResult, Error, number>({
+    queryKey: ['transactionCount', 'IMPORT'],
+    queryFn: () => storageService.getAll({ transactionType: 'IMPORT' as TransactionType, page: 0, size: 1 }),
+    select: (result) => result.meta.totalElements,
+    enabled: viewMode === 'transactions',
+  });
 
-  const filterStats = getFilterStats();
+  const { data: exportCount = 0 } = useQuery<StorageTransactionListResult, Error, number>({
+    queryKey: ['transactionCount', 'EXPORT'],
+    queryFn: () => storageService.getAll({ transactionType: 'EXPORT' as TransactionType, page: 0, size: 1 }),
+    select: (result) => result.meta.totalElements,
+    enabled: viewMode === 'transactions',
+  });
+
+  const { data: totalCount = 0 } = useQuery<StorageTransactionListResult, Error, number>({
+    queryKey: ['transactionCount', 'ALL'],
+    queryFn: () => storageService.getAll({ page: 0, size: 1 }),
+    select: (result) => result.meta.totalElements,
+    enabled: viewMode === 'transactions',
+  });
+
+  const filterStats = {
+    ALL: totalCount,
+    IMPORT: importCount,
+    EXPORT: exportCount,
+  };
 
   // Reports calculations
   const lowStockItems = allItems
@@ -350,7 +393,7 @@ export default function StorageInOutPage() {
               <span className="text-red-600">⚠️</span>
               <div>
                 <p className="text-sm font-medium text-red-900">Lỗi kết nối Backend</p>
-                <p className="text-xs text-red-700">Server trả về lỗi 500. Vui lòng liên hệ Backend để kiểm tra API /api/v1/storage</p>
+                <p className="text-xs text-red-700">Server trả về lỗi 500. Vui lòng liên hệ Backend để kiểm tra API /api/v1/warehouse/transactions</p>
               </div>
             </div>
           </CardContent>
@@ -361,76 +404,255 @@ export default function StorageInOutPage() {
       {viewMode === 'transactions' ? (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Phiếu nhập kho
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {filterStats.IMPORT}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Phiếu nhập trong tháng
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Phiếu xuất kho
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {filterStats.EXPORT}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Phiếu xuất trong tháng
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Tổng giao dịch
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {allTransactions.length}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Tất cả loại phiếu
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Phiếu nhập kho
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {filterStats.IMPORT}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Phiếu nhập trong tháng
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Phiếu xuất kho
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {filterStats.EXPORT}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Phiếu xuất trong tháng
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Tổng giao dịch
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filterStats.ALL}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Tất cả loại phiếu
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* API 6.6 Statistics */}
+            {transactionStats && (
+              <>
+                {transactionStats.pendingApprovalCount !== undefined && (
+                  <Card className="border-orange-200 bg-orange-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-orange-700">
+                        Chờ duyệt
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {transactionStats.pendingApprovalCount}
+                      </div>
+                      <p className="text-xs text-orange-600 mt-1">
+                        Phiếu đang chờ
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {hasViewCost && transactionStats.totalImportValue !== undefined && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-blue-700">
+                        Tổng giá trị nhập
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫
+                      </div>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {transactionStats.periodStart && transactionStats.periodEnd
+                          ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
+                          : 'Trong kỳ'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </div>
 
-      {/* Search Bar */}
+      {/* Search Bar & Advanced Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp..."
-                className="pl-10"
-                value={searchKeyword}
-                onChange={handleSearchChange}
-              />
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp..."
+                  className="pl-10"
+                  value={searchKeyword}
+                  onChange={handleSearchChange}
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                <FontAwesomeIcon icon={faLayerGroup} className="h-4 w-4 mr-2" />
+                {showAdvancedFilters ? 'Ẩn bộ lọc' : 'Bộ lọc nâng cao'}
+              </Button>
+              <Button onClick={() => setIsImportModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+                <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+                Nhập kho
+              </Button>
+              <Button onClick={() => setIsExportModalOpen(true)} variant="destructive">
+                <FontAwesomeIcon icon={faUpload} className="h-4 w-4 mr-2" />
+                Xuất kho
+              </Button>
             </div>
-            <Button onClick={() => setIsImportModalOpen(true)} className="bg-green-600 hover:bg-green-700">
-              <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
-              Nhập kho
-            </Button>
-            <Button onClick={() => setIsExportModalOpen(true)} variant="destructive">
-              <FontAwesomeIcon icon={faUpload} className="h-4 w-4 mr-2" />
-              Xuất kho
-            </Button>
+
+            {/* Advanced Filters Panel */}
+            {showAdvancedFilters && (
+              <div className="border-t pt-4 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Status Filter */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái duyệt</label>
+                    <Select value={statusFilter || 'ALL'} onValueChange={(value) => { setStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tất cả" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Tất cả</SelectItem>
+                        <SelectItem value="DRAFT">Nháp</SelectItem>
+                        <SelectItem value="PENDING_APPROVAL">Chờ duyệt</SelectItem>
+                        <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                        <SelectItem value="REJECTED">Từ chối</SelectItem>
+                        <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Payment Status Filter (only for IMPORT) */}
+                  {activeFilter === 'IMPORT' && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái thanh toán</label>
+                      <Select value={paymentStatusFilter || 'ALL'} onValueChange={(value) => { setPaymentStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tất cả" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Tất cả</SelectItem>
+                          <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+                          <SelectItem value="PARTIAL">Thanh toán một phần</SelectItem>
+                          <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* From Date */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">Từ ngày</label>
+                    <Input
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => { setFromDate(e.target.value); setPage(0); }}
+                    />
+                  </div>
+
+                  {/* To Date */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">Đến ngày</label>
+                    <Input
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => { setToDate(e.target.value); setPage(0); }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Supplier Filter (only for IMPORT) */}
+                  {activeFilter === 'IMPORT' && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Nhà cung cấp</label>
+                      <Select
+                        value={supplierIdFilter?.toString() || 'ALL'}
+                        onValueChange={(value) => {
+                          setSupplierIdFilter(value === 'ALL' ? undefined : Number(value));
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tất cả nhà cung cấp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Tất cả nhà cung cấp</SelectItem>
+                          {suppliers.map((supplier: any) => (
+                            <SelectItem key={supplier.supplierId} value={supplier.supplierId.toString()}>
+                              {supplier.supplierName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Appointment Filter (only for EXPORT) */}
+                  {activeFilter === 'EXPORT' && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Ca điều trị (ID)</label>
+                      <Input
+                        type="number"
+                        placeholder="Nhập ID ca điều trị"
+                        value={appointmentIdFilter || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setAppointmentIdFilter(value ? Number(value) : undefined);
+                          setPage(0);
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Clear Filters Button */}
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setStatusFilter('');
+                        setPaymentStatusFilter('');
+                        setFromDate('');
+                        setToDate('');
+                        setSupplierIdFilter(undefined);
+                        setAppointmentIdFilter(undefined);
+                        setPage(0);
+                      }}
+                      className="w-full"
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -460,7 +682,7 @@ export default function StorageInOutPage() {
         <CardContent className="pt-6">
           {isLoading ? (
             <div className="text-center py-8">Đang tải...</div>
-          ) : paginatedTransactions.length === 0 ? (
+          ) : transactions.length === 0 ? (
             <EmptyState
               icon={faUpload}
               title={debouncedSearch ? "Không tìm thấy giao dịch" : "Chưa có giao dịch nào"}
@@ -487,56 +709,118 @@ export default function StorageInOutPage() {
                           <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                         </div>
                       </th>
+                      <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
                       <th className="text-left p-3 font-semibold text-sm">Nhà cung cấp</th>
+                      {hasViewCost && (
+                        <th className="text-right p-3 font-semibold text-sm">Giá trị</th>
+                      )}
+                      {activeFilter === 'IMPORT' && (
+                        <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
+                      )}
                       <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
                       <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedTransactions.map((txn) => (
-                      <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
-                        <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
-                        <td className="p-3">
-                          <Badge className={getTypeColor(txn.transactionType)}>
-                            {getTypeLabel(txn.transactionType)}
-                          </Badge>
-                        </td>
-                        <td className="p-3">{formatDate(txn.transactionDate)}</td>
-                        <td className="p-3">{txn.supplierName || '-'}</td>
-                        <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
-                        <td className="p-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleViewDetail(txn.transactionId)}
-                              title="Xem chi tiết"
-                              className="h-8 w-8 p-0"
-                            >
-                              <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(txn)}
-                              title="Sửa ghi chú"
-                              className="h-8 w-8 p-0"
-                            >
-                              <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDelete(txn)}
-                              title="Xóa"
-                              className="h-8 w-8 p-0"
-                            >
-                              <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {transactions.map((txn) => {
+                      const getStatusBadge = (status?: string) => {
+                        if (!status) return null;
+                        const config: Record<string, { variant?: any; className?: string; label: string }> = {
+                          DRAFT: { variant: 'outline', label: 'Nháp' },
+                          PENDING_APPROVAL: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Chờ duyệt' },
+                          APPROVED: { variant: 'default', label: 'Đã duyệt' },
+                          REJECTED: { variant: 'destructive', label: 'Từ chối' },
+                          CANCELLED: { variant: 'secondary', label: 'Đã hủy' },
+                        };
+                        const cfg = config[status] || { variant: 'outline', label: status };
+                        if (cfg.className) {
+                          return <Badge className={cfg.className}>{cfg.label}</Badge>;
+                        }
+                        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+                      };
+
+                      const getPaymentStatusBadge = (paymentStatus?: string) => {
+                        if (!paymentStatus) return <span className="text-gray-400">-</span>;
+                        const config: Record<string, { className: string; label: string }> = {
+                          UNPAID: { className: 'text-red-600', label: 'Chưa thanh toán' },
+                          PARTIAL: { className: 'text-orange-600', label: 'Thanh toán một phần' },
+                          PAID: { className: 'text-green-600', label: 'Đã thanh toán' },
+                        };
+                        const cfg = config[paymentStatus] || { className: 'text-gray-600', label: paymentStatus };
+                        return <span className={cfg.className}>{cfg.label}</span>;
+                      };
+
+                      return (
+                        <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
+                          <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
+                          <td className="p-3">
+                            <Badge className={getTypeColor(txn.transactionType)}>
+                              {getTypeLabel(txn.transactionType)}
+                            </Badge>
+                          </td>
+                          <td className="p-3">{formatDate(txn.transactionDate)}</td>
+                          <td className="p-3">
+                            {getStatusBadge(txn.status)}
+                          </td>
+                          <td className="p-3">{txn.supplierName || '-'}</td>
+                          {hasViewCost && (
+                            <td className="p-3 text-right text-sm font-medium">
+                              {txn.totalValue !== null && txn.totalValue !== undefined
+                                ? `${txn.totalValue.toLocaleString('vi-VN')} ₫`
+                                : <span className="text-gray-400">-</span>}
+                            </td>
+                          )}
+                          {activeFilter === 'IMPORT' && (
+                            <td className="p-3 text-sm">
+                              {getPaymentStatusBadge(txn.paymentStatus)}
+                              {hasViewCost && txn.paymentStatus === 'PARTIAL' && txn.remainingDebt !== null && txn.remainingDebt !== undefined && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Còn nợ: {txn.remainingDebt.toLocaleString('vi-VN')} ₫
+                                </div>
+                              )}
+                            </td>
+                          )}
+                          <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
+                          <td className="p-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleViewDetail(txn.transactionId)}
+                                title="Xem chi tiết"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEdit(txn)}
+                                title="Sửa ghi chú"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
+                              </Button>
+                              {/* 
+                                ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
+                                TransactionHistoryController chỉ có GET endpoints.
+                                Nếu cần xóa, có thể set status = CANCELLED thay vì delete.
+                              */}
+                              {/* <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDelete(txn)}
+                                title="Xóa (chưa khả dụng - BE chưa implement)"
+                                className="h-8 w-8 p-0"
+                                disabled
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-400" />
+                              </Button> */}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -544,7 +828,7 @@ export default function StorageInOutPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4 pt-4 border-t">
                 <div className="text-sm text-gray-600">
-                  Hiển thị {page * size + 1} - {Math.min((page + 1) * size, sortedTransactions.length)} trong tổng số {sortedTransactions.length} giao dịch
+                  Hiển thị {pageStart} - {pageEnd} trong tổng số {totalElements} giao dịch
                   {debouncedSearch && (
                     <span className="text-muted-foreground ml-2">
                       (đã lọc theo: "{debouncedSearch}")

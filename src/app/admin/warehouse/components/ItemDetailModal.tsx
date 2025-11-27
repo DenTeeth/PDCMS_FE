@@ -54,21 +54,20 @@ export default function ItemDetailModal({
     queryKey: ['itemHistory', itemId],
     queryFn: async () => {
       if (!itemId) return [];
-      // Get all transactions and filter by itemMasterId
-      // Note: BE API 6.6 doesn't support filtering by itemMasterId directly,
-      // so we do client-side filtering. This is acceptable for now as the
-      // number of transactions per item is typically small.
-      const allTransactions = await storageService.getAll({});
-      return allTransactions.filter((tx: StorageTransaction) => 
-        tx.items?.some((item: StorageTransactionItem) => 
-          item.itemMasterId === itemId || 
-          (item as any).item_master_id === itemId ||
-          // Also check by itemCode if itemMasterId is not available
-          (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode)
-        )
-      ).sort((a: StorageTransaction, b: StorageTransaction) => 
-        new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+      const result = await storageService.getAll(
+        { page: 0, size: 30, sortBy: 'transactionDate', sortDirection: 'desc' },
+        { includeItems: true, detailLimit: 30 }
       );
+      return result.content
+        .filter((tx: StorageTransaction) =>
+          tx.items?.some((item: StorageTransactionItem) =>
+            item.itemMasterId === itemId ||
+            (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode)
+          )
+        )
+        .sort((a: StorageTransaction, b: StorageTransaction) =>
+          new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+        );
     },
     enabled: !!itemId && !!itemDetail,
   });

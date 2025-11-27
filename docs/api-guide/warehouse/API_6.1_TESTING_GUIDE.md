@@ -21,7 +21,7 @@
 
 4. **Controller Layer**
    - `WarehouseV3Controller.java` - New V3 controller
-   - `GET /api/v3/warehouse/summary` - API 6.1 endpoint
+   - `GET /api/v1/warehouse/summary` - API 6.1 endpoint
 
 ---
 
@@ -45,7 +45,7 @@ TOKEN="your_jwt_token_here"
 ### Test 1: Get All Items (Basic Test)
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -79,7 +79,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=0&size=20" \
 ### Test 2: Search by Item Name
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?search=gạc&page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?search=gạc&page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -87,7 +87,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?search=gạc&page=0&
 ### Test 3: Filter by Stock Status - LOW_STOCK
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?stockStatus=LOW_STOCK&page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?stockStatus=LOW_STOCK&page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -95,7 +95,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?stockStatus=LOW_STOC
 ### Test 4: Filter by Warehouse Type - COLD
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?warehouseType=COLD&page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?warehouseType=COLD&page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -103,7 +103,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?warehouseType=COLD&p
 ### Test 5: Filter by Category ID
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?categoryId=1&page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?categoryId=1&page=0&size=20" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -111,7 +111,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?categoryId=1&page=0&
 ### Test 6: Combined Filters
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType=NORMAL&page=0&size=10" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType=NORMAL&page=0&size=10" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -119,7 +119,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?search=thuốc&stock
 ### Test 7: Pagination - Page 2
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=1&size=5" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/summary?page=1&size=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" | jq
 ```
@@ -231,7 +231,7 @@ VALUES (1, 'Gói', 1.0, true, 1, NOW());
 Look for these log messages in terminal:
 
 ```
- API 6.1 - GET /api/v3/warehouse/summary - search='...', stockStatus=..., warehouseType=..., categoryId=..., page=..., size=...
+ API 6.1 - GET /api/v1/warehouse/summary - search='...', stockStatus=..., warehouseType=..., categoryId=..., page=..., size=...
  Returned X items out of Y total
 ```
 
@@ -241,7 +241,7 @@ Look for these log messages in terminal:
 
 1. **Frontend Integration**
 
-   - Update Dashboard to call `/api/v3/warehouse/summary`
+   - Update Dashboard to call `/api/v1/warehouse/summary`
    - Display computed fields in UI
    - Add filters dropdown (stock status, warehouse type, category)
 
@@ -259,6 +259,6 @@ Look for these log messages in terminal:
 ---
 
 **Application Status**:  RUNNING on http://localhost:8080
-**API Endpoint**: GET /api/v3/warehouse/summary
+**API Endpoint**: GET /api/v1/warehouse/summary
 **Swagger UI**: http://localhost:8080/swagger-ui.html
 **Implementation Date**: 2024-11-24
