@@ -333,6 +333,14 @@ export default function ExportTransactionFormNew({
         toast.error('Đơn vị không hợp lệ', {
           description: errorMessage,
         });
+      } else if (errorCode === 'EMPLOYEE_NOT_FOUND') {
+        toast.error('Không tìm thấy nhân viên', {
+          description: 'Tài khoản của bạn chưa được liên kết với nhân viên. Vui lòng liên hệ quản trị viên.',
+        });
+      } else if (errorCode === 'EMPLOYEE_INACTIVE') {
+        toast.error('Nhân viên không hoạt động', {
+          description: 'Tài khoản nhân viên của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
+        });
       } else {
         toast.error('Lỗi xuất kho', {
           description: errorMessage,

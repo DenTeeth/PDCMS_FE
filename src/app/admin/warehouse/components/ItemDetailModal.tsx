@@ -17,7 +17,8 @@ import {
   faArrowUp,
   faArrowDown,
 } from '@fortawesome/free-solid-svg-icons';
-import { inventoryService, type ItemMasterV1, type ItemBatchV1 } from '@/services/inventoryService';
+import { inventoryService, type ItemMasterV1 } from '@/services/inventoryService';
+import type { BatchResponse } from '@/types/warehouse';
 import { useQuery } from '@tanstack/react-query';
 
 // Import storage service for transaction history
@@ -54,20 +55,28 @@ export default function ItemDetailModal({
     queryFn: async () => {
       if (!itemId) return [];
       // Get all transactions and filter by itemMasterId
+      // Note: BE API 6.6 doesn't support filtering by itemMasterId directly,
+      // so we do client-side filtering. This is acceptable for now as the
+      // number of transactions per item is typically small.
       const allTransactions = await storageService.getAll({});
       return allTransactions.filter((tx: StorageTransaction) => 
-        tx.items?.some((item: StorageTransactionItem) => item.itemMasterId === itemId)
+        tx.items?.some((item: StorageTransactionItem) => 
+          item.itemMasterId === itemId || 
+          (item as any).item_master_id === itemId ||
+          // Also check by itemCode if itemMasterId is not available
+          (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode)
+        )
       ).sort((a: StorageTransaction, b: StorageTransaction) => 
         new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
       );
     },
-    enabled: !!itemId,
+    enabled: !!itemId && !!itemDetail,
   });
 
   if (!itemId) return null;
 
   const totalBatchQuantity = batches.reduce(
-    (sum: number, batch: ItemBatchV1) => sum + (batch.quantityOnHand ?? 0),
+    (sum: number, batch: BatchResponse) => sum + (batch.quantityOnHand ?? 0),
     0
   );
 
@@ -285,7 +294,7 @@ export default function ItemDetailModal({
                         </tr>
                       </thead>
                       <tbody>
-                        {batches.map((batch: ItemBatchV1, index: number) => (
+                        {batches.map((batch: BatchResponse, index: number) => (
                           <tr 
                             key={batch.batchId} 
                             className={`border ${index === 0 ? 'bg-green-50' : 'hover:bg-gray-50'}`}
@@ -312,10 +321,10 @@ export default function ItemDetailModal({
                               )}
                             </td>
                             <td className="p-3 border">
-                              <span className="text-sm">{formatDate(batch.importDate)}</span>
+                              <span className="text-sm">{formatDate(batch.importedAt)}</span>
                             </td>
                             <td className="p-3 border">
-                              {getWarehouseTypeBadge(batch.warehouseType)}
+                              {getWarehouseTypeBadge(itemDetail.warehouseType)}
                             </td>
                           </tr>
                         ))}
@@ -333,7 +342,7 @@ export default function ItemDetailModal({
                       <div>
                         <p className="text-sm text-gray-600">Tổng tồn kho</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {batches.reduce((sum: number, b: ItemBatchV1) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
+                          {batches.reduce((sum: number, b: BatchResponse) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
                         </p>
                       </div>
                     </div>

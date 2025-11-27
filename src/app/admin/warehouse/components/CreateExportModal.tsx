@@ -129,27 +129,27 @@ export default function CreateExportModal({
 
     try {
       const unitId = await ensureUnitId(selection.itemMasterId);
-      const newItem: ExportItem = {
+    const newItem: ExportItem = {
         batchId: selection.batch.batchId,
         batchLotNumber: selection.batch.lotNumber,
         itemName: selection.itemName ?? selection.itemCode ?? '',
         itemCode: selection.itemCode,
         itemMasterId: selection.itemMasterId,
         unitId,
-        quantity,
+      quantity,
         importPrice: undefined,
         expiryDate: selection.batch.expiryDate,
-      };
+    };
 
-      if (editingIndex !== null) {
-        const updatedItems = [...items];
-        updatedItems[editingIndex] = newItem;
-        setItems(updatedItems);
-      } else {
+    if (editingIndex !== null) {
+      const updatedItems = [...items];
+      updatedItems[editingIndex] = newItem;
+      setItems(updatedItems);
+    } else {
         setItems((prev) => [...prev, newItem]);
-      }
+    }
 
-      setEditingIndex(null);
+    setEditingIndex(null);
     } catch {
       // ensureUnitId already handles toast
     }
