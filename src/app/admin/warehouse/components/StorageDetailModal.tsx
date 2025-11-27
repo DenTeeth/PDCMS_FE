@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { storageService, StorageTransaction } from '@/services/storageService';
+import { storageService } from '@/services/storageService';
+import { inventoryService } from '@/services/inventoryService';
+import type { StorageTransactionItemV3 } from '@/types/warehouse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileInvoice,
@@ -31,11 +34,98 @@ export default function StorageDetailModal({
   onClose,
   transactionId,
 }: StorageDetailModalProps) {
+  const [itemFallbacks, setItemFallbacks] = useState<Record<string, { itemCode?: string; expiryDate?: string }>>({});
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+
   const { data: transaction, isLoading } = useQuery({
     queryKey: ['storageTransaction', transactionId],
     queryFn: () => storageService.getById(transactionId!),
     enabled: isOpen && !!transactionId,
   });
+
+  const getItemFallbackKey = (item: StorageTransactionItemV3) => {
+    if (item.transactionItemId) return String(item.transactionItemId);
+    const masterId = item.itemMasterId ?? 'unknown';
+    const lot = item.lotNumber ?? 'no-lot';
+    return `${masterId}-${lot}`;
+  };
+
+  useEffect(() => {
+    if (!transaction?.items?.length) {
+      setItemFallbacks({});
+      return;
+    }
+
+    const itemsNeedingFallback = transaction.items.filter(
+      (item) =>
+        item.itemMasterId &&
+        (!item.itemCode || (transaction.transactionType === 'IMPORT' && !item.expiryDate))
+    );
+
+    if (itemsNeedingFallback.length === 0) {
+      setItemFallbacks({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchFallbackData = async () => {
+      setFallbackLoading(true);
+      try {
+        const grouped = itemsNeedingFallback.reduce<Record<number, StorageTransactionItemV3[]>>(
+          (acc, item) => {
+            const id = item.itemMasterId!;
+            if (!acc[id]) acc[id] = [];
+            acc[id].push(item);
+            return acc;
+          },
+          {}
+        );
+
+        for (const [itemMasterIdStr, items] of Object.entries(grouped)) {
+          const itemMasterId = Number(itemMasterIdStr);
+          try {
+            const [itemDetail, batches] = await Promise.all([
+              inventoryService.getById(itemMasterId),
+              inventoryService.getBatchesByItemId(itemMasterId),
+            ]);
+
+            if (cancelled) return;
+
+            setItemFallbacks((prev) => {
+              const updated = { ...prev };
+              items.forEach((item) => {
+                const key = getItemFallbackKey(item);
+                if (!updated[key]) {
+                  const matchedBatch = item.lotNumber
+                    ? batches.find((batch) => batch.lotNumber === item.lotNumber)
+                    : undefined;
+
+                  updated[key] = {
+                    itemCode: itemDetail?.itemCode,
+                    expiryDate: matchedBatch?.expiryDate,
+                  };
+                }
+              });
+              return updated;
+            });
+          } catch (error) {
+            console.error('❌ Fallback fetch failed for itemMasterId:', itemMasterId, error);
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setFallbackLoading(false);
+        }
+      }
+    };
+
+    fetchFallbackData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [transaction]);
 
   if (!transactionId) return null;
 
@@ -171,12 +261,15 @@ export default function StorageDetailModal({
                       <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
                       <span>Ngày tạo: {formatDateTime(transaction.createdAt)}</span>
                     </div>
-                    {transaction.updatedAt && (
+                    {(() => {
+                      const updatedAt = (transaction as any).updatedAt ?? transaction.updated_at;
+                      return updatedAt ? (
                       <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
-                        <span>Cập nhật: {formatDateTime(transaction.updatedAt)}</span>
+                        <span>Cập nhật: {formatDateTime(updatedAt)}</span>
                       </div>
-                    )}
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </>
@@ -205,38 +298,63 @@ export default function StorageDetailModal({
                     <thead className="bg-slate-100">
                       <tr className="text-xs font-semibold text-slate-700">
                         <th className="p-3 text-left">STT</th>
-                        <th className="p-3 text-left">Mã vật tư</th>
+                        <th className="p-3 text-left">Mã vật tư / Hạn sử dụng</th>
                         <th className="p-3 text-left">Tên vật tư</th>
                         <th className="p-3 text-left">Số lô</th>
                         <th className="p-3 text-right">Số lượng</th>
-                        {transaction.transactionType === 'IMPORT' && (
-                          <th className="p-3 text-center bg-amber-50 text-amber-900 font-bold">⚠️ Hạn sử dụng</th>
-                        )}
                       </tr>
                     </thead>
                     <tbody>
-                      {transaction.items.map((item, index) => (
-                        <tr key={item.transactionItemId || index} className="border-t hover:bg-slate-50">
-                          <td className="p-3 text-center text-slate-600">{index + 1}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {item.itemCode || '-'}
-                            </Badge>
-                          </td>
-                          <td className="p-3 font-medium">{item.itemName || '-'}</td>
-                          <td className="p-3 font-mono text-sm">{item.lotNumber}</td>
-                          <td className="p-3 text-right font-semibold">
-                            {item.quantityChange.toLocaleString()}
-                          </td>
-                          {transaction.transactionType === 'IMPORT' && (
-                            <td className="p-3 text-center text-sm">
-                              {item.expiryDate ? formatDate(item.expiryDate) : '-'}
+                      {transaction.items.map((item, index) => {
+                        const fallback = itemFallbacks[getItemFallbackKey(item)];
+                        const displayItemCode = item.itemCode || fallback?.itemCode;
+                        const displayExpiry = item.expiryDate || fallback?.expiryDate;
+
+                        return (
+                          <tr key={item.transactionItemId || index} className="border-t hover:bg-slate-50">
+                            <td className="p-3 text-center text-slate-600">{index + 1}</td>
+                            <td className="p-3">
+                              <div className="flex flex-col gap-1">
+                                {displayItemCode ? (
+                                  <Badge variant="outline" className="font-mono text-xs w-fit">
+                                    {displayItemCode}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">Chưa có mã</span>
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                  {displayExpiry
+                                    ? `HSD: ${formatDate(displayExpiry)}`
+                                    : 'HSD: Chưa có'}
+                                </span>
+                              </div>
                             </td>
-                          )}
-                        </tr>
-                      ))}
+                            <td className="p-3 font-medium">
+                              {item.itemName || <span className="text-muted-foreground italic">Chưa có dữ liệu</span>}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-col">
+                                <span className="font-mono text-sm">{item.lotNumber || '-'}</span>
+                                {item.itemMasterId && (
+                                  <span className="text-[11px] text-muted-foreground">
+                                    ID vật tư: {item.itemMasterId}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-right font-semibold">
+                              {Math.abs(item.quantityChange).toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  {fallbackLoading && (
+                    <div className="text-center text-xs text-muted-foreground py-2">
+                      Đang đồng bộ thông tin vật tư...
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -86,14 +86,14 @@ export default function StorageInOutPage() {
     enabled: false, // Backend returning 500
   });
 
-  // Fetch transactions with filter
+  // Fetch transactions with filter (BE doesn't support search, so we do client-side filtering)
   const { data: allTransactions = [], isLoading, error } = useQuery({
-    queryKey: ['transactions', activeFilter, debouncedSearch],
+    queryKey: ['transactions', activeFilter],
     queryFn: async () => {
       try {
         return await storageService.getAll({
           transactionType: activeFilter === 'ALL' ? undefined : activeFilter,
-          search: debouncedSearch || undefined,
+          // Note: BE doesn't support search parameter, so we do client-side filtering
         });
       } catch (err: any) {
         console.error('❌ Transaction fetch error:', err);
@@ -131,8 +131,20 @@ export default function StorageInOutPage() {
     enabled: viewMode === 'reports',
   });
 
-  // Client-side pagination and sorting
-  const sortedTransactions = [...allTransactions].sort((a, b) => {
+  // Client-side filtering, sorting, and pagination
+  const filteredTransactions = debouncedSearch
+    ? allTransactions.filter((txn) => {
+        const searchLower = debouncedSearch.toLowerCase();
+        return (
+          txn.transactionCode?.toLowerCase().includes(searchLower) ||
+          txn.supplierName?.toLowerCase().includes(searchLower) ||
+          txn.notes?.toLowerCase().includes(searchLower) ||
+          txn.createdByName?.toLowerCase().includes(searchLower)
+        );
+      })
+    : allTransactions;
+
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     let aValue: any = a[sortField as keyof StorageTransaction];
     let bValue: any = b[sortField as keyof StorageTransaction];
     
@@ -274,10 +286,11 @@ export default function StorageInOutPage() {
     .slice(0, 10);
 
   const inventoryByCategory = categories.map(cat => {
-    const categoryItems = allItems.filter(item => item.categoryName === cat.name);
+    const categoryName = cat.categoryName ?? cat.name ?? '';
+    const categoryItems = allItems.filter(item => item.categoryName === categoryName);
     const totalQty = categoryItems.reduce((sum, item) => sum + (item.totalQuantity || 0), 0);
     return {
-      categoryName: cat.name,
+      categoryName: categoryName,
       warehouseType: cat.warehouseType,
       itemCount: categoryItems.length,
       totalQuantity: totalQty,
@@ -532,6 +545,11 @@ export default function StorageInOutPage() {
               <div className="flex items-center justify-between mt-4 pt-4 border-t">
                 <div className="text-sm text-gray-600">
                   Hiển thị {page * size + 1} - {Math.min((page + 1) * size, sortedTransactions.length)} trong tổng số {sortedTransactions.length} giao dịch
+                  {debouncedSearch && (
+                    <span className="text-muted-foreground ml-2">
+                      (đã lọc theo: "{debouncedSearch}")
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button

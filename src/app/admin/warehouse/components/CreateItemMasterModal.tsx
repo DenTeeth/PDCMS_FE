@@ -74,26 +74,26 @@ export default function CreateItemMasterModal({
       return;
     }
 
-    if (item) {
-      setFormData({
-        itemCode: item.itemCode,
-        itemName: item.itemName,
-        unitOfMeasure: item.unitOfMeasure,
-        warehouseType: item.warehouseType,
-        categoryId: item.categoryId || 0,
-        minStockLevel: item.minStockLevel,
-        maxStockLevel: item.maxStockLevel,
-        isTool: item.isTool,
-        notes: item.notes || '',
-      });
+      if (item) {
+        setFormData({
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          unitOfMeasure: item.unitOfMeasure,
+          warehouseType: item.warehouseType,
+          categoryId: item.categoryId || 0,
+          minStockLevel: item.minStockLevel,
+          maxStockLevel: item.maxStockLevel,
+          isTool: item.isTool,
+          notes: item.notes || '',
+        });
       setHasInitialized(true);
       return;
     }
 
     if (!hasInitialized && categories.length > 0) {
       const defaultCategoryId =
+        categories[0]?.categoryId ??
         categories[0]?.id ??
-        // compatibility with different DTOs
         (categories[0] as any)?.category_id ??
         0;
 
@@ -110,18 +110,18 @@ export default function CreateItemMasterModal({
       });
       setHasInitialized(true);
     } else if (!hasInitialized && categories.length === 0) {
-      setFormData({
-        itemCode: '',
-        itemName: '',
-        unitOfMeasure: 'Cái',
-        warehouseType: 'NORMAL',
+        setFormData({
+          itemCode: '',
+          itemName: '',
+          unitOfMeasure: 'Cái',
+          warehouseType: 'NORMAL',
         categoryId: 0,
-        minStockLevel: 10,
-        maxStockLevel: 100,
-        isTool: false,
-        notes: '',
-      });
-    }
+          minStockLevel: 10,
+          maxStockLevel: 100,
+          isTool: false,
+          notes: '',
+        });
+      }
   }, [isOpen, item, categories, hasInitialized]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -134,6 +134,14 @@ export default function CreateItemMasterModal({
     }
     if (!formData.itemName.trim()) {
       toast.error('Tên vật tư là bắt buộc!');
+      return;
+    }
+    if (!formData.categoryId || formData.categoryId === 0) {
+      toast.error('Nhóm vật tư là bắt buộc!');
+      return;
+    }
+    if (!formData.unitOfMeasure.trim()) {
+      toast.error('Đơn vị tính là bắt buộc!');
       return;
     }
     if (formData.minStockLevel < 0) {
@@ -215,12 +223,20 @@ export default function CreateItemMasterModal({
                       Chưa có danh mục. Hãy tạo trong BE trước.
                     </div>
                   ) : (
-                    categories.map((cat) => {
-                      const optionId = cat.id ?? (cat as any).category_id ?? cat.name ?? 'cat';
+                    categories.map((cat, index) => {
+                      // Use categoryId from BE response (matching ItemCategoryResponse)
+                      const categoryId = cat.categoryId ?? cat.id ?? (cat as any).category_id;
+                      const categoryName = cat.categoryName ?? cat.name ?? `Danh mục ${index + 1}`;
+                      
+                      // Ensure unique key: use categoryId or fallback to index
+                      const optionKey = categoryId ?? `cat-${index}`;
+                      // For value, use categoryId (numeric) for proper form submission
+                      const optionValue = categoryId ?? `cat-${index}`;
+                      
                       return (
-                        <SelectItem key={optionId} value={String(optionId)}>
-                          {cat.name}
-                        </SelectItem>
+                        <SelectItem key={`category-${optionKey}-${index}`} value={String(optionValue)}>
+                          {categoryName}
+                    </SelectItem>
                       );
                     })
                   )}

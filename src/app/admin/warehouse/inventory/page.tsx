@@ -63,13 +63,14 @@ export default function InventoryPage() {
   });
 
   // Main Inventory Data - API V1
+  // Note: BE /api/v1/inventory/summary doesn't support search parameter, so we do client-side filtering
   const { data: inventoryPage, isLoading } = useQuery({
-    queryKey: ['inventorySummary', tabState, page, sortField, sortDirection],
+    queryKey: ['inventorySummary', tabState.activeFilter, page, sortField, sortDirection],
     queryFn: () => {
       const filter: any = {
-        search: tabState.searchQuery || undefined,
-        page,
-        size,
+        // search: tabState.searchQuery || undefined, // BE doesn't support this
+        page: 0, // Fetch all for client-side search
+        size: 1000, // Fetch large number to enable client-side filtering
         sort: `${sortField},${sortDirection}`,
       };
 
@@ -83,9 +84,23 @@ export default function InventoryPage() {
     },
   });
 
-  const inventory = Array.isArray(inventoryPage) ? inventoryPage : ((inventoryPage as any)?.content || []);
-  const totalPages = (inventoryPage as any)?.totalPages || 1;
-  const totalElements = (inventoryPage as any)?.totalElements || inventory.length;
+  // Client-side filtering by search query
+  const allInventory = Array.isArray(inventoryPage) ? inventoryPage : ((inventoryPage as any)?.content || []);
+  const filteredInventory = tabState.searchQuery
+    ? allInventory.filter((item: InventorySummary) => {
+        const searchLower = tabState.searchQuery.toLowerCase();
+        return (
+          item.itemCode?.toLowerCase().includes(searchLower) ||
+          item.itemName?.toLowerCase().includes(searchLower) ||
+          item.categoryName?.toLowerCase().includes(searchLower)
+        );
+      })
+    : allInventory;
+
+  // Client-side pagination
+  const totalElements = filteredInventory.length;
+  const totalPages = Math.ceil(totalElements / size);
+  const inventory = filteredInventory.slice(page * size, (page + 1) * size);
 
   // Delete mutation - API V1
   const deleteMutation = useMutation({
@@ -421,6 +436,11 @@ export default function InventoryPage() {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <div className="text-sm text-gray-600">
                     Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
+                    {tabState.searchQuery && (
+                      <span className="text-muted-foreground ml-2">
+                        (đã lọc theo: "{tabState.searchQuery}")
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

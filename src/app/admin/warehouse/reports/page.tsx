@@ -25,6 +25,7 @@ import {
   faCalendar,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryService } from '@/services/inventoryService';
+import { storageService, StorageTransaction } from '@/services/storageService';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 type ReportType = 'inventory' | 'transactions' | 'expiring' | 'loss';
@@ -64,26 +65,38 @@ export default function WarehouseReportsPage() {
     },
   });
 
-  // Mock transaction data (would come from real API)
-  const transactionData = {
-    imports: [
-      { date: '2025-11-20', items: 15, value: 45000000, supplier: 'Công ty A' },
-      { date: '2025-11-18', items: 8, value: 28000000, supplier: 'Công ty B' },
-      { date: '2025-11-15', items: 12, value: 36000000, supplier: 'Công ty C' },
-    ],
-    exports: [
-      { date: '2025-11-22', items: 10, value: 15000000, department: 'Phòng khám A' },
-      { date: '2025-11-21', items: 6, value: 8500000, department: 'Phòng khám B' },
-      { date: '2025-11-19', items: 8, value: 12000000, department: 'Phòng khám C' },
-    ],
-  };
-
-  // Mock loss records
-  const lossRecords = [
-    { date: '2025-11-20', itemName: 'Thuốc X', quantity: 5, reason: 'Hết hạn', value: 750000 },
-    { date: '2025-11-15', itemName: 'Vắc-xin Y', quantity: 3, reason: 'Hư hỏng', value: 900000 },
-    { date: '2025-11-10', itemName: 'Gạc y tế', quantity: 20, reason: 'Mất mát', value: 600000 },
-  ];
+  // Fetch transactions for reports
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ['transactionsReport', timeRange],
+    queryFn: async () => {
+      // Calculate date range based on timeRange
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (timeRange) {
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90days':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      // Fetch all transactions (BE will handle filtering by date if needed)
+      const allTransactions = await storageService.getAll({});
+      
+      // Filter by date range on client side
+      return allTransactions.filter((tx: StorageTransaction) => {
+        const txDate = new Date(tx.transactionDate);
+        return txDate >= startDate && txDate <= now;
+      });
+    },
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
