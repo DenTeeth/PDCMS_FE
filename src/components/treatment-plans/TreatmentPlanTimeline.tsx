@@ -196,7 +196,7 @@ export default function TreatmentPlanTimeline({
                                         {item.sequenceNumber}. {item.itemName}
                                       </p>
                                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                        {item.serviceCode && (
+                                      {item.serviceCode && (
                                           <span className="font-mono">{item.serviceCode}</span>
                                         )}
                                         {item.estimatedTimeMinutes && (
@@ -204,7 +204,7 @@ export default function TreatmentPlanTimeline({
                                             <Clock className="h-3 w-3" />
                                             {item.estimatedTimeMinutes} phút
                                           </span>
-                                        )}
+                                      )}
                                       </div>
                                     </div>
                                     <Badge 

@@ -7,7 +7,7 @@
 ##  API Endpoint
 
 ```
-GET /api/v3/warehouse/summary
+GET /api/v1/warehouse/summary
 ```
 
 ##  Features Implemented
@@ -115,7 +115,7 @@ WHERE item_master_id = ? AND is_base_unit = true
    - Fields: page, size, totalPages, totalItems, content
 
 3. **WarehouseV3Controller.java**
-   - New controller cho /api/v3/warehouse endpoints
+   - New controller cho /api/v1/warehouse endpoints
    - API 6.1: GET /summary endpoint
 
 ### Modified Files
@@ -136,37 +136,37 @@ WHERE item_master_id = ? AND is_base_unit = true
 ### Test 1: Lấy tất cả items (no filters)
 
 ```bash
-GET /api/v3/warehouse/summary?page=0&size=20
+GET /api/v1/warehouse/summary?page=0&size=20
 ```
 
 ### Test 2: Search theo tên
 
 ```bash
-GET /api/v3/warehouse/summary?search=gạc&page=0&size=20
+GET /api/v1/warehouse/summary?search=gạc&page=0&size=20
 ```
 
 ### Test 3: Filter theo stock status
 
 ```bash
-GET /api/v3/warehouse/summary?stockStatus=LOW_STOCK&page=0&size=20
+GET /api/v1/warehouse/summary?stockStatus=LOW_STOCK&page=0&size=20
 ```
 
 ### Test 4: Filter theo warehouse type
 
 ```bash
-GET /api/v3/warehouse/summary?warehouseType=NORMAL&page=0&size=20
+GET /api/v1/warehouse/summary?warehouseType=NORMAL&page=0&size=20
 ```
 
 ### Test 5: Filter theo category
 
 ```bash
-GET /api/v3/warehouse/summary?categoryId=5&page=0&size=20
+GET /api/v1/warehouse/summary?categoryId=5&page=0&size=20
 ```
 
 ### Test 6: Combined filters
 
 ```bash
-GET /api/v3/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType=COLD&categoryId=3&page=0&size=10
+GET /api/v1/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType=COLD&categoryId=3&page=0&size=10
 ```
 
 ##  Business Use Cases

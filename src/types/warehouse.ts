@@ -441,9 +441,23 @@ export interface StorageTransactionV3 {
   transactionDate: string; // LocalDateTime
   supplierId?: number; // For IMPORT only
   supplierName?: string;
+  invoiceNumber?: string;
+  exportType?: string;
   notes?: string;
   createdByName?: string;
   createdAt: string;
+  approvedByName?: string; // API 6.6: Approval workflow
+  approvedAt?: string; // API 6.6: Approval workflow
+  totalItems?: number;
+  totalValue?: number;
+  status?: string;
+  paymentStatus?: string;
+  paidAmount?: number;
+  remainingDebt?: number;
+  dueDate?: string;
+  relatedAppointmentId?: number;
+  relatedAppointmentCode?: string;
+  patientName?: string;
   items: StorageTransactionItemV3[];
   
   // Legacy fields
@@ -471,6 +485,8 @@ export interface StorageTransactionItemV3 {
   quantityChange: number; // Positive for IMPORT, Negative for EXPORT
   expiryDate?: string; // LocalDate (YYYY-MM-DD) - Added in BE fix for Issue #10
   notes?: string;
+  unitPrice?: number;
+  totalLineValue?: number;
   
   // Legacy fields
   transaction_item_id?: number;

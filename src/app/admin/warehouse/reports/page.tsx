@@ -87,14 +87,15 @@ export default function WarehouseReportsPage() {
           startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       }
       
-      // Fetch all transactions (BE will handle filtering by date if needed)
-      const allTransactions = await storageService.getAll({});
-      
-      // Filter by date range on client side
-      return allTransactions.filter((tx: StorageTransaction) => {
-        const txDate = new Date(tx.transactionDate);
-        return txDate >= startDate && txDate <= now;
+      const result = await storageService.getAll({
+        fromDate: startDate.toISOString().split('T')[0],
+        toDate: now.toISOString().split('T')[0],
+        page: 0,
+        size: 200,
+        sortBy: 'transactionDate',
+        sortDirection: 'desc',
       });
+      return result.content;
     },
   });
 

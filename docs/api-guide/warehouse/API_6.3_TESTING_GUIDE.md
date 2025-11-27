@@ -29,7 +29,7 @@ TOKEN="Bearer eyJhbGc..."
 
 ### 3. Base URL
 ```bash
-BASE_URL="http://localhost:8080/api/v3/warehouse/alerts/expiring"
+BASE_URL="http://localhost:8080/api/v1/warehouse/alerts/expiring"
 ```
 
 ---

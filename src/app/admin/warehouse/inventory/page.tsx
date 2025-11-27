@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Inventory Page - API V1 (Item Master Management)
- * ✅ Using /api/v1/inventory endpoints
+ * Inventory Page - Warehouse API 6.x (Item Master Management)
+ * ✅ Using /api/v1/warehouse endpoints for summary + items
  */
 
 import { useState } from 'react';
@@ -62,8 +62,8 @@ export default function InventoryPage() {
     queryFn: () => inventoryService.getStats(),
   });
 
-  // Main Inventory Data - API V1
-  // Note: BE /api/v1/inventory/summary doesn't support search parameter, so we do client-side filtering
+  // Main Inventory Data - Warehouse API 6.1
+  // Note: BE /api/v1/warehouse/summary doesn't support search parameter, so we do client-side filtering
   const { data: inventoryPage, isLoading } = useQuery({
     queryKey: ['inventorySummary', tabState.activeFilter, page, sortField, sortDirection],
     queryFn: () => {
