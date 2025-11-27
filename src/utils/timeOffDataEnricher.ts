@@ -7,6 +7,7 @@ import { TimeOffRequest } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
 import { WorkShift } from '@/types/workShift';
 import { differenceInDays } from 'date-fns';
+import { formatTimeToHHMM } from '@/lib/utils';
 
 export class TimeOffDataEnricher {
     /**
@@ -100,6 +101,6 @@ export class TimeOffDataEnricher {
         const shift = workShifts.find(s => s.workShiftId === shiftId);
         if (!shift) return shiftId;
 
-        return `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`;
+        return `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`;
     }
 }

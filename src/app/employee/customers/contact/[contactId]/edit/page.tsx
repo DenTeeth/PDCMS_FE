@@ -17,7 +17,7 @@ export default function EditContactPage() {
     const update = useUpdateContact();
     const del = useSoftDeleteContact();
     const { user } = useAuth();
-    const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
+    const canDelete = user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT');
 
     if (isLoading) return <div className="p-6 text-center">Loading...</div>;
 

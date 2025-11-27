@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [type, setType] = useState<"success" | "error" | null>(null);
-  
+
   const { login, error, clearError } = useAuth();
   const router = useRouter();
 
@@ -45,12 +46,12 @@ export default function Page() {
 
       setType("success");
       setNotice("Login successful! Redirecting...");
-      
+
       // The redirect will be handled by AuthRedirect component
     } catch (error) {
       // Show error toast
       toast.error(error instanceof Error ? error.message : "Login failed. Please try again.");
-      
+
       setType("error");
       setNotice(error instanceof Error ? error.message : "Login failed. Please try again.");
     } finally {
@@ -63,20 +64,24 @@ export default function Page() {
       <main className="min-h-screen bg-gradient-to-br from-accent via-white to-secondary text-foreground">
         <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 md:grid-cols-2">
           {/* Visual / Brand Panel (static, no effects) */}
-          <section className="relative hidden items-center justify-center p-10 md:flex">
+          <section className="relative hidden items-center justify-center p-10 md:flex bg-gradient-to-br from-[#8b5fbf]/10 to-[#1e3a5f]/10">
             <div className="relative z-10 max-w-md text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500 text-white shadow-lg">
-                {/* Tooth icon */}
-                <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
-                </svg>
+              <div className="mx-auto mb-3 flex items-center justify-center">
+                <Image
+                  src="/denteeth-logo.png"
+                  alt="DenTeeth Logo"
+                  width={400}
+                  height={160}
+                  className="w-auto h-40"
+                  priority
+                />
               </div>
-              <h2 className="mb-3 text-3xl font-bold tracking-tight text-sky-800">DenTeeth</h2>
-              <p className="mx-auto max-w-sm text-sky-900/70">
+              <h2 className="mb-3 text-3xl font-bold tracking-tight text-[#1e3a5f]">DenTeeth</h2>
+              <p className="mx-auto max-w-sm text-gray-700">
                 A modern solution for scheduling and managing dental clinics. Caring for smiles from the very first login.
               </p>
-              <div className="mt-6 inline-flex items-center gap-3 rounded-full bg-white/70 px-4 py-2 text-sm text-sky-900 shadow-sm backdrop-blur">
-                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <div className="mt-6 inline-flex items-center gap-3 rounded-full bg-white/70 px-4 py-2 text-sm text-[#1e3a5f] shadow-sm backdrop-blur">
+                <span className="inline-flex h-2 w-2 rounded-full bg-[#8b5fbf]" />
                 Patient data security
               </div>
             </div>
@@ -92,13 +97,15 @@ export default function Page() {
                   </svg>
                   Back
                 </Link>
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/15 text-purple-600">
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 6.5C19 3.46 16.54 1 13.5 1 12.02 1 10.68 1.59 9.74 2.55 8.8 1.59 7.46 1 5.98 1 2.94 1 .48 3.46.48 6.5c0 2.68 1.72 4.95 4.12 5.73 1.31.42 2.24 1.54 2.43 2.9l.51 3.67c.16 1.11 1.11 1.95 2.24 1.95s2.08-.84 2.24-1.95l.51-3.67c.19-1.36 1.12-2.48 2.43-2.9 2.4-.78 4.12-3.05 4.12-5.73Z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold tracking-wide text-slate-700">DenTeeth</span>
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/denteeth-logo.png"
+                    alt="DenTeeth Logo"
+                    width={240}
+                    height={90}
+                    className="h-20 w-auto"
+                    priority
+                  />
                 </div>
               </div>
 
@@ -123,7 +130,7 @@ export default function Page() {
                       placeholder="Enter your username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#8b5fbf] focus:ring-2 focus:ring-[#8b5fbf]/20"
                     />
                   </div>
                 </div>
@@ -144,20 +151,20 @@ export default function Page() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#8b5fbf] focus:ring-2 focus:ring-[#8b5fbf]/20"
                     />
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-300" />
+                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#8b5fbf] focus:ring-[#8b5fbf]/30" />
                     Remember me
                   </label>
-                  <Link href="/forgot-password" className="text-sm text-purple-700 hover:text-purple-800 font-">Forgot password?</Link>
+                  <Link href="/forgot-password" className="text-sm text-[#8b5fbf] hover:text-[#7a4eae] font-medium">Forgot password?</Link>
                 </div>
 
-                <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-white-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black-500/20 transition hover:from-purple-500 hover:to-white -500 disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#8b5fbf] px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#7a4eae] transition disabled:cursor-not-allowed disabled:opacity-60">
                   <span>{loading ? "Signing in..." : "Sign in"}</span>
                   <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
@@ -173,8 +180,8 @@ export default function Page() {
 
                 <p className="text-center text-sm text-slate-500">
                   Don&apos;t have an account? {""}
-                  <br/>
-                  Please contact: <span className="text-purple-700 font-bold">01234568</span>
+                  <br />
+                  Please contact: <span className="text-[#8b5fbf] font-bold">01234568</span>
                 </p>
               </form>
 
