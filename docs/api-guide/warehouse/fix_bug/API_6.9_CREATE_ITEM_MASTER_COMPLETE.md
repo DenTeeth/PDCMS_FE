@@ -1,8 +1,8 @@
 # API 6.9: Create Item Master - Complete Documentation
 
-**Version:** 1.0  
-**Date:** November 27, 2025  
-**Author:** Backend Team  
+**Version:** 1.0
+**Date:** November 27, 2025
+**Author:** Backend Team
 **Status:** Implementation Complete
 
 ---
@@ -40,6 +40,7 @@
 ### Business Context
 
 This API is essential for:
+
 - **Inventory Managers:** Adding new medications, consumables, and equipment
 - **Pharmacists:** Setting up prescription-required medications with shelf life
 - **Clinic Administrators:** Configuring stock alerts for critical items
@@ -70,6 +71,7 @@ Required: JWT Bearer Token
 ### Authorization
 
 Requires one of the following authorities:
+
 - `ROLE_ADMIN`
 - `CREATE_ITEMS`
 - `MANAGE_WAREHOUSE`
@@ -124,29 +126,29 @@ Requires one of the following authorities:
 
 #### Root Level Fields
 
-| Field | Type | Required | Constraints | Description |
-|-------|------|----------|-------------|-------------|
-| `itemCode` | String | Yes | 3-20 chars, Pattern: `^[A-Z0-9-]{3,20}$` | Unique SKU code (uppercase, numbers, hyphens only) |
-| `itemName` | String | Yes | 1-255 chars | Display name of the item |
-| `description` | String | No | Max 1000 chars | Detailed description |
-| `categoryId` | Long | Yes | Must exist in `item_categories` | Foreign key to item category |
-| `warehouseType` | Enum | Yes | `NORMAL` or `COLD` | Storage temperature requirement |
-| `minStockLevel` | Integer | Yes | >= 0 | Minimum stock alert threshold |
-| `maxStockLevel` | Integer | Yes | > minStockLevel | Maximum stock alert threshold |
-| `isPrescriptionRequired` | Boolean | No | Default: `false` | Healthcare compliance flag |
-| `defaultShelfLifeDays` | Integer | No | 1-3650 or `null` | Default shelf life (null = non-perishable) |
-| `units` | Array | Yes | Min 1 item, Max 10 items | Unit hierarchy list |
+| Field                    | Type    | Required | Constraints                              | Description                                        |
+| ------------------------ | ------- | -------- | ---------------------------------------- | -------------------------------------------------- |
+| `itemCode`               | String  | Yes      | 3-20 chars, Pattern: `^[A-Z0-9-]{3,20}$` | Unique SKU code (uppercase, numbers, hyphens only) |
+| `itemName`               | String  | Yes      | 1-255 chars                              | Display name of the item                           |
+| `description`            | String  | No       | Max 1000 chars                           | Detailed description                               |
+| `categoryId`             | Long    | Yes      | Must exist in `item_categories`          | Foreign key to item category                       |
+| `warehouseType`          | Enum    | Yes      | `NORMAL` or `COLD`                       | Storage temperature requirement                    |
+| `minStockLevel`          | Integer | Yes      | >= 0                                     | Minimum stock alert threshold                      |
+| `maxStockLevel`          | Integer | Yes      | > minStockLevel                          | Maximum stock alert threshold                      |
+| `isPrescriptionRequired` | Boolean | No       | Default: `false`                         | Healthcare compliance flag                         |
+| `defaultShelfLifeDays`   | Integer | No       | 1-3650 or `null`                         | Default shelf life (null = non-perishable)         |
+| `units`                  | Array   | Yes      | Min 1 item, Max 10 items                 | Unit hierarchy list                                |
 
 #### Unit Request Fields
 
-| Field | Type | Required | Constraints | Description |
-|-------|------|----------|-------------|-------------|
-| `unitName` | String | Yes | 1-50 chars, unique within item | Display name (e.g., "Box", "Strip", "Pill") |
-| `conversionRate` | Integer | Yes | >= 1, base unit must = 1 | Conversion multiplier to base unit |
-| `isBaseUnit` | Boolean | Yes | Exactly ONE must be `true` | Indicates smallest unit |
-| `displayOrder` | Integer | Yes | >= 1 | Sort order (1 = largest unit) |
-| `isDefaultImportUnit` | Boolean | No | Default: `false` | UX: Pre-select for import transactions |
-| `isDefaultExportUnit` | Boolean | No | Default: `false` | UX: Pre-select for export transactions |
+| Field                 | Type    | Required | Constraints                    | Description                                 |
+| --------------------- | ------- | -------- | ------------------------------ | ------------------------------------------- |
+| `unitName`            | String  | Yes      | 1-50 chars, unique within item | Display name (e.g., "Box", "Strip", "Pill") |
+| `conversionRate`      | Integer | Yes      | >= 1, base unit must = 1       | Conversion multiplier to base unit          |
+| `isBaseUnit`          | Boolean | Yes      | Exactly ONE must be `true`     | Indicates smallest unit                     |
+| `displayOrder`        | Integer | Yes      | >= 1                           | Sort order (1 = largest unit)               |
+| `isDefaultImportUnit` | Boolean | No       | Default: `false`               | UX: Pre-select for import transactions      |
+| `isDefaultExportUnit` | Boolean | No       | Default: `false`               | UX: Pre-select for export transactions      |
 
 ### Warehouse Type Values
 
@@ -176,16 +178,16 @@ COLD: Refrigerated storage (2-8°C)
 
 ### Response Field Descriptions
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `itemMasterId` | Long | Unique identifier for the created item |
-| `itemCode` | String | SKU code of the item |
-| `itemName` | String | Display name of the item |
-| `baseUnitName` | String | Name of the base unit (extracted from units array) |
-| `totalQuantity` | Integer | Initial stock quantity (always 0 on creation) |
-| `isActive` | Boolean | Active status (always true on creation) |
-| `createdAt` | DateTime | Timestamp of creation (ISO 8601 format) |
-| `createdBy` | String | Username of the creator (currently hardcoded as "SYSTEM") |
+| Field           | Type     | Description                                               |
+| --------------- | -------- | --------------------------------------------------------- |
+| `itemMasterId`  | Long     | Unique identifier for the created item                    |
+| `itemCode`      | String   | SKU code of the item                                      |
+| `itemName`      | String   | Display name of the item                                  |
+| `baseUnitName`  | String   | Name of the base unit (extracted from units array)        |
+| `totalQuantity` | Integer  | Initial stock quantity (always 0 on creation)             |
+| `isActive`      | Boolean  | Active status (always true on creation)                   |
+| `createdAt`     | DateTime | Timestamp of creation (ISO 8601 format)                   |
+| `createdBy`     | String   | Username of the creator (currently hardcoded as "SYSTEM") |
 
 ---
 
@@ -198,10 +200,12 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** Item code must be unique and follow pattern `^[A-Z0-9-]{3,20}$`
 
 **Examples:**
+
 - Valid: `AMOX-500MG`, `GLOVE-L`, `SYR-5ML`, `MASK-N95`
 - Invalid: `amox-500mg` (lowercase), `AB` (too short), `ITEM_CODE` (underscore), `TOOLONGITEMCODENAME123` (too long)
 
 **Error Response:**
+
 ```json
 {
   "status": 409,
@@ -215,11 +219,13 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** `minStockLevel < maxStockLevel`
 
 **Examples:**
+
 - Valid: min=100, max=1000
 - Invalid: min=500, max=500 (equal)
 - Invalid: min=1000, max=500 (min > max)
 
 **Error Response:**
+
 ```json
 {
   "status": 400,
@@ -233,6 +239,7 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** Exactly ONE unit must have `isBaseUnit = true` and `conversionRate = 1`
 
 **Error Response (No base unit):**
+
 ```json
 {
   "status": 400,
@@ -242,6 +249,7 @@ COLD: Refrigerated storage (2-8°C)
 ```
 
 **Error Response (Multiple base units):**
+
 ```json
 {
   "status": 400,
@@ -251,6 +259,7 @@ COLD: Refrigerated storage (2-8°C)
 ```
 
 **Error Response (Wrong conversion rate):**
+
 ```json
 {
   "status": 400,
@@ -264,11 +273,13 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** Unit names must be unique within the same item (case-insensitive)
 
 **Examples:**
+
 - Valid: ["Box", "Strip", "Pill"]
 - Invalid: ["Box", "box", "BOX"] (duplicates)
 - Invalid: ["Strip", "Strip", "Pill"] (exact duplicate)
 
 **Error Response:**
+
 ```json
 {
   "status": 400,
@@ -282,6 +293,7 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** `categoryId` must reference an existing item category
 
 **Error Response:**
+
 ```json
 {
   "status": 404,
@@ -296,10 +308,12 @@ COLD: Refrigerated storage (2-8°C)
 **Rule:** If provided, `defaultShelfLifeDays` must be between 1 and 3650 (10 years)
 
 **Examples:**
+
 - Valid: 30, 365, 730, 3650, null
 - Invalid: 0, -10, 3651, 10000
 
 **Error Response:**
+
 ```json
 {
   "status": 400,
@@ -328,15 +342,15 @@ All errors follow the RFC 7807 Problem Details format:
 
 ### HTTP Status Codes
 
-| Status Code | Scenario | Example |
-|-------------|----------|---------|
-| **201 Created** | Item master created successfully | See Success Response |
-| **400 Bad Request** | Validation failure | Min >= Max, duplicate unit names, missing base unit |
-| **401 Unauthorized** | Missing or invalid JWT token | Token expired |
-| **403 Forbidden** | Insufficient permissions | User lacks CREATE_ITEMS authority |
-| **404 Not Found** | Category does not exist | Invalid categoryId |
-| **409 Conflict** | Item code already exists | Duplicate SKU code |
-| **500 Internal Server Error** | Database connection failure | Server-side error |
+| Status Code                   | Scenario                         | Example                                             |
+| ----------------------------- | -------------------------------- | --------------------------------------------------- |
+| **201 Created**               | Item master created successfully | See Success Response                                |
+| **400 Bad Request**           | Validation failure               | Min >= Max, duplicate unit names, missing base unit |
+| **401 Unauthorized**          | Missing or invalid JWT token     | Token expired                                       |
+| **403 Forbidden**             | Insufficient permissions         | User lacks CREATE_ITEMS authority                   |
+| **404 Not Found**             | Category does not exist          | Invalid categoryId                                  |
+| **409 Conflict**              | Item code already exists         | Duplicate SKU code                                  |
+| **500 Internal Server Error** | Database connection failure      | Server-side error                                   |
 
 ### Validation Error Response (400)
 
@@ -377,14 +391,14 @@ MANAGE_WAREHOUSE
 
 ### Role-Permission Matrix
 
-| Role | Has Permission | Notes |
-|------|----------------|-------|
-| Admin | Yes | Full system access |
-| Inventory Manager | Yes | Primary user for this API |
-| Warehouse Manager | Yes | Through MANAGE_WAREHOUSE authority |
-| Accountant | No | View-only access |
-| Doctor | No | Cannot create items |
-| Receptionist | No | Cannot create items |
+| Role              | Has Permission | Notes                              |
+| ----------------- | -------------- | ---------------------------------- |
+| Admin             | Yes            | Full system access                 |
+| Inventory Manager | Yes            | Primary user for this API          |
+| Warehouse Manager | Yes            | Through MANAGE_WAREHOUSE authority |
+| Accountant        | No             | View-only access                   |
+| Doctor            | No             | Cannot create items                |
+| Receptionist      | No             | Cannot create items                |
 
 ### Permission Configuration
 
@@ -392,13 +406,14 @@ The `CREATE_ITEMS` permission is defined in seed data:
 
 ```sql
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order)
-VALUES ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 
+VALUES ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE',
         'Create new item masters with unit hierarchy', 271);
 ```
 
 ### Testing RBAC
 
 **Valid Request (with CREATE_ITEMS):**
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items \
   -H "Authorization: Bearer <token_with_CREATE_ITEMS>" \
@@ -409,6 +424,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 **Expected:** 201 Created
 
 **Invalid Request (without permission):**
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items \
   -H "Authorization: Bearer <token_without_permission>" \
@@ -427,6 +443,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 **Scenario:** Pharmacist adds a new antibiotic to inventory
 
 **Request:**
+
 ```json
 {
   "itemCode": "AMOX-500MG",
@@ -460,6 +477,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 ```
 
 **Business Rules Applied:**
+
 - COLD storage required
 - Prescription flag enforced
 - 2-year shelf life
@@ -472,6 +490,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 **Scenario:** Inventory manager adds disposable gloves
 
 **Request:**
+
 ```json
 {
   "itemCode": "GLOVE-L-NITRILE",
@@ -513,6 +532,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 ```
 
 **Business Rules Applied:**
+
 - No prescription required
 - No shelf life (non-perishable)
 - 3-level unit hierarchy (Carton -> Box -> Piece)
@@ -525,6 +545,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 **Scenario:** Manager adds reusable dental mirrors
 
 **Request:**
+
 ```json
 {
   "itemCode": "MIRROR-DEN-5MM",
@@ -550,6 +571,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items \
 ```
 
 **Business Rules Applied:**
+
 - Single unit (no conversion needed)
 - Non-perishable equipment
 - Lower stock levels (expensive item)
@@ -575,7 +597,7 @@ interface CreateItemMasterRequest {
   itemName: string;
   description?: string;
   categoryId: number;
-  warehouseType: 'NORMAL' | 'COLD';
+  warehouseType: "NORMAL" | "COLD";
   minStockLevel: number;
   maxStockLevel: number;
   isPrescriptionRequired?: boolean;
@@ -597,18 +619,18 @@ interface CreateItemMasterResponse {
 async function createItemMaster(
   data: CreateItemMasterRequest
 ): Promise<CreateItemMasterResponse> {
-  const response = await fetch('/api/v1/warehouse/items', {
-    method: 'POST',
+  const response = await fetch("/api/v1/warehouse/items", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}`
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.detail || 'Failed to create item master');
+    throw new Error(error.detail || "Failed to create item master");
   }
 
   return response.json();
@@ -617,35 +639,35 @@ async function createItemMaster(
 // Usage
 try {
   const result = await createItemMaster({
-    itemCode: 'AMOX-500MG',
-    itemName: 'Amoxicillin 500mg',
+    itemCode: "AMOX-500MG",
+    itemName: "Amoxicillin 500mg",
     categoryId: 1,
-    warehouseType: 'COLD',
+    warehouseType: "COLD",
     minStockLevel: 100,
     maxStockLevel: 1000,
     isPrescriptionRequired: true,
     defaultShelfLifeDays: 730,
     units: [
       {
-        unitName: 'Box',
+        unitName: "Box",
         conversionRate: 100,
         isBaseUnit: false,
         displayOrder: 1,
-        isDefaultImportUnit: true
+        isDefaultImportUnit: true,
       },
       {
-        unitName: 'Capsule',
+        unitName: "Capsule",
         conversionRate: 1,
         isBaseUnit: true,
         displayOrder: 2,
-        isDefaultExportUnit: true
-      }
-    ]
+        isDefaultExportUnit: true,
+      },
+    ],
   });
-  
-  console.log('Created item:', result.itemMasterId);
+
+  console.log("Created item:", result.itemMasterId);
 } catch (error) {
-  console.error('Failed to create item:', error.message);
+  console.error("Failed to create item:", error.message);
 }
 ```
 
@@ -657,39 +679,43 @@ function validateItemMasterForm(data: CreateItemMasterRequest): string[] {
 
   // Item code format
   if (!/^[A-Z0-9-]{3,20}$/.test(data.itemCode)) {
-    errors.push('Item code must be 3-20 characters (uppercase, numbers, hyphens only)');
+    errors.push(
+      "Item code must be 3-20 characters (uppercase, numbers, hyphens only)"
+    );
   }
 
   // Stock levels
   if (data.minStockLevel >= data.maxStockLevel) {
-    errors.push('Min stock level must be less than max stock level');
+    errors.push("Min stock level must be less than max stock level");
   }
 
   // Shelf life range
-  if (data.defaultShelfLifeDays !== undefined && 
-      data.defaultShelfLifeDays !== null &&
-      (data.defaultShelfLifeDays < 1 || data.defaultShelfLifeDays > 3650)) {
-    errors.push('Shelf life must be between 1 and 3650 days');
+  if (
+    data.defaultShelfLifeDays !== undefined &&
+    data.defaultShelfLifeDays !== null &&
+    (data.defaultShelfLifeDays < 1 || data.defaultShelfLifeDays > 3650)
+  ) {
+    errors.push("Shelf life must be between 1 and 3650 days");
   }
 
   // Unit validations
   if (data.units.length === 0) {
-    errors.push('At least one unit is required');
+    errors.push("At least one unit is required");
   }
 
-  const baseUnits = data.units.filter(u => u.isBaseUnit);
+  const baseUnits = data.units.filter((u) => u.isBaseUnit);
   if (baseUnits.length !== 1) {
-    errors.push('Exactly one base unit is required');
+    errors.push("Exactly one base unit is required");
   }
 
   if (baseUnits.length === 1 && baseUnits[0].conversionRate !== 1) {
-    errors.push('Base unit must have conversion rate = 1');
+    errors.push("Base unit must have conversion rate = 1");
   }
 
-  const unitNames = data.units.map(u => u.unitName.toLowerCase());
+  const unitNames = data.units.map((u) => u.unitName.toLowerCase());
   const uniqueNames = new Set(unitNames);
   if (unitNames.length !== uniqueNames.size) {
-    errors.push('Unit names must be unique');
+    errors.push("Unit names must be unique");
   }
 
   return errors;
@@ -705,11 +731,13 @@ function validateItemMasterForm(data: CreateItemMasterRequest): string[] {
 **Purpose:** Track medications that require doctor prescriptions
 
 **Legal Requirements:**
+
 - All Schedule II-V controlled substances must have `isPrescriptionRequired = true`
 - Antibiotics typically require prescriptions
 - Over-the-counter items should have `isPrescriptionRequired = false`
 
 **System Behavior:**
+
 - When exporting items with `isPrescriptionRequired = true`, system should validate prescription exists
 - Audit logs should track who dispensed prescription items
 - Reports should separate prescription vs. OTC items
@@ -719,12 +747,14 @@ function validateItemMasterForm(data: CreateItemMasterRequest): string[] {
 **Purpose:** Prevent dispensing expired medications
 
 **Best Practices:**
+
 - Set realistic shelf life based on manufacturer specifications
 - Medications: 1-3 years (365-1095 days)
 - Perishable supplies: 1-6 months (30-180 days)
 - Non-perishable equipment: `null` (no expiration)
 
 **System Behavior:**
+
 - When creating batches, expiry date = import date + defaultShelfLifeDays
 - System alerts when items approach expiration
 - FIFO (First In, First Out) logic uses expiry dates
@@ -732,12 +762,14 @@ function validateItemMasterForm(data: CreateItemMasterRequest): string[] {
 ### Audit Trail
 
 **Logged Information:**
+
 - Who created the item master
 - When it was created
 - All validation results
 - Any errors encountered
 
 **Compliance Reports:**
+
 - List of prescription-required items
 - Items with upcoming expirations
 - Stock level violations (below min or above max)
@@ -755,6 +787,7 @@ itemUnitRepository.saveAll(units);
 ```
 
 **Performance Metrics:**
+
 - Single transaction for all units
 - Reduced database round trips
 - ~50ms for 3 units vs. ~150ms with individual saves
@@ -790,6 +823,7 @@ CREATE INDEX idx_item_units_item_master ON item_units(item_master_id);
 ## Changelog
 
 ### Version 1.0 (November 27, 2025)
+
 - Initial implementation
 - Support for unit hierarchy
 - Healthcare compliance fields
@@ -801,6 +835,7 @@ CREATE INDEX idx_item_units_item_master ON item_units(item_master_id);
 ## Support
 
 For issues or questions:
+
 - Technical Support: backend-team@dentalclinic.com
 - API Documentation: https://api.dentalclinic.com/docs
 - Issue Tracker: https://github.com/dentalclinic/api/issues

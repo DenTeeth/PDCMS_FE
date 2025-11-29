@@ -10,6 +10,8 @@ import type {
   CreateExportTransactionDto,
   ExportTransactionResponse,
   BatchResponse,
+  ExpiringAlertsResponse,
+  ExpiringAlertsFilter,
 } from '@/types/warehouse';
 
 const api = apiClient.getAxiosInstance();
@@ -89,26 +91,61 @@ export interface InventoryStats {
   normalStorageItems?: number;
 }
 
+export interface ItemUnitRequest {
+  unitName: string;
+  conversionRate: number;
+  isBaseUnit: boolean;
+  displayOrder: number;
+  isDefaultImportUnit?: boolean;
+  isDefaultExportUnit?: boolean;
+}
+
 export interface CreateItemMasterRequest {
   itemCode: string;
   itemName: string;
+  description?: string;
   categoryId: number;
-  unitOfMeasure: string;
   warehouseType: 'COLD' | 'NORMAL';
   minStockLevel: number;
   maxStockLevel: number;
-  isTool: boolean;
+  isPrescriptionRequired?: boolean;
+  defaultShelfLifeDays?: number;
+  units: ItemUnitRequest[]; // Required - must have at least 1 unit with isBaseUnit=true
   notes?: string;
+  // Legacy fields for backward compatibility
+  unitOfMeasure?: string;
+  isTool?: boolean;
 }
 
 export interface UpdateItemMasterRequest {
   itemName?: string;
+  description?: string;
   categoryId?: number;
-  unitOfMeasure?: string;
+  warehouseType?: 'COLD' | 'NORMAL';
   minStockLevel?: number;
   maxStockLevel?: number;
-  isTool?: boolean;
+  isPrescriptionRequired?: boolean;
+  defaultShelfLifeDays?: number;
+  units?: ItemUnitRequest[]; // Optional - for updating unit hierarchy (Safety Lock applies)
   notes?: string;
+  // Legacy fields for backward compatibility
+  unitOfMeasure?: string;
+  isTool?: boolean;
+}
+
+export interface UpdateItemMasterResponse {
+  itemMasterId: number;
+  itemCode: string;
+  itemName: string;
+  safetyLockApplied: boolean; // Indicates if Safety Lock was active during update
+  units: Array<{
+    unitId: number;
+    unitName: string;
+    conversionRate: number;
+    isBaseUnit: boolean;
+    displayOrder: number;
+    isActive: boolean;
+  }>;
 }
 
 export interface InventoryFilter {
@@ -223,8 +260,11 @@ export const inventoryService = {
 
       const content = (raw.content || raw.data || []).map(mapItem);
       return {
-        ...raw,
         content,
+        totalElements: raw.totalItems ?? raw.totalItems ?? content.length,
+        totalPages: raw.totalPages ?? raw.total_pages ?? 1,
+        size: raw.size ?? content.length,
+        number: raw.page ?? raw.number ?? 0,
       };
     } catch (error: any) {
       console.error('❌ Get inventory summary error:', error.response?.data || error.message);
@@ -299,6 +339,69 @@ export const inventoryService = {
   },
 
   /**
+   * GET /api/v1/warehouse/alerts/expiring - Lấy danh sách cảnh báo hết hạn (API 6.3)
+   */
+  getExpiringAlerts: async (filter?: ExpiringAlertsFilter): Promise<ExpiringAlertsResponse> => {
+    try {
+      const params: Record<string, any> = {
+        days: filter?.days ?? 30, // Default 30 days
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 20,
+      };
+
+      if (filter?.categoryId) params.categoryId = filter.categoryId;
+      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+      if (filter?.statusFilter) params.statusFilter = filter.statusFilter;
+
+      const response = await api.get('/warehouse/alerts/expiring', { params });
+      const raw = response.data;
+
+      // Handle BE response structure (may be wrapped in data field)
+      const payload = raw.data || raw;
+
+      // Map response to match ExpiringAlertsResponse type
+      const mapped: ExpiringAlertsResponse = {
+        reportDate: payload.reportDate || payload.report_date || new Date().toISOString(),
+        thresholdDays: payload.thresholdDays || payload.threshold_days || params.days,
+        stats: {
+          totalAlerts: payload.stats?.totalAlerts ?? payload.stats?.total_alerts ?? 0,
+          expiredCount: payload.stats?.expiredCount ?? payload.stats?.expired_count ?? 0,
+          criticalCount: payload.stats?.criticalCount ?? payload.stats?.critical_count ?? 0,
+          expiringSoonCount: payload.stats?.expiringSoonCount ?? payload.stats?.expiring_soon_count ?? 0,
+          totalQuantity: payload.stats?.totalQuantity ?? payload.stats?.total_quantity ?? 0,
+        },
+        meta: {
+          page: payload.meta?.page ?? payload.page ?? params.page,
+          size: payload.meta?.size ?? payload.size ?? params.size,
+          totalPages: payload.meta?.totalPages ?? payload.meta?.total_pages ?? payload.totalPages ?? payload.total_pages ?? 0,
+          totalElements: payload.meta?.totalElements ?? payload.meta?.total_elements ?? payload.totalElements ?? payload.total_elements ?? 0,
+        },
+        alerts: (payload.alerts || []).map((alert: any) => ({
+          batchId: alert.batchId ?? alert.batch_id,
+          itemCode: alert.itemCode ?? alert.item_code,
+          itemName: alert.itemName ?? alert.item_name,
+          categoryName: alert.categoryName ?? alert.category_name,
+          warehouseType: alert.warehouseType ?? alert.warehouse_type ?? 'NORMAL',
+          lotNumber: alert.lotNumber ?? alert.lot_number,
+          binLocation: alert.binLocation ?? alert.bin_location,
+          quantityOnHand: alert.quantityOnHand ?? alert.quantity_on_hand ?? 0,
+          unitName: alert.unitName ?? alert.unit_name,
+          expiryDate: alert.expiryDate ?? alert.expiry_date,
+          daysRemaining: alert.daysRemaining ?? alert.days_remaining ?? 0,
+          status: alert.status,
+          supplierName: alert.supplierName ?? alert.supplier_name,
+        })),
+      };
+
+      console.log('✅ Get expiring alerts:', mapped);
+      return mapped;
+    } catch (error: any) {
+      console.error('❌ Get expiring alerts error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
    * POST /api/v1/warehouse/items - Tạo vật tư mới
    */
   create: async (data: CreateItemMasterRequest): Promise<ItemMasterV1> => {
@@ -313,15 +416,34 @@ export const inventoryService = {
   },
 
   /**
-   * PUT /api/v1/warehouse/items/{id} - Cập nhật vật tư
+   * API 6.10 - PUT /api/v1/warehouse/items/{id} - Cập nhật vật tư với Safety Lock
+   * 
+   * Safety Lock: Blocks dangerous changes when stock > 0
+   * - BLOCKED: Change conversion rate, change isBaseUnit flag, hard delete units
+   * - ALLOWED: Rename units, add new units, change displayOrder, soft delete units
+   * 
+   * @throws 409 CONFLICT if Safety Lock violation occurs
    */
-  update: async (id: number, data: UpdateItemMasterRequest): Promise<ItemMasterV1> => {
+  update: async (id: number, data: UpdateItemMasterRequest): Promise<UpdateItemMasterResponse> => {
     try {
-      const response = await api.put<ItemMasterV1>(`/warehouse/items/${id}`, data);
+      const response = await api.put<UpdateItemMasterResponse>(`/warehouse/items/${id}`, data);
       console.log('✅ Update item:', response.data);
+      
+      // Show warning if Safety Lock was applied
+      if (response.data.safetyLockApplied) {
+        console.warn('⚠️ Safety Lock was applied - some changes may have been blocked due to existing inventory');
+      }
+      
       return response.data;
     } catch (error: any) {
       console.error('❌ Update item error:', error.response?.data || error.message);
+      
+      // Handle Safety Lock errors (409 CONFLICT)
+      if (error.response?.status === 409) {
+        const errorMessage = error.response?.data?.message || 'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho. Vui lòng kiểm tra lại.';
+        throw new Error(errorMessage);
+      }
+      
       throw error;
     }
   },

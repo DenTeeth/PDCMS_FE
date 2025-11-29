@@ -1,8 +1,8 @@
 # API 6.7 - Transaction Detail (Xem Chi tiết Giao dịch Kho)
 
-**Date:** November 27, 2025  
-**Status:** ✅ Production Ready  
-**Version:** v1  
+**Date:** November 27, 2025
+**Status:** [YES] Production Ready
+**Version:** v1
 **Endpoint:** `GET /api/v1/warehouse/transactions/{id}`
 
 ---
@@ -10,6 +10,7 @@
 ## 📋 Overview
 
 API 6.7 cho phép xem chi tiết đầy đủ của một phiếu Nhập/Xuất/Điều chỉnh kho, bao gồm:
+
 - Thông tin header (supplier, invoice, appointment)
 - Danh sách chi tiết tất cả items với batch và số lượng
 - Thông tin tự động unpacking (nếu có)
@@ -21,15 +22,19 @@ API 6.7 cho phép xem chi tiết đầy đủ của một phiếu Nhập/Xuất/
 ## 🎯 Use Cases
 
 ### 1. **Xem chi tiết phiếu từ danh sách**
+
 User click vào một dòng trong API 6.6 (Transaction History List) → Hiển thị đầy đủ chi tiết phiếu
 
 ### 2. **Kiểm tra items đã xuất trong ca điều trị**
+
 Doctor/Receptionist xem phiếu xuất của một ca bệnh để biết vật tư nào đã được sử dụng
 
 ### 3. **Đối soát hóa đơn nhà cung cấp**
+
 Accountant kiểm tra chi tiết phiếu nhập để đối chiếu với invoice từ supplier
 
 ### 4. **Audit trail - Truy vết lô hàng**
+
 Khi có sự cố (vật tư lỗi, hết hạn), truy vết batch nào đã được xuất/nhập trong phiếu nào
 
 ---
@@ -37,39 +42,45 @@ Khi có sự cố (vật tư lỗi, hết hạn), truy vết batch nào đã đ�
 ## 🔐 Authorization
 
 ### Required Permissions:
+
 - **VIEW_WAREHOUSE** (Bắt buộc) - Xem thông tin phiếu và items
 - **VIEW_COST** (Tùy chọn) - Xem giá trị tài chính
 
 ### Roles:
-- ✅ **Admin** - Full access (bao gồm financial data)
-- ✅ **Warehouse Manager** - Full access với VIEW_COST
-- ✅ **Warehouse Staff** - View-only, không có financial data
-- ✅ **Accountant** - Full access với VIEW_COST
-- ✅ **Receptionist** - View-only cho export transactions
-- ✅ **Doctor** - View-only cho export transactions liên quan đến ca bệnh của mình
-- ❌ **Patient** - Không có quyền truy cập
+
+- [YES] **Admin** - Full access (bao gồm financial data)
+- [YES] **Warehouse Manager** - Full access với VIEW_COST
+- [YES] **Warehouse Staff** - View-only, không có financial data
+- [YES] **Accountant** - Full access với VIEW_COST
+- [YES] **Receptionist** - View-only cho export transactions
+- [YES] **Doctor** - View-only cho export transactions liên quan đến ca bệnh của mình
+- [NO] **Patient** - Không có quyền truy cập
 
 ---
 
 ## 📡 HTTP Request
 
 ### Endpoint
+
 ```
 GET /api/v1/warehouse/transactions/{id}
 ```
 
 ### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | Long | ✅ Yes | ID của phiếu giao dịch (transaction_id) |
+
+| Parameter | Type | Required | Description                             |
+| --------- | ---- | -------- | --------------------------------------- |
+| `id`      | Long | [YES] Yes   | ID của phiếu giao dịch (transaction_id) |
 
 ### Headers
+
 ```http
 Authorization: Bearer {JWT_TOKEN}
 Content-Type: application/json
 ```
 
 ### Example Request
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
@@ -98,7 +109,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
     "createdBy": "Nguyễn Văn A",
     "createdAt": "2025-11-27T09:00:00",
     "totalItems": 3,
-    "totalValue": 15750000.00,
+    "totalValue": 15750000.0,
     "items": [
       {
         "itemCode": "MAT-001",
@@ -109,8 +120,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "expiryDate": "2026-12-31",
         "quantityChange": 100,
         "unitName": "Hộp",
-        "purchasePrice": 50000.00,
-        "totalLineValue": 5000000.00,
+        "purchasePrice": 50000.0,
+        "totalLineValue": 5000000.0,
         "binLocation": "Kệ A - Tầng 2",
         "currentStock": 250
       },
@@ -123,8 +134,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "expiryDate": "2027-06-30",
         "quantityChange": 200,
         "unitName": "Gói",
-        "purchasePrice": 25000.00,
-        "totalLineValue": 5000000.00,
+        "purchasePrice": 25000.0,
+        "totalLineValue": 5000000.0,
         "binLocation": "Kệ B - Tầng 1",
         "currentStock": 450
       },
@@ -137,8 +148,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "expiryDate": "2026-08-31",
         "quantityChange": 50,
         "unitName": "Ống",
-        "purchasePrice": 115000.00,
-        "totalLineValue": 5750000.00,
+        "purchasePrice": 115000.0,
+        "totalLineValue": 5750000.0,
         "binLocation": "Tủ lạnh C - Ngăn 3",
         "currentStock": 85
       }
@@ -166,7 +177,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
     "createdBy": "Trần Thị B",
     "createdAt": "2025-11-27T13:45:00",
     "totalItems": 4,
-    "totalValue": 3250000.00,
+    "totalValue": 3250000.0,
     "items": [
       {
         "itemCode": "MAT-001",
@@ -177,8 +188,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "binLocation": "Kệ A - Tầng 2",
         "quantityChange": -5,
         "unitName": "Chiếc",
-        "unitPrice": 5000.00,
-        "totalLineValue": 25000.00,
+        "unitPrice": 5000.0,
+        "totalLineValue": 25000.0,
         "unpackingInfo": {
           "wasUnpacked": true,
           "parentBatchId": 244,
@@ -196,8 +207,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "binLocation": "Tủ lạnh C - Ngăn 3",
         "quantityChange": -2,
         "unitName": "Ống",
-        "unitPrice": 115000.00,
-        "totalLineValue": 230000.00,
+        "unitPrice": 115000.0,
+        "totalLineValue": 230000.0,
         "unpackingInfo": null,
         "notes": null
       },
@@ -210,8 +221,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "binLocation": "Két sắt - Tủ Implant",
         "quantityChange": -1,
         "unitName": "Chiếc",
-        "unitPrice": 2500000.00,
-        "totalLineValue": 2500000.00,
+        "unitPrice": 2500000.0,
+        "totalLineValue": 2500000.0,
         "unpackingInfo": null,
         "notes": "High-value item"
       },
@@ -224,8 +235,8 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
         "binLocation": "Kệ B - Tầng 1",
         "quantityChange": -20,
         "unitName": "Gói",
-        "unitPrice": 25000.00,
-        "totalLineValue": 500000.00,
+        "unitPrice": 25000.0,
+        "totalLineValue": 500000.0,
         "unpackingInfo": null,
         "notes": null
       }
@@ -241,82 +252,83 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
 
 ### Import Transaction Response
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `transactionId` | Long | ID duy nhất của phiếu |
-| `transactionCode` | String | Mã phiếu (PN-YYYYMMDD-XXX) |
-| `transactionDate` | DateTime | Ngày/giờ giao dịch |
-| `supplierName` | String | Tên nhà cung cấp |
-| `invoiceNumber` | String | Số hóa đơn từ NCC |
-| `status` | String | Trạng thái: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED |
-| `createdBy` | String | Người tạo phiếu |
-| `createdAt` | DateTime | Thời gian tạo |
-| `totalItems` | Integer | Tổng số dòng items |
-| `totalValue` | BigDecimal | **[VIEW_COST]** Tổng giá trị phiếu nhập |
+| Field             | Type       | Description                                                        |
+| ----------------- | ---------- | ------------------------------------------------------------------ |
+| `transactionId`   | Long       | ID duy nhất của phiếu                                              |
+| `transactionCode` | String     | Mã phiếu (PN-YYYYMMDD-XXX)                                         |
+| `transactionDate` | DateTime   | Ngày/giờ giao dịch                                                 |
+| `supplierName`    | String     | Tên nhà cung cấp                                                   |
+| `invoiceNumber`   | String     | Số hóa đơn từ NCC                                                  |
+| `status`          | String     | Trạng thái: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED |
+| `createdBy`       | String     | Người tạo phiếu                                                    |
+| `createdAt`       | DateTime   | Thời gian tạo                                                      |
+| `totalItems`      | Integer    | Tổng số dòng items                                                 |
+| `totalValue`      | BigDecimal | **[VIEW_COST]** Tổng giá trị phiếu nhập                            |
 
 #### Import Item Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `itemCode` | String | Mã vật tư |
-| `itemName` | String | Tên vật tư |
-| `batchId` | Long | ID của lô hàng |
-| `batchStatus` | String | CREATED (batch mới) hoặc EXISTING (cập nhật batch cũ) |
-| `lotNumber` | String | Số lô từ nhà sản xuất |
-| `expiryDate` | Date | Hạn sử dụng |
-| `quantityChange` | Integer | Số lượng nhập (dương) |
-| `unitName` | String | Đơn vị (Hộp, Ống, Vỉ, Viên...) |
-| `purchasePrice` | BigDecimal | **[VIEW_COST]** Giá mua đơn vị |
-| `totalLineValue` | BigDecimal | **[VIEW_COST]** Thành tiền dòng (quantity × price) |
-| `binLocation` | String | Vị trí kho (Kệ A-01, Tủ lạnh B-03...) |
-| `currentStock` | Integer | Số lượng hiện tại trong batch (sau khi nhập) |
+| Field            | Type       | Description                                           |
+| ---------------- | ---------- | ----------------------------------------------------- |
+| `itemCode`       | String     | Mã vật tư                                             |
+| `itemName`       | String     | Tên vật tư                                            |
+| `batchId`        | Long       | ID của lô hàng                                        |
+| `batchStatus`    | String     | CREATED (batch mới) hoặc EXISTING (cập nhật batch cũ) |
+| `lotNumber`      | String     | Số lô từ nhà sản xuất                                 |
+| `expiryDate`     | Date       | Hạn sử dụng                                           |
+| `quantityChange` | Integer    | Số lượng nhập (dương)                                 |
+| `unitName`       | String     | Đơn vị (Hộp, Ống, Vỉ, Viên...)                        |
+| `purchasePrice`  | BigDecimal | **[VIEW_COST]** Giá mua đơn vị                        |
+| `totalLineValue` | BigDecimal | **[VIEW_COST]** Thành tiền dòng (quantity × price)    |
+| `binLocation`    | String     | Vị trí kho (Kệ A-01, Tủ lạnh B-03...)                 |
+| `currentStock`   | Integer    | Số lượng hiện tại trong batch (sau khi nhập)          |
 
 ### Export Transaction Response
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `transactionId` | Long | ID duy nhất của phiếu |
-| `transactionCode` | String | Mã phiếu (PX-YYYYMMDD-XXX) |
-| `transactionDate` | DateTime | Ngày/giờ giao dịch |
-| `exportType` | Enum | USAGE (sử dụng), DISPOSAL (hủy), RETURN (trả lại NCC) |
-| `referenceCode` | String | Mã tham chiếu (appointment code nếu liên kết ca bệnh) |
-| `notes` | String | Ghi chú |
-| `createdBy` | String | Người tạo phiếu |
-| `createdAt` | DateTime | Thời gian tạo |
-| `totalItems` | Integer | Tổng số dòng items |
-| `totalValue` | BigDecimal | **[VIEW_COST]** Tổng giá vốn (COGS) |
+| Field             | Type       | Description                                           |
+| ----------------- | ---------- | ----------------------------------------------------- |
+| `transactionId`   | Long       | ID duy nhất của phiếu                                 |
+| `transactionCode` | String     | Mã phiếu (PX-YYYYMMDD-XXX)                            |
+| `transactionDate` | DateTime   | Ngày/giờ giao dịch                                    |
+| `exportType`      | Enum       | USAGE (sử dụng), DISPOSAL (hủy), RETURN (trả lại NCC) |
+| `referenceCode`   | String     | Mã tham chiếu (appointment code nếu liên kết ca bệnh) |
+| `notes`           | String     | Ghi chú                                               |
+| `createdBy`       | String     | Người tạo phiếu                                       |
+| `createdAt`       | DateTime   | Thời gian tạo                                         |
+| `totalItems`      | Integer    | Tổng số dòng items                                    |
+| `totalValue`      | BigDecimal | **[VIEW_COST]** Tổng giá vốn (COGS)                   |
 
 #### Export Item Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `itemCode` | String | Mã vật tư |
-| `itemName` | String | Tên vật tư |
-| `batchId` | Long | ID của lô hàng được xuất |
-| `lotNumber` | String | Số lô |
-| `expiryDate` | Date | Hạn sử dụng |
-| `binLocation` | String | Vị trí kho |
-| `quantityChange` | Integer | Số lượng xuất (âm: -5, -10) |
-| `unitName` | String | Đơn vị |
-| `unitPrice` | BigDecimal | **[VIEW_COST]** Giá vốn đơn vị |
+| Field            | Type       | Description                     |
+| ---------------- | ---------- | ------------------------------- |
+| `itemCode`       | String     | Mã vật tư                       |
+| `itemName`       | String     | Tên vật tư                      |
+| `batchId`        | Long       | ID của lô hàng được xuất        |
+| `lotNumber`      | String     | Số lô                           |
+| `expiryDate`     | Date       | Hạn sử dụng                     |
+| `binLocation`    | String     | Vị trí kho                      |
+| `quantityChange` | Integer    | Số lượng xuất (âm: -5, -10)     |
+| `unitName`       | String     | Đơn vị                          |
+| `unitPrice`      | BigDecimal | **[VIEW_COST]** Giá vốn đơn vị  |
 | `totalLineValue` | BigDecimal | **[VIEW_COST]** Thành tiền dòng |
-| `unpackingInfo` | Object | Thông tin unpacking (nếu có) |
-| `notes` | String | Ghi chú dòng |
+| `unpackingInfo`  | Object     | Thông tin unpacking (nếu có)    |
+| `notes`          | String     | Ghi chú dòng                    |
 
 #### Unpacking Info Object
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `wasUnpacked` | Boolean | Batch này có phải được tạo từ unpacking không? |
-| `parentBatchId` | Long | ID của batch cha (hộp gốc bị xé) |
-| `parentUnitName` | String | Đơn vị của batch cha (VD: "Hộp") |
-| `remainingInBatch` | Integer | Số lượng còn lại trong batch sau unpacking |
+| Field              | Type    | Description                                    |
+| ------------------ | ------- | ---------------------------------------------- |
+| `wasUnpacked`      | Boolean | Batch này có phải được tạo từ unpacking không? |
+| `parentBatchId`    | Long    | ID của batch cha (hộp gốc bị xé)               |
+| `parentUnitName`   | String  | Đơn vị của batch cha (VD: "Hộp")               |
+| `remainingInBatch` | Integer | Số lượng còn lại trong batch sau unpacking     |
 
 ---
 
 ## 🚨 Error Responses
 
 ### 404 Not Found - Transaction không tồn tại
+
 ```json
 {
   "code": 404,
@@ -326,6 +338,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
 ```
 
 ### 403 Forbidden - Không có quyền VIEW_WAREHOUSE
+
 ```json
 {
   "code": 403,
@@ -335,6 +348,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
 ```
 
 ### 401 Unauthorized - Token không hợp lệ
+
 ```json
 {
   "code": 401,
@@ -350,12 +364,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
 ### User **WITHOUT** VIEW_COST permission:
 
 **Financial fields are masked (null):**
+
 - `totalValue` → `null`
 - `purchasePrice` → `null`
 - `totalLineValue` → `null`
 - `unitPrice` → `null`
 
 **Example response (without VIEW_COST):**
+
 ```json
 {
   "code": 200,
@@ -363,14 +379,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
   "data": {
     "transactionId": 1523,
     "transactionCode": "PN-20251127-001",
-    "totalValue": null,  // ← Ẩn
+    "totalValue": null, // ← Ẩn
     "items": [
       {
         "itemCode": "MAT-001",
         "itemName": "Kim tiêm 23G",
         "quantityChange": 100,
-        "purchasePrice": null,      // ← Ẩn
-        "totalLineValue": null,     // ← Ẩn
+        "purchasePrice": null, // ← Ẩn
+        "totalLineValue": null, // ← Ẩn
         "currentStock": 250
       }
     ]
@@ -385,63 +401,71 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/1523" \
 ### Test Case 1: Xem chi tiết phiếu nhập (IMPORT)
 
 **Request:**
+
 ```bash
 GET /api/v1/warehouse/transactions/1523
 Authorization: Bearer {WAREHOUSE_MANAGER_TOKEN}
 ```
 
 **Expected Response:**
-- ✅ Status: 200 OK
-- ✅ Transaction type: IMPORT
-- ✅ Contains: supplierName, invoiceNumber
-- ✅ Items array with batch info, purchasePrice, currentStock
-- ✅ totalValue hiển thị (có VIEW_COST)
+
+- [YES] Status: 200 OK
+- [YES] Transaction type: IMPORT
+- [YES] Contains: supplierName, invoiceNumber
+- [YES] Items array with batch info, purchasePrice, currentStock
+- [YES] totalValue hiển thị (có VIEW_COST)
 
 ---
 
 ### Test Case 2: Xem chi tiết phiếu xuất (EXPORT)
 
 **Request:**
+
 ```bash
 GET /api/v1/warehouse/transactions/1524
 Authorization: Bearer {WAREHOUSE_STAFF_TOKEN}
 ```
 
 **Expected Response:**
-- ✅ Status: 200 OK
-- ✅ Transaction type: EXPORT
-- ✅ Contains: exportType, referenceCode
-- ✅ Items array with quantityChange (âm)
-- ✅ unpackingInfo hiển thị nếu có unpacking
-- ✅ totalValue = null (không có VIEW_COST)
+
+- [YES] Status: 200 OK
+- [YES] Transaction type: EXPORT
+- [YES] Contains: exportType, referenceCode
+- [YES] Items array with quantityChange (âm)
+- [YES] unpackingInfo hiển thị nếu có unpacking
+- [YES] totalValue = null (không có VIEW_COST)
 
 ---
 
 ### Test Case 3: Xem phiếu không tồn tại
 
 **Request:**
+
 ```bash
 GET /api/v1/warehouse/transactions/99999
 Authorization: Bearer {ADMIN_TOKEN}
 ```
 
 **Expected Response:**
-- ✅ Status: 404 Not Found
-- ✅ Message: "Transaction with ID 99999 not found"
+
+- [YES] Status: 404 Not Found
+- [YES] Message: "Transaction with ID 99999 not found"
 
 ---
 
 ### Test Case 4: Không có quyền VIEW_WAREHOUSE
 
 **Request:**
+
 ```bash
 GET /api/v1/warehouse/transactions/1523
 Authorization: Bearer {PATIENT_TOKEN}
 ```
 
 **Expected Response:**
-- ✅ Status: 403 Forbidden
-- ✅ Message: "Access Denied"
+
+- [YES] Status: 403 Forbidden
+- [YES] Message: "Access Denied"
 
 ---
 
@@ -460,14 +484,14 @@ sequenceDiagram
     API66->>DB: Query with filters
     DB-->>API66: Paginated list
     API66-->>FE: TransactionHistoryResponse (summary)
-    
+
     Note over FE: User clicks on a transaction
-    
+
     FE->>API67: GET /transactions/{id}
     API67->>DB: Query transaction + items + batches
     DB-->>API67: Full transaction data
     API67-->>FE: ImportTransactionResponse (detail)
-    
+
     Note over FE: Display full details with items
 ```
 
@@ -476,15 +500,18 @@ sequenceDiagram
 ## 📊 Performance Considerations
 
 ### Query Optimization:
+
 1. **Lazy Loading:** Sử dụng `@ManyToOne(fetch = FetchType.LAZY)` cho relations
 2. **Join Fetch:** Load transaction + items + batches trong 1 query
 3. **Index:** transaction_id, batch_id, item_code
 
 ### Caching:
-- ❌ Không cache (data thay đổi thường xuyên)
-- ✅ Sử dụng database index để tăng tốc query
+
+- [NO] Không cache (data thay đổi thường xuyên)
+- [YES] Sử dụng database index để tăng tốc query
 
 ### Expected Response Time:
+
 - **Best case:** 50-100ms (transaction có ít items)
 - **Average:** 150-300ms (transaction có 10-20 items)
 - **Worst case:** 500ms+ (transaction có > 50 items hoặc nhiều unpacking)
@@ -497,7 +524,9 @@ sequenceDiagram
 
 ```typescript
 // API Service
-export const getTransactionDetail = async (id: number): Promise<TransactionDetail> => {
+export const getTransactionDetail = async (
+  id: number
+): Promise<TransactionDetail> => {
   const response = await api.get(`/api/v1/warehouse/transactions/${id}`);
   return response.data.data;
 };
@@ -505,7 +534,9 @@ export const getTransactionDetail = async (id: number): Promise<TransactionDetai
 // Component
 const TransactionDetailPage = () => {
   const { id } = useParams();
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
+  const [transaction, setTransaction] = useState<TransactionDetail | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -514,12 +545,12 @@ const TransactionDetailPage = () => {
         const data = await getTransactionDetail(Number(id));
         setTransaction(data);
       } catch (error) {
-        notification.error({ message: 'Không thể tải chi tiết phiếu' });
+        notification.error({ message: "Không thể tải chi tiết phiếu" });
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchDetail();
   }, [id]);
 
@@ -530,7 +561,7 @@ const TransactionDetailPage = () => {
     <Card title={`Phiếu ${transaction.transactionCode}`}>
       <Descriptions bordered column={2}>
         <Descriptions.Item label="Ngày giao dịch">
-          {moment(transaction.transactionDate).format('DD/MM/YYYY HH:mm')}
+          {moment(transaction.transactionDate).format("DD/MM/YYYY HH:mm")}
         </Descriptions.Item>
         <Descriptions.Item label="Trạng thái">
           <Tag color={getStatusColor(transaction.status)}>
@@ -555,22 +586,22 @@ const TransactionDetailPage = () => {
       <Table
         dataSource={transaction.items}
         columns={[
-          { title: 'Mã vật tư', dataIndex: 'itemCode' },
-          { title: 'Tên vật tư', dataIndex: 'itemName' },
-          { title: 'Số lô', dataIndex: 'lotNumber' },
-          { title: 'HSD', dataIndex: 'expiryDate', render: formatDate },
-          { title: 'Số lượng', dataIndex: 'quantityChange' },
-          { title: 'Đơn vị', dataIndex: 'unitName' },
+          { title: "Mã vật tư", dataIndex: "itemCode" },
+          { title: "Tên vật tư", dataIndex: "itemName" },
+          { title: "Số lô", dataIndex: "lotNumber" },
+          { title: "HSD", dataIndex: "expiryDate", render: formatDate },
+          { title: "Số lượng", dataIndex: "quantityChange" },
+          { title: "Đơn vị", dataIndex: "unitName" },
           {
-            title: 'Giá đơn vị',
-            dataIndex: 'purchasePrice',
-            render: (price) => price ? formatCurrency(price) : '-'
+            title: "Giá đơn vị",
+            dataIndex: "purchasePrice",
+            render: (price) => (price ? formatCurrency(price) : "-"),
           },
           {
-            title: 'Thành tiền',
-            dataIndex: 'totalLineValue',
-            render: (value) => value ? formatCurrency(value) : '-'
-          }
+            title: "Thành tiền",
+            dataIndex: "totalLineValue",
+            render: (value) => (value ? formatCurrency(value) : "-"),
+          },
         ]}
         pagination={false}
       />
@@ -612,7 +643,7 @@ const TransactionDetailPage = () => {
 
 ---
 
-## ✅ Implementation Checklist
+## [YES] Implementation Checklist
 
 - [x] Controller endpoint created
 - [x] Service method implemented
@@ -627,6 +658,6 @@ const TransactionDetailPage = () => {
 
 ---
 
-**Last Updated:** November 27, 2025  
-**Author:** Backend Team  
+**Last Updated:** November 27, 2025
+**Author:** Backend Team
 **Reviewed By:** Technical Lead

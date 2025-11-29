@@ -66,17 +66,17 @@ export default function WarehouseDashboard() {
     },
   });
 
-  // Fetch expiring items
-  const { data: expiringItems } = useQuery({
-    queryKey: ['expiringItems'],
+  // Fetch expiring items (API 6.3)
+  const { data: expiringAlerts } = useQuery({
+    queryKey: ['expiringAlerts'],
     queryFn: async () => {
-      const result = await inventoryService.getSummary({
-        isExpiringSoon: true,
+      const result = await inventoryService.getExpiringAlerts({
+        days: 30,
         warehouseType: 'COLD',
         page: 0,
         size: 5,
       });
-      return result.content || [];
+      return result.alerts || [];
     },
   });
 
@@ -368,31 +368,41 @@ export default function WarehouseDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {expiringItems && expiringItems.length > 0 ? (
+              {expiringAlerts && expiringAlerts.length > 0 ? (
                 <div className="space-y-3">
-                  {expiringItems.slice(0, 5).map((item: any) => {
-                    const expiryDate = item.expiryDate || item.nearestExpiryDate;
-                    const daysUntilExpiry = expiryDate
-                      ? Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-                      : null;
+                  {expiringAlerts.slice(0, 5).map((alert: any) => {
+                    const daysRemaining = alert.daysRemaining ?? 0;
+                    const status = alert.status || (daysRemaining < 0 ? 'EXPIRED' : daysRemaining <= 7 ? 'CRITICAL' : 'EXPIRING_SOON');
 
                     return (
                       <div
-                        key={item.id || item.itemMasterId}
-                        className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                        key={alert.batchId}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                          status === 'EXPIRED'
+                            ? 'bg-red-50 border-red-200'
+                            : status === 'CRITICAL'
+                            ? 'bg-orange-50 border-orange-200'
+                            : 'bg-yellow-50 border-yellow-200'
+                        }`}
                       >
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{item.itemName}</p>
+                          <p className="font-medium text-sm">{alert.itemName}</p>
                           <p className="text-xs text-gray-500">
-                            Mã: {item.itemCode}
+                            Mã: {alert.itemCode} | Lô: {alert.lotNumber}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-red-600">
-                            {daysUntilExpiry !== null ? `${daysUntilExpiry} ngày` : 'N/A'}
+                          <p className={`text-sm font-bold ${
+                            status === 'EXPIRED' ? 'text-red-600' :
+                            status === 'CRITICAL' ? 'text-orange-600' :
+                            'text-yellow-600'
+                          }`}>
+                            {daysRemaining < 0 ? `Đã hết hạn ${Math.abs(daysRemaining)} ngày` :
+                             daysRemaining === 0 ? 'Hết hạn hôm nay' :
+                             `${daysRemaining} ngày`}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {expiryDate ? new Date(expiryDate).toLocaleDateString('vi-VN') : 'N/A'}
+                            {alert.expiryDate ? new Date(alert.expiryDate).toLocaleDateString('vi-VN') : 'N/A'}
                           </p>
                         </div>
                       </div>

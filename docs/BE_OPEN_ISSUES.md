@@ -1,6 +1,11 @@
-# BE Open Issues (2025-01-27)
+# BE Open Issues (2025-11-28)
 
-> ⚠️ Only **open** issues remain below. All resolved warehouse issues (#1‒#14) have been removed as requested.
+> ⚠️ Only **open** issues are listed below. All resolved issues have been removed for clarity.
+> 
+> **Note (2025-11-28)**: 
+> - ✅ **Resolved Issues:** #15, #16, #17, #20, #21, #22 (đã được xác nhận resolved sau khi test lại)
+> - 🔴 **Open Issues:** #18, #19 (vẫn còn 500 error - cần BE kiểm tra lại seed data hoặc database)
+> - 🔵 **Low Priority:** #23 (improvement, không blocking)
 
 ---
 
@@ -8,364 +13,197 @@
 
 | # | Issue | Status | Priority | Owner | Est. Effort |
 |---|-------|--------|----------|-------|-------------|
-| 15 | Warehouse `GET /api/v1/warehouse/transactions` returns 500 | 🔴 Open | Critical | BE | ~1h |
-| 16 | Transaction Approval Workflow - Missing Approve/Reject/Cancel Endpoints | 🔴 Open | High | BE | ~4h |
-| 17 | API 6.7 Response Missing Fields - Approval Info, Payment Info, Appointment Info | 🔴 Open | Medium | BE | ~2h |
+| 18 | API 6.1 - Inventory Summary returns 500 Internal Server Error | 🔴 Open | High | BE | ~2h |
+| 19 | API 6.2 - Item Batches returns 500 Internal Server Error | 🔴 Open | High | BE | ~2h |
+| 23 | Payment Status Default Value for DRAFT Import Transactions | 🔵 Low Priority | Low | BE | ~30m |
 
 ---
 
-## #15 – Warehouse `GET /api/v1/warehouse/transactions` returns 500
-
-**Status:** 🔴 **OPEN** • **Priority:** Critical  
-**Endpoint:** `GET /api/v1/warehouse/transactions`  
-**Files (suspected):** `warehouse/controller/TransactionHistoryController.java`, `warehouse/service/TransactionHistoryService.java`, `warehouse/repository/TransactionHistoryRepository.java`  
-**Last Checked:** 2025-01-27 (Next.js console log & screenshot)
-
-### ❌ Problem Statement
-- Warehouse list API now responds with HTTP 500 on every request, even with default params.
-- Regression occurred immediately after BE reported all warehouse issues resolved, so likely tied to recent mapper/service refactor.
-- Because this endpoint powers `/admin/warehouse/storage`, users cannot view, filter, or open transactions; all downstream workflows are blocked.
-
-### 🔎 Evidence
-- FE console log: `❌ Get all transactions error: Request failed with status code 500` (`src/services/storageService.ts:67`).
-- Stack trace shows Axios rejects before FE processes payload (screenshot shared earlier).
-- Network tab confirms `GET /api/v1/warehouse/transactions` → 500 with empty body; request params were `{}` (React Query default).
-
-### 🧪 Reproduction Steps
-1. Login with warehouse permissions (admin account).  
-2. Navigate to `/admin/warehouse/storage`.  
-3. Observe toast + console error; transactions table remains empty because request fails with 500.
-
-### 🚨 Impact
-- **Critical blocker**: Warehouse operators cannot list/manage any import/export transactions.
-- QA cannot verify the all issues resolved build because the first API already fails.
-- Reports tab (which reuses this endpoint) also fails, so analytics are unavailable.
-
-### ✅ Expected Behavior
-- Endpoint should return `200 OK` with `List<TransactionResponse>` (even if empty).
-- Must gracefully handle missing filters instead of throwing server errors.
-
-### 🛠 Suggested Investigation
-1. Inspect BE logs for the stack trace triggered by `/api/v1/warehouse/transactions`; likely originates inside the new TransactionHistory pipeline (service or mapper).
-2. Ensure the new mapper/helper guards against null `supplier`, `createdBy`, or `item` references (possible NPE).
-3. Verify latest warehouse DB migrations (new columns like `unit_name`, `item_master_id`) are applied to the environment returning 500.
-4. Add temporary controller/service logging to capture request params and exception details to speed up debugging.
-
-### ✅ Definition of Done
-- `GET /api/v1/warehouse/transactions` reliably returns 200 with valid list payload.
-- Warehouse list UI loads again so users can open transaction detail modal.
-- Regression checks: import/export creation, detail view, and reports continue to work after the fix.
-
----
-
-## #16 – Transaction Approval Workflow - Missing Approve/Reject/Cancel Endpoints
+## #18 – API 6.1 - Inventory Summary returns 500 Internal Server Error
 
 **Status:** 🔴 **OPEN** • **Priority:** High  
-**Endpoints (Missing):** 
-- `POST /api/v1/warehouse/transactions/{id}/approve`
-- `POST /api/v1/warehouse/transactions/{id}/reject`
-- `POST /api/v1/warehouse/transactions/{id}/cancel`  
-**Files (Expected):** `warehouse/controller/TransactionHistoryController.java`, `warehouse/service/TransactionHistoryService.java`  
-**Last Checked:** 2025-01-28
+**Endpoint:** `GET /api/v1/warehouse/summary` (API 6.1)  
+**Files (Suspected):** `warehouse/controller/WarehouseInventoryController.java`, `warehouse/service/InventoryService.java`  
+**Last Checked:** 2025-11-28 (Test script with authentication)
 
-### ❌ Problem Statement
-- FE đã implement đầy đủ UI để hiển thị và filter theo transaction status (DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED).
-- Tuy nhiên, BE chưa implement các endpoints để thực hiện các hành động duyệt/từ chối/hủy phiếu.
-- Hiện tại `TransactionHistoryController` chỉ có 2 GET endpoints (API 6.6 & 6.7), không có POST endpoints cho approval workflow.
-- FE không thể thực hiện các hành động approve/reject/cancel, dẫn đến workflow không hoàn chỉnh.
-- **Additional Issue**: Các phiếu mới tạo không có `approvalStatus` được set trong response (null/undefined), FE phải set default = 'DRAFT' để hiển thị. BE nên set default `approvalStatus = DRAFT` khi tạo transaction mới.
+### 📊 Test Results (2025-11-28)
+- **Status Code:** 500 Internal Server Error
+- **Response Time:** 451ms
+- **Error:** Internal server error
+- **Authentication:** ✅ Valid (admin token)
+- **Note:** BE team reported this was due to seed data issues, but test still shows 500 error
+
+### ✅ Update (2025-11-28)
+- **BE Team Report:** Issue was caused by **seed data problems**, not code issues
+- **BE Code Status:** ✅ Code is correct, endpoint implementation is complete
+- **Test Result:** ❌ Still returns 500 - may need additional seed data or database fix
+
+### ❌ Original Problem Statement
+- API 6.1 (`GET /api/v1/warehouse/summary`) returns HTTP 500 Internal Server Error on every request.
+- This endpoint is critical for inventory dashboard and reports.
+- FE cannot display inventory summary, stock status, or expiring items using this endpoint.
 
 ### 🔎 Evidence
-- `TransactionHistoryController.java` chỉ có:
-  - `GET /api/v1/warehouse/transactions` (API 6.6)
-  - `GET /api/v1/warehouse/transactions/{id}` (API 6.7)
-- FE đã có UI hiển thị status badges và filters nhưng không có buttons để approve/reject vì không có endpoints.
-- Document `TRANSACTION_APPROVAL_WORKFLOW.md` đã mô tả workflow nhưng các endpoints vẫn chưa được implement.
+- Test script result: `Status: FAIL | Code: 500 | Time: 419ms | Error: Internal server error`
+- Request: `GET /api/v1/warehouse/summary?page=0&size=10`
+- Authentication: ✅ Valid (admin token)
+- Response: 500 with empty body or generic error message
+- **Root Cause:** Seed data issues (missing/invalid data in database)
 
 ### 🧪 Reproduction Steps
-1. Login với user có quyền `APPROVE_WAREHOUSE`.
-2. Navigate to `/admin/warehouse/storage`.
-3. Filter theo `status=PENDING_APPROVAL` để xem các phiếu chờ duyệt.
-4. **Expected**: Có buttons "Duyệt" và "Từ chối" để thực hiện hành động.
-5. **Actual**: Không có buttons vì FE không biết gọi endpoint nào.
+1. Login with admin account (username: admin, password: 123456)
+2. Call `GET /api/v1/warehouse/summary?page=0&size=10`
+3. **Expected**: 200 OK with inventory summary data
+4. **Actual**: 500 Internal Server Error
 
 ### 🚨 Impact
-- **Workflow không hoàn chỉnh**: Users không thể duyệt/từ chối phiếu từ UI.
-- **Phải xử lý thủ công**: Phải vào database hoặc dùng tool khác để thay đổi status.
-- **FE đã sẵn sàng**: FE đã implement đầy đủ UI, chỉ chờ BE implement endpoints.
-- **Business logic thiếu**: Không có validation và business rules cho approval workflow.
+- **Critical**: Inventory dashboard cannot load
+- **Reports**: Inventory reports fail
+- **User Experience**: Users cannot view stock status, low stock alerts, or expiring items
 
 ### ✅ Expected Behavior
+- Endpoint should return `200 OK` with `InventorySummaryPage` response
+- Should handle pagination, filtering, and sorting correctly
+- Should gracefully handle empty results (return empty list, not error)
 
-#### 1. **POST /api/v1/warehouse/transactions/{id}/approve**
-- **Purpose**: Duyệt phiếu nhập/xuất kho
-- **Request Body** (Optional):
-  ```json
-  {
-    "approvedBy": 123,  // Employee ID (lấy từ token)
-    "notes": "Đã kiểm tra và duyệt"  // Optional
-  }
-  ```
-- **Response**: `200 OK` với transaction detail đã được cập nhật (status = APPROVED)
-- **Business Logic**:
-  - Chỉ có thể approve khi `status = PENDING_APPROVAL`
-  - Sau khi approve, cập nhật tồn kho (inventory) nếu chưa cập nhật
-  - Ghi lại `approvedBy` và `approvedAt`
-  - Trả về lỗi nếu status không phải PENDING_APPROVAL
-- **Permissions**: `APPROVE_WAREHOUSE` authority required
-
-#### 2. **POST /api/v1/warehouse/transactions/{id}/reject**
-- **Purpose**: Từ chối phiếu nhập/xuất kho
-- **Request Body**:
-  ```json
-  {
-    "rejectedBy": 123,  // Employee ID (lấy từ token)
-    "rejectionReason": "Số lượng không khớp với hóa đơn"  // Required
-  }
-  ```
-- **Response**: `200 OK` với transaction detail đã được cập nhật (status = REJECTED)
-- **Business Logic**:
-  - Chỉ có thể reject khi `status = PENDING_APPROVAL`
-  - Không cập nhật tồn kho
-  - Ghi lại `rejectedBy`, `rejectedAt`, và `rejectionReason`
-  - Trả về lỗi nếu status không phải PENDING_APPROVAL hoặc thiếu rejectionReason
-- **Permissions**: `REJECT_WAREHOUSE` authority required
-
-#### 3. **POST /api/v1/warehouse/transactions/{id}/cancel**
-- **Purpose**: Hủy phiếu nhập/xuất kho
-- **Request Body** (Optional):
-  ```json
-  {
-    "cancelledBy": 123,  // Employee ID (lấy từ token)
-    "cancellationReason": "Nhập nhầm thông tin"  // Optional
-  }
-  ```
-- **Response**: `200 OK` với transaction detail đã được cập nhật (status = CANCELLED)
-- **Business Logic**:
-  - Có thể cancel khi `status = DRAFT` hoặc `PENDING_APPROVAL`
-  - Không cập nhật tồn kho
-  - Ghi lại `cancelledBy`, `cancelledAt`, và `cancellationReason`
-  - Trả về lỗi nếu status đã là APPROVED (không thể hủy phiếu đã duyệt)
-- **Permissions**: `UPDATE_WAREHOUSE` hoặc `CANCEL_WAREHOUSE` authority required
-
-### 🛠 Suggested Implementation
-
-#### Controller Methods
-```java
-@PostMapping("/transactions/{id}/approve")
-@PreAuthorize("hasAuthority('APPROVE_WAREHOUSE')")
-public ResponseEntity<?> approveTransaction(
-    @PathVariable Long id,
-    @RequestBody(required = false) ApprovalRequest request) {
-    // Implementation
-}
-
-@PostMapping("/transactions/{id}/reject")
-@PreAuthorize("hasAuthority('REJECT_WAREHOUSE')")
-public ResponseEntity<?> rejectTransaction(
-    @PathVariable Long id,
-    @RequestBody RejectionRequest request) {
-    // Implementation
-}
-
-@PostMapping("/transactions/{id}/cancel")
-@PreAuthorize("hasAuthority('UPDATE_WAREHOUSE') or hasAuthority('CANCEL_WAREHOUSE')")
-public ResponseEntity<?> cancelTransaction(
-    @PathVariable Long id,
-    @RequestBody(required = false) CancellationRequest request) {
-    // Implementation
-}
-```
-
-#### Service Layer
-- Validate transaction status trước khi thay đổi
-- Update transaction entity với status mới và audit fields
-- Trigger inventory update (chỉ khi approve)
-- Log action vào transaction history/audit log
-
-#### Database Updates
-- Ensure `StorageTransaction` entity has fields:
-  - `approvedBy` (Employee ID)
-  - `approvedAt` (LocalDateTime)
-  - `rejectedBy` (Employee ID)
-  - `rejectedAt` (LocalDateTime)
-  - `rejectionReason` (String)
-  - `cancelledBy` (Employee ID)
-  - `cancelledAt` (LocalDateTime)
-  - `cancellationReason` (String)
+### 🛠 Suggested Investigation
+1. Check BE logs for stack trace when calling `/api/v1/warehouse/summary`
+2. Verify database schema matches expected structure
+3. Check for null pointer exceptions in service/mapper layer
+4. Verify JOIN queries are correct (item_master, category, batches)
+5. Check if pagination parameters are handled correctly
 
 ### ✅ Definition of Done
-- [ ] `POST /api/v1/warehouse/transactions/{id}/approve` implemented và tested
-- [ ] `POST /api/v1/warehouse/transactions/{id}/reject` implemented và tested
-- [ ] `POST /api/v1/warehouse/transactions/{id}/cancel` implemented và tested
-- [ ] Proper RBAC permissions checked cho từng endpoint
-- [ ] Business logic validation (status checks, inventory updates)
-- [ ] Audit fields được ghi lại đầy đủ
-- [ ] Error handling rõ ràng (400 Bad Request cho invalid status, 403 Forbidden cho missing permissions)
-- [ ] API documentation updated (Swagger/OpenAPI)
-- [ ] FE có thể gọi các endpoints này và hiển thị kết quả trong UI
+- `GET /api/v1/warehouse/summary` returns 200 OK with valid response
+- Inventory dashboard loads successfully
+- Pagination, filtering, and sorting work correctly
+- Empty results return empty list (not error)
 
-### 📝 Related Documents
-- `docs/api-guide/warehouse/TRANSACTION_APPROVAL_WORKFLOW.md` - Workflow documentation
-- `docs/api-guide/warehouse/API_6.6_TRANSACTION_HISTORY_IMPLEMENTATION_SUMMARY.md` - API 6.6 details
+### 📝 Notes (2025-11-28)
+- **BE Code:** ✅ Implementation is correct
+- **Issue:** Seed data problems (missing/invalid data)
+- **Action:** Test again after seed data is fixed
+- **FE Status:** ✅ Implementation ready, waiting for BE seed data fix
 
 ---
 
-## #17 – API 6.7 Response Missing Fields - Approval Info, Payment Info, Appointment Info
+## #19 – API 6.2 - Item Batches returns 500 Internal Server Error
 
-**Status:** 🔴 **OPEN** • **Priority:** Medium  
-**Endpoint:** `GET /api/v1/warehouse/transactions/{id}` (API 6.7)  
-**Files (Affected):** 
-- `warehouse/dto/response/ImportTransactionResponse.java`
-- `warehouse/dto/response/ExportTransactionResponse.java`
-- `warehouse/service/TransactionHistoryService.java`  
-**Last Checked:** 2025-01-28
+**Status:** 🔴 **OPEN** • **Priority:** High  
+**Endpoint:** `GET /api/v1/warehouse/batches/{itemMasterId}` (API 6.2)  
+**Files (Suspected):** `warehouse/controller/WarehouseInventoryController.java`, `warehouse/service/InventoryService.java`, `warehouse/repository/ItemBatchRepository.java`  
+**Last Checked:** 2025-11-28 (Test script with authentication)
 
-### ❌ Problem Statement
-- API 6.7 (`GET /api/v1/warehouse/transactions/{id}`) trả về `ImportTransactionResponse` hoặc `ExportTransactionResponse` nhưng thiếu một số fields quan trọng.
-- FE không thể hiển thị đầy đủ thông tin trong transaction detail modal vì BE không trả về các fields này.
-- RBAC handling cho payment info và appointment info chưa được implement đầy đủ.
+### 📊 Test Results (2025-11-28)
+- **Status Code:** 500 Internal Server Error
+- **Response Time:** 196ms
+- **Error:** Internal server error
+- **Authentication:** ✅ Valid (admin token)
+- **Test Item ID:** 1
+- **Note:** BE team reported this was due to seed data issues, but test still shows 500 error
+
+### ✅ Update (2025-11-28)
+- **BE Team Report:** Issue was caused by **seed data problems**, not code issues
+- **BE Code Status:** ✅ Code is correct, endpoint implementation is complete
+- **Test Result:** ❌ Still returns 500 - may need additional seed data or database fix
+
+### ❌ Original Problem Statement
+- API 6.2 (`GET /api/v1/warehouse/batches/{itemMasterId}`) returns HTTP 500 Internal Server Error.
+- This endpoint is used for FEFO (First Expired, First Out) batch selection in export transactions.
+- FE cannot display batch details for items, blocking export transaction creation.
 
 ### 🔎 Evidence
-
-#### **ImportTransactionResponse** thiếu:
-1. ❌ `approvedByName` (String) - Tên người duyệt phiếu
-2. ❌ `approvedAt` (LocalDateTime) - Thời gian duyệt
-3. ❌ `paymentStatus` (PaymentStatus enum) - Trạng thái thanh toán
-4. ❌ `paidAmount` (BigDecimal) - Số tiền đã thanh toán
-5. ❌ `remainingDebt` (BigDecimal) - Số tiền còn nợ
-6. ❌ `dueDate` (LocalDate) - Hạn thanh toán
-7. ⚠️ `status` có nhưng là String, nên là `TransactionStatus` enum để consistent với API 6.6
-
-#### **ExportTransactionResponse** thiếu:
-1. ❌ `approvedByName` (String) - Tên người duyệt phiếu
-2. ❌ `approvedAt` (LocalDateTime) - Thời gian duyệt
-3. ❌ `status` (TransactionStatus enum) - Trạng thái duyệt
-4. ❌ `relatedAppointmentId` (Long) - ID ca điều trị (chỉ có `referenceCode` là appointmentCode)
-5. ❌ `patientName` (String) - Tên bệnh nhân (có trong `TransactionHistoryItemDto` nhưng không có trong `ExportTransactionResponse`)
-
-#### **Code Evidence:**
-- `TransactionHistoryService.mapToImportResponse()` không map payment info và approval info
-- `TransactionHistoryService.mapToExportResponse()` không map approval info và patient info
-- `TransactionHistoryItemDto` (API 6.6) có đầy đủ fields nhưng `ImportTransactionResponse` và `ExportTransactionResponse` (API 6.7) thiếu
+- Test script result: `Status: FAIL | Code: 500 | Time: 237ms | Error: Internal server error`
+- Request: `GET /api/v1/warehouse/batches/1`
+- Authentication: ✅ Valid (admin token)
+- Response: 500 Internal Server Error
+- **Root Cause:** Seed data issues (missing/invalid item_master or batch data)
 
 ### 🧪 Reproduction Steps
-1. Call `GET /api/v1/warehouse/transactions/{id}` với transaction ID của một phiếu IMPORT đã được duyệt.
-2. **Expected**: Response có `approvedByName`, `approvedAt`, `paymentStatus`, `paidAmount`, `remainingDebt`, `dueDate`.
-3. **Actual**: Response không có các fields này, chỉ có basic info (transactionCode, supplierName, invoiceNumber, items).
-
-4. Call `GET /api/v1/warehouse/transactions/{id}` với transaction ID của một phiếu EXPORT có liên kết appointment.
-5. **Expected**: Response có `approvedByName`, `approvedAt`, `status`, `relatedAppointmentId`, `patientName`.
-6. **Actual**: Response không có các fields này, chỉ có `referenceCode` (appointmentCode).
+1. Login with admin account
+2. Call `GET /api/v1/warehouse/batches/1` (or any valid itemMasterId)
+3. **Expected**: 200 OK with batch list sorted by expiry date (FEFO)
+4. **Actual**: 500 Internal Server Error
 
 ### 🚨 Impact
-- **FE không thể hiển thị đầy đủ thông tin**: Users không thấy được ai đã duyệt phiếu, khi nào duyệt, trạng thái thanh toán, thông tin bệnh nhân.
-- **Inconsistent với API 6.6**: API 6.6 (`GET /api/v1/warehouse/transactions`) trả về `TransactionHistoryItemDto` có đầy đủ fields, nhưng API 6.7 (detail) lại thiếu.
-- **RBAC không hoàn chỉnh**: Payment info và appointment info cần RBAC handling nhưng chưa được implement.
+- **Export Transactions**: Cannot create export transactions (FEFO selection fails)
+- **Item Detail**: Cannot view batch details in item detail modal
+- **Stock Management**: Cannot see batch-level information
 
 ### ✅ Expected Behavior
+- Endpoint should return `200 OK` with `BatchResponse[]` sorted by expiry date (FEFO)
+- Should handle non-existent itemMasterId gracefully (return empty list or 404)
+- Should only return batches with `quantityOnHand > 0`
 
-#### **ImportTransactionResponse** nên có thêm:
-```java
-// Approval info
-private String approvedByName;
-private LocalDateTime approvedAt;
-
-// Payment info (RBAC: Requires VIEW_COST for paidAmount, remainingDebt)
-private PaymentStatus paymentStatus;
-private BigDecimal paidAmount;  // null if no VIEW_COST
-private BigDecimal remainingDebt;  // null if no VIEW_COST
-private LocalDate dueDate;
-
-// Status (should be TransactionStatus enum, not String)
-private TransactionStatus status;  // Instead of String status
-```
-
-#### **ExportTransactionResponse** nên có thêm:
-```java
-// Approval info
-private String approvedByName;
-private LocalDateTime approvedAt;
-
-// Status
-private TransactionStatus status;
-
-// Appointment info
-private Long relatedAppointmentId;  // In addition to referenceCode
-private String patientName;
-```
-
-### 🛠 Suggested Implementation
-
-#### 1. **Update DTOs**
-- Add missing fields to `ImportTransactionResponse.java`
-- Add missing fields to `ExportTransactionResponse.java`
-- Change `status` from `String` to `TransactionStatus` enum in `ImportTransactionResponse`
-
-#### 2. **Update Service Mapping**
-- Update `mapToImportResponse()` to include:
-  - Approval info: `approvedByName`, `approvedAt`
-  - Payment info: `paymentStatus`, `paidAmount` (with RBAC), `remainingDebt` (with RBAC), `dueDate`
-  - Status: `tx.getApprovalStatus()` (TransactionStatus enum)
-  
-- Update `mapToExportResponse()` to include:
-  - Approval info: `approvedByName`, `approvedAt`
-  - Status: `tx.getApprovalStatus()` (TransactionStatus enum)
-  - Appointment info: `relatedAppointmentId`, `patientName` (fetch from appointment if available)
-
-#### 3. **RBAC Handling**
-- Payment info (`paidAmount`, `remainingDebt`) chỉ set nếu user có `VIEW_COST` permission
-- Other fields (approval info, appointment info) không cần RBAC vì không phải sensitive data
-
-#### 4. **Code Example**
-```java
-// In mapToImportResponse()
-.builder()
-    // ... existing fields ...
-    .approvedByName(tx.getApprovedBy() != null ? tx.getApprovedBy().getFullName() : null)
-    .approvedAt(tx.getApprovedAt())
-    .status(tx.getApprovalStatus())  // TransactionStatus enum
-    .paymentStatus(tx.getPaymentStatus())
-    .dueDate(tx.getDueDate())
-    // ... existing fields ...
-
-// Add payment info with RBAC
-if (hasViewCostPermission) {
-    builder.paidAmount(tx.getPaidAmount())
-           .remainingDebt(tx.getRemainingDebt());
-}
-```
-
-```java
-// In mapToExportResponse()
-.builder()
-    // ... existing fields ...
-    .approvedByName(tx.getApprovedBy() != null ? tx.getApprovedBy().getFullName() : null)
-    .approvedAt(tx.getApprovedAt())
-    .status(tx.getApprovalStatus())  // TransactionStatus enum
-    .relatedAppointmentId(tx.getRelatedAppointment() != null ? 
-        tx.getRelatedAppointment().getAppointmentId().longValue() : null)
-    // ... existing fields ...
-
-// Get patient name
-if (tx.getRelatedAppointment() != null && tx.getRelatedAppointment().getPatientId() != null) {
-    Optional<Patient> patient = patientRepository.findById(
-        tx.getRelatedAppointment().getPatientId());
-    patient.ifPresent(p -> builder.patientName(p.getFullName()));
-}
-```
+### 🛠 Suggested Investigation
+1. Check BE logs for stack trace
+2. Verify `ItemBatchRepository.findByItemMasterId()` query is correct
+3. Check for null pointer exceptions when mapping batch data
+4. Verify JOIN queries (item_master, supplier) are correct
+5. Check if itemMasterId validation is working
 
 ### ✅ Definition of Done
-- [ ] `ImportTransactionResponse` có đầy đủ fields: `approvedByName`, `approvedAt`, `paymentStatus`, `paidAmount`, `remainingDebt`, `dueDate`
-- [ ] `ExportTransactionResponse` có đầy đủ fields: `approvedByName`, `approvedAt`, `status`, `relatedAppointmentId`, `patientName`
-- [ ] `status` field trong `ImportTransactionResponse` đổi từ `String` sang `TransactionStatus` enum
-- [ ] Service mapping (`mapToImportResponse`, `mapToExportResponse`) được cập nhật để map các fields mới
-- [ ] RBAC handling cho payment info (`paidAmount`, `remainingDebt`) được implement
-- [ ] Patient name được fetch và map vào `ExportTransactionResponse`
-- [ ] API documentation (Swagger) được cập nhật
-- [ ] FE có thể hiển thị đầy đủ thông tin trong transaction detail modal
+- `GET /api/v1/warehouse/batches/{itemMasterId}` returns 200 OK with valid batch list
+- Batches are sorted by expiry date (FEFO)
+- Export transaction creation works correctly
+- Item detail modal displays batch information
 
-### 📝 Related Documents
-- `docs/api-guide/warehouse/API_6.7_TRANSACTION_DETAIL_COMPLETE.md` - API 6.7 specification
-- `docs/api-guide/warehouse/API_6.7_FE_IMPLEMENTATION_STATUS.md` - FE implementation status
-- `docs/api-guide/warehouse/API_6.6_TRANSACTION_HISTORY_IMPLEMENTATION_SUMMARY.md` - API 6.6 (có đầy đủ fields trong `TransactionHistoryItemDto`)
+### 📝 Notes (2025-11-28)
+- **BE Code:** ✅ Implementation is correct
+- **Issue:** Seed data problems (missing/invalid item_master or batch data)
+- **Action:** Test again after seed data is fixed
+- **FE Status:** ✅ Implementation ready, waiting for BE seed data fix
+
+---
+
+## #23 – Payment Status Default Value for DRAFT Import Transactions
+
+**Status:** 🔵 **LOW PRIORITY** • **Priority:** Low  
+**Endpoint:** `GET /api/v1/warehouse/transactions/{id}` (API 6.7)  
+**Files (Affected):** `warehouse/domain/StorageTransaction.java`, `warehouse/service/ImportTransactionService.java`  
+**Last Checked:** 2025-11-28
+
+### ❌ Problem Statement
+- DRAFT import transactions có thể có `paymentStatus = null` trong database
+- FE phải default `paymentStatus = 'UNPAID'` khi null để hiển thị đúng
+- BE nên set default `paymentStatus = UNPAID` khi tạo transaction mới (DRAFT)
+
+### 🔎 Evidence
+- FE code: `const paymentStatus = transaction.paymentStatus || (transaction.status === 'DRAFT' ? 'UNPAID' : null);`
+- BE entity: `paymentStatus` field không có `nullable = false` và không có default value
+- User report: Phần "Thông tin thanh toán" hiển thị "Chưa có" cho DRAFT transactions
+
+### ✅ Expected Behavior
+- Khi tạo import transaction mới với status DRAFT, BE nên tự động set `paymentStatus = UNPAID`
+- API 6.7 response nên luôn có `paymentStatus` (không null) cho IMPORT transactions
+
+### 🛠 Suggested Fix
+1. **Option 1 (Recommended)**: Set default value trong entity:
+   ```java
+   @Enumerated(EnumType.STRING)
+   @Column(name = "payment_status", length = 20)
+   @Builder.Default
+   private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+   ```
+
+2. **Option 2**: Set trong service khi tạo transaction:
+   ```java
+   if (transaction.getTransactionType() == TransactionType.IMPORT && transaction.getPaymentStatus() == null) {
+       transaction.setPaymentStatus(PaymentStatus.UNPAID);
+   }
+   ```
+
+### ✅ Definition of Done
+- [ ] DRAFT import transactions có `paymentStatus = UNPAID` (không null)
+- [ ] API 6.7 response luôn có `paymentStatus` cho IMPORT transactions
+- [ ] FE không cần default logic nữa (có thể remove fallback)
+
+### 📝 Notes
+- **FE Workaround**: FE đã implement fallback logic để default UNPAID cho DRAFT transactions
+- **Impact**: Low - không ảnh hưởng functionality, chỉ là UX improvement
+- **Priority**: Low - có thể fix sau khi các issues #18-#22 được resolved
+
+---
+
+**Last Updated:** 2025-11-28  
+**Total Open Issues:** 3 (Issues #18, #19, #23)

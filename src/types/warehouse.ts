@@ -428,6 +428,55 @@ export interface ItemUnitResponse {
   conversionRate: number;
   isBaseUnit: boolean;
   displayOrder: number;
+  isActive?: boolean;
+  description?: string;
+}
+
+// API 6.11 - Get Item Units Response
+export interface GetItemUnitsResponse {
+  itemMaster: {
+    itemMasterId: number;
+    itemCode: string;
+    itemName: string;
+    isActive: boolean;
+  };
+  baseUnit: {
+    unitId: number;
+    unitName: string;
+  };
+  units: Array<{
+    unitId: number;
+    unitName: string;
+    conversionRate: number;
+    isBaseUnit: boolean;
+    displayOrder: number;
+    isActive: boolean;
+    description: string; // Auto-generated: "1 Hop = 100 Vien"
+  }>;
+}
+
+// API 6.12 - Convert Quantity Request/Response
+export interface ConversionRequest {
+  conversions: Array<{
+    itemMasterId: number;
+    fromUnitId: number;
+    toUnitId: number;
+    quantity: number;
+  }>;
+  roundingMode?: 'FLOOR' | 'CEILING' | 'HALF_UP';
+}
+
+export interface ConversionResult {
+  inputQuantity: number;
+  resultQuantity: number;
+  resultQuantityDisplay: string;
+  formula: string;
+  conversionFactor: number;
+}
+
+export interface ConversionResponse {
+  totalProcessed: number;
+  results: ConversionResult[];
 }
 
 // ============================================
@@ -446,15 +495,28 @@ export interface StorageTransactionV3 {
   notes?: string;
   createdByName?: string;
   createdAt: string;
-  approvedByName?: string; // API 6.6: Approval workflow
-  approvedAt?: string; // API 6.6: Approval workflow
+  // Approval Info (API 6.6 - Issue #16, #17)
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectedBy?: number;
+  rejectedAt?: string;
+  rejectionReason?: string;
+  cancelledBy?: number;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  
+  // Transaction Summary
   totalItems?: number;
   totalValue?: number;
-  status?: string;
-  paymentStatus?: string;
-  paidAmount?: number;
-  remainingDebt?: number;
+  status?: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED'; // TransactionStatus enum
+  
+  // Payment Info (for IMPORT) - API 6.7 - Issue #17
+  paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID';
+  paidAmount?: number; // RBAC: requires VIEW_COST
+  remainingDebt?: number; // RBAC: requires VIEW_COST
   dueDate?: string;
+  
+  // Appointment Info (for EXPORT) - API 6.7 - Issue #17
   relatedAppointmentId?: number;
   relatedAppointmentCode?: string;
   patientName?: string;
@@ -819,6 +881,62 @@ export interface BatchSelectionItem extends ItemBatch {
   quantity_to_export?: number;
   is_suggested?: boolean; // Auto-selected by FEFO logic
   warning?: 'EXPIRING_SOON' | 'EXPIRED' | 'LOW_STOCK';
+}
+
+// ============================================
+// API 6.3 - EXPIRING ALERTS
+// ============================================
+
+export enum BatchStatus {
+  EXPIRED = 'EXPIRED',           // daysRemaining < 0
+  CRITICAL = 'CRITICAL',         // 0 <= daysRemaining <= 7
+  EXPIRING_SOON = 'EXPIRING_SOON', // 7 < daysRemaining <= 30
+}
+
+export interface ExpiringAlert {
+  batchId: number;
+  itemCode: string;
+  itemName: string;
+  categoryName?: string;
+  warehouseType: 'COLD' | 'NORMAL';
+  lotNumber: string;
+  binLocation?: string;
+  quantityOnHand: number;
+  unitName: string;
+  expiryDate: string; // ISO date string
+  daysRemaining: number; // Can be negative if expired
+  status: BatchStatus;
+  supplierName?: string;
+}
+
+export interface AlertStats {
+  totalAlerts: number;
+  expiredCount: number;      // < 0 days
+  criticalCount: number;      // 0-7 days
+  expiringSoonCount: number; // 7-30 days
+  totalQuantity: number;     // SUM(quantity_on_hand)
+}
+
+export interface ExpiringAlertsResponse {
+  reportDate: string; // ISO datetime string
+  thresholdDays: number; // Default 30
+  stats: AlertStats;
+  meta: {
+    page: number;
+    size: number;
+    totalPages: number;
+    totalElements: number;
+  };
+  alerts: ExpiringAlert[];
+}
+
+export interface ExpiringAlertsFilter {
+  days?: number; // 1-1095, default 30
+  categoryId?: number;
+  warehouseType?: 'COLD' | 'NORMAL';
+  statusFilter?: BatchStatus; // EXPIRED | CRITICAL | EXPIRING_SOON
+  page?: number;
+  size?: number;
 }
 
 
