@@ -21,8 +21,8 @@ const axios = apiClient.getAxiosInstance();
 
 export const supplierService = {
   /**
-   * GET /api/v1/suppliers
-   * Get all suppliers with pagination, search, and sort
+   * GET /api/v1/warehouse/suppliers
+   * Get all suppliers with pagination, search, and sort (Basic endpoint)
    */
   getAll: async (
     params?: SupplierQueryParams
@@ -36,7 +36,7 @@ export const supplierService = {
       if (params?.search) queryParams.append('search', params.search);
 
       const response = await axios.get(
-        `/suppliers?${queryParams.toString()}`
+        `/warehouse/suppliers?${queryParams.toString()}`
       );
       
       console.log('Supplier API Response:', response.data);
@@ -58,13 +58,58 @@ export const supplierService = {
   },
 
   /**
-   * GET /api/v1/suppliers/{id}
+   * API 6.13 - GET /api/v1/warehouse/suppliers/list
+   * Get suppliers with business metrics (Advanced endpoint)
+   * Features: Business metrics (totalOrders, lastOrderDate), advanced filters (isBlacklisted, isActive), advanced sorting
+   */
+  getSuppliersWithMetrics: async (params?: {
+    page?: number;
+    size?: number;
+    search?: string;
+    isBlacklisted?: boolean;
+    isActive?: boolean;
+    sortBy?: 'supplierName' | 'totalOrders' | 'lastOrderDate' | 'createdAt' | 'tierLevel' | 'ratingScore';
+    sortDir?: 'ASC' | 'DESC';
+  }): Promise<any> => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params?.page !== undefined) queryParams.append('page', params.page.toString());
+      if (params?.size !== undefined) queryParams.append('size', params.size.toString());
+      if (params?.search) queryParams.append('search', params.search);
+      if (params?.isBlacklisted !== undefined) queryParams.append('isBlacklisted', params.isBlacklisted.toString());
+      if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+      if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params?.sortDir) queryParams.append('sortDir', params.sortDir);
+
+      const response = await axios.get(
+        `/warehouse/suppliers/list?${queryParams.toString()}`
+      );
+      
+      console.log('Supplier with Metrics API Response:', response.data);
+      
+      // BE returns SupplierPageResponse directly
+      const data = response.data.data || response.data;
+      
+      if (!data) {
+        throw new Error('Invalid response from supplier with metrics API');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching suppliers with metrics:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * GET /api/v1/warehouse/suppliers/{id}
    * Get supplier detail by ID
    */
   getById: async (id: number): Promise<SupplierDetailResponse> => {
     try {
       const response = await axios.get(
-        `/suppliers/${id}`
+        `/warehouse/suppliers/${id}`
       );
       
       console.log('Supplier Detail API Response:', response.data);
@@ -84,13 +129,13 @@ export const supplierService = {
   },
 
   /**
-   * GET /api/v1/suppliers/{id}/supplied-items
+   * GET /api/v1/warehouse/suppliers/{id}/supplied-items
    * Get all items supplied by this supplier
    */
   getSuppliedItems: async (id: number): Promise<SuppliedItemResponse[]> => {
     try {
       const response = await axios.get(
-        `/suppliers/${id}/supplied-items`
+        `/warehouse/suppliers/${id}/supplied-items`
       );
       
       console.log('Supplied Items API Response:', response.data);
@@ -107,13 +152,13 @@ export const supplierService = {
   },
 
   /**
-   * POST /api/v1/suppliers
-   * Create new supplier
+   * API 6.14 - POST /api/v1/warehouse/suppliers
+   * Create new supplier (auto-generates supplier code)
    */
   create: async (data: CreateSupplierRequest): Promise<SupplierResponse> => {
     try {
       const response = await axios.post(
-        '/suppliers',
+        '/warehouse/suppliers',
         data
       );
       
@@ -134,13 +179,13 @@ export const supplierService = {
   },
 
   /**
-   * PUT /api/v1/suppliers/{id}
-   * Update existing supplier
+   * API 6.15 - PUT /api/v1/warehouse/suppliers/{id}
+   * Update existing supplier (including risk management flags)
    */
   update: async (id: number, data: UpdateSupplierRequest): Promise<SupplierResponse> => {
     try {
       const response = await axios.put(
-        `/suppliers/${id}`,
+        `/warehouse/suppliers/${id}`,
         data
       );
       
@@ -161,12 +206,12 @@ export const supplierService = {
   },
 
   /**
-   * DELETE /api/v1/suppliers/{id}
-   * Delete supplier (soft delete)
+   * DELETE /api/v1/warehouse/suppliers/{id}
+   * Delete supplier (soft delete - sets isActive=false)
    * Note: Cannot delete if supplier has transaction history
    */
   delete: async (id: number): Promise<void> => {
-    await axios.delete(`/suppliers/${id}`);
+    await axios.delete(`/warehouse/suppliers/${id}`);
   },
 };
 

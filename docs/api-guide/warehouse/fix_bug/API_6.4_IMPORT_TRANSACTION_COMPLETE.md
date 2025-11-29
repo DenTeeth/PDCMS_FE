@@ -5,7 +5,7 @@
 **API Endpoint:** `POST /api/v1/inventory/import`
 **Permission:** `IMPORT_ITEMS`
 **Implementation Date:** 2025-11-25
-**Status:** ✅ **COMPLETED**
+**Status:** [YES] **COMPLETED**
 
 ---
 
@@ -57,7 +57,7 @@ Hệ thống warehouse cần tracking chi tiết hơn cho phiếu nhập kho:
 - `totalValue` = sum of all totalLineValue (transaction level)
 - Dùng cho báo cáo tài chính
 
-#### 6. **Warning System** ⚠️
+#### 6. **Warning System** [WARN]
 
 - `NEAR_EXPIRY`: Hạn sử dụng < 3 tháng
 - `PRICE_VARIANCE`: Giá lệch > 30% (future)
@@ -84,18 +84,18 @@ Hệ thống warehouse cần tracking chi tiết hơn cho phiếu nhập kho:
 warehouse/
 ├── dto/
 │   ├── request/
-│   │   └── ImportTransactionRequest.java ✅ NEW
+│   │   └── ImportTransactionRequest.java [YES] NEW
 │   └── response/
-│       └── ImportTransactionResponse.java ✅ NEW
+│       └── ImportTransactionResponse.java [YES] NEW
 ├── domain/
-│   ├── StorageTransaction.java ✅ UPDATED
-│   └── StorageTransactionItem.java ✅ UPDATED
+│   ├── StorageTransaction.java [YES] UPDATED
+│   └── StorageTransactionItem.java [YES] UPDATED
 ├── repository/
-│   └── StorageTransactionRepository.java ✅ UPDATED
+│   └── StorageTransactionRepository.java [YES] UPDATED
 ├── service/
-│   └── ImportTransactionService.java ✅ NEW
+│   └── ImportTransactionService.java [YES] NEW
 └── controller/
-    └── InventoryController.java ✅ UPDATED
+    └── InventoryController.java [YES] UPDATED
 ```
 
 ### Database Schema Changes
@@ -103,14 +103,14 @@ warehouse/
 ```sql
 -- storage_transactions
 ALTER TABLE storage_transactions ADD COLUMN
-  invoice_number VARCHAR(100) UNIQUE,           -- ✅ NEW
-  expected_delivery_date DATE,                   -- ✅ NEW
-  total_value DECIMAL(15,2),                     -- ✅ NEW
-  status VARCHAR(20) DEFAULT 'COMPLETED';        -- ✅ NEW
+  invoice_number VARCHAR(100) UNIQUE,           -- [YES] NEW
+  expected_delivery_date DATE,                   -- [YES] NEW
+  total_value DECIMAL(15,2),                     -- [YES] NEW
+  status VARCHAR(20) DEFAULT 'COMPLETED';        -- [YES] NEW
 
 -- storage_transaction_items
 ALTER TABLE storage_transaction_items ADD COLUMN
-  total_line_value DECIMAL(15,2);                -- ✅ NEW
+  total_line_value DECIMAL(15,2);                -- [YES] NEW
 ```
 
 ---
@@ -273,7 +273,7 @@ ALTER TABLE storage_transaction_items ADD COLUMN
 
 ---
 
-## ⚠️ Error Handling
+## [WARN] Error Handling
 
 ### 400 Bad Request
 
@@ -359,8 +359,8 @@ Input:
 - Price: 48,000 VNĐ/hộp
 
 Validation:
-✅ Lot exists: batchId=101
-✅ Expiry matches: 2026-11-25
+[YES] Lot exists: batchId=101
+[YES] Expiry matches: 2026-11-25
 
 Output:
 - Batch updated: batchId=101
@@ -416,7 +416,7 @@ Output:
 
 ### Test Coverage
 
-#### Happy Path ✅
+#### Happy Path [YES]
 
 - [x] Import new batch (batchStatus = CREATED)
 - [x] Update existing batch (batchStatus = UPDATED)
@@ -424,7 +424,7 @@ Output:
 - [x] Near expiry warning (< 3 months)
 - [x] Multiple items in one transaction
 
-#### Error Cases ❌
+#### Error Cases [NO]
 
 - [x] Duplicate invoice number (409)
 - [x] Batch expiry conflict (409)
@@ -513,21 +513,21 @@ See: [API_6.4_IMPORT_TRANSACTION_TEST_GUIDE.md](./API_6.4_IMPORT_TRANSACTION_TES
 
 ### For Backend Team
 
-✅ **Clean Architecture:**
+[YES] **Clean Architecture:**
 
 - Separate service layer (ImportTransactionService)
 - DTOs with full validation
 - Error handling with specific codes
 - Transaction management (@Transactional)
 
-✅ **Business Logic:**
+[YES] **Business Logic:**
 
 - Batch conflict detection
 - Unit conversion support
 - Financial calculations
 - Warning generation
 
-✅ **Code Quality:**
+[YES] **Code Quality:**
 
 - Comprehensive logging
 - JavaDoc comments
@@ -536,21 +536,21 @@ See: [API_6.4_IMPORT_TRANSACTION_TEST_GUIDE.md](./API_6.4_IMPORT_TRANSACTION_TES
 
 ### For Frontend Team
 
-✅ **User Experience:**
+[YES] **User Experience:**
 
 - Real-time validation feedback
 - Clear error messages
 - Non-blocking warnings
 - Current stock display
 
-✅ **Data Handling:**
+[YES] **Data Handling:**
 
 - Invoice number uniqueness
 - Unit selection support
 - Price validation
 - Batch status tracking
 
-✅ **Integration:**
+[YES] **Integration:**
 
 - Standard REST API
 - Bearer token authentication
@@ -559,7 +559,7 @@ See: [API_6.4_IMPORT_TRANSACTION_TEST_GUIDE.md](./API_6.4_IMPORT_TRANSACTION_TES
 
 ---
 
-## ✅ Implementation Checklist
+## [YES] Implementation Checklist
 
 - [x] Create DTOs (Request/Response)
 - [x] Update entities (StorageTransaction, StorageTransactionItem)
@@ -577,7 +577,7 @@ See: [API_6.4_IMPORT_TRANSACTION_TEST_GUIDE.md](./API_6.4_IMPORT_TRANSACTION_TES
 
 **Implemented By:** Backend Team
 **Review Date:** 2025-11-25
-**Status:** ✅ **READY FOR TESTING**
+**Status:** [YES] **READY FOR TESTING**
 
 ---
 

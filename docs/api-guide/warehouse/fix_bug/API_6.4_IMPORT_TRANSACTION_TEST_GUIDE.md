@@ -10,7 +10,7 @@
 
 ## 🎯 Business Features
 
-### ✅ Core Features
+### [YES] Core Features
 
 1. **Invoice Number Tracking** - Mã hóa đơn unique cho đối chiếu kế toán
 2. **Batch Handling** - Tự động tạo lô mới hoặc cập nhật lô cũ
@@ -118,7 +118,7 @@ curl -X POST http://localhost:8080/api/v1/inventory/import \
 }
 ```
 
-**✅ Verification:**
+**[YES] Verification:**
 
 - ✓ Transaction code generated: `PN-20251125-001`
 - ✓ Batch created with status: `CREATED`
@@ -180,7 +180,7 @@ curl -X POST http://localhost:8080/api/v1/inventory/import \
 }
 ```
 
-**✅ Verification:**
+**[YES] Verification:**
 
 - ✓ Batch status: `UPDATED` (không tạo batch mới)
 - ✓ `currentStock` = 150 (100 + 50)
@@ -237,7 +237,7 @@ curl -X POST http://localhost:8080/api/v1/inventory/import \
 }
 ```
 
-**✅ Verification:**
+**[YES] Verification:**
 
 - ✓ Warning type: `NEAR_EXPIRY`
 - ✓ Message hiển thị số tháng còn lại
@@ -296,7 +296,7 @@ curl -X POST http://localhost:8080/api/v1/inventory/import \
 }
 ```
 
-**✅ Verification:**
+**[YES] Verification:**
 
 - ✓ Input: 5 Thùng
 - ✓ Stored: 50 Hộp (5 × 10 conversion rate)
@@ -304,7 +304,7 @@ curl -X POST http://localhost:8080/api/v1/inventory/import \
 
 ---
 
-## ❌ Error Test Cases
+## [NO] Error Test Cases
 
 ### Error 1: Duplicate Invoice Number
 
@@ -573,33 +573,33 @@ WHERE sti.transaction_id = 1;
 
 ### 1. Invoice Number
 
-- ✅ MUST be unique
-- ✅ Recommend format: `INV-YYYYMMDD-XXX` hoặc `HD-NCC-001`
-- ❌ Không được trùng (409 DUPLICATE_INVOICE)
+- [YES] MUST be unique
+- [YES] Recommend format: `INV-YYYYMMDD-XXX` hoặc `HD-NCC-001`
+- [NO] Không được trùng (409 DUPLICATE_INVOICE)
 
 ### 2. Expiry Date
 
-- ✅ MUST be future date (> today)
-- ✅ Cùng lot number MUST có cùng expiry date
-- ⚠️ Warning nếu < 3 months
+- [YES] MUST be future date (> today)
+- [YES] Cùng lot number MUST có cùng expiry date
+- [WARN] Warning nếu < 3 months
 
 ### 3. Unit Conversion
 
-- ✅ Chọn unit phù hợp (Hộp/Thùng/Lọ)
-- ✅ BE tự động convert về base unit
-- ✅ Response trả về theo unit đã chọn
+- [YES] Chọn unit phù hợp (Hộp/Thùng/Lọ)
+- [YES] BE tự động convert về base unit
+- [YES] Response trả về theo unit đã chọn
 
 ### 4. Price Tracking
 
-- ✅ Giá nhập bắt buộc (0.01 - 100M VNĐ)
-- ✅ Dùng cho tính COGS sau này
-- ✅ Giá có thể khác nhau giữa các lần nhập
+- [YES] Giá nhập bắt buộc (0.01 - 100M VNĐ)
+- [YES] Dùng cho tính COGS sau này
+- [YES] Giá có thể khác nhau giữa các lần nhập
 
 ### 5. Warnings
 
-- ⚠️ Warnings KHÔNG block transaction
-- ⚠️ Hiển thị cho user để nhận biết
-- ⚠️ Types: NEAR_EXPIRY, PRICE_VARIANCE
+- [WARN] Warnings KHÔNG block transaction
+- [WARN] Hiển thị cho user để nhận biết
+- [WARN] Types: NEAR_EXPIRY, PRICE_VARIANCE
 
 ### 6. Batch Status
 
@@ -608,9 +608,9 @@ WHERE sti.transaction_id = 1;
 
 ### 7. Current Stock
 
-- ✅ Luôn hiển thị theo **base unit**
-- ✅ Dùng để verify số lượng sau nhập
-- ✅ Cập nhật real-time
+- [YES] Luôn hiển thị theo **base unit**
+- [YES] Dùng để verify số lượng sau nhập
+- [YES] Cập nhật real-time
 
 ---
 
@@ -681,7 +681,7 @@ curl -X POST $BASE_URL/import \
 
 ---
 
-## ✅ Checklist for Testing
+## [YES] Checklist for Testing
 
 - [ ] Happy path - Import new batch
 - [ ] Update existing batch

@@ -51,17 +51,16 @@ export default function WarehouseReportsPage() {
     },
   });
 
-  // Fetch expiring items
-  const { data: expiringItems, isLoading: expiringLoading } = useQuery({
-    queryKey: ['expiringItemsReport'],
+  // Fetch expiring items (API 6.3)
+  const { data: expiringAlertsData, isLoading: expiringLoading } = useQuery({
+    queryKey: ['expiringAlertsReport'],
     queryFn: async () => {
-      const result = await inventoryService.getSummary({
-        isExpiringSoon: true,
-        warehouseType: 'COLD',
+      const result = await inventoryService.getExpiringAlerts({
+        days: 30,
         page: 0,
         size: 50,
       });
-      return result.content || [];
+      return result;
     },
   });
 
@@ -374,41 +373,90 @@ export default function WarehouseReportsPage() {
               <CardContent>
                 {expiringLoading ? (
                   <div className="text-center py-8">Đang tải...</div>
-                ) : expiringItems && expiringItems.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4">Mã Vật Tư</th>
-                          <th className="text-left py-3 px-4">Tên Vật Tư</th>
-                          <th className="text-right py-3 px-4">Số Lượng</th>
-                          <th className="text-center py-3 px-4">Hạn Sử Dụng</th>
-                          <th className="text-center py-3 px-4">Trạng Thái</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {expiringItems.map((item: any) => {
-                          const expiryDate = item.expiryDate || item.nearestExpiryDate;
-                          const daysRemaining = expiryDate ? getDaysUntilExpiry(expiryDate) : null;
+                ) : expiringAlertsData && expiringAlertsData.alerts && expiringAlertsData.alerts.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Stats Summary */}
+                    {expiringAlertsData.stats && (
+                      <div className="grid grid-cols-4 gap-4 mb-4">
+                        <Card>
+                          <CardContent className="pt-4">
+                            <div className="text-2xl font-bold">{expiringAlertsData.stats.totalAlerts}</div>
+                            <div className="text-sm text-gray-500">Tổng cảnh báo</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-4">
+                            <div className="text-2xl font-bold text-red-600">{expiringAlertsData.stats.expiredCount}</div>
+                            <div className="text-sm text-gray-500">Đã hết hạn</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-4">
+                            <div className="text-2xl font-bold text-orange-600">{expiringAlertsData.stats.criticalCount}</div>
+                            <div className="text-sm text-gray-500">Nguy cấp (0-7 ngày)</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-4">
+                            <div className="text-2xl font-bold text-yellow-600">{expiringAlertsData.stats.expiringSoonCount}</div>
+                            <div className="text-sm text-gray-500">Sắp hết hạn (7-30 ngày)</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4">Mã Vật Tư</th>
+                            <th className="text-left py-3 px-4">Tên Vật Tư</th>
+                            <th className="text-left py-3 px-4">Lô</th>
+                            <th className="text-right py-3 px-4">Số Lượng</th>
+                            <th className="text-center py-3 px-4">Hạn Sử Dụng</th>
+                            <th className="text-center py-3 px-4">Còn Lại</th>
+                            <th className="text-center py-3 px-4">Trạng Thái</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expiringAlertsData.alerts.map((alert: any) => {
+                            const daysRemaining = alert.daysRemaining ?? 0;
+                            const status = alert.status || (daysRemaining < 0 ? 'EXPIRED' : daysRemaining <= 7 ? 'CRITICAL' : 'EXPIRING_SOON');
 
-                          return (
-                            <tr key={item.id || item.itemMasterId} className="border-b hover:bg-gray-50">
-                              <td className="py-3 px-4 font-mono text-sm">{item.itemCode}</td>
-                              <td className="py-3 px-4">{item.itemName}</td>
-                              <td className="py-3 px-4 text-right font-semibold">
-                                {item.currentStock || item.totalQuantity || 0}
-                              </td>
-                              <td className="py-3 px-4 text-center text-sm">
-                                {expiryDate ? formatDate(expiryDate) : 'N/A'}
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                {daysRemaining !== null ? getExpiryBadge(daysRemaining) : <Badge variant="outline">N/A</Badge>}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            return (
+                              <tr key={alert.batchId} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4 font-mono text-sm">{alert.itemCode}</td>
+                                <td className="py-3 px-4">{alert.itemName}</td>
+                                <td className="py-3 px-4 text-sm text-gray-600">{alert.lotNumber}</td>
+                                <td className="py-3 px-4 text-right font-semibold">
+                                  {alert.quantityOnHand} {alert.unitName}
+                                </td>
+                                <td className="py-3 px-4 text-center text-sm">
+                                  {alert.expiryDate ? formatDate(alert.expiryDate) : 'N/A'}
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className={`font-semibold ${
+                                    status === 'EXPIRED' ? 'text-red-600' :
+                                    status === 'CRITICAL' ? 'text-orange-600' :
+                                    'text-yellow-600'
+                                  }`}>
+                                    {daysRemaining < 0 ? `-${Math.abs(daysRemaining)}` : daysRemaining} ngày
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  {status === 'EXPIRED' ? (
+                                    <Badge variant="destructive">Đã hết hạn</Badge>
+                                  ) : status === 'CRITICAL' ? (
+                                    <Badge className="bg-orange-100 text-orange-800 border-orange-200">Nguy cấp</Badge>
+                                  ) : (
+                                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Sắp hết hạn</Badge>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
