@@ -217,13 +217,15 @@ All BE/FE issues now in ONE file:
 - ℹ️ V3 API optional (advanced features like stockStatus, FEFO)
 
 **Endpoints Used:**
-- ✅ `GET /api/v1/inventory` - List items
-- ✅ `GET /api/v1/inventory/summary` - Inventory summary
+- ✅ `GET /api/v1/warehouse/summary` - Inventory summary (API 6.1)
+- ✅ `GET /api/v1/warehouse/batches/{id}` - Item batches (API 6.2)
+- ✅ `GET /api/v1/warehouse/alerts/expiring` - Expiring alerts (API 6.3)
+- ✅ `POST /api/v1/warehouse/import` - Import transactions (API 6.4)
+- ✅ `POST /api/v1/inventory/export` - Export transactions (API 6.5)
+- ✅ `GET /api/v1/warehouse/transactions` - Transaction history (API 6.6)
+- ✅ `GET /api/v1/warehouse/items` - Item masters (API 6.8)
 - ✅ `GET /api/v1/inventory/stats` - Statistics
 - ✅ `GET /api/v1/suppliers` - Suppliers
-- ✅ `GET /api/v1/storage` - Transactions
-- ✅ `POST /api/v1/storage/import` - Import items
-- ✅ `POST /api/v1/storage/export` - Export items
 
 ---
 

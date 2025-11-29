@@ -1,7 +1,7 @@
 /**
  * Storage Service - API V1
  * Handles API calls for storage in/out operations (Nhập/Xuất kho)
- * Matching BE: StorageInOutController
+ * Matching BE: TransactionHistoryController (API 6.6/6.7)
  */
 
 import { apiClient } from '@/lib/api';
@@ -95,6 +95,12 @@ const mapTransactionSummary = (item: any): StorageTransactionV3 => ({
   createdAt: item.createdAt ?? item.created_at,
   approvedByName: item.approvedByName ?? item.approved_by_name,
   approvedAt: item.approvedAt ?? item.approved_at,
+  rejectedBy: item.rejectedBy ?? item.rejected_by,
+  rejectedAt: item.rejectedAt ?? item.rejected_at,
+  rejectionReason: item.rejectionReason ?? item.rejection_reason,
+  cancelledBy: item.cancelledBy ?? item.cancelled_by,
+  cancelledAt: item.cancelledAt ?? item.cancelled_at,
+  cancellationReason: item.cancellationReason ?? item.cancellation_reason,
   totalItems: item.totalItems ?? item.total_items,
   totalValue: item.totalValue ?? item.total_value,
   status: item.status ?? item.approvalStatus ?? item.approval_status ?? 'DRAFT', // Default to DRAFT if not set
@@ -108,32 +114,53 @@ const mapTransactionSummary = (item: any): StorageTransactionV3 => ({
   items: Array.isArray(item.items) ? item.items.map(mapTransactionItem) : [],
 });
 
-const mapTransactionDetail = (item: any): StorageTransactionV3 => ({
-  transactionId: item.transactionId ?? item.transaction_id,
-  transactionCode: item.transactionCode ?? item.transaction_code,
-  transactionType: (item.transactionType ?? item.transaction_type ?? (item.exportType ? 'EXPORT' : 'IMPORT')) as TransactionType,
-  transactionDate: item.transactionDate ?? item.transaction_date,
-  supplierId: item.supplierId ?? item.supplier_id,
-  supplierName: item.supplierName ?? item.supplier_name,
-  invoiceNumber: item.invoiceNumber ?? item.invoice_number,
-  exportType: item.exportType ?? item.export_type,
-  notes: item.notes,
-  createdByName: item.createdByName ?? item.created_by_name ?? item.createdBy,
-  createdAt: item.createdAt ?? item.created_at,
-  approvedByName: item.approvedByName ?? item.approved_by_name,
-  approvedAt: item.approvedAt ?? item.approved_at,
-  totalItems: item.totalItems ?? item.total_items,
-  totalValue: item.totalValue ?? item.total_value,
-  status: item.status ?? item.approvalStatus ?? item.approval_status ?? 'DRAFT', // Default to DRAFT if not set
-  paymentStatus: item.paymentStatus ?? item.payment_status,
-  paidAmount: item.paidAmount ?? item.paid_amount,
-  remainingDebt: item.remainingDebt ?? item.remaining_debt,
-  dueDate: item.dueDate ?? item.due_date,
-  relatedAppointmentId: item.relatedAppointmentId ?? item.related_appointment_id,
-  relatedAppointmentCode: item.relatedAppointmentCode ?? item.related_appointment_code,
-  patientName: item.patientName ?? item.patient_name,
-  items: Array.isArray(item.items) ? item.items.map(mapTransactionItem) : [],
-});
+const mapTransactionDetail = (item: any): StorageTransactionV3 => {
+  // Determine transaction type:
+  // - If has supplierName -> IMPORT
+  // - If has exportType or relatedAppointmentId -> EXPORT
+  // - Otherwise try to infer from fields
+  let transactionType: TransactionType = 'IMPORT';
+  if (item.exportType || item.relatedAppointmentId || item.relatedAppointmentCode) {
+    transactionType = 'EXPORT';
+  } else if (item.supplierName || item.supplierId) {
+    transactionType = 'IMPORT';
+  } else if (item.transactionType || item.transaction_type || item.type) {
+    transactionType = (item.transactionType ?? item.transaction_type ?? item.type) as TransactionType;
+  }
+
+  return {
+    transactionId: item.transactionId ?? item.transaction_id,
+    transactionCode: item.transactionCode ?? item.transaction_code,
+    transactionType,
+    transactionDate: item.transactionDate ?? item.transaction_date,
+    supplierId: item.supplierId ?? item.supplier_id,
+    supplierName: item.supplierName ?? item.supplier_name,
+    invoiceNumber: item.invoiceNumber ?? item.invoice_number,
+    exportType: item.exportType ?? item.export_type,
+    notes: item.notes,
+    createdByName: item.createdByName ?? item.created_by_name ?? item.createdBy,
+    createdAt: item.createdAt ?? item.created_at,
+    approvedByName: item.approvedByName ?? item.approved_by_name,
+    approvedAt: item.approvedAt ?? item.approved_at,
+    rejectedBy: item.rejectedBy ?? item.rejected_by,
+    rejectedAt: item.rejectedAt ?? item.rejected_at,
+    rejectionReason: item.rejectionReason ?? item.rejection_reason,
+    cancelledBy: item.cancelledBy ?? item.cancelled_by,
+    cancelledAt: item.cancelledAt ?? item.cancelled_at,
+    cancellationReason: item.cancellationReason ?? item.cancellation_reason,
+    totalItems: item.totalItems ?? item.total_items,
+    totalValue: item.totalValue ?? item.total_value,
+    status: item.status ?? item.approvalStatus ?? item.approval_status ?? 'DRAFT', // Default to DRAFT if not set
+    paymentStatus: item.paymentStatus ?? item.payment_status,
+    paidAmount: item.paidAmount ?? item.paid_amount,
+    remainingDebt: item.remainingDebt ?? item.remaining_debt,
+    dueDate: item.dueDate ?? item.due_date,
+    relatedAppointmentId: item.relatedAppointmentId ?? item.related_appointment_id,
+    relatedAppointmentCode: item.relatedAppointmentCode ?? item.related_appointment_code ?? item.referenceCode,
+    patientName: item.patientName ?? item.patient_name,
+    items: Array.isArray(item.items) ? item.items.map(mapTransactionItem) : [],
+  };
+};
 
 const buildTransactionParams = (filter?: StorageFilter) => {
   const params: Record<string, any> = {
@@ -183,7 +210,7 @@ export const storageService = {
       console.log('✅ Get storage stats:', mapped);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Get storage stats error:', error.response?.data || error.message);
+      console.error('Get storage stats error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -211,7 +238,7 @@ export const storageService = {
             try {
               return await storageService.getById(id);
             } catch (error) {
-              console.error('❌ Failed to load detail for transaction', id, error);
+              console.error('Failed to load detail for transaction', id, error);
               return null;
             }
           }),
@@ -246,24 +273,46 @@ export const storageService = {
       console.log('✅ Get transactions:', content.length);
       return { content, meta, stats };
     } catch (error: any) {
-      console.error('❌ Get all transactions error:', error.response?.data || error.message);
+      console.error('Get all transactions error:', error.response?.data || error.message);
       throw error;
     }
   },
 
   /**
    * GET /api/v1/warehouse/transactions/{id} - Chi tiết phiếu nhập/xuất kho (API 6.7)
+   * 
+   * BE returns: ImportTransactionResponse or ExportTransactionResponse directly (not wrapped)
    */
   getById: async (id: number): Promise<StorageTransactionV3> => {
     try {
       const response = await api.get(`${TRANSACTION_BASE}/${id}`);
-      const payload = extractPayload(response);
-      const data = payload.data ?? payload;
+      
+      // BE returns response directly (ResponseEntity.ok(response))
+      // Axios wraps it in response.data
+      // So response.data is ImportTransactionResponse or ExportTransactionResponse
+      const rawData = response.data;
+      
+      // Handle case where BE might wrap in { data: ... } or return directly
+      const data = rawData?.data ?? rawData;
+      
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
+      
       const mapped = mapTransactionDetail(data);
       console.log('✅ Get transaction detail:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Get transaction detail error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Unknown error';
+      console.error('Get transaction detail error:', {
+        id,
+        status: error.response?.status,
+        message: errorMessage,
+        data: error.response?.data,
+      });
       throw error;
     }
   },
@@ -282,7 +331,58 @@ export const storageService = {
       console.log('✅ Update transaction notes:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Update transaction notes error:', error.response?.data || error.message);
+      console.error('Update transaction notes error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * POST /api/v1/warehouse/transactions/{id}/approve - Duyệt phiếu nhập/xuất kho (API 6.6.1)
+   */
+  approve: async (id: number, notes?: string): Promise<StorageTransactionV3> => {
+    try {
+      const response = await api.post(`${TRANSACTION_BASE}/${id}/approve`, notes ? { notes } : undefined);
+      const payload = extractPayload(response);
+      const mapped = mapTransactionDetail(payload.data ?? payload);
+      console.log('✅ Approve transaction:', mapped.transactionCode);
+      return mapped;
+    } catch (error: any) {
+      console.error('Approve transaction error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * POST /api/v1/warehouse/transactions/{id}/reject - Từ chối phiếu nhập/xuất kho (API 6.6.2)
+   */
+  reject: async (id: number, rejectionReason: string): Promise<StorageTransactionV3> => {
+    try {
+      const response = await api.post(`${TRANSACTION_BASE}/${id}/reject`, { rejectionReason });
+      const payload = extractPayload(response);
+      const mapped = mapTransactionDetail(payload.data ?? payload);
+      console.log('✅ Reject transaction:', mapped.transactionCode);
+      return mapped;
+    } catch (error: any) {
+      console.error('Reject transaction error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * POST /api/v1/warehouse/transactions/{id}/cancel - Hủy phiếu nhập/xuất kho (API 6.6.3)
+   */
+  cancel: async (id: number, cancellationReason?: string): Promise<StorageTransactionV3> => {
+    try {
+      const response = await api.post(
+        `${TRANSACTION_BASE}/${id}/cancel`,
+        cancellationReason ? { cancellationReason } : undefined
+      );
+      const payload = extractPayload(response);
+      const mapped = mapTransactionDetail(payload.data ?? payload);
+      console.log('✅ Cancel transaction:', mapped.transactionCode);
+      return mapped;
+    } catch (error: any) {
+      console.error('Cancel transaction error:', error.response?.data || error.message);
       throw error;
     }
   },

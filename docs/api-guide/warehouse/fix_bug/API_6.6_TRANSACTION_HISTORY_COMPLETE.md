@@ -190,12 +190,12 @@ GET /transactions?appointmentId=1523
 
 | Role                   | VIEW_WAREHOUSE | VIEW_COST | Use Case                              |
 | ---------------------- | -------------- | --------- | ------------------------------------- |
-| ROLE_ADMIN             | [YES]          | ✅        | Full access                           |
-| ROLE_INVENTORY_MANAGER | [YES]          | ✅        | Quản lý kho - full financial data     |
-| ROLE_MANAGER           | [YES]          | ✅        | Quản lý - duyệt phiếu + xem tài chính |
-| ROLE_ACCOUNTANT        | [YES]          | ✅        | Kế toán - đối soát công nợ            |
+| ROLE_ADMIN             | [YES]          | [YES]        | Full access                           |
+| ROLE_INVENTORY_MANAGER | [YES]          | [YES]        | Quản lý kho - full financial data     |
+| ROLE_MANAGER           | [YES]          | [YES]        | Quản lý - duyệt phiếu + xem tài chính |
+| ROLE_ACCOUNTANT        | [YES]          | [YES]        | Kế toán - đối soát công nợ            |
 | ROLE_RECEPTIONIST      | [YES]          | [NO]      | Lễ tân - chỉ xem metadata             |
-| ROLE_DOCTOR            | [NO]           | ❌        | Không truy cập warehouse              |
+| ROLE_DOCTOR            | [NO]           | [NO]        | Không truy cập warehouse              |
 
 **RBAC Logic**:
 
