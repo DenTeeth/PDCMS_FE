@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ArrowLeft,
   User,
@@ -542,15 +548,20 @@ export default function EmployeeDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-role">Role</Label>
                   <Select
-                    options={roles.map((role) => ({
-                      value: role.roleId,
-                      label: role.roleName,
-                      description: role.description,
-                    }))}
                     value={editFormData.roleId}
-                    onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
-                    placeholder="Select role"
-                  />
+                    onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                  >
+                    <SelectTrigger id="edit-role">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-sm text-muted-foreground">
                     Change employee role if needed
                   </p>

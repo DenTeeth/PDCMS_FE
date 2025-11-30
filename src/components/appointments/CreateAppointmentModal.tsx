@@ -303,8 +303,6 @@ export default function CreateAppointmentModal({
 
   // Step 3: Selected specialization filter
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
-  // Step 3: Selected category filter
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   
   // Current user's employee data (if employee)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
@@ -431,7 +429,6 @@ export default function CreateAppointmentModal({
     setAllEmployeeShifts(new Map());
     setSuggestedDates([]);
     setSelectedSpecializationFilter('all');
-    setSelectedCategoryFilter('all');
     setSelectedMonth(startOfMonth(new Date()));
     // Phase 5: Reset plan item IDs
     setPlanItemIds([]);
@@ -933,41 +930,28 @@ export default function CreateAppointmentModal({
     });
   };
 
-  // Step 3: Get services grouped by category (fallback to specialization if no category)
-  const getServicesGroupedByCategory = useMemo(() => {
-    const grouped = new Map<string | number, { category?: ServiceCategory; services: Service[] }>();
+  // Step 3: Get services grouped by specialization (matching service list page)
+  const getServicesGroupedBySpecialization = useMemo(() => {
+    const grouped = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
     
-    // First, group by category
+    // Group by specialization
     services.forEach((service) => {
-      const categoryId = service.categoryId || 'none';
-      if (!grouped.has(categoryId)) {
-        const category = categoryId !== 'none' ? categories.find(c => c.categoryId === categoryId) : undefined;
-        grouped.set(categoryId, { category, services: [] });
+      const specId = service.specializationId || 'none';
+      if (!grouped.has(specId)) {
+        // ✅ Fix: Compare both string and number versions of specializationId
+        const specialization = specId !== 'none' 
+          ? specializations.find(s => 
+              String(s.specializationId) === String(specId) || 
+              s.specializationId === specId
+            ) 
+          : undefined;
+        grouped.set(specId, { specialization, services: [] });
       }
-      grouped.get(categoryId)!.services.push(service);
+      grouped.get(specId)!.services.push(service);
     });
-
-    // For services without category, group by specialization
-    const noCategoryGroup = grouped.get('none');
-    if (noCategoryGroup && noCategoryGroup.services.length > 0) {
-      const bySpec = new Map<string | number, Service[]>();
-      noCategoryGroup.services.forEach((service) => {
-        const specId = service.specializationId || 'none-spec';
-        if (!bySpec.has(specId)) {
-          bySpec.set(specId, []);
-        }
-        bySpec.get(specId)!.push(service);
-      });
-      
-      // Replace 'none' group with specialization groups
-      grouped.delete('none');
-      bySpec.forEach((specServices, specId) => {
-        grouped.set(`spec-${specId}`, { services: specServices });
-      });
-    }
-
+    
     return grouped;
-  }, [services, categories]);
+  }, [services, specializations]);
 
   // Step 3: Get filtered services based on selected specialization filter
   const getFilteredServices = (): Service[] => {
@@ -1738,26 +1722,6 @@ export default function CreateAppointmentModal({
                   </div>
                 )}
                 
-                {/* Category Filter */}
-                <div>
-                  <Label>Filter by Category</Label>
-                  <Select
-                    value={selectedCategoryFilter}
-                    onValueChange={setSelectedCategoryFilter}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="All categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
-                          {cat.categoryName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div>
@@ -1765,80 +1729,39 @@ export default function CreateAppointmentModal({
                 <Card className="p-4 mt-1 max-h-96 overflow-y-auto">
                   {loadingData ? (
                     <p className="text-sm text-muted-foreground">Loading services...</p>
-                  ) : Array.from(getServicesGroupedByCategory.entries()).length === 0 ? (
+                  ) : Array.from(getServicesGroupedBySpecialization.entries()).length === 0 ? (
                     <Card className="p-4 bg-red-50 border-red-200">
                       <p className="text-sm text-red-800">No services found.</p>
                     </Card>
                   ) : (
                     <div className="space-y-4">
-                      {Array.from(getServicesGroupedByCategory.entries())
-                        .filter(([_, group]) => {
+                      {Array.from(getServicesGroupedBySpecialization.entries())
+                        .filter(([key, group]) => {
                           // Apply specialization filter
                           if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
                             if (selectedSpecializationFilter === 'none') {
-                              if (!group.services.some(s => !s.specializationId)) return false;
+                              return key === 'none'; // Only show services without specialization
                             } else {
                               const specId = parseInt(selectedSpecializationFilter, 10);
-                              if (!group.services.some(s => s.specializationId === specId)) return false;
+                              return key === specId; // Only show services with matching specialization
                             }
-                          }
-                          
-                          // Apply category filter
-                          if (selectedCategoryFilter !== 'all') {
-                            const catId = parseInt(selectedCategoryFilter, 10);
-                            if (!group.category || group.category.categoryId !== catId) return false;
                           }
                           
                           return true;
                         })
                         .map(([key, group]) => (
                           <div key={key} className="space-y-2">
-                            {group.category ? (
-                              <div className="flex items-center gap-2 pb-2 border-b">
-                                <h4 className="font-semibold text-sm text-primary">
-                                  {group.category.categoryName}
-                                </h4>
-                                <Badge variant="secondary" className="text-xs">
-                                  {group.services.length} {group.services.length === 1 ? 'service' : 'services'}
-                                </Badge>
-                              </div>
-                            ) : key.toString().startsWith('spec-') ? (
-                              <div className="flex items-center gap-2 pb-2 border-b">
-                                <h4 className="font-semibold text-sm text-muted-foreground">
-                                  {(() => {
-                                    const specId = key.toString().replace('spec-', '');
-                                    if (specId === 'none-spec') return 'No Specialization';
-                                    const spec = specializations.find(s => String(s.specializationId) === specId);
-                                    return spec ? spec.specializationName : 'Other';
-                                  })()}
-                                </h4>
-                                <Badge variant="outline" className="text-xs">
-                                  {group.services.length} {group.services.length === 1 ? 'service' : 'services'}
-                                </Badge>
-                              </div>
-                            ) : null}
+                            {/* Group Header - Specialization Name */}
+                            <div className="flex items-center gap-2 pb-2 border-b">
+                              <h4 className="font-semibold text-sm text-primary">
+                                {group.specialization?.specializationName || 'Chưa phân loại chuyên khoa'}
+                              </h4>
+                              <Badge variant="outline" className="text-xs">
+                                {group.services.length} {group.services.length === 1 ? 'service' : 'services'}
+                              </Badge>
+                            </div>
                             <div className="space-y-2 pl-4">
-                              {group.services
-                                .filter(service => {
-                                  // Apply specialization filter
-                                  if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
-                                    if (selectedSpecializationFilter === 'none') {
-                                      if (service.specializationId) return false;
-                                    } else {
-                                      const specId = parseInt(selectedSpecializationFilter, 10);
-                                      if (service.specializationId !== specId) return false;
-                                    }
-                                  }
-                                  
-                                  // Apply category filter
-                                  if (selectedCategoryFilter !== 'all') {
-                                    const catId = parseInt(selectedCategoryFilter, 10);
-                                    if (service.categoryId !== catId) return false;
-                                  }
-                                  
-                                  return true;
-                                })
-                                .map((service) => {
+                              {group.services.map((service) => {
                                   const isSelected = serviceCodes.includes(service.serviceCode);
                                   return (
                                     <div key={service.serviceId} className="flex items-center space-x-2">

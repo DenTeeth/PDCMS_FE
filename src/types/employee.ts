@@ -104,6 +104,8 @@ export interface CreateEmployeeRequest {
 /**
  * Request payload for updating an existing employee (PATCH - partial update)
  * All fields are optional
+ * NOTE: Account fields (username, email, password) are NOT supported in update endpoint
+ * Account can only be created when creating employee, not updated separately
  */
 export interface UpdateEmployeeRequest {
   firstName?: string;
@@ -112,7 +114,8 @@ export interface UpdateEmployeeRequest {
   address?: string;
   dateOfBirth?: string;
   roleId?: string;
-  employeeType?: EmploymentType; // Changed from employmentType to employeeType to match API
+  employeeType?: EmploymentType; // Changed from employmentType to employeeType to match API (BE expects employmentType)
+  isActive?: boolean; // Added to match BE UpdateEmployeeRequest
   specializationIds?: string[];
 }
 
