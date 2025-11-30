@@ -76,7 +76,36 @@ export default function CreateExportModal({
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xuất kho!');
+      const errorCode = error.code || error.response?.data?.error;
+      const errorMessage = error.message || error.response?.data?.message || 'Có lỗi xảy ra khi xuất kho!';
+      
+      // Handle specific error codes
+      if (errorCode === 'INSUFFICIENT_STOCK') {
+        toast.error('Không đủ tồn kho để xuất!', {
+          description: 'Vui lòng kiểm tra lại số lượng tồn kho hiện có.',
+        });
+      } else if (errorCode === 'INVALID_QUANTITY') {
+        toast.error('Số lượng không hợp lệ!', {
+          description: errorMessage,
+        });
+      } else if (errorCode === 'ITEM_NOT_FOUND') {
+        toast.error('Vật tư không tồn tại!', {
+          description: 'Vui lòng chọn lại vật tư.',
+        });
+      } else if (errorCode === 'UNIT_NOT_FOUND') {
+        toast.error('Đơn vị không tồn tại!', {
+          description: 'Vui lòng chọn lại đơn vị.',
+        });
+      } else {
+        toast.error(errorMessage);
+      }
+      
+      console.error('Export transaction error:', {
+        code: errorCode,
+        message: errorMessage,
+        status: error.status || error.response?.status,
+        data: error.response?.data,
+      });
     },
   });
 

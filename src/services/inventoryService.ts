@@ -185,21 +185,79 @@ export const inventoryService = {
   },
 
   /**
-   * GET /api/v1/warehouse/items/{id} - Lấy chi tiết 1 vật tư
+   * GET /api/v1/inventory/{id} - Lấy chi tiết 1 vật tư
+   * 
+   * Note: BE has endpoint at /api/v1/inventory/{id} (InventoryController)
+   * Returns: ItemMasterSummaryResponse
    */
   getById: async (id: number): Promise<ItemMasterV1> => {
     try {
-      const response = await api.get<ItemMasterV1>(`/warehouse/items/${id}`);
-      console.log('✅ Get item detail:', response.data);
-      return response.data;
+      const response = await api.get(`/inventory/${id}`);
+      const data = response.data || {};
+      
+      // Map ItemMasterSummaryResponse to ItemMasterV1
+      const mapped: ItemMasterV1 = {
+        id: data.itemMasterId ?? data.item_master_id ?? id,
+        itemCode: data.itemCode ?? data.item_code ?? '',
+        itemName: data.itemName ?? data.item_name ?? '',
+        categoryId: 0, // Not in response, will need to fetch separately if needed
+        categoryName: data.categoryName ?? data.category_name,
+        unitOfMeasure: data.unitOfMeasure ?? data.unit_of_measure ?? '',
+        warehouseType: (data.warehouseType ?? data.warehouse_type ?? 'NORMAL') as 'COLD' | 'NORMAL',
+        minStockLevel: data.minStockLevel ?? data.min_stock_level ?? 0,
+        maxStockLevel: data.maxStockLevel ?? data.max_stock_level ?? 0,
+        currentStock: data.totalQuantityOnHand ?? data.total_quantity_on_hand ?? 0,
+        stockStatus: (data.stockStatus ?? data.stock_status ?? 'NORMAL') as 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK',
+        isTool: data.isTool ?? data.is_tool ?? false,
+        notes: undefined, // Not in ItemMasterSummaryResponse
+        createdAt: data.createdAt ?? data.created_at,
+        updatedAt: data.updatedAt ?? data.updated_at,
+      };
+      
+      console.log('✅ Get item detail:', mapped);
+      return mapped;
     } catch (error: any) {
-      console.error('❌ Get item detail error:', error.response?.data || error.message);
-      throw error;
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        error.toString() || 
+        'Unknown error occurred';
+      
+      const errorDetails = error.response?.data || error.data || {};
+      const statusCode = error.response?.status || error.status;
+      const requestUrl = error.config?.url || error.url || `/inventory/${id}`;
+      
+      console.error('❌ Get item detail error:', {
+        message: errorMessage,
+        status: statusCode,
+        statusText: error.response?.statusText || error.statusText,
+        data: errorDetails,
+        url: requestUrl,
+        itemId: id,
+        fullError: error,
+      });
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch item detail: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   },
 
   /**
-   * GET /api/v1/warehouse/summary - Lấy danh sách tồn kho (Inventory Dashboard)
+   * GET /api/v1/inventory/summary - Lấy danh sách tồn kho (Inventory Dashboard)
+   * 
+   * Note: BE document (FE_ISSUES_RESOLUTION_2025_11_29.md) confirms this endpoint works correctly.
+   * Advanced version /warehouse/summary may have issues, so using simple version.
+   * 
+   * BE Response: Page<ItemMasterSummaryResponse> with:
+   * - content: ItemMasterSummaryResponse[]
+   * - totalElements, totalPages, number, size
+   * 
+   * ItemMasterSummaryResponse: { itemMasterId, itemCode, itemName, categoryName, warehouseType, 
+   *   unitOfMeasure, totalQuantityOnHand, stockStatus, isExpiringSoon, minStockLevel, maxStockLevel }
    */
   getSummary: async (filter?: InventoryFilter): Promise<InventorySummaryPage> => {
     try {
@@ -208,46 +266,49 @@ export const inventoryService = {
         size: filter?.size ?? 10,
       };
 
+      // BE /inventory/summary supports: warehouseType, stockStatus, page, size, sort
+      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+      if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
       if (filter?.sort) {
         params.sort = filter.sort;
       } else if (filter?.sortBy) {
         params.sort = `${filter.sortBy},${filter.sortDirection ?? 'asc'}`;
+      } else {
+        params.sort = 'itemName,asc'; // Default sort
       }
-      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
-      if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
-      if (filter?.categoryId) params.categoryId = filter.categoryId;
-      if (filter?.isExpiringSoon) params.isExpiringSoon = filter.isExpiringSoon;
-      if (filter?.search) params.search = filter.search;
+      // Note: /inventory/summary doesn't support search or categoryId filters
 
-      const response = await api.get('/warehouse/summary', { params });
+      const response = await api.get('/inventory/summary', { params });
       const raw = response.data;
 
+      // Map ItemMasterSummaryResponse to InventorySummary
+      // BE /inventory/summary returns: { content: ItemMasterSummaryResponse[], totalElements, totalPages, number, size }
+      // ItemMasterSummaryResponse has: itemMasterId, itemCode, itemName, categoryName, warehouseType,
+      //   unitOfMeasure, totalQuantityOnHand, stockStatus, isExpiringSoon, minStockLevel, maxStockLevel
       const mapItem = (item: any): InventorySummary => ({
-        itemMasterId: item.itemMasterId ?? item.item_master_id,
-        itemCode: item.itemCode ?? item.item_code,
-        itemName: item.itemName ?? item.item_name,
+        itemMasterId: item.itemMasterId ?? item.item_master_id ?? 0,
+        itemCode: item.itemCode ?? item.item_code ?? '',
+        itemName: item.itemName ?? item.item_name ?? '',
         categoryName: item.categoryName ?? item.category_name ?? '',
-        unitOfMeasure: item.unitOfMeasure ?? item.unit_name ?? '',
-        warehouseType: item.warehouseType ?? item.warehouse_type ?? 'NORMAL',
+        // BE /inventory/summary uses 'unitOfMeasure' (not 'unitName')
+        unitOfMeasure: item.unitOfMeasure ?? item.unit_of_measure ?? item.unitName ?? item.unit_name ?? '',
+        warehouseType: (item.warehouseType ?? item.warehouse_type ?? 'NORMAL') as 'COLD' | 'NORMAL',
         minStockLevel: item.minStockLevel ?? item.min_stock_level ?? 0,
         maxStockLevel: item.maxStockLevel ?? item.max_stock_level ?? 0,
-        stockStatus: item.stockStatus ?? item.stock_status ?? 'NORMAL',
+        stockStatus: (item.stockStatus ?? item.stock_status ?? 'NORMAL') as 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'OVERSTOCK',
+        // ItemMasterSummaryResponse has isExpiringSoon field
         isTool: item.isTool ?? item.is_tool ?? false,
         isExpiringSoon: item.isExpiringSoon ?? item.is_expiring_soon ?? false,
-        totalQuantity:
-          item.totalQuantity ??
-          item.total_quantity ??
-          item.totalQuantityOnHand ??
-          item.total_quantity_on_hand ??
-          0,
-        totalQuantityOnHand:
-          item.totalQuantityOnHand ?? item.total_quantity_on_hand ?? item.totalQuantity ?? item.total_quantity ?? 0,
-        nearestExpiryDate: item.nearestExpiryDate ?? item.nearest_expiry_date,
+        totalQuantity: item.totalQuantityOnHand ?? item.total_quantity_on_hand ?? item.totalQuantity ?? item.total_quantity ?? 0,
+        totalQuantityOnHand: item.totalQuantityOnHand ?? item.total_quantity_on_hand ?? item.totalQuantity ?? item.total_quantity ?? 0,
+        nearestExpiryDate: item.nearestExpiryDate ?? item.nearest_expiry_date, // May not be in simple version
         createdAt: item.createdAt ?? item.created_at,
         updatedAt: item.updatedAt ?? item.updated_at,
       });
 
+      // BE /inventory/summary returns Spring Page: { content[], totalElements, totalPages, number, size }
       if (Array.isArray(raw)) {
+        // Fallback: if response is array directly (shouldn't happen, but handle gracefully)
         const content = raw.map(mapItem);
         return {
           content,
@@ -258,41 +319,134 @@ export const inventoryService = {
         };
       }
 
-      const content = (raw.content || raw.data || []).map(mapItem);
+      // Normal response structure: Spring Page<ItemMasterSummaryResponse>
+      const content = (raw.content || []).map(mapItem);
       return {
         content,
-        totalElements: raw.totalItems ?? raw.totalItems ?? content.length,
-        totalPages: raw.totalPages ?? raw.total_pages ?? 1,
-        size: raw.size ?? content.length,
-        number: raw.page ?? raw.number ?? 0,
+        // Spring Page uses 'totalElements' (not 'totalItems')
+        totalElements: Number(raw.totalElements ?? raw.total_elements ?? content.length),
+        totalPages: Number(raw.totalPages ?? raw.total_pages ?? 1),
+        size: Number(raw.size ?? content.length),
+        number: Number(raw.number ?? raw.page ?? 0),
       };
     } catch (error: any) {
-      console.error('❌ Get inventory summary error:', error.response?.data || error.message);
-      throw error;
+      // Better error logging with fallbacks
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        error.toString() || 
+        'Unknown error occurred';
+      
+      const errorDetails = error.response?.data || error.data || {};
+      const statusCode = error.response?.status || error.status;
+      const requestUrl = error.config?.url || error.url || '/warehouse/summary';
+      const requestParams = error.config?.params || {};
+      
+      // Log full error details for BE debugging
+      const errorLog = {
+        message: errorMessage,
+        status: statusCode,
+        statusText: error.response?.statusText || error.statusText,
+        data: errorDetails,
+        url: requestUrl,
+        params: requestParams,
+        timestamp: new Date().toISOString(),
+        // Additional context for BE team
+        requestInfo: {
+          endpoint: '/api/v1/inventory/summary',
+          method: 'GET',
+          params: requestParams,
+          userAgent: typeof window !== 'undefined' ? window.navigator?.userAgent : 'N/A',
+        },
+        // Full error for debugging
+        fullError: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+          response: error.response ? {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            headers: error.response.headers,
+            data: error.response.data,
+          } : null,
+        },
+      };
+      
+      console.error('❌ Get inventory summary error:', errorLog);
+      
+      // Also log to console in a format BE team can easily read
+      if (statusCode === 500) {
+        console.error('🔴 BE 500 ERROR DETAILS:', {
+          endpoint: '/api/v1/inventory/summary',
+          requestParams,
+          errorResponse: errorDetails,
+        possibleCauses: [
+          'Switched to /inventory/summary endpoint (simple version)',
+          'If still fails, check BE logs for actual error',
+        ],
+        });
+      }
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch inventory summary: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   },
 
   /**
    * GET /api/v1/inventory/stats - Lấy thống kê tổng quan kho
+   * BE Response: WarehouseStatsResponse { totalItems, lowStockItems, expiringSoonItems, outOfStockItems }
    */
   getStats: async (): Promise<InventoryStats> => {
     try {
       const response = await api.get('/inventory/stats');
       const data = response.data || {};
+      
+      // Map WarehouseStatsResponse to InventoryStats
       const mapped: InventoryStats = {
         totalItems: data.totalItems ?? data.total_items ?? 0,
-        totalValue: data.totalValue ?? data.total_value,
-        lowStockCount: data.lowStockCount ?? data.lowStockItems ?? 0,
-        outOfStockCount: data.outOfStockCount ?? data.outOfStockItems ?? 0,
-        expiringWithin30Days: data.expiringWithin30Days ?? data.expiringSoonItems ?? 0,
-        coldStorageItems: data.coldStorageItems ?? data.cold_storage_items,
-        normalStorageItems: data.normalStorageItems ?? data.normal_storage_items,
+        // These fields are NOT in WarehouseStatsResponse, set to undefined
+        totalValue: undefined,
+        lowStockCount: data.lowStockItems ?? data.low_stock_items ?? 0,
+        outOfStockCount: data.outOfStockItems ?? data.out_of_stock_items ?? 0,
+        expiringWithin30Days: data.expiringSoonItems ?? data.expiring_soon_items ?? 0,
+        coldStorageItems: undefined, // Not in WarehouseStatsResponse
+        normalStorageItems: undefined, // Not in WarehouseStatsResponse
       };
+      
       console.log('✅ Get inventory stats:', mapped);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Get inventory stats error:', error.response?.data || error.message);
-      throw error;
+      // Better error logging with fallbacks
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        error.toString() || 
+        'Unknown error occurred';
+      
+      const errorDetails = error.response?.data || error.data || {};
+      const statusCode = error.response?.status || error.status;
+      const requestUrl = error.config?.url || error.url || '/inventory/stats';
+      
+      console.error('❌ Get inventory stats error:', {
+        message: errorMessage,
+        status: statusCode,
+        statusText: error.response?.statusText || error.statusText,
+        data: errorDetails,
+        url: requestUrl,
+        fullError: error,
+      });
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch inventory stats: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   },
 
@@ -325,16 +479,62 @@ export const inventoryService = {
   },
 
   /**
-   * GET /api/v1/warehouse/batches/{itemMasterId} - Lấy danh sách lô hàng theo FEFO
+   * GET /api/v1/inventory/batches/{itemMasterId} - Lấy danh sách lô hàng theo FEFO
+   * 
+   * Note: BE document (FE_ISSUES_RESOLUTION_2025_11_29.md) confirms this endpoint works correctly.
+   * Simple version returns List<BatchResponse>[] with FEFO sorting.
+   * 
+   * Alternative advanced endpoint: /api/v1/warehouse/batches/{itemMasterId} (with stats, pagination)
+   * 
+   * BE Response: BatchResponse[] sorted by expiryDate ASC (FEFO)
+   * BatchResponse: { batchId, lotNumber, quantityOnHand, expiryDate, importedAt, supplierName, isExpiringSoon, isExpired }
    */
   getBatchesByItemId: async (itemMasterId: number): Promise<BatchResponse[]> => {
     try {
-      const response = await api.get<BatchResponse[]>(`/warehouse/batches/${itemMasterId}`);
-      console.log('✅ Get batches (FEFO):', response.data);
-      return response.data;
+      const response = await api.get(`/inventory/batches/${itemMasterId}`);
+      const data = response.data || [];
+      
+      // Map BatchResponse to ensure correct structure
+      const mapped: BatchResponse[] = Array.isArray(data) ? data.map((batch: any) => ({
+        batchId: batch.batchId ?? batch.batch_id ?? 0,
+        lotNumber: batch.lotNumber ?? batch.lot_number ?? '',
+        quantityOnHand: batch.quantityOnHand ?? batch.quantity_on_hand ?? 0,
+        expiryDate: batch.expiryDate ?? batch.expiry_date,
+        importedAt: batch.importedAt ?? batch.imported_at,
+        supplierName: batch.supplierName ?? batch.supplier_name,
+        isExpiringSoon: batch.isExpiringSoon ?? batch.is_expiring_soon ?? false,
+        isExpired: batch.isExpired ?? batch.is_expired ?? false,
+      })) : [];
+      
+      console.log('✅ Get batches (FEFO):', mapped.length, 'batches');
+      return mapped;
     } catch (error: any) {
-      console.error('❌ Get batches error:', error.response?.data || error.message);
-      throw error;
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        error.toString() || 
+        'Unknown error occurred';
+      
+      const errorDetails = error.response?.data || error.data || {};
+      const statusCode = error.response?.status || error.status;
+      const requestUrl = error.config?.url || error.url || `/inventory/batches/${itemMasterId}`;
+      
+      console.error('❌ Get batches error:', {
+        message: errorMessage,
+        status: statusCode,
+        statusText: error.response?.statusText || error.statusText,
+        data: errorDetails,
+        url: requestUrl,
+        itemMasterId,
+        fullError: error,
+      });
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch batches: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   },
 
@@ -529,8 +729,26 @@ export const inventoryService = {
       console.log('✅ Create export transaction:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Create export transaction error:', error.response?.data || error.message);
-      throw error;
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || errorData?.error || error.message;
+      const errorCode = errorData?.error;
+      
+      console.error('❌ Create export transaction error:', {
+        message: errorMessage,
+        code: errorCode,
+        status: error.response?.status,
+        data: errorData,
+        url: error.config?.url,
+        payload: data,
+        fullError: error,
+      });
+      
+      // Re-throw with enhanced error info
+      const enhancedError = new Error(errorMessage);
+      (enhancedError as any).code = errorCode;
+      (enhancedError as any).status = error.response?.status;
+      (enhancedError as any).response = error.response;
+      throw enhancedError;
     }
   },
 };

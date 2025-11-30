@@ -166,16 +166,20 @@ export default function StorageInOutPage() {
     enabled: viewMode === 'reports',
   });
 
-  const { data: allItemsResponse = [] } = useQuery({
+  const { data: allItemsResponse, error: inventorySummaryError } = useQuery({
     queryKey: ['allInventoryItems'],
-    queryFn: () => inventoryService.getSummary({}),
+    queryFn: () => inventoryService.getSummary({ page: 0, size: 1000 }),
     enabled: viewMode === 'reports',
+    retry: 1, // Only retry once on failure
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
   // Extract array from response (handle both array and Page response)
-  const allItems: InventorySummary[] = Array.isArray(allItemsResponse) 
-    ? allItemsResponse 
-    : (allItemsResponse as any)?.content || [];
+  const allItems: InventorySummary[] = inventorySummaryError 
+    ? [] // Return empty array if error occurs
+    : (Array.isArray(allItemsResponse) 
+      ? allItemsResponse 
+      : (allItemsResponse as any)?.content || []);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['allCategories'],

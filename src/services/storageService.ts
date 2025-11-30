@@ -192,6 +192,7 @@ const extractPayload = (response: any) => response?.data?.data ?? response?.data
 export const storageService = {
   /**
    * GET /api/v1/warehouse/transactions/stats - Lấy thống kê import/export (API 6.6)
+   * Note: This endpoint may not exist or may require specific permissions
    */
   getStats: async (month?: number, year?: number): Promise<StorageStats> => {
     try {
@@ -210,8 +211,24 @@ export const storageService = {
       console.log('✅ Get storage stats:', mapped);
       return mapped;
     } catch (error: any) {
-      console.error('Get storage stats error:', error.response?.data || error.message);
-      throw error;
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+      const errorDetails = error.response?.data || {};
+      const statusCode = error.response?.status;
+      const requestUrl = error.config?.url;
+      
+      console.error('❌ Get storage stats error:', {
+        message: errorMessage,
+        status: statusCode,
+        data: errorDetails,
+        url: requestUrl,
+        params: error.config?.params,
+      });
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch storage stats: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      throw enhancedError;
     }
   },
 
@@ -273,8 +290,35 @@ export const storageService = {
       console.log('✅ Get transactions:', content.length);
       return { content, meta, stats };
     } catch (error: any) {
-      console.error('Get all transactions error:', error.response?.data || error.message);
-      throw error;
+      // Better error logging with fallbacks
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        error.toString() || 
+        'Unknown error occurred';
+      
+      const errorDetails = error.response?.data || error.data || {};
+      const statusCode = error.response?.status || error.status;
+      const requestUrl = error.config?.url || error.url || TRANSACTION_BASE;
+      const requestParams = error.config?.params || {};
+      
+      console.error('❌ Get all transactions error:', {
+        message: errorMessage,
+        status: statusCode,
+        statusText: error.response?.statusText || error.statusText,
+        data: errorDetails,
+        url: requestUrl,
+        params: requestParams,
+        filter,
+        fullError: error,
+      });
+      
+      // Re-throw with more context
+      const enhancedError = new Error(`Failed to fetch transactions: ${errorMessage}`);
+      (enhancedError as any).status = statusCode;
+      (enhancedError as any).data = errorDetails;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   },
 

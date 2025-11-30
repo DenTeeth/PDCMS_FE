@@ -57,45 +57,70 @@ export default function InventoryPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; itemId: number | null; itemName: string }>({ isOpen: false, itemId: null, itemName: '' });
 
   // Dashboard Stats - API V1
-  const { data: stats } = useQuery({
+  const { data: stats, error: statsError } = useQuery({
     queryKey: ['inventoryStats'],
     queryFn: () => inventoryService.getStats(),
+    retry: 1, // Only retry once on failure
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Main Inventory Data - Warehouse API 6.1
-  // Note: BE /api/v1/warehouse/summary doesn't support search parameter, so we do client-side filtering
-  const { data: inventoryPage, isLoading } = useQuery({
+  // Note: BE /api/v1/warehouse/summary supports: search, stockStatus, warehouseType, categoryId, page, size
+  // Note: BE does NOT support isExpiringSoon filter or sort parameter
+  const { data: inventoryPage, isLoading, error: inventoryError } = useQuery({
     queryKey: ['inventorySummary', tabState.activeFilter, page, sortField, sortDirection],
     queryFn: () => {
       const filter: any = {
-        // search: tabState.searchQuery || undefined, // BE doesn't support this
         page: 0, // Fetch all for client-side search
         size: 1000, // Fetch large number to enable client-side filtering
-        sort: `${sortField},${sortDirection}`,
+        // Note: BE doesn't support sort parameter, so we do client-side sorting
       };
 
-      // Apply tab filters
+      // Apply tab filters (BE supported filters only)
       if (tabState.activeFilter === 'COLD') filter.warehouseType = 'COLD';
       if (tabState.activeFilter === 'NORMAL') filter.warehouseType = 'NORMAL';
       if (tabState.activeFilter === 'LOW_STOCK') filter.stockStatus = 'LOW_STOCK';
-      if (tabState.activeFilter === 'EXPIRING_SOON') filter.isExpiringSoon = true;
+      // Note: EXPIRING_SOON filter is not supported by BE, we'll filter client-side
+
+      // Add search if available (BE supports search parameter)
+      if (tabState.searchQuery) {
+        filter.search = tabState.searchQuery;
+      }
 
       return inventoryService.getSummary(filter);
     },
+    retry: 1, // Only retry once on failure
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
-  // Client-side filtering by search query
+  // Client-side filtering by search query and EXPIRING_SOON filter
   const allInventory = Array.isArray(inventoryPage) ? inventoryPage : ((inventoryPage as any)?.content || []);
-  const filteredInventory = tabState.searchQuery
-    ? allInventory.filter((item: InventorySummary) => {
-        const searchLower = tabState.searchQuery.toLowerCase();
-        return (
-          item.itemCode?.toLowerCase().includes(searchLower) ||
-          item.itemName?.toLowerCase().includes(searchLower) ||
-          item.categoryName?.toLowerCase().includes(searchLower)
-        );
-      })
-    : allInventory;
+  
+  let filteredInventory = allInventory;
+  
+  // Apply search filter
+  if (tabState.searchQuery) {
+    filteredInventory = filteredInventory.filter((item: InventorySummary) => {
+      const searchLower = tabState.searchQuery.toLowerCase();
+      return (
+        item.itemCode?.toLowerCase().includes(searchLower) ||
+        item.itemName?.toLowerCase().includes(searchLower) ||
+        item.categoryName?.toLowerCase().includes(searchLower)
+      );
+    });
+  }
+  
+  // Apply EXPIRING_SOON filter (client-side, BE doesn't support this filter)
+  if (tabState.activeFilter === 'EXPIRING_SOON') {
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    
+    filteredInventory = filteredInventory.filter((item: InventorySummary) => {
+      if (!item.nearestExpiryDate) return false;
+      const expiryDate = new Date(item.nearestExpiryDate);
+      return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
+    });
+  }
 
   // Client-side pagination
   const totalElements = filteredInventory.length;
@@ -282,9 +307,13 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {stats?.lowStockCount || 0}
-            </div>
+            {statsError ? (
+              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
+            ) : (
+              <div className="text-2xl font-bold text-red-600">
+                {stats?.lowStockCount || 0}
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -294,9 +323,13 @@ export default function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {stats?.expiringWithin30Days || 0}
-            </div>
+            {statsError ? (
+              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
+            ) : (
+              <div className="text-2xl font-bold text-orange-600">
+                {stats?.expiringWithin30Days || 0}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -320,7 +353,14 @@ export default function InventoryPage() {
       {/* Inventory Table */}
       <Card>
         <CardContent className="pt-6">
-              {isLoading ? (
+              {inventoryError ? (
+                <div className="text-center py-8">
+                  <div className="text-red-600 font-semibold mb-2">Lỗi tải dữ liệu tồn kho</div>
+                  <div className="text-sm text-gray-600">
+                    {(inventoryError as any)?.message || 'Không thể tải danh sách vật tư. Vui lòng thử lại sau.'}
+                  </div>
+                </div>
+              ) : isLoading ? (
                 <div className="text-center py-8">Đang tải...</div>
               ) : inventory.length === 0 ? (
                 <EmptyState
