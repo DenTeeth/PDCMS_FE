@@ -38,6 +38,7 @@ export default function TreatmentPlanList({
     const statusInfo = TREATMENT_PLAN_STATUS_COLORS[status];
     return (
       <Badge
+        className="whitespace-nowrap"
         style={{
           backgroundColor: statusInfo.bg,
           borderColor: statusInfo.border,
