@@ -83,7 +83,7 @@ export default function BookAppointmentFromPlanModal({
   planItemIds,
 }: BookAppointmentFromPlanModalProps) {
   const { user } = useAuth();
-  
+
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
@@ -116,7 +116,7 @@ export default function BookAppointmentFromPlanModal({
     const items = plan.phases
       .flatMap(phase => phase.items || [])
       .filter(item => planItemIds.includes(item.itemId));
-    
+
     // Debug: Log plan items to check estimatedTimeMinutes
     console.log('📋 Plan Items for Booking (RAW):', items.map(item => ({
       itemId: item.itemId,
@@ -124,7 +124,7 @@ export default function BookAppointmentFromPlanModal({
       serviceCode: item.serviceCode,
       estimatedTimeMinutes: item.estimatedTimeMinutes,
     })));
-    
+
     return items;
   }, [plan, planItemIds]);
 
@@ -176,7 +176,7 @@ export default function BookAppointmentFromPlanModal({
       setLoadingServices(true);
       try {
         // Fetch all services (booking API has correct defaultDurationMinutes)
-        const response = await ServiceService.getAllServices({
+        const response = await ServiceService.getServices({
           page: 0,
           size: 1000, // Get all to build map
           isActive: true,
@@ -184,7 +184,7 @@ export default function BookAppointmentFromPlanModal({
 
         const services = response.content || [];
         const map = new Map<string, Service>();
-        
+
         services.forEach(service => {
           if (service.serviceCode) {
             map.set(service.serviceCode, service);
@@ -218,7 +218,7 @@ export default function BookAppointmentFromPlanModal({
       setSelectedMonth(startOfMonth(new Date()));
     }
   }, [open, plan]);
-  
+
   // Get doctor employee code from plan (fixed, cannot be changed)
   const employeeCode = plan?.doctor.employeeCode || '';
 
@@ -239,7 +239,7 @@ export default function BookAppointmentFromPlanModal({
         size: 1000, // ✅ FIX: Increase size to ensure we get all employees including assistants/nurses
         isActive: true,
       });
-      
+
       // ✅ DEBUG: Log employees to see what we're getting
       console.log('📋 Loaded employees:', {
         total: employeesResponse.content.length,
@@ -248,11 +248,11 @@ export default function BookAppointmentFromPlanModal({
           acc[role] = (acc[role] || 0) + 1;
           return acc;
         }, {}),
-        assistants: employeesResponse.content.filter((e: any) => 
+        assistants: employeesResponse.content.filter((e: any) =>
           e.roleName?.includes('ASSISTANT') || e.roleName?.includes('NURSE')
         ).length,
       });
-      
+
       // Load all employees (doctors, assistants, nurses) - we need assistants/nurses for participants
       setEmployees(employeesResponse.content);
 
@@ -279,16 +279,16 @@ export default function BookAppointmentFromPlanModal({
 
   const loadAllShiftsForMonth = async () => {
     if (!plan?.doctor.employeeCode || employees.length === 0) return;
-    
+
     setLoadingShifts(true);
     try {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = endOfMonth(selectedMonth);
       const startDateStr = format(monthStart, 'yyyy-MM-dd');
       const endDateStr = format(monthEnd, 'yyyy-MM-dd');
-      
+
       const shiftsMap = new Map<string, EmployeeShift[]>();
-      
+
       // Load shifts for plan doctor
       const doctorEmployee = employees.find((e) => e.employeeCode === plan.doctor.employeeCode);
       if (doctorEmployee) {
@@ -304,7 +304,7 @@ export default function BookAppointmentFromPlanModal({
           shiftsMap.set(plan.doctor.employeeCode, []);
         }
       }
-      
+
       // ✅ FIX: Load shifts for ALL eligible participants (assistants/nurses/doctors)
       // This is needed to filter eligibleParticipants correctly
       // Only load for employees who could be participants (exclude plan doctor)
@@ -313,7 +313,7 @@ export default function BookAppointmentFromPlanModal({
         if (emp.employeeCode === plan.doctor.employeeCode) {
           return false;
         }
-        
+
         // Must be ASSISTANT, NURSE, DOCTOR, or DENTIST
         const isAssistant = emp.roleName?.includes('ASSISTANT') || emp.roleName?.includes('NURSE');
         const isDoctor = emp.roleName?.includes('DOCTOR') || emp.roleName?.includes('DENTIST');
@@ -321,7 +321,7 @@ export default function BookAppointmentFromPlanModal({
       });
 
       console.log(`📅 Loading shifts for ${potentialParticipants.length} potential participants...`);
-      
+
       // Load shifts for all potential participants in parallel (limit to avoid too many requests)
       const shiftPromises = potentialParticipants.slice(0, 20).map(async (emp) => {
         try {
@@ -342,7 +342,7 @@ export default function BookAppointmentFromPlanModal({
       const results = await Promise.all(shiftPromises);
       const totalShifts = results.reduce((sum, r) => sum + r.count, 0);
       console.log(`✅ Loaded shifts for ${results.length} participants (${totalShifts} total shifts)`);
-      
+
       setAllEmployeeShifts(shiftsMap);
     } catch (error: any) {
       console.error('Failed to load shifts:', error);
@@ -398,7 +398,7 @@ export default function BookAppointmentFromPlanModal({
 
   const loadAvailableSlots = async () => {
     if (!plan?.doctor.employeeCode) return;
-    
+
     setLoadingAvailableSlots(true);
     try {
       const request: AvailableTimesRequest = {
@@ -622,13 +622,12 @@ export default function BookAppointmentFromPlanModal({
             <React.Fragment key={step}>
               <div className="flex items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    currentStep === step
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === step
                       ? 'bg-primary text-primary-foreground'
                       : currentStep > step
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
                 >
                   {currentStep > step ? (
                     <CheckCircle className="h-5 w-5" />
@@ -637,9 +636,8 @@ export default function BookAppointmentFromPlanModal({
                   )}
                 </div>
                 <span
-                  className={`ml-2 text-sm ${
-                    currentStep >= step ? 'font-medium' : 'text-muted-foreground'
-                  }`}
+                  className={`ml-2 text-sm ${currentStep >= step ? 'font-medium' : 'text-muted-foreground'
+                    }`}
                 >
                   {step === 1 && 'Xem lại hạng mục'}
                   {step === 2 && 'Chọn ngày & Bác sĩ'}
@@ -648,9 +646,8 @@ export default function BookAppointmentFromPlanModal({
               </div>
               {step < 3 && (
                 <div
-                  className={`flex-1 h-0.5 mx-4 ${
-                    currentStep > step ? 'bg-primary' : 'bg-muted'
-                  }`}
+                  className={`flex-1 h-0.5 mx-4 ${currentStep > step ? 'bg-primary' : 'bg-muted'
+                    }`}
                 />
               )}
             </React.Fragment>
@@ -720,7 +717,7 @@ export default function BookAppointmentFromPlanModal({
                 </Card>
                 <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Tổng thời gian dự kiến: 
+                  Tổng thời gian dự kiến:
                   <span className="font-medium">
                     {loadingServices ? (
                       <span className="inline-flex items-center gap-1">
@@ -808,20 +805,20 @@ export default function BookAppointmentFromPlanModal({
                           const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
                           const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
                           const dates: React.ReactElement[] = [];
-                          
+
                           let currentDate = new Date(calendarStart);
-                          
+
                           while (currentDate <= calendarEnd) {
                             const dateStr = format(currentDate, 'yyyy-MM-dd');
                             const isPast = currentDate < today;
                             const isSelected = appointmentDate === dateStr;
                             const isToday = isSameDay(currentDate, today);
                             const isCurrentMonth = isSameMonth(currentDate, selectedMonth);
-                            
+
                             const hasDoctor = hasDoctorShift(dateStr);
                             const hasParticipant = hasParticipantShift(dateStr);
                             const isAvailable = isDateAvailable(dateStr);
-                            
+
                             dates.push(
                               <button
                                 key={dateStr}
@@ -834,17 +831,16 @@ export default function BookAppointmentFromPlanModal({
                                   }
                                 }}
                                 disabled={isPast || !isCurrentMonth || !isAvailable}
-                                className={`p-2 rounded text-center transition-all ${
-                                  !isCurrentMonth
+                                className={`p-2 rounded text-center transition-all ${!isCurrentMonth
                                     ? 'bg-muted/20 opacity-30 cursor-not-allowed'
                                     : isPast
-                                    ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                                    : !isAvailable
-                                    ? 'bg-red-50 opacity-50 cursor-not-allowed border border-red-200'
-                                    : isSelected
-                                    ? 'bg-primary text-primary-foreground font-semibold scale-105'
-                                    : 'bg-green-50 hover:bg-green-100 border border-green-200'
-                                } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
+                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                      : !isAvailable
+                                        ? 'bg-red-50 opacity-50 cursor-not-allowed border border-red-200'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground font-semibold scale-105'
+                                          : 'bg-green-50 hover:bg-green-100 border border-green-200'
+                                  } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
                               >
                                 <div className="text-xs font-medium">{currentDate.getDate()}</div>
                                 {isAvailable && !isPast && isCurrentMonth && (
@@ -852,10 +848,10 @@ export default function BookAppointmentFromPlanModal({
                                 )}
                               </button>
                             );
-                            
+
                             currentDate = addDays(currentDate, 1);
                           }
-                          
+
                           return dates;
                         })()}
                       </div>
@@ -863,16 +859,16 @@ export default function BookAppointmentFromPlanModal({
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 rounded bg-green-50 border border-green-200"></div>
                           <span>
-                            {participantCode 
-                              ? 'Bác sĩ và phụ tá đều có ca' 
+                            {participantCode
+                              ? 'Bác sĩ và phụ tá đều có ca'
                               : 'Bác sĩ có ca'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 rounded bg-red-50 border border-red-200"></div>
                           <span>
-                            {participantCode 
-                              ? 'Không đủ ca làm' 
+                            {participantCode
+                              ? 'Không đủ ca làm'
                               : 'Bác sĩ không có ca'}
                           </span>
                         </div>

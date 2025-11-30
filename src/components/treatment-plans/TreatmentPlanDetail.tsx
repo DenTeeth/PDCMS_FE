@@ -42,6 +42,7 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
+import React from 'react';
 import { format } from 'date-fns';
 import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
@@ -354,24 +355,24 @@ export default function TreatmentPlanDetail({
       phasesCount: plan.phases.length,
       hasItems: plan.phases.some(p => p.items.length > 0),
       canSubmitForReview: (user?.permissions?.includes('CREATE_TREATMENT_PLAN') || user?.permissions?.includes('UPDATE_TREATMENT_PLAN')) &&
-                          normalizedApprovalStatus === ApprovalStatus.DRAFT &&
-                          plan.phases.length > 0 &&
-                          plan.phases.some(p => p.items.length > 0),
-      shouldShowApproveSection: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && 
-                                user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
+        normalizedApprovalStatus === ApprovalStatus.DRAFT &&
+        plan.phases.length > 0 &&
+        plan.phases.some(p => p.items.length > 0),
+      shouldShowApproveSection: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
+        user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
       // Detailed check for approve section
       approveSectionCheck: {
         isPendingReview: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW,
         hasPermission: user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
-        shouldShow: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && 
-                    user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
+        shouldShow: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
+          user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
       },
     });
   }
 
   // Check if can submit for review
   // Điều kiện: approvalStatus === DRAFT (hoặc null/undefined - mặc định là DRAFT)
-  const canSubmitForReview = 
+  const canSubmitForReview =
     (user?.permissions?.includes('CREATE_TREATMENT_PLAN') || user?.permissions?.includes('UPDATE_TREATMENT_PLAN')) &&
     normalizedApprovalStatus === ApprovalStatus.DRAFT &&
     plan.phases.length > 0 &&
@@ -387,21 +388,21 @@ export default function TreatmentPlanDetail({
       const updatedPlan = await TreatmentPlanService.submitForReview(plan.planCode, {
         notes: submitNotes || undefined,
       });
-      
+
       console.log('✅ Submit for review success - API 5.12 response:', {
         planCode: updatedPlan.planCode,
         status: updatedPlan.status,
         approvalStatus: updatedPlan.approvalStatus, // Should be "PENDING_REVIEW"
         normalized: normalizeApprovalStatus(updatedPlan.approvalStatus),
       });
-      
+
       toast.success('Đã gửi duyệt lộ trình điều trị', {
         description: 'Lộ trình đã được gửi lên quản lý để duyệt',
       });
-      
+
       setShowSubmitDialog(false);
       setSubmitNotes('');
-      
+
       // Refresh plan data - onPlanUpdated will reload from API 5.2
       // This ensures we get the latest data including approvalStatus
       // Note: Có thể có delay nhỏ trong DB, nên cần refresh để đảm bảo có approvalStatus mới nhất
@@ -509,7 +510,7 @@ export default function TreatmentPlanDetail({
                     {typeof plan.approvalMetadata.approvedBy === 'string'
                       ? plan.approvalMetadata.approvedBy
                       : plan.approvalMetadata.approvedBy.fullName ||
-                        plan.approvalMetadata.approvedBy.employeeCode}
+                      plan.approvalMetadata.approvedBy.employeeCode}
                     {plan.approvalMetadata.approvedAt && (
                       <span className="ml-2">
                         • {new Date(plan.approvalMetadata.approvedAt).toLocaleString('vi-VN')}
@@ -536,7 +537,7 @@ export default function TreatmentPlanDetail({
                     borderColor: statusInfo.border,
                     color: 'white',
                   }}
-                  className="text-sm px-3 py-1"
+                  className="text-sm px-3 py-1 whitespace-nowrap"
                 >
                   {statusInfo.text}
                 </Badge>
@@ -554,18 +555,19 @@ export default function TreatmentPlanDetail({
                     </div>
                   )}
                   {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && (
-                    <div className="text-yellow-700 font-medium">
-                      ⏳ Đang chờ quản lý duyệt
+                    <div className="text-yellow-700 font-medium flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Đang chờ quản lý duyệt
                     </div>
                   )}
                   {isRejectedState && (
                     <div className="text-red-600 font-medium">
-                      {isRejected ? '❌ Lộ trình đã bị từ chối' : '⚠️ Lộ trình bị trả về bản nháp'}
+                      {isRejected ? 'Lộ trình đã bị từ chối' : 'Lộ trình bị trả về bản nháp'}
                     </div>
                   )}
                   {normalizedApprovalStatus === ApprovalStatus.DRAFT && !isRejectedState && (
                     <div className="text-gray-600">
-                      📝 Lộ trình đang ở trạng thái bản nháp
+                      Lộ trình đang ở trạng thái bản nháp
                     </div>
                   )}
                 </div>
@@ -645,111 +647,142 @@ export default function TreatmentPlanDetail({
           </div>
 
           <div className="mt-8">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <div className="mb-6 flex items-center gap-2 text-sm font-semibold">
               <RefreshCw className="h-4 w-4 text-primary" />
               Quy trình phê duyệt
             </div>
-            <div className="grid gap-6 md:grid-cols-3 mb-6">
-              {approvalSteps.map((step, index) => {
-                const isDone = step.state === 'done';
-                const isCurrent = step.state === 'current';
-                const isWarning = step.state === 'warning';
 
-                return (
-                  <div
-                    key={step.key}
-                    className={cn(
-                      'rounded-xl border bg-white p-4 shadow-sm transition-colors',
-                      isDone && 'border-emerald-200 ring-1 ring-emerald-100',
-                      isCurrent && 'border-primary/40 ring-1 ring-primary/20',
-                      isWarning && 'border-red-200 ring-1 ring-red-100',
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold',
-                          isDone && 'border-emerald-500 bg-emerald-500 text-white',
-                          isCurrent && 'border-primary bg-primary text-white',
-                          isWarning && 'border-red-500 bg-red-500 text-white',
-                        )}
-                      >
-                        {isDone ? (
-                          <CheckCircle2 className="h-5 w-5" />
-                        ) : isCurrent ? (
-                          <RefreshCw className="h-5 w-5" />
-                        ) : isWarning ? (
-                          <AlertTriangle className="h-5 w-5" />
-                        ) : (
-                          index + 1
-                        )}
+            {/* Stepper Design */}
+            <div className="relative mb-12 px-8">
+              {/* Steps Container */}
+              <div className="relative flex justify-between items-center">
+                {approvalSteps.map((step, index) => {
+                  const isDone = step.state === 'done';
+                  const isCurrent = step.state === 'current';
+                  const isWarning = step.state === 'warning';
+                  const isLast = index === approvalSteps.length - 1;
+
+                  return (
+                    <React.Fragment key={step.key}>
+                      {/* Step */}
+                      <div className="flex flex-col items-center group relative z-10">
+                        {/* Step Circle */}
+                        <div
+                          className={cn(
+                            'flex h-12 w-12 items-center justify-center rounded-full border-4 bg-white text-base font-bold transition-all duration-300 cursor-pointer',
+                            isDone && 'border-emerald-500 text-emerald-600 shadow-lg shadow-emerald-200',
+                            isCurrent && 'border-primary text-primary shadow-lg shadow-primary/30 scale-110',
+                            isWarning && 'border-red-500 text-red-600 shadow-lg shadow-red-200',
+                            !isDone && !isCurrent && !isWarning && 'border-gray-300 text-gray-400'
+                          )}
+                        >
+                          {isDone ? (
+                            <CheckCircle2 className="h-6 w-6" />
+                          ) : isCurrent ? (
+                            <RefreshCw className="h-5 w-5 animate-spin" />
+                          ) : isWarning ? (
+                            <AlertTriangle className="h-6 w-6" />
+                          ) : (
+                            index + 1
+                          )}
+                        </div>
+
+                        {/* Tooltip on Hover - Removed icons from description */}
+                        <div className="absolute top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                          <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl min-w-[200px]">
+                            <div className="font-semibold mb-1">{step.title}</div>
+                            <div className="text-gray-300">{step.description}</div>
+                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
+                          </div>
+                        </div>
+
+                        {/* Step Label */}
+                        <div className="mt-3 text-center">
+                          <p className={cn(
+                            "text-xs font-medium transition-colors whitespace-nowrap",
+                            isDone && "text-emerald-600",
+                            isCurrent && "text-primary font-semibold",
+                            isWarning && "text-red-600",
+                            !isDone && !isCurrent && !isWarning && "text-gray-500"
+                          )}>
+                            {step.title}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold">{step.title}</p>
-                        <p className="text-xs text-muted-foreground">{step.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+
+                      {/* Connecting Line (only between steps, not after last) */}
+                      {!isLast && (
+                        <div className="flex-1 h-0.5 bg-gray-200 mx-4 relative -mt-12">
+                          <div
+                            className={cn(
+                              "h-full transition-all duration-500",
+                              isDone ? "bg-emerald-500" : "bg-transparent"
+                            )}
+                          />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Info Stats - Colored Design */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
             {/* Doctor Info */}
-            <div className="flex items-start gap-3 p-4 rounded-xl border bg-white shadow-sm">
-              <UserCog className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground mb-1">Bác sĩ phụ trách</div>
-                <div className="font-semibold truncate">{plan.doctor.fullName}</div>
-                <div className="text-xs text-muted-foreground font-mono">{plan.doctor.employeeCode}</div>
+            <div className="rounded-lg bg-purple-50 p-4 border border-purple-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <UserCog className="h-4 w-4 text-purple-600" />
+                <span className="text-xs font-medium text-purple-700">Bác sĩ phụ trách</span>
               </div>
+              <div className="font-bold text-gray-900 truncate">{plan.doctor.fullName}</div>
+              <div className="text-xs text-purple-600 font-mono mt-1">{plan.doctor.employeeCode}</div>
             </div>
 
             {/* Patient Info */}
-            <div className="flex items-start gap-3 p-4 rounded-xl border bg-white shadow-sm">
-              <User className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground mb-1">Bệnh nhân</div>
-                <div className="font-semibold truncate">{plan.patient.fullName}</div>
-                <div className="text-xs text-muted-foreground font-mono">{plan.patient.patientCode}</div>
+            <div className="rounded-lg bg-blue-50 p-4 border border-blue-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-blue-700">Bệnh nhân</span>
               </div>
+              <div className="font-bold text-gray-900 truncate">{plan.patient.fullName}</div>
+              <div className="text-xs text-blue-600 font-mono mt-1">{plan.patient.patientCode}</div>
             </div>
 
             {/* Dates */}
-            <div className="flex items-start gap-3 p-4 rounded-xl border bg-white shadow-sm">
-              <Calendar className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground mb-1">Thời gian</div>
-                <div className="font-semibold text-sm">
-                  {formatDate(plan.startDate)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Dự kiến kết thúc: {formatDate(plan.expectedEndDate)}
-                </div>
+            <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-4 w-4 text-amber-600" />
+                <span className="text-xs font-medium text-amber-700">Thời gian</span>
+              </div>
+              <div className="font-bold text-gray-900">
+                {formatDate(plan.startDate)}
+              </div>
+              <div className="text-xs text-amber-600 mt-1">
+                Kết thúc: {formatDate(plan.expectedEndDate)}
               </div>
             </div>
 
             {/* Financial */}
             {(plan.finalCost != null || plan.totalPrice != null) && (
-              <div className="flex items-start gap-3 p-4 rounded-xl border bg-white shadow-sm">
-                <DollarSign className="h-5 w-5 text-primary mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">Chi phí</div>
-                  {plan.finalCost != null && (
-                    <div className="font-semibold text-lg text-primary">
-                      {formatCurrency(plan.finalCost)}
-                    </div>
-                  )}
-                  {plan.discountAmount != null && plan.discountAmount > 0 && plan.totalPrice != null && (
-                    <div className="text-xs text-muted-foreground line-through">
-                      {formatCurrency(plan.totalPrice)}
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {getPaymentTypeText(plan.paymentType)}
+              <div className="rounded-lg bg-emerald-50 p-4 border border-emerald-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <DollarSign className="h-4 w-4 text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-700">Chi phí</span>
+                </div>
+                {plan.finalCost != null && (
+                  <div className="font-bold text-lg text-emerald-600">
+                    {formatCurrency(plan.finalCost)}
                   </div>
+                )}
+                {plan.discountAmount != null && plan.discountAmount > 0 && plan.totalPrice != null && (
+                  <div className="text-xs text-gray-500 line-through mt-1">
+                    {formatCurrency(plan.totalPrice)}
+                  </div>
+                )}
+                <div className="text-xs text-emerald-600 mt-1">
+                  {getPaymentTypeText(plan.paymentType)}
                 </div>
               </div>
             )}
@@ -831,7 +864,7 @@ export default function TreatmentPlanDetail({
                   const isCompleted = phase.status === 'COMPLETED';
                   const isInProgress = phase.status === 'IN_PROGRESS';
                   const isPending = phase.status === 'PENDING';
-                  
+
                   return (
                     <div key={phase.phaseId} className="relative">
                       {/* Timeline Step Indicator */}
@@ -888,18 +921,18 @@ export default function TreatmentPlanDetail({
 
       {/* V21: Bước 3 - Approve/Reject Section */}
       {/* Chỉ check permission, không check role (theo yêu cầu dự án) */}
-      {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && 
-       user?.permissions?.includes('APPROVE_TREATMENT_PLAN') && (
-        <ApproveRejectSection 
-          plan={plan} 
-          onPlanUpdated={(updatedPlan) => {
-            // Refresh plan data after approve/reject
-            if (onPlanUpdated) {
-              onPlanUpdated();
-            }
-          }} 
-        />
-      )}
+      {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
+        user?.permissions?.includes('APPROVE_TREATMENT_PLAN') && (
+          <ApproveRejectSection
+            plan={plan}
+            onPlanUpdated={(updatedPlan) => {
+              // Refresh plan data after approve/reject
+              if (onPlanUpdated) {
+                onPlanUpdated();
+              }
+            }}
+          />
+        )}
 
       {/* V21.4: API 5.13 - Update Prices Modal */}
       <UpdatePricesModal

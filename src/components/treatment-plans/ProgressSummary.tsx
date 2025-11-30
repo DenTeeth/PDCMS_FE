@@ -65,29 +65,29 @@ export default function ProgressSummary({ progress }: ProgressSummaryProps) {
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Simplified Design */}
       <div className="md:col-span-2 grid grid-cols-2 gap-4 pt-4 border-t">
-        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+        <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">Sẵn sàng đặt lịch</span>
+            <Calendar className="h-5 w-5 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Sẵn sàng đặt lịch</span>
           </div>
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-3xl font-bold text-gray-900">
             {progress.readyForBookingItems}
           </div>
-          <div className="text-xs text-blue-700 mt-1">
+          <div className="text-xs text-gray-500 mt-1">
             hạng mục có thể đặt lịch ngay
           </div>
         </div>
-        <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+        <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <span className="text-sm font-medium text-green-900">Đã hoàn thành</span>
+            <CheckCircle2 className="h-5 w-5 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Đã hoàn thành</span>
           </div>
-          <div className="text-3xl font-bold text-green-600">
+          <div className="text-3xl font-bold text-gray-900">
             {progress.completedItems}
           </div>
-          <div className="text-xs text-green-700 mt-1">
+          <div className="text-xs text-gray-500 mt-1">
             hạng mục đã hoàn tất
           </div>
         </div>
