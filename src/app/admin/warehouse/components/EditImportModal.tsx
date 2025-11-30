@@ -88,27 +88,49 @@ export default function EditImportModal({
 
   // Populate form when transaction loaded
   useEffect(() => {
-    if (transaction && isOpen) {
-      reset({
-        supplierId: transaction.supplierId || 0,
-        transactionDate: transaction.transactionDate?.split('T')[0] || '',
+    if (transaction && isOpen && transaction.transactionType === 'IMPORT') {
+      // Map transaction data to form
+      const formData: EditImportFormData = {
+        supplierId: transaction.supplierId || transaction.supplier_id || 0,
+        transactionDate: transaction.transactionDate?.split('T')[0] || 
+                         transaction.transaction_date?.split('T')[0] || 
+                         new Date().toISOString().split('T')[0],
         notes: transaction.notes || '',
-        items: transaction.items.map(item => ({
-          itemMasterId: item.itemMasterId,
-          lotNumber: item.lotNumber,
-          quantity: item.quantityChange,
-          importPrice: item.unitPrice,
-          expiryDate: item.expiryDate?.split('T')[0] || '',
+        items: (transaction.items || []).map(item => ({
+          itemMasterId: item.itemMasterId || item.item_master_id || 0,
+          lotNumber: item.lotNumber || item.lot_number || '',
+          quantity: item.quantityChange || item.quantity_change || 0,
+          importPrice: item.unitPrice || item.unit_price || 0,
+          expiryDate: item.expiryDate?.split('T')[0] || 
+                      item.expiry_date?.split('T')[0] || 
+                      '',
         })),
+      };
+      
+      console.log('📝 Populating form with transaction data:', {
+        transactionId,
+        supplierId: formData.supplierId,
+        itemsCount: formData.items.length,
+        transaction,
+      });
+      
+      reset(formData);
+    } else if (isOpen && !transaction && !loadingTransaction) {
+      // Reset form if modal opened but no transaction (shouldn't happen, but handle gracefully)
+      reset({
+        supplierId: 0,
+        transactionDate: '',
+        notes: '',
+        items: [],
       });
     }
-  }, [transaction, isOpen, reset]);
+  }, [transaction, isOpen, reset, transactionId, loadingTransaction]);
 
   const onSubmit = async (data: EditImportFormData) => {
     if (!transactionId) return;
 
     // Validation
-    if (!data.supplier_id) {
+    if (!data.supplierId || data.supplierId === 0) {
       toast.error('Vui lòng chọn nhà cung cấp!');
       return;
     }
@@ -190,8 +212,14 @@ export default function EditImportModal({
         </DialogHeader>
 
         {loadingTransaction ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="flex flex-col justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-sm text-gray-600">Đang tải thông tin phiếu nhập...</p>
+          </div>
+        ) : !transaction ? (
+          <div className="flex flex-col justify-center items-center py-12">
+            <p className="text-red-600 mb-2">Không thể tải thông tin phiếu nhập</p>
+            <Button variant="outline" onClick={onClose}>Đóng</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

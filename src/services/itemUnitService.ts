@@ -77,8 +77,26 @@ export const itemUnitService = {
       console.log('✅ Convert units:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Convert units error:', error.response?.data || error.message);
-      throw error;
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || errorData?.error || error.message;
+      const errorCode = errorData?.error;
+      
+      console.error('❌ Convert units error:', {
+        message: errorMessage,
+        code: errorCode,
+        status: error.response?.status,
+        data: errorData,
+        url: error.config?.url,
+        request: request,
+        fullError: error,
+      });
+      
+      // Re-throw with enhanced error info
+      const enhancedError = new Error(errorMessage);
+      (enhancedError as any).code = errorCode;
+      (enhancedError as any).status = error.response?.status;
+      (enhancedError as any).response = error.response;
+      throw enhancedError;
     }
   },
 

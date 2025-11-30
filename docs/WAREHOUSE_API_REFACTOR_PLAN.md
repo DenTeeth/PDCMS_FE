@@ -1,8 +1,22 @@
 # Warehouse API Refactor Plan
 
-**Date:** 2025-11-28  
+**Date:** 2025-11-29  
 **Status:** 🔄 In Progress  
 **Purpose:** Refactor FE để align với BE API mới (6.9-6.15)
+
+---
+
+## ✅ BE Issues Resolution (2025-11-29)
+
+All previously reported BE issues have been resolved. See `docs/api-guide/warehouse/FE_ISSUES_RESOLUTION_2025_11_29.md` for details.
+
+| Issue | Status | BE Response | FE Action |
+|-------|--------|-------------|-----------|
+| #18 API 6.1 - 500 Error | ✅ RESOLVED | NOT A BUG - API working correctly | ✅ FE using correct endpoint (`/warehouse/summary`) |
+| #19 API 6.2 - 500 Error | ✅ RESOLVED | INCORRECT URL - API working correctly | ✅ FE using correct endpoint (`/warehouse/batches/{id}`) |
+| #23 Payment Status | ✅ FIXED V30 | Added `@Builder.Default` to entity | ⚠️ Optional - FE can remove fallback logic |
+
+**Note:** FE is using advanced endpoints (`/warehouse/*`) which are correct and production-ready.
 
 ---
 
@@ -10,13 +24,16 @@
 
 | API | Endpoint | Method | Status | Priority | Effort |
 |-----|----------|--------|--------|-----------|--------|
+| 6.1 | `/warehouse/summary` | GET | ✅ Verified Working | - | - |
+| 6.2 | `/warehouse/batches/{id}` | GET | ✅ Verified Working | - | - |
 | 6.9 | `/warehouse/items` | POST | ✅ Backend Ready | High | UI: 4h |
 | 6.10 | `/warehouse/items/{id}` | PUT | ✅ Backend Ready | High | UI: 4h |
 | 6.11 | `/warehouse/items/{id}/units` | GET | ✅ Backend Ready | Medium | UI: 2h |
 | 6.12 | `/warehouse/items/units/convert` | POST/GET | ✅ Backend Ready | Low | UI: 2h |
 | 6.13 | `/warehouse/suppliers/list` | GET | ✅ Backend Ready | Medium | UI: 3h |
-| 6.14 | `/warehouse/suppliers` | POST | ✅ Working | Low | - |
-| 6.15 | `/warehouse/suppliers/{id}` | PUT | ✅ Working | Low | - |
+| 6.14 | `/warehouse/suppliers` | POST | ✅ Implemented | Low | - |
+| 6.15 | `/warehouse/suppliers/{id}` | PUT | ✅ Implemented | Low | - |
+| 6.16 | `/warehouse/suppliers/{id}` | DELETE | ✅ Implemented | Low | - |
 
 ---
 
@@ -62,6 +79,27 @@
   - ✅ Added `getSuppliersWithMetrics()` method to `supplierService.ts`
   - ✅ Updated all supplier endpoints to use `/warehouse/suppliers` path (matching BE)
   - ⚠️ **TODO:** Update supplier list UI to use new endpoint and display metrics
+
+### API 6.14 - Create Supplier
+- **Status:** ✅ Implemented
+- **Changes:**
+  - ✅ Implemented `create()` method in `supplierService.ts`
+  - ✅ Auto-generates supplier code (SUP-XXX format)
+  - ✅ Validates name and email uniqueness
+
+### API 6.15 - Update Supplier
+- **Status:** ✅ Implemented
+- **Changes:**
+  - ✅ Implemented `update()` method in `supplierService.ts`
+  - ✅ Supports risk management flags (isActive, isBlacklisted)
+
+### API 6.16 - Delete Supplier (Soft Delete)
+- **Status:** ✅ Implemented
+- **Changes:**
+  - ✅ Implemented `delete()` method in `supplierService.ts`
+  - ✅ Soft delete (sets isActive=false)
+  - ✅ Business rule: Cannot delete if supplier has transaction history
+  - ⚠️ **Note:** FE should handle 409 Conflict error for suppliers with transactions
 
 ---
 
@@ -185,11 +223,27 @@
 
 ## 📊 Progress Summary
 
-- **Backend Implementation:** ✅ **100% Complete** (6/6 APIs)
-- **UI Integration:** ⚠️ **0% Complete** (0/6 UIs)
-- **Total Progress:** 🟡 **50% Complete**
+- **Backend Implementation:** ✅ **100% Complete** (10/10 APIs: 6.1, 6.2, 6.9-6.16)
+- **Service Layer:** ✅ **100% Complete** (All APIs have service methods)
+- **UI Integration:** ⚠️ **0% Complete** (0/6 UIs need integration)
+- **Total Progress:** 🟡 **67% Complete** (Backend + Service done, UI pending)
 
 **Estimated Remaining Work:** ~13 hours of UI development
+
+### API Implementation Status
+
+| API | Backend | Service | UI | Status |
+|-----|---------|---------|----|--------|
+| 6.1 Inventory Summary | ✅ | ✅ | ✅ | Complete |
+| 6.2 Item Batches | ✅ | ✅ | ✅ | Complete |
+| 6.9 Create Item Master | ✅ | ✅ | ⚠️ | UI Pending |
+| 6.10 Update Item Master | ✅ | ✅ | ⚠️ | UI Pending |
+| 6.11 Get Item Units | ✅ | ✅ | ⚠️ | UI Pending |
+| 6.12 Convert Quantity | ✅ | ✅ | ⚠️ | UI Pending |
+| 6.13 Get Suppliers (Metrics) | ✅ | ✅ | ⚠️ | UI Pending |
+| 6.14 Create Supplier | ✅ | ✅ | ✅ | Complete |
+| 6.15 Update Supplier | ✅ | ✅ | ✅ | Complete |
+| 6.16 Delete Supplier | ✅ | ✅ | ✅ | Complete |
 
 ---
 
@@ -202,6 +256,33 @@
 
 ---
 
-**Last Updated:** 2025-11-28  
-**Status:** ✅ Backend implementation complete, UI integration pending
+---
+
+## 🔍 Endpoint Verification (2025-11-29)
+
+### API 6.1 - Inventory Summary
+- **BE Endpoints Available:**
+  - Simple: `GET /api/v1/inventory/summary` (InventoryController)
+  - Advanced: `GET /api/v1/warehouse/summary` (WarehouseInventoryController) ✅ **FE using this**
+- **FE Status:** ✅ Using correct advanced endpoint
+- **Features:** Search, filters, pagination, computed fields (stockStatus, nearestExpiryDate)
+
+### API 6.2 - Item Batches
+- **BE Endpoints Available:**
+  - Simple: `GET /api/v1/inventory/batches/{itemMasterId}` (InventoryController) - Returns `List<BatchResponse>`
+  - Advanced: `GET /api/v1/warehouse/batches/{itemMasterId}` (WarehouseInventoryController) ✅ **FE using this**
+- **FE Status:** ✅ Using correct advanced endpoint
+- **Features:** Pagination, stats, filtering by status, sorting, FEFO default
+
+### API 6.7 - Transaction Detail
+- **Payment Status Fix (V30):**
+  - BE now sets default `paymentStatus = UNPAID` for all import transactions
+  - FE fallback logic is now optional (can be removed but doesn't hurt)
+  - Schema: V30 (November 29, 2025)
+
+---
+
+**Last Updated:** 2025-11-29  
+**Status:** ✅ Backend implementation complete, UI integration pending  
+**BE Issues:** ✅ All resolved (see FE_ISSUES_RESOLUTION_2025_11_29.md)
 
