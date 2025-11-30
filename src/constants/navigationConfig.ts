@@ -208,6 +208,44 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
+      name: 'Warehouse Management',
+      icon: faWarehouse,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'WAREHOUSE',
+      submenu: [
+        {
+          name: 'Tổng Quan Kho',
+          href: '/admin/warehouse',
+          icon: faTachometerAlt,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Quản Lý Vật Tư',
+          href: '/admin/warehouse/inventory',
+          icon: faBoxes,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhập/Xuất Kho',
+          href: '/admin/warehouse/storage',
+          icon: faClipboard,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhà Cung Cấp',
+          href: '/admin/warehouse/suppliers',
+          icon: faUsers,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Báo Cáo & Thống Kê',
+          href: '/admin/warehouse/reports',
+          icon: faChartLine,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+      ],
+    },
+    {
       name: 'Customer Contacts',
       href: '/admin/customer-contacts',
       icon: faPhone,

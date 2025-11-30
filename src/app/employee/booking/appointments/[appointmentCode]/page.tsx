@@ -18,7 +18,7 @@
  * - VIEW_APPOINTMENT_ALL: Can view all appointments (same as admin)
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -230,6 +230,7 @@ export default function EmployeeAppointmentDetailPage() {
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
   const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
   const [treatmentPlanError, setTreatmentPlanError] = useState<string | null>(null);
+  const [hasTriedLoadingTreatmentPlan, setHasTriedLoadingTreatmentPlan] = useState(false); // Flag to prevent infinite API calls
   const [activeTab, setActiveTab] = useState<string>('details');
 
   // Permissions
@@ -406,14 +407,21 @@ export default function EmployeeAppointmentDetailPage() {
   }, [appointmentCode, canView, router]); // Removed handleError from dependencies to prevent loop
 
   // Load treatment plan when Treatment Plan tab is activated (lazy loading)
-  const loadTreatmentPlan = async () => {
+  const loadTreatmentPlan = useCallback(async () => {
     if (!appointment?.patient?.patientCode) {
       setTreatmentPlanError('Không tìm thấy thông tin bệnh nhân');
+      setHasTriedLoadingTreatmentPlan(true);
+      return;
+    }
+
+    // Prevent multiple simultaneous calls
+    if (loadingTreatmentPlan) {
       return;
     }
 
     setLoadingTreatmentPlan(true);
     setTreatmentPlanError(null);
+    setHasTriedLoadingTreatmentPlan(true);
 
     try {
       // OPTIMIZATION: If BE provides linkedTreatmentPlanCode, use it directly (1 API call instead of N+1)
@@ -522,10 +530,11 @@ export default function EmployeeAppointmentDetailPage() {
         setTreatmentPlan(foundPlan);
       } else {
         // Provide helpful error message based on permissions
+        const patientName = appointment.patient?.fullName || 'bệnh nhân này';
         if (hasViewAll) {
-          setTreatmentPlanError('Không tìm thấy lộ trình điều trị liên quan đến lịch hẹn này.');
+          setTreatmentPlanError(`Không tìm thấy lộ trình điều trị nào của ${patientName} liên quan đến lịch hẹn này.`);
         } else if (hasViewOwn) {
-          setTreatmentPlanError('Không tìm thấy lộ trình điều trị liên quan đến lịch hẹn này.');
+          setTreatmentPlanError(`Không tìm thấy lộ trình điều trị nào của ${patientName} liên quan đến lịch hẹn này.`);
         } else {
           setTreatmentPlanError('Bạn không có quyền xem lộ trình điều trị. Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_TREATMENT_PLAN_ALL hoặc VIEW_TREATMENT_PLAN_OWN.');
         }
@@ -540,14 +549,26 @@ export default function EmployeeAppointmentDetailPage() {
     } finally {
       setLoadingTreatmentPlan(false);
     }
-  };
+  }, [appointment?.patient?.patientCode, appointment?.linkedTreatmentPlanCode, appointment?.appointmentCode, user?.permissions]);
 
   // Load treatment plan when Treatment Plan tab is activated (lazy loading)
   useEffect(() => {
-    if (activeTab === 'treatment-plan' && appointment && !treatmentPlan && !loadingTreatmentPlan) {
+    // Only load if:
+    // 1. Treatment Plan tab is active
+    // 2. Appointment is loaded
+    // 3. Treatment plan hasn't been loaded yet
+    // 4. Not currently loading
+    // 5. Haven't tried loading before (or if we want to allow retry, check hasTriedLoadingTreatmentPlan)
+    if (
+      activeTab === 'treatment-plan' && 
+      appointment && 
+      !treatmentPlan && 
+      !loadingTreatmentPlan &&
+      !hasTriedLoadingTreatmentPlan
+    ) {
       loadTreatmentPlan();
     }
-  }, [activeTab, appointment, treatmentPlan, loadingTreatmentPlan]);
+  }, [activeTab, appointment?.appointmentCode, treatmentPlan, loadingTreatmentPlan, hasTriedLoadingTreatmentPlan, loadTreatmentPlan]);
 
   // Get status badge
   const getStatusBadge = (status: AppointmentStatus) => {
@@ -1091,7 +1112,14 @@ export default function EmployeeAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
                   <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
-                  <Button variant="outline" onClick={loadTreatmentPlan}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setHasTriedLoadingTreatmentPlan(false);
+                      setTreatmentPlanError(null);
+                      loadTreatmentPlan();
+                    }}
+                  >
                     Thử lại
                   </Button>
                 </div>
@@ -1129,12 +1157,8 @@ export default function EmployeeAppointmentDetailPage() {
                 {/* Timeline */}
                 <TreatmentPlanTimeline
                   plan={treatmentPlan}
-                  onItemClick={(item) => {
-                    // Navigate to appointment if item has linked appointments
-                    if (item.linkedAppointments && item.linkedAppointments.length > 0) {
-                      const firstAppointment = item.linkedAppointments[0];
-                      router.push(`/employee/booking/appointments/${firstAppointment.code}`);
-                    }
+                  onAppointmentClick={(appointmentCode) => {
+                    router.push(`/employee/booking/appointments/${appointmentCode}`);
                   }}
                 />
               </div>

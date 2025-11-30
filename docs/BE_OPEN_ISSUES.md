@@ -1,275 +1,348 @@
-# Treatment Plan & Appointment – Open BE Issues
+# BE Open Issues
 
-**Date:** 2025-11-20 (Updated: 2025-01-XX)  
-**Status:** ✅ All critical issues resolved!  
-**Scope:** APIs 3.4, 5.1, 5.2, 5.5 (Phase 5 & V21 workflow)
-
----
-
-## ✅ RESOLVED Issues
-
-### 1. ✅ Bác Sĩ Phụ Trách Appointment Không Thể Xem Treatment Plan Linked - ĐÃ FIX
-
-- **Status:** ✅ **RESOLVED**
-- **Priority:** 🔴 High (was)
-- **File:** `booking_appointment/service/AppointmentDetailService.java`, `booking_appointment/dto/AppointmentDetailDTO.java`, `treatment_plans/service/TreatmentPlanDetailService.java`, `booking_appointment/repository/AppointmentRepository.java`
-- **Issue:** Bác sĩ phụ trách appointment (primary doctor) không thể xem treatment plan linked với appointment để kiểm tra tiến độ, nếu họ không phải người tạo plan (createdBy).
-
-**✅ ĐÃ FIX - Verified in BE code:**
-
-1. **AppointmentDetailDTO.java** (line 138):
-   - ✅ Đã có field `linkedTreatmentPlanCode` với comment đầy đủ
-   - ✅ Type: `String`, nullable (null nếu appointment không linked với plan)
-
-2. **AppointmentDetailService.java** (lines 320-340, 367):
-   - ✅ Đã có logic load `linkedTreatmentPlanCode` từ `appointment_plan_items` bridge table
-   - ✅ Query: `appointment_plan_items → patient_plan_items → phases → treatment_plan`
-   - ✅ Đã populate vào DTO builder (line 367): `.linkedTreatmentPlanCode(linkedPlanCode)`
-
-3. **TreatmentPlanDetailService.java** (lines 280-293, 312-329):
-   - ✅ Đã có method `isPrimaryDoctorOfLinkedAppointment(Integer employeeId, Long planId)` (lines 312-329)
-   - ✅ Đã được gọi trong `verifyEmployeeCreatedByPermission()` (lines 282-288)
-   - ✅ Cho phép access nếu employee là primary doctor của linked appointment, dù không phải người tạo plan
-   - ✅ Logic: Nếu employee không phải creator, check thêm xem có phải primary doctor của linked appointment không
-
-4. **AppointmentRepository.java** (lines 466-477):
-   - ✅ Đã có method `countByEmployeeIdAndLinkedToPlan(Integer employeeId, Long planId)`
-   - ✅ Query: `appointments → appointment_plan_items → patient_plan_items → phases → treatment_plan`
-   - ✅ Filter: `a.employeeId = :employeeId AND phase.treatmentPlan.planId = :planId`
-
-**Kết quả:**
-- ✅ Bác sĩ phụ trách appointment (chỉ có `VIEW_TREATMENT_PLAN_OWN`) có thể xem treatment plan linked với appointment của họ
-- ✅ `AppointmentDetailDTO` có field `linkedTreatmentPlanCode` để FE biết plan code
-- ✅ API 5.2 cho phép primary doctor xem plan linked với appointment, không cần `VIEW_TREATMENT_PLAN_ALL`
+> ⚠️ Only **open** issues are listed below. All resolved issues have been removed for clarity.
+> 
+> **Note (2025-01-30)**: 
+> - ✅ **Resolved Issues:** #15, #16, #17, #20, #21, #22, #18, #19, #23, #24 (đã được BE xác nhận resolved)
+> - 📋 **BE Response:** Xem file `docs/api-guide/warehouse/FE_ISSUES_RESOLUTION_2025_11_29.md` để biết chi tiết
+> - **Issue #24:** Đã resolved - FE đã được update để dùng đúng endpoint `/api/v1/inventory/summary` thay vì `/api/v1/warehouse/summary`
 
 ---
 
-## 🔴 OPEN Issues
+## 📊 Summary
 
-_No open issues at the moment. All critical issues have been resolved!_
+| # | Issue | Status | Priority | Reported Date |
+|---|-------|--------|----------|---------------|
+| #25 | Admin không thấy nút Approve/Reject cho phiếu nhập kho | 🔴 **OPEN** | **HIGH** | 2025-01-30 |
+| #26 | API 6.12-POST - Batch Unit Conversion trả về 400 Bad Request | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
 
-**Problem Description:**
+---
 
-- **Use Case:** Bác sĩ cần xem treatment plan từ appointment detail để:
-  - Kiểm tra đã đến bước nào trong lộ trình điều trị
-  - Xem bước tiếp theo là gì
-  - Theo dõi tiến độ điều trị của bệnh nhân
-  
-- **Current Problem:**
-  - Appointment có thể linked với treatment plan items qua `appointment_plan_items` bridge table
-  - Bác sĩ phụ trách appointment (appointment.employeeId) có thể không phải là người tạo treatment plan (plan.createdBy)
-  - API 5.2 `/patients/{patientCode}/treatment-plans/{planCode}` với `VIEW_TREATMENT_PLAN_OWN` chỉ cho phép:
-    - Patient xem plans của chính họ
-    - Doctor xem plans mà họ tạo (createdBy)
-  - Nếu doctor không có `VIEW_TREATMENT_PLAN_ALL`, họ không thể xem plan mà họ không tạo, dù họ là primary doctor của appointment linked với plan đó
+## 🔴 Open Issues
 
-- **Why NOT give `VIEW_TREATMENT_PLAN_ALL` to doctors:**
-  - Nếu bác sĩ có `VIEW_TREATMENT_PLAN_ALL`, họ sẽ xem được TẤT CẢ treatment plans của TẤT CẢ bác sĩ khác khi vào `/employee/treatment-plans`
-  - Điều này vi phạm privacy và không cần thiết
-  - Bác sĩ chỉ cần xem plans linked với appointments của họ, không cần xem tất cả plans
+### Issue #25: Admin không thấy nút Approve/Reject cho phiếu nhập kho
 
-**Current BE Implementation:**
+**Status:** 🔴 **OPEN**  
+**Priority:** **HIGH**  
+**Reported Date:** 2025-01-30  
+**Endpoint:** `POST /api/v1/warehouse/transactions/{id}/approve`, `POST /api/v1/warehouse/transactions/{id}/reject`
 
-**File:** `files_from_BE/treatment_plans/service/TreatmentPlanService.java`
-- ⚠️ **Line 365-367:** Doctor với `VIEW_TREATMENT_PLAN_OWN` chỉ xem được plans mà họ tạo (`filterByCreatedByEmployee`)
-- ⚠️ **Line 370-373:** BE ignore `patientCode` filter khi doctor dùng API 5.5
-- ⚠️ **File:** `files_from_BE/booking_appointment/dto/AppointmentDetailDTO.java` - Không có field `linkedTreatmentPlanCode` hoặc `treatmentPlan`
+#### Problem Description
 
-**Expected Behavior:**
+Khi đăng nhập bằng tài khoản admin, không thấy nút "Duyệt" và "Từ chối" trong modal chi tiết phiếu nhập kho (`StorageDetailModal`), mặc dù BE cho phép `ROLE_ADMIN` có quyền approve/reject transactions.
 
-- Bác sĩ phụ trách appointment (primary doctor) nên có thể xem treatment plan linked với appointment đó để kiểm tra tiến độ, dù không phải người tạo plan
-- `AppointmentDetailDTO` nên có field `linkedTreatmentPlanCode` để FE biết plan nào linked với appointment
-- API 5.2 (`getTreatmentPlanDetail`) nên cập nhật RBAC logic:
-  - Cho phép xem nếu user là primary doctor của appointment linked với plan đó
-  - KHÔNG cần `VIEW_TREATMENT_PLAN_ALL` (vì sẽ cho phép xem tất cả plans)
-  - Chỉ cần `VIEW_TREATMENT_PLAN_OWN` + check thêm: user là primary doctor của linked appointment
+#### Expected Behavior
 
-**Proposed Solution (Option 1 - Recommended): Thêm linkedTreatmentPlanCode vào AppointmentDetailDTO**
+Theo BE code (`TransactionHistoryController.java`):
+- Line 193: `@PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('APPROVE_TRANSACTION')")`
+- Admin role (`ROLE_ADMIN`) nên có quyền approve/reject transactions
 
-```java
-// In AppointmentDetailDTO.java
-/**
- * Treatment plan code linked to this appointment (if any)
- * Populated from appointment_plan_items bridge table
- * Example: "PLAN-20251001-001"
- */
-private String linkedTreatmentPlanCode;
+FE logic (`StorageDetailModal.tsx`):
+- Line 67-68: `const isAdmin = useRole('ROLE_ADMIN'); const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');`
+- Line 644: Button chỉ hiển thị khi `transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission`
 
-// In AppointmentDetailService.java
-// Add dependency
-private final AppointmentPlanItemRepository appointmentPlanItemRepository;
-private final PatientPlanItemRepository patientPlanItemRepository;
+#### Possible Root Causes
 
-// In mapToDetailDTO method, after loading services:
-// Load linked treatment plan code
-String linkedPlanCode = null;
-try {
-    // Query: appointment_plan_items → patient_plan_items → phases → treatment_plan
-    List<AppointmentPlanItemBridge> bridges = appointmentPlanItemRepository
-        .findByIdAppointmentId(appointment.getAppointmentId());
-    
-    if (!bridges.isEmpty()) {
-        // Get first item's plan code (all items in same appointment should be from same plan)
-        Long firstItemId = bridges.get(0).getId().getItemId();
-        PatientPlanItem item = patientPlanItemRepository.findById(firstItemId).orElse(null);
-        if (item != null && item.getPhase() != null && item.getPhase().getTreatmentPlan() != null) {
-            linkedPlanCode = item.getPhase().getTreatmentPlan().getPlanCode();
-        }
-    }
-} catch (Exception e) {
-    log.warn("Failed to load linked treatment plan code: {}", e.getMessage());
-}
+1. **Transaction Status Issue:**
+   - Transaction status hiện tại là `DRAFT` (Nháp) thay vì `PENDING_APPROVAL` (Chờ duyệt)
+   - Nút approve/reject chỉ hiển thị khi status = `PENDING_APPROVAL`
+   - **Action Required:** Cần submit transaction để chuyển từ `DRAFT` → `PENDING_APPROVAL`
 
-// Add to DTO builder
-.linkedTreatmentPlanCode(linkedPlanCode)
+2. **Admin Role Not Recognized:**
+   - FE check `useRole('ROLE_ADMIN')` nhưng BE có thể trả về role name khác (ví dụ: `ADMIN` thay vì `ROLE_ADMIN`)
+   - **Action Required:** Kiểm tra response từ `/api/v1/auth/login` xem `roles` array có chứa `ROLE_ADMIN` không
+
+3. **Missing APPROVE_TRANSACTION Permission:**
+   - Admin có thể không có `APPROVE_TRANSACTION` trong `permissions` array
+   - **Action Required:** Kiểm tra seed data xem admin có được gán quyền `APPROVE_TRANSACTION` không
+
+4. **Permission Check Logic:**
+   - FE check: `isAdmin || usePermission('APPROVE_TRANSACTION')`
+   - Nếu cả hai đều false, button sẽ không hiển thị
+
+#### FE Debug Logging
+
+FE đã thêm debug logging trong `StorageDetailModal.tsx` để track:
+- `isAdmin`: Kết quả check `ROLE_ADMIN`
+- `hasApprovePermission`: Kết quả check permission
+- `userRoles`: Danh sách roles của user
+- `userPermissions`: Danh sách permissions của user
+- `transactionStatus`: Status hiện tại của transaction
+- `canShowApproveButton`: Điều kiện hiển thị button
+
+**Check browser console để xem debug logs khi mở modal chi tiết phiếu.**
+
+#### Investigation Steps
+
+1. **Kiểm tra Transaction Status:**
+   - Mở modal chi tiết phiếu
+   - Xem console log để check `transactionStatus`
+   - Nếu status = `DRAFT`, cần submit transaction để chuyển sang `PENDING_APPROVAL`
+
+2. **Kiểm tra User Roles & Permissions:**
+   - Xem console log để check `userRoles` và `userPermissions`
+   - Verify xem có `ROLE_ADMIN` trong `userRoles` không
+   - Verify xem có `APPROVE_TRANSACTION` trong `userPermissions` không
+
+3. **Kiểm tra BE Seed Data:**
+   - Verify xem admin user có được gán `ROLE_ADMIN` role không
+   - Verify xem admin user có được gán `APPROVE_TRANSACTION` permission không
+   - Verify xem role `ROLE_ADMIN` có được map với permission `APPROVE_TRANSACTION` không
+
+#### Related BE Files
+
+- `files_from_BE/warehouse/controller/TransactionHistoryController.java:193, 225`
+- `files_from_BE/warehouse/service/TransactionHistoryService.java:453-529`
+- Seed data files (cần check role và permission mapping)
+
+#### Related FE Files
+
+- `src/app/admin/warehouse/components/StorageDetailModal.tsx:67-68, 644`
+- `src/hooks/usePermissions.ts:35-38`
+- `src/contexts/AuthContext.tsx:330-333`
+
+#### Suggested Fixes
+
+1. **BE: Ensure Admin Role Has Approve Permission:**
+   - Verify seed data: Admin role should have `APPROVE_TRANSACTION` permission
+   - Or ensure `ROLE_ADMIN` is recognized by Spring Security `@PreAuthorize`
+
+2. **BE: Verify Role Name Format:**
+   - Ensure login response returns `ROLE_ADMIN` (not `ADMIN`) in `roles` array
+   - Or update FE to check for both `ROLE_ADMIN` and `ADMIN`
+
+3. **FE: Add Fallback Role Check:**
+   - Check for both `ROLE_ADMIN` and `ADMIN` roles
+   - Or check `baseRole === 'admin'` as fallback
+
+4. **Documentation:**
+   - Document required permissions for approve/reject workflow
+   - Document how to submit transaction from DRAFT to PENDING_APPROVAL
+
+---
+
+### Issue #26: API 6.12-POST - Batch Unit Conversion trả về 400 Bad Request
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-01-30  
+**Endpoint:** `POST /api/v1/warehouse/items/units/convert`
+
+#### Problem Description
+
+API 6.12-POST (Batch Unit Conversion) trả về `400 Bad Request` với error message generic `"error": "error.bad_request"` không có chi tiết validation error, mặc dù:
+- Request structure đúng theo test guide (`ITEM_UNIT_CONVERSION_API_TEST_GUIDE.md`)
+- Units đã được verify belong to the same item (via API 6.11)
+- GET endpoint (API 6.12-GET) hoạt động tốt với cùng unit IDs
+- Request payload structure khớp với test guide
+
+#### Expected Behavior
+
+Theo test guide (`docs/api-guide/warehouse/ITEM_UNIT_CONVERSION_API_TEST_GUIDE.md`):
+- Endpoint: `POST /api/v1/warehouse/items/units/convert`
+- Request structure:
+  ```json
+  {
+    "conversions": [
+      {
+        "itemMasterId": 1,
+        "fromUnitId": 60,
+        "toUnitId": 58,
+        "quantity": 2.5
+      }
+    ],
+    "roundingMode": "HALF_UP"
+  }
+  ```
+- Expected response: `200 OK` với conversion results
+
+#### Actual Behavior
+
+- **Status Code:** `400 Bad Request`
+- **Error Response:**
+  ```json
+  {
+    "statusCode": 400,
+    "error": "error.bad_request",
+    "message": "Bad Request",
+    "data": null
+  }
+  ```
+- **Issue:** Error message quá generic, không có chi tiết validation error nào
+
+#### Test Evidence
+
+**Test Script:** `scripts/test-warehouse-apis.ts`
+
+**Test Steps:**
+1. ✅ Get item units via API 6.11: `GET /warehouse/items/1/units`
+   - Found 9 units for item 1 (CON-GLOVE-01)
+   - Base Unit: Chiec (ID: 58)
+   - Selected: Hop (ID: 60, order: 1) → Chiec (ID: 58, base: true)
+
+2. ✅ Verify units belong to item:
+   - Verified units belong to item 1: Hop → Chiec
+
+3. ✅ GET endpoint works:
+   - `GET /warehouse/items/units/convert?fromUnitId=60&toUnitId=58&quantity=10`
+   - Status: `200 OK`
+   - Result: `10 → 2000` (correct conversion)
+
+4. ❌ POST endpoint fails:
+   - `POST /warehouse/items/units/convert`
+   - Request body:
+     ```json
+     {
+       "conversions": [
+         {
+           "itemMasterId": 1,
+           "fromUnitId": 60,
+           "toUnitId": 58,
+           "quantity": 2.5
+         }
+       ],
+       "roundingMode": "HALF_UP"
+     }
+     ```
+   - Status: `400 Bad Request`
+   - Error: Generic "error.bad_request" without details
+
+#### BE Code Analysis
+
+**Controller:** `ItemMasterController.java:252-318`
+- Endpoint: `POST /api/v1/warehouse/items/units/convert`
+- Uses `@Valid` annotation on `ConversionRequest`
+- Authorization: `ADMIN`, `VIEW_ITEMS`, `VIEW_WAREHOUSE`, `MANAGE_WAREHOUSE`
+
+**Request DTO:** `ConversionRequest.java`
+- `@NotEmpty` on `conversions` list
+- `@Valid` on nested `ConversionItemRequest` objects
+- `roundingMode` optional (default: "HALF_UP")
+
+**Item Request DTO:** `ConversionItemRequest.java`
+- `@NotNull`, `@Positive` on `itemMasterId` (Long)
+- `@NotNull`, `@Positive` on `fromUnitId` (Long)
+- `@NotNull`, `@Positive` on `toUnitId` (Long)
+- `@NotNull`, `@Positive` on `quantity` (Double)
+
+**Service Logic:** `ItemMasterService.java:612-637`
+- Line 620-632: Loop through conversions, catch exceptions
+- Line 626-631: Catch exception and throw `ResponseStatusException` with message
+- Line 642-676: `convertSingleUnit()` validates:
+  1. Item exists (404 if not found)
+  2. From unit exists and belongs to item (400 if mismatch)
+  3. To unit exists and belongs to item (400 if mismatch)
+  4. Conversion rates > 0 (400 if invalid)
+  5. Base unit exists (500 if missing)
+
+#### Possible Root Causes
+
+1. **Validation Error Handling:**
+   - `@Valid` validation errors (MethodArgumentNotValidException) may not be handled properly
+   - Generic error response suggests validation errors are caught but message is lost
+   - **Action Required:** Check global exception handler for `MethodArgumentNotValidException`
+
+2. **Unit Ownership Validation:**
+   - Line 658-662: Checks `fromUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())`
+   - Line 671-675: Checks `toUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())`
+   - **Issue:** If units don't belong to item, should return specific error message
+   - **Test Evidence:** GET endpoint works with same unit IDs, suggesting units DO belong to item
+   - **Action Required:** Verify unit ownership check logic
+
+3. **@Positive Validation for Double:**
+   - `@Positive` on `Double quantity` may have issues with decimal values
+   - Test uses `quantity: 2.5` which should be valid
+   - **Action Required:** Verify `@Positive` works correctly with `Double` type
+
+4. **Missing Error Details:**
+   - BE trả về generic "error.bad_request" thay vì specific validation errors
+   - Exception messages from service (line 630) may not be included in response
+   - **Action Required:** Check global exception handler to include validation error details
+
+#### Investigation Steps
+
+1. **Verify Request Structure:**
+   - Check BE DTO (`BatchConversionRequest` hoặc tương tự)
+   - Verify field names match (camelCase: `itemMasterId`, `fromUnitId`, `toUnitId`, `quantity`)
+   - Verify `roundingMode` enum values
+
+2. **Check BE Validation:**
+   - Review validation annotations (`@Valid`, `@NotNull`, `@Min`, etc.)
+   - Check if units belong to item validation
+   - Check if conversion rate exists between units
+
+3. **Compare GET vs POST:**
+   - GET endpoint works with same unit IDs
+   - POST endpoint fails with same unit IDs
+   - Check if validation logic differs between GET and POST
+
+4. **Test with Test Guide Example:**
+   - Try with exact unit IDs from test guide (fromUnitId: 3, toUnitId: 1 for item 1)
+   - Verify if issue is specific to certain unit IDs or general
+
+#### Related BE Files (Expected)
+
+- Controller: `ItemMasterController.java` hoặc `ItemUnitController.java`
+  - Method: `@PostMapping("/units/convert")` hoặc tương tự
+- Service: `ItemUnitService.java` hoặc tương tự
+  - Method: `batchConvert()` hoặc `convertUnits()`
+- DTO: `BatchConversionRequest.java` hoặc tương tự
+  - Fields: `conversions[]`, `roundingMode`
+
+#### Related FE Files
+
+- `src/services/itemUnitService.ts:74-101` - `convertUnits()` method
+- `src/types/warehouse.ts:459-467` - `ConversionRequest` interface
+- `scripts/test-warehouse-apis.ts:1028-1043` - Test script
+
+#### Suggested Fixes
+
+1. **BE: Improve Error Response:**
+   - Return specific validation errors instead of generic "error.bad_request"
+   - Include field-level validation errors (e.g., "fromUnitId: Unit not found", "quantity: Must be positive")
+   - Use `@Valid` with proper error handling
+
+2. **BE: Verify Validation Logic:**
+   - Ensure POST endpoint validation matches GET endpoint logic
+   - Verify units belong to item validation
+   - Check conversion rate calculation
+
+3. **BE: Update Test Guide:**
+   - If request structure changed, update test guide
+   - If unit IDs in test guide are incorrect, update with correct IDs
+
+4. **Documentation:**
+   - Document exact request structure required
+   - Document validation rules and error codes
+   - Provide working example with actual unit IDs from seed data
+
+#### Test Request (for BE team to reproduce)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversions": [
+      {
+        "itemMasterId": 1,
+        "fromUnitId": 60,
+        "toUnitId": 58,
+        "quantity": 2.5
+      }
+    ],
+    "roundingMode": "HALF_UP"
+  }'
 ```
 
-**Proposed Solution (Option 2): Tạo API Endpoint Mới**
-
-```java
-// In AppointmentController.java
-@GetMapping("/{appointmentCode}/treatment-plan")
-@PreAuthorize("hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
-public ResponseEntity<TreatmentPlanDetailResponse> getLinkedTreatmentPlan(
-        @PathVariable String appointmentCode) {
-    
-    // Logic:
-    // 1. Load appointment
-    // 2. Check if current user is primary doctor OR has VIEW_TREATMENT_PLAN_ALL
-    // 3. Query linked plan items from appointment_plan_items
-    // 4. Get treatment plan code
-    // 5. Return full treatment plan detail (with RBAC check: allow if user is primary doctor)
-    
-    TreatmentPlanDetailResponse plan = appointmentDetailService.getLinkedTreatmentPlan(appointmentCode);
-    return ResponseEntity.ok(plan);
-}
-```
-
-**Proposed Solution (Option 3 - RECOMMENDED): Cập Nhật RBAC Logic trong API 5.2**
-
-```java
-// In TreatmentPlanDetailService.java
-// When checking permissions for getTreatmentPlanDetail:
-// Allow access if:
-// 1. User has VIEW_TREATMENT_PLAN_ALL → Full access
-// 2. User has VIEW_TREATMENT_PLAN_OWN AND:
-//    - User is patient of this plan, OR
-//    - User created this plan (createdBy), OR
-//    - User is primary doctor of appointment linked to this plan (NEW - for appointment detail view)
-
-// Add method to check if user is primary doctor of any appointment linked to this plan
-private boolean isPrimaryDoctorOfLinkedAppointment(Integer employeeId, Long planId) {
-    // Query: appointments → appointment_plan_items → plan_items → phases → treatment_plan
-    // Check if any appointment has employeeId as primary doctor
-    return appointmentRepository.existsByEmployeeIdAndLinkedToPlan(employeeId, planId);
-}
-
-// In getTreatmentPlanDetail method:
-// After RBAC check for VIEW_TREATMENT_PLAN_OWN:
-if (hasViewOwnPermission && !isOwner) {
-    // Check if user is primary doctor of linked appointment
-    Integer currentEmployeeId = getCurrentEmployeeId(authentication);
-    if (isPrimaryDoctorOfLinkedAppointment(currentEmployeeId, plan.getPlanId())) {
-        log.info("Allowing access: User {} is primary doctor of appointment linked to plan {}", 
-            currentEmployeeId, planCode);
-        // Allow access
-    } else {
-        throw new AccessDeniedException("You can only view your own treatment plans or plans linked to your appointments");
-    }
-}
-```
-
-**Recommended Approach:**
-
-**Option 1 + Option 3** (Kết hợp):
-1. **Option 1:** Thêm `linkedTreatmentPlanCode` vào `AppointmentDetailDTO` để FE biết plan code
-2. **Option 3:** Cập nhật RBAC logic trong API 5.2 để cho phép primary doctor xem plan linked với appointment
-
-**Lý do:**
-- Bác sĩ KHÔNG cần `VIEW_TREATMENT_PLAN_ALL` (sẽ xem được tất cả plans)
-- Bác sĩ chỉ cần `VIEW_TREATMENT_PLAN_OWN` + logic đặc biệt: cho phép xem nếu là primary doctor của linked appointment
-- Khi vào `/employee/treatment-plans`, bác sĩ vẫn chỉ xem được plans mà họ tạo (không xem plans của bác sĩ khác)
-- Khi vào appointment detail, bác sĩ có thể xem plan linked với appointment đó (để kiểm tra tiến độ)
-
-**Test Cases:**
-
-1. **Doctor views appointment with linked plan (not created by doctor):**
-   - Setup: Appointment với primary doctor = `EMP002`, linked to plan created by `EMP001`
-   - Action: Doctor `EMP002` (chỉ có `VIEW_TREATMENT_PLAN_OWN`) gọi API 5.2 với plan code
-   - Expected: ✅ Allowed (doctor is primary doctor of linked appointment)
-
-2. **Doctor views appointment detail:**
-   - Setup: Appointment linked to treatment plan
-   - Action: Get appointment detail
-   - Expected: Response có `linkedTreatmentPlanCode` field
-
-3. **Doctor without permission:**
-   - Setup: Doctor không phải primary doctor và không có `VIEW_TREATMENT_PLAN_ALL`
-   - Action: Try to view plan linked to appointment
-   - Expected: ❌ 403 Forbidden
+**Expected:** `200 OK` with conversion results  
+**Actual:** `400 Bad Request` with generic error
 
 ---
 
-## 🟡 FE Issues (Minor - Can be fixed by FE)
+**Last Updated:** 2025-01-30  
+**Total Open Issues:** 2  
+**High Priority Issues:** 1  
+**Medium Priority Issues:** 1
 
-### 5. 🟡 TreatmentPlanSummaryDTO Thiếu ProgressSummary
-
-- **Status:** 🟡 **FE WORKAROUND APPLIED**
-- **Priority:** 🟢 Low
-- **File:** `src/components/treatment-plans/TreatmentPlanProgressCard.tsx`
-- **Issue:** `TreatmentPlanSummaryDTO` không có field `progressSummary`, nên progress card không thể hiển thị progress percentage.
-
-**Current Workaround:**
-
-- FE đã set `progressPercentage = 0` và hiển thị placeholder message
-- User cần click vào card để xem detail page (có đầy đủ progress info)
-
-**Proposed BE Enhancement (Optional):**
-
-- Thêm `progressSummary: ProgressSummaryDTO` vào `TreatmentPlanSummaryDTO` để có thể hiển thị progress trong list view
-- **Note:** Đây là enhancement, không phải bug. FE đã workaround được.
-
----
-
-## Summary Table
-
-| # | Issue | Status | Action Owner | Priority |
-|---|-------|--------|--------------|----------|
-| 1 | **Bác sĩ phụ trách appointment không thể xem treatment plan linked** | ✅ **RESOLVED** | **BE** | ✅ Fixed |
-| 2 | **TreatmentPlanSummaryDTO thiếu ProgressSummary** | 🟡 **FE WORKAROUND** | **BE (Optional)** | 🟢 Low |
-
----
-
-## ✅ Testing Status
-
-**Test Scripts:**
-- `scripts/test-features.ts` - Test treatment plan & appointment features
-- `scripts/test-all-modules.ts` - Test all modules (Employee, Account, Role, Permission, Specialization)
-
-**Run Commands:**
-- `npm run test:features` - Test treatment plan & appointment
-- `npm run test:all-modules` - Test all modules
-
-**Tested Features:**
-- ✅ Authentication (Admin, Doctor, Patient)
-- ✅ Treatment Plan APIs (List, Detail)
-- ✅ Appointment APIs (List, Detail)
-- ✅ Services APIs
-- ✅ Doctor Services Filtering
-- ✅ Employees APIs (With search/filter)
-- ✅ Account APIs (Me, Profile, Permissions, Info)
-- ✅ Role APIs (List, Detail, Permissions)
-- ✅ Permission APIs (List, Grouped, By Module)
-- ✅ Specialization APIs (List)
-
-**Known Issues from Testing:**
-- ✅ Doctor có thể xem treatment plan linked với appointment (Issue #1 - **FIXED**)
-
----
-
-**Last Updated:** 2025-01-XX  
-**Next Steps:** 
-- ✅ **BE Team:** 
-  - ✅ Fixed RBAC để bác sĩ phụ trách appointment có thể xem treatment plan linked (Issue #1 - **RESOLVED**)
-- 🟡 **FE Team:** 
-  - Update UI to use `linkedTreatmentPlanCode` from appointment detail (Issue #1 - **BE FIXED, FE can now use it**)
+**For detailed BE response, see:** `docs/api-guide/warehouse/FE_ISSUES_RESOLUTION_2025_11_29.md`
