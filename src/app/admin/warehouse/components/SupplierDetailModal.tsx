@@ -52,11 +52,16 @@ export default function SupplierDetailModal({
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // Fetch full supplier detail using API V1
-  const { data: supplierDetail, isLoading: loadingDetail } = useSupplier(
+  const { data: supplierDetail, isLoading: loadingDetail, error: detailError } = useSupplier(
     supplier?.supplierId || null
   );
 
   if (!supplier) return null;
+
+  // Show error if fetch failed
+  if (detailError && !loadingDetail) {
+    console.error('Error loading supplier detail:', detailError);
+  }
 
   // Filter supplied items from detail response by search keyword
   const filteredItems = supplierDetail?.suppliedItems?.filter((item) => {
@@ -113,8 +118,15 @@ export default function SupplierDetailModal({
           <TabsContent value="info" className="space-y-6 mt-6">
             {loadingDetail ? (
               <div className="text-center py-8">Đang tải thông tin...</div>
+            ) : detailError ? (
+              <div className="text-center py-8 text-red-500">
+                <p className="font-semibold">Không thể tải thông tin nhà cung cấp</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {(detailError as any)?.response?.data?.message || 'Vui lòng thử lại sau'}
+                </p>
+              </div>
             ) : !supplierDetail ? (
-              <div className="text-center py-8 text-red-500">Không thể tải thông tin nhà cung cấp</div>
+              <div className="text-center py-8 text-red-500">Không tìm thấy thông tin nhà cung cấp</div>
             ) : (
               <>
                 {/* Basic Information */}

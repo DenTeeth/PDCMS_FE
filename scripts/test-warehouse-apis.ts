@@ -124,7 +124,23 @@ async function testAPI(
     const responseTime = Date.now() - startTime;
     result.status = 'FAIL';
     result.statusCode = error.response?.status;
-    result.error = error.response?.data?.message || error.message;
+    // Get detailed error message
+    const errorData = error.response?.data;
+    if (errorData) {
+      if (errorData.message) {
+        result.error = errorData.message;
+      } else if (errorData.error) {
+        result.error = errorData.error;
+      } else if (typeof errorData === 'string') {
+        result.error = errorData;
+      } else {
+        result.error = JSON.stringify(errorData);
+      }
+      // Store full error data for debugging
+      result.data = errorData;
+    } else {
+      result.error = error.message;
+    }
     result.responseTime = responseTime;
   }
 
@@ -134,9 +150,10 @@ async function testAPI(
 // Test functions
 async function testAPI_6_1() {
   console.log('\n📊 Testing API 6.1 - Inventory Summary');
+  // FE uses /inventory/summary (simple version) instead of /warehouse/summary
   const result = await testAPI(
     '6.1',
-    '/warehouse/summary',
+    '/inventory/summary',
     'GET',
     undefined,
     { page: 0, size: 10 }
@@ -375,15 +392,113 @@ async function testAPI_6_5() {
     console.log('   ⚠️  Could not fetch valid item IDs, using defaults');
   }
   
+  // Find an item with stock for export
+  let itemWithStock: { itemMasterId: number; unitId: number; availableStock: number } | null = null;
+  
+  if (validItemMasterId) {
+    try {
+      const batchesResponse = await axios.get(`${API_BASE}/inventory/batches/${validItemMasterId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (Array.isArray(batchesResponse.data) && batchesResponse.data.length > 0) {
+        const totalStock = batchesResponse.data.reduce((sum: number, batch: any) => {
+          return sum + (batch.quantityOnHand || batch.quantity_on_hand || 0);
+        }, 0);
+        if (totalStock > 0) {
+          itemWithStock = {
+            itemMasterId: validItemMasterId,
+            unitId: validUnitId || 1,
+            availableStock: totalStock,
+          };
+          console.log(`   ℹ️  Item has stock: ${totalStock} units available`);
+        } else {
+          console.log(`   ⚠️  Item ${validItemMasterId} has no stock, searching for item with stock...`);
+        }
+      }
+    } catch (e) {
+      console.log('   ⚠️  Could not check stock for this item');
+    }
+  }
+  
+  // If current item has no stock, search for another item with stock
+  if (!itemWithStock) {
+    try {
+      const itemsResponse = await axios.get(`${API_BASE}/warehouse/items`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+        params: { page: 0, size: 20 },
+      });
+      
+      let items: any[] = [];
+      if (itemsResponse.data?.content) {
+        items = itemsResponse.data.content;
+      } else if (Array.isArray(itemsResponse.data)) {
+        items = itemsResponse.data;
+      }
+      
+      // Try to find an item with stock
+      for (const item of items.slice(0, 10)) {
+        const testItemId = item.itemMasterId || item.id;
+        if (!testItemId) continue;
+        
+        try {
+          const batchesResponse = await axios.get(`${API_BASE}/inventory/batches/${testItemId}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          
+          if (Array.isArray(batchesResponse.data) && batchesResponse.data.length > 0) {
+            const totalStock = batchesResponse.data.reduce((sum: number, batch: any) => {
+              return sum + (batch.quantityOnHand || batch.quantity_on_hand || 0);
+            }, 0);
+            
+            if (totalStock > 0) {
+              // Get unit for this item
+              try {
+                const unitsResponse = await axios.get(`${API_BASE}/warehouse/items/${testItemId}/units`, {
+                  headers: { Authorization: `Bearer ${authToken}` },
+                  params: { status: 'active' },
+                });
+                
+                const units = unitsResponse.data?.units || [];
+                if (units.length > 0) {
+                  itemWithStock = {
+                    itemMasterId: testItemId,
+                    unitId: units[0].unitId,
+                    availableStock: totalStock,
+                  };
+                  console.log(`   ℹ️  Found item ${testItemId} with stock: ${totalStock} units`);
+                  break;
+                }
+              } catch (e) {
+                continue;
+              }
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    } catch (e) {
+      console.log('   ⚠️  Could not search for items with stock');
+    }
+  }
+  
+  // Use LocalDateTime format (YYYY-MM-DDTHH:mm:ss) instead of just date
+  const today = new Date();
+  const transactionDateTime = `${today.toISOString().split('T')[0]}T00:00:00`;
+  
+  if (!itemWithStock) {
+    console.log('   ⚠️  No items with stock found, will test with default item (may fail with INSUFFICIENT_STOCK)');
+  }
+  
   const testData = {
-    transactionDate: new Date().toISOString().split('T')[0],
+    transactionDate: transactionDateTime, // LocalDateTime format
     exportType: 'USAGE',
     notes: 'Test export transaction from test script',
     items: [
       {
-        itemMasterId: validItemMasterId || 1,
-        quantity: 5,
-        unitId: validUnitId || 1,
+        itemMasterId: itemWithStock?.itemMasterId || validItemMasterId || 1,
+        quantity: itemWithStock ? Math.min(1, itemWithStock.availableStock) : 1, // Use 1 unit if stock exists
+        unitId: itemWithStock?.unitId || validUnitId || 1,
       },
     ],
   };
@@ -391,13 +506,21 @@ async function testAPI_6_5() {
   const result = await testAPI('6.5', '/inventory/export', 'POST', testData);
   results.push(result);
   console.log(`   Status: ${result.status} | Code: ${result.statusCode} | Time: ${result.responseTime}ms`);
-  if (result.error) console.log(`   Error: ${result.error}`);
+  if (result.error) {
+    console.log(`   Error: ${result.error}`);
+    // Log full error response for debugging
+    if (result.data && typeof result.data === 'object') {
+      console.log(`   Error Details:`, JSON.stringify(result.data, null, 2));
+    }
+  }
   if (result.statusCode === 400) {
-    console.log('   ⚠️  Note: 400 Bad Request - Test data validation failed or stock unavailable (expected).');
+    console.log('   ⚠️  Note: 400 Bad Request - Check error details above for validation issues.');
   } else if (result.statusCode === 404) {
     console.log('   ⚠️  Note: 404 Not Found - Endpoint or resource not found.');
   } else if (result.statusCode === 500) {
     console.log('   ❌ Note: 500 Internal Server Error - BE issue, not test data issue.');
+  } else if (result.statusCode === 201) {
+    console.log('   ✅ Export transaction created successfully');
   }
 }
 
@@ -602,8 +725,23 @@ async function testAPI_6_10() {
     return;
   }
   
+  // Get category ID for update
+  let validCategoryId: number | null = null;
+  try {
+    const categoriesResponse = await axios.get(`${API_BASE}/inventory/categories`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : categoriesResponse.data?.data || [];
+    if (categories.length > 0) {
+      validCategoryId = categories[0].categoryId || categories[0].category_id || categories[0].id;
+    }
+  } catch (e) {
+    console.log('   ⚠️  Could not fetch categories for update');
+  }
+  
   const updateData = {
     itemName: 'Updated Test Item Name',
+    categoryId: validCategoryId || 1, // Required field
     warehouseType: 'NORMAL', // Required field
     minStockLevel: 20,
     maxStockLevel: 200,
@@ -732,15 +870,22 @@ async function testAPI_6_11() {
 async function testAPI_6_12() {
   console.log('\n🔄 Testing API 6.12 - Convert Quantity Between Units');
   
-  // Try to find item from seed data that has multiple units (CON-GLOVE-01 has 3 units)
+  // According to API_6.12_CONVERT_UNITS_COMPLETE.md test guide:
+  // Item 1: Kim tiem nha khoa 27G x 1 inch
+  // - Unit 1: Chiec (base, rate: 1) - toUnitId: 1
+  // - Unit 2: Cap (rate: 2)
+  // - Unit 3: Hop (rate: 200) - fromUnitId: 3
+  // Test guide uses: itemMasterId: 1, fromUnitId: 3, toUnitId: 1, quantity: 2.5
+  
   let validItemMasterId: number | null = null;
   let fromUnitId: number | null = null;
   let toUnitId: number | null = null;
   
   try {
+    // First, try to find Item 1 (Kim tiem) as per test guide
     const itemsResponse = await axios.get(`${API_BASE}/warehouse/items`, {
       headers: { Authorization: `Bearer ${authToken}` },
-      params: { page: 0, size: 50, search: 'CON-GLOVE' },
+      params: { page: 0, size: 50 },
     });
     
     let items: any[] = [];
@@ -750,14 +895,30 @@ async function testAPI_6_12() {
       items = itemsResponse.data;
     }
     
-    // Try to find CON-GLOVE-01 (has 3 units: Hop, Cap, Chiec)
-    const gloveItem = items.find((item: any) => 
-      item.itemCode === 'CON-GLOVE-01' || item.item_code === 'CON-GLOVE-01'
-    );
+    // Try to find Item 1 (Kim tiem nha khoa) - check by ID or name
+    let testItem = items.find((item: any) => {
+      const id = item.itemMasterId || item.id;
+      const name = (item.itemName || item.item_name || '').toLowerCase();
+      const code = (item.itemCode || item.item_code || '').toLowerCase();
+      return id === 1 || name.includes('kim tiem') || name.includes('kim tiêm') || code.includes('kim');
+    });
     
-    if (gloveItem) {
-      validItemMasterId = gloveItem.itemMasterId || gloveItem.id;
-      console.log(`   ℹ️  Found seed item CON-GLOVE-01 (ID: ${validItemMasterId})`);
+    // If not found, try CON-GLOVE-01 as fallback
+    if (!testItem) {
+      testItem = items.find((item: any) => 
+        item.itemCode === 'CON-GLOVE-01' || item.item_code === 'CON-GLOVE-01'
+      );
+    }
+    
+    // If still not found, use first item with multiple units
+    if (!testItem && items.length > 0) {
+      testItem = items[0];
+    }
+    
+    if (testItem) {
+      validItemMasterId = testItem.itemMasterId || testItem.id;
+      const itemName = testItem.itemName || testItem.item_name || 'Unknown';
+      console.log(`   ℹ️  Found test item: ${itemName} (ID: ${validItemMasterId})`);
       
       // Get units for this item
       try {
@@ -767,18 +928,47 @@ async function testAPI_6_12() {
         });
         
         if (unitsResponse.data?.units && unitsResponse.data.units.length >= 2) {
-          // Use Hop (largest) → Chiec (base) for conversion
-          const hopUnit = unitsResponse.data.units.find((u: any) => u.unitName === 'Hop' || u.unitName === 'Hộp');
-          const chiecUnit = unitsResponse.data.units.find((u: any) => u.unitName === 'Chiec' || u.unitName === 'Chiếc' || u.isBaseUnit);
+          // Log all units for debugging
+          console.log(`   ℹ️  Available units:`, unitsResponse.data.units.map((u: any) => 
+            `${u.unitName} (ID: ${u.unitId}, base: ${u.isBaseUnit}, rate: ${u.conversionRate})`
+          ).join(', '));
           
-          if (hopUnit && chiecUnit) {
+          // According to test guide, find "Hop" (largest) and "Chiec" (base)
+          const hopUnit = unitsResponse.data.units.find((u: any) => 
+            (u.unitName || '').toLowerCase().includes('hop') || 
+            (u.unitName || '').toLowerCase().includes('hộp')
+          );
+          const chiecUnit = unitsResponse.data.units.find((u: any) => 
+            u.isBaseUnit || 
+            (u.unitName || '').toLowerCase().includes('chiec') || 
+            (u.unitName || '').toLowerCase().includes('chiếc')
+          );
+          
+          if (hopUnit && chiecUnit && hopUnit.unitId !== chiecUnit.unitId) {
             fromUnitId = hopUnit.unitId;
             toUnitId = chiecUnit.unitId;
-            console.log(`   ℹ️  Using units: ${hopUnit.unitName} (${fromUnitId}) → ${chiecUnit.unitName} (${toUnitId})`);
+            console.log(`   ℹ️  Using units from test guide: ${hopUnit.unitName} (${fromUnitId}) → ${chiecUnit.unitName} (${toUnitId}, base)`);
           } else {
-            fromUnitId = unitsResponse.data.units[0].unitId;
-            toUnitId = unitsResponse.data.units[1].unitId;
-            console.log(`   ℹ️  Using units: ${unitsResponse.data.units[0].unitName} (${fromUnitId}) → ${unitsResponse.data.units[1].unitName} (${toUnitId})`);
+            // Fallback: use largest unit → base unit
+            const sortedUnits = [...unitsResponse.data.units].sort((a: any, b: any) => {
+              const orderA = a.displayOrder || 999;
+              const orderB = b.displayOrder || 999;
+              return orderA - orderB;
+            });
+            
+            const largestUnit = sortedUnits[0];
+            const baseUnit = sortedUnits.find((u: any) => u.isBaseUnit) || sortedUnits[sortedUnits.length - 1];
+            
+            if (largestUnit && baseUnit && largestUnit.unitId !== baseUnit.unitId) {
+              fromUnitId = largestUnit.unitId;
+              toUnitId = baseUnit.unitId;
+              console.log(`   ℹ️  Using units: ${largestUnit.unitName} (${fromUnitId}) → ${baseUnit.unitName} (${toUnitId}, base)`);
+            } else {
+              // Last fallback: use first two units
+              fromUnitId = sortedUnits[0].unitId;
+              toUnitId = sortedUnits[1].unitId;
+              console.log(`   ℹ️  Using first two units: ${sortedUnits[0].unitName} (${fromUnitId}) → ${sortedUnits[1].unitName} (${toUnitId})`);
+            }
           }
         } else if (unitsResponse.data?.units && unitsResponse.data.units.length === 1) {
           fromUnitId = unitsResponse.data.units[0].unitId;
@@ -786,11 +976,11 @@ async function testAPI_6_12() {
           console.log(`   ⚠️  Only 1 unit found, using same unit for conversion test`);
         }
       } catch (e) {
-        console.log('   ⚠️  Could not fetch units for CON-GLOVE-01');
+        console.log(`   ⚠️  Could not fetch units for item ${validItemMasterId}`);
       }
     }
     
-    // Fallback: try other seed items
+    // Final fallback: try other seed items
     if (!fromUnitId || !toUnitId) {
       const fallbackCodes = ['CON-MASK-01', 'MED-SEPT-01', 'MAT-COMP-01'];
       for (const code of fallbackCodes) {
@@ -848,30 +1038,77 @@ async function testAPI_6_12() {
   }
   
   // Test POST endpoint (batch conversion) - only if we have valid unit IDs
+  // According to BE, POST endpoint is at /warehouse/items/units/convert (ItemMasterController)
+  // But we need to verify the request structure matches BE expectations
   if (fromUnitId && toUnitId && validItemMasterId) {
+    // Verify units belong to the same item
+    try {
+      const unitsCheck = await axios.get(`${API_BASE}/warehouse/items/${validItemMasterId}/units`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+        params: { status: 'active' },
+      });
+      
+      const itemUnits = unitsCheck.data?.units || [];
+      const fromUnit = itemUnits.find((u: any) => u.unitId === fromUnitId);
+      const toUnit = itemUnits.find((u: any) => u.unitId === toUnitId);
+      
+      if (!fromUnit || !toUnit) {
+        console.log('   ⚠️  Units do not belong to the same item, skipping POST test');
+        const skipResult: TestResult = {
+          api: '6.12-POST',
+          endpoint: '/warehouse/items/units/convert',
+          method: 'POST',
+          status: 'SKIP',
+        };
+        results.push(skipResult);
+        return;
+      }
+      
+      console.log(`   ℹ️  Verified units belong to item ${validItemMasterId}: ${fromUnit.unitName} → ${toUnit.unitName}`);
+    } catch (e) {
+      console.log('   ⚠️  Could not verify units, proceeding anyway');
+    }
+    
+    // According to API_6.12_CONVERT_UNITS_COMPLETE.md test guide:
+    // Request structure: { conversions: [{ itemMasterId, fromUnitId, toUnitId, quantity }], roundingMode? }
+    // Test guide example: itemMasterId: 1, fromUnitId: 3, toUnitId: 1, quantity: 2.5
+    // BE expects: Long for IDs, Double for quantity
+    // Validation: @NotNull, @Positive for all fields
     const postData = {
       conversions: [
         {
-          itemMasterId: validItemMasterId,
-          fromUnitId,
-          toUnitId,
-          quantity: 10,
+          itemMasterId: Number(validItemMasterId), // Ensure it's a number
+          fromUnitId: Number(fromUnitId), // Ensure it's a number
+          toUnitId: Number(toUnitId), // Ensure it's a number
+          quantity: 2.5, // Double - Use decimal as shown in test guide (Example 1)
         },
       ],
-      roundingMode: 'HALF_UP',
+      roundingMode: 'HALF_UP', // Optional, default is HALF_UP
     };
+    
+    console.log(`   ℹ️  POST Request (following test guide):`, JSON.stringify(postData, null, 2));
+    console.log(`   ℹ️  Request types: itemMasterId=${typeof postData.conversions[0].itemMasterId}, fromUnitId=${typeof postData.conversions[0].fromUnitId}, toUnitId=${typeof postData.conversions[0].toUnitId}, quantity=${typeof postData.conversions[0].quantity}`);
     
     const postResult = await testAPI('6.12-POST', '/warehouse/items/units/convert', 'POST', postData);
     results.push(postResult);
     console.log(`   POST Status: ${postResult.status} | Code: ${postResult.statusCode} | Time: ${postResult.responseTime}ms`);
-    if (postResult.error) console.log(`   Error: ${postResult.error}`);
+    if (postResult.error) {
+      console.log(`   Error: ${postResult.error}`);
+      // Log full error response for debugging
+      if (postResult.data) {
+        console.log(`   Error Details:`, JSON.stringify(postResult.data, null, 2));
+      }
+    }
     if (postResult.statusCode === 200) {
       console.log('   ✅ Batch conversion successful');
       if (postResult.data?.totalProcessed) {
         console.log(`   Processed: ${postResult.data.totalProcessed} conversions`);
       }
+      if (postResult.data?.results) {
+        console.log(`   Results: ${postResult.data.results.length} conversions`);
+      }
     } else if (postResult.statusCode === 400) {
-      console.log('   ⚠️  Note: 400 Bad Request - Units may not belong to the item or validation failed.');
+      console.log('   ⚠️  Note: 400 Bad Request - Check error details above for validation issues.');
     }
   } else {
     console.log('   ⚠️  Skipping POST test - No valid unit IDs found');
@@ -924,6 +1161,75 @@ async function testAPI_6_13() {
   }
 }
 
+// Test additional APIs
+async function testAdditionalAPIs() {
+  console.log('\n📋 Testing Additional Warehouse APIs...\n');
+  
+  // Get Inventory Stats
+  console.log('📊 Testing Get Inventory Stats');
+  const statsResult = await testAPI('Stats', '/inventory/stats', 'GET');
+  results.push(statsResult);
+  console.log(`   Status: ${statsResult.status} | Code: ${statsResult.statusCode} | Time: ${statsResult.responseTime}ms`);
+  
+  // Get All Item Masters (Simple)
+  console.log('\n📦 Testing Get All Item Masters (Simple)');
+  const allItemsResult = await testAPI('GetAllItems', '/inventory', 'GET', undefined, { search: '', warehouseType: 'NORMAL' });
+  results.push(allItemsResult);
+  console.log(`   Status: ${allItemsResult.status} | Code: ${allItemsResult.statusCode} | Time: ${allItemsResult.responseTime}ms`);
+  
+  // Get Categories
+  console.log('\n📁 Testing Get Categories');
+  const categoriesResult = await testAPI('GetCategories', '/inventory/categories', 'GET');
+  results.push(categoriesResult);
+  console.log(`   Status: ${categoriesResult.status} | Code: ${categoriesResult.statusCode} | Time: ${categoriesResult.responseTime}ms`);
+  
+  // Get Suppliers (Basic)
+  console.log('\n🏢 Testing Get Suppliers (Basic)');
+  const suppliersResult = await testAPI('GetSuppliers', '/warehouse/suppliers', 'GET', undefined, { page: 0, size: 10 });
+  results.push(suppliersResult);
+  console.log(`   Status: ${suppliersResult.status} | Code: ${suppliersResult.statusCode} | Time: ${suppliersResult.responseTime}ms`);
+  
+  // Get Transaction Stats
+  console.log('\n📈 Testing Get Transaction Stats');
+  const txStatsResult = await testAPI('TxStats', '/warehouse/transactions/stats', 'GET');
+  results.push(txStatsResult);
+  console.log(`   Status: ${txStatsResult.status} | Code: ${txStatsResult.statusCode} | Time: ${txStatsResult.responseTime}ms`);
+  
+  // Test transaction approval workflow (if we have a pending transaction)
+  console.log('\n✅ Testing Transaction Approval Workflow');
+  try {
+    // Get a transaction with PENDING_APPROVAL status
+    const txListResponse = await axios.get(`${API_BASE}/warehouse/transactions`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+      params: { status: 'PENDING_APPROVAL', page: 0, size: 1 },
+    });
+    
+    let pendingTxId: number | null = null;
+    if (txListResponse.data?.content && txListResponse.data.content.length > 0) {
+      pendingTxId = txListResponse.data.content[0].transactionId || txListResponse.data.content[0].id;
+    }
+    
+    if (pendingTxId) {
+      console.log(`   Found pending transaction ID: ${pendingTxId}`);
+      // Test approve
+      const approveResult = await testAPI('ApproveTx', `/warehouse/transactions/${pendingTxId}/approve`, 'POST', { notes: 'Test approval' });
+      results.push(approveResult);
+      console.log(`   Approve Status: ${approveResult.status} | Code: ${approveResult.statusCode}`);
+    } else {
+      console.log('   ⚠️  No pending transactions found for approval test');
+      const skipResult: TestResult = {
+        api: 'ApproveTx',
+        endpoint: '/warehouse/transactions/{id}/approve',
+        method: 'POST',
+        status: 'SKIP',
+      };
+      results.push(skipResult);
+    }
+  } catch (e) {
+    console.log('   ⚠️  Could not test approval workflow');
+  }
+}
+
 // Main test runner
 async function runAllTests() {
   console.log('🚀 Starting Warehouse API Tests (6.1 - 6.13)');
@@ -954,6 +1260,9 @@ async function runAllTests() {
   await testAPI_6_11();
   await testAPI_6_12();
   await testAPI_6_13();
+  
+  // Additional APIs
+  await testAdditionalAPIs();
 
   // Summary
   console.log('\n' + '='.repeat(60));

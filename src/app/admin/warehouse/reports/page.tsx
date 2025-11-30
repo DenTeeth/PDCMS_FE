@@ -2,7 +2,7 @@
 
 /**
  * Warehouse Reports Page - Báo cáo & Thống kê kho
- * Includes: Inventory reports, transaction reports, expiring alerts, loss records
+ * Includes: Inventory reports, transaction reports, expiring alerts
  */
 
 import { useState } from 'react';
@@ -18,7 +18,6 @@ import {
   faBoxes,
   faClipboard,
   faClock,
-  faTrash,
   faExclamationTriangle,
   faDownload,
   faFilter,
@@ -28,7 +27,7 @@ import { inventoryService } from '@/services/inventoryService';
 import { storageService, StorageTransaction } from '@/services/storageService';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-type ReportType = 'inventory' | 'transactions' | 'expiring' | 'loss';
+type ReportType = 'inventory' | 'transactions' | 'expiring';
 type TimeRange = '7days' | '30days' | '90days' | 'custom';
 
 export default function WarehouseReportsPage() {
@@ -37,7 +36,7 @@ export default function WarehouseReportsPage() {
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | 'COLD' | 'NORMAL'>('ALL');
 
   // Fetch inventory summary for reports
-  const { data: inventorySummary, isLoading: inventoryLoading } = useQuery({
+  const { data: inventorySummary, isLoading: inventoryLoading, error: inventoryError } = useQuery({
     queryKey: ['inventoryReportSummary', warehouseFilter],
     queryFn: async () => {
       const filter: any = {
@@ -49,10 +48,12 @@ export default function WarehouseReportsPage() {
       }
       return await inventoryService.getSummary(filter);
     },
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Fetch expiring items (API 6.3)
-  const { data: expiringAlertsData, isLoading: expiringLoading } = useQuery({
+  const { data: expiringAlertsData, isLoading: expiringLoading, error: expiringError } = useQuery({
     queryKey: ['expiringAlertsReport'],
     queryFn: async () => {
       const result = await inventoryService.getExpiringAlerts({
@@ -62,10 +63,12 @@ export default function WarehouseReportsPage() {
       });
       return result;
     },
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Fetch transactions for reports
-  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useQuery({
     queryKey: ['transactionsReport', timeRange],
     queryFn: async () => {
       // Calculate date range based on timeRange
@@ -90,12 +93,14 @@ export default function WarehouseReportsPage() {
         fromDate: startDate.toISOString().split('T')[0],
         toDate: now.toISOString().split('T')[0],
         page: 0,
-        size: 200,
+        size: 100, // BE limit: max 100 (see TransactionHistoryService.validateRequest)
         sortBy: 'transactionDate',
         sortDirection: 'desc',
       });
       return result.content;
     },
+    retry: 1,
+    retryDelay: 1000,
   });
 
   const formatDate = (dateString: string) => {
@@ -159,7 +164,7 @@ export default function WarehouseReportsPage() {
 
         {/* Report Tabs */}
         <Tabs value={activeReport} onValueChange={(v) => setActiveReport(v as ReportType)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <FontAwesomeIcon icon={faBoxes} className="h-4 w-4" />
               Tồn Kho
@@ -171,10 +176,6 @@ export default function WarehouseReportsPage() {
             <TabsTrigger value="expiring" className="flex items-center gap-2">
               <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
               Sắp Hết Hạn
-            </TabsTrigger>
-            <TabsTrigger value="loss" className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-              Hao Hụt
             </TabsTrigger>
           </TabsList>
 
@@ -199,6 +200,13 @@ export default function WarehouseReportsPage() {
               <CardContent>
                 {inventoryLoading ? (
                   <div className="text-center py-8">Đang tải...</div>
+                ) : inventoryError ? (
+                  <div className="text-center py-8 text-red-500">
+                    <p className="font-semibold">Không thể tải dữ liệu tồn kho</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {(inventoryError as any)?.response?.data?.message || 'Vui lòng thử lại sau'}
+                    </p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -258,6 +266,20 @@ export default function WarehouseReportsPage() {
                 <CardContent>
                   {transactionsLoading ? (
                     <div className="text-center py-6 text-gray-500 text-sm">Đang tải...</div>
+                  ) : transactionsError ? (
+                    <div className="text-center py-6 text-red-500 text-sm">
+                      <p className="font-semibold">Không thể tải giao dịch</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(transactionsError as any)?.message || 
+                         (transactionsError as any)?.response?.data?.message || 
+                         'Vui lòng thử lại sau'}
+                      </p>
+                      {(transactionsError as any)?.status && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Status: {(transactionsError as any).status}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-3">
                       {transactions
@@ -314,6 +336,20 @@ export default function WarehouseReportsPage() {
                 <CardContent>
                   {transactionsLoading ? (
                     <div className="text-center py-6 text-gray-500 text-sm">Đang tải...</div>
+                  ) : transactionsError ? (
+                    <div className="text-center py-6 text-red-500 text-sm">
+                      <p className="font-semibold">Không thể tải giao dịch</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(transactionsError as any)?.message || 
+                         (transactionsError as any)?.response?.data?.message || 
+                         'Vui lòng thử lại sau'}
+                      </p>
+                      {(transactionsError as any)?.status && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Status: {(transactionsError as any).status}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-3">
                       {transactions
@@ -373,6 +409,13 @@ export default function WarehouseReportsPage() {
               <CardContent>
                 {expiringLoading ? (
                   <div className="text-center py-8">Đang tải...</div>
+                ) : expiringError ? (
+                  <div className="text-center py-8 text-red-500">
+                    <p className="font-semibold">Không thể tải cảnh báo hết hạn</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {(expiringError as any)?.response?.data?.message || 'Vui lòng thử lại sau'}
+                    </p>
+                  </div>
                 ) : expiringAlertsData && expiringAlertsData.alerts && expiringAlertsData.alerts.length > 0 ? (
                   <div className="space-y-4">
                     {/* Stats Summary */}
@@ -468,23 +511,6 @@ export default function WarehouseReportsPage() {
             </Card>
           </TabsContent>
 
-          {/* Loss Records Report */}
-          <TabsContent value="loss" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faTrash} className="h-5 w-5 text-red-500" />
-                  Báo Cáo Hao Hụt & Hư Hỏng
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600">
-                  API báo cáo hao hụt chưa được BE cung cấp. Khi có dữ liệu chính thức, tab này sẽ
-                  hiển thị danh sách phiếu hủy cùng thống kê giá trị mất mát.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     // </ProtectedRoute>

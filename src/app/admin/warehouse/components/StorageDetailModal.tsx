@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -62,11 +63,31 @@ export default function StorageDetailModal({
   const [cancellationReason, setCancellationReason] = useState('');
 
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const hasViewCost = usePermission('VIEW_COST');
   // BE checks: hasRole('ADMIN') or hasAuthority('APPROVE_TRANSACTION')
   const isAdmin = useRole('ROLE_ADMIN');
   const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');
   const hasUpdatePermission = usePermission('UPDATE_WAREHOUSE') || usePermission('CANCEL_WAREHOUSE');
+
+  // Debug: Log permission info
+  useEffect(() => {
+    if (transaction && isOpen) {
+      console.log('🔍 [StorageDetailModal] Permission Debug:', {
+        transactionId: transaction.transactionId,
+        transactionCode: transaction.transactionCode,
+        transactionStatus: transaction.status,
+        isAdmin,
+        hasApprovePermission,
+        hasUpdatePermission,
+        hasViewCost,
+        userRoles: user?.roles || [],
+        userPermissions: user?.permissions || [],
+        canShowApproveButton: transaction.status === 'PENDING_APPROVAL' && hasApprovePermission,
+        canShowCancelButton: (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission,
+      });
+    }
+  }, [transaction, isOpen, isAdmin, hasApprovePermission, hasUpdatePermission, hasViewCost, user]);
 
   const { data: transaction, isLoading, isError, error } = useQuery({
     queryKey: ['storageTransaction', transactionId],

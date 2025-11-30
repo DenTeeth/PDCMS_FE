@@ -40,10 +40,11 @@ export default function SupplierFormModal({
   const [itemSearchQuery, setItemSearchQuery] = useState('');
 
   // Fetch full supplier detail when editing
-  const { data: fullSupplierDetail, isLoading: loadingSupplierDetail } = useQuery({
+  const { data: fullSupplierDetail, isLoading: loadingSupplierDetail, error: supplierDetailError } = useQuery({
     queryKey: ['supplierDetail', supplier?.supplierId],
     queryFn: () => supplierService.getById(supplier!.supplierId),
     enabled: isOpen && !!supplier?.supplierId,
+    retry: 1,
   });
 
   // Fetch all inventory items
@@ -72,7 +73,11 @@ export default function SupplierFormModal({
         notes: supplierData.notes || '',
       });
       // Set selected items from supplier detail
-      const itemIds = supplierData.suppliedItems?.map(item => item.itemMasterId).filter(Boolean) || [];
+      // Handle both SuppliedItemResponse format and simple item IDs
+      const itemIds = supplierData.suppliedItems?.map(item => {
+        // Handle different response formats
+        return item.itemMasterId || (item as any).itemId || (item as any).id;
+      }).filter((id): id is number => typeof id === 'number' && id > 0) || [];
       setSelectedItemIds(itemIds);
     } else if (!supplierData && isOpen) {
       // Reset form when creating new supplier
@@ -140,6 +145,16 @@ export default function SupplierFormModal({
         {loadingSupplierDetail ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          </div>
+        ) : supplierDetailError ? (
+          <div className="text-center py-12 text-red-500">
+            <p className="font-semibold">Không thể tải thông tin nhà cung cấp</p>
+            <p className="text-sm text-gray-500 mt-2">
+              {(supplierDetailError as any)?.response?.data?.message || 'Vui lòng thử lại sau'}
+            </p>
+            <Button variant="outline" onClick={onClose} className="mt-4">
+              Đóng
+            </Button>
           </div>
         ) : (
           <div className={supplier ? "grid grid-cols-2 gap-6 overflow-hidden flex-1" : "overflow-hidden flex-1"}>
