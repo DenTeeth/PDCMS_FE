@@ -34,13 +34,13 @@ export default function TreatmentPlanProgressCard({
   const router = useRouter();
 
   const statusColor = TREATMENT_PLAN_STATUS_COLORS[plan.status] || 'default';
-  const statusLabel = plan.status === TreatmentPlanStatus.IN_PROGRESS 
-    ? 'Đang điều trị' 
-    : plan.status === TreatmentPlanStatus.COMPLETED 
-    ? 'Hoàn thành' 
-    : plan.status === TreatmentPlanStatus.PENDING 
-    ? 'Chờ xử lý' 
-    : 'Đã hủy';
+  const statusLabel = plan.status === TreatmentPlanStatus.IN_PROGRESS
+    ? 'Đang điều trị'
+    : plan.status === TreatmentPlanStatus.COMPLETED
+      ? 'Hoàn thành'
+      : plan.status === TreatmentPlanStatus.PENDING
+        ? 'Chờ xử lý'
+        : 'Đã hủy';
 
   // Calculate progress percentage
   // Note: TreatmentPlanSummaryDTO doesn't have progressSummary, so we'll show 0% or use a placeholder
@@ -71,7 +71,7 @@ export default function TreatmentPlanProgressCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-semibold text-sm truncate">{plan.planName}</h3>
-                <Badge variant={statusColor as any} className="text-xs">
+                <Badge variant={statusColor as any} className="text-xs whitespace-nowrap">
                   {statusLabel}
                 </Badge>
               </div>
@@ -108,7 +108,7 @@ export default function TreatmentPlanProgressCard({
               Mã: {plan.planCode}
             </CardDescription>
           </div>
-          <Badge variant={statusColor as any} className="shrink-0">
+          <Badge variant={statusColor as any} className="shrink-0 whitespace-nowrap">
             {statusLabel}
           </Badge>
         </div>
@@ -182,9 +182,9 @@ export default function TreatmentPlanProgressCard({
 
         {/* Actions */}
         {showActions && (
-          <Button 
-            variant="outline" 
-            className="w-full" 
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={handleViewDetail}
           >
             Xem chi tiết

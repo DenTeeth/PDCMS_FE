@@ -27,7 +27,7 @@ export default function ApproveRejectSection({
   onPlanUpdated,
 }: ApproveRejectSectionProps) {
   const { user } = useAuth();
-  
+
   // Debug: Log plan data to check submitNotes
   if (plan.approvalStatus === 'PENDING_REVIEW' || plan.approvalStatus === 'PENDING_APPROVAL') {
     console.log('ApproveRejectSection - Plan data:', {
@@ -183,7 +183,7 @@ export default function ApproveRejectSection({
     // Confirm rejection
     const confirmed = window.confirm(
       'Bạn có chắc muốn từ chối lộ trình này?\n' +
-        'Lộ trình sẽ chuyển sang trạng thái "Đã từ chối" và không thể kích hoạt.'
+      'Lộ trình sẽ chuyển sang trạng thái "Đã từ chối" và không thể kích hoạt.'
     );
 
     if (!confirmed) return;
@@ -257,7 +257,7 @@ export default function ApproveRejectSection({
           {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && (
             <div className="space-y-2">
               <p className="text-yellow-700 font-medium">
-                ⚠️ Lộ trình đang chờ được duyệt. Quản lý cần duyệt trước khi có thể kích hoạt.
+                Lộ trình đang chờ được duyệt. Quản lý cần duyệt trước khi có thể kích hoạt.
               </p>
               {/* ✅ Display submit notes from doctor */}
               {(() => {
@@ -265,13 +265,13 @@ export default function ApproveRejectSection({
                 // Handle both TreatmentPlanDetailResponse and TreatmentPlanDetailResponseWithApproval
                 const planWithNotes = plan as TreatmentPlanDetailResponse;
                 const submitNotes = planWithNotes.submitNotes;
-                
+
                 // Debug: Log to check if submitNotes exists
                 if (normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW) {
                   console.log('ApproveRejectSection - Plan submitNotes:', submitNotes);
                   console.log('ApproveRejectSection - Plan object keys:', Object.keys(plan));
                 }
-                
+
                 if (submitNotes && typeof submitNotes === 'string' && submitNotes.trim()) {
                   return (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -293,64 +293,64 @@ export default function ApproveRejectSection({
           )}
           {normalizedApprovalStatus === ApprovalStatus.APPROVED && (
             <p className="text-green-700 font-medium">
-              ✅ Lộ trình đã được duyệt và có thể kích hoạt.
+              Lộ trình đã được duyệt và có thể kích hoạt.
             </p>
           )}
           {/* Show rejection/return notice for both REJECTED and DRAFT with notes */}
-          {(normalizedApprovalStatus === ApprovalStatus.REJECTED || 
-            (normalizedApprovalStatus === ApprovalStatus.DRAFT && 
-             'approvalMetadata' in plan && plan.approvalMetadata && plan.approvalMetadata.notes)) && (
-            <div className="space-y-2">
-              <p className="text-red-700 font-medium">
-                {normalizedApprovalStatus === ApprovalStatus.REJECTED
-                  ? '❌ Lộ trình đã bị từ chối và không thể kích hoạt.'
-                  : '⚠️ Lộ trình đã bị trả về bản nháp. Vui lòng xem ghi chú và chỉnh sửa lại.'}
-              </p>
-              {/* Show rejection/return reason prominently */}
-              {'approvalMetadata' in plan && plan.approvalMetadata && plan.approvalMetadata.notes && (
-                <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-sm">
-                  <div className="flex items-start gap-3 text-red-700">
-                    <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-red-600" />
-                    <div className="flex-1 space-y-2">
-                      <p className="font-semibold text-base text-red-900">
-                        Phản hồi từ người duyệt:
-                      </p>
-                      <p className="text-red-800 text-sm leading-relaxed whitespace-pre-wrap">
-                        {plan.approvalMetadata.notes}
-                      </p>
-                      {plan.approvalMetadata.approvedBy && (
-                        <p className="text-xs text-red-600 mt-2 pt-2 border-t border-red-200">
-                          <span className="font-medium">Người xử lý:</span>{' '}
-                          {typeof plan.approvalMetadata.approvedBy === 'string'
-                            ? plan.approvalMetadata.approvedBy
-                            : plan.approvalMetadata.approvedBy.fullName ||
-                              plan.approvalMetadata.approvedBy.employeeCode}
-                          {plan.approvalMetadata.approvedAt && (
-                            <span className="ml-2">
-                              • {new Date(plan.approvalMetadata.approvedAt).toLocaleString('vi-VN')}
-                            </span>
-                          )}
+          {(normalizedApprovalStatus === ApprovalStatus.REJECTED ||
+            (normalizedApprovalStatus === ApprovalStatus.DRAFT &&
+              'approvalMetadata' in plan && plan.approvalMetadata && plan.approvalMetadata.notes)) && (
+              <div className="space-y-2">
+                <p className="text-red-700 font-medium">
+                  {normalizedApprovalStatus === ApprovalStatus.REJECTED
+                    ? 'Lộ trình đã bị từ chối và không thể kích hoạt.'
+                    : 'Lộ trình đã bị trả về bản nháp. Vui lòng xem ghi chú và chỉnh sửa lại.'}
+                </p>
+                {/* Show rejection/return reason prominently */}
+                {'approvalMetadata' in plan && plan.approvalMetadata && plan.approvalMetadata.notes && (
+                  <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-sm">
+                    <div className="flex items-start gap-3 text-red-700">
+                      <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-red-600" />
+                      <div className="flex-1 space-y-2">
+                        <p className="font-semibold text-base text-red-900">
+                          Phản hồi từ người duyệt:
                         </p>
-                      )}
+                        <p className="text-red-800 text-sm leading-relaxed whitespace-pre-wrap">
+                          {plan.approvalMetadata.notes}
+                        </p>
+                        {plan.approvalMetadata.approvedBy && (
+                          <p className="text-xs text-red-600 mt-2 pt-2 border-t border-red-200">
+                            <span className="font-medium">Người xử lý:</span>{' '}
+                            {typeof plan.approvalMetadata.approvedBy === 'string'
+                              ? plan.approvalMetadata.approvedBy
+                              : plan.approvalMetadata.approvedBy.fullName ||
+                              plan.approvalMetadata.approvedBy.employeeCode}
+                            {plan.approvalMetadata.approvedAt && (
+                              <span className="ml-2">
+                                • {new Date(plan.approvalMetadata.approvedAt).toLocaleString('vi-VN')}
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              {(!('approvalMetadata' in plan) || !plan.approvalMetadata || !plan.approvalMetadata.notes) && (
-                <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg text-sm text-yellow-800 shadow-sm">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-yellow-600" />
-                    <p className="font-medium">
-                      ⚠️ Không có thông tin lý do từ chối. Vui lòng liên hệ quản lý để biết thêm chi tiết.
-                    </p>
+                )}
+                {(!('approvalMetadata' in plan) || !plan.approvalMetadata || !plan.approvalMetadata.notes) && (
+                  <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg text-sm text-yellow-800 shadow-sm">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-yellow-600" />
+                      <p className="font-medium">
+                        Không có thông tin lý do từ chối. Vui lòng liên hệ quản lý để biết thêm chi tiết.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
           {normalizedApprovalStatus === ApprovalStatus.DRAFT && (
             <p className="text-gray-700 font-medium">
-              📝 Lộ trình đang ở trạng thái bản nháp.
+              Lộ trình đang ở trạng thái bản nháp.
             </p>
           )}
         </div>
