@@ -184,7 +184,6 @@ export default function AppointmentList({
                                                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Patient</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Dentist</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Service</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                                                 <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
                                             </tr>
@@ -215,9 +214,6 @@ export default function AppointmentList({
                                                     </td>
                                                     <td className="py-3 px-4">
                                                         <div className="font-medium">{appointment.dentistName}</div>
-                                                    </td>
-                                                    <td className="py-3 px-4">
-                                                        <div className="font-medium">{appointment.serviceName}</div>
                                                     </td>
                                                     <td className="py-3 px-4">{getStatusBadge(appointment.status)}</td>
                                                     <td className="py-3 px-4">
