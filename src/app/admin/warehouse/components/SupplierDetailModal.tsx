@@ -36,6 +36,11 @@ import {
   faBarcode,
   faBox,
   faSearch,
+  faShoppingCart,
+  faBan,
+  faExclamationTriangle,
+  faStar,
+  faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SupplierDetailModalProps {
@@ -72,10 +77,24 @@ export default function SupplierDetailModal({
     );
   }) || [];
 
-  // Debug: Log each item detail
-  if (supplierDetail?.suppliedItems?.length) {
-    console.log('First supplied item:', supplierDetail.suppliedItems[0]);
-  }
+  // Helper: Check if supplier is inactive (> 6 months)
+  const isSupplierInactive = (): boolean => {
+    const lastOrderDate = (supplierDetail as any)?.lastOrderDate;
+    if (!lastOrderDate) return true; // Never ordered = inactive
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const lastOrder = new Date(lastOrderDate);
+    return lastOrder < sixMonthsAgo;
+  };
+
+  // Get business metrics from supplier detail
+  const businessMetrics = {
+    totalOrders: (supplierDetail as any)?.totalOrders || 0,
+    lastOrderDate: (supplierDetail as any)?.lastOrderDate,
+    tierLevel: (supplierDetail as any)?.tierLevel,
+    ratingScore: (supplierDetail as any)?.ratingScore,
+    isBlacklisted: (supplierDetail as any)?.isBlacklisted || false,
+  };
 
   const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
     return (
@@ -129,6 +148,37 @@ export default function SupplierDetailModal({
               <div className="text-center py-8 text-red-500">Không tìm thấy thông tin nhà cung cấp</div>
             ) : (
               <>
+                {/* Blacklist Warning Banner */}
+                {businessMetrics.isBlacklisted && (
+                  <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <FontAwesomeIcon icon={faBan} className="w-5 h-5 text-red-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-bold text-red-800 mb-1">⛔ NHÀ CUNG CẤP TRONG DANH SÁCH ĐEN</h3>
+                        <p className="text-sm text-red-700">
+                          Nhà cung cấp này đã được đánh dấu là có vấn đề (chất lượng, fraud, giao hàng trễ, hóa đơn giả).
+                          <strong className="block mt-1">KHÔNG NÊN ĐẶT HÀNG TỪ NHÀ CUNG CẤP NÀY!</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inactive Warning */}
+                {isSupplierInactive() && !businessMetrics.isBlacklisted && (
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-yellow-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-yellow-800 mb-1">⚠️ Nhà cung cấp không hoạt động</h3>
+                        <p className="text-sm text-yellow-700">
+                          Không có đơn hàng trong hơn 6 tháng. Cần kiểm tra lại tình trạng nhà cung cấp.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Basic Information */}
                 <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
@@ -154,6 +204,57 @@ export default function SupplierDetailModal({
                   </div>
                 </div>
 
+                {/* Business Metrics */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
+                    Business Metrics
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <FontAwesomeIcon icon={faShoppingCart} className="w-4 h-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Tổng số đơn hàng</p>
+                        <p className="font-semibold text-lg">{businessMetrics.totalOrders}</p>
+                        <p className="text-xs text-muted-foreground">Số lần đã nhập hàng từ NCC này</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Đơn hàng gần nhất</p>
+                        <p className="font-semibold">
+                          {businessMetrics.lastOrderDate ? formatDate(businessMetrics.lastOrderDate) : 'Chưa có'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Ngày nhập hàng gần nhất</p>
+                      </div>
+                    </div>
+
+                    {businessMetrics.tierLevel && (
+                      <div className="flex items-start gap-3">
+                        <FontAwesomeIcon icon={faLayerGroup} className="w-4 h-4 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Tier Level</p>
+                          <p className="font-semibold">{businessMetrics.tierLevel}</p>
+                          <p className="text-xs text-muted-foreground">Phân loại ưu tiên</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {businessMetrics.ratingScore !== undefined && businessMetrics.ratingScore !== null && (
+                      <div className="flex items-start gap-3">
+                        <FontAwesomeIcon icon={faStar} className="w-4 h-4 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Rating Score</p>
+                          <p className="font-semibold">{businessMetrics.ratingScore.toFixed(1)} / 5.0</p>
+                          <p className="text-xs text-muted-foreground">Điểm đánh giá chất lượng</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Contact Information */}
                 <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
@@ -161,6 +262,16 @@ export default function SupplierDetailModal({
                   </h3>
                   
                   <div className="grid grid-cols-1 gap-3">
+                    {(supplierDetail as any)?.contactPerson && (
+                      <div className="flex items-start gap-3">
+                        <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Người liên hệ</p>
+                          <p className="font-medium">{(supplierDetail as any).contactPerson}</p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-muted-foreground mt-1" />
                       <div>

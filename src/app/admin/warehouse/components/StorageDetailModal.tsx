@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileInvoice,
+  faPaperPlane,
   faInfoCircle,
   faBoxes,
   faCalendarAlt,
@@ -40,7 +41,6 @@ import {
   faCheckCircle,
   faTimesCircle,
   faBan,
-  faCreditCard,
   faHospital,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -64,15 +64,29 @@ export default function StorageDetailModal({
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const hasViewCost = usePermission('VIEW_COST');
+  // RBAC: Check VIEW_WAREHOUSE_COST permission (BE uses VIEW_WAREHOUSE_COST, not VIEW_COST)
+  const hasViewCost = usePermission('VIEW_WAREHOUSE_COST');
   // BE checks: hasRole('ADMIN') or hasAuthority('APPROVE_TRANSACTION')
   const isAdmin = useRole('ROLE_ADMIN');
   const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');
   const hasUpdatePermission = usePermission('UPDATE_WAREHOUSE') || usePermission('CANCEL_WAREHOUSE');
 
-  // Debug: Log permission info
+  // Fetch transaction data first (must be declared before useEffect that uses it)
+  const { data: transaction, isLoading, isError, error } = useQuery({
+    queryKey: ['storageTransaction', transactionId],
+    queryFn: () => storageService.getById(transactionId!),
+    enabled: isOpen && !!transactionId,
+    retry: 1, // Only retry once
+    retryDelay: 1000,
+  });
+
+  // Debug: Log permission info (moved after transaction declaration)
   useEffect(() => {
     if (transaction && isOpen) {
+      const canShowApproveButton = transaction.status === 'PENDING_APPROVAL' && hasApprovePermission;
+      const canShowSubmitButton = transaction.status === 'DRAFT' && hasUpdatePermission;
+      const canShowCancelButton = (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission;
+      
       console.log('🔍 [StorageDetailModal] Permission Debug:', {
         transactionId: transaction.transactionId,
         transactionCode: transaction.transactionCode,
@@ -83,23 +97,24 @@ export default function StorageDetailModal({
         hasViewCost,
         userRoles: user?.roles || [],
         userPermissions: user?.permissions || [],
-        canShowApproveButton: transaction.status === 'PENDING_APPROVAL' && hasApprovePermission,
-        canShowCancelButton: (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission,
+        canShowApproveButton,
+        canShowSubmitButton,
+        canShowCancelButton,
+        reasonNoApproveButton: !canShowApproveButton 
+          ? (transaction.status !== 'PENDING_APPROVAL' 
+              ? `Status is ${transaction.status}, not PENDING_APPROVAL` 
+              : `hasApprovePermission is ${hasApprovePermission}`)
+          : 'OK',
       });
     }
   }, [transaction, isOpen, isAdmin, hasApprovePermission, hasUpdatePermission, hasViewCost, user]);
 
-  const { data: transaction, isLoading, isError, error } = useQuery({
-    queryKey: ['storageTransaction', transactionId],
-    queryFn: () => storageService.getById(transactionId!),
-    enabled: isOpen && !!transactionId,
-    retry: 1, // Only retry once
-    retryDelay: 1000,
-  });
-
   // Approve mutation
   const approveMutation = useMutation({
-    mutationFn: (notes?: string) => storageService.approve(transactionId!, notes),
+    mutationFn: (notes?: string) => {
+      if (!transactionId) throw new Error('Transaction ID is required');
+      return storageService.approve(transactionId, notes);
+    },
     onSuccess: () => {
       toast.success('Đã duyệt phiếu thành công');
       queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
@@ -139,7 +154,9 @@ export default function StorageDetailModal({
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Lỗi khi hủy phiếu');
+      const errorMessage = error.message || error.response?.data?.message || 'Lỗi khi hủy phiếu';
+      console.error('Cancel transaction error:', error);
+      toast.error(errorMessage);
     },
   });
 
@@ -279,7 +296,7 @@ export default function StorageDetailModal({
   };
 
   const handleApprove = () => {
-    approveMutation.mutate();
+    approveMutation.mutate(undefined); // No notes for approval
   };
 
   const handleReject = () => {
@@ -451,71 +468,6 @@ export default function StorageDetailModal({
                   </div>
                 </div>
 
-                {/* Payment Info (for IMPORT) */}
-                {transaction.transactionType === 'IMPORT' && (
-                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2 flex items-center gap-2">
-                      <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
-                      Thông tin thanh toán
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Trạng thái thanh toán</p>
-                        {(() => {
-                          // Default to UNPAID for DRAFT/IMPORT transactions if paymentStatus is null
-                          const paymentStatus = transaction.paymentStatus || (transaction.status === 'DRAFT' ? 'UNPAID' : null);
-                          if (paymentStatus) {
-                            return (
-                              <Badge className={
-                                paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                                paymentStatus === 'PARTIAL' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }>
-                                {paymentStatus === 'PAID' ? 'Đã thanh toán' :
-                                 paymentStatus === 'PARTIAL' ? 'Thanh toán một phần' :
-                                 'Chưa thanh toán'}
-                              </Badge>
-                            );
-                          }
-                          return <p className="text-sm text-muted-foreground">Chưa có</p>;
-                        })()}
-                      </div>
-                      {hasViewCost ? (
-                        <>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Đã thanh toán</p>
-                            {transaction.paidAmount !== undefined && transaction.paidAmount !== null ? (
-                              <p className="font-semibold text-green-600">{formatCurrency(transaction.paidAmount)}</p>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">Chưa có</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Còn nợ</p>
-                            {transaction.remainingDebt !== undefined && transaction.remainingDebt !== null ? (
-                              <p className="font-semibold text-red-600">{formatCurrency(transaction.remainingDebt)}</p>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">Chưa có</p>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="col-span-2">
-                          <p className="text-xs text-muted-foreground italic">
-                            Thông tin tài chính chỉ hiển thị cho người có quyền VIEW_COST
-                          </p>
-                        </div>
-                      )}
-                      {transaction.dueDate && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Hạn thanh toán</p>
-                          <p className="font-medium">{formatDate(transaction.dueDate)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Appointment Info (for EXPORT) */}
                 {transaction.transactionType === 'EXPORT' && transaction.relatedAppointmentId && (
                   <div className="bg-muted/30 rounded-lg p-4 space-y-3">
@@ -662,6 +614,24 @@ export default function StorageDetailModal({
         <div className="flex justify-between items-center pt-4 border-t mt-6">
           {/* Approval Workflow Buttons */}
           <div className="flex gap-2">
+            {/* Submit button: DISABLED - BE không có endpoint submit riêng */}
+            {/* 
+              Note: BE không có endpoint để submit transaction từ DRAFT sang PENDING_APPROVAL.
+              Transactions thường được tạo với status PENDING_APPROVAL ngay từ đầu, hoặc cần BE implement endpoint submit.
+              Tạm thời ẩn button này để tránh lỗi 500.
+            */}
+            {false && transaction?.status === 'DRAFT' && hasUpdatePermission && (
+              <Button
+                disabled
+                className="bg-gray-400 text-white cursor-not-allowed"
+                title="Chức năng chưa khả dụng - BE chưa có endpoint submit"
+              >
+                <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4 mr-2" />
+                Gửi duyệt (Chưa khả dụng)
+              </Button>
+            )}
+            
+            {/* Approve/Reject buttons: Show when status = PENDING_APPROVAL */}
             {transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission && (
               <>
                 <Button
@@ -682,6 +652,8 @@ export default function StorageDetailModal({
                 </Button>
               </>
             )}
+            
+            {/* Cancel button: Show when status = DRAFT or PENDING_APPROVAL */}
             {(transaction?.status === 'DRAFT' || transaction?.status === 'PENDING_APPROVAL') && hasUpdatePermission && (
               <Button
                 variant="outline"
@@ -691,6 +663,18 @@ export default function StorageDetailModal({
                 <FontAwesomeIcon icon={faBan} className="w-4 h-4 mr-2" />
                 {cancelMutation.isPending ? 'Đang hủy...' : 'Hủy phiếu'}
               </Button>
+            )}
+            
+            {/* Debug info: Show why buttons are not visible */}
+            {process.env.NODE_ENV === 'development' && transaction && (
+              <div className="text-xs text-muted-foreground ml-4 flex items-center">
+                {transaction.status === 'DRAFT' && !hasUpdatePermission && (
+                  <span className="text-orange-600">⚠️ Cần quyền UPDATE_WAREHOUSE để gửi duyệt</span>
+                )}
+                {transaction.status === 'PENDING_APPROVAL' && !hasApprovePermission && (
+                  <span className="text-orange-600">⚠️ Cần quyền APPROVE_TRANSACTION hoặc ROLE_ADMIN để duyệt</span>
+                )}
+              </div>
             )}
           </div>
           <Button onClick={onClose}>Đóng</Button>
