@@ -276,7 +276,7 @@ export default function RegistrationRequestsPage() {
           </Badge>
         );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="whitespace-nowrap">{status}</Badge>;
     }
   };
 
