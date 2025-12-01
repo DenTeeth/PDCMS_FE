@@ -137,11 +137,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${
-          disabled
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
             ? 'bg-muted cursor-not-allowed opacity-50'
             : 'bg-background hover:border-primary'
-        }`}
+          }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -159,11 +158,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {hours.map((h) => (
                   <div
                     key={h}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      h === hour
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${h === hour
                         ? 'bg-primary text-primary-foreground font-medium'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     onClick={() => handleHourChange(h)}
                   >
                     {h}
@@ -181,11 +179,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {minutes.map((m) => (
                   <div
                     key={m}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      m === minute
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${m === minute
                         ? 'bg-primary text-primary-foreground font-medium'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     onClick={() => handleMinuteChange(m)}
                   >
                     {m}
@@ -217,9 +214,6 @@ export default function AdminAppointmentDetailPage() {
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | null>(null);
   const [statusUpdateReason, setStatusUpdateReason] = useState<AppointmentReasonCode | ''>('');
   const [statusUpdateNotes, setStatusUpdateNotes] = useState<string>('');
-<<<<<<< HEAD
-  const [updating, setUpdating] = useState(false);
-=======
   const [delayNewStartTime, setDelayNewStartTime] = useState<string>('');
   const [delayDate, setDelayDate] = useState<string>('');
   const [delayTime, setDelayTime] = useState<string>(''); // Format: "HH:mm"
@@ -227,14 +221,13 @@ export default function AdminAppointmentDetailPage() {
   const [delayNotes, setDelayNotes] = useState<string>('');
   const [updating, setUpdating] = useState(false);
   const [delaying, setDelaying] = useState(false);
-  
+
   // Treatment Plan state (lazy loading)
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
   const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
   const [treatmentPlanError, setTreatmentPlanError] = useState<string | null>(null);
   const [hasTriedLoadingTreatmentPlan, setHasTriedLoadingTreatmentPlan] = useState(false); // Flag to prevent infinite API calls
   const [activeTab, setActiveTab] = useState<string>('details');
->>>>>>> origin/FE-501-Dev
 
   // Permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
@@ -446,7 +439,7 @@ export default function AdminAppointmentDetailPage() {
       // FALLBACK: If linkedTreatmentPlanCode is not available, use old logic (loop through plans)
       // Admin always has VIEW_TREATMENT_PLAN_ALL
       let plans: TreatmentPlanSummaryDTO[] = [];
-      
+
       try {
         plans = await TreatmentPlanService.getAllTreatmentPlansForPatient(
           appointment.patient.patientCode
@@ -516,9 +509,9 @@ export default function AdminAppointmentDetailPage() {
     // 4. Not currently loading
     // 5. Haven't tried loading before
     if (
-      activeTab === 'treatment-plan' && 
-      appointment && 
-      !treatmentPlan && 
+      activeTab === 'treatment-plan' &&
+      appointment &&
+      !treatmentPlan &&
       !loadingTreatmentPlan &&
       !hasTriedLoadingTreatmentPlan
     ) {
@@ -537,7 +530,7 @@ export default function AdminAppointmentDetailPage() {
           color: 'white',
           padding: '0.5rem 1rem',
         }}
-        className="text-sm font-medium"
+        className="text-sm font-medium whitespace-nowrap"
       >
         {statusInfo.text}
       </Badge>
@@ -615,7 +608,7 @@ export default function AdminAppointmentDetailPage() {
 
       // Update appointment with new data
 =======
-      
+
       // ✅ FIX: Verify response has updated status
       if (!updated || !updated.status) {
         console.error('❌ Invalid response from updateAppointmentStatus:', updated);
@@ -624,7 +617,7 @@ export default function AdminAppointmentDetailPage() {
         });
         return;
       }
-      
+
       // ✅ Verify status matches what we requested
       if (updated.status !== selectedStatus) {
         console.warn('⚠️ Status mismatch:', {
@@ -636,12 +629,12 @@ export default function AdminAppointmentDetailPage() {
           duration: 5000,
         });
       }
-      
+
       // Check if appointment might be linked to treatment plan items
       // (BE auto-updates plan items when appointment status changes)
       const isPlanRelated = updated.services && updated.services.length > 0;
       const statusChangesPlanItems = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(selectedStatus);
-      
+
       if (isPlanRelated && statusChangesPlanItems) {
         toast.success('Status updated successfully', {
           description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}. Linked treatment plan items have been automatically updated.`,
@@ -652,7 +645,7 @@ export default function AdminAppointmentDetailPage() {
           description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
         });
       }
-      
+
       // ✅ FIX: Update appointment with response data (BE now returns DTO)
 >>>>>>> origin/FE-501-Dev
       setAppointment(updated);
@@ -684,14 +677,8 @@ export default function AdminAppointmentDetailPage() {
 
     // Validate: New start time must be after original
     const originalStart = new Date(appointment.appointmentStartTime);
-<<<<<<< HEAD
     const newStart = new Date(delayNewStartTime);
 
-=======
-    const [hours, minutes] = delayTime.split(':');
-    const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);
-    
->>>>>>> origin/FE-501-Dev
     if (newStart <= originalStart) {
       toast.error('Invalid time', {
         description: 'New start time must be after the original start time',
@@ -1060,8 +1047,8 @@ export default function AdminAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
                   <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingTreatmentPlan(false);
                       setTreatmentPlanError(null);
@@ -1248,21 +1235,8 @@ export default function AdminAppointmentDetailPage() {
         </Dialog>
 
         {/* Delay Appointment Modal */}
-<<<<<<< HEAD
-        <DelayAppointmentModal
+        <Dialog
           open={showDelayModal}
-          appointment={appointment}
-          onClose={() => setShowDelayModal(false)}
-          onSuccess={() => {
-            // Reload appointment to get updated data
-            if (appointmentCode) {
-              loadAppointmentDetails();
-            }
-          }}
-        />
-=======
-        <Dialog 
-          open={showDelayModal} 
           onOpenChange={(open) => {
             setShowDelayModal(open);
             if (!open) {
@@ -1356,7 +1330,7 @@ export default function AdminAppointmentDetailPage() {
               <Button
                 onClick={handleDelay}
                 disabled={
-                  delaying || 
+                  delaying ||
                   !delayDate ||
                   !delayTime ||
                   (appointment && delayDate && delayTime ? (() => {
@@ -1381,7 +1355,6 @@ export default function AdminAppointmentDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
->>>>>>> origin/FE-501-Dev
 
         {/* Reschedule Appointment Modal */}
         <RescheduleAppointmentModal

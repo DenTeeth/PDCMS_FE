@@ -29,7 +29,7 @@ export default function Providers({
       <NextIntlClientProvider locale={locale} messages={messages}>
         <AuthProvider>
           {children}
-          <Toaster />
+          <Toaster icons={false} />
         </AuthProvider>
       </NextIntlClientProvider>
     </QueryClientProvider>

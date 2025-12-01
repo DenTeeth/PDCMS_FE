@@ -142,8 +142,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
     <div className="relative" ref={dropdownRef}>
       <div
         className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
-            ? 'bg-muted cursor-not-allowed opacity-50'
-            : 'bg-background hover:border-primary'
+          ? 'bg-muted cursor-not-allowed opacity-50'
+          : 'bg-background hover:border-primary'
           }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -163,8 +163,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <div
                     key={h}
                     className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${h === hour
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
                       }`}
                     onClick={() => handleHourChange(h)}
                   >
@@ -184,8 +184,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <div
                     key={m}
                     className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${m === minute
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
                       }`}
                     onClick={() => handleMinuteChange(m)}
                   >
@@ -247,7 +247,7 @@ export default function CreateAppointmentModal({
   initialPlanItemIds,
 }: CreateAppointmentModalProps) {
   const { user } = useAuth();
-  
+
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
@@ -301,10 +301,10 @@ export default function CreateAppointmentModal({
 
   // Step 3: Selected specialization filter
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
-  
+
   // Current user's employee data (if employee)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
-  
+
   // Get current user's specializations (if employee)
   const currentUserSpecializations = useMemo(() => {
     if (!currentEmployee || !currentEmployee.specializations) return [];
@@ -313,7 +313,7 @@ export default function CreateAppointmentModal({
       return isNaN(specId) ? null : specId;
     }).filter((id: number | null): id is number => id !== null);
   }, [currentEmployee]);
-  
+
   // Check if current user has any specializations
   const hasUserSpecializations = currentUserSpecializations.length > 0;
 
@@ -335,7 +335,7 @@ export default function CreateAppointmentModal({
         // Load patient data
         loadPatientByCode(initialPatientCode);
       }
-      
+
       // Pre-fill service codes
       if (initialServiceCodes && initialServiceCodes.length > 0) {
         setServiceCodes(initialServiceCodes);
@@ -344,7 +344,7 @@ export default function CreateAppointmentModal({
           setCurrentStep(2);
         }
       }
-      
+
       // Pre-fill plan item IDs
       if (initialPlanItemIds && initialPlanItemIds.length > 0) {
         setPlanItemIds(initialPlanItemIds);
@@ -462,7 +462,7 @@ export default function CreateAppointmentModal({
       setSpecializations(specializationsData);
 
       // Load categories
-      const categoriesData = await ServiceCategoryService.getAllCategories();
+      const categoriesData = await ServiceCategoryService.getCategories();
       setCategories(categoriesData.filter(cat => cat.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
 
       // Load employees (all active employees - will filter by ROLE_DENTIST in Step 4)
@@ -473,7 +473,7 @@ export default function CreateAppointmentModal({
         isActive: true,
       });
       setEmployees(employeesResponse.content);
-      
+
       // Load current employee data if user is employee
       if (user && user.employeeId) {
         const employeeId = user.employeeId;
@@ -833,7 +833,7 @@ export default function CreateAppointmentModal({
     try {
       // Phase 5: Use serviceCodes if available, otherwise use planItemServiceCodes
       const codesToUse = serviceCodes.length > 0 ? serviceCodes : planItemServiceCodes;
-      
+
       const request: AvailableTimesRequest = {
         date: appointmentDate,
         employeeCode,
@@ -960,23 +960,23 @@ export default function CreateAppointmentModal({
   // Step 3: Get services grouped by specialization (matching service list page)
   const getServicesGroupedBySpecialization = useMemo(() => {
     const grouped = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
-    
+
     // Group by specialization
     services.forEach((service) => {
       const specId = service.specializationId || 'none';
       if (!grouped.has(specId)) {
         // ✅ Fix: Compare both string and number versions of specializationId
-        const specialization = specId !== 'none' 
-          ? specializations.find(s => 
-              String(s.specializationId) === String(specId) || 
-              s.specializationId === specId
-            ) 
+        const specialization = specId !== 'none'
+          ? specializations.find(s =>
+            String(s.specializationId) === String(specId) ||
+            s.specializationId === specId
+          )
           : undefined;
         grouped.set(specId, { specialization, services: [] });
       }
       grouped.get(specId)!.services.push(service);
     });
-    
+
     return grouped;
   }, [services, specializations]);
 
@@ -996,7 +996,7 @@ export default function CreateAppointmentModal({
   const getCompatibleDoctors = (): Employee[] => {
     // Use serviceCodes if available (either from direct selection or extracted from plan items)
     const codesToUse = serviceCodes.length > 0 ? serviceCodes : planItemServiceCodes;
-    
+
     if (codesToUse.length === 0) {
       // If booking from plan items but serviceCodes not loaded yet, show all doctors with specializations
       if (planItemIds.length > 0) {
@@ -1019,7 +1019,7 @@ export default function CreateAppointmentModal({
     // Get required specialization IDs from selected services
     const requiredSpecializationIds = new Set<number>();
     const servicesWithoutSpecialization: Service[] = [];
-    
+
     codesToUse.forEach((code) => {
       const service = services.find((s) => s.serviceCode === code);
       if (service) {
@@ -1055,7 +1055,7 @@ export default function CreateAppointmentModal({
         return false;
       }
 
-      const employeeSpecializationIds = employee.specializations.map((spec) => 
+      const employeeSpecializationIds = employee.specializations.map((spec) =>
         parseInt(String(spec.specializationId), 10)
       ).filter(id => !isNaN(id));
 
@@ -1064,7 +1064,7 @@ export default function CreateAppointmentModal({
         const hasMatchingSpecialization = Array.from(requiredSpecializationIds).some((reqId) =>
           employeeSpecializationIds.includes(reqId)
         );
-        
+
         // Log for debugging
         if (!hasMatchingSpecialization) {
           console.log(`❌ Employee ${employee.employeeCode} (${employee.fullName}) filtered out:`, {
@@ -1073,7 +1073,7 @@ export default function CreateAppointmentModal({
             roleName: employee.roleName
           });
         }
-        
+
         return hasMatchingSpecialization;
       }
 
@@ -1185,18 +1185,18 @@ export default function CreateAppointmentModal({
     // Phase 5: XOR validation - Need EITHER serviceCodes OR patientPlanItemIds
     const hasServices = serviceCodes.length > 0;
     const hasPlanItems = planItemIds.length > 0;
-    
+
     if (!patientCode || !employeeCode || !roomCode || !appointmentStartTime) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
-    
+
     // Validate: Must have either services or plan items (XOR)
     if (!hasServices && !hasPlanItems) {
       toast.error('Vui lòng chọn dịch vụ hoặc đặt lịch từ kế hoạch điều trị');
       return;
     }
-    
+
     if (hasServices && hasPlanItems) {
       // This shouldn't happen in normal flow, but handle it
       toast.error('Không thể cung cấp cả dịch vụ và mục kế hoạch. Vui lòng sử dụng một phương thức.');
@@ -1250,7 +1250,7 @@ export default function CreateAppointmentModal({
       // If booking from treatment plan (has planItemIds), BE will extract serviceCodes from items
       // So we should NOT send serviceCodes when planItemIds are provided
       let request: CreateAppointmentRequest;
-      
+
       if (planItemIds.length > 0) {
         // Booking from treatment plan items - BE extracts serviceCodes from items
         request = {
@@ -1359,10 +1359,10 @@ export default function CreateAppointmentModal({
                   <div className="flex flex-col items-center flex-1">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step === currentStep
-                          ? 'bg-primary text-primary-foreground scale-110'
-                          : step < currentStep
-                            ? 'bg-primary/20 text-primary'
-                            : 'bg-muted text-muted-foreground'
+                        ? 'bg-primary text-primary-foreground scale-110'
+                        : step < currentStep
+                          ? 'bg-primary/20 text-primary'
+                          : 'bg-muted text-muted-foreground'
                         }`}
                     >
                       {step < currentStep ? <CheckCircle className="h-5 w-5" /> : step}
@@ -1391,7 +1391,7 @@ export default function CreateAppointmentModal({
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="patientSearch">Search Patient</Label>
+                <Label htmlFor="patientSearch">Search Patient <span className="text-red-500">*</span></Label>
                 <div className="relative mt-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -1416,8 +1416,8 @@ export default function CreateAppointmentModal({
                         key={patient.patientId}
                         onClick={() => handleSelectPatient(patient)}
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${patientCode === patient.patientCode
-                            ? 'border-primary bg-primary/5'
-                            : 'hover:bg-muted'
+                          ? 'border-primary bg-primary/5'
+                          : 'hover:bg-muted'
                           }`}
                       >
                         <div className="font-medium">{patient.fullName}</div>
@@ -1555,14 +1555,14 @@ export default function CreateAppointmentModal({
                                   }}
                                   disabled={isPast || !isCurrentMonth}
                                   className={`p-2 rounded text-center transition-all ${!isCurrentMonth
-                                      ? 'bg-muted/20 opacity-30 cursor-not-allowed'
-                                      : isPast
-                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                                        : isSelected
-                                          ? 'bg-primary text-primary-foreground font-semibold scale-105'
-                                          : hasDoctors
-                                            ? 'bg-green-50 hover:bg-green-100 border border-green-200'
-                                            : 'bg-muted/50 hover:bg-muted border border-border'
+                                    ? 'bg-muted/20 opacity-30 cursor-not-allowed'
+                                    : isPast
+                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                      : isSelected
+                                        ? 'bg-primary text-primary-foreground font-semibold scale-105'
+                                        : hasDoctors
+                                          ? 'bg-green-50 hover:bg-green-100 border border-green-200'
+                                          : 'bg-muted/50 hover:bg-muted border border-border'
                                     } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
                                 >
                                   <div className="text-xs font-medium">{currentDate.getDate()}</div>
@@ -1798,7 +1798,7 @@ export default function CreateAppointmentModal({
                     </Select>
                   </div>
                 )}
-                
+
               </div>
 
               <div>
@@ -1823,7 +1823,7 @@ export default function CreateAppointmentModal({
                               return key === specId; // Only show services with matching specialization
                             }
                           }
-                          
+
                           return true;
                         })
                         .map(([key, group]) => (
@@ -1839,33 +1839,32 @@ export default function CreateAppointmentModal({
                             </div>
                             <div className="space-y-2 pl-4">
                               {group.services.map((service) => {
-                                  const isSelected = serviceCodes.includes(service.serviceCode);
-                                  return (
-                                    <div key={service.serviceId} className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`service-${service.serviceId}`}
-                                        checked={isSelected}
-                                        onCheckedChange={() => handleToggleService(service.serviceCode)}
-                                      />
-                                      <Label
-                                        htmlFor={`service-${service.serviceId}`}
-                                        className={`text-sm font-normal cursor-pointer flex-1 ${
-                                          isSelected ? 'font-semibold' : ''
+                                const isSelected = serviceCodes.includes(service.serviceCode);
+                                return (
+                                  <div key={service.serviceId} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`service-${service.serviceId}`}
+                                      checked={isSelected}
+                                      onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                    />
+                                    <Label
+                                      htmlFor={`service-${service.serviceId}`}
+                                      className={`text-sm font-normal cursor-pointer flex-1 ${isSelected ? 'font-semibold' : ''
                                         }`}
-                                      >
-                                        {service.serviceName} ({service.serviceCode})
-                                        <span className="text-muted-foreground ml-2">
-                                          • {service.defaultDurationMinutes} phút • {service.price?.toLocaleString()} VND
-                                        </span>
-                                        {service.specializationName && (
-                                          <Badge variant="outline" className="ml-2 text-xs">
-                                            {service.specializationName}
-                                          </Badge>
-                                        )}
-                                      </Label>
-                                    </div>
-                                  );
-                                })}
+                                    >
+                                      {service.serviceName} ({service.serviceCode})
+                                      <span className="text-muted-foreground ml-2">
+                                        • {service.defaultDurationMinutes} phút • {service.price?.toLocaleString()} VND
+                                      </span>
+                                      {service.specializationName && (
+                                        <Badge variant="outline" className="ml-2 text-xs">
+                                          {service.specializationName}
+                                        </Badge>
+                                      )}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         ))}
@@ -1915,10 +1914,10 @@ export default function CreateAppointmentModal({
                           const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
                           return shiftsForDate.length > 0;
                         });
-                        
+
                         // If no doctors with shifts, show all compatible doctors (user can still select to see available slots)
                         const doctorsToShow = doctorsWithShifts.length > 0 ? doctorsWithShifts : compatibleDoctors;
-                        
+
                         if (doctorsToShow.length === 0) {
                           return (
                             <SelectItem value="no-doctors" disabled>
@@ -1926,7 +1925,7 @@ export default function CreateAppointmentModal({
                             </SelectItem>
                           );
                         }
-                        
+
                         return doctorsToShow.map((employee) => {
                           const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
                           const hasShifts = shiftsForDate.length > 0;
@@ -2003,10 +2002,10 @@ export default function CreateAppointmentModal({
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
                                     className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                        : isSelected
-                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                      : isSelected
+                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                        : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
@@ -2047,10 +2046,10 @@ export default function CreateAppointmentModal({
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
                                     className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                        : isSelected
-                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                      : isSelected
+                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                        : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
@@ -2091,10 +2090,10 @@ export default function CreateAppointmentModal({
                                     onClick={() => handleSelectTimeSlot(slot)}
                                     disabled={!isAvailable}
                                     className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                        : isSelected
-                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                          : 'bg-background hover:bg-primary/10 border-border'
+                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                      : isSelected
+                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                        : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
                                     title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
                                   >
@@ -2433,7 +2432,7 @@ export default function CreateAppointmentModal({
       </DialogContent>
     </Dialog>
   );
-}function getStepTitle(step: Step): string {
+} function getStepTitle(step: Step): string {
   switch (step) {
     case 1:
       return 'Select Patient';

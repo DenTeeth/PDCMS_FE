@@ -8,16 +8,16 @@ export class ServiceService {
     // 2. Booking CRUD: /api/v1/booking/services (ServiceController) - has specializationId, full CRUD
     // Using Booking API for now because it has CREATE/UPDATE/DELETE endpoints
     private static readonly BASE_URL = 'booking/services';
-    
+
     // Get paginated services with filters
     // ✅ Updated to match Booking API params (ServiceController.java line 28-44)
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
         const params = new URLSearchParams();
-        
+
         // Add pagination
         params.append('page', String(filters.page || 0));
         params.append('size', String(filters.size || 10));
-        
+
         // Add sorting - Booking API uses 'sortBy' and 'sortDirection'
         params.append('sortBy', filters.sortBy || 'serviceName');
         params.append('sortDirection', filters.sortDirection || 'ASC');
@@ -26,17 +26,17 @@ export class ServiceService {
         if (filters.isActive !== undefined && filters.isActive !== '') {
             params.append('isActive', String(filters.isActive));
         }
-        
+
         // Booking API uses specializationId
         if (filters.specializationId !== undefined && filters.specializationId !== '') {
             params.append('specializationId', String(filters.specializationId));
         }
-        
+
         // ✅ NEW: Booking API now supports categoryId (V17 update 2025-01-26)
         if (filters.categoryId !== undefined && filters.categoryId !== '') {
             params.append('categoryId', String(filters.categoryId));
         }
-        
+
         // Booking API uses 'keyword' param
         if (filters.keyword) {
             params.append('keyword', filters.keyword);
@@ -167,11 +167,11 @@ export class ServiceService {
     // Automatically filters services based on logged-in doctor's specializations
     static async getServicesForCurrentDoctor(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
         const params = new URLSearchParams();
-        
+
         // Add pagination
         params.append('page', String(filters.page || 0));
         params.append('size', String(filters.size || 10));
-        
+
         // Add sorting
         if (filters.sortBy) {
             params.append('sortBy', filters.sortBy);
@@ -179,7 +179,7 @@ export class ServiceService {
         if (filters.sortDirection) {
             params.append('sortDirection', filters.sortDirection);
         }
-        
+
         // Add optional filters
         if (filters.isActive !== undefined && filters.isActive !== '') {
             params.append('isActive', filters.isActive);
@@ -187,7 +187,7 @@ export class ServiceService {
         if (filters.keyword) {
             params.append('keyword', filters.keyword);
         }
-        
+
         const url = `${this.BASE_URL}/my-specializations?${params.toString()}`;
         console.log('ServiceService.getServicesForCurrentDoctor - URL:', url);
         console.log('ServiceService.getServicesForCurrentDoctor - Params:', Object.fromEntries(params));
@@ -199,17 +199,17 @@ export class ServiceService {
         // BE returns response wrapped in { message, status, data: { content, pageable, ... } }
         // Extract the actual Page data from response.data.data
         const responseData = response.data;
-        
+
         // Check if response is wrapped in { data: ... } (from BE docs example)
         if (responseData.data && Array.isArray(responseData.data.content)) {
             return responseData.data as ServiceListResponse;
         }
-        
+
         // If response.data is already the Page format (direct Spring Page response)
         if (Array.isArray(responseData.content)) {
             return responseData as ServiceListResponse;
         }
-        
+
         // Fallback: return as-is (might need adjustment)
         console.warn('Unexpected response format from /my-specializations:', responseData);
         return responseData as ServiceListResponse;
