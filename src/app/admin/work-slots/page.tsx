@@ -337,36 +337,6 @@ export default function WorkSlotsManagementPage() {
   return (
     <ProtectedRoute requiredPermissions={[Permission.MANAGE_WORK_SLOTS]}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* Info Card - 303v2-p1 */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start space-x-3">
-              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-blue-800">Work Slots Management (303v2-p1)</h3>
-                  <Badge variant="outline" className="text-xs">Part-Time Flex</Badge>
-                </div>
-                <p className="text-sm text-blue-700 mb-3">
-                  Quản lý các suất làm việc part-time linh hoạt. Tạo suất mới (VD: Cần 2 người Ca Sáng T3),
-                  cập nhật quota hoặc đóng/mở suất. Nhân viên <strong>PART_TIME_FLEX</strong> sẽ thấy các suất còn trống và tự đăng ký.
-                </p>
-                <div className="flex items-center gap-4 text-xs text-blue-600">
-                  <Link
-                    href="/admin/registrations"
-                    className="flex items-center gap-1 hover:text-blue-800 hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Xem Part-Time Registrations
-                  </Link>
-                  <span className="text-blue-300">|</span>
-                  <span>Endpoint: <code className="bg-blue-100 px-1 rounded">/api/v1/work-slots</code></span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
