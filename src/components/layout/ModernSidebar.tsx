@@ -174,9 +174,10 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
       filterNavigationItems(
         navigationConfig.items,
         user.permissions,
-        user.groupedPermissions
+        user.groupedPermissions,
+        user.roles // Pass user roles to check ROLE_ADMIN
       ) : [];
-  }, [navigationConfig, user?.permissions, user?.groupedPermissions]);
+  }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles]);
 
   // Memoize toggle function
   const toggleItem = useCallback((itemName: string) => {
