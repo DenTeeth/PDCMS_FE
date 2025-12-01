@@ -57,6 +57,7 @@ export interface User {
   tokenExpiresAt?: number;
   refreshTokenExpiresAt?: number;
   employeeId?: string; // Add employeeId for employee-specific operations
+  employeeCode?: string; // Add employeeCode for employee-specific operations (extracted from token)
 }
 
 export interface UserProfile {

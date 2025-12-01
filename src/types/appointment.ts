@@ -92,14 +92,18 @@ export interface CreateAppointmentRequestLegacy {
 }
 
 // NEW CreateAppointmentRequest (P3.2 - matches docs)
+// Phase 5: XOR validation - Must provide EITHER serviceCodes OR patientPlanItemIds, not both
 export interface CreateAppointmentRequest {
     patientCode: string;        // Required: Patient code (not ID)
     employeeCode: string;        // Required: Doctor/employee code (not ID)
     roomCode: string;            // Required: Room code from available slots
-    serviceCodes: string[];      // Required: Array of service codes (not single ID)
+    // XOR: Either serviceCodes OR patientPlanItemIds (not both, not neither)
+    serviceCodes?: string[];      // Optional: Array of service codes (required if patientPlanItemIds not provided)
     appointmentStartTime: string; // Required: ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
     participantCodes?: string[];  // Optional: Assistant/participant codes
     notes?: string;             // Optional: Notes from receptionist
+    // Phase 5: Optional - Link to treatment plan items (required if serviceCodes not provided)
+    patientPlanItemIds?: number[];  // Array of plan item IDs - BE extracts serviceCodes from items
 }
 
 export interface UpdateAppointmentRequest {
@@ -366,6 +370,13 @@ export interface AppointmentDetailDTO {
         role: 'ASSISTANT' | 'SECONDARY_DOCTOR' | 'OBSERVER';
     }>;
     notes?: string | null;
+    /**
+     * Treatment plan code linked to this appointment (if any)
+     * Populated from appointment_plan_items bridge table
+     * Example: "PLAN-20251001-001"
+     * Null if appointment is not linked to any treatment plan
+     */
+    linkedTreatmentPlanCode?: string | null;
 }
 
 // P3.5 - Update Appointment Status Request

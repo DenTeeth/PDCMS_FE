@@ -27,6 +27,7 @@ export interface Patient {
   emergencyContactPhone?: string;
   isActive: boolean;
   hasAccount: boolean;
+  accountStatus?: 'ACTIVE' | 'PENDING_VERIFICATION' | 'LOCKED' | 'INACTIVE'; // Account verification status (BE: 2025-01-25)
   createdAt: string;
   updatedAt?: string;
 }
@@ -34,11 +35,15 @@ export interface Patient {
 /**
  * Request payload for creating a new patient WITH account
  * Patient can login to system
+ * 
+ * NOTE (2025-01-26): BE automatically creates account when email is provided
+ * - username: Optional (BE auto-generates from email if not provided)
+ * - password: NOT REQUIRED (BE generates temporary password, patient sets via email)
+ * - email: Required to create account (BE sends password setup email)
  */
 export interface CreatePatientWithAccountRequest {
-  username: string;
-  password: string;
-  email: string;
+  username?: string; // Optional - BE auto-generates from email if not provided
+  email: string; // Required - BE uses this to create account and send password setup email
   firstName: string;
   lastName: string;
   phone?: string;
@@ -77,6 +82,9 @@ export type CreatePatientRequest = CreatePatientWithAccountRequest | CreatePatie
 /**
  * Request payload for updating patient (PATCH - partial update)
  * All fields are optional for partial updates
+ * NOTE: Account fields (username, password) are NOT supported in update endpoint
+ * Account can only be created when creating patient, not updated separately
+ * Email is part of patient record, not account
  */
 export interface UpdatePatientRequest {
   firstName?: string;

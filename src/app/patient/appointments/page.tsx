@@ -21,7 +21,7 @@ import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { Calendar, List } from 'lucide-react';
 import { appointmentService } from '@/services/appointmentService';
-import {
+import { 
   AppointmentSummaryDTO,
   AppointmentFilterCriteria,
 } from '@/types/appointment';
