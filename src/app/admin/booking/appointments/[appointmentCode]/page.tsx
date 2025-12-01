@@ -138,8 +138,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
     <div className="relative" ref={dropdownRef}>
       <div
         className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
-            ? 'bg-muted cursor-not-allowed opacity-50'
-            : 'bg-background hover:border-primary'
+          ? 'bg-muted cursor-not-allowed opacity-50'
+          : 'bg-background hover:border-primary'
           }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -159,8 +159,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <div
                     key={h}
                     className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${h === hour
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
                       }`}
                     onClick={() => handleHourChange(h)}
                   >
@@ -180,8 +180,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <div
                     key={m}
                     className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${m === minute
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
                       }`}
                     onClick={() => handleMinuteChange(m)}
                   >
@@ -1134,7 +1134,7 @@ export default function AdminAppointmentDetailPage() {
             <div className="space-y-4">
               {/* Status Selection - Only show valid next statuses */}
               <div>
-                <Label>New Status</Label>
+                <Label>New Status <span className="text-red-500">*</span></Label>
                 <div className="mt-2 space-y-2">
                   {appointment && getValidNextStatuses(appointment.status).map((status) => {
                     const color = APPOINTMENT_STATUS_COLORS[status];
@@ -1164,7 +1164,7 @@ export default function AdminAppointmentDetailPage() {
               {/* Reason Code - Required for CANCELLED */}
               {selectedStatus === 'CANCELLED' && (
                 <div>
-                  <Label htmlFor="reasonCode">Reason Code <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="reasonCode">Lý do <span className="text-red-500">*</span></Label>
                   <Select
                     value={statusUpdateReason || ''}
                     onValueChange={(value) => setStatusUpdateReason(value as AppointmentReasonCode)}

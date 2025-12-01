@@ -155,12 +155,6 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requireAll: false, // Show if user has either permission
         },
         {
-          name: 'Employee Shifts',
-          href: '/admin/employee-shifts',
-          icon: faCalendarDays,
-          requiredPermissions: ['VIEW_SHIFTS_ALL'],
-        },
-        {
           name: 'Shift Calendar',
           href: '/admin/shift-calendar',
           icon: faCalendarAlt,
