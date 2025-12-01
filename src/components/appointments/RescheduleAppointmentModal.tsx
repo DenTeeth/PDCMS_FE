@@ -115,11 +115,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${
-          disabled
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
             ? 'bg-muted cursor-not-allowed opacity-50'
             : 'bg-background hover:border-primary'
-        }`}
+          }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -137,9 +136,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <button
                     key={h}
                     type="button"
-                    className={`px-3 py-1 text-sm rounded hover:bg-accent ${
-                      hour === h ? 'bg-primary text-primary-foreground' : ''
-                    }`}
+                    className={`px-3 py-1 text-sm rounded hover:bg-accent ${hour === h ? 'bg-primary text-primary-foreground' : ''
+                      }`}
                     onClick={() => handleHourChange(h)}
                   >
                     {h}
@@ -156,9 +154,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                   <button
                     key={m}
                     type="button"
-                    className={`px-3 py-1 text-sm rounded hover:bg-accent ${
-                      minute === m ? 'bg-primary text-primary-foreground' : ''
-                    }`}
+                    className={`px-3 py-1 text-sm rounded hover:bg-accent ${minute === m ? 'bg-primary text-primary-foreground' : ''
+                      }`}
                     onClick={() => handleMinuteChange(m)}
                   >
                     {m}
@@ -196,7 +193,7 @@ export default function RescheduleAppointmentModal({
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  
+
   // Shift states
   const [doctorShifts, setDoctorShifts] = useState<EmployeeShift[]>([]);
   const [participantShifts, setParticipantShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
@@ -215,7 +212,7 @@ export default function RescheduleAppointmentModal({
       // Pre-fill with current appointment values
       setNewEmployeeCode(appointment.doctor?.employeeCode || '');
       setNewRoomCode(appointment.room?.roomCode || '');
-      
+
       // Pre-fill date and time from current appointment
       const currentStartTime = new Date(appointment.appointmentStartTime);
       setNewDate(currentStartTime.toISOString().split('T')[0]);
@@ -225,13 +222,13 @@ export default function RescheduleAppointmentModal({
           .toString()
           .padStart(2, '0')}`
       );
-      
+
       // Pre-fill services (convert service codes to IDs - we'll need to fetch service IDs)
       // Pre-fill participants
       setNewParticipantCodes(
         appointment.participants?.map((p) => p.employeeCode) || []
       );
-      
+
       setReasonCode('');
       setCancelNotes('');
     } else {
@@ -244,7 +241,7 @@ export default function RescheduleAppointmentModal({
       setReasonCode('');
       setCancelNotes('');
     }
-    
+
     // Clear shifts
     setDoctorShifts([]);
     setParticipantShifts(new Map());
@@ -259,10 +256,10 @@ export default function RescheduleAppointmentModal({
         const targetDate = new Date(newDate);
         const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
         const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
-        
+
         const startDateStr = startOfMonth.toISOString().split('T')[0];
         const endDateStr = endOfMonth.toISOString().split('T')[0];
-        
+
         // Convert employeeId from string to number
         const employeeId = parseInt(selectedEmployee.employeeId, 10);
         if (!isNaN(employeeId)) {
@@ -286,10 +283,10 @@ export default function RescheduleAppointmentModal({
           const targetDate = new Date(newDate);
           const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
           const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
-          
+
           const startDateStr = startOfMonth.toISOString().split('T')[0];
           const endDateStr = endOfMonth.toISOString().split('T')[0];
-          
+
           // Convert employeeId from string to number
           const employeeId = parseInt(participant.employeeId, 10);
           if (!isNaN(employeeId)) {
@@ -493,10 +490,10 @@ export default function RescheduleAppointmentModal({
       onClose();
     } catch (error: any) {
       console.error('Failed to reschedule appointment:', error);
-      
+
       // Extract error message from backend response
       const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      
+
       toast.error('Failed to reschedule appointment', {
         description: errorMessage,
         duration: 5000,
@@ -557,7 +554,7 @@ export default function RescheduleAppointmentModal({
             {/* New Doctor */}
             <div>
               <Label htmlFor="newEmployeeCode">
-                New Doctor <span className="text-destructive">*</span>
+                New Doctor <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={newEmployeeCode}
@@ -583,7 +580,7 @@ export default function RescheduleAppointmentModal({
             {/* New Room */}
             <div>
               <Label htmlFor="newRoomCode">
-                New Room <span className="text-destructive">*</span>
+                New Room <span className="text-red-500">*</span>
               </Label>
               <Select value={newRoomCode} onValueChange={(value) => setNewRoomCode(value)}>
                 <SelectTrigger id="newRoomCode" className="mt-1">
@@ -608,7 +605,7 @@ export default function RescheduleAppointmentModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="newDate">
-                    New Date <span className="text-destructive">*</span>
+                    New Date <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="newDate"
@@ -621,12 +618,12 @@ export default function RescheduleAppointmentModal({
                 </div>
                 <div>
                   <Label htmlFor="newTime">
-                    New Time <span className="text-destructive">*</span>
+                    New Time <span className="text-red-500">*</span>
                   </Label>
                   <TimePicker value={newTime} onChange={setNewTime} />
                 </div>
               </div>
-              
+
               {/* Doctor Shift Availability */}
               {newEmployeeCode && newDate && (
                 <Card className="p-4 bg-primary/5 border-primary/20">
@@ -685,9 +682,8 @@ export default function RescheduleAppointmentModal({
                                 <Badge
                                   key={date}
                                   variant="outline"
-                                  className={`text-xs ${
-                                    date === newDate ? 'bg-primary text-primary-foreground' : ''
-                                  }`}
+                                  className={`text-xs ${date === newDate ? 'bg-primary text-primary-foreground' : ''
+                                    }`}
                                 >
                                   {format(new Date(date), 'MMM dd')}
                                 </Badge>
@@ -725,8 +721,8 @@ export default function RescheduleAppointmentModal({
                             {participant?.roleName.includes('DENTIST') || participant?.roleName.includes('DOCTOR')
                               ? 'Bác sĩ'
                               : participant?.roleName.includes('NURSE')
-                              ? 'Y tá/Trợ lí'
-                              : participant?.roleName || ''}
+                                ? 'Y tá/Trợ lí'
+                                : participant?.roleName || ''}
                             :
                           </div>
                           {shiftsForDate.length > 0 ? (
@@ -811,16 +807,16 @@ export default function RescheduleAppointmentModal({
                   const eligibleParticipants = employees.filter((e) => {
                     // Exclude selected doctor
                     if (e.employeeCode === newEmployeeCode) return false;
-                    
+
                     // Check if employee has STANDARD specialization (ID 8)
                     // specializationId is string in FE type, but BE uses integer 8
                     // Check both string and number formats for safety
                     const hasStandardSpecialization = e.specializations?.some(
-                      (spec) => 
-                        String(spec.specializationId) === '8' || 
+                      (spec) =>
+                        String(spec.specializationId) === '8' ||
                         spec.specializationId === '8'
                     );
-                    
+
                     return hasStandardSpecialization;
                   });
 
@@ -851,8 +847,8 @@ export default function RescheduleAppointmentModal({
                           {employee.roleName.includes('DENTIST') || employee.roleName.includes('DOCTOR')
                             ? 'Bác sĩ'
                             : employee.roleName.includes('NURSE')
-                            ? 'Y tá/Trợ lí'
-                            : employee.roleName}
+                              ? 'Y tá/Trợ lí'
+                              : employee.roleName}
                         </Badge>
                       </label>
                     </div>
@@ -864,7 +860,7 @@ export default function RescheduleAppointmentModal({
             {/* Reason Code (Required) */}
             <div>
               <Label htmlFor="reasonCode">
-                Reason Code <span className="text-destructive">*</span>
+                Reason Code <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={reasonCode}

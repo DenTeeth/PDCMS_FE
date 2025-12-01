@@ -119,11 +119,11 @@ export default function MyCalendarPage() {
           page: 0,
           size: 100, // Get enough to find current employee
         });
-        
+
         const foundEmployee = response.content?.find(
           (emp) => emp.employeeId === String(currentEmployeeId)
         );
-        
+
         if (foundEmployee) {
           setEmployeeInfo(foundEmployee);
         }
@@ -139,7 +139,7 @@ export default function MyCalendarPage() {
   // Load initial data when component mounts and employeeInfo is ready
   useEffect(() => {
     if (!currentEmployeeId || !canViewShifts && !canViewAppointments) return;
-    
+
     // Only load data if we have employeeInfo (for appointments) or can proceed without it (for shifts)
     if (canViewAppointments && !employeeInfo?.employeeCode) {
       // Wait for employeeInfo to load before loading appointments
@@ -175,65 +175,65 @@ export default function MyCalendarPage() {
       const [shiftsData, appointmentsData] = await Promise.all([
         canViewShifts
           ? EmployeeShiftService.getShifts({
-              start_date: format(start, 'yyyy-MM-dd'),
-              end_date: format(end, 'yyyy-MM-dd'),
-              employee_id: currentEmployeeId,
-            }).catch((error) => {
-              if (error.name === 'AbortError' || abortController.signal.aborted) {
-                return [];
-              }
-              console.error('Error loading shifts:', error);
+            start_date: format(start, 'yyyy-MM-dd'),
+            end_date: format(end, 'yyyy-MM-dd'),
+            employee_id: currentEmployeeId,
+          }).catch((error) => {
+            if (error.name === 'AbortError' || abortController.signal.aborted) {
               return [];
-            })
+            }
+            console.error('Error loading shifts:', error);
+            return [];
+          })
           : Promise.resolve([]),
         canViewAppointments
           ? (async () => {
-              try {
-                // First, try to get employeeCode from employee info
-                // If not available, we'll need to fetch employee list
-                // For now, we'll use a workaround: fetch appointments and filter by participant
-                // Or use employeeCode if we have it
-                
-                // If employeeInfo is available, use employeeCode
-                if (employeeInfo?.employeeCode) {
-                  const response = await appointmentService.getAppointmentsPage({
-                    dateFrom: format(start, 'yyyy-MM-dd'),
-                    dateTo: format(end, 'yyyy-MM-dd'),
-                    employeeCode: employeeInfo.employeeCode,
-                    page: 0,
-                    size: 1000,
-                  });
-                  return response.content || [];
-                } else {
-                  // Fallback: fetch all appointments and filter by employeeId
-                  // This is not ideal, but works if backend filters by participant
-                  const response = await appointmentService.getAppointmentsPage({
-                    dateFrom: format(start, 'yyyy-MM-dd'),
-                    dateTo: format(end, 'yyyy-MM-dd'),
-                    page: 0,
-                    size: 1000,
-                  });
-                  
-                  // Filter appointments where current employee is doctor or participant
-                  // This is a workaround - ideally backend should filter by employeeCode
-                  return (response.content || []).filter((apt) => {
-                    // Check if employee is doctor (primary employee)
-                    const isDoctor = apt.doctor?.employeeId === String(currentEmployeeId);
-                    // Check if employee is participant
-                    const isParticipant = apt.participants?.some(
-                      (p) => p.employeeId === String(currentEmployeeId)
-                    );
-                    return isDoctor || isParticipant;
-                  });
-                }
-              } catch (error: any) {
-                if (error.name === 'AbortError' || abortController.signal.aborted) {
-                  return [];
-                }
-                console.error('Error loading appointments:', error);
+            try {
+              // First, try to get employeeCode from employee info
+              // If not available, we'll need to fetch employee list
+              // For now, we'll use a workaround: fetch appointments and filter by participant
+              // Or use employeeCode if we have it
+
+              // If employeeInfo is available, use employeeCode
+              if (employeeInfo?.employeeCode) {
+                const response = await appointmentService.getAppointmentsPage({
+                  dateFrom: format(start, 'yyyy-MM-dd'),
+                  dateTo: format(end, 'yyyy-MM-dd'),
+                  employeeCode: employeeInfo.employeeCode,
+                  page: 0,
+                  size: 1000,
+                });
+                return response.content || [];
+              } else {
+                // Fallback: fetch all appointments and filter by employeeId
+                // This is not ideal, but works if backend filters by participant
+                const response = await appointmentService.getAppointmentsPage({
+                  dateFrom: format(start, 'yyyy-MM-dd'),
+                  dateTo: format(end, 'yyyy-MM-dd'),
+                  page: 0,
+                  size: 1000,
+                });
+
+                // Filter appointments where current employee is doctor or participant
+                // This is a workaround - ideally backend should filter by employeeCode
+                return (response.content || []).filter((apt) => {
+                  // Check if employee is doctor (primary employee)
+                  const isDoctor = apt.doctor?.employeeId === String(currentEmployeeId);
+                  // Check if employee is participant
+                  const isParticipant = apt.participants?.some(
+                    (p) => p.employeeId === String(currentEmployeeId)
+                  );
+                  return isDoctor || isParticipant;
+                });
+              }
+            } catch (error: any) {
+              if (error.name === 'AbortError' || abortController.signal.aborted) {
                 return [];
               }
-            })()
+              console.error('Error loading appointments:', error);
+              return [];
+            }
+          })()
           : Promise.resolve([]),
       ]);
 
@@ -274,9 +274,9 @@ export default function MyCalendarPage() {
       const workShift = shift.workShift;
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
       const end = `${shift.workDate}T${workShift?.endTime || '17:00:00'}`;
-      
+
       const statusColor = getShiftColor(shift.status);
-      
+
       return {
         id: `shift-${shift.employeeShiftId}`,
         title: workShift?.shiftName || 'Ca làm việc',
@@ -301,10 +301,10 @@ export default function MyCalendarPage() {
       const statusColor = APPOINTMENT_STATUS_COLORS[appointment.status];
       const startDateTime = new Date(appointment.appointmentStartTime);
       const endDateTime = new Date(appointment.appointmentEndTime);
-      
+
       const doctorName = appointment.doctor?.fullName || 'No Doctor';
       const patientName = appointment.patient?.fullName || 'Unknown Patient';
-      
+
       // Format time range: "HH:mm - HH:mm"
       const formatTime = (date: Date) => {
         const hours = date.getHours().toString().padStart(2, '0');
@@ -312,7 +312,7 @@ export default function MyCalendarPage() {
         return `${hours}:${minutes}`;
       };
       const timeRange = `${formatTime(startDateTime)} - ${formatTime(endDateTime)}`;
-      
+
       // Title: Show time range and doctor name
       const title = `${timeRange} - Dr. ${doctorName}`;
 
@@ -344,7 +344,7 @@ export default function MyCalendarPage() {
   // Handle event click
   const handleEventClick = useCallback(async (clickInfo: any) => {
     const eventType = clickInfo.event.extendedProps.type;
-    
+
     if (eventType === 'shift') {
       const shift = clickInfo.event.extendedProps.shift as EmployeeShift;
       try {
@@ -460,95 +460,95 @@ export default function MyCalendarPage() {
         {/* Calendar */}
         <Card>
           <div className="p-4 flex items-center justify-between border-b">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrev}>
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleToday}>
-                  Hôm nay
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleNext}>
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleViewChange('dayGridMonth')}
-                >
-                  <FontAwesomeIcon icon={faCalendar} className="mr-1" />
-                  Tháng
-                </Button>
-                <Button
-                  variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleViewChange('timeGridWeek')}
-                >
-                  <FontAwesomeIcon icon={faCalendarWeek} className="mr-1" />
-                  Tuần
-                </Button>
-                <Button
-                  variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleViewChange('timeGridDay')}
-                >
-                  <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                  Ngày
-                </Button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrev}>
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleToday}>
+                Hôm nay
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleNext}>
+                <FontAwesomeIcon icon={faChevronRight} />
+              </Button>
             </div>
-            <div className="p-4 relative">
-              {loading && (
-                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              )}
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={currentView}
-                initialDate={currentDate}
-                events={allEvents}
-                eventClick={handleEventClick}
-                datesSet={handleDatesSet}
-                headerToolbar={false}
-                height="auto"
-                locale="vi"
-                firstDay={1} // Monday
-                eventContent={(eventInfo) => {
-                  const eventType = eventInfo.event.extendedProps.type;
-                  
-                  if (eventType === 'shift') {
-                    // Shift event: Show shift name
-                    return (
-                      <div className="p-1 overflow-hidden">
-                        <div className="text-xs font-medium truncate">
-                          {eventInfo.event.title}
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    // Appointment event: Show time range and doctor name
-                    const appointment = eventInfo.event.extendedProps.appointment as AppointmentSummaryDTO;
-                    const doctorName = eventInfo.event.extendedProps.doctorName || 'No Doctor';
-                    const timeRange = eventInfo.event.extendedProps.timeRange || '';
-                    
-                    return (
-                      <div className="p-1 overflow-hidden cursor-pointer">
-                        <div className="font-medium text-xs truncate">{timeRange}</div>
-                        <div className="text-xs font-semibold truncate">
-                          Dr. {doctorName}
-                        </div>
-                      </div>
-                    );
-                  }
-                }}
-                className="my-calendar"
-              />
+            <div className="flex items-center gap-2">
+              <Button
+                variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleViewChange('dayGridMonth')}
+              >
+                <FontAwesomeIcon icon={faCalendar} className="mr-1" />
+                Tháng
+              </Button>
+              <Button
+                variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleViewChange('timeGridWeek')}
+              >
+                <FontAwesomeIcon icon={faCalendarWeek} className="mr-1" />
+                Tuần
+              </Button>
+              <Button
+                variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleViewChange('timeGridDay')}
+              >
+                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
+                Ngày
+              </Button>
+            </div>
+          </div>
+          <div className="p-4 relative">
+            {loading && (
+              <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            )}
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={currentView}
+              initialDate={currentDate}
+              events={allEvents}
+              eventClick={handleEventClick}
+              datesSet={handleDatesSet}
+              headerToolbar={false}
+              height="auto"
+              locale="vi"
+              firstDay={1} // Monday
+              eventContent={(eventInfo) => {
+                const eventType = eventInfo.event.extendedProps.type;
 
-              {/* Custom CSS for shift and appointment events */}
-              <style jsx global>{`
+                if (eventType === 'shift') {
+                  // Shift event: Show shift name
+                  return (
+                    <div className="p-1 overflow-hidden">
+                      <div className="text-xs font-medium truncate">
+                        {eventInfo.event.title}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Appointment event: Show time range and doctor name
+                  const appointment = eventInfo.event.extendedProps.appointment as AppointmentSummaryDTO;
+                  const doctorName = eventInfo.event.extendedProps.doctorName || 'No Doctor';
+                  const timeRange = eventInfo.event.extendedProps.timeRange || '';
+
+                  return (
+                    <div className="p-1 overflow-hidden cursor-pointer">
+                      <div className="font-medium text-xs truncate">{timeRange}</div>
+                      <div className="text-xs font-semibold truncate">
+                        Dr. {doctorName}
+                      </div>
+                    </div>
+                  );
+                }
+              }}
+              className="my-calendar"
+            />
+
+            {/* Custom CSS for shift and appointment events */}
+            <style jsx global>{`
                 .my-calendar .fc-event.shift-event {
                   opacity: 0.3;
                   border-style: dashed !important;
@@ -580,7 +580,7 @@ export default function MyCalendarPage() {
                   cursor: pointer;
                 }
               `}</style>
-            </div>
+          </div>
         </Card>
 
         {/* Shift Detail Modal */}
@@ -613,7 +613,7 @@ export default function MyCalendarPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Trạng thái</label>
                     <div>
-                      <Badge variant="outline">{selectedShift.status}</Badge>
+                      <Badge variant="outline" className="whitespace-nowrap">{selectedShift.status}</Badge>
                     </div>
                   </div>
                   {selectedShift.notes && (

@@ -36,6 +36,7 @@ export default function AppointmentList({
     const statusInfo = APPOINTMENT_STATUS_COLORS[status];
     return (
       <Badge
+        className="whitespace-nowrap"
         style={{
           backgroundColor: statusInfo.bg,
           borderColor: statusInfo.border,

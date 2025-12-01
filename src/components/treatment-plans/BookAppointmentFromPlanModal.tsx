@@ -623,10 +623,10 @@ export default function BookAppointmentFromPlanModal({
               <div className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === step
-                      ? 'bg-primary text-primary-foreground'
-                      : currentStep > step
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-muted text-muted-foreground'
+                    ? 'bg-primary text-primary-foreground'
+                    : currentStep > step
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-muted text-muted-foreground'
                     }`}
                 >
                   {currentStep > step ? (
@@ -709,7 +709,7 @@ export default function BookAppointmentFromPlanModal({
                               )}
                             </div>
                           </div>
-                          <Badge variant="outline">{item.status}</Badge>
+                          <Badge variant="outline" className="whitespace-nowrap">{item.status}</Badge>
                         </div>
                       </div>
                     ))}
@@ -832,14 +832,14 @@ export default function BookAppointmentFromPlanModal({
                                 }}
                                 disabled={isPast || !isCurrentMonth || !isAvailable}
                                 className={`p-2 rounded text-center transition-all ${!isCurrentMonth
-                                    ? 'bg-muted/20 opacity-30 cursor-not-allowed'
-                                    : isPast
-                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                                      : !isAvailable
-                                        ? 'bg-red-50 opacity-50 cursor-not-allowed border border-red-200'
-                                        : isSelected
-                                          ? 'bg-primary text-primary-foreground font-semibold scale-105'
-                                          : 'bg-green-50 hover:bg-green-100 border border-green-200'
+                                  ? 'bg-muted/20 opacity-30 cursor-not-allowed'
+                                  : isPast
+                                    ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                    : !isAvailable
+                                      ? 'bg-red-50 opacity-50 cursor-not-allowed border border-red-200'
+                                      : isSelected
+                                        ? 'bg-primary text-primary-foreground font-semibold scale-105'
+                                        : 'bg-green-50 hover:bg-green-100 border border-green-200'
                                   } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
                               >
                                 <div className="text-xs font-medium">{currentDate.getDate()}</div>

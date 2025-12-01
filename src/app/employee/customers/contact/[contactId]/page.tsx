@@ -16,21 +16,21 @@ const getStatusBadge = (status: string) => {
     switch (statusUpper) {
         case 'NEW':
         case 'PENDING':
-            return <Badge variant="default" className="bg-blue-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-blue-500 whitespace-nowrap">{status}</Badge>;
         case 'CONTACTED':
         case 'IN_PROGRESS':
-            return <Badge variant="default" className="bg-yellow-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-yellow-500 whitespace-nowrap">{status}</Badge>;
         case 'INTERESTED':
         case 'QUALIFIED':
-            return <Badge variant="default" className="bg-green-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-green-500 whitespace-nowrap">{status}</Badge>;
         case 'NOT_INTERESTED':
         case 'REJECTED':
-            return <Badge variant="destructive">{status}</Badge>;
+            return <Badge variant="destructive" className="whitespace-nowrap">{status}</Badge>;
         case 'CONVERTED':
         case 'SUCCESS':
-            return <Badge variant="default" className="bg-emerald-600">{status}</Badge>;
+            return <Badge variant="default" className="bg-emerald-600 whitespace-nowrap">{status}</Badge>;
         default:
-            return <Badge variant="secondary">{status}</Badge>;
+            return <Badge variant="secondary" className="whitespace-nowrap">{status}</Badge>;
     }
 };
 
