@@ -205,7 +205,10 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Warehouse Management',
       icon: faWarehouse,
       hasSubmenu: true,
-      requiredPermissionGroup: 'WAREHOUSE',
+      // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
+      // Fallback: ROLE_ADMIN (has all permissions in seed data)
+      // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
+      // Logic is handled in filterNavigationItems function using canAccessWarehouse()
       submenu: [
         {
           name: 'Tổng Quan Kho',
@@ -249,9 +252,8 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Booking Management',
       icon: faClipboardList,
       hasSubmenu: true,
-      // Show if user has any of these permission groups
-      requiredPermissions: ['VIEW_ROOM', 'VIEW_SERVICE', 'VIEW_APPOINTMENT', 'VIEW_TREATMENT_PLAN_ALL'],
-      requireAll: false,
+      // Parent menu visibility is determined by submenu items - if user has permission for any submenu item, show parent
+      // No requiredPermissions on parent - logic handled in filterNavigationItems
       submenu: [
         {
           name: 'Rooms',
@@ -427,6 +429,48 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
         },
       ],
     },
+    // Warehouse Management (for employee roles with VIEW_WAREHOUSE permission)
+    {
+      name: 'Warehouse Management',
+      icon: faWarehouse,
+      hasSubmenu: true,
+      // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
+      // Fallback: ROLE_ADMIN (has all permissions in seed data)
+      // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
+      // Logic is handled in filterNavigationItems function using canAccessWarehouse()
+      submenu: [
+        {
+          name: 'Tổng Quan Kho',
+          href: '/employee/warehouse',
+          icon: faTachometerAlt,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Quản Lý Vật Tư',
+          href: '/employee/warehouse/inventory',
+          icon: faBoxes,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhập/Xuất Kho',
+          href: '/employee/warehouse/storage',
+          icon: faClipboard,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhà Cung Cấp',
+          href: '/employee/warehouse/suppliers',
+          icon: faUsers,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Báo Cáo & Thống Kê',
+          href: '/employee/warehouse/reports',
+          icon: faChartLine,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+      ],
+    },
     // Analytics
     {
       name: 'Analytics',
@@ -445,6 +489,8 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
 
 /**
  * PATIENT NAVIGATION CONFIG
+ * Includes menu items based on permissions (RBAC)
+ * Patient role can have admin/employee permissions, so we show menu items based on actual permissions
  */
 export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
   title: 'PDCMS Patient',
@@ -463,7 +509,112 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Treatment Plans',
       href: '/patient/treatment-plans',
       icon: faListCheck,
-      requiredPermissions: ['VIEW_TREATMENT_PLAN_OWN'],
+      requiredPermissions: ['VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_ALL'],
+      requireAll: false,
+    },
+    // Booking Management - Show if user has any booking-related permissions
+    {
+      name: 'Booking Management',
+      icon: faClipboardList,
+      hasSubmenu: true,
+      // Parent menu visibility is determined by submenu items
+      submenu: [
+        {
+          name: 'Rooms',
+          href: '/admin/booking/rooms',
+          icon: faHospitalUser,
+          requiredPermissions: ['VIEW_ROOM'],
+        },
+        {
+          name: 'Services',
+          href: '/admin/booking/services',
+          icon: faTeeth,
+          requiredPermissions: ['VIEW_SERVICE'],
+        },
+        {
+          name: 'Appointments',
+          href: '/admin/booking/appointments',
+          icon: faCalendarAlt,
+          requiredPermissions: ['VIEW_APPOINTMENT', 'VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN'],
+          requireAll: false,
+        },
+        {
+          name: 'Treatment Plans',
+          href: '/admin/treatment-plans',
+          icon: faListCheck,
+          requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
+          requireAll: false,
+        },
+      ],
+    },
+    // System Configuration - Show if user has system config permissions
+    {
+      name: 'System Configuration',
+      icon: faCog,
+      hasSubmenu: true,
+      // Parent menu visibility is determined by submenu items
+      submenu: [
+        {
+          name: 'Role Management',
+          href: '/admin/roles',
+          icon: faShieldAlt,
+          requiredPermissions: ['VIEW_ROLE'],
+        },
+        {
+          name: 'Permission Management',
+          href: '/admin/permissions',
+          icon: faKey,
+          requiredPermissions: ['VIEW_PERMISSION'],
+        },
+        {
+          name: 'Specializations',
+          href: '/admin/specializations',
+          icon: faStethoscope,
+          requiredPermissions: ['VIEW_SPECIALIZATION'],
+        },
+      ],
+    },
+    // Warehouse Management - Show if user has VIEW_WAREHOUSE permission
+    {
+      name: 'Warehouse Management',
+      icon: faWarehouse,
+      hasSubmenu: true,
+      // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
+      // Fallback: ROLE_ADMIN (has all permissions in seed data)
+      // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
+      // Logic is handled in filterNavigationItems function using canAccessWarehouse()
+      submenu: [
+        {
+          name: 'Tổng Quan Kho',
+          href: '/admin/warehouse',
+          icon: faTachometerAlt,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Quản Lý Vật Tư',
+          href: '/admin/warehouse/inventory',
+          icon: faBoxes,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhập/Xuất Kho',
+          href: '/admin/warehouse/storage',
+          icon: faClipboard,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Nhà Cung Cấp',
+          href: '/admin/warehouse/suppliers',
+          icon: faUsers,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+        {
+          name: 'Báo Cáo & Thống Kê',
+          href: '/admin/warehouse/reports',
+          icon: faChartLine,
+          requiredPermissions: ['VIEW_WAREHOUSE'],
+        },
+      ],
     },
     {
       name: 'Medical Records',
@@ -520,35 +671,105 @@ export const hasPermissions = (
 };
 
 /**
+ * Helper function: Check if user can access warehouse (RBAC-based)
+ * Priority: Check permissions first (RBAC), ROLE_ADMIN as fallback only
+ * BE Pattern: hasRole('ADMIN') or hasAuthority('VIEW_WAREHOUSE')
+ * Note: ROLE_ADMIN has all permissions in seed data, but we prioritize permission check
+ */
+export const canAccessWarehouse = (
+  userRoles?: string[],
+  userPermissions?: string[]
+): boolean => {
+  // Priority 1: Check if user has VIEW_WAREHOUSE permission (RBAC)
+  const hasViewWarehouse = userPermissions?.includes('VIEW_WAREHOUSE') || false;
+  if (hasViewWarehouse) {
+    return true;
+  }
+  
+  // Priority 2: Fallback - Check if user is ROLE_ADMIN (has all permissions)
+  // Note: This is a fallback only, as ROLE_ADMIN should have VIEW_WAREHOUSE permission
+  const isAdmin = userRoles?.includes('ROLE_ADMIN') || false;
+  return isAdmin;
+};
+
+/**
  * Helper function: Filter navigation items based on user permissions
  */
 export const filterNavigationItems = (
   items: NavigationItem[],
   userPermissions: string[] | undefined,
-  groupedPermissions: GroupedPermissions | undefined
+  groupedPermissions: GroupedPermissions | undefined,
+  userRoles?: string[] // Add userRoles parameter to check ROLE_ADMIN
 ): NavigationItem[] => {
   return items.filter(item => {
-    // Check permission group
+    // Special handling for Warehouse Management menu
+    // RBAC-based: Check VIEW_WAREHOUSE permission first, ROLE_ADMIN as fallback
+    if (item.name === 'Warehouse Management') {
+      // Check warehouse access (prioritizes permissions, ROLE_ADMIN as fallback)
+      const canAccess = canAccessWarehouse(userRoles, userPermissions);
+      
+      if (!canAccess) {
+        return false;
+      }
+      
+      // Filter submenu items based on permissions
+      if (item.hasSubmenu && item.submenu) {
+        const filteredSubmenu = item.submenu.filter(subItem => {
+          // Check if submenu item requires specific permissions
+          if (subItem.requiredPermissions && subItem.requiredPermissions.length > 0) {
+            // Use normal permission check (RBAC-based)
+            if (!userPermissions || !hasPermissions(userPermissions, subItem.requiredPermissions, subItem.requireAll)) {
+              return false;
+            }
+          }
+          return true;
+        });
+        
+        if (filteredSubmenu.length === 0) {
+          return false; // Hide parent if no submenu items are visible
+        }
+        item.submenu = filteredSubmenu;
+      }
+      return true;
+    }
+
+    // Special handling for menus with submenu: Check submenu items first
+    // If user has permission for any submenu item, show parent menu
+    // This applies to menus like "Booking Management" where parent visibility depends on submenu permissions
+    if (item.hasSubmenu && item.submenu) {
+      // Filter submenu items first
+      const filteredSubmenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions, userRoles);
+      
+      // If no submenu items are visible, hide parent
+      if (filteredSubmenu.length === 0) {
+        return false;
+      }
+      
+      // If parent has no requiredPermissions/requiredPermissionGroup, 
+      // visibility is determined by submenu items (already checked above)
+      // Otherwise, check parent permissions
+      if (!item.requiredPermissionGroup && (!item.requiredPermissions || item.requiredPermissions.length === 0)) {
+        // Parent visibility is determined by submenu items - if we have visible submenu items, show parent
+        item.submenu = filteredSubmenu;
+        return true;
+      }
+      
+      // Parent has permissions - check them
+      item.submenu = filteredSubmenu;
+    }
+
+    // Check permission group (for parent menu)
     if (item.requiredPermissionGroup) {
       if (!hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup)) {
         return false;
       }
     }
 
-    // Check specific permissions
+    // Check specific permissions (for parent menu)
     if (item.requiredPermissions && item.requiredPermissions.length > 0) {
       if (!userPermissions || !hasPermissions(userPermissions, item.requiredPermissions, item.requireAll)) {
         return false;
       }
-    }
-
-    // Filter submenu items
-    if (item.hasSubmenu && item.submenu) {
-      const filteredSubmenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions);
-      if (filteredSubmenu.length === 0) {
-        return false; // Hide parent if no submenu items are visible
-      }
-      item.submenu = filteredSubmenu;
     }
 
     return true;

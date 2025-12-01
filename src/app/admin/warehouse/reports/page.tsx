@@ -302,9 +302,11 @@ export default function WarehouseReportsPage() {
                                     {formatDate(txn.transactionDate)}
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="bg-white text-blue-700 border-blue-300">
-                                  +{totalItems} dòng vật tư
-                                </Badge>
+                                {totalItems > 0 && (
+                                  <Badge variant="outline" className="bg-white text-blue-700 border-blue-300">
+                                    +{totalItems} dòng vật tư
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex justify-between text-sm text-gray-600">
                                 <span>Mã phiếu</span>
@@ -372,9 +374,11 @@ export default function WarehouseReportsPage() {
                                     {formatDate(txn.transactionDate)}
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="bg-white text-orange-700 border-orange-300">
-                                  -{totalItems} dòng vật tư
-                                </Badge>
+                                {totalItems > 0 && (
+                                  <Badge variant="outline" className="bg-white text-orange-700 border-orange-300">
+                                    -{totalItems} dòng vật tư
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex justify-between text-sm text-gray-600">
                                 <span>Mã phiếu</span>
