@@ -48,7 +48,7 @@ export default function AdminShiftCalendarPage() {
   const [loading, setLoading] = useState(false);
   const [hasViewedCalendar, setHasViewedCalendar] = useState(false); // Track if user has clicked "Xem lịch"
   const calendarRef = useRef<FullCalendar>(null);
-  
+
   // Calendar filter state (separate from currentDate to avoid auto-loading)
   const [calendarFilter, setCalendarFilter] = useState({
     selectedMonth: new Date().getMonth(),
@@ -163,7 +163,7 @@ export default function AdminShiftCalendarPage() {
   const loadShifts = async () => {
     try {
       setLoading(true);
-      
+
       // Use calendarFilter instead of currentDate/selectedEmployee
       const filterDate = new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1);
       const startDate = format(startOfMonth(filterDate), 'yyyy-MM-dd');
@@ -211,6 +211,16 @@ export default function AdminShiftCalendarPage() {
 
       console.log('Summary data received:', summaryData);
       setSummaryData(summaryData);
+
+      // Navigate calendar to the selected date range
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        const startDate = new Date(summaryDateRange.startDate);
+        calendarApi.gotoDate(startDate);
+
+        // Update currentDate to sync the calendar
+        setCurrentDate(startDate);
+      }
     } catch (error: any) {
       console.error('Error loading summary:', error);
       setSummaryError('Không thể tải dữ liệu thống kê');
@@ -492,11 +502,11 @@ export default function AdminShiftCalendarPage() {
 
         {/* Summary Dashboard - Step by Step Guide */}
         {canViewSummary && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 p-6">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <FontAwesomeIcon icon={faChartBar} className="text-blue-600" />
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon icon={faChartBar} className="text-purple-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Thống kê Ca Làm Việc</h3>
@@ -509,13 +519,13 @@ export default function AdminShiftCalendarPage() {
               {/* Step 1: Select Employee */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
                   <span className="text-sm font-medium text-gray-700">Chọn nhân viên:</span>
                 </div>
                 <select
                   value={selectedEmployee?.toString() || ''}
                   onChange={(e) => setSelectedEmployee(e.target.value ? parseInt(e.target.value) : null)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-[200px]"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[200px]"
                 >
                   <option value="">Tất cả nhân viên</option>
                   {employees.map(employee => (
@@ -534,7 +544,7 @@ export default function AdminShiftCalendarPage() {
               {/* Step 2: Select Date Range */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
                   <span className="text-sm font-medium text-gray-700">Chọn khoảng thời gian:</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -542,14 +552,14 @@ export default function AdminShiftCalendarPage() {
                     type="date"
                     value={summaryDateRange.startDate}
                     onChange={(e) => setSummaryDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   />
                   <span className="text-gray-500">đến</span>
                   <input
                     type="date"
                     value={summaryDateRange.endDate}
                     onChange={(e) => setSummaryDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   />
                 </div>
                 {summaryDateRange.startDate && summaryDateRange.endDate && (
@@ -562,7 +572,7 @@ export default function AdminShiftCalendarPage() {
               {/* Step 3: View Data */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
                   <span className="text-sm font-medium text-gray-700">Xem dữ liệu:</span>
                 </div>
                 <Button
@@ -615,21 +625,21 @@ export default function AdminShiftCalendarPage() {
 
                       return (
                         <>
-                          <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">{totalShifts}</div>
-                            <div className="text-xs text-blue-700">Tổng ca làm</div>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <div className="text-3xl font-bold text-blue-600">{totalShifts}</div>
+                            <div className="text-sm text-blue-700 mt-1">Tổng ca làm</div>
                           </div>
-                          <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                            <div className="text-2xl font-bold text-yellow-600">{statusCounts.SCHEDULED || 0}</div>
-                            <div className="text-xs text-yellow-700">Đã lên lịch</div>
+                          <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-100">
+                            <div className="text-3xl font-bold text-orange-600">{statusCounts.SCHEDULED || 0}</div>
+                            <div className="text-sm text-orange-700 mt-1">Đã lên lịch</div>
                           </div>
-                          <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">{statusCounts.COMPLETED || 0}</div>
-                            <div className="text-xs text-green-700">Hoàn thành</div>
+                          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                            <div className="text-3xl font-bold text-green-600">{statusCounts.COMPLETED || 0}</div>
+                            <div className="text-sm text-green-700 mt-1">Hoàn thành</div>
                           </div>
-                          <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <div className="text-2xl font-bold text-gray-600">{statusCounts.CANCELLED || 0}</div>
-                            <div className="text-xs text-gray-700">Đã hủy</div>
+                          <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="text-3xl font-bold text-gray-600">{statusCounts.CANCELLED || 0}</div>
+                            <div className="text-sm text-gray-700 mt-1">Đã hủy</div>
                           </div>
                         </>
                       );
@@ -643,9 +653,9 @@ export default function AdminShiftCalendarPage() {
                 <p className="text-gray-500">Không có dữ liệu trong khoảng thời gian đã chọn</p>
               </div>
             ) : !summaryData ? (
-              <div className="mt-6 text-center py-8 bg-blue-50 rounded-lg border border-blue-200">
-                <FontAwesomeIcon icon={faChartBar} className="text-2xl mb-2 text-blue-400" />
-                <p className="text-blue-600 font-medium">Chọn nhân viên và khoảng thời gian, sau đó click "Xem thống kê"</p>
+              <div className="mt-6 text-center py-8 bg-purple-50 rounded-lg border border-purple-200">
+                <FontAwesomeIcon icon={faChartBar} className="text-2xl mb-2 text-purple-400" />
+                <p className="text-purple-600 font-medium">Chọn nhân viên và khoảng thời gian, sau đó click "Xem thống kê"</p>
               </div>
             ) : null}
           </div>
@@ -659,76 +669,75 @@ export default function AdminShiftCalendarPage() {
           </h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4 flex-wrap">
-                {/* Employee Filter */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
-                  <select
-                    value={calendarFilter.selectedEmployeeForCalendar?.toString() || ''}
-                    onChange={(e) => setCalendarFilter(prev => ({
-                      ...prev,
-                      selectedEmployeeForCalendar: e.target.value ? parseInt(e.target.value) : null
-                    }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-[200px]"
-                  >
-                    <option value="">Tất cả nhân viên</option>
-                    {employees.map(employee => (
-                      <option key={employee.employeeId} value={employee.employeeId}>
-                        {employee.fullName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Month Filter */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium text-gray-700 min-w-[60px]">Tháng:</Label>
-                  <select
-                    value={calendarFilter.selectedMonth}
-                    onChange={(e) => setCalendarFilter(prev => ({
-                      ...prev,
-                      selectedMonth: parseInt(e.target.value)
-                    }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <option key={i} value={i}>
-                        {format(new Date(2024, i, 1), 'MMMM', { locale: vi })}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Year Filter */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium text-gray-700 min-w-[50px]">Năm:</Label>
-                  <select
-                    value={calendarFilter.selectedYear}
-                    onChange={(e) => setCalendarFilter(prev => ({
-                      ...prev,
-                      selectedYear: parseInt(e.target.value)
-                    }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - 2 + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                {/* View Calendar Button */}
-                <Button
-                  onClick={loadShifts}
-                  disabled={loading}
-                  className="ml-auto"
+              {/* Employee Filter */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
+                <select
+                  value={calendarFilter.selectedEmployeeForCalendar?.toString() || ''}
+                  onChange={(e) => setCalendarFilter(prev => ({
+                    ...prev,
+                    selectedEmployeeForCalendar: e.target.value ? parseInt(e.target.value) : null
+                  }))} className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[200px]"
                 >
-                  <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-                  {loading ? 'Đang tải...' : 'Xem lịch'}
-                </Button>
+                  <option value="">Tất cả nhân viên</option>
+                  {employees.map(employee => (
+                    <option key={employee.employeeId} value={employee.employeeId}>
+                      {employee.fullName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Month Filter */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 min-w-[60px]">Tháng:</Label>
+                <select
+                  value={calendarFilter.selectedMonth}
+                  onChange={(e) => setCalendarFilter(prev => ({
+                    ...prev,
+                    selectedMonth: parseInt(e.target.value)
+                  }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {format(new Date(2024, i, 1), 'MMMM', { locale: vi })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Year Filter */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 min-w-[50px]">Năm:</Label>
+                <select
+                  value={calendarFilter.selectedYear}
+                  onChange={(e) => setCalendarFilter(prev => ({
+                    ...prev,
+                    selectedYear: parseInt(e.target.value)
+                  }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                >
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - 2 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* View Calendar Button */}
+              <Button
+                onClick={loadShifts}
+                disabled={loading}
+                className="ml-auto"
+              >
+                <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Đang tải...' : 'Xem lịch'}
+              </Button>
             </div>
           </div>
         </div>
@@ -756,7 +765,7 @@ export default function AdminShiftCalendarPage() {
               ) : loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <div className="text-gray-600">Đang tải lịch làm việc...</div>
                   </div>
                 </div>
@@ -974,13 +983,13 @@ export default function AdminShiftCalendarPage() {
               {/* Employee Selection */}
               <div>
                 <Label htmlFor="employee-select" className="text-sm font-medium text-gray-700">
-                  Nhân viên *
+                  Nhân viên <span className="text-red-500">*</span>
                 </Label>
                 <select
                   id="employee-select"
                   value={createForm.employee_id}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, employee_id: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                 >
                   <option value="">Chọn nhân viên</option>
                   {employees.map(employee => (
@@ -994,27 +1003,27 @@ export default function AdminShiftCalendarPage() {
               {/* Work Date */}
               <div>
                 <Label htmlFor="work-date" className="text-sm font-medium text-gray-700">
-                  Ngày làm việc *
+                  Ngày làm việc <span className="text-red-500">*</span>
                 </Label>
                 <input
                   id="work-date"
                   type="date"
                   value={createForm.work_date}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, work_date: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
 
               {/* Work Shift */}
               <div>
                 <Label htmlFor="work-shift-select" className="text-sm font-medium text-gray-700">
-                  Mẫu ca *
+                  Mẫu ca <span className="text-red-500">*</span>
                 </Label>
                 <select
                   id="work-shift-select"
                   value={createForm.work_shift_id}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, work_shift_id: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                 >
                   <option value="">Chọn mẫu ca</option>
                   {workShifts.map(workShift => (
@@ -1035,7 +1044,7 @@ export default function AdminShiftCalendarPage() {
                   value={createForm.notes}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   placeholder="Nhập ghi chú (không bắt buộc)"
                 />
               </div>

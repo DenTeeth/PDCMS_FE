@@ -1082,7 +1082,7 @@ export default function AdminTimeOffRequestsPage() {
                 </div>
 
                 <div className="mb-4">
-                  <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+                  <Label htmlFor="rejectReason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="rejectReason"
                     value={rejectReason}
@@ -1115,7 +1115,7 @@ export default function AdminTimeOffRequestsPage() {
               <div className="bg-white rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
                 <div className="mb-4">
-                  <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="cancelReason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="cancelReason"
                     value={cancelReason}
