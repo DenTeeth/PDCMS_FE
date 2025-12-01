@@ -141,30 +141,6 @@ export default function AppointmentList({
       ),
     },
     {
-      key: 'services',
-      header: 'Services',
-      accessor: (appointment) => (
-        <div className="max-w-[200px]">
-          {appointment.services.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {appointment.services.slice(0, 2).map((service) => (
-                <Badge key={service.serviceCode} variant="outline" className="text-xs">
-                  {service.serviceName}
-                </Badge>
-              ))}
-              {appointment.services.length > 2 && (
-                <Badge variant="outline" className="text-xs">
-                  +{appointment.services.length - 2}
-                </Badge>
-              )}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">No services</span>
-          )}
-        </div>
-      ),
-    },
-    {
       key: 'status',
       header: 'Status',
       accessor: (appointment) => getStatusBadge(appointment.status),

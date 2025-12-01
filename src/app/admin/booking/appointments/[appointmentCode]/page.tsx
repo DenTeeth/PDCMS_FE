@@ -14,11 +14,12 @@
  * - Actions (if permitted): Update status, Reschedule, Cancel
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
+import { cn } from '@/lib/utils';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +46,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { appointmentService } from '@/services/appointmentService';
+import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
@@ -54,6 +57,11 @@ import {
   AppointmentReasonCode,
   APPOINTMENT_REASON_CODE_LABELS,
 } from '@/types/appointment';
+import {
+  TreatmentPlanDetailResponse,
+  TreatmentPlanSummaryDTO,
+} from '@/types/treatmentPlan';
+import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
 import DelayAppointmentModal from '@/components/appointments/DelayAppointmentModal';
 import {
@@ -70,8 +78,127 @@ import {
   X,
   CheckCircle,
   AlertCircle,
+  Menu,
+  MoreHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
+
+// TimePicker component for 15-minute intervals
+interface TimePickerProps {
+  value: string; // Format: "HH:mm" (e.g., "08:00")
+  onChange: (time: string) => void;
+  disabled?: boolean;
+}
+
+function TimePicker({ value, onChange, disabled }: TimePickerProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [hour, setHour] = React.useState('08');
+  const [minute, setMinute] = React.useState('00');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (value) {
+      const [h, m] = value.split(':');
+      setHour(h || '08');
+      setMinute(m || '00');
+    }
+  }, [value]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Hours from 0 to 23
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  // Minutes: 00, 15, 30, 45
+  const minutes = ['00', '15', '30', '45'];
+
+  const handleHourChange = (newHour: string) => {
+    setHour(newHour);
+    onChange(`${newHour}:${minute}`);
+  };
+
+  const handleMinuteChange = (newMinute: string) => {
+    setMinute(newMinute);
+    onChange(`${hour}:${newMinute}`);
+    setIsOpen(false);
+  };
+
+  const displayValue = value || '--:--';
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${
+          disabled
+            ? 'bg-muted cursor-not-allowed opacity-50'
+            : 'bg-background hover:border-primary'
+        }`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <Clock className="h-4 w-4 text-muted-foreground" />
+        <span className={value ? 'text-foreground' : 'text-muted-foreground'}>{displayValue}</span>
+        <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute top-full left-0 mt-2 bg-popover border rounded-lg shadow-lg z-50 p-3">
+          <div className="flex gap-3">
+            {/* Hour Selector */}
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold mb-2 text-center">Hour</label>
+              <div className="h-40 w-16 overflow-y-auto rounded-lg border">
+                {hours.map((h) => (
+                  <div
+                    key={h}
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
+                      h === hour
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => handleHourChange(h)}
+                  >
+                    {h}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center text-xl font-bold text-muted-foreground">:</div>
+
+            {/* Minute Selector */}
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold mb-2 text-center">Min</label>
+              <div className="h-40 w-16 overflow-y-auto rounded-lg border">
+                {minutes.map((m) => (
+                  <div
+                    key={m}
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
+                      m === minute
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => handleMinuteChange(m)}
+                  >
+                    {m}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminAppointmentDetailPage() {
   const params = useParams();
@@ -90,7 +217,24 @@ export default function AdminAppointmentDetailPage() {
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | null>(null);
   const [statusUpdateReason, setStatusUpdateReason] = useState<AppointmentReasonCode | ''>('');
   const [statusUpdateNotes, setStatusUpdateNotes] = useState<string>('');
+<<<<<<< HEAD
   const [updating, setUpdating] = useState(false);
+=======
+  const [delayNewStartTime, setDelayNewStartTime] = useState<string>('');
+  const [delayDate, setDelayDate] = useState<string>('');
+  const [delayTime, setDelayTime] = useState<string>(''); // Format: "HH:mm"
+  const [delayReason, setDelayReason] = useState<AppointmentReasonCode | ''>('');
+  const [delayNotes, setDelayNotes] = useState<string>('');
+  const [updating, setUpdating] = useState(false);
+  const [delaying, setDelaying] = useState(false);
+  
+  // Treatment Plan state (lazy loading)
+  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
+  const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
+  const [treatmentPlanError, setTreatmentPlanError] = useState<string | null>(null);
+  const [hasTriedLoadingTreatmentPlan, setHasTriedLoadingTreatmentPlan] = useState(false); // Flag to prevent infinite API calls
+  const [activeTab, setActiveTab] = useState<string>('details');
+>>>>>>> origin/FE-501-Dev
 
   // Permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
@@ -99,6 +243,89 @@ export default function AdminAppointmentDetailPage() {
   // Reschedule permission: can reschedule if has UPDATE_APPOINTMENT_STATUS or can create appointments
   const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') ||
     user?.permissions?.includes('CREATE_APPOINTMENT') || false;
+
+  const actionItems = useMemo(() => {
+    if (!appointment) {
+      return [];
+    }
+
+    const items: {
+      key: string;
+      label: string;
+      icon: React.ComponentType<{ className?: string }>;
+      onSelect: () => void;
+    }[] = [];
+
+    const canShowUpdateStatus =
+      canUpdateStatus && getValidNextStatuses(appointment.status).length > 0;
+    const canShowDelay =
+      canDelay &&
+      (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN');
+    const canShowReschedule =
+      canReschedule &&
+      (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN');
+
+    if (canShowUpdateStatus) {
+      items.push({
+        key: 'update-status',
+        label: 'Update Status',
+        icon: Edit,
+        onSelect: () => setShowStatusModal(true),
+      });
+    }
+    if (canShowDelay) {
+      items.push({
+        key: 'delay',
+        label: 'Delay Appointment',
+        icon: Clock,
+        onSelect: () => setShowDelayModal(true),
+      });
+    }
+    if (canShowReschedule) {
+      items.push({
+        key: 'reschedule',
+        label: 'Reschedule Appointment',
+        icon: Calendar,
+        onSelect: () => setShowRescheduleModal(true),
+      });
+    }
+
+    return items;
+  }, [appointment, canDelay, canReschedule, canUpdateStatus]);
+
+  const renderActionMenu = () => {
+    if (!actionItems.length) {
+      return null;
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="gap-2">
+            <Menu className="h-4 w-4" />
+            Actions
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-60 p-2 space-y-1">
+          <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Appointment Actions
+          </p>
+          {actionItems.map((item) => (
+            <Button
+              key={item.key}
+              variant="ghost"
+              className="w-full justify-start gap-2 text-sm"
+              onClick={() => item.onSelect()}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Button>
+          ))}
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   // Request cancellation ref
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -179,6 +406,126 @@ export default function AdminAppointmentDetailPage() {
     };
   }, [appointmentCode, canView, router]); // Removed handleError from dependencies to prevent loop
 
+  // Load treatment plan when Treatment Plan tab is activated (lazy loading)
+  const loadTreatmentPlan = async () => {
+    if (!appointment?.patient?.patientCode) {
+      setTreatmentPlanError('Không tìm thấy thông tin bệnh nhân');
+      setHasTriedLoadingTreatmentPlan(true);
+      return;
+    }
+
+    // Prevent multiple simultaneous calls
+    if (loadingTreatmentPlan) {
+      return;
+    }
+
+    setLoadingTreatmentPlan(true);
+    setTreatmentPlanError(null);
+    setHasTriedLoadingTreatmentPlan(true);
+
+    try {
+      // OPTIMIZATION: If BE provides linkedTreatmentPlanCode, use it directly (1 API call instead of N+1)
+      if (appointment.linkedTreatmentPlanCode) {
+        try {
+          const planDetail = await TreatmentPlanService.getTreatmentPlanDetail(
+            appointment.patient.patientCode,
+            appointment.linkedTreatmentPlanCode
+          );
+          setTreatmentPlan(planDetail);
+          return;
+        } catch (error: any) {
+          // If 403 or 404, fallback to old logic (loop through plans)
+          if (error.response?.status === 403 || error.response?.status === 404) {
+            console.warn('Cannot access linked plan directly, falling back to loop method');
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      // FALLBACK: If linkedTreatmentPlanCode is not available, use old logic (loop through plans)
+      // Admin always has VIEW_TREATMENT_PLAN_ALL
+      let plans: TreatmentPlanSummaryDTO[] = [];
+      
+      try {
+        plans = await TreatmentPlanService.getAllTreatmentPlansForPatient(
+          appointment.patient.patientCode
+        );
+      } catch (error: any) {
+        // If 403, fallback to API 5.5
+        if (error.response?.status === 403) {
+          console.warn('API 5.1 returned 403, trying API 5.5 with patientCode filter');
+          const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
+            patientCode: appointment.patient.patientCode,
+            page: 0,
+            size: 100,
+          });
+          plans = pageResponse.content;
+        } else {
+          throw error;
+        }
+      }
+
+      // Step 2: Find the plan that has items linked to this appointment
+      let foundPlan: TreatmentPlanDetailResponse | null = null;
+
+      for (const planSummary of plans) {
+        try {
+          const planDetail = await TreatmentPlanService.getTreatmentPlanDetail(
+            appointment.patient.patientCode,
+            planSummary.planCode
+          );
+
+          // Check if any item in this plan has this appointment linked
+          const hasLinkedAppointment = planDetail.phases.some(phase =>
+            phase.items.some(item =>
+              item.linkedAppointments?.some(apt => apt.code === appointment.appointmentCode)
+            )
+          );
+
+          if (hasLinkedAppointment) {
+            foundPlan = planDetail;
+            break;
+          }
+        } catch (error: any) {
+          console.warn(`Failed to load plan ${planSummary.planCode}:`, error);
+          // Continue to next plan
+        }
+      }
+
+      if (foundPlan) {
+        setTreatmentPlan(foundPlan);
+      } else {
+        const patientName = appointment.patient?.fullName || 'bệnh nhân này';
+        setTreatmentPlanError(`Không tìm thấy lộ trình điều trị nào của ${patientName} liên quan đến lịch hẹn này.`);
+      }
+    } catch (error: any) {
+      console.error('Error loading treatment plan:', error);
+      setTreatmentPlanError('Không thể tải lộ trình điều trị. Vui lòng thử lại sau.');
+    } finally {
+      setLoadingTreatmentPlan(false);
+    }
+  };
+
+  // Load treatment plan when Treatment Plan tab is activated (lazy loading)
+  useEffect(() => {
+    // Only load if:
+    // 1. Treatment Plan tab is active
+    // 2. Appointment is loaded
+    // 3. Treatment plan hasn't been loaded yet
+    // 4. Not currently loading
+    // 5. Haven't tried loading before
+    if (
+      activeTab === 'treatment-plan' && 
+      appointment && 
+      !treatmentPlan && 
+      !loadingTreatmentPlan &&
+      !hasTriedLoadingTreatmentPlan
+    ) {
+      loadTreatmentPlan();
+    }
+  }, [activeTab, appointment?.appointmentCode, treatmentPlan, loadingTreatmentPlan, hasTriedLoadingTreatmentPlan]);
+
   // Get status badge
   const getStatusBadge = (status: AppointmentStatus) => {
     const statusInfo = APPOINTMENT_STATUS_COLORS[status];
@@ -218,9 +565,9 @@ export default function AdminAppointmentDetailPage() {
   };
 
   // Get valid next statuses for current appointment
-  const getValidNextStatuses = (currentStatus: AppointmentStatus): AppointmentStatus[] => {
+  function getValidNextStatuses(currentStatus: AppointmentStatus): AppointmentStatus[] {
     return APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
-  };
+  }
 
   // Handle status update
   const handleStatusUpdate = async () => {
@@ -252,13 +599,62 @@ export default function AdminAppointmentDetailPage() {
         notes: statusUpdateNotes || null,
       };
 
+      console.log('🔄 Updating appointment status:', {
+        appointmentCode: appointment.appointmentCode,
+        currentStatus: appointment.status,
+        newStatus: selectedStatus,
+      });
+
+      // ✅ BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
       const updated = await appointmentService.updateAppointmentStatus(appointment.appointmentCode, request);
+<<<<<<< HEAD
 
       toast.success('Status updated successfully', {
         description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
       });
 
       // Update appointment with new data
+=======
+      
+      // ✅ FIX: Verify response has updated status
+      if (!updated || !updated.status) {
+        console.error('❌ Invalid response from updateAppointmentStatus:', updated);
+        toast.error('Failed to update status', {
+          description: 'Response from server is invalid',
+        });
+        return;
+      }
+      
+      // ✅ Verify status matches what we requested
+      if (updated.status !== selectedStatus) {
+        console.warn('⚠️ Status mismatch:', {
+          requested: selectedStatus,
+          received: updated.status,
+        });
+        toast.warning('Status may not match expected value', {
+          description: `Requested: ${selectedStatus}, Received: ${updated.status}`,
+          duration: 5000,
+        });
+      }
+      
+      // Check if appointment might be linked to treatment plan items
+      // (BE auto-updates plan items when appointment status changes)
+      const isPlanRelated = updated.services && updated.services.length > 0;
+      const statusChangesPlanItems = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(selectedStatus);
+      
+      if (isPlanRelated && statusChangesPlanItems) {
+        toast.success('Status updated successfully', {
+          description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}. Linked treatment plan items have been automatically updated.`,
+          duration: 5000,
+        });
+      } else {
+        toast.success('Status updated successfully', {
+          description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
+        });
+      }
+      
+      // ✅ FIX: Update appointment with response data (BE now returns DTO)
+>>>>>>> origin/FE-501-Dev
       setAppointment(updated);
 
       // Reset form
@@ -288,8 +684,14 @@ export default function AdminAppointmentDetailPage() {
 
     // Validate: New start time must be after original
     const originalStart = new Date(appointment.appointmentStartTime);
+<<<<<<< HEAD
     const newStart = new Date(delayNewStartTime);
 
+=======
+    const [hours, minutes] = delayTime.split(':');
+    const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);
+    
+>>>>>>> origin/FE-501-Dev
     if (newStart <= originalStart) {
       toast.error('Invalid time', {
         description: 'New start time must be after the original start time',
@@ -318,6 +720,8 @@ export default function AdminAppointmentDetailPage() {
       // Reset form
       setShowDelayModal(false);
       setDelayNewStartTime('');
+      setDelayDate('');
+      setDelayTime('');
       setDelayReason('');
       setDelayNotes('');
     } catch (error: any) {
@@ -390,45 +794,46 @@ export default function AdminAppointmentDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(appointment.status)}
-            {canUpdateStatus && getValidNextStatuses(appointment.status).length > 0 && (
-              <Button variant="outline" onClick={() => setShowStatusModal(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Update Status
-              </Button>
+          <div className="flex items-center gap-3">
+            {/* ✅ FIX: Add key to force re-render when status changes */}
+            {appointment && (
+              <div key={`status-${appointment.status}-${appointment.appointmentCode}`}>
+                {getStatusBadge(appointment.status)}
+              </div>
             )}
-            {canDelay && (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN') && (
-              <Button variant="outline" onClick={() => setShowDelayModal(true)}>
-                <Clock className="h-4 w-4 mr-2" />
-                Delay Appointment
-              </Button>
-            )}
-            {canReschedule && (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN') && (
-              <Button variant="outline" onClick={() => setShowRescheduleModal(true)}>
-                <Calendar className="h-4 w-4 mr-2" />
-                Reschedule Appointment
-              </Button>
-            )}
+            {renderActionMenu()}
           </div>
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="details" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="details">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-muted/20 rounded-full h-auto p-1 w-full md:w-auto">
+            <TabsTrigger
+              value="details"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <FileText className="h-4 w-4 mr-2" />
               Appointment Details
             </TabsTrigger>
-            <TabsTrigger value="patient">
+            <TabsTrigger
+              value="patient"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <User className="h-4 w-4 mr-2" />
               Patient Information
             </TabsTrigger>
-            <TabsTrigger value="medical-history" disabled>
+            <TabsTrigger
+              value="medical-history"
+              disabled
+              className="rounded-full px-4 py-2"
+            >
               <Stethoscope className="h-4 w-4 mr-2" />
               Medical History
             </TabsTrigger>
-            <TabsTrigger value="treatment-plan" disabled>
+            <TabsTrigger
+              value="treatment-plan"
+              className="rounded-full px-4 py-2"
+            >
               <ClipboardList className="h-4 w-4 mr-2" />
               Treatment Plan
             </TabsTrigger>
@@ -450,7 +855,10 @@ export default function AdminAppointmentDetailPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <div className="mt-1">{getStatusBadge(appointment.status)}</div>
+                    {/* ✅ FIX: Add key to force re-render when status changes */}
+                    <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
+                      {getStatusBadge(appointment.status)}
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -536,19 +944,29 @@ export default function AdminAppointmentDetailPage() {
               </Card>
 
               {/* Services */}
-              <Card className="p-6 md:col-span-2">
+              <Card
+                className={cn(
+                  'p-6 md:col-span-2',
+                  appointment.services.length === 0 && 'border-dashed bg-muted/30',
+                )}
+              >
                 <h3 className="text-lg font-semibold mb-4">Services</h3>
-                <div className="flex flex-wrap gap-2">
-                  {appointment.services.length > 0 ? (
-                    appointment.services.map((service) => (
+                {appointment.services.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {appointment.services.map((service) => (
                       <Badge key={service.serviceCode} variant="outline" className="text-sm p-2">
                         {service.serviceName} ({service.serviceCode})
                       </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">No services assigned</p>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>No services assigned</p>
+                    <p className="text-xs">
+                      Services from treatment plan items will appear here once linked.
+                    </p>
+                  </div>
+                )}
               </Card>
 
               {/* Participants */}
@@ -625,20 +1043,84 @@ export default function AdminAppointmentDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Treatment Plan Tab (Placeholder) */}
-          <TabsContent value="treatment-plan">
-            <Card className="p-6">
-              <div className="text-center py-12">
-                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Treatment Plan</h3>
-                <p className="text-muted-foreground mb-4">
-                  This feature will be available soon. Treatment plan will be displayed here.
-                </p>
-                <Button variant="outline" disabled>
-                  View Treatment Plan
-                </Button>
+          {/* Treatment Plan Tab */}
+          <TabsContent value="treatment-plan" className="space-y-4">
+            {loadingTreatmentPlan ? (
+              <Card className="p-6">
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-muted-foreground">Đang tải lộ trình điều trị...</p>
+                  </div>
+                </div>
+              </Card>
+            ) : treatmentPlanError ? (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
+                  <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setHasTriedLoadingTreatmentPlan(false);
+                      setTreatmentPlanError(null);
+                      loadTreatmentPlan();
+                    }}
+                  >
+                    Thử lại
+                  </Button>
+                </div>
+              </Card>
+            ) : treatmentPlan ? (
+              <div className="space-y-4">
+                {/* Plan Header */}
+                <Card className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">{treatmentPlan.planName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Mã lộ trình: <span className="font-mono">{treatmentPlan.planCode}</span>
+                      </p>
+                      {treatmentPlan.progressSummary && (
+                        <div className="mt-3 flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">
+                            Tiến độ: {treatmentPlan.progressSummary.completedItems}/{treatmentPlan.progressSummary.totalItems} hạng mục
+                          </span>
+                          <span className="text-muted-foreground">
+                            Giai đoạn: {treatmentPlan.progressSummary.completedPhases}/{treatmentPlan.progressSummary.totalPhases}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push(`/admin/treatment-plans/${treatmentPlan.planCode}`)}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Timeline */}
+                <TreatmentPlanTimeline
+                  plan={treatmentPlan}
+                  onAppointmentClick={(appointmentCode) => {
+                    router.push(`/admin/booking/appointments/${appointmentCode}`);
+                  }}
+                />
               </div>
-            </Card>
+            ) : (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Treatment Plan</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Lịch hẹn này chưa được liên kết với lộ trình điều trị nào.
+                  </p>
+                </div>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -766,6 +1248,7 @@ export default function AdminAppointmentDetailPage() {
         </Dialog>
 
         {/* Delay Appointment Modal */}
+<<<<<<< HEAD
         <DelayAppointmentModal
           open={showDelayModal}
           appointment={appointment}
@@ -777,6 +1260,128 @@ export default function AdminAppointmentDetailPage() {
             }
           }}
         />
+=======
+        <Dialog 
+          open={showDelayModal} 
+          onOpenChange={(open) => {
+            setShowDelayModal(open);
+            if (!open) {
+              // Reset form when closing
+              setDelayNewStartTime('');
+              setDelayDate('');
+              setDelayTime('');
+              setDelayReason('');
+              setDelayNotes('');
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delay Appointment</DialogTitle>
+              <DialogDescription>
+                Move this appointment to a later time. Current start time: <span className="font-semibold">{formatDateTime(appointment.appointmentStartTime)}</span>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* New Date and Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="delayDate">
+                    New Date <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="delayDate"
+                    type="date"
+                    value={delayDate}
+                    onChange={(e) => setDelayDate(e.target.value)}
+                    min={appointment ? new Date(appointment.appointmentStartTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="delayTime">
+                    New Time <span className="text-red-500">*</span>
+                  </Label>
+                  <TimePicker value={delayTime} onChange={setDelayTime} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Must be after the current start time. Time slots are in 15-minute intervals.
+              </p>
+
+              {/* Reason Code */}
+              <div>
+                <Label htmlFor="delayReason">Reason Code (Optional)</Label>
+                <Select
+                  value={delayReason || '__NONE__'}
+                  onValueChange={(value) => setDelayReason(value === '__NONE__' ? '' : (value as AppointmentReasonCode || ''))}
+                >
+                  <SelectTrigger id="delayReason" className="mt-1">
+                    <SelectValue placeholder="Select reason (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__NONE__">None</SelectItem>
+                    {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
+                      <SelectItem key={code} value={code}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="delayNotes">Notes (Optional)</Label>
+                <Textarea
+                  id="delayNotes"
+                  value={delayNotes}
+                  onChange={(e) => setDelayNotes(e.target.value)}
+                  placeholder="Add any additional notes..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDelayModal(false);
+                }}
+                disabled={delaying}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDelay}
+                disabled={
+                  delaying || 
+                  !delayDate ||
+                  !delayTime ||
+                  (appointment && delayDate && delayTime ? (() => {
+                    const [hours, minutes] = delayTime.split(':');
+                    const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);
+                    return newStart <= new Date(appointment.appointmentStartTime);
+                  })() : false)
+                }
+              >
+                {delaying ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Delaying...
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Delay Appointment
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+>>>>>>> origin/FE-501-Dev
 
         {/* Reschedule Appointment Modal */}
         <RescheduleAppointmentModal

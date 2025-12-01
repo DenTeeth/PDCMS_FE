@@ -59,14 +59,15 @@ interface ServiceFormData {
   defaultBufferMinutes: number;
   price: number;
   specializationId?: number;
+  displayOrder?: number; // Display order
   isActive: boolean;
 }
 
 export default function BookingServicesPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
 
-  // State
+  // Services state
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -100,6 +101,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -111,6 +113,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -311,14 +314,29 @@ export default function BookingServicesPage() {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
+      // Validate duration must be multiple of 15
+      if (createForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
       if (createForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
+        return;
+      }
+      // Validate buffer must be multiple of 5
+      if (createForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
         return;
       }
       if (createForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a positive number (backend requires it)
+      const finalDisplayOrder = createForm.displayOrder && createForm.displayOrder > 0 
+        ? createForm.displayOrder 
+        : 1;
 
       const requestData: CreateServiceRequest = {
         serviceCode: createForm.serviceCode.trim(),
@@ -328,9 +346,12 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: createForm.defaultBufferMinutes,
         price: createForm.price,
         specializationId: createForm.specializationId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: createForm.isActive,
       };
 
+      console.log('Creating service with data:', JSON.stringify(requestData, null, 2));
+      
       await ServiceService.createService(requestData);
 
       // Reset form
@@ -342,6 +363,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: 10,
         price: 0,
         specializationId: undefined,
+        displayOrder: 1, // Reset to default 1
         isActive: true,
       });
 
@@ -354,7 +376,15 @@ export default function BookingServicesPage() {
       toast.success('Tạo dịch vụ thành công!');
     } catch (error: any) {
       console.error('Error creating service:', error);
-      handleCreateError(error);
+      console.error('Error response:', error.response?.data);
+      
+      // Show more detailed error message
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.message || 'Lỗi server. Vui lòng kiểm tra lại dữ liệu hoặc liên hệ admin.';
+        toast.error(`Lỗi tạo dịch vụ: ${errorMessage}`);
+      } else {
+        handleCreateError(error);
+      }
     }
   };
 
@@ -391,18 +421,33 @@ export default function BookingServicesPage() {
         toast.error('Vui lòng nhập tên dịch vụ');
         return;
       }
-      if (updateForm.defaultDurationMinutes < 1) {
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes < 1) {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
-      if (updateForm.defaultBufferMinutes < 0) {
+      // Validate duration must be multiple of 15
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
         return;
       }
-      if (updateForm.price < 0) {
+      // Validate buffer must be multiple of 5
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
+        return;
+      }
+      if (updateForm.price !== undefined && updateForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a positive number (backend requires it)
+      const finalDisplayOrder = updateForm.displayOrder && updateForm.displayOrder > 0 
+        ? updateForm.displayOrder 
+        : (selectedService?.displayOrder || 1);
 
       const requestData: UpdateServiceRequest = {
         serviceName: updateForm.serviceName.trim(),
@@ -411,6 +456,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: updateForm.defaultBufferMinutes,
         price: updateForm.price,
         specializationId: updateForm.specializationId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: updateForm.isActive,
       };
 
@@ -503,6 +549,7 @@ export default function BookingServicesPage() {
       defaultBufferMinutes: service.defaultBufferMinutes,
       price: service.price,
       specializationId: service.specializationId,
+      displayOrder: service.displayOrder,
       isActive: service.isActive,
     });
     setShowUpdateModal(true);
@@ -521,6 +568,8 @@ export default function BookingServicesPage() {
     setShowDetailModal(true);
   }, []);
 
+  // ==================== CATEGORY HANDLERS ====================
+  
   // Columns definition
   const columns: OptimizedTableColumn<Service>[] = useMemo(() => [
     {
@@ -634,9 +683,13 @@ export default function BookingServicesPage() {
           <div>
             <h1 className="text-3xl font-bold">Services Management</h1>
             <p className="text-muted-foreground mt-2">
-              Manage clinic services and their configurations
+              Manage clinic services and their specialization requirements
             </p>
           </div>
+        </div>
+
+        {/* Header with Create Button */}
+        <div className="flex items-center justify-end">
           {canCreate && (
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -871,10 +924,17 @@ export default function BookingServicesPage() {
                   <Input
                     id="create-duration"
                     type="number"
-                    min="1"
+                    min="15"
+                    step="15"
                     value={createForm.defaultDurationMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setCreateForm({ ...createForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
                   <Label htmlFor="create-buffer">Buffer (minutes) *</Label>
@@ -882,9 +942,16 @@ export default function BookingServicesPage() {
                     id="create-buffer"
                     type="number"
                     min="0"
+                    step="5"
                     value={createForm.defaultBufferMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setCreateForm({ ...createForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
                   <Label htmlFor="create-price">Price (VND) *</Label>
@@ -893,35 +960,64 @@ export default function BookingServicesPage() {
                     type="number"
                     min="0"
                     value={createForm.price}
-                    onChange={(e) => setCreateForm({ ...createForm, price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setCreateForm({ ...createForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setCreateForm({ ...createForm, price: value });
+                    }}
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="create-specialization">Specialization</Label>
-                <Select
-                  value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setCreateForm({ ...createForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="create-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="create-specialization">Specialization</Label>
+                  <Select
+                    value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setCreateForm({ ...createForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="create-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="create-displayOrder">Display Order</Label>
+                  <Input
+                    id="create-displayOrder"
+                    type="number"
+                    min="1"
+                    value={createForm.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setCreateForm({ ...createForm, displayOrder: value });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Số càng nhỏ hiển thị càng trước. Giá trị mặc định: {createForm.displayOrder || 1}.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -987,10 +1083,17 @@ export default function BookingServicesPage() {
                   <Input
                     id="update-duration"
                     type="number"
-                    min="1"
-                    value={updateForm.defaultDurationMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    min="15"
+                    step="15"
+                    value={updateForm.defaultDurationMinutes !== undefined ? updateForm.defaultDurationMinutes : (selectedService?.defaultDurationMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setUpdateForm({ ...updateForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
                   <Label htmlFor="update-buffer">Buffer (minutes) *</Label>
@@ -998,9 +1101,16 @@ export default function BookingServicesPage() {
                     id="update-buffer"
                     type="number"
                     min="0"
-                    value={updateForm.defaultBufferMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    step="5"
+                    value={updateForm.defaultBufferMinutes !== undefined ? updateForm.defaultBufferMinutes : (selectedService?.defaultBufferMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setUpdateForm({ ...updateForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
                   <Label htmlFor="update-price">Price (VND) *</Label>
@@ -1008,36 +1118,65 @@ export default function BookingServicesPage() {
                     id="update-price"
                     type="number"
                     min="0"
-                    value={updateForm.price}
-                    onChange={(e) => setUpdateForm({ ...updateForm, price: parseFloat(e.target.value) || 0 })}
+                    value={updateForm.price !== undefined ? updateForm.price : (selectedService?.price || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setUpdateForm({ ...updateForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setUpdateForm({ ...updateForm, price: value });
+                    }}
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="update-specialization">Specialization</Label>
-                <Select
-                  value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setUpdateForm({ ...updateForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="update-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="update-specialization">Specialization</Label>
+                  <Select
+                    value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setUpdateForm({ ...updateForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="update-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="update-displayOrder">Display Order</Label>
+                  <Input
+                    id="update-displayOrder"
+                    type="number"
+                    min="1"
+                    value={updateForm.displayOrder || selectedService?.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setUpdateForm({ ...updateForm, displayOrder: value });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Số càng nhỏ hiển thị càng trước.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -1139,6 +1278,8 @@ export default function BookingServicesPage() {
                       {getSpecializationName(selectedService.specializationId)}
                     </p>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Status</Label>
                     <Badge variant={selectedService.isActive ? 'default' : 'secondary'}>
@@ -1175,4 +1316,3 @@ export default function BookingServicesPage() {
     </ProtectedRoute>
   );
 }
-

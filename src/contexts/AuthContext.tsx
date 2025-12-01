@@ -5,7 +5,7 @@ import { User, AuthState, LoginRequest } from '@/types/auth';
 import { apiClient } from '@/lib/api';
 import { getToken, getUserData, setUserData, setToken, clearAuthData } from '@/lib/cookies';
 import { getBasePathByBaseRole } from '@/constants/navigationConfig';
-import { getEmployeeIdFromToken } from '@/lib/utils';
+import { getEmployeeIdFromToken, getEmployeeCodeFromToken } from '@/lib/utils';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
@@ -62,10 +62,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const employeeId = getEmployeeIdFromToken(token);
             if (employeeId) {
               userData.employeeId = employeeId;
-              // Update localStorage with employeeId
-              setUserData(userData);
               console.log('✅ Extracted employeeId from token:', employeeId);
             }
+          }
+          
+          // Extract employeeCode from token if not already in userData
+          if (!userData.employeeCode && token) {
+            const employeeCode = getEmployeeCodeFromToken(token);
+            if (employeeCode) {
+              userData.employeeCode = employeeCode;
+              console.log('✅ Extracted employeeCode from token:', employeeCode);
+            }
+          }
+          
+          // Update localStorage if we extracted new data
+          if ((!userData.employeeId && getEmployeeIdFromToken(token)) || 
+              (!userData.employeeCode && getEmployeeCodeFromToken(token))) {
+            setUserData(userData);
           }
           
           // Token exists, set authenticated
@@ -222,8 +235,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Response now directly contains the data (no statusCode wrapper)
       if (response.token) {
-        // Extract employeeId from JWT token
+        // Extract employeeId and employeeCode from JWT token
         const employeeId = getEmployeeIdFromToken(response.token);
+        const employeeCode = getEmployeeCodeFromToken(response.token);
         
         const userData: User = {
           username: response.username,
@@ -238,6 +252,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           tokenExpiresAt: response.tokenExpiresAt,
           refreshTokenExpiresAt: response.refreshTokenExpiresAt,
           employeeId: employeeId || undefined, // Add employeeId from token
+          employeeCode: employeeCode || undefined, // Add employeeCode from token
         };
 
         console.log('👤 User data prepared:', userData);
