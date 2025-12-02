@@ -15,8 +15,8 @@ import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 
 // Import types and services for Part-Time Registration
-import { 
-  DayOfWeek 
+import {
+  DayOfWeek
 } from '@/types/shiftRegistration';
 import { PartTimeSlot, PartTimeSlotDetailResponse } from '@/types/workSlot';
 import { workSlotService } from '@/services/workSlotService';
@@ -52,7 +52,7 @@ const DAY_LABELS: { [key: number]: string } = {
 const getDayOfWeekLabel = (day: DayOfWeek): string => {
   const dayMap = {
     [DayOfWeek.MONDAY]: 'T2',
-    [DayOfWeek.TUESDAY]: 'T3', 
+    [DayOfWeek.TUESDAY]: 'T3',
     [DayOfWeek.WEDNESDAY]: 'T4',
     [DayOfWeek.THURSDAY]: 'T5',
     [DayOfWeek.FRIDAY]: 'T6',
@@ -65,14 +65,14 @@ const getDayOfWeekLabel = (day: DayOfWeek): string => {
 // ==================== MAIN COMPONENT ====================
 export default function RegistrationsPage() {
   const { user, hasPermission } = useAuth();
-  
+
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>('part-time');
 
   // ==================== PART-TIME SLOTS STATE ====================
   const [partTimeSlots, setPartTimeSlots] = useState<PartTimeSlot[]>([]);
   const [partTimeLoading, setPartTimeLoading] = useState(true);
-  
+
   // Slot detail modal state
   const [showSlotDetailsModal, setShowSlotDetailsModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<PartTimeSlot | null>(null);
@@ -177,7 +177,7 @@ export default function RegistrationsPage() {
   const fetchDropdownData = async () => {
     try {
       setLoadingDropdowns(true);
-      
+
       // Fetch active work shifts
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
@@ -189,9 +189,9 @@ export default function RegistrationsPage() {
         size: 1000,
         isActive: true
       });
-      
+
       // Filter to only employees who can use fixed registration
-      const eligibleEmployees = (employeesResponse.content || []).filter(emp => 
+      const eligibleEmployees = (employeesResponse.content || []).filter(emp =>
         canUseFixedRegistration(emp.employeeType as EmploymentType)
       );
       setEmployees(eligibleEmployees);
@@ -270,7 +270,7 @@ export default function RegistrationsPage() {
       console.error('Failed to create fixed registration:', error);
 
       let errorMessage = 'Failed to create fixed shift registration';
-      
+
       if (error.errorCode === FixedRegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
         errorMessage = 'Employee type PART_TIME_FLEX cannot use fixed shift registration. Use part-time registration instead.';
       } else if (error.errorCode === FixedRegistrationErrorCode.DUPLICATE_FIXED_SHIFT_REGISTRATION) {
@@ -342,8 +342,8 @@ export default function RegistrationsPage() {
 
       const payload: UpdateFixedRegistrationRequest = {
         ...(fixedEditFormData.workShiftId && { workShiftId: fixedEditFormData.workShiftId }),
-        ...(fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0 && { 
-          daysOfWeek: fixedEditFormData.daysOfWeek.sort((a, b) => a - b) 
+        ...(fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0 && {
+          daysOfWeek: fixedEditFormData.daysOfWeek.sort((a, b) => a - b)
         }),
         ...(fixedEditFormData.effectiveFrom && { effectiveFrom: fixedEditFormData.effectiveFrom }),
         effectiveTo: fixedEditFormData.effectiveTo !== undefined ? fixedEditFormData.effectiveTo : undefined
@@ -451,12 +451,12 @@ export default function RegistrationsPage() {
             <p className="text-gray-600 mt-1">Manage part-time and fixed shift registrations</p>
           </div>
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={() => {
                 if (activeTab === 'part-time') fetchPartTimeSlots();
                 else fetchFixedRegistrations();
-              }} 
-              variant="outline" 
+              }}
+              variant="outline"
               className="flex items-center gap-2"
             >
               <RotateCcw className="h-4 w-4" />
@@ -785,7 +785,7 @@ export default function RegistrationsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Slot Details</h2>
-              
+
               {loadingSlotDetail ? (
                 <div className="flex justify-center items-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -905,7 +905,7 @@ export default function RegistrationsPage() {
               <h2 className="text-xl font-bold mb-4">Create Fixed Shift Registration</h2>
               <form onSubmit={handleFixedCreate} className="space-y-4">
                 <div>
-                  <Label htmlFor="createEmployee">Employee *</Label>
+                  <Label htmlFor="createEmployee">Employee <span className="text-red-500">*</span></Label>
                   <select
                     id="createEmployee"
                     value={fixedCreateFormData.employeeId}
@@ -933,7 +933,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="createWorkShift">Work Shift *</Label>
+                  <Label htmlFor="createWorkShift">Work Shift <span className="text-red-500">*</span></Label>
                   <select
                     id="createWorkShift"
                     value={fixedCreateFormData.workShiftId}
@@ -954,7 +954,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div>
-                  <Label>Days of Week *</Label>
+                  <Label>Days of Week <span className="text-red-500">*</span></Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {[1, 2, 3, 4, 5, 6, 7].map(day => (
                       <label key={day} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
@@ -983,7 +983,7 @@ export default function RegistrationsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="createEffectiveFrom">Effective From *</Label>
+                    <Label htmlFor="createEffectiveFrom">Effective From <span className="text-red-500">*</span></Label>
                     <Input
                       id="createEffectiveFrom"
                       type="date"

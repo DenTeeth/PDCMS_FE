@@ -98,12 +98,6 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faFileAlt,
     },
     {
-      name: 'Appointments',
-      href: '/admin/appointments',
-      icon: faCalendarAlt,
-      requiredPermissionGroup: 'APPOINTMENT',
-    },
-    {
       name: 'System Configuration',
       icon: faCog,
       hasSubmenu: true,
