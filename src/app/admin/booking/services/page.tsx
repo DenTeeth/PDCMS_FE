@@ -334,8 +334,8 @@ export default function BookingServicesPage() {
       }
 
       // Ensure displayOrder is always a positive number (backend requires it)
-      const finalDisplayOrder = createForm.displayOrder && createForm.displayOrder > 0 
-        ? createForm.displayOrder 
+      const finalDisplayOrder = createForm.displayOrder && createForm.displayOrder > 0
+        ? createForm.displayOrder
         : 1;
 
       const requestData: CreateServiceRequest = {
@@ -351,7 +351,7 @@ export default function BookingServicesPage() {
       };
 
       console.log('Creating service with data:', JSON.stringify(requestData, null, 2));
-      
+
       await ServiceService.createService(requestData);
 
       // Reset form
@@ -377,7 +377,7 @@ export default function BookingServicesPage() {
     } catch (error: any) {
       console.error('Error creating service:', error);
       console.error('Error response:', error.response?.data);
-      
+
       // Show more detailed error message
       if (error.response?.status === 500) {
         const errorMessage = error.response?.data?.message || 'Lỗi server. Vui lòng kiểm tra lại dữ liệu hoặc liên hệ admin.';
@@ -445,8 +445,8 @@ export default function BookingServicesPage() {
       }
 
       // Ensure displayOrder is always a positive number (backend requires it)
-      const finalDisplayOrder = updateForm.displayOrder && updateForm.displayOrder > 0 
-        ? updateForm.displayOrder 
+      const finalDisplayOrder = updateForm.displayOrder && updateForm.displayOrder > 0
+        ? updateForm.displayOrder
         : (selectedService?.displayOrder || 1);
 
       const requestData: UpdateServiceRequest = {
@@ -569,7 +569,7 @@ export default function BookingServicesPage() {
   }, []);
 
   // ==================== CATEGORY HANDLERS ====================
-  
+
   // Columns definition
   const columns: OptimizedTableColumn<Service>[] = useMemo(() => [
     {
@@ -748,8 +748,8 @@ export default function BookingServicesPage() {
                             setIsSortDropdownOpen(false);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
-                              ? 'bg-[#8b5fbf] text-white'
-                              : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            ? 'bg-[#8b5fbf] text-white'
+                            : 'text-gray-700 hover:bg-[#f3f0ff]'
                             }`}
                         >
                           {option.label}
@@ -765,8 +765,8 @@ export default function BookingServicesPage() {
                 <button
                   onClick={() => setSortDirection('ASC')}
                   className={`p-1.5 rounded transition-all ${sortDirection === 'ASC'
-                      ? 'bg-[#8b5fbf] text-white shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                     }`}
                   title="Tăng dần"
                 >
@@ -775,8 +775,8 @@ export default function BookingServicesPage() {
                 <button
                   onClick={() => setSortDirection('DESC')}
                   className={`p-1.5 rounded transition-all ${sortDirection === 'DESC'
-                      ? 'bg-[#8b5fbf] text-white shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                     }`}
                   title="Giảm dần"
                 >
@@ -891,7 +891,7 @@ export default function BookingServicesPage() {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="create-serviceCode">Service Code *</Label>
+                  <Label htmlFor="create-serviceCode">Service Code <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceCode"
                     value={createForm.serviceCode}
@@ -900,7 +900,7 @@ export default function BookingServicesPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-serviceName">Service Name *</Label>
+                  <Label htmlFor="create-serviceName">Service Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceName"
                     value={createForm.serviceName}
@@ -920,7 +920,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="create-duration">Duration (minutes) *</Label>
+                  <Label htmlFor="create-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-duration"
                     type="number"
@@ -937,7 +937,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-buffer">Buffer (minutes) *</Label>
+                  <Label htmlFor="create-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-buffer"
                     type="number"
@@ -954,7 +954,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-price">Price (VND) *</Label>
+                  <Label htmlFor="create-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-price"
                     type="number"
@@ -1060,7 +1060,7 @@ export default function BookingServicesPage() {
                 <p className="text-xs text-muted-foreground mt-1">Service code cannot be changed</p>
               </div>
               <div>
-                <Label htmlFor="update-serviceName">Service Name *</Label>
+                <Label htmlFor="update-serviceName">Service Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-serviceName"
                   value={updateForm.serviceName}
@@ -1079,7 +1079,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="update-duration">Duration (minutes) *</Label>
+                  <Label htmlFor="update-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-duration"
                     type="number"
@@ -1096,7 +1096,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-buffer">Buffer (minutes) *</Label>
+                  <Label htmlFor="update-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-buffer"
                     type="number"
@@ -1113,7 +1113,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-price">Price (VND) *</Label>
+                  <Label htmlFor="update-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-price"
                     type="number"
