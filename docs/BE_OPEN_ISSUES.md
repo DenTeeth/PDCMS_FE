@@ -3,9 +3,11 @@
 > ⚠️ Only **open** issues are listed below. All resolved issues have been removed for clarity.
 > 
 > **Note (2025-01-30)**: 
-> - ✅ **Resolved Issues:** #15, #16, #17, #20, #21, #22, #18, #19, #23, #24 (đã được BE xác nhận resolved)
+> - ✅ **Resolved Issues:** #15, #16, #17, #20, #21, #22, #18, #19, #23, #24, #25, #26 (đã được BE xác nhận resolved)
 > - 📋 **BE Response:** Xem file `docs/api-guide/warehouse/FE_ISSUES_RESOLUTION_2025_11_29.md` để biết chi tiết
 > - **Issue #24:** Đã resolved - FE đã được update để dùng đúng endpoint `/api/v1/inventory/summary` thay vì `/api/v1/warehouse/summary`
+> - **Issue #25:** Đã resolved - Seed data đã có `APPROVE_TRANSACTION` permission cho `ROLE_ADMIN`, FE đã thêm button "Gửi duyệt" để submit transaction từ DRAFT → PENDING_APPROVAL
+> - **Issue #26:** Đã resolved - BE đã fix database constraints và error handling. FE test script đã fetch units dynamically (không có hardcoded IDs)
 
 ---
 
@@ -13,336 +15,363 @@
 
 | # | Issue | Status | Priority | Reported Date |
 |---|-------|--------|----------|---------------|
-| #25 | Admin không thấy nút Approve/Reject cho phiếu nhập kho | 🔴 **OPEN** | **HIGH** | 2025-01-30 |
-| #26 | API 6.12-POST - Batch Unit Conversion trả về 400 Bad Request | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
+| #27 | API 6.6 - Transaction List không trả về `totalValue` (Giá trị) | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
+| #28 | API - Transaction Stats endpoint trả về 400 INVALID_PARAMETER_TYPE | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
 
 ---
 
 ## 🔴 Open Issues
 
-### Issue #25: Admin không thấy nút Approve/Reject cho phiếu nhập kho
-
-**Status:** 🔴 **OPEN**  
-**Priority:** **HIGH**  
-**Reported Date:** 2025-01-30  
-**Endpoint:** `POST /api/v1/warehouse/transactions/{id}/approve`, `POST /api/v1/warehouse/transactions/{id}/reject`
-
-#### Problem Description
-
-Khi đăng nhập bằng tài khoản admin, không thấy nút "Duyệt" và "Từ chối" trong modal chi tiết phiếu nhập kho (`StorageDetailModal`), mặc dù BE cho phép `ROLE_ADMIN` có quyền approve/reject transactions.
-
-#### Expected Behavior
-
-Theo BE code (`TransactionHistoryController.java`):
-- Line 193: `@PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('APPROVE_TRANSACTION')")`
-- Admin role (`ROLE_ADMIN`) nên có quyền approve/reject transactions
-
-FE logic (`StorageDetailModal.tsx`):
-- Line 67-68: `const isAdmin = useRole('ROLE_ADMIN'); const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');`
-- Line 644: Button chỉ hiển thị khi `transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission`
-
-#### Possible Root Causes
-
-1. **Transaction Status Issue:**
-   - Transaction status hiện tại là `DRAFT` (Nháp) thay vì `PENDING_APPROVAL` (Chờ duyệt)
-   - Nút approve/reject chỉ hiển thị khi status = `PENDING_APPROVAL`
-   - **Action Required:** Cần submit transaction để chuyển từ `DRAFT` → `PENDING_APPROVAL`
-
-2. **Admin Role Not Recognized:**
-   - FE check `useRole('ROLE_ADMIN')` nhưng BE có thể trả về role name khác (ví dụ: `ADMIN` thay vì `ROLE_ADMIN`)
-   - **Action Required:** Kiểm tra response từ `/api/v1/auth/login` xem `roles` array có chứa `ROLE_ADMIN` không
-
-3. **Missing APPROVE_TRANSACTION Permission:**
-   - Admin có thể không có `APPROVE_TRANSACTION` trong `permissions` array
-   - **Action Required:** Kiểm tra seed data xem admin có được gán quyền `APPROVE_TRANSACTION` không
-
-4. **Permission Check Logic:**
-   - FE check: `isAdmin || usePermission('APPROVE_TRANSACTION')`
-   - Nếu cả hai đều false, button sẽ không hiển thị
-
-#### FE Debug Logging
-
-FE đã thêm debug logging trong `StorageDetailModal.tsx` để track:
-- `isAdmin`: Kết quả check `ROLE_ADMIN`
-- `hasApprovePermission`: Kết quả check permission
-- `userRoles`: Danh sách roles của user
-- `userPermissions`: Danh sách permissions của user
-- `transactionStatus`: Status hiện tại của transaction
-- `canShowApproveButton`: Điều kiện hiển thị button
-
-**Check browser console để xem debug logs khi mở modal chi tiết phiếu.**
-
-#### Investigation Steps
-
-1. **Kiểm tra Transaction Status:**
-   - Mở modal chi tiết phiếu
-   - Xem console log để check `transactionStatus`
-   - Nếu status = `DRAFT`, cần submit transaction để chuyển sang `PENDING_APPROVAL`
-
-2. **Kiểm tra User Roles & Permissions:**
-   - Xem console log để check `userRoles` và `userPermissions`
-   - Verify xem có `ROLE_ADMIN` trong `userRoles` không
-   - Verify xem có `APPROVE_TRANSACTION` trong `userPermissions` không
-
-3. **Kiểm tra BE Seed Data:**
-   - Verify xem admin user có được gán `ROLE_ADMIN` role không
-   - Verify xem admin user có được gán `APPROVE_TRANSACTION` permission không
-   - Verify xem role `ROLE_ADMIN` có được map với permission `APPROVE_TRANSACTION` không
-
-#### Related BE Files
-
-- `files_from_BE/warehouse/controller/TransactionHistoryController.java:193, 225`
-- `files_from_BE/warehouse/service/TransactionHistoryService.java:453-529`
-- Seed data files (cần check role và permission mapping)
-
-#### Related FE Files
-
-- `src/app/admin/warehouse/components/StorageDetailModal.tsx:67-68, 644`
-- `src/hooks/usePermissions.ts:35-38`
-- `src/contexts/AuthContext.tsx:330-333`
-
-#### Suggested Fixes
-
-1. **BE: Ensure Admin Role Has Approve Permission:**
-   - Verify seed data: Admin role should have `APPROVE_TRANSACTION` permission
-   - Or ensure `ROLE_ADMIN` is recognized by Spring Security `@PreAuthorize`
-
-2. **BE: Verify Role Name Format:**
-   - Ensure login response returns `ROLE_ADMIN` (not `ADMIN`) in `roles` array
-   - Or update FE to check for both `ROLE_ADMIN` and `ADMIN`
-
-3. **FE: Add Fallback Role Check:**
-   - Check for both `ROLE_ADMIN` and `ADMIN` roles
-   - Or check `baseRole === 'admin'` as fallback
-
-4. **Documentation:**
-   - Document required permissions for approve/reject workflow
-   - Document how to submit transaction from DRAFT to PENDING_APPROVAL
-
 ---
 
-### Issue #26: API 6.12-POST - Batch Unit Conversion trả về 400 Bad Request
+### Issue #27: API 6.6 - Transaction List không trả về `totalValue` (Giá trị)
 
 **Status:** 🔴 **OPEN**  
 **Priority:** **MEDIUM**  
 **Reported Date:** 2025-01-30  
-**Endpoint:** `POST /api/v1/warehouse/items/units/convert`
+**Endpoint:** `GET /api/v1/warehouse/transactions`
 
 #### Problem Description
 
-API 6.12-POST (Batch Unit Conversion) trả về `400 Bad Request` với error message generic `"error": "error.bad_request"` không có chi tiết validation error, mặc dù:
-- Request structure đúng theo test guide (`ITEM_UNIT_CONVERSION_API_TEST_GUIDE.md`)
-- Units đã được verify belong to the same item (via API 6.11)
-- GET endpoint (API 6.12-GET) hoạt động tốt với cùng unit IDs
-- Request payload structure khớp với test guide
+API 6.6 (Transaction List) không trả về field `totalValue` trong response, khiến FE không thể hiển thị giá trị của các phiếu nhập/xuất kho trong bảng danh sách. Tất cả transactions đều hiển thị giá trị mặc định hoặc không có giá trị.
 
 #### Expected Behavior
 
-Theo test guide (`docs/api-guide/warehouse/ITEM_UNIT_CONVERSION_API_TEST_GUIDE.md`):
-- Endpoint: `POST /api/v1/warehouse/items/units/convert`
-- Request structure:
-  ```json
-  {
-    "conversions": [
-      {
-        "itemMasterId": 1,
-        "fromUnitId": 60,
-        "toUnitId": 58,
-        "quantity": 2.5
-      }
-    ],
-    "roundingMode": "HALF_UP"
-  }
-  ```
-- Expected response: `200 OK` với conversion results
+Theo API 6.6 specification:
+- Response nên bao gồm field `totalValue` (hoặc `total_value`) cho mỗi transaction
+- `totalValue` = tổng giá trị của tất cả items trong transaction
+- Công thức: `sum(item.quantity * item.unitPrice)` cho mỗi item
 
 #### Actual Behavior
 
-- **Status Code:** `400 Bad Request`
-- **Error Response:**
-  ```json
-  {
-    "statusCode": 400,
-    "error": "error.bad_request",
-    "message": "Bad Request",
-    "data": null
-  }
-  ```
-- **Issue:** Error message quá generic, không có chi tiết validation error nào
+- **Status Code:** `200 OK`
+- **Response Structure:** Transaction list được trả về đúng
+- **Missing Field:** `totalValue` không có trong response
+- **FE Impact:** Cột "Giá trị" trong bảng hiển thị "-" hoặc giá trị mặc định (10.000 ₫)
 
-#### Test Evidence
+#### FE Implementation
 
-**Test Script:** `scripts/test-warehouse-apis.ts`
+**File:** `src/services/storageService.ts`
 
-**Test Steps:**
-1. ✅ Get item units via API 6.11: `GET /warehouse/items/1/units`
-   - Found 9 units for item 1 (CON-GLOVE-01)
-   - Base Unit: Chiec (ID: 58)
-   - Selected: Hop (ID: 60, order: 1) → Chiec (ID: 58, base: true)
+**Mapping Function:** `mapTransactionSummary()`
+- Line 105: `totalValue: item.totalValue ?? item.total_value`
+- FE đã thử nhiều field names: `totalValue`, `total_value`, `totalAmount`, `total_amount`, `amount`, `value`
+- FE đã implement fallback: Tính toán từ `items` array nếu có
 
-2. ✅ Verify units belong to item:
-   - Verified units belong to item 1: Hop → Chiec
-
-3. ✅ GET endpoint works:
-   - `GET /warehouse/items/units/convert?fromUnitId=60&toUnitId=58&quantity=10`
-   - Status: `200 OK`
-   - Result: `10 → 2000` (correct conversion)
-
-4. ❌ POST endpoint fails:
-   - `POST /warehouse/items/units/convert`
-   - Request body:
-     ```json
-     {
-       "conversions": [
-         {
-           "itemMasterId": 1,
-           "fromUnitId": 60,
-           "toUnitId": 58,
-           "quantity": 2.5
-         }
-       ],
-       "roundingMode": "HALF_UP"
-     }
-     ```
-   - Status: `400 Bad Request`
-   - Error: Generic "error.bad_request" without details
-
-#### BE Code Analysis
-
-**Controller:** `ItemMasterController.java:252-318`
-- Endpoint: `POST /api/v1/warehouse/items/units/convert`
-- Uses `@Valid` annotation on `ConversionRequest`
-- Authorization: `ADMIN`, `VIEW_ITEMS`, `VIEW_WAREHOUSE`, `MANAGE_WAREHOUSE`
-
-**Request DTO:** `ConversionRequest.java`
-- `@NotEmpty` on `conversions` list
-- `@Valid` on nested `ConversionItemRequest` objects
-- `roundingMode` optional (default: "HALF_UP")
-
-**Item Request DTO:** `ConversionItemRequest.java`
-- `@NotNull`, `@Positive` on `itemMasterId` (Long)
-- `@NotNull`, `@Positive` on `fromUnitId` (Long)
-- `@NotNull`, `@Positive` on `toUnitId` (Long)
-- `@NotNull`, `@Positive` on `quantity` (Double)
-
-**Service Logic:** `ItemMasterService.java:612-637`
-- Line 620-632: Loop through conversions, catch exceptions
-- Line 626-631: Catch exception and throw `ResponseStatusException` with message
-- Line 642-676: `convertSingleUnit()` validates:
-  1. Item exists (404 if not found)
-  2. From unit exists and belongs to item (400 if mismatch)
-  3. To unit exists and belongs to item (400 if mismatch)
-  4. Conversion rates > 0 (400 if invalid)
-  5. Base unit exists (500 if missing)
+**Display Logic:** `src/app/admin/warehouse/storage/page.tsx`
+- Line 772-774: Hiển thị `totalValue` nếu có, nếu không hiển thị "-"
+- Code: `{txn.totalValue !== null && txn.totalValue !== undefined ? ${txn.totalValue.toLocaleString('vi-VN')} ₫ : <span className="text-gray-400">-</span>}`
 
 #### Possible Root Causes
 
-1. **Validation Error Handling:**
-   - `@Valid` validation errors (MethodArgumentNotValidException) may not be handled properly
-   - Generic error response suggests validation errors are caught but message is lost
-   - **Action Required:** Check global exception handler for `MethodArgumentNotValidException`
+1. **BE Response Missing Field:**
+   - BE không tính toán và trả về `totalValue` trong list response
+   - BE có thể chỉ trả về `totalValue` trong detail response (API 6.7), không có trong list response (API 6.6)
+   - **Action Required:** Verify BE response structure cho API 6.6
 
-2. **Unit Ownership Validation:**
-   - Line 658-662: Checks `fromUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())`
-   - Line 671-675: Checks `toUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())`
-   - **Issue:** If units don't belong to item, should return specific error message
-   - **Test Evidence:** GET endpoint works with same unit IDs, suggesting units DO belong to item
-   - **Action Required:** Verify unit ownership check logic
+2. **BE Field Name Mismatch:**
+   - BE có thể trả về field với tên khác (ví dụ: `totalAmount`, `total_amount`, `value`)
+   - **Action Required:** Check BE DTO response class để xem field name chính xác
 
-3. **@Positive Validation for Double:**
-   - `@Positive` on `Double quantity` may have issues with decimal values
-   - Test uses `quantity: 2.5` which should be valid
-   - **Action Required:** Verify `@Positive` works correctly with `Double` type
+3. **BE Performance Optimization:**
+   - BE có thể không trả về `totalValue` trong list để tối ưu performance
+   - BE có thể không trả về `items` array trong list response
+   - **Action Required:** Verify xem BE có trả về `items` array trong list response không
 
-4. **Missing Error Details:**
-   - BE trả về generic "error.bad_request" thay vì specific validation errors
-   - Exception messages from service (line 630) may not be included in response
-   - **Action Required:** Check global exception handler to include validation error details
+4. **BE Calculation Missing:**
+   - BE có thể chưa tính toán `totalValue` khi tạo transaction
+   - **Action Required:** Verify xem BE có tính toán và lưu `totalValue` vào database không
 
 #### Investigation Steps
 
-1. **Verify Request Structure:**
-   - Check BE DTO (`BatchConversionRequest` hoặc tương tự)
-   - Verify field names match (camelCase: `itemMasterId`, `fromUnitId`, `toUnitId`, `quantity`)
-   - Verify `roundingMode` enum values
+1. **✅ Check FE Mapping (COMPLETED):**
+   - ✅ FE đã thử nhiều field names: `totalValue`, `total_value`, `totalAmount`, `total_amount`, `amount`, `value`
+   - ✅ FE đã implement fallback: Tính toán từ `items` array nếu có
+   - ✅ FE đã thêm debug logging để track BE response
 
-2. **Check BE Validation:**
-   - Review validation annotations (`@Valid`, `@NotNull`, `@Min`, etc.)
-   - Check if units belong to item validation
-   - Check if conversion rate exists between units
+2. **Check BE Response:**
+   - Verify response từ `GET /api/v1/warehouse/transactions` có field `totalValue` không
+   - Check xem BE có trả về `items` array trong list response không
+   - Verify field name chính xác trong BE DTO
 
-3. **Compare GET vs POST:**
-   - GET endpoint works with same unit IDs
-   - POST endpoint fails with same unit IDs
-   - Check if validation logic differs between GET and POST
+3. **Check BE DTO:**
+   - Review `TransactionSummaryResponse` hoặc tương tự
+   - Verify xem có field `totalValue` hoặc tương tự không
+   - Check xem field có được map từ entity không
 
-4. **Test with Test Guide Example:**
-   - Try with exact unit IDs from test guide (fromUnitId: 3, toUnitId: 1 for item 1)
-   - Verify if issue is specific to certain unit IDs or general
+4. **Check BE Service:**
+   - Verify xem service có tính toán `totalValue` khi query transactions không
+   - Check xem có logic để populate `totalValue` trong list response không
 
 #### Related BE Files (Expected)
 
-- Controller: `ItemMasterController.java` hoặc `ItemUnitController.java`
-  - Method: `@PostMapping("/units/convert")` hoặc tương tự
-- Service: `ItemUnitService.java` hoặc tương tự
-  - Method: `batchConvert()` hoặc `convertUnits()`
-- DTO: `BatchConversionRequest.java` hoặc tương tự
-  - Fields: `conversions[]`, `roundingMode`
+- Controller: `TransactionHistoryController.java`
+  - Method: `GET /api/v1/warehouse/transactions` (API 6.6)
+- Service: `TransactionHistoryService.java`
+  - Method: `getAllTransactions()` hoặc tương tự
+- DTO: `TransactionSummaryResponse.java` hoặc tương tự
+  - Expected field: `totalValue` hoặc `total_value`
 
 #### Related FE Files
 
-- `src/services/itemUnitService.ts:74-101` - `convertUnits()` method
-- `src/types/warehouse.ts:459-467` - `ConversionRequest` interface
-- `scripts/test-warehouse-apis.ts:1028-1043` - Test script
+- `src/services/storageService.ts:85-115` - `mapTransactionSummary()` function
+- `src/app/admin/warehouse/storage/page.tsx:770-776` - Display logic for `totalValue`
 
 #### Suggested Fixes
 
-1. **BE: Improve Error Response:**
-   - Return specific validation errors instead of generic "error.bad_request"
-   - Include field-level validation errors (e.g., "fromUnitId: Unit not found", "quantity: Must be positive")
-   - Use `@Valid` with proper error handling
+1. **BE: Add `totalValue` to List Response:**
+   - Tính toán `totalValue` từ items khi query transactions
+   - Thêm field `totalValue` vào `TransactionSummaryResponse` DTO
+   - Map field từ entity hoặc tính toán trong service
 
-2. **BE: Verify Validation Logic:**
-   - Ensure POST endpoint validation matches GET endpoint logic
-   - Verify units belong to item validation
-   - Check conversion rate calculation
+2. **BE: Include `items` Array in List Response (if needed):**
+   - Nếu FE cần tính toán từ items, BE nên trả về `items` array trong list response
+   - Hoặc BE nên tính toán và trả về `totalValue` trực tiếp
 
-3. **BE: Update Test Guide:**
-   - If request structure changed, update test guide
-   - If unit IDs in test guide are incorrect, update with correct IDs
+3. **BE: Verify Field Name:**
+   - Đảm bảo field name consistent (camelCase: `totalValue` hoặc snake_case: `total_value`)
+   - Document field name trong API specification
 
 4. **Documentation:**
-   - Document exact request structure required
-   - Document validation rules and error codes
-   - Provide working example with actual unit IDs from seed data
+   - Update API 6.6 specification để include `totalValue` field
+   - Document calculation formula: `sum(item.quantity * item.unitPrice)`
 
-#### Test Request (for BE team to reproduce)
+#### Test Request (for BE team to verify)
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversions": [
-      {
-        "itemMasterId": 1,
-        "fromUnitId": 60,
-        "toUnitId": 58,
-        "quantity": 2.5
-      }
-    ],
-    "roundingMode": "HALF_UP"
-  }'
+curl -X GET "http://localhost:8080/api/v1/warehouse/transactions?page=0&size=10" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Expected:** `200 OK` with conversion results  
-**Actual:** `400 Bad Request` with generic error
+**Expected Response:**
+```json
+{
+  "content": [
+    {
+      "transactionId": 1,
+      "transactionCode": "PN-20251130-001",
+      "transactionType": "IMPORT",
+      "totalValue": 1000000,  // ← Field này cần có
+      ...
+    }
+  ],
+  ...
+}
+```
+
+**Actual Response:** `totalValue` field missing hoặc `null`
 
 ---
 
 **Last Updated:** 2025-01-30  
 **Total Open Issues:** 2  
-**High Priority Issues:** 1  
-**Medium Priority Issues:** 1
+**High Priority Issues:** 0  
+**Medium Priority Issues:** 2 (Issue #27, #28)
 
 **For detailed BE response, see:** `docs/api-guide/warehouse/FE_ISSUES_RESOLUTION_2025_11_29.md`
+
+---
+
+## 📝 Verification Summary (2025-01-30)
+
+### Issue #25 - Admin Approve/Reject Permissions
+
+**✅ RESOLVED:**
+- `APPROVE_TRANSACTION` permission đã được tạo trong seed data
+- `ROLE_ADMIN` đã được gán TẤT CẢ permissions, bao gồm `APPROVE_TRANSACTION`
+- FE đã thêm button "Gửi duyệt" để submit transaction từ DRAFT → PENDING_APPROVAL
+- Buttons approve/reject hiển thị đúng khi transaction status = PENDING_APPROVAL và user có permission
+- **Status:** ✅ **RESOLVED** - Đã được fix và test thành công
+
+### Issue #26 - API 6.12-POST Batch Unit Conversion
+
+**✅ RESOLVED BY BE:**
+- **Root Cause:** Database có duplicate base units (4 copies per item) gây `NonUniqueResultException`
+- **BE Fixes:**
+  1. ✅ Database constraints: `UNIQUE (item_master_id, unit_name)` và `UNIQUE (item_master_id) WHERE is_base_unit = true`
+  2. ✅ Seed data fixed với proper `ON CONFLICT` handling
+  3. ✅ Error handling improved: Returns `404 UNIT_NOT_FOUND` for invalid unit IDs
+- **Status:** ✅ **RESOLVED** - API hoạt động đúng khi dùng valid unit IDs
+
+**FE Status:**
+- ✅ Test script (`scripts/test-warehouse-apis.ts`) đã fetch units dynamically (line 950-1008)
+- ✅ No hardcoded unit IDs found in test script
+- ✅ FE service code (`src/services/itemUnitService.ts`) không có hardcoded IDs
+- **Note:** FE code đã đúng, chỉ cần test lại với BE fixes
+
+### Issue #27 - API 6.6 Transaction List Missing `totalValue`
+
+**❌ FIELD MISSING IN BE RESPONSE:**
+- BE không trả về field `totalValue` trong transaction list response
+- FE đã thử nhiều field names nhưng không tìm thấy
+- **Status:** 🔴 **OPEN** - Cần BE thêm field `totalValue` vào response
+
+### Issue #28 - Transaction Stats Endpoint 400 Error
+
+**❌ ENDPOINT ERROR:**
+- Endpoint `/warehouse/transactions/stats` trả về `400 INVALID_PARAMETER_TYPE`
+- Error message: "Invalid parameter type: id"
+- FE đang gửi `month` và `year` nhưng BE expect `id`
+- **Status:** 🔴 **OPEN** - Cần BE fix endpoint signature hoặc implement endpoint đúng
+
+**Action Required:**
+1. BE cần thêm field `totalValue` vào `TransactionSummaryResponse` DTO
+2. BE cần tính toán và trả về `totalValue` trong list response
+3. Hoặc BE cần trả về `items` array để FE có thể tính toán
+
+---
+
+### Issue #28: API - Transaction Stats endpoint trả về 400 INVALID_PARAMETER_TYPE
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-01-30  
+**Endpoint:** `GET /api/v1/warehouse/transactions/stats`
+
+#### Problem Description
+
+Endpoint `/warehouse/transactions/stats` trả về `400 Bad Request` với error `INVALID_PARAMETER_TYPE` và message "Invalid parameter type: id", mặc dù FE đang gửi parameters `month` và `year` (không phải `id`).
+
+#### Expected Behavior
+
+Theo documentation và FE implementation:
+- Endpoint: `GET /api/v1/warehouse/transactions/stats`
+- Parameters: `month` (optional, number), `year` (optional, number)
+- Expected response: Statistics về import/export transactions cho tháng/năm được chỉ định
+
+#### Actual Behavior
+
+- **Status Code:** `400 Bad Request`
+- **Error Code:** `INVALID_PARAMETER_TYPE`
+- **Error Message:** `"Invalid parameter type: id"`
+- **Request URL:** `/warehouse/transactions/stats?month=11&year=2025`
+- **Request Params:** `{ month: 11, year: 2025 }`
+- **Issue:** BE expect parameter `id` nhưng FE đang gửi `month` và `year`
+
+#### Error Response
+
+```json
+{
+  "statusCode": 400,
+  "error": "INVALID_PARAMETER_TYPE",
+  "message": "Invalid parameter type: id",
+  "data": null
+}
+```
+
+#### FE Implementation
+
+**File:** `src/services/storageService.ts:228-273`
+
+```typescript
+getStats: async (month?: number, year?: number): Promise<StorageStats> => {
+  try {
+    const response = await api.get(`${TRANSACTION_BASE}/stats`, {
+      params: { month, year },
+    });
+    // ... mapping logic ...
+  } catch (error: any) {
+    // Returns default values to prevent UI crash
+    return defaultStats;
+  }
+}
+```
+
+**Used In:**
+- `src/app/admin/warehouse/page.tsx:51-54` - Dashboard stats
+- `src/app/admin/warehouse/storage/page.tsx:111-112` - Storage page stats
+
+#### Possible Root Causes
+
+1. **Endpoint Signature Mismatch:**
+   - BE endpoint có thể expect `id` parameter thay vì `month`/`year`
+   - Endpoint có thể là `/warehouse/transactions/{id}/stats` thay vì `/warehouse/transactions/stats`
+   - **Action Required:** Verify endpoint signature trong BE controller
+
+2. **Endpoint Not Implemented:**
+   - Endpoint này có thể chưa được implement bởi BE
+   - Endpoint có thể đã bị remove hoặc deprecated
+   - **Action Required:** Check BE controller xem endpoint có tồn tại không
+
+3. **Parameter Validation Bug:**
+   - BE có validation bug, expect `id` nhưng endpoint không cần `id`
+   - **Action Required:** Check BE parameter validation logic
+
+4. **Wrong Endpoint Path:**
+   - Endpoint có thể ở path khác (ví dụ: `/warehouse/stats` hoặc `/inventory/stats`)
+   - **Action Required:** Verify correct endpoint path trong BE
+
+#### Investigation Steps
+
+1. **Check BE Controller:**
+   - Verify endpoint `GET /warehouse/transactions/stats` có tồn tại không
+   - Check parameter annotations (`@RequestParam`, `@PathVariable`, etc.)
+   - Verify expected parameter names và types
+
+2. **Check BE Service:**
+   - Verify service method signature
+   - Check xem có logic để handle `month` và `year` parameters không
+
+3. **Check API Documentation:**
+   - Verify endpoint specification trong BE docs
+   - Check xem endpoint có được document đúng không
+
+4. **Alternative Solution:**
+   - Nếu endpoint không tồn tại, FE có thể tính toán stats từ transaction list
+   - Hoặc BE có thể implement endpoint mới với đúng signature
+
+#### Related BE Files (Expected)
+
+- Controller: `TransactionHistoryController.java`
+  - Method: `GET /api/v1/warehouse/transactions/stats`
+- Service: `TransactionHistoryService.java`
+  - Method: `getTransactionStats()` hoặc tương tự
+
+#### Related FE Files
+
+- `src/services/storageService.ts:228-273` - `getStats()` method
+- `src/app/admin/warehouse/page.tsx:51-54` - Dashboard stats query
+- `src/app/admin/warehouse/storage/page.tsx:111-112` - Storage page stats query
+
+#### Suggested Fixes
+
+1. **BE: Fix Endpoint Signature:**
+   - Update endpoint để accept `month` và `year` parameters
+   - Remove validation cho `id` parameter nếu không cần
+   - Hoặc document endpoint đúng signature nếu cần `id`
+
+2. **BE: Implement Endpoint (if missing):**
+   - Implement endpoint `/warehouse/transactions/stats` với `month`/`year` parameters
+   - Return statistics về import/export counts, growth percentages, etc.
+
+3. **FE: Workaround (temporary):**
+   - FE đã implement fallback: Return default values khi endpoint fail
+   - UI vẫn hoạt động bình thường, chỉ stats hiển thị 0
+
+#### Test Request (for BE team to verify)
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/warehouse/transactions/stats?month=11&year=2025" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Expected Response:**
+```json
+{
+  "monthlyImportCount": 10,
+  "monthlyExportCount": 5,
+  "importGrowthPercent": 15.5,
+  "exportGrowthPercent": -5.2,
+  "totalTransactionsCount": 15,
+  "expiredItemsCount": 0
+}
+```
+
+**Actual Response:** `400 INVALID_PARAMETER_TYPE` with message "Invalid parameter type: id"
+
+---
+
+**Last Updated:** 2025-01-30  
+**Total Open Issues:** 2  
+**High Priority Issues:** 0  
+**Medium Priority Issues:** 2 (Issue #27, #28)

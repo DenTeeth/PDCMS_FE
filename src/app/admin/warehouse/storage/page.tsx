@@ -49,8 +49,8 @@ type TransactionFilter = 'ALL' | 'IMPORT' | 'EXPORT';
 type ViewMode = 'transactions' | 'reports';
 
 export default function StorageInOutPage() {
-  // RBAC: Check VIEW_COST permission
-  const hasViewCost = usePermission('VIEW_COST');
+  // RBAC: Check VIEW_WAREHOUSE_COST permission (BE uses VIEW_WAREHOUSE_COST, not VIEW_COST)
+  const hasViewCost = usePermission('VIEW_WAREHOUSE_COST');
   
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('transactions');

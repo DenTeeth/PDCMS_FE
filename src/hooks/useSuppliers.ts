@@ -13,6 +13,8 @@ import {
   UpdateSupplierRequest,
   SupplierResponse,
   SupplierQueryParams,
+  SupplierFilterRequest,
+  SupplierPageResponse,
   PageResponse,
 } from '@/types/supplier';
 import { supplierService } from '@/services/supplierService';
@@ -22,13 +24,24 @@ import { supplierService } from '@/services/supplierService';
 // ============================================
 
 /**
- * Get all suppliers with pagination
+ * Get all suppliers with pagination (Basic endpoint)
  * Usage: const { data, isLoading, error } = useSuppliers({ page: 0, size: 10 })
  */
 export const useSuppliers = (params?: SupplierQueryParams) => {
   return useQuery<PageResponse<SupplierSummaryResponse>>({
     queryKey: ['suppliers', params],
     queryFn: () => supplierService.getAll(params),
+  });
+};
+
+/**
+ * API 6.13: Get suppliers with business metrics (Advanced endpoint)
+ * Usage: const { data, isLoading, error } = useSuppliersWithMetrics({ page: 0, size: 20, isBlacklisted: false })
+ */
+export const useSuppliersWithMetrics = (params?: SupplierFilterRequest) => {
+  return useQuery<SupplierPageResponse>({
+    queryKey: ['suppliersWithMetrics', params],
+    queryFn: () => supplierService.getSuppliersWithMetrics(params),
   });
 };
 
@@ -128,12 +141,13 @@ export const useDeleteSupplier = () => {
     },
     onError: (error: any) => {
       const errorCode = error.response?.data?.error;
+      const statusCode = error.response?.status;
       
-      // Special handling for supplier with transactions
-      if (errorCode === 'SUPPLIER_HAS_TRANSACTIONS') {
-        toast.error('Không thể xóa nhà cung cấp đã có lịch sử giao dịch!');
+      // Special handling for supplier with transactions (409 Conflict)
+      if (statusCode === 409 || errorCode === 'SUPPLIER_HAS_TRANSACTIONS') {
+        toast.error('Không thể xóa nhà cung cấp đã có lịch sử giao dịch. Vui lòng vô hiệu hóa thay vì xóa.');
       } else {
-        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi xóa!';
+        const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa!';
         toast.error(errorMessage);
       }
     },

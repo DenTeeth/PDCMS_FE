@@ -679,20 +679,6 @@ export default function PatientsPage() {
                     >
                       {patient.isActive ? 'Active' : 'Inactive'}
                     </Badge>
-                    {patient.hasAccount && patient.accountStatus && (
-                      <Badge
-                        variant="outline"
-                        className={
-                          patient.accountStatus === 'ACTIVE'
-                            ? 'bg-blue-100 text-blue-800 border-blue-300'
-                            : patient.accountStatus === 'PENDING_VERIFICATION'
-                            ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                            : 'bg-gray-100 text-gray-800 border-gray-300'
-                        }
-                      >
-                        {patient.accountStatus === 'PENDING_VERIFICATION' ? 'Pending Setup' : patient.accountStatus}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -838,37 +824,16 @@ export default function PatientsPage() {
                         {patient.email || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          {/* Patient Active Status */}
-                          <Badge
-                            variant={patient.isActive ? 'default' : 'secondary'}
-                            className={
-                              patient.isActive
-                                ? 'bg-green-100 text-green-700 w-fit'
-                                : 'bg-gray-100 text-gray-700 w-fit'
-                            }
-                          >
-                            {patient.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                          
-                          {/* Account Verification Status (if has account) */}
-                          {patient.hasAccount && patient.accountStatus && (
-                            <Badge
-                              variant={patient.accountStatus === 'ACTIVE' ? 'default' : 'secondary'}
-                              className={
-                                patient.accountStatus === 'ACTIVE'
-                                  ? 'bg-blue-100 text-blue-700 w-fit text-xs'
-                                  : patient.accountStatus === 'PENDING_VERIFICATION'
-                                  ? 'bg-yellow-100 text-yellow-700 w-fit text-xs'
-                                  : patient.accountStatus === 'LOCKED'
-                                  ? 'bg-red-100 text-red-700 w-fit text-xs'
-                                  : 'bg-gray-100 text-gray-700 w-fit text-xs'
-                              }
-                            >
-                              {patient.accountStatus === 'PENDING_VERIFICATION' ? '⏳ Email Pending' : patient.accountStatus}
-                            </Badge>
-                          )}
-                        </div>
+                        <Badge
+                          variant={patient.isActive ? 'default' : 'secondary'}
+                          className={
+                            patient.isActive
+                              ? 'bg-green-100 text-green-700 w-fit'
+                              : 'bg-gray-100 text-gray-700 w-fit'
+                          }
+                        >
+                          {patient.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex flex-col gap-1">
@@ -1027,18 +992,6 @@ export default function PatientsPage() {
             </CardHeader>
             <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto">
               <form onSubmit={handleCreatePatient} className="space-y-4">
-                {/* Password Setup Notice */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-                  <Mail className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium">Password Setup Email</p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      If email is provided, patient will receive a welcome email with a link to set up their password. 
-                      Username will be auto-generated from email if not provided.
-                    </p>
-                  </div>
-                </div>
-
                 {/* Account Information */}
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
@@ -1048,7 +1001,7 @@ export default function PatientsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="username">
-                        Username <span className="text-gray-500 text-xs">(Optional)</span>
+                        Username
                       </Label>
                       <Input
                         id="username"
@@ -1057,13 +1010,10 @@ export default function PatientsPage() {
                         onChange={(e) => setFormData({ ...formData, username: e.target.value || undefined })}
                         disabled={creating}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        If not provided, username will be auto-generated from email address
-                      </p>
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="email">
-                        Email <span className="text-red-500">*</span> <span className="text-gray-500 text-xs">(Required for account creation)</span>
+                        Email <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="email"
