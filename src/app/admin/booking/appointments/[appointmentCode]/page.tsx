@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/dialog';
 import { appointmentService } from '@/services/appointmentService';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
+import { clinicalRecordService } from '@/services/clinicalRecordService';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
@@ -61,8 +62,11 @@ import {
   TreatmentPlanDetailResponse,
   TreatmentPlanSummaryDTO,
 } from '@/types/treatmentPlan';
+import { ClinicalRecordResponse } from '@/types/clinicalRecord';
 import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
+import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
+import ClinicalRecordForm from '@/components/clinical-records/ClinicalRecordForm';
 import {
   ArrowLeft,
   Calendar,
@@ -231,6 +235,13 @@ export default function AdminAppointmentDetailPage() {
   const [hasTriedLoadingTreatmentPlan, setHasTriedLoadingTreatmentPlan] = useState(false); // Flag to prevent infinite API calls
   const [activeTab, setActiveTab] = useState<string>('details');
 
+  // Clinical Record state (lazy loading)
+  const [clinicalRecord, setClinicalRecord] = useState<ClinicalRecordResponse | null>(null);
+  const [loadingClinicalRecord, setLoadingClinicalRecord] = useState(false);
+  const [clinicalRecordError, setClinicalRecordError] = useState<string | null>(null);
+  const [hasTriedLoadingClinicalRecord, setHasTriedLoadingClinicalRecord] = useState(false);
+  const [isEditingClinicalRecord, setIsEditingClinicalRecord] = useState(false);
+
   // Permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
   const canUpdateStatus = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || false;
@@ -238,6 +249,15 @@ export default function AdminAppointmentDetailPage() {
   // Reschedule permission: can reschedule if has UPDATE_APPOINTMENT_STATUS or can create appointments
   const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || 
                          user?.permissions?.includes('CREATE_APPOINTMENT') || false;
+  // Clinical Record permissions
+  const canWriteClinicalRecord = user?.permissions?.includes('WRITE_CLINICAL_RECORD') || false;
+  
+  // Check if appointment status allows clinical record creation/editing
+  // BE requires: IN_PROGRESS or CHECKED_IN
+  const canCreateOrEditClinicalRecord = appointment && (
+    appointment.status === 'IN_PROGRESS' || 
+    appointment.status === 'CHECKED_IN'
+  );
 
   const actionItems = useMemo(() => {
     if (!appointment) {
@@ -400,6 +420,52 @@ export default function AdminAppointmentDetailPage() {
       }
     };
   }, [appointmentCode, canView, router]); // Removed handleError from dependencies to prevent loop
+
+  // Load clinical record when Clinical Record tab is activated (lazy loading)
+  const loadClinicalRecord = async () => {
+    if (!appointment?.appointmentId) {
+      setClinicalRecordError('Không tìm thấy thông tin lịch hẹn');
+      setHasTriedLoadingClinicalRecord(true);
+      return;
+    }
+
+    // Prevent multiple simultaneous calls
+    if (loadingClinicalRecord) {
+      return;
+    }
+
+    setLoadingClinicalRecord(true);
+    setClinicalRecordError(null);
+    setHasTriedLoadingClinicalRecord(true);
+
+    try {
+      const record = await clinicalRecordService.getByAppointmentId(appointment.appointmentId);
+      setClinicalRecord(record);
+      setIsEditingClinicalRecord(false);
+    } catch (error: any) {
+      // 404 is expected if no clinical record exists yet
+      // Check both error.status (from createApiError) and error.response?.status (from axios)
+      const status = error.status || error.response?.status;
+      if (status === 404) {
+        setClinicalRecord(null);
+        setClinicalRecordError(null); // No error, just no record yet
+        console.log('📋 [CLINICAL RECORD] No record found for appointment, showing create form');
+      } else {
+        console.error('Error loading clinical record:', error);
+        setClinicalRecordError(error.message || 'Không thể tải bệnh án');
+        handleError(error);
+      }
+    } finally {
+      setLoadingClinicalRecord(false);
+    }
+  };
+
+  // Load clinical record when tab is activated
+  useEffect(() => {
+    if (activeTab === 'clinical-record' && appointment?.appointmentId && !hasTriedLoadingClinicalRecord) {
+      loadClinicalRecord();
+    }
+  }, [activeTab, appointment?.appointmentId, hasTriedLoadingClinicalRecord]);
 
   // Load treatment plan when Treatment Plan tab is activated (lazy loading)
   const loadTreatmentPlan = async () => {
@@ -643,6 +709,20 @@ export default function AdminAppointmentDetailPage() {
       // ✅ FIX: Update appointment with response data (BE now returns DTO)
       setAppointment(updated);
       
+      // ✅ FIX: Reset clinical record loading state when appointment status changes
+      // This allows clinical record to be reloaded if user switches to that tab
+      setHasTriedLoadingClinicalRecord(false);
+      setClinicalRecord(null);
+      setClinicalRecordError(null);
+      
+      // If currently on clinical record tab, reload it
+      if (activeTab === 'clinical-record' && updated.appointmentId) {
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          loadClinicalRecord();
+        }, 100);
+      }
+      
       // Reset form
       setShowStatusModal(false);
       setSelectedStatus(null);
@@ -697,6 +777,11 @@ export default function AdminAppointmentDetailPage() {
       
       // Update appointment with new data
       setAppointment(updated);
+      
+      // ✅ FIX: Reset clinical record loading state when appointment changes
+      setHasTriedLoadingClinicalRecord(false);
+      setClinicalRecord(null);
+      setClinicalRecordError(null);
       
       // Reset form
       setShowDelayModal(false);
@@ -804,12 +889,12 @@ export default function AdminAppointmentDetailPage() {
               Patient Information
             </TabsTrigger>
             <TabsTrigger
-              value="medical-history"
-              disabled
-              className="rounded-full px-4 py-2"
+              value="clinical-record"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              disabled={!appointment || (appointment.status !== 'IN_PROGRESS' && appointment.status !== 'CHECKED_IN' && !clinicalRecord)}
             >
               <Stethoscope className="h-4 w-4 mr-2" />
-              Medical History
+              Clinical Record
             </TabsTrigger>
             <TabsTrigger
               value="treatment-plan"
@@ -1008,20 +1093,87 @@ export default function AdminAppointmentDetailPage() {
             )}
           </TabsContent>
 
-          {/* Medical History Tab (Placeholder) */}
-          <TabsContent value="medical-history">
-            <Card className="p-6">
-              <div className="text-center py-12">
-                <Stethoscope className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Medical History</h3>
-                <p className="text-muted-foreground mb-4">
-                  This feature will be available soon. Medical history will be displayed here.
-                </p>
-                <Button variant="outline" disabled>
-                  View Medical History
-                </Button>
+          {/* Clinical Record Tab */}
+          <TabsContent value="clinical-record" className="space-y-4">
+            {/* Check appointment status - only allow creation if IN_PROGRESS or CHECKED_IN */}
+            {appointment && !canCreateOrEditClinicalRecord && !clinicalRecord ? (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Chưa thể tạo bệnh án</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Bệnh án chỉ có thể được tạo khi lịch hẹn đã được check-in (CHECKED_IN) hoặc đang điều trị (IN_PROGRESS).
+                    <br />
+                    Trạng thái hiện tại: <span className="font-semibold">{appointment.status}</span>
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveTab('details')}
+                  >
+                    Quay lại chi tiết
+                  </Button>
+                </div>
+              </Card>
+            ) : loadingClinicalRecord ? (
+              <Card className="p-6">
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-muted-foreground">Đang tải bệnh án...</p>
+                  </div>
+                </div>
+              </Card>
+            ) : clinicalRecordError ? (
+              <Card className="p-6">
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Lỗi khi tải bệnh án</h3>
+                  <p className="text-muted-foreground mb-4">{clinicalRecordError}</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setHasTriedLoadingClinicalRecord(false);
+                      setClinicalRecordError(null);
+                      loadClinicalRecord();
+                    }}
+                  >
+                    Thử lại
+                  </Button>
+                </div>
+              </Card>
+            ) : isEditingClinicalRecord || !clinicalRecord ? (
+              <div className="space-y-4">
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">
+                    {clinicalRecord ? 'Chỉnh sửa bệnh án' : 'Tạo bệnh án mới'}
+                  </h3>
+                  <ClinicalRecordForm
+                    appointmentId={appointment?.appointmentId || 0}
+                    existingRecord={clinicalRecord || undefined}
+                    onSuccess={(record) => {
+                      setClinicalRecord(record);
+                      setIsEditingClinicalRecord(false);
+                    }}
+                    onCancel={() => {
+                      if (clinicalRecord) {
+                        setIsEditingClinicalRecord(false);
+                      } else {
+                        setActiveTab('details');
+                      }
+                    }}
+                    readOnly={!canWriteClinicalRecord || !canCreateOrEditClinicalRecord}
+                  />
+                </Card>
               </div>
-            </Card>
+            ) : (
+              <div className="space-y-4">
+                <ClinicalRecordView
+                  record={clinicalRecord}
+                  onEdit={() => setIsEditingClinicalRecord(true)}
+                  canEdit={canWriteClinicalRecord}
+                />
+              </div>
+            )}
           </TabsContent>
 
           {/* Treatment Plan Tab */}
