@@ -34,14 +34,16 @@ export default function TreatmentPlanList({
   showActions = true,
   patientCode,
 }: TreatmentPlanListProps) {
-  const getStatusBadge = (status: TreatmentPlanStatus) => {
-    const statusInfo = TREATMENT_PLAN_STATUS_COLORS[status];
+  const getStatusBadge = (status: TreatmentPlanStatus | null) => {
+    // V32: Handle null status (when approval_status = DRAFT, plan not activated yet)
+    const statusKey = status || 'NULL';
+    const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
     return (
       <Badge
         style={{
           backgroundColor: statusInfo.bg,
           borderColor: statusInfo.border,
-          color: 'white',
+          color: statusKey === 'NULL' ? '#6B7280' : 'white',
         }}
       >
         {statusInfo.text}
@@ -113,32 +115,6 @@ export default function TreatmentPlanList({
           </div>
         </div>
       ),
-    },
-    {
-      key: 'financial',
-      header: 'Chi phí',
-      accessor: (plan) => {
-        // Hide price column if all prices are null/undefined (doctor view)
-        const hasPrice = plan.finalCost != null || plan.totalCost != null;
-        if (!hasPrice) {
-          return <div className="text-muted-foreground">-</div>;
-        }
-        return (
-          <div>
-            <div className="font-medium">{formatCurrency(plan.finalCost)}</div>
-            {plan.discountAmount != null && plan.discountAmount > 0 && plan.totalCost != null && (
-              <div className="text-sm text-muted-foreground line-through">
-                {formatCurrency(plan.totalCost)}
-              </div>
-            )}
-            {plan.discountAmount != null && plan.discountAmount > 0 && (
-              <div className="text-xs text-green-600">
-                Giảm: {formatCurrency(plan.discountAmount)}
-              </div>
-            )}
-          </div>
-        );
-      },
     },
     {
       key: 'paymentType',

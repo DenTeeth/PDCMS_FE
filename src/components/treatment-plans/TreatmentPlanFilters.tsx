@@ -39,28 +39,38 @@ export default function TreatmentPlanFilters({
   canViewAll = true,
 }: TreatmentPlanFiltersProps) {
   // Search input - separate from applied filters
+  // Only sync with searchTerm, not patientCode (patientCode is a separate filter)
   const [searchInput, setSearchInput] = useState(
-    filters.searchTerm || filters.patientCode || ''
+    filters.searchTerm || ''
   );
 
-  // Sync search input with filters when filters change externally (e.g., from URL)
+  // Sync search input with searchTerm when filters change externally (e.g., from URL)
+  // Note: patientCode is a separate filter, don't sync it with search input
   useEffect(() => {
-    const currentSearch = filters.searchTerm || filters.patientCode || '';
+    const currentSearch = filters.searchTerm || '';
     if (currentSearch !== searchInput) {
       setSearchInput(currentSearch);
     }
-  }, [filters.searchTerm, filters.patientCode]);
+  }, [filters.searchTerm]);
 
   // Handle search button click
+  // BE logic: searchTerm searches in planName and patient.fullName (case-insensitive LIKE)
+  // patientCode is a separate exact match filter
+  // We should use searchTerm for the search input since BE can search both plan name and patient name
   const handleSearch = () => {
     const searchValue = searchInput.trim();
     if (canViewAll) {
+      // For employee/admin: Use searchTerm for search input (searches in plan name and patient name)
+      // If user wants to filter by exact patient code, they should use a separate patientCode filter
+      // But for search input, we use searchTerm which BE handles for both plan name and patient name
       onFiltersChange({
         ...filters,
-        patientCode: searchValue || undefined,
-        searchTerm: undefined,
+        searchTerm: searchValue || undefined,
+        // Keep existing patientCode if set (from URL or other sources)
+        // Don't override it with search input
       });
     } else {
+      // For patient: Use searchTerm only
       onFiltersChange({
         ...filters,
         searchTerm: searchValue || undefined,
@@ -82,8 +92,9 @@ export default function TreatmentPlanFilters({
     if (canViewAll) {
       onFiltersChange({
         ...filters,
-        patientCode: undefined,
         searchTerm: undefined,
+        // Keep patientCode if it was set from URL or other sources
+        // Only clear searchTerm
       });
     } else {
       onFiltersChange({
@@ -125,13 +136,13 @@ export default function TreatmentPlanFilters({
           {/* Search / Patient Code */}
           <div className="flex-1 w-full sm:w-auto space-y-2">
             <Label htmlFor="search" className="text-sm font-medium text-foreground">
-              {canViewAll ? 'Mã bệnh nhân' : 'Tìm kiếm'}
+              Tìm kiếm
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 id="search"
-                placeholder={canViewAll ? 'Nhập mã bệnh nhân...' : 'Tìm kiếm...'}
+                placeholder={canViewAll ? 'Tìm theo tên lộ trình hoặc tên bệnh nhân...' : 'Tìm kiếm...'}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleSearchKeyDown}

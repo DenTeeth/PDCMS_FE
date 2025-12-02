@@ -176,10 +176,10 @@ export default function BookAppointmentFromPlanModal({
       setLoadingServices(true);
       try {
         // Fetch all services (booking API has correct defaultDurationMinutes)
-        const response = await ServiceService.getAllServices({
+        const response = await ServiceService.getServices({
           page: 0,
           size: 1000, // Get all to build map
-          isActive: true,
+          isActive: 'true', // ServiceFilters expects string
         });
 
         const services = response.content || [];

@@ -33,14 +33,18 @@ export default function TreatmentPlanProgressCard({
 }: TreatmentPlanProgressCardProps) {
   const router = useRouter();
 
-  const statusColor = TREATMENT_PLAN_STATUS_COLORS[plan.status] || 'default';
+  // V32: Handle null status (when approval_status = DRAFT, plan not activated yet)
+  const statusKey = plan.status || 'NULL';
+  const statusColor = TREATMENT_PLAN_STATUS_COLORS[statusKey] || TREATMENT_PLAN_STATUS_COLORS.NULL;
   const statusLabel = plan.status === TreatmentPlanStatus.IN_PROGRESS 
     ? 'Đang điều trị' 
     : plan.status === TreatmentPlanStatus.COMPLETED 
     ? 'Hoàn thành' 
     : plan.status === TreatmentPlanStatus.PENDING 
     ? 'Chờ xử lý' 
-    : 'Đã hủy';
+    : plan.status === TreatmentPlanStatus.CANCELLED
+    ? 'Đã hủy'
+    : 'Chưa kích hoạt'; // null status
 
   // Calculate progress percentage
   // Note: TreatmentPlanSummaryDTO doesn't have progressSummary, so we'll show 0% or use a placeholder
