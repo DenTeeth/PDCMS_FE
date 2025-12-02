@@ -1,9 +1,9 @@
 # Backend Open Issues
 
-**Last Updated:** 2025-12-02  
-**Total Open Issues:** 5  
+**Last Updated:** 2025-12-03  
+**Total Open Issues:** 6  
 **High Priority Issues:** 1 (Issue #34)  
-**Medium Priority Issues:** 4 (Issue #28, #29, #30, #35)  
+**Medium Priority Issues:** 5 (Issue #28, #29, #30, #35, #36)  
 **Resolved Issues:** 4 (Issue #27, #31, #32, #33) - Removed from this document
 
 ---
@@ -17,6 +17,7 @@
 | #30 | Seed Data - Điều chỉnh Treatment Plan Templates để các dịch vụ có cùng specialization | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
 | #34 | API 5.5 - searchTerm parameter gây lỗi 500 Internal Server Error | 🔴 **OPEN** | **HIGH** | 2025-12-02 |
 | #35 | API 5.5 - TreatmentPlanSummaryDTO thiếu progressSummary để FE tính toán status | 🔴 **OPEN** | **MEDIUM** | 2025-12-02 |
+| #36 | API 8.1 - ClinicalRecordResponse thiếu field followUpDate | 🔴 **OPEN** | **MEDIUM** | 2025-12-03 |
 
 ---
 
@@ -330,5 +331,184 @@ Actual:
   - List view: Shows "Chưa hoàn thành" (status = null)
   - Detail view: Shows "Hoàn thành" (calculated from phases)
 ```
+
+---
+
+### Issue #36: API 8.1 - ClinicalRecordResponse thiếu field followUpDate
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-03  
+**Endpoint:** `GET /api/v1/appointments/{appointmentId}/clinical-record`
+
+#### Problem Description
+
+API 8.1 trả về `ClinicalRecordResponse` nhưng thiếu field `followUpDate`, mặc dù:
+- `CreateClinicalRecordRequest` có field `followUpDate` (optional)
+- `UpdateClinicalRecordRequest` có field `followUpDate` (optional)
+- FE có thể tạo/cập nhật `followUpDate` nhưng không thể xem lại giá trị đã lưu
+
+**Expected Behavior:**
+- `ClinicalRecordResponse` nên bao gồm field `followUpDate` (type: `String`, format: `yyyy-MM-dd`)
+- Field này có thể là `null` nếu chưa được set
+- Field này nên được trả về trong response của API 8.1
+
+**Actual Behavior:**
+- `ClinicalRecordResponse` không có field `followUpDate`
+- Console log cho thấy: `hasFollowUpDate: false, followUpDate: undefined`
+- FE không thể hiển thị ngày tái khám đã lưu
+
+#### Test Results
+
+**Test Scenario:**
+1. Tạo clinical record với `followUpDate: "2025-12-15"`
+2. Gọi API 8.1 để lấy clinical record
+3. Kiểm tra response có chứa `followUpDate` không
+
+**Console Log:**
+```
+📋 [CLINICAL RECORD] Get by appointment ID: {
+  appointmentId: 107,
+  clinicalRecordId: 5,
+  hasFollowUpDate: false,  // ❌ Expected: true
+  followUpDate: undefined   // ❌ Expected: "2025-12-15"
+}
+```
+
+**Result:**
+- ❌ `followUpDate` không có trong response
+- ❌ FE không thể hiển thị ngày tái khám
+
+#### Root Cause
+
+**File:** `files_from_BE/clinical_records/dto/ClinicalRecordResponse.java` (hoặc tương đương)
+
+**Possible Issues:**
+1. DTO class thiếu field `followUpDate`
+2. Entity mapping không map field `followUpDate` từ database
+3. Database column `follow_up_date` không được select trong query
+
+#### Suggested Fix
+
+**1. Add field to DTO:**
+
+```java
+public class ClinicalRecordResponse {
+    // ... existing fields
+    private String followUpDate; // yyyy-MM-dd format, nullable
+    
+    // Getter and setter
+    public String getFollowUpDate() {
+        return followUpDate;
+    }
+    
+    public void setFollowUpDate(String followUpDate) {
+        this.followUpDate = followUpDate;
+    }
+}
+```
+
+**2. Verify Entity mapping:**
+
+```java
+@Entity
+@Table(name = "clinical_records")
+public class ClinicalRecord {
+    // ... existing fields
+    
+    @Column(name = "follow_up_date")
+    private LocalDate followUpDate;
+    
+    // Getter and setter
+}
+```
+
+**3. Verify Service mapping:**
+
+```java
+public ClinicalRecordResponse mapToResponse(ClinicalRecord record) {
+    ClinicalRecordResponse response = new ClinicalRecordResponse();
+    // ... map other fields
+    
+    // Map followUpDate
+    if (record.getFollowUpDate() != null) {
+        response.setFollowUpDate(record.getFollowUpDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+    }
+    
+    return response;
+}
+```
+
+#### Impact
+
+- **Medium Priority:** Feature không hoàn chỉnh
+- Users không thể xem lại ngày tái khám đã đặt
+- UX: Users phải nhớ hoặc ghi chú ngày tái khám ở nơi khác
+- Data loss risk: Nếu user đặt ngày tái khám nhưng không thấy lại, có thể nghĩ là chưa lưu
+
+#### Related Files
+
+- `files_from_BE/clinical_records/dto/ClinicalRecordResponse.java`
+- `files_from_BE/clinical_records/domain/ClinicalRecord.java`
+- `files_from_BE/clinical_records/service/ClinicalRecordService.java`
+- `files_from_BE/clinical_records/mapper/ClinicalRecordMapper.java` (nếu có)
+
+#### Test Cases
+
+**Test 1: Create record with followUpDate**
+```
+POST /api/v1/clinical-records
+{
+  "appointmentId": 107,
+  "chiefComplaint": "Đau răng",
+  "examinationFindings": "Phát hiện đau răng",
+  "diagnosis": "Sâu răng",
+  "followUpDate": "2025-12-15"
+}
+
+Expected: 201 CREATED
+Actual: ✅ 201 CREATED (followUpDate được lưu)
+```
+
+**Test 2: Get record and verify followUpDate**
+```
+GET /api/v1/appointments/107/clinical-record
+
+Expected Response:
+{
+  "clinicalRecordId": 5,
+  "followUpDate": "2025-12-15",  // ✅ Should be present
+  ...
+}
+
+Actual Response:
+{
+  "clinicalRecordId": 5,
+  // ❌ followUpDate missing
+  ...
+}
+```
+
+**Test 3: Update followUpDate**
+```
+PUT /api/v1/clinical-records/5
+{
+  "followUpDate": "2025-12-20"
+}
+
+Expected: 200 OK, followUpDate updated
+Then GET /api/v1/appointments/107/clinical-record
+Expected: followUpDate = "2025-12-20"
+Actual: ❌ followUpDate still missing in response
+```
+
+#### Workaround (Frontend)
+
+FE đã handle gracefully:
+- Code chỉ hiển thị "Ngày Tái Khám" khi `record.followUpDate` có giá trị
+- Nếu không có, section này sẽ không hiển thị (không gây lỗi)
+- Users vẫn có thể tạo/cập nhật `followUpDate` qua form, nhưng không thể xem lại
+
+**Note:** Workaround này acceptable tạm thời, nhưng cần BE fix để feature hoàn chỉnh.
 
 ---

@@ -1,0 +1,441 @@
+'use client';
+
+/**
+ * Odontogram Component
+ * 
+ * Displays a dental chart (sơ đồ răng) with 32 teeth using FDI notation.
+ * Shows tooth status with color coding and allows interaction.
+ * 
+ * Features:
+ * - Visual representation of 32 teeth (FDI notation)
+ * - Color coding based on tooth condition
+ * - Click to view/edit tooth status
+ * - Tooltip showing tooth number and status
+ * - Responsive design
+ */
+
+import React, { useMemo, useState } from 'react';
+import { ToothStatusResponse, ToothCondition } from '@/types/clinicalRecord';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * FDI Tooth Numbering System (Fédération Dentaire Internationale)
+ * 
+ * Miệng được chia thành 4 cung hàm (quadrants):
+ * - Cung 1: Hàm trên bên phải (Upper Right) - Răng 11-18
+ * - Cung 2: Hàm trên bên trái (Upper Left) - Răng 21-28
+ * - Cung 3: Hàm dưới bên trái (Lower Left) - Răng 31-38
+ * - Cung 4: Hàm dưới bên phải (Lower Right) - Răng 41-48
+ * 
+ * Mỗi cung có 8 răng, đánh số từ 1-8:
+ * - 1: Răng cửa giữa (Central Incisor)
+ * - 2: Răng cửa bên (Lateral Incisor)
+ * - 3: Răng nanh (Canine)
+ * - 4: Răng tiền hàm nhỏ thứ nhất (First Premolar)
+ * - 5: Răng tiền hàm nhỏ thứ hai (Second Premolar)
+ * - 6: Răng hàm lớn thứ nhất (First Molar)
+ * - 7: Răng hàm lớn thứ hai (Second Molar)
+ * - 8: Răng khôn (Third Molar / Wisdom Tooth)
+ * 
+ * Cách đọc: Số thứ tự = [Cung hàm] + [Vị trí răng]
+ * Ví dụ: Răng 36 = Cung 3 (hàm dưới trái) + Vị trí 6 (răng hàm lớn thứ nhất)
+ * 
+ * Layout từ góc nhìn bệnh nhân (mirror view):
+ * - Upper Right (18-11): Hiển thị từ phải sang trái (18 ngoài cùng phải → 11 gần center)
+ * - Upper Left (21-28): Hiển thị từ trái sang phải (21 gần center → 28 ngoài cùng trái)
+ * - Lower Left (31-38): Hiển thị từ trái sang phải (31 gần center → 38 ngoài cùng trái)
+ * - Lower Right (41-48): Hiển thị từ phải sang trái (48 ngoài cùng phải → 41 gần center)
+ */
+// Thứ tự hiển thị từ trái sang phải trên màn hình (từ góc nhìn bệnh nhân)
+// Cung trên - phải: [18,17,16,15,14,13,12,11] (18 ngoài cùng phải → 11 gần center)
+const UPPER_RIGHT = ['18', '17', '16', '15', '14', '13', '12', '11'];
+// Cung trên - trái: [28,27,26,25,24,23,22,21] (28 ngoài cùng trái → 21 gần center)
+// Array được giữ nguyên để hiển thị đúng thứ tự
+const UPPER_LEFT = ['28', '27', '26', '25', '24', '23', '22', '21'];
+// Cung dưới - trái: [38,37,36,35,34,33,32,31] (38 ngoài cùng trái → 31 gần center)
+// Array được giữ nguyên để hiển thị đúng thứ tự
+const LOWER_LEFT = ['38', '37', '36', '35', '34', '33', '32', '31'];
+// Cung dưới - phải: [48,47,46,45,44,43,42,41] (48 ngoài cùng phải → 41 gần center)
+const LOWER_RIGHT = ['48', '47', '46', '45', '44', '43', '42', '41'];
+
+const ALL_TEETH = [
+  ...UPPER_RIGHT,
+  ...UPPER_LEFT,
+  ...LOWER_LEFT,
+  ...LOWER_RIGHT,
+];
+
+// Color mapping for tooth conditions
+const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
+  HEALTHY: '#10b981',      // Green
+  CARIES: '#ef4444',       // Red
+  FILLED: '#3b82f6',       // Blue
+  CROWN: '#f59e0b',       // Yellow/Orange
+  ROOT_CANAL: '#ec4899',  // Pink
+  EXTRACTED: '#6b7280',   // Gray
+  MISSING: '#6b7280',     // Gray
+  IMPLANT: '#8b5cf6',     // Purple
+  FRACTURED: '#f97316',   // Orange
+  IMPACTED: '#6366f1',    // Indigo
+};
+
+// Status labels in Vietnamese
+const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
+  HEALTHY: 'Khỏe mạnh',
+  CARIES: 'Sâu răng',
+  FILLED: 'Đã trám',
+  CROWN: 'Bọc sứ',
+  ROOT_CANAL: 'Điều trị tủy',
+  EXTRACTED: 'Đã nhổ',
+  MISSING: 'Mất răng',
+  IMPLANT: 'Cấy ghép',
+  FRACTURED: 'Gãy răng',
+  IMPACTED: 'Mọc ngầm',
+};
+
+// Default color for teeth without status
+const DEFAULT_COLOR = '#e5e7eb'; // Light gray
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface OdontogramProps {
+  patientId: number;
+  toothStatuses?: ToothStatusResponse[];
+  onToothClick?: (toothNumber: string, status?: ToothCondition, notes?: string) => void;
+  editable?: boolean;
+  readOnly?: boolean;
+  className?: string;
+}
+
+interface ToothData {
+  number: string;
+  x: number;
+  y: number;
+  status?: ToothCondition;
+  notes?: string;
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export default function Odontogram({
+  patientId,
+  toothStatuses = [],
+  onToothClick,
+  editable = false,
+  readOnly = false,
+  className,
+}: OdontogramProps) {
+  const [hoveredTooth, setHoveredTooth] = useState<string | null>(null);
+
+  // Create status map for quick lookup
+  const statusMap = useMemo(() => {
+    const map = new Map<string, ToothStatusResponse>();
+    toothStatuses.forEach((status) => {
+      map.set(status.toothNumber, status);
+    });
+    return map;
+  }, [toothStatuses]);
+
+  // Generate teeth data with positions
+  const teethData = useMemo(() => {
+    const teeth: ToothData[] = [];
+    
+    // SVG dimensions - Increased to ensure all 32 teeth are visible
+    const svgWidth = 1000;
+    const svgHeight = 500;
+    const toothWidth = 45;
+    const toothHeight = 65;
+    const spacing = 6;
+    const centerGap = 60; // Gap between left and right quadrants
+    const verticalGap = 40; // Gap between upper and lower jaw
+    const topMargin = 50; // Top margin for labels
+    const bottomMargin = 50; // Bottom margin for labels
+    
+    // Calculate quadrant width (8 teeth per quadrant)
+    const quadrantWidth = (toothWidth + spacing) * 8 - spacing;
+    
+    // Calculate starting X positions for left and right quadrants
+    // Center the entire layout
+    const totalWidth = quadrantWidth * 2 + centerGap;
+    const leftQuadrantStart = (svgWidth - totalWidth) / 2;
+    const rightQuadrantStart = leftQuadrantStart + quadrantWidth + centerGap;
+    
+    // Upper jaw Y position
+    const upperY = topMargin;
+    
+    // Upper right quadrant (18-11): Display right to left
+    // 18 is on the far right, 11 is near center
+    UPPER_RIGHT.forEach((toothNum, index) => {
+      const status = statusMap.get(toothNum);
+      const x = rightQuadrantStart + (7 - index) * (toothWidth + spacing);
+      teeth.push({
+        number: toothNum,
+        x,
+        y: upperY,
+        status: status?.status,
+        notes: status?.notes,
+      });
+    });
+    
+    // Cung trên - trái (Upper Left Quadrant 2): [28,27,26,25,24,23,22,21]
+    // Array: ['28', '27', '26', '25', '24', '23', '22', '21']
+    // Hiển thị từ trái sang phải: 28 ngoài cùng trái → 21 gần center
+    // index 0 (28) → x = leftQuadrantStart (ngoài cùng trái)
+    // index 7 (21) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
+    UPPER_LEFT.forEach((toothNum, index) => {
+      const status = statusMap.get(toothNum);
+      const x = leftQuadrantStart + index * (toothWidth + spacing);
+      teeth.push({
+        number: toothNum,
+        x,
+        y: upperY,
+        status: status?.status,
+        notes: status?.notes,
+      });
+    });
+    
+    // Lower jaw Y position
+    const lowerY = upperY + toothHeight + verticalGap;
+    
+    // Cung dưới - phải (Lower Right Quadrant 4): [48,47,46,45,44,43,42,41]
+    // Hiển thị từ phải sang trái: 48 ngoài cùng phải → 41 gần center
+    // Nằm dưới cung trên - phải (cùng x positions)
+    LOWER_RIGHT.forEach((toothNum, index) => {
+      const status = statusMap.get(toothNum);
+      // Array đã được sắp xếp [48,47,46,45,44,43,42,41]
+      // 48 (index 0) is at rightQuadrantStart + 7*(toothWidth+spacing)
+      // 41 (index 7) is at rightQuadrantStart
+      const x = rightQuadrantStart + (7 - index) * (toothWidth + spacing);
+      teeth.push({
+        number: toothNum,
+        x,
+        y: lowerY,
+        status: status?.status,
+        notes: status?.notes,
+      });
+    });
+    
+    // Cung dưới - trái (Lower Left Quadrant 3): [38,37,36,35,34,33,32,31]
+    // Array: ['38', '37', '36', '35', '34', '33', '32', '31']
+    // Hiển thị từ trái sang phải: 38 ngoài cùng trái → 31 gần center
+    // index 0 (38) → x = leftQuadrantStart (ngoài cùng trái)
+    // index 7 (31) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
+    LOWER_LEFT.forEach((toothNum, index) => {
+      const status = statusMap.get(toothNum);
+      const x = leftQuadrantStart + index * (toothWidth + spacing);
+      teeth.push({
+        number: toothNum,
+        x,
+        y: lowerY,
+        status: status?.status,
+        notes: status?.notes,
+      });
+    });
+    
+    // Verify all 32 teeth are generated
+    if (teeth.length !== 32) {
+      console.warn(`Expected 32 teeth, but generated ${teeth.length}`);
+    }
+    
+    return teeth;
+  }, [statusMap]);
+
+  const handleToothClick = (tooth: ToothData) => {
+    if (readOnly || !onToothClick) return;
+    onToothClick(tooth.number, tooth.status, tooth.notes);
+  };
+
+  const handleToothHover = (toothNumber: string | null) => {
+    if (readOnly) return;
+    setHoveredTooth(toothNumber);
+  };
+
+  return (
+    <Card className={cn('w-full', className)}>
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold">Sơ Đồ Răng (Odontogram)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* SVG Chart */}
+        <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <svg
+            viewBox="0 0 1000 500"
+            className="w-full h-auto min-h-[400px] sm:min-h-[500px] max-w-full"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Background */}
+            <rect width="1000" height="500" fill="#fafafa" />
+            
+            {/* Center vertical line */}
+            <line
+              x1="500"
+              y1="0"
+              x2="500"
+              y2="500"
+              stroke="#d1d5db"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+            />
+            
+            {/* Horizontal separator between jaws */}
+            <line
+              x1="0"
+              y1="250"
+              x2="1000"
+              y2="250"
+              stroke="#e5e7eb"
+              strokeWidth="1"
+              strokeDasharray="3,3"
+            />
+            
+            {/* Quadrant labels with FDI notation explanation */}
+            <text
+              x="250"
+              y="30"
+              textAnchor="middle"
+              className="text-xs font-semibold fill-gray-600"
+              fontSize="11"
+            >
+              Cung 2: Hàm Trên - Trái
+            </text>
+            <text
+              x="750"
+              y="30"
+              textAnchor="middle"
+              className="text-xs font-semibold fill-gray-600"
+              fontSize="11"
+            >
+              Cung 1: Hàm Trên - Phải 
+            </text>
+            <text
+              x="250"
+              y="480"
+              textAnchor="middle"
+              className="text-xs font-semibold fill-gray-600"
+              fontSize="11"
+            >
+              Cung 3: Hàm Dưới - Trái
+            </text>
+            <text
+              x="750"
+              y="480"
+              textAnchor="middle"
+              className="text-xs font-semibold fill-gray-600"
+              fontSize="11"
+            >
+              Cung 4: Hàm Dưới - Phải
+            </text>
+            
+            {/* Render teeth */}
+            {teethData.map((tooth) => {
+              const fillColor = tooth.status
+                ? TOOTH_STATUS_COLORS[tooth.status]
+                : DEFAULT_COLOR;
+              const isHovered = hoveredTooth === tooth.number;
+              const strokeColor = isHovered ? '#3b82f6' : '#d1d5db';
+              const strokeWidth = isHovered ? 2.5 : 1.5;
+              
+              return (
+                <g key={tooth.number}>
+                  {/* Tooth shape (rounded rectangle) */}
+                  <rect
+                    x={tooth.x}
+                    y={tooth.y}
+                    width="45"
+                    height="65"
+                    rx="5"
+                    fill={fillColor}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    className={cn(
+                      'transition-all duration-200',
+                      !readOnly && 'cursor-pointer',
+                      isHovered && 'opacity-90',
+                      !readOnly && !isHovered && 'hover:opacity-85 hover:shadow-md'
+                    )}
+                    onClick={() => handleToothClick(tooth)}
+                    onMouseEnter={() => handleToothHover(tooth.number)}
+                    onMouseLeave={() => handleToothHover(null)}
+                  />
+                  
+                  {/* Tooth number */}
+                  <text
+                    x={tooth.x + 22.5}
+                    y={tooth.y + 38}
+                    textAnchor="middle"
+                    className="text-sm font-bold fill-gray-900"
+                    fontSize="12"
+                    pointerEvents="none"
+                  >
+                    {tooth.number}
+                  </text>
+                  
+                  {/* Status indicator (small dot in top-right corner) */}
+                  {tooth.status && (
+                    <circle
+                      cx={tooth.x + 38}
+                      cy={tooth.y + 7}
+                      r="4.5"
+                      fill={TOOTH_STATUS_COLORS[tooth.status]}
+                      stroke="white"
+                      strokeWidth="1.5"
+                      pointerEvents="none"
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="border-t pt-4 mt-4">
+          <h4 className="text-sm font-semibold mb-3 text-foreground">Chú Giải Trạng Thái Răng</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
+            {Object.entries(TOOTH_STATUS_COLORS).map(([status, color]) => (
+              <div key={status} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 transition-colors">
+                <div
+                  className="w-4 h-4 rounded border border-gray-200 flex-shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-xs text-foreground font-medium">
+                  {TOOTH_STATUS_LABELS[status as ToothCondition]}
+                </span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 transition-colors">
+              <div
+                className="w-4 h-4 rounded border-2 border-gray-300 flex-shrink-0"
+                style={{ backgroundColor: DEFAULT_COLOR }}
+              />
+              <span className="text-xs text-foreground font-medium">Chưa ghi nhận</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tooltip (if hovered) */}
+        {hoveredTooth && !readOnly && (
+          <div className="absolute bg-gray-900 text-white text-xs rounded px-2 py-1 pointer-events-none z-10">
+            Răng {hoveredTooth}
+            {teethData.find((t) => t.number === hoveredTooth)?.status && (
+              <span className="ml-2">
+                - {TOOTH_STATUS_LABELS[teethData.find((t) => t.number === hoveredTooth)!.status!]}
+              </span>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
