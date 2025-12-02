@@ -658,8 +658,8 @@ export default function BookingRoomsPage() {
                             setIsSortDropdownOpen(false);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
-                              ? 'bg-[#8b5fbf] text-white'
-                              : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            ? 'bg-[#8b5fbf] text-white'
+                            : 'text-gray-700 hover:bg-[#f3f0ff]'
                             }`}
                         >
                           {option.label}
@@ -675,8 +675,8 @@ export default function BookingRoomsPage() {
                 <button
                   onClick={() => setSortDirection('ASC')}
                   className={`p-1.5 rounded transition-all ${sortDirection === 'ASC'
-                      ? 'bg-[#8b5fbf] text-white shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                     }`}
                   title="Tăng dần"
                 >
@@ -685,8 +685,8 @@ export default function BookingRoomsPage() {
                 <button
                   onClick={() => setSortDirection('DESC')}
                   className={`p-1.5 rounded transition-all ${sortDirection === 'DESC'
-                      ? 'bg-[#8b5fbf] text-white shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                     }`}
                   title="Giảm dần"
                 >
@@ -803,7 +803,7 @@ export default function BookingRoomsPage() {
             <div className="space-y-4">
               {/* Room Code */}
               <div>
-                <Label htmlFor="create-room-code">Room Code *</Label>
+                <Label htmlFor="create-room-code">Room Code <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-code"
                   value={createForm.roomCode}
@@ -815,7 +815,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Name */}
               <div>
-                <Label htmlFor="create-room-name">Room Name *</Label>
+                <Label htmlFor="create-room-name">Room Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-name"
                   value={createForm.roomName}
@@ -827,7 +827,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Type */}
               <div>
-                <Label htmlFor="create-room-type">Room Type *</Label>
+                <Label htmlFor="create-room-type">Room Type <span className="text-red-500">*</span></Label>
                 <Select
                   value={createForm.roomType}
                   onValueChange={(value) => setCreateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
@@ -885,7 +885,7 @@ export default function BookingRoomsPage() {
             <div className="space-y-4">
               {/* Room Code */}
               <div>
-                <Label htmlFor="update-room-code">Room Code *</Label>
+                <Label htmlFor="update-room-code">Room Code <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-code"
                   value={updateForm.roomCode}
@@ -897,7 +897,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Name */}
               <div>
-                <Label htmlFor="update-room-name">Room Name *</Label>
+                <Label htmlFor="update-room-name">Room Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-name"
                   value={updateForm.roomName}
@@ -909,7 +909,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Type */}
               <div>
-                <Label htmlFor="update-room-type">Room Type *</Label>
+                <Label htmlFor="update-room-type">Room Type <span className="text-red-500">*</span></Label>
                 <Select
                   value={updateForm.roomType}
                   onValueChange={(value) => setUpdateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
