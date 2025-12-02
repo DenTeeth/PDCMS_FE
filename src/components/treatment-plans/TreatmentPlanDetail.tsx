@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus } from '@/types/treatmentPlan';
+import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus } from '@/types/treatmentPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -66,7 +66,64 @@ export default function TreatmentPlanDetail({
   onBookPlanItems,
 }: TreatmentPlanDetailProps) {
   const { user } = useAuth();
-  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[plan.status];
+  
+  // Phase 5: Bulk selection for booking
+  const [selectedPlanItemIds, setSelectedPlanItemIds] = useState<number[]>([]);
+
+  const allPlanItems = useMemo(
+    () => plan.phases.flatMap((phase) => phase.items),
+    [plan.phases]
+  );
+  
+  // Calculate actual plan status based on completion
+  // FE Enhancement: Show COMPLETED if all phases are completed, even if BE status is null/PENDING
+  // This provides better UX by showing actual completion state
+  // BE logic: checkAndCompletePlan() only auto-completes when plan.status = IN_PROGRESS
+  // But FE can show visual completion state for better user experience
+  const calculateActualStatus = (): TreatmentPlanStatus | 'NULL' => {
+    // If plan is already COMPLETED or CANCELLED, use that
+    if (plan.status === TreatmentPlanStatus.COMPLETED || plan.status === TreatmentPlanStatus.CANCELLED) {
+      return plan.status;
+    }
+    
+    // If no phases, use BE status
+    if (!plan.phases || plan.phases.length === 0) {
+      return plan.status || 'NULL';
+    }
+    
+    // Check if ALL phases are COMPLETED
+    // BE uses: phase.getStatus() == PhaseStatus.COMPLETED
+    const allPhasesCompleted = plan.phases.every(phase => {
+      const phaseStatus = phase.status?.toUpperCase();
+      return phaseStatus === 'COMPLETED';
+    });
+    
+    // FE Enhancement: Show COMPLETED if all phases are done, regardless of plan status
+    // This provides better UX - user can see that all work is done even if plan wasn't activated
+    if (allPhasesCompleted) {
+      // If BE status is IN_PROGRESS, BE will auto-complete it
+      // If BE status is null/PENDING, FE shows COMPLETED for better UX
+      console.log('✅ [TreatmentPlan] Auto-detected COMPLETED status:', {
+        planCode: plan.planCode,
+        beStatus: plan.status,
+        allPhasesCompleted,
+        phasesCount: plan.phases.length,
+        completedPhases: plan.phases.filter(p => p.status?.toUpperCase() === 'COMPLETED').length,
+        note: plan.status === TreatmentPlanStatus.IN_PROGRESS 
+          ? 'BE will auto-complete this' 
+          : 'FE showing COMPLETED for UX (plan not activated yet)'
+      });
+      return TreatmentPlanStatus.COMPLETED;
+    }
+    
+    // Otherwise, use the status from BE
+    return plan.status || 'NULL';
+  };
+  
+  // V32: Handle null status (when approval_status = DRAFT, plan not activated yet)
+  const actualStatus = calculateActualStatus();
+  const statusKey = actualStatus;
+  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
 
   const canCreateAppointment = Boolean(
     user?.permissions?.includes('CREATE_APPOINTMENT')
@@ -78,14 +135,6 @@ export default function TreatmentPlanDetail({
 
   // V21.4: API 5.13 - Update Prices (Finance)
   const [showUpdatePricesModal, setShowUpdatePricesModal] = useState(false);
-
-  // Phase 5: Bulk selection for booking
-  const [selectedPlanItemIds, setSelectedPlanItemIds] = useState<number[]>([]);
-
-  const allPlanItems = useMemo(
-    () => plan.phases.flatMap((phase) => phase.items),
-    [plan.phases]
-  );
 
   const selectedPlanItems = useMemo(
     () => allPlanItems.filter((item) => selectedPlanItemIds.includes(item.itemId)),
