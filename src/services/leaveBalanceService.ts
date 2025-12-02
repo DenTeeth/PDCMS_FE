@@ -48,7 +48,15 @@ export class LeaveBalanceService {
       return response.data;
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('LeaveBalanceService.getEmployeeBalances error:', error.response?.data);
+        console.error('❌ LeaveBalanceService.getEmployeeBalances error:', {
+          employeeId,
+          cycleYear: cycleYear || new Date().getFullYear(),
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url,
+          message: error.message
+        });
       }
       throw error;
     }
