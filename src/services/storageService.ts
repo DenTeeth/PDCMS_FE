@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from '@/lib/api';
+import { extractApiResponse, extractPageResponse, extractErrorMessage, createApiError } from '@/utils/apiResponse';
 import type {
   StorageTransactionV3,
   StorageTransactionItemV3,
@@ -82,50 +83,80 @@ const mapTransactionItem = (item: any): StorageTransactionItemV3 => ({
   totalLineValue: item.totalLineValue ?? item.total_line_value ?? item.totalPrice ?? item.total_price,
 });
 
-const mapTransactionSummary = (item: any): StorageTransactionV3 => ({
-  transactionId: item.transactionId ?? item.transaction_id,
-  transactionCode: item.transactionCode ?? item.transaction_code,
-  transactionType: (item.transactionType ?? item.type ?? item.transaction_type) as TransactionType,
-  transactionDate: item.transactionDate ?? item.transaction_date,
-  supplierId: item.supplierId ?? item.supplier_id,
-  supplierName: item.supplierName ?? item.supplier_name,
-  invoiceNumber: item.invoiceNumber ?? item.invoice_number,
-  notes: item.notes ?? item.transactionNotes,
-  createdByName: item.createdByName ?? item.created_by_name ?? item.createdBy,
-  createdAt: item.createdAt ?? item.created_at,
-  approvedByName: item.approvedByName ?? item.approved_by_name,
-  approvedAt: item.approvedAt ?? item.approved_at,
-  rejectedBy: item.rejectedBy ?? item.rejected_by,
-  rejectedAt: item.rejectedAt ?? item.rejected_at,
-  rejectionReason: item.rejectionReason ?? item.rejection_reason,
-  cancelledBy: item.cancelledBy ?? item.cancelled_by,
-  cancelledAt: item.cancelledAt ?? item.cancelled_at,
-  cancellationReason: item.cancellationReason ?? item.cancellation_reason,
-  totalItems: item.totalItems ?? item.total_items,
-  totalValue: item.totalValue ?? item.total_value,
-  status: item.status ?? item.approvalStatus ?? item.approval_status ?? 'DRAFT', // Default to DRAFT if not set
-  paymentStatus: item.paymentStatus ?? item.payment_status,
-  paidAmount: item.paidAmount ?? item.paid_amount,
-  remainingDebt: item.remainingDebt ?? item.remaining_debt,
-  dueDate: item.dueDate ?? item.due_date,
-  relatedAppointmentId: item.relatedAppointmentId ?? item.related_appointment_id,
-  relatedAppointmentCode: item.relatedAppointmentCode ?? item.related_appointment_code,
-  patientName: item.patientName ?? item.patient_name,
-  items: Array.isArray(item.items) ? item.items.map(mapTransactionItem) : [],
-});
+const mapTransactionSummary = (item: any): StorageTransactionV3 => {
+  // Calculate totalValue from items if BE doesn't provide it
+  let calculatedTotalValue: number | null = null;
+  if (Array.isArray(item.items) && item.items.length > 0) {
+    calculatedTotalValue = item.items.reduce((sum: number, item: any) => {
+      const lineValue = item.totalLineValue ?? item.total_line_value ?? item.totalPrice ?? item.total_price ?? 
+                       (item.quantityChange ?? item.quantity ?? 0) * (item.unitPrice ?? item.unit_price ?? item.purchasePrice ?? item.purchase_price ?? 0);
+      return sum + (lineValue || 0);
+    }, 0);
+  }
+  
+  // Use BE value if available, otherwise use calculated value
+  const totalValue = item.totalValue ?? item.total_value ?? item.totalAmount ?? item.total_amount ?? calculatedTotalValue;
+  
+  // Debug: Log if totalValue is missing
+  if (process.env.NODE_ENV === 'development' && !totalValue && calculatedTotalValue === null) {
+    console.log('⚠️ [mapTransactionSummary] Missing totalValue:', {
+      transactionId: item.transactionId ?? item.transaction_id,
+      transactionCode: item.transactionCode ?? item.transaction_code,
+      hasItems: Array.isArray(item.items) && item.items.length > 0,
+      itemsCount: Array.isArray(item.items) ? item.items.length : 0,
+      availableFields: Object.keys(item).filter(k => k.toLowerCase().includes('value') || k.toLowerCase().includes('amount') || k.toLowerCase().includes('price')),
+    });
+  }
+  
+  return {
+    transactionId: item.transactionId ?? item.transaction_id,
+    transactionCode: item.transactionCode ?? item.transaction_code,
+    transactionType: (item.transactionType ?? item.type ?? item.transaction_type) as TransactionType,
+    transactionDate: item.transactionDate ?? item.transaction_date,
+    supplierId: item.supplierId ?? item.supplier_id,
+    supplierName: item.supplierName ?? item.supplier_name,
+    invoiceNumber: item.invoiceNumber ?? item.invoice_number,
+    notes: item.notes ?? item.transactionNotes,
+    createdByName: item.createdByName ?? item.created_by_name ?? item.createdBy,
+    createdAt: item.createdAt ?? item.created_at,
+    approvedByName: item.approvedByName ?? item.approved_by_name,
+    approvedAt: item.approvedAt ?? item.approved_at,
+    rejectedBy: item.rejectedBy ?? item.rejected_by,
+    rejectedAt: item.rejectedAt ?? item.rejected_at,
+    rejectionReason: item.rejectionReason ?? item.rejection_reason,
+    cancelledBy: item.cancelledBy ?? item.cancelled_by,
+    cancelledAt: item.cancelledAt ?? item.cancelled_at,
+    cancellationReason: item.cancellationReason ?? item.cancellation_reason,
+    totalItems: item.totalItems ?? item.total_items,
+    totalValue: totalValue,
+    status: item.status ?? item.approvalStatus ?? item.approval_status ?? 'DRAFT', // Default to DRAFT if not set
+    paymentStatus: item.paymentStatus ?? item.payment_status,
+    paidAmount: item.paidAmount ?? item.paid_amount,
+    remainingDebt: item.remainingDebt ?? item.remaining_debt,
+    dueDate: item.dueDate ?? item.due_date,
+    relatedAppointmentId: item.relatedAppointmentId ?? item.related_appointment_id,
+    relatedAppointmentCode: item.relatedAppointmentCode ?? item.related_appointment_code,
+    patientName: item.patientName ?? item.patient_name,
+    items: Array.isArray(item.items) ? item.items.map(mapTransactionItem) : [],
+  };
+};
 
 const mapTransactionDetail = (item: any): StorageTransactionV3 => {
   // Determine transaction type:
   // - If has supplierName -> IMPORT
   // - If has exportType or relatedAppointmentId -> EXPORT
   // - Otherwise try to infer from fields
-  let transactionType: TransactionType = 'IMPORT';
+  // Note: StorageTransactionV3.transactionType is 'IMPORT' | 'EXPORT' (string literal), not enum
+  let transactionType: 'IMPORT' | 'EXPORT' = 'IMPORT';
   if (item.exportType || item.relatedAppointmentId || item.relatedAppointmentCode) {
     transactionType = 'EXPORT';
   } else if (item.supplierName || item.supplierId) {
     transactionType = 'IMPORT';
   } else if (item.transactionType || item.transaction_type || item.type) {
-    transactionType = (item.transactionType ?? item.transaction_type ?? item.type) as TransactionType;
+    const typeValue = item.transactionType ?? item.transaction_type ?? item.type;
+    if (typeValue === 'IMPORT' || typeValue === 'EXPORT') {
+      transactionType = typeValue;
+    }
   }
 
   return {
@@ -183,7 +214,14 @@ const buildTransactionParams = (filter?: StorageFilter) => {
   return params;
 };
 
-const extractPayload = (response: any) => response?.data?.data ?? response?.data ?? response ?? {};
+// Legacy helper - use extractApiResponse instead
+const extractPayload = (response: any) => {
+  try {
+    return extractApiResponse(response);
+  } catch {
+    return response?.data ?? response ?? {};
+  }
+};
 
 // ============================================
 // STORAGE SERVICE
@@ -193,6 +231,7 @@ export const storageService = {
   /**
    * GET /api/v1/warehouse/transactions/stats - Lấy thống kê import/export (API 6.6)
    * Note: This endpoint may not exist or may require specific permissions
+   * If endpoint fails, returns default values instead of throwing error to prevent UI crash
    */
   getStats: async (month?: number, year?: number): Promise<StorageStats> => {
     try {
@@ -211,24 +250,33 @@ export const storageService = {
       console.log('✅ Get storage stats:', mapped);
       return mapped;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+      const errorMessage = extractErrorMessage(error);
       const errorDetails = error.response?.data || {};
       const statusCode = error.response?.status;
       const requestUrl = error.config?.url;
       
-      console.error('❌ Get storage stats error:', {
+      // Log error but don't throw - return default values to prevent UI crash
+      console.warn('⚠️ Get storage stats error (returning defaults):', {
         message: errorMessage,
         status: statusCode,
         data: errorDetails,
         url: requestUrl,
         params: error.config?.params,
+        note: 'Returning default values to prevent UI crash. Endpoint may not exist or require different parameters.',
       });
       
-      // Re-throw with more context
-      const enhancedError = new Error(`Failed to fetch storage stats: ${errorMessage}`);
-      (enhancedError as any).status = statusCode;
-      (enhancedError as any).data = errorDetails;
-      throw enhancedError;
+      // Return default values instead of throwing error
+      // This allows the UI to continue working even if stats endpoint is unavailable
+      const defaultStats: StorageStats = {
+        monthlyImportCount: 0,
+        monthlyExportCount: 0,
+        importGrowthPercent: 0,
+        exportGrowthPercent: 0,
+        totalTransactionsCount: 0,
+        expiredItemsCount: undefined,
+      };
+      
+      return defaultStats;
     }
   },
 
@@ -290,34 +338,21 @@ export const storageService = {
       console.log('✅ Get transactions:', content.length);
       return { content, meta, stats };
     } catch (error: any) {
-      // Better error logging with fallbacks
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.message || 
-        error.toString() || 
-        'Unknown error occurred';
-      
-      const errorDetails = error.response?.data || error.data || {};
-      const statusCode = error.response?.status || error.status;
-      const requestUrl = error.config?.url || error.url || TRANSACTION_BASE;
-      const requestParams = error.config?.params || {};
-      
-      console.error('❌ Get all transactions error:', {
-        message: errorMessage,
-        status: statusCode,
-        statusText: error.response?.statusText || error.statusText,
-        data: errorDetails,
-        url: requestUrl,
-        params: requestParams,
-        filter,
-        fullError: error,
+      const enhancedError = createApiError(error, {
+        endpoint: TRANSACTION_BASE,
+        method: 'GET',
+        params: buildTransactionParams(filter),
       });
       
-      // Re-throw with more context
-      const enhancedError = new Error(`Failed to fetch transactions: ${errorMessage}`);
-      (enhancedError as any).status = statusCode;
-      (enhancedError as any).data = errorDetails;
-      (enhancedError as any).originalError = error;
+      console.error('❌ Get all transactions error:', {
+        message: enhancedError.message,
+        status: enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        params: enhancedError.params,
+        filter,
+        originalError: error,
+      });
+      
       throw enhancedError;
     }
   },
@@ -347,17 +382,20 @@ export const storageService = {
       console.log('✅ Get transaction detail:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          'Unknown error';
-      console.error('Get transaction detail error:', {
-        id,
-        status: error.response?.status,
-        message: errorMessage,
-        data: error.response?.data,
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}`,
+        method: 'GET',
       });
-      throw error;
+      
+      console.error('❌ Get transaction detail error:', {
+        id,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -375,8 +413,20 @@ export const storageService = {
       console.log('✅ Update transaction notes:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('Update transaction notes error:', error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}`,
+        method: 'PUT',
+        params: { notes },
+      });
+      
+      console.error('❌ Update transaction notes error:', {
+        id,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -391,8 +441,19 @@ export const storageService = {
       console.log('✅ Approve transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('Approve transaction error:', error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}/approve`,
+        method: 'POST',
+      });
+      
+      console.error('❌ Approve transaction error:', {
+        id,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -407,8 +468,19 @@ export const storageService = {
       console.log('✅ Reject transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('Reject transaction error:', error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}/reject`,
+        method: 'POST',
+      });
+      
+      console.error('❌ Reject transaction error:', {
+        id,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -421,13 +493,37 @@ export const storageService = {
         `${TRANSACTION_BASE}/${id}/cancel`,
         cancellationReason ? { cancellationReason } : undefined
       );
-      const payload = extractPayload(response);
-      const mapped = mapTransactionDetail(payload.data ?? payload);
+      
+      // BE returns response directly (ResponseEntity.ok(response))
+      // Axios wraps it in response.data
+      const rawData = response.data;
+      
+      // Handle case where BE might wrap in { data: ... } or return directly
+      const data = rawData?.data ?? rawData;
+      
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
+      
+      const mapped = mapTransactionDetail(data);
       console.log('✅ Cancel transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('Cancel transaction error:', error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}/cancel`,
+        method: 'POST',
+        params: { cancellationReason },
+      });
+      
+      console.error('❌ Cancel transaction error:', {
+        id,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
