@@ -23,7 +23,7 @@ Utility API for converting quantities between different units of the same item w
 - ✅ Three rounding modes (FLOOR, CEILING, HALF_UP)
 - ✅ Formula transparency (shows calculation)
 - ✅ Security validation (prevents cross-item unit mixing)
-- ✅ Auto-formatted display strings (e.g., "1,000" vs "1000.0")
+- ✅ Auto-formatted display strings (e.g., "1,000"B vs "1000.0")
 - ✅ Data integrity checks (base unit exists, rates > 0)
 
 ## Algorithm

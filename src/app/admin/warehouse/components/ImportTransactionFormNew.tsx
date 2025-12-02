@@ -21,11 +21,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Search, Plus, Trash2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, Plus, Trash2, DollarSign, Calendar, AlertCircle, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { SupplierSummaryResponse } from '@/types/supplier';
@@ -46,6 +53,7 @@ interface ImportItem {
   purchasePrice: number;
   binLocation: string;
   notes: string;
+  availableUnits?: ItemUnitResponse[]; // Danh sách units có sẵn cho item này
 }
 
 interface ImportTransactionFormNewProps {
@@ -88,7 +96,7 @@ export default function ImportTransactionFormNew({
   // UI state
   const [openPopovers, setOpenPopovers] = useState<Record<number, boolean>>({});
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
-  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse>>({});
+  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse[]>>({}); // Cache danh sách units
   const [unitLoading, setUnitLoading] = useState<Record<number, boolean>>({});
 
   // Fetch Suppliers
@@ -177,6 +185,7 @@ export default function ImportTransactionFormNew({
           purchasePrice: 0,
           binLocation: '',
           notes: '',
+          availableUnits: undefined,
         },
       ]);
       setOpenPopovers({});
@@ -186,19 +195,21 @@ export default function ImportTransactionFormNew({
     }
   }, [isOpen]);
 
-  // Fetch base unit for item
-  const fetchBaseUnit = async (itemMasterId: number, rowIndex: number, item?: ItemMasterV1) => {
+  // Fetch units for item (API 6.11)
+  const fetchItemUnits = async (itemMasterId: number, rowIndex: number, item?: ItemMasterV1) => {
     if (!itemMasterId || itemMasterId <= 0) return;
 
     // Check cache
-    if (unitCache[itemMasterId]) {
-      const cachedUnit = unitCache[itemMasterId];
+    if (unitCache[itemMasterId] && unitCache[itemMasterId].length > 0) {
+      const cachedUnits = unitCache[itemMasterId];
+      const baseUnit = cachedUnits.find(u => u.isBaseUnit) || cachedUnits[0];
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
           ...updated[rowIndex],
-          unitId: cachedUnit.unitId,
-          unitName: cachedUnit.unitName,
+          unitId: baseUnit.unitId,
+          unitName: baseUnit.unitName,
+          availableUnits: cachedUnits,
         };
         return updated;
       });
@@ -207,59 +218,128 @@ export default function ImportTransactionFormNew({
 
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
-      const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
       
-      if (!baseUnit || !baseUnit.unitId) {
-        throw new Error('Base unit không hợp lệ');
+      // Try to get units using API 6.11
+      const unitsResponse = await itemUnitService.getItemUnits(itemMasterId, 'active');
+      
+      if (!unitsResponse || !unitsResponse.units || unitsResponse.units.length === 0) {
+        // Fallback: Try getBaseUnit
+        try {
+          const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+          if (baseUnit && baseUnit.unitId) {
+            const units = [baseUnit];
+            setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+            setItems((prev) => {
+              const updated = [...prev];
+              updated[rowIndex] = {
+                ...updated[rowIndex],
+                unitId: baseUnit.unitId,
+                unitName: baseUnit.unitName,
+                availableUnits: units,
+              };
+              return updated;
+            });
+            return;
+          }
+        } catch (baseUnitError) {
+          console.warn('⚠️ Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
+        }
+        
+        // If both fail, BE will auto-create base unit from unitOfMeasure
+        const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+        const fallbackUnit: ItemUnitResponse = {
+          unitId: 0, // Will be set by BE
+          unitName: fallbackUnitName,
+          conversionRate: 1,
+          isBaseUnit: true,
+          displayOrder: 1,
+        };
+        
+        setItems((prev) => {
+          const updated = [...prev];
+          updated[rowIndex] = {
+            ...updated[rowIndex],
+            unitId: 0, // BE will auto-create and use correct unitId
+            unitName: fallbackUnitName,
+            availableUnits: [fallbackUnit],
+          };
+          return updated;
+        });
+        
+        toast.warning('Chưa có đơn vị cho vật tư này', {
+          description: `Hệ thống sẽ tự động tạo đơn vị cơ sở "${fallbackUnitName}" khi bạn nhập kho.`,
+          duration: 5000,
+        });
+        return;
       }
 
-      // Cache the unit
-      setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
+      // Cache the units
+      const units = unitsResponse.units.map(u => ({
+        unitId: u.unitId,
+        unitName: u.unitName,
+        conversionRate: u.conversionRate,
+        isBaseUnit: u.isBaseUnit,
+        displayOrder: u.displayOrder,
+        isActive: u.isActive,
+        description: u.description,
+      }));
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
 
-      // Update item with unit
+      // Set default to base unit (or first unit if no base unit found)
+      const baseUnit = units.find(u => u.isBaseUnit) || units[0];
+      
+      // Update item with base unit and available units
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
           ...updated[rowIndex],
           unitId: baseUnit.unitId,
           unitName: baseUnit.unitName,
+          availableUnits: units,
         };
         return updated;
       });
     } catch (error: any) {
-      console.warn('⚠️ Base unit not found, but BE will auto-create from unitOfMeasure when processing import transaction');
+      console.error('❌ Failed to fetch units:', error);
       
-      // BE đã implement Issue #11 Priority 1: Auto-create base unit khi import transaction
-      // Nếu unitId không tìm thấy, BE sẽ tự động tạo base unit từ unitOfMeasure
-      // Solution: Use a temporary large unitId that doesn't exist, BE will auto-create base unit if not found
+      // Fallback: Try getBaseUnit
+      try {
+        const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+        if (baseUnit && baseUnit.unitId) {
+          const units = [baseUnit];
+          setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+          setItems((prev) => {
+            const updated = [...prev];
+            updated[rowIndex] = {
+              ...updated[rowIndex],
+              unitId: baseUnit.unitId,
+              unitName: baseUnit.unitName,
+              availableUnits: units,
+            };
+            return updated;
+          });
+          return;
+        }
+      } catch (baseUnitError) {
+        console.warn('⚠️ getBaseUnit also failed');
+      }
+      
+      // Final fallback: BE will auto-create
       const fallbackUnitName = item?.unitOfMeasure || 'Cái';
-      const tempUnitId = 999999; // Temporary ID - BE will auto-create base unit if not found
+      toast.warning('Không thể tải đơn vị', {
+        description: `Hệ thống sẽ tự động tạo đơn vị "${fallbackUnitName}" khi nhập kho.`,
+        duration: 5000,
+      });
       
-      // Cache the fallback unit with temp ID
-      const fallbackUnitWithTempId = {
-        unitId: tempUnitId,
-        unitName: fallbackUnitName,
-        conversionRate: 1,
-        isBaseUnit: true,
-        displayOrder: 1,
-      };
-      setUnitCache((prev) => ({ ...prev, [itemMasterId]: fallbackUnitWithTempId }));
-
-      // Update item with temp unitId (BE will auto-create base unit when processing import)
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
           ...updated[rowIndex],
-          unitId: tempUnitId, // Temporary - BE will auto-create and use correct unitId
+          unitId: 0, // BE will auto-create
           unitName: fallbackUnitName,
+          availableUnits: [],
         };
         return updated;
-      });
-      
-      // Show info message (not error, as BE will handle it)
-      toast.info('Đơn vị sẽ được tạo tự động', {
-        description: `Đơn vị: ${fallbackUnitName}. Hệ thống sẽ tự động tạo đơn vị cơ sở khi bạn nhập kho. Bạn có thể tiếp tục điền thông tin và submit.`,
-        duration: 6000,
       });
     } finally {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: false }));
@@ -298,8 +378,8 @@ export default function ImportTransactionFormNew({
       return updated;
     });
 
-    // Fetch base unit (pass item for fallback to unitOfMeasure)
-    await fetchBaseUnit(itemId, rowIndex, item);
+    // Fetch units (pass item for fallback to unitOfMeasure)
+    await fetchItemUnits(itemId, rowIndex, item);
 
     // Close popover
     setOpenPopovers((prev) => ({ ...prev, [rowIndex]: false }));
@@ -322,6 +402,7 @@ export default function ImportTransactionFormNew({
         purchasePrice: 0,
         binLocation: '',
         notes: '',
+        availableUnits: undefined,
       },
     ]);
   };
@@ -427,9 +508,16 @@ export default function ImportTransactionFormNew({
     }
 
     // Validate items
-    // Note: BE đã implement Issue #11 Priority 1 - sẽ auto-create base unit nếu unitId không tìm thấy
-    // FE có thể gửi unitId tạm thời (999999), BE sẽ tự động tạo base unit từ unitOfMeasure
+    // Note: BE sẽ auto-create base unit nếu unitId = 0 hoặc không tìm thấy
+    // Nhưng theo BE validation, unitId phải là @Positive, nên FE cần đảm bảo unitId > 0
     const validItems = items.filter((item) => {
+      // If unitId is 0, it means BE will auto-create, but BE validation requires @Positive
+      // So we need to ensure unitId > 0 before submit
+      if (item.unitId === 0) {
+        toast.error(`Vật tư "${item.itemName}" chưa có đơn vị. Vui lòng chọn đơn vị hoặc đợi hệ thống tạo tự động.`);
+        return false;
+      }
+      
       return (
         item.itemMasterId > 0 &&
         item.unitId > 0 && // Must be positive (BE validation @Positive)
@@ -488,7 +576,8 @@ export default function ImportTransactionFormNew({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Box className="h-5 w-5" />
             Phiếu Nhập Kho {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -499,27 +588,29 @@ export default function ImportTransactionFormNew({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* General Information */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="supplierId" className="text-sm font-medium">
                 Nhà Cung Cấp <span className="text-red-500">*</span>
               </Label>
-              <select
-                id="supplierId"
-                value={supplierId}
-                onChange={(e) => setSupplierId(Number(e.target.value))}
-                className="w-full px-3 py-2 border rounded-md"
+              <Select
+                value={supplierId > 0 ? supplierId.toString() : ''}
+                onValueChange={(value) => setSupplierId(Number(value))}
                 required
               >
-                <option value={0}>-- Chọn nhà cung cấp --</option>
-                {suppliers.map((sup) => (
-                  <option key={sup.supplierId} value={sup.supplierId}>
-                    {sup.supplierName}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="supplierId">
+                  <SelectValue placeholder="-- Chọn nhà cung cấp --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((sup) => (
+                    <SelectItem key={sup.supplierId} value={sup.supplierId.toString()}>
+                      {sup.supplierName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="transactionDate" className="text-sm font-medium">
                 Ngày Nhập <span className="text-red-500">*</span>
               </Label>
@@ -536,7 +627,7 @@ export default function ImportTransactionFormNew({
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="invoiceNumber" className="text-sm font-medium">
                 Số Hóa Đơn <span className="text-red-500">*</span>
               </Label>
@@ -549,7 +640,7 @@ export default function ImportTransactionFormNew({
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="expectedDeliveryDate" className="text-sm font-medium">
                 Ngày Dự Kiến Giao
               </Label>
@@ -567,12 +658,12 @@ export default function ImportTransactionFormNew({
           </div>
 
           {/* Items Table */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">
                 Danh Sách Vật Tư <span className="text-red-500">*</span>
               </Label>
-              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
+              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4" />
                 Thêm Dòng
               </Button>
@@ -584,12 +675,13 @@ export default function ImportTransactionFormNew({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[25%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[15%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[12%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[15%]">Đơn Giá (VNĐ) *</th>
-                      <th className="p-3 text-left w-[15%]">Hạn Sử Dụng *</th>
-                      <th className="p-3 text-left w-[13%]">Hành Động</th>
+                      <th className="p-3 text-left w-[18%]">Vật Tư *</th>
+                      <th className="p-3 text-left w-[8%]">Đơn Vị *</th>
+                      <th className="p-3 text-left w-[14%]">Số Lô *</th>
+                      <th className="p-3 text-left w-[10%]">Số Lượng *</th>
+                      <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) *</th>
+                      <th className="p-3 text-left w-[12%]">Hạn Sử Dụng *</th>
+                      <th className="p-3 text-left w-[15%]">Hành Động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -692,11 +784,18 @@ export default function ImportTransactionFormNew({
                                 </div>
                               </PopoverContent>
                             </Popover>
-                            {unitLoading[index] && (
-                              <p className="text-xs text-blue-500 mt-1">Đang tải đơn vị...</p>
-                            )}
-                            {item.unitName && !unitLoading[index] && (
-                              <p className="text-xs text-gray-500 mt-1">Đơn vị: {item.unitName}</p>
+                          </td>
+                          <td className="p-3">
+                            {unitLoading[index] ? (
+                              <div className="text-sm text-gray-500">Đang tải...</div>
+                            ) : item.unitId > 0 && item.unitName ? (
+                              <div className="text-sm font-medium text-slate-700">
+                                {item.unitName}
+                              </div>
+                            ) : item.itemMasterId > 0 ? (
+                              <div className="text-sm text-gray-400">Chưa có đơn vị</div>
+                            ) : (
+                              <div className="text-sm text-gray-400">-</div>
                             )}
                           </td>
                           <td className="p-3">
@@ -758,11 +857,11 @@ export default function ImportTransactionFormNew({
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+          <div className="bg-emerald-50 border-2 border-emerald-300 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-emerald-600" />
-                <Label className="text-sm font-semibold text-emerald-900">
+                <Label className="text-base font-semibold text-emerald-900">
                   Tổng Giá Trị Phiếu Nhập
                 </Label>
               </div>
@@ -773,7 +872,7 @@ export default function ImportTransactionFormNew({
           </div>
 
           {/* Notes */}
-          <div>
+          <div className="space-y-2">
             <Label className="text-sm font-medium">Ghi Chú</Label>
             <Textarea
               value={notes}
@@ -801,10 +900,10 @@ export default function ImportTransactionFormNew({
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>
               Hủy
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={mutation.isPending} className="bg-purple-600 hover:bg-purple-700">
               {mutation.isPending ? 'Đang lưu...' : 'Lưu Phiếu Nhập'}
             </Button>
           </div>

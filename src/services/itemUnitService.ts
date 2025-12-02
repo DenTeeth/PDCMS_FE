@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api';
+import { extractApiResponse, extractErrorMessage, createApiError } from '@/utils/apiResponse';
 import type { ItemUnitResponse, GetItemUnitsResponse, ConversionRequest, ConversionResponse } from '@/types/warehouse';
 
 const api = apiClient.getAxiosInstance();
@@ -19,10 +20,21 @@ export const itemUnitService = {
         params: { status },
       });
       console.log(`✅ Get item units for item ${itemMasterId}:`, response.data);
-      return response.data;
+      return extractApiResponse(response);
     } catch (error: any) {
-      console.error(`❌ Get item units error for item ${itemMasterId}:`, error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${BASE_PATH}/${itemMasterId}/units`,
+        method: 'GET',
+        params: { status },
+      });
+      
+      console.error(`❌ Get item units error for item ${itemMasterId}:`, {
+        message: enhancedError.message,
+        status: enhancedError.status,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -57,10 +69,20 @@ export const itemUnitService = {
     try {
       const response = await api.get<ItemUnitResponse>(`${BASE_PATH}/${itemMasterId}/units/base`);
       console.log(`✅ Get base unit for item ${itemMasterId}:`, response.data);
-      return response.data;
+      return extractApiResponse(response);
     } catch (error: any) {
-      console.error(`❌ Get base unit error for item ${itemMasterId}:`, error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${BASE_PATH}/${itemMasterId}/units/base`,
+        method: 'GET',
+      });
+      
+      console.error(`❌ Get base unit error for item ${itemMasterId}:`, {
+        message: enhancedError.message,
+        status: enhancedError.status,
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 
@@ -75,27 +97,23 @@ export const itemUnitService = {
     try {
       const response = await api.post<ConversionResponse>(`${BASE_PATH}/units/convert`, request);
       console.log('✅ Convert units:', response.data);
-      return response.data;
+      return extractApiResponse(response);
     } catch (error: any) {
-      const errorData = error.response?.data;
-      const errorMessage = errorData?.message || errorData?.error || error.message;
-      const errorCode = errorData?.error;
-      
-      console.error('❌ Convert units error:', {
-        message: errorMessage,
-        code: errorCode,
-        status: error.response?.status,
-        data: errorData,
-        url: error.config?.url,
-        request: request,
-        fullError: error,
+      const enhancedError = createApiError(error, {
+        endpoint: `${BASE_PATH}/units/convert`,
+        method: 'POST',
+        params: request,
       });
       
-      // Re-throw with enhanced error info
-      const enhancedError = new Error(errorMessage);
-      (enhancedError as any).code = errorCode;
-      (enhancedError as any).status = error.response?.status;
-      (enhancedError as any).response = error.response;
+      console.error('❌ Convert units error:', {
+        message: enhancedError.message,
+        code: enhancedError.code,
+        status: enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        request,
+        originalError: error,
+      });
+      
       throw enhancedError;
     }
   },
@@ -115,10 +133,22 @@ export const itemUnitService = {
         params: { fromUnitId, toUnitId, quantity },
       });
       console.log(`✅ Convert quantity: ${quantity} from unit ${fromUnitId} to ${toUnitId} = ${response.data}`);
-      return response.data;
+      return extractApiResponse(response);
     } catch (error: any) {
-      console.error('❌ Convert quantity error:', error.response?.data || error.message);
-      throw error;
+      const enhancedError = createApiError(error, {
+        endpoint: `${BASE_PATH}/units/convert`,
+        method: 'GET',
+        params: { fromUnitId, toUnitId, quantity },
+      });
+      
+      console.error('❌ Convert quantity error:', {
+        message: enhancedError.message,
+        status: enhancedError.status,
+        params: { fromUnitId, toUnitId, quantity },
+        originalError: error,
+      });
+      
+      throw enhancedError;
     }
   },
 };

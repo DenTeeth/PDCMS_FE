@@ -32,7 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Search, Plus, Trash2, Calendar, AlertCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, Plus, Trash2, Calendar, AlertCircle, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CreateExportTransactionDto, CreateExportItemDto, ExportType, ItemUnitResponse } from '@/types/warehouse';
@@ -47,6 +47,7 @@ interface ExportItem {
   unitId: number;
   unitName: string;
   notes: string;
+  availableUnits?: ItemUnitResponse[]; // Danh sách units có sẵn cho item này
 }
 
 interface ExportTransactionFormNewProps {
@@ -87,7 +88,7 @@ export default function ExportTransactionFormNew({
   // UI state
   const [openPopovers, setOpenPopovers] = useState<Record<number, boolean>>({});
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
-  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse>>({});
+  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse[]>>({}); // Cache danh sách units
   const [unitLoading, setUnitLoading] = useState<Record<number, boolean>>({});
 
   // Fetch Item Masters - Using getSummary for better compatibility
@@ -152,6 +153,7 @@ export default function ExportTransactionFormNew({
           unitId: 0,
           unitName: '',
           notes: '',
+          availableUnits: undefined,
         },
       ]);
       setOpenPopovers({});
@@ -161,19 +163,21 @@ export default function ExportTransactionFormNew({
     }
   }, [isOpen]);
 
-  // Fetch base unit for item
-  const fetchBaseUnit = async (itemMasterId: number, rowIndex: number) => {
+  // Fetch units for item (API 6.11)
+  const fetchItemUnits = async (itemMasterId: number, rowIndex: number, item?: ItemMasterV1) => {
     if (!itemMasterId || itemMasterId <= 0) return;
 
-    // Check cache first
-    if (unitCache[itemMasterId]) {
-      const cachedUnit = unitCache[itemMasterId];
+    // Check cache
+    if (unitCache[itemMasterId] && unitCache[itemMasterId].length > 0) {
+      const cachedUnits = unitCache[itemMasterId];
+      const baseUnit = cachedUnits.find(u => u.isBaseUnit) || cachedUnits[0];
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
           ...updated[rowIndex],
-          unitId: cachedUnit.unitId,
-          unitName: cachedUnit.unitName,
+          unitId: baseUnit.unitId,
+          unitName: baseUnit.unitName,
+          availableUnits: cachedUnits,
         };
         return updated;
       });
@@ -182,29 +186,128 @@ export default function ExportTransactionFormNew({
 
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
-      const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
       
-      if (!baseUnit || !baseUnit.unitId) {
-        throw new Error('Base unit không hợp lệ');
+      // Try to get units using API 6.11
+      const unitsResponse = await itemUnitService.getItemUnits(itemMasterId, 'active');
+      
+      if (!unitsResponse || !unitsResponse.units || unitsResponse.units.length === 0) {
+        // Fallback: Try getBaseUnit
+        try {
+          const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+          if (baseUnit && baseUnit.unitId) {
+            const units = [baseUnit];
+            setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+            setItems((prev) => {
+              const updated = [...prev];
+              updated[rowIndex] = {
+                ...updated[rowIndex],
+                unitId: baseUnit.unitId,
+                unitName: baseUnit.unitName,
+                availableUnits: units,
+              };
+              return updated;
+            });
+            return;
+          }
+        } catch (baseUnitError) {
+          console.warn('⚠️ Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
+        }
+        
+        // If both fail, BE will auto-create base unit from unitOfMeasure
+        const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+        const fallbackUnit: ItemUnitResponse = {
+          unitId: 0, // Will be set by BE
+          unitName: fallbackUnitName,
+          conversionRate: 1,
+          isBaseUnit: true,
+          displayOrder: 1,
+        };
+        
+        setItems((prev) => {
+          const updated = [...prev];
+          updated[rowIndex] = {
+            ...updated[rowIndex],
+            unitId: 0, // BE will auto-create and use correct unitId
+            unitName: fallbackUnitName,
+            availableUnits: [fallbackUnit],
+          };
+          return updated;
+        });
+        
+        toast.warning('Chưa có đơn vị cho vật tư này', {
+          description: `Hệ thống sẽ tự động tạo đơn vị cơ sở "${fallbackUnitName}" khi bạn xuất kho.`,
+          duration: 5000,
+        });
+        return;
       }
 
-      // Cache the unit
-      setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
+      // Cache the units
+      const units = unitsResponse.units.map(u => ({
+        unitId: u.unitId,
+        unitName: u.unitName,
+        conversionRate: u.conversionRate,
+        isBaseUnit: u.isBaseUnit,
+        displayOrder: u.displayOrder,
+        isActive: u.isActive,
+        description: u.description,
+      }));
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
 
-      // Update item with unit
+      // Set default to base unit (or first unit if no base unit found)
+      const baseUnit = units.find(u => u.isBaseUnit) || units[0];
+      
+      // Update item with base unit and available units
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
           ...updated[rowIndex],
           unitId: baseUnit.unitId,
           unitName: baseUnit.unitName,
+          availableUnits: units,
         };
         return updated;
       });
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit:', error);
-      toast.error('Không thể tải đơn vị cơ sở', {
-        description: error.response?.data?.message || error.message || 'Vui lòng thử lại',
+      console.error('❌ Failed to fetch units:', error);
+      
+      // Fallback: Try getBaseUnit
+      try {
+        const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+        if (baseUnit && baseUnit.unitId) {
+          const units = [baseUnit];
+          setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+          setItems((prev) => {
+            const updated = [...prev];
+            updated[rowIndex] = {
+              ...updated[rowIndex],
+              unitId: baseUnit.unitId,
+              unitName: baseUnit.unitName,
+              availableUnits: units,
+            };
+            return updated;
+          });
+          return;
+        }
+      } catch (baseUnitError) {
+        console.warn('⚠️ getBaseUnit also failed');
+      }
+      
+      // Final fallback: BE will auto-create
+      const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+      toast.warning('Không thể tải đơn vị', {
+        description: `Hệ thống sẽ tự động tạo đơn vị "${fallbackUnitName}" khi xuất kho.`,
+        duration: 5000,
+      });
+      
+      setItems((prev) => {
+        const updated = [...prev];
+        updated[rowIndex] = {
+          ...updated[rowIndex],
+          unitId: 0, // BE will auto-create
+          unitName: fallbackUnitName,
+          availableUnits: [],
+        };
+        return updated;
       });
     } finally {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: false }));
@@ -243,8 +346,8 @@ export default function ExportTransactionFormNew({
       return updated;
     });
 
-    // Fetch base unit
-    await fetchBaseUnit(itemId, rowIndex);
+    // Fetch units (pass item for fallback to unitOfMeasure)
+    await fetchItemUnits(itemId, rowIndex, item);
 
     // Close popover
     setOpenPopovers((prev) => ({ ...prev, [rowIndex]: false }));
@@ -263,6 +366,7 @@ export default function ExportTransactionFormNew({
         unitId: 0,
         unitName: '',
         notes: '',
+        availableUnits: undefined,
       },
     ]);
   };
@@ -360,10 +464,19 @@ export default function ExportTransactionFormNew({
     }
 
     // Validate items
+    // Note: BE sẽ auto-create base unit nếu unitId = 0 hoặc không tìm thấy
+    // Nhưng theo BE validation, unitId phải là @Positive, nên FE cần đảm bảo unitId > 0
     const validItems = items.filter((item) => {
+      // If unitId is 0, it means BE will auto-create, but BE validation requires @Positive
+      // So we need to ensure unitId > 0 before submit
+      if (item.unitId === 0) {
+        toast.error(`Vật tư "${item.itemName}" chưa có đơn vị. Vui lòng đợi hệ thống tải đơn vị hoặc chọn vật tư khác.`);
+        return false;
+      }
+      
       return (
         item.itemMasterId > 0 &&
-        item.unitId > 0 &&
+        item.unitId > 0 && // Must be positive (BE validation @Positive)
         item.quantity > 0
       );
     });
@@ -404,7 +517,8 @@ export default function ExportTransactionFormNew({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Box className="h-5 w-5" />
             Phiếu Xuất Kho {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -415,7 +529,7 @@ export default function ExportTransactionFormNew({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Header Fields */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="transactionDate" className="text-sm font-medium">
                 Ngày Xuất Kho <span className="text-red-500">*</span>
               </Label>
@@ -433,12 +547,12 @@ export default function ExportTransactionFormNew({
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="exportType" className="text-sm font-medium">
                 Loại Xuất Kho <span className="text-red-500">*</span>
               </Label>
               <Select value={exportType} onValueChange={(value: ExportType) => setExportType(value)}>
-                <SelectTrigger>
+                <SelectTrigger id="exportType">
                   <SelectValue placeholder="Chọn loại xuất kho" />
                 </SelectTrigger>
                 <SelectContent>
@@ -449,7 +563,7 @@ export default function ExportTransactionFormNew({
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="referenceCode" className="text-sm font-medium">
                 Mã Tham Chiếu
               </Label>
@@ -461,7 +575,7 @@ export default function ExportTransactionFormNew({
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="departmentName" className="text-sm font-medium">
                 Phòng Ban
               </Label>
@@ -473,7 +587,7 @@ export default function ExportTransactionFormNew({
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="requestedBy" className="text-sm font-medium">
                 Người Yêu Cầu
               </Label>
@@ -504,7 +618,7 @@ export default function ExportTransactionFormNew({
           </div>
 
           {/* Notes */}
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="notes" className="text-sm font-medium">
               Ghi Chú
             </Label>
@@ -518,12 +632,12 @@ export default function ExportTransactionFormNew({
           </div>
 
           {/* Items Table */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">
                 Danh Sách Vật Tư <span className="text-red-500">*</span>
               </Label>
-              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
+              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4" />
                 Thêm Dòng
               </Button>
@@ -653,12 +767,14 @@ export default function ExportTransactionFormNew({
                           <td className="p-3">
                             {unitLoading[index] ? (
                               <div className="text-sm text-gray-500">Đang tải...</div>
-                            ) : item.unitId > 0 ? (
+                            ) : item.unitId > 0 && item.unitName ? (
                               <div className="text-sm font-medium text-slate-700">
                                 {item.unitName}
                               </div>
+                            ) : item.itemMasterId > 0 ? (
+                              <div className="text-sm text-gray-400">Chưa có đơn vị</div>
                             ) : (
-                              <div className="text-sm text-gray-400">Chưa chọn</div>
+                              <div className="text-sm text-gray-400">-</div>
                             )}
                           </td>
                           <td className="p-3">
@@ -714,7 +830,7 @@ export default function ExportTransactionFormNew({
             <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>
               Hủy
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={mutation.isPending} className="bg-purple-600 hover:bg-purple-700">
               {mutation.isPending ? 'Đang xử lý...' : 'Tạo Phiếu Xuất'}
             </Button>
           </div>
