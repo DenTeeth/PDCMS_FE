@@ -675,7 +675,7 @@ export const canAccessWarehouse = (
   if (hasViewWarehouse) {
     return true;
   }
-  
+
   // Priority 2: Fallback - Check if user is ROLE_ADMIN (has all permissions)
   // Note: This is a fallback only, as ROLE_ADMIN should have VIEW_WAREHOUSE permission
   const isAdmin = userRoles?.includes('ROLE_ADMIN') || false;
@@ -705,11 +705,11 @@ export const filterNavigationItems = (
     if (item.name === 'Warehouse Management') {
       // Check warehouse access (prioritizes permissions, ROLE_ADMIN as fallback)
       const canAccess = canAccessWarehouse(userRoles, userPermissions);
-      
+
       if (!canAccess) {
         return false;
       }
-      
+
       // Filter submenu items based on permissions
       if (item.hasSubmenu && item.submenu) {
         const filteredSubmenu = item.submenu.filter(subItem => {
@@ -722,7 +722,7 @@ export const filterNavigationItems = (
           }
           return true;
         });
-        
+
         if (filteredSubmenu.length === 0) {
           return false; // Hide parent if no submenu items are visible
         }
@@ -737,12 +737,12 @@ export const filterNavigationItems = (
     if (item.hasSubmenu && item.submenu) {
       // Filter submenu items first
       const filteredSubmenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions, userRoles, employmentType);
-      
+
       // If no submenu items are visible, hide parent
       if (filteredSubmenu.length === 0) {
         return false;
       }
-      
+
       // If parent has no requiredPermissions/requiredPermissionGroup, 
       // visibility is determined by submenu items (already checked above)
       // Otherwise, check parent permissions
@@ -751,7 +751,7 @@ export const filterNavigationItems = (
         item.submenu = filteredSubmenu;
         return true;
       }
-      
+
       // Parent has permissions - check them
       item.submenu = filteredSubmenu;
     }
