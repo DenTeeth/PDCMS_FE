@@ -92,10 +92,12 @@ export interface InventoryStats {
 }
 
 export interface ItemUnitRequest {
+  unitId?: number; // Optional - required when updating existing units
   unitName: string;
   conversionRate: number;
   isBaseUnit: boolean;
   displayOrder: number;
+  isActive?: boolean; // Required when updating existing units
   isDefaultImportUnit?: boolean;
   isDefaultExportUnit?: boolean;
 }
@@ -625,25 +627,106 @@ export const inventoryService = {
    * @throws 409 CONFLICT if Safety Lock violation occurs
    */
   update: async (id: number, data: UpdateItemMasterRequest): Promise<UpdateItemMasterResponse> => {
+    // Log request details for BE debugging
+    console.group('🔄 [WAREHOUSE] Update Item Request');
+    console.log('📋 Item ID:', id);
+    console.log('📦 Request Data:', JSON.stringify(data, null, 2));
+    console.log('🔗 Endpoint: PUT /warehouse/items/' + id);
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    
     try {
       const response = await api.put<UpdateItemMasterResponse>(`/warehouse/items/${id}`, data);
-      console.log('✅ Update item:', response.data);
+      
+      console.log('✅ [WAREHOUSE] Update Success');
+      console.log('📊 Response Data:', JSON.stringify(response.data, null, 2));
       
       // Show warning if Safety Lock was applied
       if (response.data.safetyLockApplied) {
-        console.warn('⚠️ Safety Lock was applied - some changes may have been blocked due to existing inventory');
+        console.warn('⚠️ [WAREHOUSE] Safety Lock was applied - some changes may have been blocked due to existing inventory');
+        console.warn('📌 Safety Lock Details:', {
+          itemId: id,
+          itemCode: data.itemCode || 'N/A',
+          safetyLockApplied: response.data.safetyLockApplied,
+          timestamp: new Date().toISOString()
+        });
       }
       
+      console.groupEnd();
       return response.data;
     } catch (error: any) {
-      console.error('❌ Update item error:', error.response?.data || error.message);
+      // Detailed error logging for BE debugging
+      console.error('❌ [WAREHOUSE] Update Item Error');
+      console.error('📋 Item ID:', id);
+      console.error('📦 Request Data:', JSON.stringify(data, null, 2));
+      console.error('🔗 Endpoint: PUT /warehouse/items/' + id);
+      console.error('⏰ Timestamp:', new Date().toISOString());
       
-      // Handle Safety Lock errors (409 CONFLICT)
-      if (error.response?.status === 409) {
-        const errorMessage = error.response?.data?.message || 'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho. Vui lòng kiểm tra lại.';
+      // Log full error details
+      if (error.response) {
+        console.error('📡 Response Status:', error.response.status);
+        console.error('📡 Response Headers:', error.response.headers);
+        console.error('📡 Response Data:', JSON.stringify(error.response.data, null, 2));
+        console.error('📡 Full Response:', error.response);
+      } else if (error.request) {
+        console.error('📡 Request made but no response received:', error.request);
+      } else {
+        console.error('📡 Error setting up request:', error.message);
+      }
+      
+      console.error('📡 Full Error Object:', error);
+      console.error('📡 Error Stack:', error.stack);
+      
+      // Handle validation errors (400 Bad Request) - Detailed logging
+      if (error.response?.status === 400) {
+        const errorData = error.response.data || {};
+        console.error('❌ [WAREHOUSE] Validation Error (400)');
+        console.error('📌 Validation Details:', {
+          itemId: id,
+          itemCode: data.itemCode || 'N/A',
+          status: 400,
+          message: errorData.message || 'No message provided',
+          errorCode: errorData.errorCode || 'NO_ERROR_CODE',
+          timestamp: new Date().toISOString(),
+          fullErrorData: JSON.stringify(errorData, null, 2)
+        });
+        
+        const errorMessage = errorData.message || 
+          'Lỗi validation. Vui lòng kiểm tra lại dữ liệu.';
+        
+        console.groupEnd();
         throw new Error(errorMessage);
       }
       
+      // Handle Safety Lock errors (409 CONFLICT) - Detailed logging
+      if (error.response?.status === 409) {
+        const conflictData = error.response.data || {};
+        console.error('🚫 [WAREHOUSE] CONFLICT (409) - Safety Lock Violation');
+        console.error('📌 Conflict Details:', {
+          itemId: id,
+          itemCode: data.itemCode || 'N/A',
+          status: 409,
+          message: conflictData.message || 'No message provided',
+          errorCode: conflictData.errorCode || 'NO_ERROR_CODE',
+          timestamp: new Date().toISOString(),
+          fullErrorData: JSON.stringify(conflictData, null, 2)
+        });
+        
+        const errorMessage = conflictData.message || 
+          'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho. Vui lòng kiểm tra lại.';
+        
+        console.groupEnd();
+        throw new Error(errorMessage);
+      }
+      
+      // Log other error types
+      console.error('❌ [WAREHOUSE] Other Error Type:', {
+        status: error.response?.status || 'NO_STATUS',
+        message: error.message || 'NO_MESSAGE',
+        errorCode: error.response?.data?.errorCode || 'NO_ERROR_CODE',
+        timestamp: new Date().toISOString()
+      });
+      
+      console.groupEnd();
       throw error;
     }
   },
