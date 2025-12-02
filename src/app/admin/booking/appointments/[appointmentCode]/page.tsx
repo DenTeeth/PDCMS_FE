@@ -600,14 +600,6 @@ export default function AdminAppointmentDetailPage() {
 
       // ✅ BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
       const updated = await appointmentService.updateAppointmentStatus(appointment.appointmentCode, request);
-<<<<<<< HEAD
-
-      toast.success('Status updated successfully', {
-        description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
-      });
-
-      // Update appointment with new data
-=======
 
       // ✅ FIX: Verify response has updated status
       if (!updated || !updated.status) {
@@ -647,7 +639,6 @@ export default function AdminAppointmentDetailPage() {
       }
 
       // ✅ FIX: Update appointment with response data (BE now returns DTO)
->>>>>>> origin/FE-501-Dev
       setAppointment(updated);
 
       // Reset form
