@@ -93,21 +93,57 @@ export default function EmployeeTimeOffRequestsPage() {
   };
 
   const loadLeaveBalances = async () => {
-    if (!user?.employeeId) return;
+    // Validate employeeId exists and is a valid number
+    if (!user?.employeeId) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ Cannot load leave balances: user.employeeId is missing');
+        console.warn('User object:', user);
+      }
+      return;
+    }
+
+    const employeeIdNum = Number(user.employeeId);
+    if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Invalid employeeId:');
+        console.error('  Raw value:', user.employeeId);
+        console.error('  Parsed value:', employeeIdNum);
+        console.error('  Type:', typeof user.employeeId);
+        console.error('Full user object:', user);
+      }
+      return;
+    }
 
     try {
       const currentYear = new Date().getFullYear();
       const balances = await LeaveBalanceService.getEmployeeBalances(
-        Number(user.employeeId),
+        employeeIdNum,
         currentYear
       );
       setLeaveBalances(balances);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Leave balances loaded:', balances);
+      }
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Error loading leave balances:', error);
+        console.error('❌ Error loading leave balances:', {
+          employeeId: employeeIdNum,
+          status: error?.response?.status,
+          message: error?.response?.data?.message || error.message
+        });
       }
-      // Don't show error if 404 (no balances yet)
-      if (error?.response?.status !== 404) {
+
+      // Don't show error if 404 (no balances yet) or 403 (no permission)
+      const status = error?.response?.status;
+      if (status === 404) {
+        // No balances found - this is OK for new employees
+        setLeaveBalances(null);
+      } else if (status === 403) {
+        // No permission - silently ignore
+        setLeaveBalances(null);
+      } else {
+        // Other errors - show to user
         handleError(error, 'Không thể tải số dư ngày nghỉ');
       }
     }
