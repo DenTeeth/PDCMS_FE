@@ -268,6 +268,13 @@ export default function StorageInOutPage() {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  };
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'IMPORT': return 'bg-green-100 text-green-800';
@@ -281,6 +288,96 @@ export default function StorageInOutPage() {
       case 'IMPORT': return 'Nhập kho';
       case 'EXPORT': return 'Xuất kho';
       default: return type;
+    }
+  };
+
+  const getStatusColor = (status?: string): string => {
+    switch (status) {
+      case 'APPROVED':
+      case 'COMPLETED':
+        return 'bg-blue-100 text-blue-800';
+      case 'PENDING_APPROVAL':
+      case 'DRAFT':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'REJECTED':
+      case 'CANCELLED':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusVariant = (status?: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (status) {
+      case 'APPROVED':
+      case 'COMPLETED':
+        return 'default';
+      case 'PENDING_APPROVAL':
+      case 'DRAFT':
+        return 'secondary';
+      case 'REJECTED':
+      case 'CANCELLED':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getStatusLabel = (status?: string): string => {
+    switch (status) {
+      case 'DRAFT':
+        return 'Nháp';
+      case 'PENDING_APPROVAL':
+        return 'Chờ duyệt';
+      case 'APPROVED':
+        return 'Đã duyệt';
+      case 'REJECTED':
+        return 'Từ chối';
+      case 'COMPLETED':
+        return 'Hoàn thành';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      default:
+        return status || 'N/A';
+    }
+  };
+
+  const getPaymentStatusColor = (paymentStatus?: string): string => {
+    switch (paymentStatus) {
+      case 'PAID':
+        return 'bg-green-100 text-green-800';
+      case 'PARTIAL':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'UNPAID':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStatusVariant = (paymentStatus?: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (paymentStatus) {
+      case 'PAID':
+        return 'default';
+      case 'PARTIAL':
+        return 'secondary';
+      case 'UNPAID':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getPaymentStatusLabel = (paymentStatus?: string): string => {
+    switch (paymentStatus) {
+      case 'PAID':
+        return 'Đã thanh toán';
+      case 'PARTIAL':
+        return 'Thanh toán một phần';
+      case 'UNPAID':
+        return 'Chưa thanh toán';
+      default:
+        return paymentStatus || 'N/A';
     }
   };
 
@@ -394,7 +491,7 @@ export default function StorageInOutPage() {
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <FontAwesomeIcon icon={faExclamationTriangle} className="h-5 w-5 text-red-600" />
               <div>
                 <p className="text-sm font-medium text-red-900">Lỗi kết nối Backend</p>
                 <p className="text-xs text-red-700">Server trả về lỗi 500. Vui lòng liên hệ Backend để kiểm tra API /api/v1/warehouse/transactions</p>
@@ -720,139 +817,60 @@ export default function StorageInOutPage() {
                           {activeFilter === 'IMPORT' && (
                             <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
                           )}
-<<<<<<< HEAD
                           <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
-                          <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                          <th className="text-left p-3 font-semibold text-sm">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {transactions.map((txn) => {
-                          const getStatusBadge = (status?: string) => {
-                            if (!status) return null;
-                            const config: Record<string, { variant?: any; className?: string; label: string }> = {
-                              DRAFT: { variant: 'outline', label: 'Nháp' },
-                              PENDING_APPROVAL: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Chờ duyệt' },
-                              APPROVED: { variant: 'default', label: 'Đã duyệt' },
-                              REJECTED: { variant: 'destructive', label: 'Từ chối' },
-                              CANCELLED: { variant: 'secondary', label: 'Đã hủy' },
-                            };
-                            const cfg = config[status] || { variant: 'outline', label: status };
-                            if (cfg.className) {
-                              return <Badge className={cfg.className}>{cfg.label}</Badge>;
-                            }
-                            return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
-                          };
-
-                          const getPaymentStatusBadge = (paymentStatus?: string) => {
-                            if (!paymentStatus) return <span className="text-gray-400">-</span>;
-                            const config: Record<string, { className: string; label: string }> = {
-                              UNPAID: { className: 'text-red-600', label: 'Chưa thanh toán' },
-                              PARTIAL: { className: 'text-orange-600', label: 'Thanh toán một phần' },
-                              PAID: { className: 'text-green-600', label: 'Đã thanh toán' },
-                            };
-                            const cfg = config[paymentStatus] || { className: 'text-gray-600', label: paymentStatus };
-                            return <span className={cfg.className}>{cfg.label}</span>;
-                          };
-
-                          return (
-                            <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
-                              <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
-                              <td className="p-3">
-                                <Badge className={getTypeColor(txn.transactionType)}>
-                                  {getTypeLabel(txn.transactionType)}
-                                </Badge>
+                        {transactions.map((txn) => (
+                          <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
+                            <td className="p-3 text-sm font-mono">{txn.transactionCode}</td>
+                            <td className="p-3 text-sm">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(txn.transactionType || '')}`}>
+                                {txn.transactionType === 'IMPORT' ? 'Nhập' : 'Xuất'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm">{formatDate(txn.transactionDate)}</td>
+                            <td className="p-3 text-sm">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(txn.status)}`}>
+                                {getStatusLabel(txn.status)}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-gray-600 max-w-xs truncate">
+                              {txn.supplierName || '-'}
+                            </td>
+                            {hasViewCost && (
+                              <td className="p-3 text-sm text-right font-medium">
+                                {txn.totalValue ? formatCurrency(txn.totalValue) : '-'}
                               </td>
-                              <td className="p-3">{formatDate(txn.transactionDate)}</td>
-                              <td className="p-3">
-                                {getStatusBadge(txn.status)}
+                            )}
+                            {activeFilter === 'IMPORT' && (
+                              <td className="p-3 text-sm">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(txn.paymentStatus)}`}>
+                                  {getPaymentStatusLabel(txn.paymentStatus)}
+                                </span>
                               </td>
-                              <td className="p-3">{txn.supplierName || '-'}</td>
-                              {hasViewCost && (
-                                <td className="p-3 text-right text-sm font-medium">
-                                  {txn.totalValue !== null && txn.totalValue !== undefined
-                                    ? `${txn.totalValue.toLocaleString('vi-VN')} ₫`
-                                    : <span className="text-gray-400">-</span>}
-                                </td>
-                              )}
-                              {activeFilter === 'IMPORT' && (
-                                <td className="p-3 text-sm">
-                                  {getPaymentStatusBadge(txn.paymentStatus)}
-                                  {hasViewCost && txn.paymentStatus === 'PARTIAL' && txn.remainingDebt !== null && txn.remainingDebt !== undefined && (
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      Còn nợ: {txn.remainingDebt.toLocaleString('vi-VN')} ₫
-                                    </div>
-                                  )}
-                                </td>
-                              )}
-                              <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
-                              <td className="p-3">
-                                <div className="flex items-center justify-center gap-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleViewDetail(txn.transactionId)}
-                                    title="Xem chi tiết"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleEdit(txn)}
-                                    title="Sửa ghi chú"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
-                                  </Button>
-                                  {/* 
-=======
-                          <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
-                          <td className="p-3">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleViewDetail(txn.transactionId)}
-                                title="Xem chi tiết"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
-                              </Button>
-                              {/* 
-                                ⚠️ EDIT BUTTON HIDDEN: User requested to hide edit button
-                                Edit functionality is disabled as BE doesn't support updating transaction content
-                              */}
-                              {/* <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEdit(txn)}
-                                title="Sửa ghi chú"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
-                              </Button> */}
-                              {/* 
->>>>>>> origin/501_Merge_Warehouse
-                                ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
-                                TransactionHistoryController chỉ có GET endpoints.
-                                Nếu cần xóa, có thể set status = CANCELLED thay vì delete.
-                              */}
-                                  {/* <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDelete(txn)}
-                                title="Xóa (chưa khả dụng - BE chưa implement)"
-                                className="h-8 w-8 p-0"
-                                disabled
-                              >
-                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-400" />
-                              </Button> */}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                            )}
+                            <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
+                            <td className="p-3">
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleViewDetail(txn.transactionId)}
+                                  title="Xem chi tiết"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                {/* 
+                                  ⚠️ Tạm thời ẩn nút sửa/xóa vì chưa được BE support.
+                                  Nếu BE implement update hoặc xoá thì mở lại ở đây nhé bạn!
+                                */}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

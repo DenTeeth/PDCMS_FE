@@ -47,6 +47,21 @@
 - **Kết quả:** Treatment plan được tạo với `status = null`, `approval_status = DRAFT`
 - **Lưu ý:** Sau khi tạo, bác sĩ cần click "Gửi duyệt" để chuyển sang `approval_status = PENDING_REVIEW`
 
+**Bước 6: Duyệt Treatment Plan (Admin/Manager)**
+- Admin/Manager duyệt plan → `approval_status = APPROVED`
+- Plan sẵn sàng để tạo appointment
+
+**Bước 7: Tạo Appointment từ Treatment Plan**
+- Receptionist/Admin tạo appointment từ plan
+- Chọn bệnh nhân: BN-1004 - Mít tơ Bít
+- Chọn bác sĩ: BS Trịnh Công Thái (EMP002)
+- Chọn dịch vụ từ plan: Điều trị tủy răng sau (ENDO_TREAT_POST)
+- Đặt lịch: 2026-02-01 14:00:00 (theo ngày bắt đầu trong plan)
+
+**Bước 8: Tạo Clinical Record (sau khi khám)**
+- Xem chi tiết: **@docs/CLINICAL_RECORD_DEMO_DATA.md** - Case 2: Điều trị tủy răng sau
+- Procedure "Điều trị tủy răng sau" sẽ link với **patient_plan_item_id** từ treatment plan này
+
 ---
 
 ### Demo Case 2: Bọc răng sứ Cercon HT (Custom)
@@ -83,6 +98,27 @@
   - **Giá (VND):** 0 ₫
 
 **Tổng giá:** 5,000,000 ₫
+
+**Bước 5: Xem lại và Xác nhận**
+- Xem lại tất cả thông tin
+- Click "Tạo lộ trình"
+- **Kết quả:** Treatment plan được tạo với `status = null`, `approval_status = DRAFT`
+- **Lưu ý:** Sau khi tạo, bác sĩ cần click "Gửi duyệt" để chuyển sang `approval_status = PENDING_REVIEW`
+
+**Bước 6: Duyệt Treatment Plan (Admin/Manager)**
+- Admin/Manager duyệt plan → `approval_status = APPROVED`
+- Plan sẵn sàng để tạo appointment
+
+**Bước 7: Tạo Appointment từ Treatment Plan**
+- Receptionist/Admin tạo appointment từ plan
+- Chọn bệnh nhân: BN-1003 - Nguyễn Tuấn Anh
+- Chọn bác sĩ: BS Lê Anh Khoa (EMP001)
+- Chọn dịch vụ từ plan: Mão răng toàn sứ Cercon HT (CROWN_ZIR_CERCON), Gắn sứ / Thử sứ (PROS_CEMENT)
+- Đặt lịch: 2026-02-05 09:00:00 (theo ngày bắt đầu trong plan)
+
+**Bước 8: Tạo Clinical Record (sau khi khám)**
+- Xem chi tiết: **@docs/CLINICAL_RECORD_DEMO_DATA.md** - Case 3: Bọc răng sứ Cercon HT
+- Procedures sẽ link với **patient_plan_item_id** từ treatment plan này
 
 ---
 
@@ -177,6 +213,24 @@
 - **Kết quả:** Treatment plan được tạo từ template với `status = PENDING`, `approval_status = APPROVED` (template plans được auto-approved)
 - **Lưu ý:** Plan từ template có thể sử dụng ngay, không cần duyệt
 
+**Bước 7: Tạo Appointments từ Treatment Plan**
+- **Appointment 1:** Khám & Chuẩn bị (Phase 1)
+  - Dịch vụ: ORTHO_CONSULT, ORTHO_FILMS
+  - Ngày: 2026-02-10 09:00:00
+- **Appointment 2:** Gắn mắc cài (Phase 2)
+  - Dịch vụ: ORTHO_BRACES_ON
+  - Ngày: 2026-02-17 09:00:00
+- **Appointment 3-10:** Điều chỉnh định kỳ (Phase 3) - 8 lần
+  - Dịch vụ: ORTHO_ADJUST (mỗi lần)
+  - Ngày: Mỗi 4-6 tuần một lần (ví dụ: 2026-03-15, 2026-04-12, ...)
+- **Appointment 11:** Tháo niềng & Duy trì (Phase 4)
+  - Dịch vụ: ORTHO_BRACES_OFF, ORTHO_RETAINER_REMOV
+  - Ngày: 2028-02-10 09:00:00
+
+**Bước 8: Tạo Clinical Records cho các Appointments**
+- **Appointment đầu tiên:** Xem **@docs/CLINICAL_RECORD_DEMO_DATA.md** - Case 4: Tái khám niềng răng (cho appointment điều chỉnh)
+- Procedures sẽ link với **patient_plan_item_id** từ treatment plan này
+
 ---
 
 ### Demo Case 2: Điều trị tủy răng sau (Từ Template)
@@ -218,6 +272,22 @@
   - **Giá (VND):** 2,000,000 ₫
 
 **Tổng giá:** 2,000,000 ₫
+
+**Bước 6: Xem lại và Xác nhận**
+- Xem lại tất cả thông tin
+- Click "Tạo lộ trình"
+- **Kết quả:** Treatment plan được tạo từ template với `status = PENDING`, `approval_status = APPROVED`
+
+**Bước 7: Tạo Appointment từ Treatment Plan**
+- Receptionist/Admin tạo appointment từ plan
+- Chọn bệnh nhân: BN-1004 - Mít tơ Bít
+- Chọn bác sĩ: BS Trịnh Công Thái (EMP002)
+- Chọn dịch vụ từ plan: Điều trị tủy răng sau (ENDO_TREAT_POST)
+- Đặt lịch: 2026-02-01 14:00:00
+
+**Bước 8: Tạo Clinical Record (sau khi khám)**
+- Xem chi tiết: **@docs/CLINICAL_RECORD_DEMO_DATA.md** - Case 2: Điều trị tủy răng sau
+- Procedure "Điều trị tủy răng sau" sẽ link với **patient_plan_item_id** từ treatment plan này
 
 ---
 
@@ -272,6 +342,34 @@
   - **Giá (VND):** 0 ₫
 
 **Tổng giá:** 5,500,000 ₫
+
+**Bước 6: Xem lại và Xác nhận**
+- Xem lại tất cả thông tin
+- Click "Tạo lộ trình"
+- **Kết quả:** Treatment plan được tạo từ template với `status = PENDING`, `approval_status = APPROVED`
+
+**Bước 7: Tạo Appointment từ Treatment Plan**
+- Receptionist/Admin tạo appointment từ plan
+- Chọn bệnh nhân: BN-1005 - Trần Văn Nam
+- Chọn bác sĩ: BS Lê Anh Khoa (EMP001)
+- Chọn dịch vụ từ plan: ENDO_POST_CORE, CROWN_ZIR_CERCON, PROS_CEMENT
+- Đặt lịch: 2026-02-05 09:00:00
+
+**Bước 8: Tạo Clinical Record (sau khi khám)**
+- Xem chi tiết: **@docs/CLINICAL_RECORD_DEMO_DATA.md** - Case 3: Bọc răng sứ Cercon HT
+- Procedures sẽ link với **patient_plan_item_id** từ treatment plan này
+
+---
+
+## 🔗 Liên Kết Với Clinical Records
+
+**Workflow hoàn chỉnh:**
+1. **Tạo Treatment Plan** → Duyệt plan
+2. **Tạo Appointment** từ treatment plan (chọn dịch vụ từ plan)
+3. **Khám bệnh nhân** → Appointment status = COMPLETED
+4. **Tạo Clinical Record** → Link procedures với treatment plan items
+
+**Chi tiết:** Xem **@docs/CLINICAL_RECORD_DEMO_DATA.md** để biết cách tạo clinical record và link với treatment plan.
 
 ---
 
