@@ -155,10 +155,11 @@ export default function WarehouseReportsPage() {
                 <SelectItem value="custom">Tùy chỉnh</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
+            {/* Nút Xuất Excel đã được ẩn theo yêu cầu */}
+            {/* <Button variant="outline">
               <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
               Xuất Excel
-            </Button>
+            </Button> */}
           </div>
         </div>
 
