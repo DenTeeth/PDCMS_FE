@@ -68,7 +68,7 @@ export const toothStatusService = {
   },
 
   /**
-   * API 8.10: PUT /api/v1/patients/{patientId}/tooth-status/{toothNumber}
+   * API 8.10: PUT /api/v1/patients/{patientId}/tooth-status
    * Update tooth status for a patient
    * 
    * Authorization: WRITE_CLINICAL_RECORD (Doctor, Admin)
@@ -82,15 +82,21 @@ export const toothStatusService = {
    * - 200 OK: Tooth status updated successfully
    * - 400 BAD_REQUEST: Patient not found or validation error
    * - 403 FORBIDDEN: Access denied
+   * 
+   * Note: According to documentation, endpoint is PUT /api/v1/patients/{patientId}/tooth-status
+   * The toothNumber should be in the request body, not in the path.
    */
   updateToothStatus: async (
     patientId: number,
     request: UpdateToothStatusRequest
   ): Promise<ToothStatusResponse> => {
     try {
+      // According to API 8.10 documentation: PUT /api/v1/patients/{patientId}/tooth-status
+      // toothNumber should be in the request body
       const response = await api.put<ToothStatusResponse>(
-        `/patients/${patientId}/tooth-status/${request.toothNumber}`,
+        `/patients/${patientId}/tooth-status`,
         {
+          toothNumber: request.toothNumber,
           status: request.status,
           notes: request.notes,
         }

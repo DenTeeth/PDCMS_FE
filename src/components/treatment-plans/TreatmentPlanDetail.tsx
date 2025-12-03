@@ -47,6 +47,7 @@ import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculatePlanStatus } from '@/utils/treatmentPlanStatus';
 
 interface TreatmentPlanDetailProps {
   plan: TreatmentPlanDetailResponse;
@@ -75,53 +76,10 @@ export default function TreatmentPlanDetail({
     [plan.phases]
   );
   
-  // Calculate actual plan status based on completion
-  // FE Enhancement: Show COMPLETED if all phases are completed, even if BE status is null/PENDING
-  // This provides better UX by showing actual completion state
-  // BE logic: checkAndCompletePlan() only auto-completes when plan.status = IN_PROGRESS
-  // But FE can show visual completion state for better user experience
-  const calculateActualStatus = (): TreatmentPlanStatus | 'NULL' => {
-    // If plan is already COMPLETED or CANCELLED, use that
-    if (plan.status === TreatmentPlanStatus.COMPLETED || plan.status === TreatmentPlanStatus.CANCELLED) {
-      return plan.status;
-    }
-    
-    // If no phases, use BE status
-    if (!plan.phases || plan.phases.length === 0) {
-      return plan.status || 'NULL';
-    }
-    
-    // Check if ALL phases are COMPLETED
-    // BE uses: phase.getStatus() == PhaseStatus.COMPLETED
-    const allPhasesCompleted = plan.phases.every(phase => {
-      const phaseStatus = phase.status?.toUpperCase();
-      return phaseStatus === 'COMPLETED';
-    });
-    
-    // FE Enhancement: Show COMPLETED if all phases are done, regardless of plan status
-    // This provides better UX - user can see that all work is done even if plan wasn't activated
-    if (allPhasesCompleted) {
-      // If BE status is IN_PROGRESS, BE will auto-complete it
-      // If BE status is null/PENDING, FE shows COMPLETED for better UX
-      console.log('✅ [TreatmentPlan] Auto-detected COMPLETED status:', {
-        planCode: plan.planCode,
-        beStatus: plan.status,
-        allPhasesCompleted,
-        phasesCount: plan.phases.length,
-        completedPhases: plan.phases.filter(p => p.status?.toUpperCase() === 'COMPLETED').length,
-        note: plan.status === TreatmentPlanStatus.IN_PROGRESS 
-          ? 'BE will auto-complete this' 
-          : 'FE showing COMPLETED for UX (plan not activated yet)'
-      });
-      return TreatmentPlanStatus.COMPLETED;
-    }
-    
-    // Otherwise, use the status from BE
-    return plan.status || 'NULL';
-  };
-  
-  // V32: Handle null status (when approval_status = DRAFT, plan not activated yet)
-  const actualStatus = calculateActualStatus();
+  // Calculate actual plan status using utility function
+  // This handles BE lazy loading bug by calculating from phases/items as fallback
+  // See: src/utils/treatmentPlanStatus.ts
+  const actualStatus = calculatePlanStatus(plan.status, plan.phases || []);
   const statusKey = actualStatus;
   const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
 

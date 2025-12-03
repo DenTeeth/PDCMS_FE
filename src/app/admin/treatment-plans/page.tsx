@@ -80,8 +80,8 @@ export default function AdminTreatmentPlansPage() {
     }
   }, [searchParams, patientCode]);
 
-  // Load treatment plans - auto-load all plans when page loads
-  useEffect(() => {
+  // Function to load treatment plans (extracted for reuse)
+  const loadPlans = useCallback(async () => {
     if (!canView) return;
 
     const targetPatientCode = filters.patientCode || patientCode;
@@ -97,53 +97,152 @@ export default function AdminTreatmentPlansPage() {
 
     let isMounted = true;
 
-    const loadPlans = async () => {
+    try {
       setLoading(true);
-      try {
-        // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
-        // This API automatically handles RBAC (Admin sees all, Doctor sees their own, etc.)
-        const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
-          page: currentPage,
-          size: pageSize,
-          sort: 'createdAt,desc',
-          status: filters.status,
-          patientCode: targetPatientCode || undefined, // Admin can filter by patientCode
-          searchTerm: filters.searchTerm,
-        });
+      // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
+      // This API automatically handles RBAC (Admin sees all, Doctor sees their own, etc.)
+      const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
+        page: currentPage,
+        size: pageSize,
+        sort: 'createdAt,desc',
+        status: filters.status,
+        patientCode: targetPatientCode || undefined, // Admin can filter by patientCode
+        searchTerm: filters.searchTerm,
+      });
 
         if (!abortController.signal.aborted && isMounted) {
+          // Debug: Log status for each plan to verify BE response
+          if (process.env.NODE_ENV === 'development') {
+            console.log('📋 [TREATMENT PLANS LIST] Loaded plans:', {
+              count: pageResponse.content.length,
+              plans: pageResponse.content.map(p => ({
+                planCode: p.planCode,
+                planName: p.planName,
+                status: p.status,
+                patientPlanId: p.patientPlanId,
+              })),
+            });
+          }
+
           setPlans(pageResponse.content);
           setTotalPages(pageResponse.totalPages);
         }
-      } catch (error: any) {
-        if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
-          return;
-        }
-        console.error('Error loading treatment plans:', error);
-        handleErrorRef.current(error);
-        if (!abortController.signal.aborted && isMounted) {
-          setPlans([]);
-        }
-      } finally {
-        if (!abortController.signal.aborted && isMounted) {
-          setLoading(false);
-        }
-        if (abortControllerRef.current === abortController) {
-          abortControllerRef.current = null;
-        }
+    } catch (error: any) {
+      if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
+        return;
       }
-    };
+      console.error('Error loading treatment plans:', error);
+      handleErrorRef.current(error);
+      if (!abortController.signal.aborted && isMounted) {
+        setPlans([]);
+      }
+    } finally {
+      if (!abortController.signal.aborted && isMounted) {
+        setLoading(false);
+      }
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+    }
+  }, [canView, filters, patientCode, pageSize, currentPage, handleErrorRef]);
 
+  // Load treatment plans - auto-load all plans when page loads
+  useEffect(() => {
+    // Check if we just returned from detail page
+    const detailViewTime = sessionStorage.getItem('treatmentPlanDetailViewTime');
+    if (detailViewTime) {
+      const timeSinceDetailView = Date.now() - parseInt(detailViewTime, 10);
+      // If we viewed detail recently (within last 30s), add extra delay for BE transaction
+      if (timeSinceDetailView < 30000) {
+        const extraDelay = Math.max(0, 2000 - timeSinceDetailView);
+        setTimeout(() => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 [TREATMENT PLANS LIST] Refetching after returning from detail (extra delay:', extraDelay, 'ms)');
+          }
+          loadPlans();
+        }, extraDelay);
+        sessionStorage.removeItem('treatmentPlanDetailViewTime');
+        return;
+      }
+      sessionStorage.removeItem('treatmentPlanDetailViewTime');
+    }
+    
     loadPlans();
 
     return () => {
-      isMounted = false;
-      if (abortControllerRef.current === abortController) {
-        abortController.abort();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
     };
-  }, [canView, filters, patientCode, pageSize, currentPage]);
+  }, [loadPlans]);
+
+  // Refetch when page becomes visible (user returns from detail page)
+  // Also refetch when router pathname changes (Next.js App Router)
+  useEffect(() => {
+    let lastRefetchTime = 0;
+    const REFETCH_COOLDOWN = 1000; // Minimum 1s between refetches (increased for BE transaction commit)
+    const REFETCH_DELAY = 2000; // Increased delay to ensure BE auto-complete transaction is fully committed
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && canView) {
+        const now = Date.now();
+        if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
+        lastRefetchTime = now;
+        
+        // Increased delay to ensure BE auto-complete transaction is fully committed
+        // BE may need time to update phase/plan status after item completion
+        setTimeout(() => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to visibility change (delay:', REFETCH_DELAY, 'ms)');
+          }
+          loadPlans();
+        }, REFETCH_DELAY);
+      }
+    };
+
+    const handleFocus = () => {
+      if (canView) {
+        const now = Date.now();
+        if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
+        lastRefetchTime = now;
+        
+        // Delay to ensure navigation is complete and BE status is updated
+        setTimeout(() => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to window focus (delay:', REFETCH_DELAY, 'ms)');
+          }
+          loadPlans();
+        }, REFETCH_DELAY);
+      }
+    };
+
+    // Also listen to popstate (browser back/forward)
+    const handlePopState = () => {
+      if (canView) {
+        const now = Date.now();
+        if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
+        lastRefetchTime = now;
+        
+        setTimeout(() => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to popstate (back/forward) (delay:', REFETCH_DELAY, 'ms)');
+          }
+          loadPlans();
+        }, REFETCH_DELAY);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [loadPlans, canView, router]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: FiltersType) => {
@@ -201,6 +300,8 @@ export default function AdminTreatmentPlansPage() {
     }
 
     // ✅ Simplified: Use patientCode directly from plan (always available after backend fix)
+    // Store timestamp when navigating to detail - will use for refetch timing
+    sessionStorage.setItem('treatmentPlanDetailViewTime', Date.now().toString());
     router.push(`/admin/treatment-plans/${plan.planCode}?patientCode=${plan.patientCode}`);
   }, [router]);
 

@@ -1149,6 +1149,7 @@ export default function AdminAppointmentDetailPage() {
                   </h3>
                   <ClinicalRecordForm
                     appointmentId={appointment?.appointmentId || 0}
+                    patientId={clinicalRecord?.patient.patientId}
                     existingRecord={clinicalRecord || undefined}
                     onSuccess={(record) => {
                       setClinicalRecord(record);

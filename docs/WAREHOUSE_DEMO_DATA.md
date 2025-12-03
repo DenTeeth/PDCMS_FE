@@ -989,6 +989,483 @@ GET /api/v1/warehouse/consumables/services/7
 
 ---
 
-**Last Updated:** 2025-12-02  
+## 🎬 Scenarios & Use Cases - FE Workflow
+
+### Scenario 1: Happy Case - Quy trình nhập xuất kho hoàn chỉnh
+
+**Mục đích:** Demo quy trình đầy đủ từ khai báo vật tư đến xuất kho cho ca bệnh
+
+**Các bước thao tác trên FE:**
+
+1. **Khai báo vật tư mới**
+   - Vào menu: Kho → Vật tư → Tạo mới
+   - Nhập thông tin: Mã vật tư, Tên, Mô tả, Category, Loại kho
+   - Thiết lập mức tồn kho: Min = 50, Max = 1000
+   - Thêm đơn vị: Thùng (10 Hộp), Hộp (base unit)
+   - Chọn đơn vị nhập mặc định: Thùng
+   - Chọn đơn vị xuất mặc định: Hộp
+   - Lưu và xác nhận tạo thành công
+
+2. **Tạo nhà cung cấp**
+   - Vào menu: Kho → Nhà cung cấp → Tạo mới
+   - Nhập: Tên, SĐT, Email, Địa chỉ
+   - Thêm ghi chú về nhà cung cấp
+   - Lưu và xác nhận
+
+3. **Tạo phiếu nhập kho**
+   - Vào menu: Kho → Phiếu nhập → Tạo mới
+   - Chọn nhà cung cấp từ dropdown
+   - Nhập: Số hóa đơn, Ngày giao dịch, Ngày giao hàng dự kiến
+   - Thêm items:
+     - Chọn vật tư từ danh sách
+     - Nhập: Số lô, Hạn sử dụng, Số lượng, Đơn vị, Giá nhập, Vị trí kho
+     - Thêm ghi chú cho từng item
+   - Xem tổng giá trị tự động tính
+   - Lưu phiếu nhập (status: DRAFT)
+   - Gửi duyệt (status: PENDING_APPROVAL)
+   - Admin duyệt phiếu (status: APPROVED)
+
+4. **Kiểm tra tồn kho sau nhập**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Tìm kiếm vật tư vừa nhập
+   - Xác nhận số lượng tồn kho đã cập nhật
+   - Kiểm tra trạng thái tồn kho (NORMAL/LOW_STOCK/OUT_OF_STOCK)
+
+5. **Xem chi tiết lô hàng**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Click vào vật tư → Xem chi tiết lô
+   - Xác nhận các lô được sắp xếp theo FEFO (lô sắp hết hạn trước)
+   - Kiểm tra thông tin: Lot number, Expiry date, Số lượng, Vị trí kho
+
+6. **Tạo phiếu xuất kho cho ca bệnh**
+   - Vào menu: Kho → Phiếu xuất → Tạo mới
+   - Chọn ca bệnh từ dropdown (hoặc để trống nếu không liên kết)
+   - Nhập: Ngày xuất, Ghi chú
+   - Thêm items:
+     - Chọn vật tư từ danh sách
+     - Nhập: Số lượng, Đơn vị
+     - Hệ thống tự động áp dụng FEFO (không cần chọn lô)
+   - Xem tổng giá trị (nếu có quyền VIEW_COST)
+   - Lưu và gửi duyệt
+   - Admin duyệt phiếu xuất
+
+7. **Kiểm tra tồn kho sau xuất**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Xác nhận số lượng tồn kho đã giảm
+   - Kiểm tra lô hàng đã được xuất (số lượng giảm)
+
+8. **Xem lịch sử giao dịch**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Xem danh sách phiếu nhập/xuất
+   - Lọc theo: Loại (Nhập/Xuất), Trạng thái, Khoảng thời gian
+   - Click vào phiếu để xem chi tiết
+   - Xác nhận thông tin: Items, Nhà cung cấp, Ca bệnh, Tổng giá trị
+
+---
+
+### Scenario 2: Cảnh báo hết hạn và ưu tiên sử dụng
+
+**Mục đích:** Demo tính năng cảnh báo hết hạn và FEFO
+
+**Các bước thao tác trên FE:**
+
+1. **Nhập vật tư với lô sắp hết hạn**
+   - Tạo phiếu nhập mới
+   - Thêm item với hạn sử dụng gần (ví dụ: 2 tháng nữa)
+   - Hệ thống hiển thị cảnh báo: "⚠️ Lô này hết hạn trong 2.5 tháng"
+   - Xác nhận vẫn có thể lưu (warning không block)
+   - Lưu phiếu nhập
+
+2. **Nhập thêm lô cùng vật tư với hạn xa hơn**
+   - Tạo phiếu nhập mới cho cùng vật tư
+   - Thêm item với hạn sử dụng xa hơn (ví dụ: 1 năm nữa)
+   - Lưu phiếu nhập
+
+3. **Xem cảnh báo hết hạn**
+   - Vào menu: Kho → Cảnh báo → Hết hạn
+   - Chọn số ngày trước hết hạn (ví dụ: 90 ngày)
+   - Xem danh sách lô sắp hết hạn
+   - Xác nhận lô hết hạn sớm hơn được hiển thị trước
+   - Xem số ngày còn lại đến hạn
+
+4. **Xuất vật tư - Kiểm tra FEFO**
+   - Tạo phiếu xuất mới
+   - Chọn vật tư có nhiều lô (lô sắp hết hạn và lô hạn xa)
+   - Nhập số lượng xuất
+   - Hệ thống tự động chọn lô sắp hết hạn trước
+   - Xác nhận trong chi tiết phiếu xuất: Lô nào được xuất
+   - Lưu phiếu xuất
+
+5. **Kiểm tra tồn kho sau xuất**
+   - Vào menu: Kho → Tổng hợp tồn kho → Chi tiết lô
+   - Xác nhận lô sắp hết hạn đã giảm số lượng
+   - Lô hạn xa vẫn còn nguyên
+
+---
+
+### Scenario 3: Quản lý đơn vị và chuyển đổi
+
+**Mục đích:** Demo tính năng quản lý đơn vị và chuyển đổi
+
+**Các bước thao tác trên FE:**
+
+1. **Tạo vật tư với nhiều đơn vị (3 cấp)**
+   - Tạo vật tư mới
+   - Thêm đơn vị cấp 1: Hộp (conversionRate: 100, base unit: false)
+   - Thêm đơn vị cấp 2: Vỉ (conversionRate: 10, base unit: false)
+   - Thêm đơn vị cấp 3: Viên (conversionRate: 1, base unit: true)
+   - Thiết lập: Đơn vị nhập mặc định = Hộp, Đơn vị xuất mặc định = Vỉ
+   - Lưu vật tư
+
+2. **Xem danh sách đơn vị của vật tư**
+   - Vào menu: Kho → Vật tư → Chi tiết vật tư
+   - Tab "Đơn vị"
+   - Xem danh sách đơn vị với conversion rates
+   - Xác nhận đơn vị nào là base unit
+   - Xác nhận đơn vị nào là default import/export
+
+3. **Nhập kho với đơn vị khác base unit**
+   - Tạo phiếu nhập mới
+   - Chọn vật tư có nhiều đơn vị
+   - Chọn đơn vị nhập: Hộp
+   - Nhập số lượng: 5 Hộp
+   - Hệ thống tự động hiển thị: "5 Hộp (= 500 Viên)"
+   - Lưu phiếu nhập
+   - Xác nhận tồn kho được tính theo base unit (Viên)
+
+4. **Xuất kho với đơn vị khác base unit**
+   - Tạo phiếu xuất mới
+   - Chọn vật tư có nhiều đơn vị
+   - Chọn đơn vị xuất: Vỉ
+   - Nhập số lượng: 10 Vỉ
+   - Hệ thống tự động hiển thị: "10 Vỉ (= 100 Viên)"
+   - Lưu phiếu xuất
+   - Xác nhận tồn kho giảm đúng số lượng base unit
+
+5. **Sử dụng công cụ chuyển đổi đơn vị**
+   - Vào menu: Kho → Công cụ → Chuyển đổi đơn vị
+   - Chọn vật tư
+   - Chọn đơn vị nguồn: Thùng
+   - Chọn đơn vị đích: Hộp
+   - Nhập số lượng: 3 Thùng
+   - Xem kết quả: "3 Thùng = 30 Hộp"
+   - Xem công thức: "3 × 10 = 30"
+
+---
+
+### Scenario 4: Cảnh báo tồn kho thấp và nhập bổ sung
+
+**Mục đích:** Demo tính năng cảnh báo tồn kho và nhập bổ sung
+
+**Các bước thao tác trên FE:**
+
+1. **Tạo vật tư với mức tồn kho**
+   - Tạo vật tư mới
+   - Thiết lập: Min = 50, Max = 1000
+   - Lưu vật tư
+
+2. **Nhập kho lần đầu (số lượng < min)**
+   - Tạo phiếu nhập mới
+   - Nhập số lượng: 30 (dưới mức tối thiểu)
+   - Lưu và duyệt phiếu nhập
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Xác nhận trạng thái: "LOW_STOCK" (màu vàng/cảnh báo)
+   - Xem cảnh báo: "Tồn kho dưới mức tối thiểu"
+
+3. **Nhập bổ sung để đạt mức tối thiểu**
+   - Tạo phiếu nhập mới
+   - Chọn vật tư đang LOW_STOCK
+   - Nhập số lượng bổ sung: 30
+   - Lưu và duyệt phiếu nhập
+   - Kiểm tra tồn kho: 30 + 30 = 60 (>= 50)
+   - Xác nhận trạng thái chuyển sang: "NORMAL" (màu xanh)
+
+4. **Nhập quá mức tối đa**
+   - Tạo phiếu nhập mới
+   - Chọn vật tư
+   - Nhập số lượng: 2000 (vượt max = 1000)
+   - Lưu và duyệt phiếu nhập
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Xác nhận trạng thái: "OVERSTOCK" (màu đỏ/cảnh báo)
+   - Xem cảnh báo: "Tồn kho vượt mức tối đa"
+
+5. **Lọc vật tư theo trạng thái tồn kho**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Chọn filter: "LOW_STOCK"
+   - Xem danh sách vật tư cần nhập bổ sung
+   - Chọn filter: "OUT_OF_STOCK"
+   - Xem danh sách vật tư hết hàng
+
+---
+
+### Scenario 5: Xuất kho cho nhiều ca bệnh và báo cáo
+
+**Mục đích:** Demo xuất kho cho nhiều ca bệnh và xem báo cáo
+
+**Các bước thao tác trên FE:**
+
+1. **Xuất kho cho ca bệnh 1**
+   - Vào menu: Kho → Phiếu xuất → Tạo mới
+   - Chọn ca bệnh: APT-2025-1215-001
+   - Thêm items: Gạc (2 Hộp), Găng tay (1 Hộp), Thuốc tê (1 Lọ)
+   - Lưu và duyệt phiếu xuất
+
+2. **Xuất kho cho ca bệnh 2**
+   - Tạo phiếu xuất mới
+   - Chọn ca bệnh: APT-2025-1215-002
+   - Thêm items: Gạc (1 Hộp), Bông gòn (1 Hộp)
+   - Lưu và duyệt phiếu xuất
+
+3. **Xem lịch sử xuất kho theo ca bệnh**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Chọn filter: Loại = "Xuất kho"
+   - Chọn ca bệnh: APT-2025-1215-001
+   - Xem danh sách phiếu xuất cho ca bệnh này
+   - Click vào phiếu để xem chi tiết items đã xuất
+
+4. **Xem báo cáo tổng hợp xuất kho**
+   - Vào menu: Kho → Báo cáo → Xuất kho theo ca bệnh
+   - Chọn khoảng thời gian: Tháng 12/2025
+   - Xem danh sách ca bệnh và vật tư đã xuất
+   - Xem tổng giá trị vật tư xuất (nếu có quyền VIEW_COST)
+
+5. **Xuất kho không liên kết ca bệnh**
+   - Tạo phiếu xuất mới
+   - Để trống "Ca bệnh" (không chọn)
+   - Thêm items: Gạc (10 Hộp), Găng tay (5 Hộp)
+   - Ghi chú: "Xuất cho phòng khám - Bổ sung vật tư"
+   - Lưu và duyệt phiếu xuất
+   - Xác nhận trong lịch sử: "Không liên kết ca bệnh"
+
+---
+
+### Scenario 6: Quản lý nhà cung cấp và đơn hàng
+
+**Mục đích:** Demo quản lý nhà cung cấp và theo dõi đơn hàng
+
+**Các bước thao tác trên FE:**
+
+1. **Tạo nhà cung cấp mới**
+   - Vào menu: Kho → Nhà cung cấp → Tạo mới
+   - Nhập: Tên, SĐT, Email, Địa chỉ
+   - Thêm ghi chú: "Nhà cung cấp chính, chất lượng tốt"
+   - Lưu và xác nhận mã nhà cung cấp tự động tạo (SUP-001)
+
+2. **Xem danh sách nhà cung cấp**
+   - Vào menu: Kho → Nhà cung cấp
+   - Xem danh sách với thông tin: Tên, SĐT, Email, Số đơn hàng
+   - Tìm kiếm nhà cung cấp theo tên
+   - Lọc theo trạng thái: ACTIVE, INACTIVE, BLACKLISTED
+
+3. **Tạo nhiều phiếu nhập từ cùng nhà cung cấp**
+   - Tạo phiếu nhập 1: Chọn nhà cung cấp SUP-001
+   - Tạo phiếu nhập 2: Chọn nhà cung cấp SUP-001
+   - Tạo phiếu nhập 3: Chọn nhà cung cấp SUP-001
+   - Duyệt tất cả phiếu nhập
+
+4. **Xem thống kê nhà cung cấp**
+   - Vào menu: Kho → Nhà cung cấp → Chi tiết SUP-001
+   - Xem thông tin: Tổng số đơn hàng, Ngày đơn hàng cuối
+   - Xem danh sách phiếu nhập từ nhà cung cấp này
+   - Xem tổng giá trị đơn hàng (nếu có quyền VIEW_COST)
+
+5. **Cập nhật thông tin nhà cung cấp**
+   - Vào menu: Kho → Nhà cung cấp → Chi tiết SUP-001
+   - Click "Chỉnh sửa"
+   - Cập nhật: SĐT, Email mới
+   - Thêm ghi chú: "Đã cập nhật thông tin liên hệ"
+   - Lưu và xác nhận
+
+6. **Vô hiệu hóa nhà cung cấp**
+   - Vào menu: Kho → Nhà cung cấp → Chi tiết SUP-001
+   - Click "Vô hiệu hóa"
+   - Xác nhận hành động
+   - Xác nhận trạng thái chuyển sang: "INACTIVE"
+   - Xác nhận không thể chọn nhà cung cấp này khi tạo phiếu nhập mới
+
+---
+
+### Scenario 7: Vật tư tiêu hao cho dịch vụ
+
+**Mục đích:** Demo tính năng xem vật tư cần thiết cho dịch vụ
+
+**Các bước thao tác trên FE:**
+
+1. **Xem vật tư tiêu hao cho dịch vụ**
+   - Vào menu: Dịch vụ → Chi tiết dịch vụ (ví dụ: "Nhổ răng sữa")
+   - Tab "Vật tư tiêu hao"
+   - Xem danh sách vật tư cần thiết cho dịch vụ
+   - Xem số lượng cần thiết cho mỗi vật tư
+   - Xem tình trạng tồn kho: OK (xanh), LOW (vàng), OUT_OF_STOCK (đỏ)
+
+2. **Kiểm tra trước khi đặt lịch**
+   - Vào menu: Đặt lịch → Tạo lịch hẹn mới
+   - Chọn dịch vụ: "Nhổ răng sữa"
+   - Hệ thống tự động hiển thị cảnh báo nếu thiếu vật tư
+   - Xem danh sách vật tư cần thiết và tình trạng tồn kho
+   - Quyết định: Đặt lịch hoặc nhập bổ sung vật tư trước
+
+3. **Chuẩn bị vật tư trước ca bệnh**
+   - Vào menu: Lịch hẹn → Chi tiết ca bệnh
+   - Tab "Vật tư cần thiết"
+   - Xem danh sách vật tư và số lượng cần
+   - Kiểm tra tồn kho có đủ không
+   - Nếu thiếu: Tạo phiếu nhập bổ sung hoặc cảnh báo
+
+4. **Xuất vật tư sau ca bệnh**
+   - Sau khi hoàn thành ca bệnh
+   - Vào menu: Kho → Phiếu xuất → Tạo mới
+   - Chọn ca bệnh vừa hoàn thành
+   - Hệ thống tự động gợi ý items từ "Vật tư tiêu hao" của dịch vụ
+   - Xác nhận số lượng và lưu phiếu xuất
+
+5. **Xem chi phí vật tư (COGS)**
+   - Vào menu: Dịch vụ → Chi tiết dịch vụ
+   - Tab "Vật tư tiêu hao"
+   - Xem giá thành vật tư (nếu có quyền VIEW_WAREHOUSE_COST)
+   - Xem tổng chi phí vật tư cho dịch vụ
+   - Sử dụng cho tính giá dịch vụ
+
+---
+
+### Scenario 8: Quy trình duyệt phiếu nhập/xuất
+
+**Mục đích:** Demo quy trình duyệt phiếu nhập/xuất
+
+**Các bước thao tác trên FE:**
+
+1. **Nhân viên tạo phiếu nhập (DRAFT)**
+   - Tạo phiếu nhập mới
+   - Thêm items và thông tin
+   - Lưu phiếu (status: DRAFT)
+   - Xác nhận có thể chỉnh sửa/xóa
+
+2. **Nhân viên gửi duyệt (PENDING_APPROVAL)**
+   - Vào menu: Kho → Phiếu nhập → Chi tiết phiếu
+   - Click "Gửi duyệt"
+   - Xác nhận status chuyển sang: PENDING_APPROVAL
+   - Xác nhận không thể chỉnh sửa/xóa nữa
+
+3. **Admin xem danh sách chờ duyệt**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Chọn filter: Trạng thái = "PENDING_APPROVAL"
+   - Xem danh sách phiếu chờ duyệt
+   - Xem thông tin: Người tạo, Ngày tạo, Tổng giá trị
+
+4. **Admin duyệt phiếu (APPROVED)**
+   - Click vào phiếu chờ duyệt
+   - Xem chi tiết: Items, Nhà cung cấp, Tổng giá trị
+   - Click "Duyệt"
+   - Xác nhận status chuyển sang: APPROVED
+   - Xác nhận tồn kho được cập nhật
+
+5. **Admin từ chối phiếu (REJECTED)**
+   - Click vào phiếu chờ duyệt khác
+   - Click "Từ chối"
+   - Nhập lý do từ chối
+   - Xác nhận status chuyển sang: REJECTED
+   - Xác nhận tồn kho KHÔNG được cập nhật
+
+6. **Nhân viên xem phiếu bị từ chối**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Chọn filter: Trạng thái = "REJECTED"
+   - Xem phiếu bị từ chối và lý do
+   - Có thể chỉnh sửa và gửi duyệt lại
+
+---
+
+### Scenario 9: Tìm kiếm và lọc nâng cao
+
+**Mục đích:** Demo tính năng tìm kiếm và lọc
+
+**Các bước thao tác trên FE:**
+
+1. **Tìm kiếm vật tư**
+   - Vào menu: Kho → Vật tư
+   - Nhập từ khóa: "gạc"
+   - Xem kết quả: Tất cả vật tư có tên/mã chứa "gạc"
+   - Thử tìm kiếm theo mã: "MAT-GAC"
+   - Xem kết quả chính xác
+
+2. **Lọc vật tư theo nhiều tiêu chí**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Chọn filter: Loại kho = "COLD"
+   - Chọn filter: Trạng thái tồn kho = "NORMAL"
+   - Chọn filter: Category = "Thuốc"
+   - Xem kết quả lọc
+   - Xóa từng filter để xem thay đổi
+
+3. **Tìm kiếm phiếu nhập/xuất**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Nhập từ khóa: Số hóa đơn hoặc Mã phiếu
+   - Xem kết quả tìm kiếm
+   - Lọc theo: Loại, Trạng thái, Nhà cung cấp, Khoảng thời gian
+
+4. **Lọc theo khoảng thời gian**
+   - Vào menu: Kho → Lịch sử giao dịch
+   - Chọn: Từ ngày = 01/12/2025
+   - Chọn: Đến ngày = 31/12/2025
+   - Xem kết quả: Chỉ giao dịch trong tháng 12
+   - Sử dụng cho báo cáo tháng
+
+5. **Sắp xếp kết quả**
+   - Vào menu: Kho → Tổng hợp tồn kho
+   - Chọn sắp xếp: "Số lượng tồn kho" (Tăng dần/Giảm dần)
+   - Chọn sắp xếp: "Tên vật tư" (A-Z/Z-A)
+   - Xem kết quả thay đổi
+
+---
+
+### Scenario 10: Xử lý lỗi và edge cases
+
+**Mục đích:** Demo xử lý các trường hợp lỗi và edge cases
+
+**Các bước thao tác trên FE:**
+
+1. **Nhập vật tư với số hóa đơn trùng**
+   - Tạo phiếu nhập mới
+   - Nhập số hóa đơn đã tồn tại
+   - Lưu phiếu
+   - Xem lỗi: "Số hóa đơn đã tồn tại" (409 CONFLICT)
+   - Sửa số hóa đơn và lưu lại
+
+2. **Xuất kho khi không đủ tồn kho**
+   - Tạo phiếu xuất mới
+   - Chọn vật tư có tồn kho: 10 Hộp
+   - Nhập số lượng xuất: 15 Hộp
+   - Lưu phiếu
+   - Xem lỗi: "Không đủ tồn kho. Tồn kho hiện tại: 10 Hộp" (400 BAD REQUEST)
+   - Sửa số lượng <= 10 và lưu lại
+
+3. **Nhập vật tư với hạn sử dụng quá khứ**
+   - Tạo phiếu nhập mới
+   - Nhập hạn sử dụng: Ngày trong quá khứ
+   - Lưu phiếu
+   - Xem lỗi: "Hạn sử dụng phải trong tương lai" (400 BAD REQUEST)
+   - Sửa hạn sử dụng và lưu lại
+
+4. **Tạo vật tư với mã trùng**
+   - Tạo vật tư mới
+   - Nhập mã vật tư đã tồn tại: "MAT-GAC-10X10"
+   - Lưu vật tư
+   - Xem lỗi: "Mã vật tư đã tồn tại" (409 CONFLICT)
+   - Sửa mã vật tư và lưu lại
+
+5. **Tạo nhà cung cấp với tên/email trùng**
+   - Tạo nhà cung cấp mới
+   - Nhập tên hoặc email đã tồn tại
+   - Lưu nhà cung cấp
+   - Xem lỗi: "Tên nhà cung cấp đã tồn tại" hoặc "Email đã tồn tại" (409 CONFLICT)
+   - Sửa thông tin và lưu lại
+
+6. **Xóa/vô hiệu hóa vật tư đã có giao dịch**
+   - Vào menu: Kho → Vật tư → Chi tiết vật tư
+   - Click "Vô hiệu hóa"
+   - Xem cảnh báo: "Vật tư đã có giao dịch, không thể xóa"
+   - Xác nhận chỉ có thể vô hiệu hóa (soft delete)
+
+---
+
+**Last Updated:** 2025-12-04  
 **Author:** FE Development Team  
 **Purpose:** Complete demo data for Warehouse module testing (API 6.1 - 6.17)

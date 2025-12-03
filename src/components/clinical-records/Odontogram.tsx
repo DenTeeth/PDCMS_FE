@@ -150,16 +150,16 @@ export default function Odontogram({
   const teethData = useMemo(() => {
     const teeth: ToothData[] = [];
     
-    // SVG dimensions - Increased to ensure all 32 teeth are visible
-    const svgWidth = 1000;
-    const svgHeight = 500;
-    const toothWidth = 45;
-    const toothHeight = 65;
-    const spacing = 6;
-    const centerGap = 60; // Gap between left and right quadrants
-    const verticalGap = 40; // Gap between upper and lower jaw
-    const topMargin = 50; // Top margin for labels
-    const bottomMargin = 50; // Bottom margin for labels
+    // SVG dimensions - Compact size for better fit
+    const svgWidth = 800;
+    const svgHeight = 320; // Reduced height to minimize bottom space
+    const toothWidth = 36;
+    const toothHeight = 52;
+    const spacing = 5;
+    const centerGap = 50; // Gap between left and right quadrants
+    const verticalGap = 15; // Small gap between upper and lower jaw
+    const topMargin = 40; // Top margin for labels
+    const bottomMargin = 20; // Reduced bottom margin
     
     // Calculate quadrant width (8 teeth per quadrant)
     const quadrantWidth = (toothWidth + spacing) * 8 - spacing;
@@ -204,7 +204,7 @@ export default function Odontogram({
       });
     });
     
-    // Lower jaw Y position
+    // Lower jaw Y position - closer to upper jaw
     const lowerY = upperY + toothHeight + verticalGap;
     
     // Cung dưới - phải (Lower Right Quadrant 4): [48,47,46,45,44,43,42,41]
@@ -269,69 +269,58 @@ export default function Odontogram({
         {/* SVG Chart */}
         <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <svg
-            viewBox="0 0 1000 500"
-            className="w-full h-auto min-h-[400px] sm:min-h-[500px] max-w-full"
+            viewBox="0 0 800 320"
+            className="w-full h-auto min-h-[256px] sm:min-h-[320px] max-w-full"
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Background */}
-            <rect width="1000" height="500" fill="#fafafa" />
+            <rect width="800" height="320" fill="#fafafa" />
             
             {/* Center vertical line */}
             <line
-              x1="500"
+              x1="400"
               y1="0"
-              x2="500"
-              y2="500"
+              x2="400"
+              y2="320"
               stroke="#d1d5db"
               strokeWidth="2"
               strokeDasharray="5,5"
             />
             
-            {/* Horizontal separator between jaws */}
-            <line
-              x1="0"
-              y1="250"
-              x2="1000"
-              y2="250"
-              stroke="#e5e7eb"
-              strokeWidth="1"
-              strokeDasharray="3,3"
-            />
-            
             {/* Quadrant labels with FDI notation explanation */}
             <text
-              x="250"
-              y="30"
+              x="200"
+              y="25"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
-              fontSize="11"
+              fontSize="10"
             >
               Cung 2: Hàm Trên - Trái
             </text>
             <text
-              x="750"
-              y="30"
+              x="600"
+              y="25"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
-              fontSize="11"
+              fontSize="10"
             >
               Cung 1: Hàm Trên - Phải 
             </text>
             <text
-              x="250"
-              y="480"
+              x="200"
+              y="180"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
-              fontSize="11"
+              fontSize="10"
             >
               Cung 3: Hàm Dưới - Trái
             </text>
             <text
-              x="750"
-              y="480"
+              x="600"
+              y="180"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
-              fontSize="11"
+              fontSize="10"
             >
               Cung 4: Hàm Dưới - Phải
             </text>
@@ -351,9 +340,9 @@ export default function Odontogram({
                   <rect
                     x={tooth.x}
                     y={tooth.y}
-                    width="45"
-                    height="65"
-                    rx="5"
+                    width="36"
+                    height="52"
+                    rx="4"
                     fill={fillColor}
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
@@ -370,11 +359,11 @@ export default function Odontogram({
                   
                   {/* Tooth number */}
                   <text
-                    x={tooth.x + 22.5}
-                    y={tooth.y + 38}
+                    x={tooth.x + 18}
+                    y={tooth.y + 30}
                     textAnchor="middle"
                     className="text-sm font-bold fill-gray-900"
-                    fontSize="12"
+                    fontSize="11"
                     pointerEvents="none"
                   >
                     {tooth.number}
@@ -383,9 +372,9 @@ export default function Odontogram({
                   {/* Status indicator (small dot in top-right corner) */}
                   {tooth.status && (
                     <circle
-                      cx={tooth.x + 38}
-                      cy={tooth.y + 7}
-                      r="4.5"
+                      cx={tooth.x + 30}
+                      cy={tooth.y + 6}
+                      r="4"
                       fill={TOOTH_STATUS_COLORS[tooth.status]}
                       stroke="white"
                       strokeWidth="1.5"

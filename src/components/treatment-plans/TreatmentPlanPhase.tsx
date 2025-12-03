@@ -6,6 +6,7 @@
  */
 
 import { ApprovalStatus, PhaseDetailDTO, ItemDetailDTO, PlanItemStatus } from '@/types/treatmentPlan';
+import { calculatePhaseStatus, getPhaseProgress } from '@/utils/treatmentPlanStatus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,7 +82,11 @@ export default function TreatmentPlanPhase({
     return statusMap[status] || { bg: '#9CA3AF', border: '#6B7280', text: status };
   };
 
-  const statusInfo = getPhaseStatusColor(phase.status);
+  // Calculate phase status using utility function
+  // This handles BE lazy loading bug by calculating from items as fallback
+  // See: src/utils/treatmentPlanStatus.ts
+  const effectivePhaseStatus = calculatePhaseStatus(phase);
+  const statusInfo = getPhaseStatusColor(effectivePhaseStatus);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Chưa có';
@@ -93,12 +98,18 @@ export default function TreatmentPlanPhase({
     }
   };
 
-  const completedItems = phase.items.filter((item) => item.status === 'COMPLETED').length;
-  const totalItems = phase.items.length;
-  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+  // Use utility function for progress calculation
+  const progress = getPhaseProgress(phase);
 
-  const isCompleted = phase.status === 'COMPLETED';
-  const isInProgress = phase.status === 'IN_PROGRESS';
+  // Calculate completed and total items for display
+  const completedItems = phase.items?.filter(
+    (item) => item.status === 'COMPLETED' || item.status === 'SKIPPED'
+  ).length || 0;
+  const totalItems = phase.items?.length || 0;
+
+  // Use calculated status for display logic
+  const isCompleted = effectivePhaseStatus === 'COMPLETED';
+  const isInProgress = effectivePhaseStatus === 'IN_PROGRESS';
 
   return (
     <Card className={cn(

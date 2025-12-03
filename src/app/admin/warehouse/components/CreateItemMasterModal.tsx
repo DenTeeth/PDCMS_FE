@@ -263,6 +263,7 @@ export default function CreateItemMasterModal({
           conversionRate: 1,
           isBaseUnit: true,
           displayOrder: 1,
+          isActive: true, // ✅ FIX: Required field - new units are active by default
           isDefaultImportUnit: true,
           isDefaultExportUnit: true,
         },

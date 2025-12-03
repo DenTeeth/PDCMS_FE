@@ -481,7 +481,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // NII Image Viewer
     {
-      name: 'NII Image Viewer',
+      name: 'CBCT Viewer',
       href: '/employee/nii-viewer',
       icon: faImage,
     },
@@ -629,7 +629,7 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faFolderOpen,
     },
     {
-      name: 'NII Image Viewer',
+      name: 'CBCT Viewer',
       href: '/patient/nii-viewer',
       icon: faImage,
     },
