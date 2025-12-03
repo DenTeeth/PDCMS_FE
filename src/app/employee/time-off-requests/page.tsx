@@ -300,17 +300,16 @@ export default function EmployeeTimeOffRequestsPage() {
       alert(`Tạo yêu cầu nghỉ phép thành công!\n\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ Error creating time off request:', error);
-        console.error('📋 Error details:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.response?.data?.message,
-          detail: error.response?.data?.detail
-        });
+        console.error('❌ Error creating time off request:', error.message);
+        console.error('📋 Status:', error.response?.status);
+        console.error('📋 Error Data:', JSON.stringify(error.response?.data, null, 2));
+        console.error('📋 Message:', error.response?.data?.message);
+        console.error('📋 Detail:', error.response?.data?.detail);
       }
 
       const status = error.response?.status;
       const errorData = error.response?.data;
+      const errorCode = errorData?.errorCode;
       let errorMsg = '';
 
       if (status === 409) {
@@ -318,19 +317,40 @@ export default function EmployeeTimeOffRequestsPage() {
         errorMsg = errorData?.detail || errorData?.message ||
           'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
       } else if (status === 400) {
-        // Bad request - validation error - show detailed errors
-        const detail = errorData?.detail || errorData?.message;
-        const errors = errorData?.errors;
-
-        if (errors && Array.isArray(errors) && errors.length > 0) {
-          // Show validation errors
-          const errorList = errors.map((err: any) => `• ${err.field || 'Field'}: ${err.message || err.defaultMessage || 'Invalid'}`).join('\n');
-          errorMsg = `Lỗi validation:\n\n${errorList}`;
-        } else if (detail) {
-          errorMsg = detail;
+        // Bad request - check for specific error codes
+        if (errorCode === 'DUPLICATE_BALANCE_RECORDS') {
+          // Data corruption - duplicate balance records in database
+          const backendMsg = errorData?.message;
+          errorMsg = (backendMsg && backendMsg !== 'Invalid Request')
+            ? backendMsg
+            : 'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.';
+        } else if (errorCode === 'BALANCE_NOT_FOUND') {
+          // No balance record - needs HR to initialize
+          const backendMsg = errorData?.message;
+          errorMsg = (backendMsg && backendMsg !== 'Invalid Request')
+            ? backendMsg
+            : 'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
+        } else if (errorCode === 'INSUFFICIENT_BALANCE') {
+          // Not enough balance
+          const backendMsg = errorData?.message;
+          errorMsg = (backendMsg && backendMsg !== 'Invalid Request')
+            ? backendMsg
+            : 'Số dư ngày nghỉ không đủ cho yêu cầu này.';
         } else {
-          // Show full error data for debugging
-          errorMsg = `Dữ liệu không hợp lệ:\n\n${JSON.stringify(errorData, null, 2)}`;
+          // Other validation errors
+          const detail = errorData?.detail || errorData?.message;
+          const errors = errorData?.errors;
+
+          if (errors && Array.isArray(errors) && errors.length > 0) {
+            // Show validation errors
+            const errorList = errors.map((err: any) => `• ${err.field || 'Field'}: ${err.message || err.defaultMessage || 'Invalid'}`).join('\n');
+            errorMsg = `Lỗi validation:\n\n${errorList}`;
+          } else if (detail) {
+            errorMsg = detail;
+          } else {
+            // Show full error data for debugging
+            errorMsg = `Dữ liệu không hợp lệ:\n\n${JSON.stringify(errorData, null, 2)}`;
+          }
         }
       } else if (status === 403) {
         // Forbidden

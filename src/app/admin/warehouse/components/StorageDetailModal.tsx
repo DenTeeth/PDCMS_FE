@@ -86,7 +86,7 @@ export default function StorageDetailModal({
       const canShowApproveButton = transaction.status === 'PENDING_APPROVAL' && hasApprovePermission;
       const canShowSubmitButton = transaction.status === 'DRAFT' && hasUpdatePermission;
       const canShowCancelButton = (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission;
-      
+
       console.log('🔍 [StorageDetailModal] Permission Debug:', {
         transactionId: transaction.transactionId,
         transactionCode: transaction.transactionCode,
@@ -100,10 +100,10 @@ export default function StorageDetailModal({
         canShowApproveButton,
         canShowSubmitButton,
         canShowCancelButton,
-        reasonNoApproveButton: !canShowApproveButton 
-          ? (transaction.status !== 'PENDING_APPROVAL' 
-              ? `Status is ${transaction.status}, not PENDING_APPROVAL` 
-              : `hasApprovePermission is ${hasApprovePermission}`)
+        reasonNoApproveButton: !canShowApproveButton
+          ? (transaction.status !== 'PENDING_APPROVAL'
+            ? `Status is ${transaction.status}, not PENDING_APPROVAL`
+            : `hasApprovePermission is ${hasApprovePermission}`)
           : 'OK',
       });
     }
@@ -342,22 +342,22 @@ export default function StorageDetailModal({
               <div className="text-center py-8">Đang tải thông tin...</div>
             ) : !transaction ? (
               <div className="text-center py-8 space-y-2">
-              <div className="text-red-500 font-semibold">Không thể tải thông tin phiếu</div>
-              {isError && error && (
-                <div className="text-sm text-muted-foreground">
-                  {error instanceof Error
-                    ? error.message
-                    : (error as any)?.response?.data?.message || 
-                      (error as any)?.response?.data?.error || 
+                <div className="text-red-500 font-semibold">Không thể tải thông tin phiếu</div>
+                {isError && error && (
+                  <div className="text-sm text-muted-foreground">
+                    {error instanceof Error
+                      ? error.message
+                      : (error as any)?.response?.data?.message ||
+                      (error as any)?.response?.data?.error ||
                       'Lỗi không xác định'}
-                </div>
-              )}
-              {(error as any)?.response?.status === 500 && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Lỗi máy chủ (500). Vui lòng thử lại sau hoặc liên hệ quản trị viên.
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+                {(error as any)?.response?.status === 500 && (
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Lỗi máy chủ (500). Vui lòng thử lại sau hoặc liên hệ quản trị viên.
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 {/* Basic Information */}
@@ -365,7 +365,7 @@ export default function StorageDetailModal({
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                     Thông tin cơ bản
                   </h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faBarcode} className="w-4 h-4 text-muted-foreground mt-1" />
@@ -514,10 +514,10 @@ export default function StorageDetailModal({
                     {(() => {
                       const updatedAt = (transaction as any).updatedAt ?? transaction.updated_at;
                       return updatedAt ? (
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
-                        <span>Cập nhật: {formatDateTime(updatedAt)}</span>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
+                          <span>Cập nhật: {formatDateTime(updatedAt)}</span>
+                        </div>
                       ) : null;
                     })()}
                   </div>
@@ -630,7 +630,7 @@ export default function StorageDetailModal({
                 Gửi duyệt (Chưa khả dụng)
               </Button>
             )}
-            
+
             {/* Approve/Reject buttons: Show when status = PENDING_APPROVAL */}
             {transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission && (
               <>
@@ -652,7 +652,7 @@ export default function StorageDetailModal({
                 </Button>
               </>
             )}
-            
+
             {/* Cancel button: Show when status = DRAFT or PENDING_APPROVAL */}
             {(transaction?.status === 'DRAFT' || transaction?.status === 'PENDING_APPROVAL') && hasUpdatePermission && (
               <Button
@@ -664,15 +664,15 @@ export default function StorageDetailModal({
                 {cancelMutation.isPending ? 'Đang hủy...' : 'Hủy phiếu'}
               </Button>
             )}
-            
+
             {/* Debug info: Show why buttons are not visible */}
             {process.env.NODE_ENV === 'development' && transaction && (
               <div className="text-xs text-muted-foreground ml-4 flex items-center">
                 {transaction.status === 'DRAFT' && !hasUpdatePermission && (
-                  <span className="text-orange-600">⚠️ Cần quyền UPDATE_WAREHOUSE để gửi duyệt</span>
+                  <span className="text-orange-600">Cần quyền UPDATE_WAREHOUSE để gửi duyệt</span>
                 )}
                 {transaction.status === 'PENDING_APPROVAL' && !hasApprovePermission && (
-                  <span className="text-orange-600">⚠️ Cần quyền APPROVE_TRANSACTION hoặc ROLE_ADMIN để duyệt</span>
+                  <span className="text-orange-600">Cần quyền APPROVE_TRANSACTION hoặc ROLE_ADMIN để duyệt</span>
                 )}
               </div>
             )}

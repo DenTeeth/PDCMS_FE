@@ -145,9 +145,9 @@ export default function CreateImportModal({
       try {
         const result = await inventoryService.getAll({
           warehouseType,
-      });
+        });
         console.log('📦 Item Masters fetched:', result.length, 'items');
-      return result;
+        return result;
       } catch (error: any) {
         console.error('❌ Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
@@ -306,16 +306,16 @@ export default function CreateImportModal({
                     </div>
                   ) : (
                     suppliers.map((supplier: SupplierSummaryResponse) => (
-                    <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
-                      {supplier.supplierName}
-                    </SelectItem>
+                      <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
+                        {supplier.supplierName}
+                      </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
               {suppliers.length === 0 && !suppliersLoading && (
                 <p className="text-xs text-red-500 mt-1">
-                  ⚠️ Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
+                  Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
                 </p>
               )}
             </div>
@@ -407,10 +407,10 @@ export default function CreateImportModal({
                                   {selectedItem
                                     ? `${selectedItem.itemCode} - ${selectedItem.itemName}`
                                     : itemsLoading
-                                    ? "Đang tải..."
-                                    : items.length === 0
-                                    ? "Không có dữ liệu"
-                                    : "Chọn vật tư"}
+                                      ? "Đang tải..."
+                                      : items.length === 0
+                                        ? "Không có dữ liệu"
+                                        : "Chọn vật tư"}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
@@ -482,7 +482,7 @@ export default function CreateImportModal({
                             </Popover>
                             {items.length === 0 && !itemsLoading && index === 0 && (
                               <p className="text-xs text-red-500 mt-1">
-                                ⚠️ Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
+                                Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
                               </p>
                             )}
                           </td>
@@ -509,10 +509,10 @@ export default function CreateImportModal({
                               {unitLoading[index]
                                 ? 'Đang tải đơn vị...'
                                 : baseUnit?.unitName
-                                ? `Đơn vị: ${baseUnit.unitName}`
-                                : selectedItem?.unitOfMeasure
-                                ? `Đơn vị: ${selectedItem.unitOfMeasure}`
-                                : 'Chưa chọn vật tư'}
+                                  ? `Đơn vị: ${baseUnit.unitName}`
+                                  : selectedItem?.unitOfMeasure
+                                    ? `Đơn vị: ${selectedItem.unitOfMeasure}`
+                                    : 'Chưa chọn vật tư'}
                             </p>
                           </td>
                           <td className="p-3">

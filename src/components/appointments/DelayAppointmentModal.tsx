@@ -19,15 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt, faClock, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { appointmentService } from '@/services/appointmentService';
 import { AppointmentDetailDTO, DelayAppointmentRequest } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 interface DelayAppointmentModalProps {
   open: boolean;
@@ -284,29 +281,21 @@ export default function DelayAppointmentModal({
             <Label htmlFor="new-date" className="text-sm font-semibold">
               Ngày mới <span className="text-red-500">*</span>
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !selectedDate && 'text-muted-foreground'
-                  )}
-                >
-                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 h-4 w-4" />
-                  {selectedDate && !isNaN(selectedDate.getTime()) ? format(selectedDate, 'dd/MM/yyyy') : 'Chọn ngày'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <input
+              id="new-date"
+              type="date"
+              value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+              onChange={(e) => {
+                const dateValue = e.target.value;
+                if (dateValue) {
+                  setSelectedDate(new Date(dateValue));
+                } else {
+                  setSelectedDate(undefined);
+                }
+              }}
+              min={format(new Date(), 'yyyy-MM-dd')}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
           </div>
 
           {/* New Time Selection */}
