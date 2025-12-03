@@ -98,7 +98,7 @@ export interface TreatmentPlanSummaryDTO {
   planCode: string; // ✅ Backend now includes this field
   patientCode: string; // ✅ Backend fix 2025-11-15: Required for Admin navigation from list to detail
   planName: string;
-  status: TreatmentPlanStatus;
+  status: TreatmentPlanStatus | null; // V32: Can be null when approval_status = DRAFT (not activated yet)
   approvalStatus?: ApprovalStatus; // V19: Optional for backward compatibility
   doctor: DoctorInfoDTO;
   startDate: string;
@@ -136,7 +136,7 @@ export interface TreatmentPlanDetailResponse {
   planId: number;
   planCode: string;
   planName: string;
-  status: TreatmentPlanStatus;
+  status: TreatmentPlanStatus | null; // V32: Can be null when approval_status = DRAFT (not activated yet)
   approvalStatus?: ApprovalStatus; // V19: Optional for backward compatibility
   approvalMetadata?: ApprovalMetadataDTO; // V20: Approval metadata (who, when, notes)
   submitNotes?: string; // ✅ NEW: Notes from doctor when submitting for review (API 5.12)
@@ -205,7 +205,13 @@ export interface GetAllTreatmentPlansFilters {
 }
 
 // Status Colors (for UI)
-export const TREATMENT_PLAN_STATUS_COLORS: Record<TreatmentPlanStatus, { bg: string; border: string; text: string }> = {
+// V32: Handle null status (when approval_status = DRAFT, plan not activated yet)
+export const TREATMENT_PLAN_STATUS_COLORS: Record<TreatmentPlanStatus | 'NULL', { bg: string; border: string; text: string }> = {
+  NULL: {
+    bg: '#F3F4F6',
+    border: '#D1D5DB',
+    text: 'Chưa hoàn thành',
+  },
   [TreatmentPlanStatus.PENDING]: {
     bg: '#9CA3AF',
     border: '#6B7280',

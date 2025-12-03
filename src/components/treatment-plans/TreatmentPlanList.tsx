@@ -34,15 +34,67 @@ export default function TreatmentPlanList({
   showActions = true,
   patientCode,
 }: TreatmentPlanListProps) {
-  const getStatusBadge = (status: TreatmentPlanStatus) => {
-    const statusInfo = TREATMENT_PLAN_STATUS_COLORS[status];
+  const getStatusBadge = (plan: TreatmentPlanSummaryDTO) => {
+    const status = plan.status;
+    const approvalStatus = plan.approvalStatus;
+    
+    // If status is null, determine based on approvalStatus
+    if (status === null) {
+      if (approvalStatus === 'APPROVED') {
+        // Plan is approved but not started yet → Show PENDING
+        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['PENDING'];
+        return (
+          <Badge
+            style={{
+              backgroundColor: statusInfo.bg,
+              borderColor: statusInfo.border,
+              color: 'white',
+            }}
+          >
+            {statusInfo.text}
+          </Badge>
+        );
+      } else if (approvalStatus === 'DRAFT') {
+        // Plan is still in draft → Show NULL/DRAFT
+        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['NULL'];
+        return (
+          <Badge
+            style={{
+              backgroundColor: statusInfo.bg,
+              borderColor: statusInfo.border,
+              color: '#6B7280',
+            }}
+          >
+            {statusInfo.text}
+          </Badge>
+        );
+      } else if (approvalStatus === 'PENDING_REVIEW' || approvalStatus === 'PENDING_APPROVAL') {
+        // Plan is pending review → Show PENDING
+        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['PENDING'];
+        return (
+          <Badge
+            style={{
+              backgroundColor: statusInfo.bg,
+              borderColor: statusInfo.border,
+              color: 'white',
+            }}
+          >
+            Chờ duyệt
+          </Badge>
+        );
+      }
+    }
+    
+    // Use actual status if available
+    const statusKey = status || 'NULL';
+    const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
     return (
       <Badge
         className="whitespace-nowrap"
         style={{
           backgroundColor: statusInfo.bg,
           borderColor: statusInfo.border,
-          color: 'white',
+          color: statusKey === 'NULL' ? '#6B7280' : 'white',
         }}
       >
         {statusInfo.text}
@@ -116,32 +168,6 @@ export default function TreatmentPlanList({
       ),
     },
     {
-      key: 'financial',
-      header: 'Chi phí',
-      accessor: (plan) => {
-        // Hide price column if all prices are null/undefined (doctor view)
-        const hasPrice = plan.finalCost != null || plan.totalCost != null;
-        if (!hasPrice) {
-          return <div className="text-muted-foreground">-</div>;
-        }
-        return (
-          <div>
-            <div className="font-medium">{formatCurrency(plan.finalCost)}</div>
-            {plan.discountAmount != null && plan.discountAmount > 0 && plan.totalCost != null && (
-              <div className="text-sm text-muted-foreground line-through">
-                {formatCurrency(plan.totalCost)}
-              </div>
-            )}
-            {plan.discountAmount != null && plan.discountAmount > 0 && (
-              <div className="text-xs text-green-600">
-                Giảm: {formatCurrency(plan.discountAmount)}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
       key: 'paymentType',
       header: 'Hình thức thanh toán',
       accessor: (plan) => (
@@ -153,7 +179,7 @@ export default function TreatmentPlanList({
     {
       key: 'status',
       header: 'Trạng thái',
-      accessor: (plan) => getStatusBadge(plan.status),
+      accessor: (plan) => getStatusBadge(plan),
     },
     ...(showActions ? [{
       key: 'actions',

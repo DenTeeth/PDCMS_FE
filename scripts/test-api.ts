@@ -216,10 +216,10 @@ async function testSpecializationValidation() {
         {
           phaseNumber: 1,
           phaseName: 'Test Phase',
-          estimatedDurationDays: 7,
           items: [
             {
               serviceCode: testService.serviceCode,
+              price: testService.price || 1000000, // Use service price or default
               sequenceNumber: 1,
               quantity: 1,
             },
@@ -240,6 +240,7 @@ async function testSpecializationValidation() {
         data: { planCode: planResponse.data.planCode },
       });
     } catch (error: any) {
+      console.error('   Create plan error:', error.response?.status, error.response?.data);
       if (error.response?.status === 400 && error.response?.data?.errorCode === 'doctorSpecializationMismatch') {
         logResult({
           name: 'Specialization Validation Error Handling',
@@ -256,10 +257,13 @@ async function testSpecializationValidation() {
       }
     }
   } catch (error: any) {
+    const errorDetail = error.response?.data || error.message;
+    console.error('   Full error response:', JSON.stringify(error.response?.data, null, 2));
+    console.error('   Error stack:', error.stack);
     logResult({
       name: 'Specialization Validation Test',
       status: 'FAIL',
-      error: error.response?.data || error.message,
+      error: errorDetail,
     });
   }
 }

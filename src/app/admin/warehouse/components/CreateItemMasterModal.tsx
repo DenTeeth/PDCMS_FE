@@ -45,6 +45,8 @@ export default function CreateItemMasterModal({
   const queryClient = useQueryClient();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [units, setUnits] = useState<ItemUnitRequest[]>([]);
+  // Track original units to detect deletions (for Safety Lock)
+  const [originalUnits, setOriginalUnits] = useState<Map<number, any>>(new Map());
   const [formData, setFormData] = useState<CreateItemMasterRequest>({
     itemCode: '',
     itemName: '',
@@ -59,9 +61,10 @@ export default function CreateItemMasterModal({
   });
 
   // Fetch categories
-  const { data: categories = [] } = useQuery<CategoryV1[]>({
+  const { data: categories = [], isLoading: loadingCategories, error: categoriesError } = useQuery<CategoryV1[]>({
     queryKey: ['categories'],
     queryFn: () => inventoryService.getCategories(),
+    retry: 2,
   });
 
   // Fetch existing units when editing
@@ -90,13 +93,94 @@ export default function CreateItemMasterModal({
       toast.success(item ? 'Cập nhật vật tư thành công!' : 'Thêm vật tư mới thành công!');
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: any, variables: any) => {
+      // Detailed error logging in component for BE debugging
+      console.group('❌ [WAREHOUSE MODAL] Update Item Error');
+      console.error('📋 Item ID:', item?.id);
+      console.error('📋 Item Code:', item?.itemCode || 'N/A');
+      console.error('📦 Request Variables:', JSON.stringify(variables, null, 2));
+      console.error('⏰ Timestamp:', new Date().toISOString());
+      
       // Handle Safety Lock errors (409 CONFLICT)
       if (error.response?.status === 409) {
-        const errorMessage = error.response?.data?.message || 
-          'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho. Vui lòng kiểm tra lại.';
+        const conflictData = error.response.data || {};
+        console.error('🚫 [WAREHOUSE MODAL] CONFLICT (409) Detected');
+        console.error('📌 Conflict Details:', {
+          itemId: item?.id,
+          itemCode: item?.itemCode || 'N/A',
+          status: 409,
+          message: conflictData.message || conflictData.error || 'No message',
+          errorCode: conflictData.errorCode || conflictData.error || 'NO_ERROR_CODE',
+          fullErrorData: JSON.stringify(conflictData, null, 2),
+          fullResponse: JSON.stringify(error.response, null, 2),
+          timestamp: new Date().toISOString()
+        });
+        
+        // Handle different error formats from BE
+        let errorMessage = 'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho.';
+        
+        if (conflictData.message) {
+          errorMessage = conflictData.message;
+        } else if (conflictData.error) {
+          // BE might return error: "error.conflict" without message
+          if (conflictData.error === 'error.conflict' || conflictData.error.includes('conflict')) {
+            errorMessage = 'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho (Safety Lock). ' +
+              'Vui lòng kiểm tra: không thể thay đổi tỷ lệ quy đổi, đơn vị cơ bản, hoặc xóa đơn vị khi còn tồn kho.';
+          } else {
+            errorMessage = conflictData.error;
+          }
+        } else if (conflictData.details) {
+          errorMessage = conflictData.details;
+        }
+        
+        console.groupEnd();
         toast.error(errorMessage);
+      } else if (error.response?.status === 400) {
+        // Handle validation errors (400 Bad Request) with specific messages
+        const errorData = error.response.data || {};
+        const message = errorData.message || error.message || 'Lỗi validation';
+        
+        console.error('❌ [WAREHOUSE MODAL] Validation Error (400):', {
+          status: 400,
+          message: message,
+          errorCode: errorData.errorCode || 'NO_ERROR_CODE',
+          fullErrorData: JSON.stringify(errorData, null, 2),
+          timestamp: new Date().toISOString()
+        });
+        
+        // Map BE error messages to user-friendly Vietnamese messages
+        let userMessage = message;
+        if (message.includes('Unit name cannot be null') || message.includes('Unit name cannot be empty')) {
+          userMessage = 'Tên đơn vị không được để trống';
+        } else if (message.includes('isBaseUnit flag is required')) {
+          userMessage = 'Phải chỉ định đơn vị cơ bản cho tất cả đơn vị';
+        } else if (message.includes('Conversion rate must be >= 1')) {
+          userMessage = 'Tỷ lệ quy đổi phải lớn hơn hoặc bằng 1';
+        } else if (message.includes('isActive flag is required')) {
+          userMessage = 'Phải chỉ định trạng thái hoạt động cho tất cả đơn vị';
+        } else if (message.includes('duplicated') || message.includes('duplicate')) {
+          userMessage = 'Tên đơn vị bị trùng lặp';
+        } else if (message.includes('Exactly one base unit')) {
+          userMessage = 'Phải có đúng 1 đơn vị cơ bản';
+        } else if (message.includes('Safety Lock')) {
+          userMessage = 'Không thể thay đổi đơn vị khi còn tồn kho. Vui lòng liên hệ quản lý.';
+        } else if (message.includes('Min stock level must be less than max stock level')) {
+          userMessage = 'Tồn kho tối thiểu phải nhỏ hơn tồn kho tối đa';
+        }
+        
+        console.groupEnd();
+        toast.error(userMessage);
       } else {
+        // Log other errors
+        console.error('❌ [WAREHOUSE MODAL] Other Error:', {
+          status: error.response?.status || 'NO_STATUS',
+          message: error.message || 'NO_MESSAGE',
+          errorCode: error.response?.data?.errorCode || 'NO_ERROR_CODE',
+          responseData: error.response?.data ? JSON.stringify(error.response.data, null, 2) : 'NO_RESPONSE_DATA',
+          timestamp: new Date().toISOString()
+        });
+        
+        console.groupEnd();
         toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra!');
       }
     },
@@ -132,10 +216,20 @@ export default function CreateItemMasterModal({
           conversionRate: unit.conversionRate,
           isBaseUnit: unit.isBaseUnit,
           displayOrder: unit.displayOrder || index + 1,
+          isActive: unit.isActive !== undefined ? unit.isActive : true, // Preserve isActive from API
           isDefaultImportUnit: false,
           isDefaultExportUnit: false,
         }));
         setUnits(loadedUnits);
+        
+        // Store original units with their IDs for Safety Lock detection
+        const originalMap = new Map<number, any>();
+        existingUnitsData.units.forEach((unit) => {
+          if (unit.unitId) {
+            originalMap.set(unit.unitId, unit);
+          }
+        });
+        setOriginalUnits(originalMap);
       }
       setHasInitialized(true);
       return;
@@ -169,6 +263,7 @@ export default function CreateItemMasterModal({
           conversionRate: 1,
           isBaseUnit: true,
           displayOrder: 1,
+          isActive: true, // ✅ FIX: Required field - new units are active by default
           isDefaultImportUnit: true,
           isDefaultExportUnit: true,
         },
@@ -195,6 +290,7 @@ export default function CreateItemMasterModal({
           conversionRate: 1,
           isBaseUnit: true,
           displayOrder: 1,
+          isActive: true, // New units are active by default
           isDefaultImportUnit: true,
           isDefaultExportUnit: true,
         },
@@ -216,6 +312,7 @@ export default function CreateItemMasterModal({
       conversionRate: 1,
       isBaseUnit: false,
       displayOrder: units.length + 1,
+      isActive: true, // New units are active by default
       isDefaultImportUnit: false,
       isDefaultExportUnit: false,
     };
@@ -231,15 +328,82 @@ export default function CreateItemMasterModal({
       toast.error('Không thể xóa đơn vị cơ sở! Hãy đặt đơn vị khác làm cơ sở trước.');
       return;
     }
-    const newUnits = units.filter((_, i) => i !== index).map((unit, i) => ({
-      ...unit,
-      displayOrder: i + 1,
-    }));
-    setUnits(newUnits);
+    
+    // Check if item has stock (Safety Lock)
+    const hasStock = item && (item.currentStock !== undefined && item.currentStock > 0);
+    
+    if (hasStock) {
+      // Safety Lock: Use soft delete instead of hard delete
+      const unitToRemove = units[index];
+      // Find original unit by name to get unitId
+      const originalUnit = Array.from(originalUnits.values()).find(
+        (u) => u.unitName === unitToRemove.unitName
+      );
+      
+      if (originalUnit && originalUnit.unitId) {
+        // Soft delete: Set isActive = false instead of removing
+        const newUnits = units.map((unit, i) => {
+          if (i === index) {
+            return { ...unit, isActive: false };
+          }
+          return unit;
+        });
+        setUnits(newUnits);
+        toast.info('Vật tư đã có tồn kho. Đơn vị sẽ được vô hiệu hóa (isActive=false) thay vì xóa.');
+      } else {
+        // New unit (not from API), can be removed
+        const newUnits = units.filter((_, i) => i !== index).map((unit, i) => ({
+          ...unit,
+          displayOrder: i + 1,
+        }));
+        setUnits(newUnits);
+      }
+    } else {
+      // No stock: Can hard delete
+      const newUnits = units.filter((_, i) => i !== index).map((unit, i) => ({
+        ...unit,
+        displayOrder: i + 1,
+      }));
+      setUnits(newUnits);
+    }
   };
 
   const updateUnit = (index: number, field: keyof ItemUnitRequest, value: any) => {
     const newUnits = [...units];
+    const unitToUpdate = newUnits[index];
+    
+    // Safety Lock: Check if item has stock
+    const hasStock = item && (item.currentStock !== undefined && item.currentStock > 0);
+    
+    if (hasStock && item) {
+      // Find original unit to check if it's an existing unit
+      const originalUnit = Array.from(originalUnits.values()).find(
+        (u) => u.unitName === unitToUpdate.unitName
+      );
+      
+      if (originalUnit) {
+        // Existing unit: Block dangerous changes
+        if (field === 'conversionRate') {
+          const numValue = Number(value);
+          if (numValue !== originalUnit.conversionRate) {
+            toast.error(
+              `Không thể thay đổi tỷ lệ quy đổi của đơn vị "${unitToUpdate.unitName}" ` +
+              `vì vật tư đã có tồn kho (Safety Lock). Tỷ lệ hiện tại: ${originalUnit.conversionRate}`
+            );
+            return;
+          }
+        }
+        if (field === 'isBaseUnit') {
+          if (value !== originalUnit.isBaseUnit) {
+            toast.error(
+              `Không thể thay đổi đơn vị cơ sở của "${unitToUpdate.unitName}" ` +
+              `vì vật tư đã có tồn kho (Safety Lock).`
+            );
+            return;
+          }
+        }
+      }
+    }
     
     if (field === 'isBaseUnit' && value === true) {
       // Unset other base units
@@ -266,10 +430,63 @@ export default function CreateItemMasterModal({
     setUnits(newUnits);
   };
 
+  // Validation function for units (matching BE requirements)
+  const validateUnitsBeforeUpdate = (unitsToValidate: ItemUnitRequest[]): void => {
+    // Check if units array is provided
+    if (!unitsToValidate || unitsToValidate.length === 0) {
+      return; // OK - will keep existing units (for update without units field)
+    }
+
+    // Validate each unit - all required fields must be present
+    unitsToValidate.forEach((unit, index) => {
+      // unitName is REQUIRED - cannot be null/empty
+      if (!unit.unitName || !unit.unitName.trim()) {
+        throw new Error(`Đơn vị ${index + 1}: Tên đơn vị không được để trống`);
+      }
+
+      // conversionRate is REQUIRED - must be >= 1
+      if (unit.conversionRate == null || unit.conversionRate < 1) {
+        throw new Error(`Đơn vị ${index + 1}: Tỷ lệ quy đổi phải >= 1`);
+      }
+
+      // isBaseUnit is REQUIRED - cannot be null
+      if (unit.isBaseUnit == null) {
+        throw new Error(`Đơn vị ${index + 1}: Phải chỉ định đơn vị cơ bản`);
+      }
+
+      // isActive is REQUIRED - cannot be null
+      if (unit.isActive == null) {
+        throw new Error(`Đơn vị ${index + 1}: Phải chỉ định trạng thái hoạt động`);
+      }
+    });
+
+    // Check exactly one base unit
+    const baseUnitCount = unitsToValidate.filter(u => u.isBaseUnit === true).length;
+    if (baseUnitCount !== 1) {
+      throw new Error('Phải có đúng 1 đơn vị cơ bản');
+    }
+
+    // Base unit must have conversionRate = 1
+    const baseUnit = unitsToValidate.find(u => u.isBaseUnit === true);
+    if (baseUnit && baseUnit.conversionRate !== 1) {
+      throw new Error('Đơn vị cơ bản phải có tỷ lệ quy đổi = 1');
+    }
+
+    // Check unique unit names (case-insensitive)
+    const unitNames = unitsToValidate.map(u => u.unitName.trim().toLowerCase());
+    const duplicates = unitNames.filter((name, index) => 
+      unitNames.indexOf(name) !== index
+    );
+    if (duplicates.length > 0) {
+      const uniqueDuplicates = [...new Set(duplicates)];
+      throw new Error(`Tên đơn vị bị trùng: ${uniqueDuplicates.join(', ')}`);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Basic validation
     if (!formData.itemCode.trim()) {
       toast.error('Mã vật tư là bắt buộc!');
       return;
@@ -291,54 +508,134 @@ export default function CreateItemMasterModal({
       return;
     }
 
-    // Validate units
-    if (units.length === 0) {
-      toast.error('Phải có ít nhất 1 đơn vị!');
+    // Validate units using BE-compatible validation
+    try {
+      validateUnitsBeforeUpdate(units);
+    } catch (validationError: any) {
+      toast.error(validationError.message || 'Lỗi validation đơn vị');
       return;
     }
 
-    const baseUnits = units.filter((u) => u.isBaseUnit);
-    if (baseUnits.length === 0) {
-      toast.error('Phải có ít nhất 1 đơn vị cơ sở (isBaseUnit = true)!');
-      return;
-    }
-    if (baseUnits.length > 1) {
-      toast.error('Chỉ được có 1 đơn vị cơ sở!');
-      return;
-    }
-
-    // Validate unit names
-    const unitNames = units.map((u) => u.unitName.trim());
-    if (unitNames.some((name) => !name)) {
-      toast.error('Tất cả đơn vị phải có tên!');
-      return;
-    }
-    const uniqueNames = new Set(unitNames);
-    if (uniqueNames.size !== unitNames.length) {
-      toast.error('Tên đơn vị không được trùng nhau!');
-      return;
-    }
-
-    // Validate conversion rates
-    for (const unit of units) {
-      if (unit.isBaseUnit && unit.conversionRate !== 1) {
-        toast.error('Đơn vị cơ sở phải có tỷ lệ quy đổi = 1');
-        return;
+    // Safety Lock: Check if item has stock and validate unit changes
+    const hasStock = item && (item.currentStock !== undefined && item.currentStock > 0);
+    if (hasStock && item) {
+      // Check for dangerous changes that Safety Lock blocks
+      for (const unit of units) {
+        // Find original unit
+        const originalUnit = Array.from(originalUnits.values()).find(
+          (u) => u.unitName === unit.unitName
+        );
+        
+        if (originalUnit) {
+          // Existing unit: Check for blocked changes
+          if (originalUnit.conversionRate !== unit.conversionRate) {
+            toast.error(
+              `Không thể thay đổi tỷ lệ quy đổi của đơn vị "${unit.unitName}" vì vật tư đã có tồn kho (Safety Lock). ` +
+              `Tỷ lệ cũ: ${originalUnit.conversionRate}, Tỷ lệ mới: ${unit.conversionRate}`
+            );
+            return;
+          }
+          if (originalUnit.isBaseUnit !== unit.isBaseUnit) {
+            toast.error(
+              `Không thể thay đổi đơn vị cơ sở của "${unit.unitName}" vì vật tư đã có tồn kho (Safety Lock).`
+            );
+            return;
+          }
+        }
       }
-      if (!unit.isBaseUnit && unit.conversionRate <= 1) {
-        toast.error(`Đơn vị "${unit.unitName}" phải có tỷ lệ quy đổi > 1`);
-        return;
+      
+      // Check for hard-deleted units (should be soft-deleted instead)
+      const currentUnitNames = new Set(units.filter(u => u.isActive !== false).map(u => u.unitName.trim()));
+      const originalUnitNames = new Set(Array.from(originalUnits.values()).map(u => u.unitName));
+      
+      for (const originalName of originalUnitNames) {
+        if (!currentUnitNames.has(originalName)) {
+          // Unit was removed but should be soft-deleted
+          toast.error(
+            `Không thể xóa đơn vị "${originalName}" vì vật tư đã có tồn kho. ` +
+            `Vui lòng vô hiệu hóa đơn vị (isActive=false) thay vì xóa.`
+          );
+          return;
+        }
       }
     }
 
     // Prepare request data
     const requestData: CreateItemMasterRequest | UpdateItemMasterRequest = {
       ...formData,
-      units: units.map((unit) => ({
-        ...unit,
-        unitName: unit.unitName.trim(),
-      })),
     };
+
+    // Handle units field according to BE requirements:
+    // - If creating: always include units
+    // - If updating: include units only if we want to update them
+    //   (If units is undefined, BE will keep existing units)
+    if (!item) {
+      // Creating: always include units
+      requestData.units = units
+        .filter((unit) => unit.isActive !== false)
+        .map((unit) => ({
+          ...unit,
+          unitName: unit.unitName.trim(),
+          isActive: unit.isActive !== undefined ? unit.isActive : true,
+        }));
+    } else {
+      // Updating: include units only if we want to update them
+      // Map units with all required fields and include unitId for existing units
+      requestData.units = units
+        .filter((unit) => {
+          // When updating with stock, include all units (even inactive ones) so BE can track changes
+          if (hasStock) {
+            return true;
+          }
+          // When no stock: only include active units
+          return unit.isActive !== false;
+        })
+        .map((unit) => {
+          // Find original unit to get unitId - try multiple matching strategies
+          let originalUnit = Array.from(originalUnits.values()).find(
+            (u) => u.unitName?.toLowerCase().trim() === unit.unitName?.toLowerCase().trim()
+          );
+          
+          // If not found by name, try to find by index or other means
+          if (!originalUnit && existingUnitsData?.units) {
+            // Try to match by position/index if names don't match
+            const unitIndex = units.indexOf(unit);
+            if (unitIndex < existingUnitsData.units.length) {
+              originalUnit = existingUnitsData.units[unitIndex];
+            }
+          }
+
+          const unitData: any = {
+            unitName: unit.unitName.trim(),
+            conversionRate: unit.conversionRate,
+            isBaseUnit: unit.isBaseUnit,
+            isActive: unit.isActive !== undefined ? unit.isActive : true,
+            displayOrder: unit.displayOrder,
+            isDefaultImportUnit: unit.isDefaultImportUnit || false,
+            isDefaultExportUnit: unit.isDefaultExportUnit || false,
+          };
+
+          // Include unitId if we found the original unit
+          if (originalUnit?.unitId) {
+            unitData.unitId = originalUnit.unitId;
+          }
+
+          return unitData;
+        });
+      
+      // Log units mapping for debugging
+      console.log('📦 [WAREHOUSE] Units mapping for update:', {
+        originalUnitsCount: originalUnits.size,
+        requestUnitsCount: requestData.units.length,
+        unitsWithId: requestData.units.filter((u: any) => u.unitId).length,
+        unitsWithoutId: requestData.units.filter((u: any) => !u.unitId).length,
+        units: requestData.units.map((u: any) => ({
+          unitId: u.unitId || 'NEW',
+          unitName: u.unitName,
+          isBaseUnit: u.isBaseUnit
+        }))
+      });
+    }
 
     // Remove legacy unitOfMeasure if units array is provided
     if (requestData.units && requestData.units.length > 0) {
@@ -407,7 +704,15 @@ export default function CreateItemMasterModal({
                 <SelectValue placeholder="Chọn nhóm" />
               </SelectTrigger>
               <SelectContent>
-                {categories.length === 0 ? (
+                {loadingCategories ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">
+                    Đang tải danh mục...
+                  </div>
+                ) : categoriesError ? (
+                  <div className="px-3 py-2 text-sm text-red-500">
+                    Lỗi tải danh mục: {categoriesError instanceof Error ? categoriesError.message : 'Unknown error'}
+                  </div>
+                ) : categories.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-500">
                     Chưa có danh mục. Hãy tạo trong BE trước.
                   </div>
