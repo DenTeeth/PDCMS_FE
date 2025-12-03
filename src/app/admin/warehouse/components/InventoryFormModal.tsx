@@ -192,8 +192,8 @@ export default function InventoryFormModal({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 required
               >
-                <option value={WarehouseType.COLD}>❄️ Kho lạnh</option>
-                <option value={WarehouseType.NORMAL}>📦 Kho thường</option>
+                <option value={WarehouseType.COLD}>Kho lạnh</option>
+                <option value={WarehouseType.NORMAL}>Kho thường</option>
               </select>
             </div>
 

@@ -98,7 +98,7 @@ export default function CreateItemMasterModal({
       console.group('❌ [WAREHOUSE MODAL] Update Item Error');
       console.error('📋 Item ID:', item?.id);
       console.error('📋 Item Code:', item?.itemCode || 'N/A');
-      console.error('📦 Request Variables:', JSON.stringify(variables, null, 2));
+      console.error('[WAREHOUSE] Request Variables:', JSON.stringify(variables, null, 2));
       console.error('⏰ Timestamp:', new Date().toISOString());
       
       // Handle Safety Lock errors (409 CONFLICT)
@@ -624,7 +624,7 @@ export default function CreateItemMasterModal({
         });
       
       // Log units mapping for debugging
-      console.log('📦 [WAREHOUSE] Units mapping for update:', {
+      console.log('[WAREHOUSE] Units mapping for update:', {
         originalUnitsCount: originalUnits.size,
         requestUnitsCount: requestData.units.length,
         unitsWithId: requestData.units.filter((u: any) => u.unitId).length,
