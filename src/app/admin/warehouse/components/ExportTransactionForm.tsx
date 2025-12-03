@@ -37,6 +37,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Check, ChevronsUpDown, Search, Plus, Trash2, TruckIcon, AlertCircle, DollarSign } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { CreateExportTransactionDto, ExportType, ItemUnitResponse } from '@/types/warehouse';
@@ -275,7 +277,12 @@ export default function ExportTransactionForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <TruckIcon className="h-6 w-6 text-blue-600" />
-            Phiếu Xuất Kho (FEFO) {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
+            Phiếu Xuất Kho (FEFO) {warehouseType === 'COLD' ? (
+              <>
+                <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                (Kho Lạnh)
+              </>
+            ) : '(Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu xuất kho với FEFO (First Expired, First Out) và Auto-Unpacking

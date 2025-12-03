@@ -30,6 +30,7 @@ import {
   faUsers,
   faPlus,
   faEye,
+  faSnowflake,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryService } from '@/services/inventoryService';
 import { storageService } from '@/services/storageService';
@@ -328,7 +329,12 @@ export default function EmployeeWarehouseDashboard() {
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.itemName}</p>
                         <p className="text-xs text-gray-500">
-                          Mã: {item.itemCode} • {item.warehouseType === 'COLD' ? '❄️ Kho lạnh' : '📦 Kho thường'}
+                          Mã: {item.itemCode} • {item.warehouseType === 'COLD' ? (
+                            <>
+                              <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                              Kho lạnh
+                            </>
+                          ) : 'Kho thường'}
                         </p>
                       </div>
                       <div className="text-right">

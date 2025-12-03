@@ -33,6 +33,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Check, ChevronsUpDown, Search, Plus, Trash2, DollarSign, Calendar, AlertCircle, Box } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { SupplierSummaryResponse } from '@/types/supplier';
@@ -578,7 +580,12 @@ export default function ImportTransactionFormNew({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Box className="h-5 w-5" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
+            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+              <>
+                <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                (Kho Lạnh)
+              </>
+            ) : '(Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với tracking hóa đơn, giá nhập, xử lý lô hàng
