@@ -66,7 +66,6 @@ type Step = 0 | 1 | 2 | 3 | 4;
 interface PhaseFormData {
   phaseNumber: number;
   phaseName: string;
-  estimatedDurationDays?: number;
   items: ItemFormData[];
 }
 
@@ -138,7 +137,6 @@ export default function CreateCustomPlanModal({
     {
       phaseNumber: 1,
       phaseName: '',
-      estimatedDurationDays: undefined,
       items: [],
     },
   ]);
@@ -396,8 +394,10 @@ export default function CreateCustomPlanModal({
         
         // Filter services that match ANY of the selected doctor's specializations
         const filteredServices = allServices.filter(service => {
-          // Service matches if it has a specializationId that matches one of the doctor's specializations
-          return service.specializationId && selectedDoctorSpecializationIds.includes(service.specializationId);
+          // Service matches if:
+          // 1. Service has no specializationId (general service, available to all doctors)
+          // 2. OR service has a specializationId that matches one of the doctor's specializations
+          return !service.specializationId || selectedDoctorSpecializationIds.includes(service.specializationId);
         });
         
         console.log(`✅ Filtered services for doctor ${selectedDoctor.fullName}: ${filteredServices.length}/${allServices.length} services match specializations`);
@@ -531,7 +531,6 @@ export default function CreateCustomPlanModal({
       const populatedPhases: PhaseFormData[] = detail.phases.map((phase: TemplatePhaseDTO, index: number) => ({
         phaseNumber: index + 1,
         phaseName: phase.phaseName,
-        estimatedDurationDays: undefined, // Template doesn't have this in response
         items: phase.itemsInPhase.map((item: TemplateServiceDTO, itemIndex: number) => ({
           serviceCode: item.serviceCode,
           price: item.price,
@@ -587,7 +586,6 @@ export default function CreateCustomPlanModal({
         {
           phaseNumber: 1,
           phaseName: '',
-          estimatedDurationDays: undefined,
           items: [],
         },
       ]);
@@ -648,9 +646,6 @@ export default function CreateCustomPlanModal({
         phaseErrors.phaseName = 'Tên giai đoạn là bắt buộc';
       }
 
-      if (phase.estimatedDurationDays !== undefined && phase.estimatedDurationDays < 0) {
-        phaseErrors.estimatedDurationDays = 'Thời gian dự kiến không được âm';
-      }
 
       if (Object.keys(phaseErrors).length > 0) {
         newPhaseErrors[phase.phaseNumber] = phaseErrors;
@@ -673,6 +668,34 @@ export default function CreateCustomPlanModal({
 
     let hasItems = false;
 
+    // Pre-validate doctor specialization compatibility (prevent BE error)
+    if (doctorEmployeeCode) {
+      const selectedDoctor = doctors.find(d => d.employeeCode === doctorEmployeeCode);
+      if (selectedDoctor && selectedDoctor.specializations) {
+        // Convert specializationId to number for comparison (BE returns as string in Employee, number in Service)
+        const doctorSpecializationIds = selectedDoctor.specializations.map(s => Number(s.specializationId));
+        
+        phases.forEach((phase) => {
+          phase.items.forEach((item, itemIndex) => {
+            if (item.serviceCode) {
+              const service = services.find(s => s.serviceCode === item.serviceCode);
+              if (service && service.specializationId != null) {
+                // Service requires a specific specialization
+                if (!doctorSpecializationIds.includes(service.specializationId)) {
+                  const itemKey = `${phase.phaseNumber}-${itemIndex}`;
+                  if (!newItemErrors[itemKey]) {
+                    newItemErrors[itemKey] = {};
+                  }
+                  newItemErrors[itemKey].serviceCode = 
+                    `Dịch vụ "${service.serviceName}" yêu cầu chuyên môn "${service.specializationName || 'chưa xác định'}". Bác sĩ "${selectedDoctor.fullName}" không có chuyên môn này.`;
+                }
+              }
+            }
+          });
+        });
+      }
+    }
+
     phases.forEach((phase) => {
       phase.items.forEach((item, itemIndex) => {
         const itemKey = `${phase.phaseNumber}-${itemIndex}`;
@@ -687,6 +710,11 @@ export default function CreateCustomPlanModal({
 
         if (item.quantity < 1 || item.quantity > 100) {
           itemErrors.quantity = 'Số lượng phải từ 1 đến 100';
+        }
+
+        // Merge with specialization errors if any
+        if (newItemErrors[itemKey]) {
+          Object.assign(itemErrors, newItemErrors[itemKey]);
         }
 
         if (Object.keys(itemErrors).length > 0) {
@@ -708,6 +736,16 @@ export default function CreateCustomPlanModal({
     if (!hasItems) {
       toast.error('Vui lòng thêm ít nhất một hạng mục vào các giai đoạn');
       return false;
+    }
+
+    // Show toast if specialization mismatch errors found
+    const hasSpecializationErrors = Object.values(newItemErrors).some(errors => 
+      errors.serviceCode && errors.serviceCode.includes('yêu cầu chuyên môn')
+    );
+    if (hasSpecializationErrors) {
+      toast.error('Một số dịch vụ không phù hợp với chuyên môn của bác sĩ đã chọn', {
+        duration: 6000,
+      });
     }
 
     return Object.keys(newItemErrors).length === 0;
@@ -771,7 +809,6 @@ export default function CreateCustomPlanModal({
       {
         phaseNumber: newPhaseNumber,
         phaseName: '',
-        estimatedDurationDays: undefined,
         items: [],
       },
     ]);
@@ -892,29 +929,50 @@ export default function CreateCustomPlanModal({
     setLoading(true);
     
     // Always use API 5.4: Create Custom Plan (DRAFT, needs approval)
+    // Build request payload - ensure no undefined values are sent
     const request: CreateCustomPlanRequest = {
         planName: planName.trim(),
         doctorEmployeeCode,
         paymentType,
         // ✅ FIX: BE requires @NotNull, so send 0 instead of undefined
         discountAmount: discountAmount === '' ? 0 : Number(discountAmount),
-        startDate: startDate || null,
-        expectedEndDate: expectedEndDate || null,
-        phases: phases.map((phase) => ({
-          phaseNumber: phase.phaseNumber,
-          phaseName: phase.phaseName.trim(),
-          estimatedDurationDays: phase.estimatedDurationDays,
-          items: phase.items.map((item) => ({
-            serviceCode: item.serviceCode,
-            // V21.4: price is optional - backend auto-fills from service default
-            // price: omit - backend will auto-fill
-            sequenceNumber: item.sequenceNumber,
-            quantity: item.quantity,
-          })),
-        })),
+        // BE expects LocalDate (yyyy-MM-dd format) or null
+        // Send null if empty string, otherwise send the date string
+        startDate: startDate && startDate.trim() ? startDate.trim() : null,
+        expectedEndDate: expectedEndDate && expectedEndDate.trim() ? expectedEndDate.trim() : null,
+        phases: phases.map((phase) => {
+          const phaseRequest: CreateCustomPlanPhaseRequest = {
+            phaseNumber: phase.phaseNumber,
+            phaseName: phase.phaseName.trim(),
+            items: phase.items.map((item) => {
+              const itemRequest: CreateCustomPlanItemRequest = {
+                serviceCode: item.serviceCode,
+                sequenceNumber: item.sequenceNumber,
+                quantity: item.quantity,
+              };
+              // V21.4: price is optional - only include if explicitly set
+              // Backend will auto-fill from service default if omitted
+              // Note: FE auto-fills price from service when user selects service,
+              // so price is usually present. BE will validate and use it if provided.
+              if (item.price != null && item.price > 0) {
+                itemRequest.price = item.price;
+              }
+              return itemRequest;
+            }),
+          };
+          return phaseRequest;
+        }),
       };
 
-    console.log('Creating custom plan (API 5.4):', request);
+    // Log request payload with full details for debugging
+    console.log('Creating custom plan (API 5.4):', JSON.stringify(request, null, 2));
+    console.log('Request details:', {
+      patientCode: selectedPatientCode,
+      planName: request.planName,
+      doctorCode: request.doctorEmployeeCode,
+      phasesCount: request.phases.length,
+      totalItems: request.phases.reduce((sum, p) => sum + p.items.length, 0),
+    });
 
     try {
         const createdPlan = await TreatmentPlanService.createCustomTreatmentPlan(selectedPatientCode, request);
@@ -931,18 +989,47 @@ export default function CreateCustomPlanModal({
         onSuccess();
       }
     } catch (error: any) {
-      console.error('Error creating treatment plan:', error);
-      console.error('Request payload:', request);
-      console.error('Error response:', error.response?.data);
+      // Enhanced error logging for debugging
+      console.error('❌ Error creating treatment plan:', error);
+      console.error('📤 Request payload:', JSON.stringify(request, null, 2));
+      console.error('📥 Error response:', error.response?.data);
+      console.error('🔍 Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        errorCode: error.response?.data?.errorCode || error.response?.data?.error,
+        message: error.response?.data?.message,
+        detail: error.response?.data?.detail,
+        data: error.response?.data?.data,
+        fullResponse: error.response?.data,
+      });
+      console.error('📋 Request URL:', `/patients/${selectedPatientCode}/treatment-plans/custom`);
+      console.error('📦 Phases details:', request.phases.map((p, idx) => ({
+        phaseIndex: idx,
+        phaseNumber: p.phaseNumber,
+        phaseName: p.phaseName,
+        itemsCount: p.items.length,
+        items: p.items.map((item, itemIdx) => ({
+          itemIndex: itemIdx,
+          serviceCode: item.serviceCode,
+          sequenceNumber: item.sequenceNumber,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      })));
+      console.error('🔗 Error stack:', error.stack);
       
       // V21.4: Handle specialization validation errors
-      const errorCode = error.response?.data?.errorCode || error.response?.data?.code;
+      // BE returns error code as 'error.doctorSpecializationMismatch' or 'doctorSpecializationMismatch'
+      const errorCode = error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error;
       const errorDetail = error.response?.data?.detail || error.response?.data?.message || error.message;
       
       // Handle validation errors (400 Bad Request)
       if (error.response?.status === 400) {
-        if (errorCode === 'doctorSpecializationMismatch') {
-          // Specialization validation error - show detailed message
+        // Check for specialization mismatch error (BE may return 'error.doctorSpecializationMismatch' or 'doctorSpecializationMismatch')
+        if (errorCode === 'doctorSpecializationMismatch' || 
+            errorCode === 'error.doctorSpecializationMismatch' ||
+            (typeof errorCode === 'string' && errorCode.includes('doctorSpecializationMismatch'))) {
+          // Specialization validation error - show detailed message from BE
           toast.error('Không thể tạo lộ trình điều trị', {
             description: errorDetail || 'Bác sĩ không có chuyên môn phù hợp với các dịch vụ đã chọn. Vui lòng chọn lại dịch vụ hoặc liên hệ quản trị viên để cập nhật chuyên môn.',
             duration: 8000, // Show longer for important errors
@@ -993,7 +1080,6 @@ export default function CreateCustomPlanModal({
       {
         phaseNumber: 1,
         phaseName: '',
-        estimatedDurationDays: undefined,
         items: [],
       },
     ]);
@@ -1248,7 +1334,6 @@ export default function CreateCustomPlanModal({
                       {
                         phaseNumber: 1,
                         phaseName: '',
-                        estimatedDurationDays: undefined,
                         items: [],
                       },
                     ]);
@@ -1298,9 +1383,6 @@ export default function CreateCustomPlanModal({
                     )}
                     <p className="text-xs text-green-700 mt-1">
                       {templateDetail.summary.totalPhases} giai đoạn, {templateDetail.summary.totalItemsInTemplate} loại dịch vụ
-                    </p>
-                    <p className="text-xs text-green-700 mt-1 italic">
-                      💡 Bạn có thể tùy chỉnh các giai đoạn và hạng mục ở các bước tiếp theo
                     </p>
                   </div>
                 )}
@@ -1510,33 +1592,6 @@ export default function CreateCustomPlanModal({
                     )}
                   </div>
 
-                  <div>
-                    <Label>Thời gian dự kiến (ngày)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={phase.estimatedDurationDays || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleUpdatePhase(
-                          phase.phaseNumber,
-                          'estimatedDurationDays',
-                          value === '' ? undefined : Number(value)
-                        );
-                      }}
-                      placeholder="Ví dụ: 30"
-                      className={
-                        phaseErrors[phase.phaseNumber]?.estimatedDurationDays
-                          ? 'border-red-500'
-                          : ''
-                      }
-                    />
-                    {phaseErrors[phase.phaseNumber]?.estimatedDurationDays && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {phaseErrors[phase.phaseNumber].estimatedDurationDays}
-                      </p>
-                    )}
-                  </div>
                 </div>
               </Card>
             ))}
@@ -1776,11 +1831,6 @@ export default function CreateCustomPlanModal({
                       <Badge>Giai đoạn {phase.phaseNumber}</Badge>
                       <span className="font-medium">{phase.phaseName}</span>
                     </div>
-                    {phase.estimatedDurationDays && (
-                      <p className="text-sm text-gray-600 mb-2">
-                        Thời gian dự kiến: {phase.estimatedDurationDays} ngày
-                      </p>
-                    )}
                     <div className="space-y-1">
                       {phase.items.map((item, idx) => {
                         const service = getServiceByCode(item.serviceCode);

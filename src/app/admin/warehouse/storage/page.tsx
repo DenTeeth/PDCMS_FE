@@ -720,6 +720,7 @@ export default function StorageInOutPage() {
                           {activeFilter === 'IMPORT' && (
                             <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
                           )}
+<<<<<<< HEAD
                           <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
                           <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
                         </tr>
@@ -805,6 +806,34 @@ export default function StorageInOutPage() {
                                     <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
                                   </Button>
                                   {/* 
+=======
+                          <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
+                          <td className="p-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleViewDetail(txn.transactionId)}
+                                title="Xem chi tiết"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              {/* 
+                                ⚠️ EDIT BUTTON HIDDEN: User requested to hide edit button
+                                Edit functionality is disabled as BE doesn't support updating transaction content
+                              */}
+                              {/* <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEdit(txn)}
+                                title="Sửa ghi chú"
+                                className="h-8 w-8 p-0"
+                              >
+                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
+                              </Button> */}
+                              {/* 
+>>>>>>> origin/501_Merge_Warehouse
                                 ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
                                 TransactionHistoryController chỉ có GET endpoints.
                                 Nếu cần xóa, có thể set status = CANCELLED thay vì delete.

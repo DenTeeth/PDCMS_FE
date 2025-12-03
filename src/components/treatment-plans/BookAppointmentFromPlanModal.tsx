@@ -179,7 +179,7 @@ export default function BookAppointmentFromPlanModal({
         const response = await ServiceService.getServices({
           page: 0,
           size: 1000, // Get all to build map
-          isActive: true,
+          isActive: 'true', // ServiceFilters expects string
         });
 
         const services = response.content || [];
