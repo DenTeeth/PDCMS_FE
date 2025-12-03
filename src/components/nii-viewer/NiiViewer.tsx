@@ -23,7 +23,7 @@ interface NiiViewerProps {
 }
 
 export default function NiiViewer({ 
-  title = 'NII Image Viewer',
+  title = 'CBCT Viewer',
   description = 'Upload and view 3D medical images from .nii files'
 }: NiiViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -401,9 +401,9 @@ export default function NiiViewer({
       {/* 3D Viewer Canvas */}
       <Card>
         <CardHeader>
-          <CardTitle>Trình xem 3D</CardTitle>
+          <CardTitle>Trình xem CBCT</CardTitle>
           <CardDescription>
-            Hình ảnh 3D tương tác của file NII của bạn
+            Hình ảnh 3D của file NII
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -80,20 +80,21 @@ export default function PatientTreatmentPlansPage() {
     handleErrorRef.current = handleError;
   }, [handleError]);
 
-  // Load treatment plans
-  useEffect(() => {
+  // Function to load treatment plans (extracted for reuse)
+  const loadPlans = useCallback(async () => {
     if (!canView) return;
 
     // Get patientCode from JWT token if not already set
-    if (!patientCode && user?.token) {
+    let targetPatientCode = patientCode;
+    if (!targetPatientCode && user?.token) {
       const code = getPatientCodeFromToken(user.token);
       if (code) {
+        targetPatientCode = code;
         setPatientCode(code);
-        return; // Will retry on next render
       }
     }
 
-    if (!patientCode) {
+    if (!targetPatientCode) {
       console.warn('Patient code not found in JWT token');
       toast.error('Không tìm thấy mã bệnh nhân. Vui lòng đăng nhập lại.');
       return;
@@ -110,59 +111,100 @@ export default function PatientTreatmentPlansPage() {
 
     let isMounted = true;
 
-    const loadPlans = async () => {
-      try {
-        setLoading(true);
-        // ✅ Backend fix applied: Use pagination support
-        const pageResponse = await TreatmentPlanService.getTreatmentPlans(
-          patientCode,
-          currentPage,
-          pageSize,
-          'createdAt,desc'
-        );
+    try {
+      setLoading(true);
+      // ✅ Backend fix applied: Use pagination support
+      const pageResponse = await TreatmentPlanService.getTreatmentPlans(
+        targetPatientCode,
+        currentPage,
+        pageSize,
+        'createdAt,desc'
+      );
 
-        // Check if request was cancelled or component unmounted
-        if (abortController.signal.aborted || !isMounted) return;
-        
-        let filteredData = pageResponse.content;
-        // Apply status filter if any (client-side for now)
-        if (filters.status) {
-          filteredData = pageResponse.content.filter((plan) => plan.status === filters.status);
-        }
-
-        setPlans(filteredData);
-        // Use pagination metadata from backend
-        setTotalPages(pageResponse.totalPages);
-      } catch (error: any) {
-        // Don't show error if request was cancelled
-        if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
-          return;
-        }
-        console.error('Error loading treatment plans:', error);
-        handleErrorRef.current(error);
-      } finally {
-        // Only update loading state if request wasn't cancelled and component is mounted
-        if (!abortController.signal.aborted && isMounted) {
-          setLoading(false);
-        }
-        // Clear abort controller reference
-        if (abortControllerRef.current === abortController) {
-          abortControllerRef.current = null;
-        }
+      // Check if request was cancelled or component unmounted
+      if (abortController.signal.aborted || !isMounted) return;
+      
+      let filteredData = pageResponse.content;
+      // Apply status filter if any (client-side for now)
+      if (filters.status) {
+        filteredData = pageResponse.content.filter((plan) => plan.status === filters.status);
       }
-    };
 
+      setPlans(filteredData);
+      // Use pagination metadata from backend
+      setTotalPages(pageResponse.totalPages);
+    } catch (error: any) {
+      // Don't show error if request was cancelled
+      if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
+        return;
+      }
+      console.error('Error loading treatment plans:', error);
+      handleErrorRef.current(error);
+    } finally {
+      // Only update loading state if request wasn't cancelled and component is mounted
+      if (!abortController.signal.aborted && isMounted) {
+        setLoading(false);
+      }
+      // Clear abort controller reference
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+    }
+  }, [canView, patientCode, filters.status, currentPage, pageSize, user?.token, handleErrorRef]);
+
+  // Load treatment plans
+  useEffect(() => {
     loadPlans();
 
     // Cleanup function
     return () => {
-      isMounted = false;
-      if (abortControllerRef.current === abortController) {
-        abortController.abort();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
     };
-  }, [canView, patientCode, filters.status]);
+  }, [loadPlans]);
+
+  // Refetch when page becomes visible (user returns from detail page)
+  // Also refetch when router pathname changes (Next.js App Router)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && canView) {
+        // Delay to ensure navigation is complete and DB transaction is committed
+        setTimeout(() => {
+          loadPlans();
+        }, 300);
+      }
+    };
+
+    const handleFocus = () => {
+      if (canView) {
+        // Delay to ensure navigation is complete
+        setTimeout(() => {
+          loadPlans();
+        }, 300);
+      }
+    };
+
+    // Also listen to popstate (browser back/forward)
+    const handlePopState = () => {
+      if (canView) {
+        setTimeout(() => {
+          loadPlans();
+        }, 300);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [loadPlans, canView]);
 
   // Handle filters change
   const handleFiltersChange = useCallback((newFilters: FiltersType) => {

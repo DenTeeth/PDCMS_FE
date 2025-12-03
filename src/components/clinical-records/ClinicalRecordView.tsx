@@ -8,8 +8,9 @@
  * treatment notes, procedures, prescriptions, and appointment info
  */
 
-import React, { useState } from 'react';
-import { ClinicalRecordResponse } from '@/types/clinicalRecord';
+import React, { useState, useEffect } from 'react';
+import { ClinicalRecordResponse, ToothStatusResponse, PrescriptionDTO } from '@/types/clinicalRecord';
+import { clinicalRecordService } from '@/services/clinicalRecordService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,11 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import ProcedureList from './ProcedureList';
 import PrescriptionList from './PrescriptionList';
+import PrescriptionForm from './PrescriptionForm';
+import Odontogram from './Odontogram';
+import ToothStatusDialog from './ToothStatusDialog';
+import { toothStatusService } from '@/services/toothStatusService';
+import { ToothCondition } from '@/types/clinicalRecord';
 import {
   User,
   UserCog,
@@ -28,6 +34,7 @@ import {
   Pill,
   Activity,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -43,6 +50,119 @@ export default function ClinicalRecordView({
   onEdit,
   canEdit = false,
 }: ClinicalRecordViewProps) {
+  const [toothStatuses, setToothStatuses] = useState<ToothStatusResponse[]>([]);
+  const [loadingToothStatuses, setLoadingToothStatuses] = useState(false);
+  const [prescription, setPrescription] = useState<PrescriptionDTO | null>(null);
+  const [loadingPrescription, setLoadingPrescription] = useState(false);
+  // Prescription edit state
+  const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
+  const [editingPrescription, setEditingPrescription] = useState<PrescriptionDTO | null>(null);
+  // Tooth status edit state
+  const [toothDialogOpen, setToothDialogOpen] = useState(false);
+  const [selectedTooth, setSelectedTooth] = useState<{
+    number: string;
+    status?: ToothCondition;
+    notes?: string;
+  } | null>(null);
+
+  // Load tooth statuses
+  useEffect(() => {
+    const loadToothStatuses = async () => {
+      if (!record.patient.patientId) return;
+      
+      setLoadingToothStatuses(true);
+      try {
+        const statuses = await toothStatusService.getToothStatus(record.patient.patientId);
+        setToothStatuses(statuses);
+      } catch (error: any) {
+        console.error('Error loading tooth statuses:', error);
+        // Don't show error toast - odontogram is optional
+      } finally {
+        setLoadingToothStatuses(false);
+      }
+    };
+
+    loadToothStatuses();
+  }, [record.patient.patientId]);
+
+  // Load prescription (fallback if not in record response)
+  useEffect(() => {
+    const loadPrescription = async () => {
+      // If prescription already in record, use it
+      if (record.prescriptions && record.prescriptions.length > 0) {
+        setPrescription(record.prescriptions[0]); // BE returns array but typically has 1 prescription
+        return;
+      }
+
+      // Otherwise, try to load from API
+      if (!record.clinicalRecordId) return;
+
+      setLoadingPrescription(true);
+      try {
+        const prescriptionData = await clinicalRecordService.getPrescription(
+          record.clinicalRecordId
+        );
+        setPrescription(prescriptionData);
+      } catch (error: any) {
+        // 404 means no prescription yet - this is OK
+        if (error.status !== 404) {
+          console.error('Error loading prescription:', error);
+        }
+        setPrescription(null);
+      } finally {
+        setLoadingPrescription(false);
+      }
+    };
+
+    loadPrescription();
+  }, [record.clinicalRecordId, record.prescriptions]);
+
+  // Handle prescription edit/create
+  const handleEditPrescription = (prescription: PrescriptionDTO) => {
+    setEditingPrescription(prescription);
+    setPrescriptionDialogOpen(true);
+  };
+
+  const handleCreatePrescription = () => {
+    setEditingPrescription(null);
+    setPrescriptionDialogOpen(true);
+  };
+
+  const handlePrescriptionSuccess = (updatedPrescription: PrescriptionDTO) => {
+    setPrescription(updatedPrescription);
+    setPrescriptionDialogOpen(false);
+    setEditingPrescription(null);
+  };
+
+  const handlePrescriptionDelete = () => {
+    setPrescription(null);
+    setPrescriptionDialogOpen(false);
+    setEditingPrescription(null);
+  };
+
+  // Handle tooth click
+  const handleToothClick = (
+    toothNumber: string,
+    status?: ToothCondition,
+    notes?: string
+  ) => {
+    if (!canEdit) return;
+    setSelectedTooth({ number: toothNumber, status, notes });
+    setToothDialogOpen(true);
+  };
+
+  // Handle tooth status update success
+  const handleToothStatusUpdate = async () => {
+    if (!record.patient.patientId) return;
+    
+    try {
+      const statuses = await toothStatusService.getToothStatus(record.patient.patientId);
+      setToothStatuses(statuses);
+    } catch (error: any) {
+      console.error('Error refreshing tooth statuses:', error);
+    }
+  };
+
   const formatDateTime = (dateTime: string) => {
     try {
       return format(new Date(dateTime), 'dd/MM/yyyy HH:mm', { locale: vi });
@@ -304,7 +424,64 @@ export default function ClinicalRecordView({
       </Card>
 
       {/* Prescriptions */}
-      <PrescriptionList prescriptions={record.prescriptions || []} />
+      {loadingPrescription ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Đang tải đơn thuốc...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <PrescriptionList
+          prescriptions={prescription ? [prescription] : (record.prescriptions || [])}
+          canEdit={canEdit}
+          onEdit={handleEditPrescription}
+          onCreate={handleCreatePrescription}
+        />
+      )}
+
+      {/* Prescription Form Dialog */}
+      {canEdit && record.clinicalRecordId && (
+        <div className="hidden">
+          <PrescriptionForm
+            recordId={record.clinicalRecordId}
+            existingPrescription={editingPrescription}
+            onSuccess={handlePrescriptionSuccess}
+            onDelete={handlePrescriptionDelete}
+            readOnly={false}
+            open={prescriptionDialogOpen}
+            onOpenChange={setPrescriptionDialogOpen}
+          />
+        </div>
+      )}
+
+      {/* Odontogram */}
+      <Card>
+        <CardContent className="pt-6">
+          <Odontogram
+            patientId={record.patient.patientId}
+            toothStatuses={toothStatuses}
+            onToothClick={canEdit ? handleToothClick : undefined}
+            editable={canEdit}
+            readOnly={!canEdit}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Tooth Status Dialog */}
+      {canEdit && selectedTooth && (
+        <ToothStatusDialog
+          open={toothDialogOpen}
+          onOpenChange={setToothDialogOpen}
+          patientId={record.patient.patientId}
+          toothNumber={selectedTooth.number}
+          currentStatus={selectedTooth.status}
+          currentNotes={selectedTooth.notes}
+          onSuccess={handleToothStatusUpdate}
+        />
+      )}
     </div>
   );
 }

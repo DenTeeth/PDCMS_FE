@@ -106,6 +106,7 @@ export interface UpdateProcedureRequest {
 
 export interface PrescriptionDTO {
   prescriptionId: number;
+  clinicalRecordId?: number;
   prescriptionNotes?: string;
   createdAt: string;
   items: PrescriptionItemDTO[];
@@ -113,11 +114,24 @@ export interface PrescriptionDTO {
 
 export interface PrescriptionItemDTO {
   prescriptionItemId: number;
+  itemMasterId?: number; // Link to warehouse inventory (optional)
   itemCode?: string;
   itemName: string;
+  unitName?: string; // Unit name from warehouse
   quantity: number;
   dosageInstructions?: string;
-  createdAt: string;
+}
+
+export interface PrescriptionItemRequest {
+  itemMasterId?: number; // Optional - link to warehouse inventory
+  itemName: string; // Required - medication name
+  quantity: number; // Required - must be > 0
+  dosageInstructions?: string; // Optional - max 1000 chars
+}
+
+export interface SavePrescriptionRequest {
+  prescriptionNotes?: string; // Optional - max 2000 chars
+  items: PrescriptionItemRequest[]; // Required - must not be empty
 }
 
 // ============================================================================
@@ -159,13 +173,34 @@ export interface UpdateToothStatusRequest {
 
 export interface AttachmentResponse {
   attachmentId: number;
+  clinicalRecordId?: number;
   fileName: string;
-  fileType: string;
   fileSize: number;
-  fileUrl: string;
+  mimeType: string;
   attachmentType: AttachmentType;
+  description?: string;
+  uploadedBy?: number;
+  uploadedByName?: string;
   uploadedAt: string;
 }
 
-export type AttachmentType = 'XRAY' | 'PHOTO' | 'DOCUMENT' | 'OTHER';
+export type AttachmentType = 
+  | 'XRAY' 
+  | 'PHOTO_BEFORE' 
+  | 'PHOTO_AFTER' 
+  | 'LAB_RESULT' 
+  | 'CONSENT_FORM' 
+  | 'OTHER';
+
+export interface UploadAttachmentResponse {
+  attachmentId: number;
+  clinicalRecordId: number;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  attachmentType: AttachmentType;
+  description?: string;
+  uploadedAt: string;
+  message?: string;
+}
 

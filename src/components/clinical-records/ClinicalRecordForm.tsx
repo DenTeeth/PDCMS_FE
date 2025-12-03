@@ -9,8 +9,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { ClinicalRecordResponse, CreateClinicalRecordRequest, UpdateClinicalRecordRequest } from '@/types/clinicalRecord';
+import { ClinicalRecordResponse, CreateClinicalRecordRequest, UpdateClinicalRecordRequest, ToothStatusResponse, ToothCondition, PrescriptionDTO } from '@/types/clinicalRecord';
 import { clinicalRecordService } from '@/services/clinicalRecordService';
+import { toothStatusService } from '@/services/toothStatusService';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,9 +19,13 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Loader2, Save, X } from 'lucide-react';
+import Odontogram from './Odontogram';
+import ToothStatusDialog from './ToothStatusDialog';
+import PrescriptionForm from './PrescriptionForm';
 
 interface ClinicalRecordFormProps {
   appointmentId: number;
+  patientId?: number; // Optional - for Odontogram (can get from existingRecord if not provided)
   existingRecord?: ClinicalRecordResponse | null;
   onSuccess?: (record: ClinicalRecordResponse) => void;
   onCancel?: () => void;
@@ -43,12 +48,25 @@ interface FormData {
 
 export default function ClinicalRecordForm({
   appointmentId,
+  patientId,
   existingRecord,
   onSuccess,
   onCancel,
   readOnly = false,
 }: ClinicalRecordFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Odontogram state
+  const [toothStatuses, setToothStatuses] = useState<ToothStatusResponse[]>([]);
+  const [loadingToothStatuses, setLoadingToothStatuses] = useState(false);
+  const [toothDialogOpen, setToothDialogOpen] = useState(false);
+  const [selectedTooth, setSelectedTooth] = useState<{
+    number: string;
+    status?: ToothCondition;
+    notes?: string;
+  } | null>(null);
+  // Prescription state
+  const [prescription, setPrescription] = useState<PrescriptionDTO | null>(null);
+  const [loadingPrescription, setLoadingPrescription] = useState(false);
   const {
     register,
     handleSubmit,
@@ -89,6 +107,80 @@ export default function ClinicalRecordForm({
     }
   }, [existingRecord, reset]);
 
+  // Get patientId from props or existingRecord
+  const effectivePatientId = patientId || existingRecord?.patient.patientId;
+
+  // Load prescription when record exists
+  useEffect(() => {
+    const loadPrescription = async () => {
+      if (!existingRecord?.clinicalRecordId) {
+        setPrescription(null);
+        return;
+      }
+
+      setLoadingPrescription(true);
+      try {
+        const prescriptionData = await clinicalRecordService.getPrescription(
+          existingRecord.clinicalRecordId
+        );
+        setPrescription(prescriptionData);
+      } catch (error: any) {
+        // 404 means no prescription yet - this is OK
+        if (error.status !== 404) {
+          console.error('Error loading prescription:', error);
+        }
+        setPrescription(null);
+      } finally {
+        setLoadingPrescription(false);
+      }
+    };
+
+    loadPrescription();
+  }, [existingRecord?.clinicalRecordId]);
+
+  // Load tooth statuses
+  useEffect(() => {
+    const loadToothStatuses = async () => {
+      if (!effectivePatientId) return;
+      
+      setLoadingToothStatuses(true);
+      try {
+        const statuses = await toothStatusService.getToothStatus(effectivePatientId);
+        setToothStatuses(statuses);
+      } catch (error: any) {
+        console.error('Error loading tooth statuses:', error);
+        // Don't show error toast - odontogram is optional
+      } finally {
+        setLoadingToothStatuses(false);
+      }
+    };
+
+    loadToothStatuses();
+  }, [effectivePatientId]);
+
+  // Handle tooth click
+  const handleToothClick = (
+    toothNumber: string,
+    status?: ToothCondition,
+    notes?: string
+  ) => {
+    if (readOnly) return;
+    setSelectedTooth({ number: toothNumber, status, notes });
+    setToothDialogOpen(true);
+  };
+
+  // Handle tooth status update success
+  const handleToothStatusUpdate = async () => {
+    if (!effectivePatientId) return;
+    
+    try {
+      const statuses = await toothStatusService.getToothStatus(effectivePatientId);
+      setToothStatuses(statuses);
+    } catch (error: any) {
+      console.error('Error refreshing tooth statuses:', error);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     if (readOnly) return;
 
@@ -116,6 +208,35 @@ export default function ClinicalRecordForm({
 
         // Refetch the updated record
         const updatedRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
+        
+        // ✅ Reload tooth statuses after updating clinical record
+        // Odontogram may have been updated separately, so refresh to show latest state
+        if (effectivePatientId) {
+          try {
+            const statuses = await toothStatusService.getToothStatus(effectivePatientId);
+            setToothStatuses(statuses);
+          } catch (error: any) {
+            console.error('Error refreshing tooth statuses after update:', error);
+            // Don't show error toast - odontogram refresh is optional
+          }
+        }
+
+        // ✅ Reload prescription after updating clinical record
+        if (updatedRecord.clinicalRecordId) {
+          try {
+            const prescriptionData = await clinicalRecordService.getPrescription(
+              updatedRecord.clinicalRecordId
+            );
+            setPrescription(prescriptionData);
+          } catch (error: any) {
+            // 404 means no prescription yet - this is OK
+            if (error.status !== 404) {
+              console.error('Error refreshing prescription after update:', error);
+            }
+            setPrescription(null);
+          }
+        }
+        
         onSuccess?.(updatedRecord);
       } else {
         // Create new record
@@ -344,6 +465,54 @@ export default function ClinicalRecordForm({
           disabled={!canEdit}
         />
       </div>
+
+      <Separator />
+
+      {/* Prescription Form */}
+      {existingRecord?.clinicalRecordId && (
+        <PrescriptionForm
+          recordId={existingRecord.clinicalRecordId}
+          existingPrescription={prescription}
+          onSuccess={(updatedPrescription) => {
+            setPrescription(updatedPrescription);
+          }}
+          onDelete={() => {
+            setPrescription(null);
+          }}
+          readOnly={readOnly || !canEdit}
+        />
+      )}
+
+      <Separator />
+
+      {/* Odontogram */}
+      {effectivePatientId && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Sơ Đồ Răng (Odontogram)</Label>
+            <Odontogram
+              patientId={effectivePatientId}
+              toothStatuses={toothStatuses}
+              onToothClick={handleToothClick}
+              editable={canEdit}
+              readOnly={readOnly || !canEdit}
+            />
+          </div>
+
+          {/* Tooth Status Dialog */}
+          {selectedTooth && (
+            <ToothStatusDialog
+              open={toothDialogOpen}
+              onOpenChange={setToothDialogOpen}
+              patientId={effectivePatientId}
+              toothNumber={selectedTooth.number}
+              currentStatus={selectedTooth.status}
+              currentNotes={selectedTooth.notes}
+              onSuccess={handleToothStatusUpdate}
+            />
+          )}
+        </>
+      )}
 
       {/* Actions */}
       {canEdit && (
