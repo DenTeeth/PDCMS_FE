@@ -88,18 +88,29 @@ export const clinicalRecordService = {
    * - VIEW_APPOINTMENT_OWN: Access only related records
    * 
    * Returns:
-   * - 200 OK: Clinical record found
-   * - 404 RECORD_NOT_FOUND: No clinical record (frontend shows CREATE form)
+   * - 200 OK with record data: Clinical record found
+   * - 200 OK with null/empty body: No clinical record exists (frontend shows CREATE form)
    * - 404 APPOINTMENT_NOT_FOUND: Appointment doesn't exist
    * - 403 FORBIDDEN: Access denied
+   * 
+   * Note: BE now returns HTTP 200 with null/empty body instead of 404 when no record exists
+   * (Issue #37 fix - allows retroactive creation for COMPLETED appointments)
    */
-  getByAppointmentId: async (appointmentId: number): Promise<ClinicalRecordResponse> => {
+  getByAppointmentId: async (appointmentId: number): Promise<ClinicalRecordResponse | null> => {
     try {
-      const response = await api.get<ClinicalRecordResponse>(
+      const response = await api.get<ClinicalRecordResponse | null>(
         `/appointments/${appointmentId}/clinical-record`
       );
       
+      // Handle empty response (Content-Length: 0) or null data
+      // BE returns HTTP 200 with null/empty body when no record exists
       const record = extractApiResponse(response) || response.data;
+      
+      // If response is null, undefined, or empty, return null (no record exists)
+      if (!record) {
+        console.log('📋 [CLINICAL RECORD] No record found for appointment ID:', appointmentId);
+        return null;
+      }
       
       console.log('📋 [CLINICAL RECORD] Get by appointment ID:', {
         appointmentId,
@@ -110,6 +121,8 @@ export const clinicalRecordService = {
       
       return record;
     } catch (error: any) {
+      // Only throw error for actual errors (404 for appointment not found, 403 for access denied, etc.)
+      // Not for missing clinical record (which now returns 200 with null)
       const enhancedError = createApiError(error, {
         endpoint: `/appointments/${appointmentId}/clinical-record`,
         method: 'GET',
@@ -135,8 +148,11 @@ export const clinicalRecordService = {
    * Returns:
    * - 201 CREATED: Clinical record created successfully
    * - 409 CONFLICT: Record already exists for this appointment
-   * - 400 BAD_REQUEST: Invalid appointment status or validation error
+   * - 400 BAD_REQUEST: Validation error
    * - 404 NOT_FOUND: Appointment not found
+   * 
+   * Note: BE now allows creation for all appointment statuses (Issue #37 fix)
+   * Previously only allowed IN_PROGRESS or CHECKED_IN, now supports retroactive creation
    */
   create: async (
     request: CreateClinicalRecordRequest

@@ -250,12 +250,8 @@ export default function AdminAppointmentDetailPage() {
   // Clinical Record permissions
   const canWriteClinicalRecord = user?.permissions?.includes('WRITE_CLINICAL_RECORD') || false;
 
-  // Check if appointment status allows clinical record creation/editing
-  // BE requires: IN_PROGRESS or CHECKED_IN
-  const canCreateOrEditClinicalRecord = appointment && (
-    appointment.status === 'IN_PROGRESS' ||
-    appointment.status === 'CHECKED_IN'
-  );
+  // Note: BE now allows clinical record creation/editing for all appointment statuses
+  // (Issue #37 fix - removed status restriction to allow retroactive creation)
 
   const actionItems = useMemo(() => {
     if (!appointment) {
@@ -437,22 +433,18 @@ export default function AdminAppointmentDetailPage() {
     setHasTriedLoadingClinicalRecord(true);
 
     try {
+      // BE now returns HTTP 200 with null instead of 404 when no record exists (Issue #37 fix)
       const record = await clinicalRecordService.getByAppointmentId(appointment.appointmentId);
-      setClinicalRecord(record);
+      setClinicalRecord(record); // record can be null if no clinical record exists
       setIsEditingClinicalRecord(false);
-    } catch (error: any) {
-      // 404 is expected if no clinical record exists yet
-      // Check both error.status (from createApiError) and error.response?.status (from axios)
-      const status = error.status || error.response?.status;
-      if (status === 404) {
-        setClinicalRecord(null);
-        setClinicalRecordError(null); // No error, just no record yet
+      if (!record) {
         console.log('📋 [CLINICAL RECORD] No record found for appointment, showing create form');
-      } else {
-        console.error('Error loading clinical record:', error);
-        setClinicalRecordError(error.message || 'Không thể tải bệnh án');
-        handleError(error);
       }
+    } catch (error: any) {
+      // Only real errors (appointment not found, access denied, etc.)
+      console.error('Error loading clinical record:', error);
+      setClinicalRecordError(error.message || 'Không thể tải bệnh án');
+      handleError(error);
     } finally {
       setLoadingClinicalRecord(false);
     }
@@ -888,7 +880,7 @@ export default function AdminAppointmentDetailPage() {
             <TabsTrigger
               value="clinical-record"
               className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              disabled={!appointment || (appointment.status !== 'IN_PROGRESS' && appointment.status !== 'CHECKED_IN' && !clinicalRecord)}
+              disabled={!appointment}
             >
               <Stethoscope className="h-4 w-4 mr-2" />
               Clinical Record
@@ -1092,26 +1084,7 @@ export default function AdminAppointmentDetailPage() {
 
           {/* Clinical Record Tab */}
           <TabsContent value="clinical-record" className="space-y-4">
-            {/* Check appointment status - only allow creation if IN_PROGRESS or CHECKED_IN */}
-            {appointment && !canCreateOrEditClinicalRecord && !clinicalRecord ? (
-              <Card className="p-6">
-                <div className="text-center py-12">
-                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Chưa thể tạo bệnh án</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Bệnh án chỉ có thể được tạo khi lịch hẹn đã được check-in (CHECKED_IN) hoặc đang điều trị (IN_PROGRESS).
-                    <br />
-                    Trạng thái hiện tại: <span className="font-semibold">{appointment.status}</span>
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab('details')}
-                  >
-                    Quay lại chi tiết
-                  </Button>
-                </div>
-              </Card>
-            ) : loadingClinicalRecord ? (
+            {loadingClinicalRecord ? (
               <Card className="p-6">
                 <div className="flex items-center justify-center py-12">
                   <div className="flex flex-col items-center gap-3">
@@ -1159,7 +1132,7 @@ export default function AdminAppointmentDetailPage() {
                         setActiveTab('details');
                       }
                     }}
-                    readOnly={!canWriteClinicalRecord || !canCreateOrEditClinicalRecord}
+                    readOnly={!canWriteClinicalRecord}
                   />
                 </Card>
               </div>
