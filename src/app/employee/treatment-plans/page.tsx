@@ -101,25 +101,25 @@ export default function EmployeeTreatmentPlansPage() {
 
     let isMounted = true;
 
-    try {
-      setLoading(true);
-      // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
-      // ✅ Backend fix (2025-11-15): Backend now checks role BEFORE permission
-      // - Employee: Always filtered by createdBy (regardless of permission)
-      // - Patient: Always filtered by patient
-      // - Admin: Can see all plans, can use doctorEmployeeCode/patientCode filters
-      // No workaround needed - backend enforces RBAC correctly
-      const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
-        page: currentPage,
-        size: pageSize,
-        sort: 'createdAt,desc',
-        status: filters.status,
-        patientCode: filters.patientCode || undefined, // Optional filter by patientCode (Admin only)
-        searchTerm: filters.searchTerm,
-      });
+      try {
+        setLoading(true);
+        // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
+        // ✅ Backend fix (2025-11-15): Backend now checks role BEFORE permission
+        // - Employee: Always filtered by createdBy (regardless of permission)
+        // - Patient: Always filtered by patient
+        // - Admin: Can see all plans, can use doctorEmployeeCode/patientCode filters
+        // No workaround needed - backend enforces RBAC correctly
+        const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
+          page: currentPage,
+          size: pageSize,
+          sort: 'createdAt,desc',
+          status: filters.status,
+          patientCode: filters.patientCode || undefined, // Optional filter by patientCode (Admin only)
+          searchTerm: filters.searchTerm,
+        });
 
-      // Check if request was cancelled or component unmounted
-      if (abortController.signal.aborted || !isMounted) return;
+        // Check if request was cancelled or component unmounted
+        if (abortController.signal.aborted || !isMounted) return;
 
       // Debug: Log status for each plan to verify BE response
       if (process.env.NODE_ENV === 'development') {
@@ -134,50 +134,50 @@ export default function EmployeeTreatmentPlansPage() {
         });
       }
 
-      setPlans(pageResponse.content);
-      // Use pagination metadata from backend
-      setTotalPages(pageResponse.totalPages);
-    } catch (error: any) {
-      // Don't show error if request was cancelled
-      if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
-        return;
-      }
-      console.error('Error loading treatment plans:', error);
-      
-      // Enhanced error logging for 500 errors
-      if (error.response?.status === 500) {
-        const errorMessage = error.response?.data?.message || error.message || '';
-        console.error('❌ [500 Error] Details:', {
-          status: error.response?.status,
-          message: errorMessage,
-          data: error.response?.data,
-          // Check if it's related to account_id extraction
-          isAccountIdError: /account_id|accountId|Unable to extract/.test(errorMessage),
-        });
-        
-        // If it's an account_id extraction error, show specific message
-        if (/account_id|accountId|Unable to extract/.test(errorMessage)) {
-          toast.error('Lỗi xác thực', {
-            description: 'Không thể xác định tài khoản từ token. Vui lòng đăng nhập lại.',
-            duration: 5000,
-          });
-          // Optionally redirect to login
-          // router.push('/login');
+        setPlans(pageResponse.content);
+        // Use pagination metadata from backend
+        setTotalPages(pageResponse.totalPages);
+      } catch (error: any) {
+        // Don't show error if request was cancelled
+        if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
           return;
         }
+        console.error('Error loading treatment plans:', error);
+        
+        // Enhanced error logging for 500 errors
+        if (error.response?.status === 500) {
+          const errorMessage = error.response?.data?.message || error.message || '';
+          console.error('❌ [500 Error] Details:', {
+            status: error.response?.status,
+            message: errorMessage,
+            data: error.response?.data,
+            // Check if it's related to account_id extraction
+            isAccountIdError: /account_id|accountId|Unable to extract/.test(errorMessage),
+          });
+          
+          // If it's an account_id extraction error, show specific message
+          if (/account_id|accountId|Unable to extract/.test(errorMessage)) {
+            toast.error('Lỗi xác thực', {
+              description: 'Không thể xác định tài khoản từ token. Vui lòng đăng nhập lại.',
+              duration: 5000,
+            });
+            // Optionally redirect to login
+            // router.push('/login');
+            return;
+          }
+        }
+        
+        handleErrorRef.current(error);
+      } finally {
+        // Only update loading state if request wasn't cancelled and component is mounted
+        if (!abortController.signal.aborted && isMounted) {
+          setLoading(false);
+        }
+        // Clear abort controller reference
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
       }
-      
-      handleErrorRef.current(error);
-    } finally {
-      // Only update loading state if request wasn't cancelled and component is mounted
-      if (!abortController.signal.aborted && isMounted) {
-        setLoading(false);
-      }
-      // Clear abort controller reference
-      if (abortControllerRef.current === abortController) {
-        abortControllerRef.current = null;
-      }
-    }
   }, [canView, filters.patientCode, filters.status, filters.searchTerm, currentPage, pageSize, handleErrorRef]);
 
   // Load treatment plans

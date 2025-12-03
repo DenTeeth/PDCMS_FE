@@ -106,49 +106,49 @@ export default function AdminTreatmentPlansPage() {
 
     try {
       setLoading(true);
-      // ✅ Backend fix applied: Use pagination support
-      const pageResponse = await TreatmentPlanService.getTreatmentPlans(
-        targetPatientCode,
-        currentPage,
-        pageSize,
-        'createdAt,desc'
-      );
+        // ✅ Backend fix applied: Use pagination support
+        const pageResponse = await TreatmentPlanService.getTreatmentPlans(
+          targetPatientCode,
+          currentPage,
+          pageSize,
+          'createdAt,desc'
+        );
 
-      // Only update if request wasn't cancelled and component is still mounted
-      if (!abortController.signal.aborted && isMounted) {
-        let filteredData = pageResponse.content;
-        
-        // Apply status filter if set (client-side filter for now)
-        // TODO: Move status filter to backend query params if supported
-        if (filters.status) {
-          filteredData = pageResponse.content.filter((plan) => plan.status === filters.status);
+        // Only update if request wasn't cancelled and component is still mounted
+        if (!abortController.signal.aborted && isMounted) {
+          let filteredData = pageResponse.content;
+          
+          // Apply status filter if set (client-side filter for now)
+          // TODO: Move status filter to backend query params if supported
+          if (filters.status) {
+            filteredData = pageResponse.content.filter((plan) => plan.status === filters.status);
+          }
+
+          setPlans(filteredData);
+          // Use pagination metadata from backend
+          setTotalPages(pageResponse.totalPages);
         }
-
-        setPlans(filteredData);
-        // Use pagination metadata from backend
-        setTotalPages(pageResponse.totalPages);
+      } catch (error: any) {
+        // Don't show error if request was cancelled or component unmounted
+        if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
+          return;
+        }
+        console.error('Error loading treatment plans:', error);
+        handleErrorRef.current(error);
+        // Only clear data if it's a real error (not cancellation)
+        if (!abortController.signal.aborted && isMounted) {
+          setPlans([]);
+        }
+      } finally {
+        // Only update loading state if request wasn't cancelled and component is mounted
+        if (!abortController.signal.aborted && isMounted) {
+          setLoading(false);
+        }
+        // Clear abort controller reference
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
       }
-    } catch (error: any) {
-      // Don't show error if request was cancelled or component unmounted
-      if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
-        return;
-      }
-      console.error('Error loading treatment plans:', error);
-      handleErrorRef.current(error);
-      // Only clear data if it's a real error (not cancellation)
-      if (!abortController.signal.aborted && isMounted) {
-        setPlans([]);
-      }
-    } finally {
-      // Only update loading state if request wasn't cancelled and component is mounted
-      if (!abortController.signal.aborted && isMounted) {
-        setLoading(false);
-      }
-      // Clear abort controller reference
-      if (abortControllerRef.current === abortController) {
-        abortControllerRef.current = null;
-      }
-    }
   }, [canView, filters, patientCode, pageSize, currentPage, handleErrorRef]);
 
   // Load treatment plans
