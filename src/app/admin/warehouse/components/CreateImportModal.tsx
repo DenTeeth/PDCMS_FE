@@ -29,6 +29,8 @@ import inventoryService, { type ItemMasterV1 } from '@/services/inventoryService
 import supplierService from '@/services/supplierService';
 import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, Package } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 
 interface CreateImportModalProps {
   isOpen: boolean;
@@ -121,7 +123,7 @@ export default function CreateImportModal({
           size: 1000,
           sort: 'supplierName,asc',
         });
-        console.log('📦 Suppliers fetched:', page.content?.length || 0);
+        console.log('[WAREHOUSE] Suppliers fetched:', page.content?.length || 0);
         return page;
       } catch (error: any) {
         console.error('❌ Failed to fetch suppliers:', error);
@@ -136,7 +138,7 @@ export default function CreateImportModal({
 
   const suppliers: SupplierSummaryResponse[] = suppliersResponse?.content ?? [];
 
-  console.log('📦 Processed suppliers:', suppliers.length, suppliers.length === 0 ? '⚠️ EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : '✅ OK');
+  console.log('[WAREHOUSE] Processed suppliers:', suppliers.length, suppliers.length === 0 ? 'EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : 'OK');
 
   // Fetch Item Masters
   const { data: items = [], isLoading: itemsLoading, error: itemsError } = useQuery({
@@ -146,7 +148,7 @@ export default function CreateImportModal({
         const result = await inventoryService.getAll({
           warehouseType,
       });
-        console.log('📦 Item Masters fetched:', result.length, 'items');
+        console.log('[WAREHOUSE] Item Masters fetched:', result.length, 'items');
       return result;
       } catch (error: any) {
         console.error('❌ Failed to fetch item masters:', error);
@@ -158,7 +160,7 @@ export default function CreateImportModal({
     },
     enabled: isOpen,
   });
-  console.log('📦 Processed items:', items.length, items.length === 0 ? '⚠️ EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : '✅ OK');
+  console.log('[WAREHOUSE] Processed items:', items.length, items.length === 0 ? 'EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : 'OK');
 
   // Create Import Mutation
   const mutation = useMutation({
@@ -277,7 +279,12 @@ export default function CreateImportModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-emerald-600" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
+            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+              <>
+                <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                (Kho Lạnh)
+              </>
+            ) : '(Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với thông tin nhà cung cấp và danh sách vật tư

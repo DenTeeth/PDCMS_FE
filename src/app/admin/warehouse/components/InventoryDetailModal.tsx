@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Inventory, WarehouseType, InventoryStatus } from '@/types/warehouse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faWarehouse, faUser, faPhone, faEnvelope, faMapMarkerAlt, faCalendar, faClock, faCheckCircle, faNoteSticky } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faWarehouse, faUser, faPhone, faEnvelope, faMapMarkerAlt, faCalendar, faClock, faCheckCircle, faNoteSticky, faSnowflake } from '@fortawesome/free-solid-svg-icons';
 
 interface InventoryDetailModalProps {
   isOpen: boolean;
@@ -80,7 +80,12 @@ export default function InventoryDetailModal({
                 Loại kho
               </p>
               <Badge variant={isColdStorage ? 'default' : 'secondary'}>
-                {isColdStorage ? '❄️ Kho lạnh' : '📦 Kho thường'}
+                {isColdStorage ? (
+                  <>
+                    <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                    Kho lạnh
+                  </>
+                ) : 'Kho thường'}
               </Badge>
             </div>
             <div>
