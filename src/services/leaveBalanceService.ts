@@ -105,11 +105,28 @@ export class LeaveBalanceService {
     data: AnnualResetRequest
   ): Promise<AnnualResetResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<AnnualResetResponse>(
-      `${this.BASE_URL}/leave-balances/annual-reset`,
-      data
-    );
-    return response.data;
+
+    try {
+      console.log('🔄 Calling annual-reset with:', data);
+
+      const response = await axios.post<AnnualResetResponse>(
+        `${this.BASE_URL}/leave-balances/annual-reset`,
+        data
+      );
+
+      console.log('✅ Annual-reset response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Annual-reset error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        url: error.config?.url,
+        requestData: data
+      });
+      throw error;
+    }
   }
 
   /**

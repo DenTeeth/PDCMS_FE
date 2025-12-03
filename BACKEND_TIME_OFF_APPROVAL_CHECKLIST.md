@@ -12,36 +12,54 @@
 
 ## 🚨 VẤN ĐỀ MỚI PHÁT HIỆN
 
-### ⚠️ CRITICAL: `employeeId` đang là `NaN`!
+### ✅ RESOLVED: Backend 500 Error khi tạo Time-Off Request!
 
-**URL thực tế:**
+**Original Issue (FIXED):**
+Backend returned generic 500 Internal Server Error when employee had duplicate leave balance records.
+
+**Backend Fix Applied:**
+- Changed from 500 error → 400 Bad Request with clear error codes
+- Added `DUPLICATE_BALANCE_RECORDS` error code
+- Added `BALANCE_NOT_FOUND` error code  
+- Added `INSUFFICIENT_BALANCE` error code
+- All errors now have Vietnamese messages
+
+**Frontend Fix Applied:**
+- ✅ Updated employee page error handling with specific error code checks
+- ✅ Updated admin page error handling with specific error code checks
+- ✅ Show clear messages for each error type
+- ✅ Users get actionable guidance (contact admin, contact HR, etc.)
+
+**Error Codes Handled:**
+```typescript
+// DUPLICATE_BALANCE_RECORDS
+'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.'
+
+// BALANCE_NOT_FOUND
+'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.'
+
+// INSUFFICIENT_BALANCE
+'Số dư ngày nghỉ không đủ cho yêu cầu này.'
 ```
+
+**Files Updated:**
+- ✅ `src/app/employee/time-off-requests/page.tsx`
+- ✅ `src/app/admin/time-off-requests/page.tsx`
+
+---
+
+### ⚠️ OLD ISSUE: `employeeId` đang là `NaN` (ĐÃ FIX)
+
+~~**URL thực tế:**~~
+~~```
 GET /api/v1/admin/employees/NaN/leave-balances?cycle_year=2025
-                              ^^^
 Status: 400 Bad Request
-```
-
-**Nguyên nhân:**
-- `user.employeeId` **không tồn tại** HOẶC **không phải số hợp lệ**
-- Frontend đang gọi `Number(user.employeeId)` nhưng kết quả là `NaN`
-
-**Các khả năng:**
-1. ❌ User đăng nhập là **Patient** (không có employeeId)
-2. ❌ JWT không chứa `employeeId` field
-3. ❌ Backend không trả về `employeeId` trong user object
-4. ❌ `employeeId` có giá trị `null`, `undefined`, hoặc string không hợp lệ
+```~~
 
 **Frontend đã fix:**
 - ✅ Validate `employeeId` trước khi gọi API
 - ✅ Check `isNaN()` và `<= 0`
 - ✅ Log chi tiết để debug
-
-**Cần kiểm tra:**
-```javascript
-// Trong console, check user object:
-console.log('User:', user);
-console.log('EmployeeId:', user?.employeeId, typeof user?.employeeId);
-```
 
 ---
 
@@ -286,6 +304,153 @@ if (timeOffType.isRequiresBalance()) {
 - [ ] Check history record có được tạo với `changed_by` đúng không
 - [ ] Check employee shifts có được update thành ON_LEAVE không
 - [ ] Check request status có thành APPROVED không
+
+---
+
+## 🔧 BACKEND DEBUGGING STEPS (FOR BACKEND DEV)
+
+### Step 1: Check Backend Logs
+```bash
+# Check application logs for full stack trace
+tail -f logs/application.log
+
+# Look for:
+# - NullPointerException
+# - ConstraintViolationException
+# - SQL errors
+# - Business logic errors
+```
+
+### Step 2: Check Database State
+```sql
+-- 1. Check if employee exists
+SELECT * FROM employees WHERE employee_id = 1;
+
+-- 2. Check if time-off type exists and configuration
+SELECT * FROM time_off_types WHERE type_id = 'ANNUAL_LEAVE';
+-- Should show: requires_balance = true
+
+-- 3. Check if leave balance record exists
+SELECT * FROM employee_leave_balances 
+WHERE employee_id = 1 
+  AND time_off_type_id = 'ANNUAL_LEAVE' 
+  AND year = 2025;
+-- If empty, THIS IS THE PROBLEM!
+
+-- 4. Check if there are conflicting requests
+SELECT * FROM time_off_requests 
+WHERE employee_id = 1 
+  AND status != 'CANCELLED'
+  AND (
+    (start_date <= '2025-12-03' AND end_date >= '2025-12-03')
+  );
+```
+
+### Step 3: Add Debug Logging in Backend
+```java
+// In TimeOffRequestService.createTimeOffRequest()
+@Override
+public TimeOffRequestDTO createTimeOffRequest(CreateTimeOffRequestDTO dto) {
+    log.info("🔍 Creating time-off request: {}", dto);
+    
+    // 1. Validate employee
+    Employee employee = employeeRepository.findById(dto.getEmployeeId())
+        .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+    log.info("✅ Employee found: {}", employee.getEmployeeId());
+    
+    // 2. Validate time-off type
+    TimeOffType timeOffType = timeOffTypeRepository.findById(dto.getTimeOffTypeId())
+        .orElseThrow(() -> new ResourceNotFoundException("Time off type not found"));
+    log.info("✅ Time-off type found: {} (requiresBalance={})", 
+        timeOffType.getTypeId(), timeOffType.isRequiresBalance());
+    
+    // 3. Check balance if required
+    if (timeOffType.isRequiresBalance()) {
+        log.info("🔍 Checking leave balance...");
+        
+        int year = LocalDate.parse(dto.getStartDate()).getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository
+            .findByEmployeeIdAndTimeOffTypeIdAndYear(
+                dto.getEmployeeId(), 
+                dto.getTimeOffTypeId(), 
+                year
+            );
+        
+        if (balanceOpt.isEmpty()) {
+            log.error("❌ Leave balance not found for employee={}, type={}, year={}", 
+                dto.getEmployeeId(), dto.getTimeOffTypeId(), year);
+            throw new BadRequestException(
+                "Employee does not have leave balance for " + dto.getTimeOffTypeId() + 
+                " in year " + year + ". Please contact HR to initialize balance."
+            );
+        }
+        
+        LeaveBalance balance = balanceOpt.get();
+        log.info("✅ Balance found: total={}, used={}, remaining={}", 
+            balance.getTotalDays(), balance.getUsedDays(), balance.getRemainingDays());
+        
+        // Calculate required days
+        double requiredDays = calculateBusinessDays(dto.getStartDate(), dto.getEndDate());
+        log.info("🔍 Required days: {}", requiredDays);
+        
+        if (balance.getRemainingDays() < requiredDays) {
+            log.error("❌ Insufficient balance: required={}, available={}", 
+                requiredDays, balance.getRemainingDays());
+            throw new BadRequestException(
+                "Insufficient leave balance. Required: " + requiredDays + 
+                " days, Available: " + balance.getRemainingDays() + " days"
+            );
+        }
+    }
+    
+    // 4. Create request
+    log.info("🔍 Creating time-off request record...");
+    // ... rest of the logic
+}
+```
+
+### Step 4: Fix Missing Balance Records
+```sql
+-- If balance records are missing, create them:
+-- (Adjust total_days based on company policy)
+
+INSERT INTO employee_leave_balances 
+(employee_id, time_off_type_id, year, total_days, used_days, remaining_days, created_at, updated_at)
+VALUES 
+(1, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 12.0, NOW(), NOW()),
+(1, 'SICK_LEAVE', 2025, 30.0, 0.0, 30.0, NOW(), NOW())
+ON CONFLICT (employee_id, time_off_type_id, year) DO NOTHING;
+
+-- Verify:
+SELECT * FROM employee_leave_balances WHERE employee_id = 1;
+```
+
+### Step 5: Test Again
+After fixing the backend issue, test with the same request:
+```json
+POST /api/v1/time-off-requests
+{
+  "employeeId": 1,
+  "timeOffTypeId": "ANNUAL_LEAVE",
+  "startDate": "2025-12-03",
+  "endDate": "2025-12-03",
+  "workShiftId": null,
+  "reason": "Test request"
+}
+```
+
+Expected response:
+```json
+{
+  "requestId": "TOR251202001",
+  "employeeId": 1,
+  "timeOffTypeId": "ANNUAL_LEAVE",
+  "startDate": "2025-12-03",
+  "endDate": "2025-12-03",
+  "status": "PENDING",
+  ...
+}
+```
 
 ---
 
