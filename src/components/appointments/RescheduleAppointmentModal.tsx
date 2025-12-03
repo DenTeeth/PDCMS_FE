@@ -56,13 +56,13 @@ import {
 import { Service } from '@/types/service';
 import { Employee } from '@/types/employee';
 import { Room } from '@/types/room';
-import { 
-  Clock, 
-  UserCog, 
-  Building2, 
-  Loader2, 
-  Calendar, 
-  AlertCircle, 
+import {
+  Clock,
+  UserCog,
+  Building2,
+  Loader2,
+  Calendar,
+  AlertCircle,
   Info,
   ArrowRight,
   CheckCircle2,
@@ -134,8 +134,8 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
     <div className="relative" ref={dropdownRef}>
       <div
         className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
-            ? 'bg-muted cursor-not-allowed opacity-50'
-            : 'bg-background hover:border-primary'
+          ? 'bg-muted cursor-not-allowed opacity-50'
+          : 'bg-background hover:border-primary'
           }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -240,7 +240,7 @@ export default function RescheduleAppointmentModal({
           .toString()
           .padStart(2, '0')}`
       );
-      
+
       // Pre-fill services (convert service codes to IDs)
       // Pre-fill participants
       setNewParticipantCodes(
@@ -512,7 +512,7 @@ export default function RescheduleAppointmentModal({
       toast.error('Failed to reschedule appointment', {
 =======
       const errorMessage = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định';
-      
+
       toast.error('Không thể đổi lịch hẹn', {
 >>>>>>> origin/501_Merge_Warehouse
         description: errorMessage,
@@ -534,19 +534,19 @@ export default function RescheduleAppointmentModal({
   const minDate = new Date().toISOString().split('T')[0];
 
   // Check if form is valid
-  const isFormValid = 
-    newEmployeeCode && 
-    newRoomCode && 
-    newDate && 
-    newTime && 
+  const isFormValid =
+    newEmployeeCode &&
+    newRoomCode &&
+    newDate &&
+    newTime &&
     reasonCode;
 
   // Get eligible participants (employees with STANDARD specialization, excluding selected doctor)
   const eligibleParticipants = employees.filter((e) => {
     if (e.employeeCode === newEmployeeCode) return false;
     const hasStandardSpecialization = e.specializations?.some(
-      (spec) => 
-        String(spec.specializationId) === '8' || 
+      (spec) =>
+        String(spec.specializationId) === '8' ||
         spec.specializationId === '8'
     );
     return hasStandardSpecialization;
@@ -580,367 +580,367 @@ export default function RescheduleAppointmentModal({
               </TabsList>
 
 <<<<<<< HEAD
-            {/* New Doctor */}
-            <div>
-              <Label htmlFor="newEmployeeCode">
-                New Doctor <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={newEmployeeCode}
-                onValueChange={(value) => setNewEmployeeCode(value)}
-              >
-                <SelectTrigger id="newEmployeeCode" className="mt-1">
-                  <SelectValue placeholder="Select doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.employeeCode} value={employee.employeeCode}>
-                      <div className="flex items-center gap-2">
-                        <UserCog className="h-4 w-4" />
-                        <span>{employee.fullName}</span>
-                        <span className="text-muted-foreground">({employee.employeeCode})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+  {/* New Doctor */ }
+  <div>
+    <Label htmlFor="newEmployeeCode">
+      New Doctor <span className="text-red-500">*</span>
+    </Label>
+    <Select
+      value={newEmployeeCode}
+      onValueChange={(value) => setNewEmployeeCode(value)}
+    >
+      <SelectTrigger id="newEmployeeCode" className="mt-1">
+        <SelectValue placeholder="Select doctor" />
+      </SelectTrigger>
+      <SelectContent>
+        {employees.map((employee) => (
+          <SelectItem key={employee.employeeCode} value={employee.employeeCode}>
+            <div className="flex items-center gap-2">
+              <UserCog className="h-4 w-4" />
+              <span>{employee.fullName}</span>
+              <span className="text-muted-foreground">({employee.employeeCode})</span>
             </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
 
-            {/* New Room */}
-            <div>
-              <Label htmlFor="newRoomCode">
-                New Room <span className="text-red-500">*</span>
-              </Label>
-              <Select value={newRoomCode} onValueChange={(value) => setNewRoomCode(value)}>
-                <SelectTrigger id="newRoomCode" className="mt-1">
-                  <SelectValue placeholder="Select room" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rooms.map((room) => (
-                    <SelectItem key={room.roomCode} value={room.roomCode}>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        <span>{room.roomName}</span>
-                        <span className="text-muted-foreground">({room.roomCode})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+  {/* New Room */ }
+  <div>
+    <Label htmlFor="newRoomCode">
+      New Room <span className="text-red-500">*</span>
+    </Label>
+    <Select value={newRoomCode} onValueChange={(value) => setNewRoomCode(value)}>
+      <SelectTrigger id="newRoomCode" className="mt-1">
+        <SelectValue placeholder="Select room" />
+      </SelectTrigger>
+      <SelectContent>
+        {rooms.map((room) => (
+          <SelectItem key={room.roomCode} value={room.roomCode}>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              <span>{room.roomName}</span>
+              <span className="text-muted-foreground">({room.roomCode})</span>
             </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
 
-            {/* New Date and Time */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="newDate">
-                    New Date <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="newDate"
-                    type="date"
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    min={minDate}
-                    className="mt-1"
-                  />
+  {/* New Date and Time */ }
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="newDate">
+          New Date <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="newDate"
+          type="date"
+          value={newDate}
+          onChange={(e) => setNewDate(e.target.value)}
+          min={minDate}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="newTime">
+          New Time <span className="text-red-500">*</span>
+        </Label>
+        <TimePicker value={newTime} onChange={setNewTime} />
+      </div>
+    </div>
+
+    {/* Doctor Shift Availability */}
+    {newEmployeeCode && newDate && (
+      <Card className="p-4 bg-primary/5 border-primary/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Calendar className="h-4 w-4 text-primary" />
+          <h4 className="font-semibold text-sm">Doctor Shift Availability</h4>
+        </div>
+        {loadingShifts ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Loading shifts...</span>
+          </div>
+        ) : (
+          <>
+            {getShiftsForDate(newDate, doctorShifts).length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-muted-foreground">
+                  Shifts for {selectedEmployee?.fullName} on{' '}
+                  {format(new Date(newDate), 'PPP')}:
                 </div>
-                <div>
-                  <Label htmlFor="newTime">
-                    New Time <span className="text-red-500">*</span>
-                  </Label>
-                  <TimePicker value={newTime} onChange={setNewTime} />
+                {getShiftsForDate(newDate, doctorShifts).map((shift) => (
+                  <div
+                    key={shift.employeeShiftId}
+                    className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
+                  >
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span className="font-medium">
+                      {shift.workShift?.shiftName || 'Shift'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {shift.workShift?.startTime} - {shift.workShift?.endTime}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-red-600">
+                <AlertCircle className="h-4 w-4" />
+                <span>
+                  ⚠️ No shifts scheduled for {selectedEmployee?.fullName} on{' '}
+                  {format(new Date(newDate), 'PPP')}
+                </span>
+              </div>
+            )}
+            {/* Show all dates with shifts in the month */}
+            {getDatesWithShifts(doctorShifts).size > 0 && (
+              <div className="mt-3 pt-3 border-t">
+                <div className="text-xs font-medium text-muted-foreground mb-2">
+                  Dates with shifts this month:
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Array.from(getDatesWithShifts(doctorShifts))
+                    .sort()
+                    .slice(0, 10)
+                    .map((date) => (
+                      <Badge
+                        key={date}
+                        variant="outline"
+                        className={`text-xs ${date === newDate ? 'bg-primary text-primary-foreground' : ''
+                          }`}
+                      >
+                        {format(new Date(date), 'MMM dd')}
+                      </Badge>
+                    ))}
+                  {getDatesWithShifts(doctorShifts).size > 10 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{getDatesWithShifts(doctorShifts).size - 10} more
+                    </Badge>
+                  )}
                 </div>
               </div>
+            )}
+          </>
+        )}
+      </Card>
+    )}
 
-              {/* Doctor Shift Availability */}
-              {newEmployeeCode && newDate && (
-                <Card className="p-4 bg-primary/5 border-primary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <h4 className="font-semibold text-sm">Doctor Shift Availability</h4>
-                  </div>
-                  {loadingShifts ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>Loading shifts...</span>
-                    </div>
-                  ) : (
-                    <>
-                      {getShiftsForDate(newDate, doctorShifts).length > 0 ? (
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium text-muted-foreground">
-                            Shifts for {selectedEmployee?.fullName} on{' '}
-                            {format(new Date(newDate), 'PPP')}:
-                          </div>
-                          {getShiftsForDate(newDate, doctorShifts).map((shift) => (
-                            <div
-                              key={shift.employeeShiftId}
-                              className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
-                            >
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span className="font-medium">
-                                {shift.workShift?.shiftName || 'Shift'}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {shift.workShift?.startTime} - {shift.workShift?.endTime}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-sm text-red-600">
-                          <AlertCircle className="h-4 w-4" />
-                          <span>
-                            ⚠️ No shifts scheduled for {selectedEmployee?.fullName} on{' '}
-                            {format(new Date(newDate), 'PPP')}
-                          </span>
-                        </div>
-                      )}
-                      {/* Show all dates with shifts in the month */}
-                      {getDatesWithShifts(doctorShifts).size > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <div className="text-xs font-medium text-muted-foreground mb-2">
-                            Dates with shifts this month:
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {Array.from(getDatesWithShifts(doctorShifts))
-                              .sort()
-                              .slice(0, 10)
-                              .map((date) => (
-                                <Badge
-                                  key={date}
-                                  variant="outline"
-                                  className={`text-xs ${date === newDate ? 'bg-primary text-primary-foreground' : ''
-                                    }`}
-                                >
-                                  {format(new Date(date), 'MMM dd')}
-                                </Badge>
-                              ))}
-                            {getDatesWithShifts(doctorShifts).size > 10 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{getDatesWithShifts(doctorShifts).size - 10} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Card>
-              )}
+    {/* Participant Shifts Availability */}
+    {newParticipantCodes.length > 0 && newDate && (
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <div className="flex items-center gap-2 mb-2">
+          <UserCog className="h-4 w-4 text-blue-600" />
+          <h4 className="font-semibold text-sm">Participant Shift Availability</h4>
+        </div>
+        <div className="space-y-3">
+          {newParticipantCodes.map((participantCode) => {
+            const participant = employees.find((e) => e.employeeCode === participantCode);
+            const shifts = participantShifts.get(participantCode) || [];
+            const shiftsForDate = getShiftsForDate(newDate, shifts);
 
-              {/* Participant Shifts Availability */}
-              {newParticipantCodes.length > 0 && newDate && (
-                <Card className="p-4 bg-blue-50 border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <UserCog className="h-4 w-4 text-blue-600" />
-                    <h4 className="font-semibold text-sm">Participant Shift Availability</h4>
-                  </div>
-                  <div className="space-y-3">
-                    {newParticipantCodes.map((participantCode) => {
-                      const participant = employees.find((e) => e.employeeCode === participantCode);
-                      const shifts = participantShifts.get(participantCode) || [];
-                      const shiftsForDate = getShiftsForDate(newDate, shifts);
-
-                      return (
-                        <div key={participantCode} className="space-y-2">
-                          <div className="text-xs font-medium text-muted-foreground">
-                            {participant?.fullName} ({participantCode}) -{' '}
-                            {participant?.roleName.includes('DENTIST') || participant?.roleName.includes('DOCTOR')
-                              ? 'Bác sĩ'
-                              : participant?.roleName.includes('NURSE')
-                                ? 'Y tá/Trợ lí'
-                                : participant?.roleName || ''}
-                            :
-                          </div>
-                          {shiftsForDate.length > 0 ? (
-                            <div className="space-y-1">
-                              {shiftsForDate.map((shift) => (
-                                <div
-                                  key={shift.employeeShiftId}
-                                  className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
-                                >
-                                  <Clock className="h-3 w-3 text-muted-foreground" />
-                                  <span className="font-medium">
-                                    {shift.workShift?.shiftName || 'Shift'}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {shift.workShift?.startTime} - {shift.workShift?.endTime}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm text-red-600">
-                              <AlertCircle className="h-3 w-3" />
-                              <span>
-                                ⚠️ No shifts scheduled for {participant?.fullName} on{' '}
-                                {format(new Date(newDate), 'PPP')}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            {/* Services (Optional - if not selected, reuses old appointment's services) */}
-            <div>
-              <Label>Services (Optional - leave empty to reuse current services)</Label>
-              <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                {services.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No services available</p>
-                ) : (
-                  services.map((service) => (
-                    <div key={service.serviceId} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`service-${service.serviceId}`}
-                        checked={newServiceIds.includes(service.serviceId)}
-                        onCheckedChange={() => handleToggleService(service.serviceId)}
-                      />
-                      <label
-                        htmlFor={`service-${service.serviceId}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            return (
+              <div key={participantCode} className="space-y-2">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {participant?.fullName} ({participantCode}) -{' '}
+                  {participant?.roleName.includes('DENTIST') || participant?.roleName.includes('DOCTOR')
+                    ? 'Bác sĩ'
+                    : participant?.roleName.includes('NURSE')
+                      ? 'Y tá/Trợ lí'
+                      : participant?.roleName || ''}
+                  :
+                </div>
+                {shiftsForDate.length > 0 ? (
+                  <div className="space-y-1">
+                    {shiftsForDate.map((shift) => (
+                      <div
+                        key={shift.employeeShiftId}
+                        className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
                       >
-                        {service.serviceName}
-                        <span className="text-muted-foreground ml-2">
-                          ({service.serviceCode})
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="font-medium">
+                          {shift.workShift?.shiftName || 'Shift'}
                         </span>
-                      </label>
-                    </div>
-                  ))
+                        <span className="text-muted-foreground">
+                          {shift.workShift?.startTime} - {shift.workShift?.endTime}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-red-600">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>
+                      ⚠️ No shifts scheduled for {participant?.fullName} on{' '}
+                      {format(new Date(newDate), 'PPP')}
+                    </span>
+                  </div>
                 )}
               </div>
-              {newServiceIds.length === 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Current appointment services will be reused
-                </p>
-              )}
+            );
+          })}
+        </div>
+      </Card>
+    )}
+  </div>
+
+  {/* Services (Optional - if not selected, reuses old appointment's services) */ }
+  <div>
+    <Label>Services (Optional - leave empty to reuse current services)</Label>
+    <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+      {services.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No services available</p>
+      ) : (
+        services.map((service) => (
+          <div key={service.serviceId} className="flex items-center space-x-2">
+            <Checkbox
+              id={`service-${service.serviceId}`}
+              checked={newServiceIds.includes(service.serviceId)}
+              onCheckedChange={() => handleToggleService(service.serviceId)}
+            />
+            <label
+              htmlFor={`service-${service.serviceId}`}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {service.serviceName}
+              <span className="text-muted-foreground ml-2">
+                ({service.serviceCode})
+              </span>
+            </label>
+          </div>
+        ))
+      )}
+    </div>
+    {newServiceIds.length === 0 && (
+      <p className="text-xs text-muted-foreground mt-1">
+        Current appointment services will be reused
+      </p>
+    )}
+  </div>
+
+  {/* Participants (Optional) */ }
+  <div>
+    <Label>Participants (Optional)</Label>
+    <p className="text-xs text-muted-foreground mt-1 mb-2">
+      Only employees with STANDARD specialization (medical staff) can be selected as participants.
+    </p>
+    <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+      {(() => {
+        // Filter to only show employees with STANDARD specialization (ID 8)
+        // Participants must have STANDARD specialization (ID 8) - medical staff only
+        // Admin/Receptionist without STANDARD cannot be participants
+        const eligibleParticipants = employees.filter((e) => {
+          // Exclude selected doctor
+          if (e.employeeCode === newEmployeeCode) return false;
+
+          // Check if employee has STANDARD specialization (ID 8)
+          // specializationId is string in FE type, but BE uses integer 8
+          // Check both string and number formats for safety
+          const hasStandardSpecialization = e.specializations?.some(
+            (spec) =>
+              String(spec.specializationId) === '8' ||
+              spec.specializationId === '8'
+          );
+
+          return hasStandardSpecialization;
+        });
+
+        if (eligibleParticipants.length === 0) {
+          return (
+            <div className="text-center py-4 text-xs text-muted-foreground">
+              No eligible participants found. Only employees with STANDARD specialization (medical staff) can be selected.
             </div>
+          );
+        }
 
-            {/* Participants (Optional) */}
-            <div>
-              <Label>Participants (Optional)</Label>
-              <p className="text-xs text-muted-foreground mt-1 mb-2">
-                Only employees with STANDARD specialization (medical staff) can be selected as participants.
-              </p>
-              <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                {(() => {
-                  // Filter to only show employees with STANDARD specialization (ID 8)
-                  // Participants must have STANDARD specialization (ID 8) - medical staff only
-                  // Admin/Receptionist without STANDARD cannot be participants
-                  const eligibleParticipants = employees.filter((e) => {
-                    // Exclude selected doctor
-                    if (e.employeeCode === newEmployeeCode) return false;
-
-                    // Check if employee has STANDARD specialization (ID 8)
-                    // specializationId is string in FE type, but BE uses integer 8
-                    // Check both string and number formats for safety
-                    const hasStandardSpecialization = e.specializations?.some(
-                      (spec) =>
-                        String(spec.specializationId) === '8' ||
-                        spec.specializationId === '8'
-                    );
-
-                    return hasStandardSpecialization;
-                  });
-
-                  if (eligibleParticipants.length === 0) {
-                    return (
-                      <div className="text-center py-4 text-xs text-muted-foreground">
-                        No eligible participants found. Only employees with STANDARD specialization (medical staff) can be selected.
-                      </div>
-                    );
-                  }
-
-                  return eligibleParticipants.map((employee) => (
-                    <div key={employee.employeeCode} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`participant-${employee.employeeCode}`}
-                        checked={newParticipantCodes.includes(employee.employeeCode)}
-                        onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
-                      />
-                      <label
-                        htmlFor={`participant-${employee.employeeCode}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {employee.fullName}
-                        <span className="text-muted-foreground ml-2">
-                          ({employee.employeeCode})
-                        </span>
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {employee.roleName.includes('DENTIST') || employee.roleName.includes('DOCTOR')
-                            ? 'Bác sĩ'
-                            : employee.roleName.includes('NURSE')
-                              ? 'Y tá/Trợ lí'
-                              : employee.roleName}
-                        </Badge>
-                      </label>
+        return eligibleParticipants.map((employee) => (
+          <div key={employee.employeeCode} className="flex items-center space-x-2">
+            <Checkbox
+              id={`participant-${employee.employeeCode}`}
+              checked={newParticipantCodes.includes(employee.employeeCode)}
+              onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
+            />
+            <label
+              htmlFor={`participant-${employee.employeeCode}`}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {employee.fullName}
+              <span className="text-muted-foreground ml-2">
+                ({employee.employeeCode})
+              </span>
+              <Badge variant="outline" className="ml-2 text-xs">
+                {employee.roleName.includes('DENTIST') || employee.roleName.includes('DOCTOR')
+                  ? 'Bác sĩ'
+                  : employee.roleName.includes('NURSE')
+                    ? 'Y tá/Trợ lí'
+                    : employee.roleName}
+              </Badge>
+            </label>
 =======
               {/* Tab 1: Current Appointment Info */}
-              <TabsContent value="info" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Info className="h-4 w-4" />
-                      Thông tin lịch hẹn hiện tại
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Ngày & Giờ</Label>
-                        <p className="font-medium">
-                          {format(new Date(appointment.appointmentStartTime), 'PPP p')}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Bác sĩ</Label>
-                        <p className="font-medium">{appointment.doctor?.fullName || '-'}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Phòng</Label>
-                        <p className="font-medium">{appointment.room?.roomName || '-'}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Dịch vụ</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {appointment.services.map((s) => (
-                            <Badge key={s.serviceCode} variant="outline" className="text-xs">
-                              {s.serviceName}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
->>>>>>> origin/501_Merge_Warehouse
+            <TabsContent value="info" className="space-y-4 mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    Thông tin lịch hẹn hiện tại
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Ngày & Giờ</Label>
+                      <p className="font-medium">
+                        {format(new Date(appointment.appointmentStartTime), 'PPP p')}
+                      </p>
                     </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Bác sĩ</Label>
+                      <p className="font-medium">{appointment.doctor?.fullName || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Phòng</Label>
+                      <p className="font-medium">{appointment.room?.roomName || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Dịch vụ</Label>
+                      <div className="flex flex-wrap gap-1">
+                        {appointment.services.map((s) => (
+                          <Badge key={s.serviceCode} variant="outline" className="text-xs">
+                            {s.serviceName}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+>>>>>>> origin/501_Merge_Warehouse
+                  </div>
 
 <<<<<<< HEAD
-            {/* Reason Code (Required) */}
-            <div>
-              <Label htmlFor="reasonCode">
-                Reason Code <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={reasonCode}
-                onValueChange={(value) => setReasonCode(value as AppointmentReasonCode)}
-              >
-                <SelectTrigger id="reasonCode" className="mt-1">
-                  <SelectValue placeholder="Select reason code" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+  {/* Reason Code (Required) */ }
+  <div>
+    <Label htmlFor="reasonCode">
+      Reason Code <span className="text-red-500">*</span>
+    </Label>
+    <Select
+      value={reasonCode}
+      onValueChange={(value) => setReasonCode(value as AppointmentReasonCode)}
+    >
+      <SelectTrigger id="reasonCode" className="mt-1">
+        <SelectValue placeholder="Select reason code" />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([value, label]) => (
+          <SelectItem key={value} value={value}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
 =======
                     {/* Treatment Plan Info - Issue #39: BE auto re-links plan items */}
                     {appointment.linkedTreatmentPlanCode && (
@@ -964,309 +964,310 @@ export default function RescheduleAppointmentModal({
               </TabsContent>
 >>>>>>> origin/501_Merge_Warehouse
 
-              {/* Tab 2: New Appointment Details */}
-              <TabsContent value="new" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* New Doctor */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <UserCog className="h-4 w-4" />
-                        Bác sĩ mới <span className="text-destructive">*</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Select
-                        value={newEmployeeCode}
-                        onValueChange={(value) => setNewEmployeeCode(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn bác sĩ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.employeeCode} value={employee.employeeCode}>
-                              <div className="flex items-center gap-2">
-                                <span>{employee.fullName}</span>
-                                <span className="text-muted-foreground text-xs">
-                                  ({employee.employeeCode})
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </CardContent>
-                  </Card>
-
-                  {/* New Room */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Phòng mới <span className="text-destructive">*</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Select value={newRoomCode} onValueChange={(value) => setNewRoomCode(value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn phòng" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {rooms.map((room) => (
-                            <SelectItem key={room.roomCode} value={room.roomCode}>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-3 w-3" />
-                                <span>{room.roomName}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Date and Time */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Ngày & Giờ mới <span className="text-destructive">*</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="newDate">Ngày</Label>
-                        <Input
-                          id="newDate"
-                          type="date"
-                          value={newDate}
-                          onChange={(e) => setNewDate(e.target.value)}
-                          min={minDate}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="newTime">Giờ</Label>
-                        <TimePicker value={newTime} onChange={setNewTime} />
-                      </div>
-                    </div>
-                    
-                    {/* Doctor Shift Availability */}
-                    {newEmployeeCode && newDate && (
-                      <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          <h4 className="font-semibold text-sm">Lịch làm việc của bác sĩ</h4>
-                        </div>
-                        {loadingShifts ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>Đang tải...</span>
-                          </div>
-                        ) : (
-                          <>
-                            {getShiftsForDate(newDate, doctorShifts).length > 0 ? (
-                              <div className="space-y-2">
-                                <div className="text-xs text-muted-foreground">
-                                  Ca làm việc của {selectedEmployee?.fullName} vào{' '}
-                                  {format(new Date(newDate), 'PPP')}:
-                                </div>
-                                {getShiftsForDate(newDate, doctorShifts).map((shift) => (
-                                  <div
-                                    key={shift.employeeShiftId}
-                                    className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
-                                  >
-                                    <CheckCircle2 className="h-3 w-3 text-green-600" />
-                                    <span className="font-medium">
-                                      {shift.workShift?.shiftName || 'Ca làm việc'}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {shift.workShift?.startTime} - {shift.workShift?.endTime}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 text-sm text-amber-600">
-                                <AlertCircle className="h-4 w-4" />
-                                <span>
-                                  Không có ca làm việc cho {selectedEmployee?.fullName} vào{' '}
-                                  {format(new Date(newDate), 'PPP')}
-                                </span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Services (Optional) */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Stethoscope className="h-4 w-4" />
-                      Dịch vụ (Tùy chọn)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Để trống để giữ nguyên dịch vụ hiện tại
-                    </p>
-                    <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                      {services.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-2">
-                          Không có dịch vụ nào
-                        </p>
-                      ) : (
-                        services.map((service) => (
-                          <div key={service.serviceId} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`service-${service.serviceId}`}
-                              checked={newServiceIds.includes(service.serviceId)}
-                              onCheckedChange={() => handleToggleService(service.serviceId)}
-                            />
-                            <label
-                              htmlFor={`service-${service.serviceId}`}
-                              className="text-sm font-medium leading-none cursor-pointer flex-1"
-                            >
-                              {service.serviceName}
-                              <span className="text-muted-foreground ml-2 text-xs">
-                                ({service.serviceCode})
-                              </span>
-                            </label>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    {newServiceIds.length === 0 && (
-                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                        <Info className="h-3 w-3" />
-                        Dịch vụ hiện tại sẽ được giữ nguyên
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Participants (Optional) */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Người tham gia (Tùy chọn)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Chỉ nhân viên y tế (STANDARD specialization) mới có thể được chọn
-                    </p>
-                    <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                      {eligibleParticipants.length === 0 ? (
-                        <div className="text-center py-4 text-xs text-muted-foreground">
-                          Không có người tham gia phù hợp
-                        </div>
-                      ) : (
-                        eligibleParticipants.map((employee) => (
-                          <div key={employee.employeeCode} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`participant-${employee.employeeCode}`}
-                              checked={newParticipantCodes.includes(employee.employeeCode)}
-                              onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
-                            />
-                            <label
-                              htmlFor={`participant-${employee.employeeCode}`}
-                              className="text-sm font-medium leading-none cursor-pointer flex-1"
-                            >
-                              {employee.fullName}
-                              <span className="text-muted-foreground ml-2 text-xs">
-                                ({employee.employeeCode})
-                              </span>
-                            </label>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 3: Reason */}
-              <TabsContent value="reason" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      Lý do đổi lịch <span className="text-destructive">*</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="reasonCode">Mã lý do</Label>
-                      <Select
-                        value={reasonCode}
-                        onValueChange={(value) => setReasonCode(value as AppointmentReasonCode)}
-                      >
-                        <SelectTrigger id="reasonCode" className="mt-1">
-                          <SelectValue placeholder="Chọn lý do đổi lịch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Cancel Notes - Only show when "Lý do khác" (OTHER) is selected */}
-                    {reasonCode === AppointmentReasonCode.OTHER && (
-                      <div>
-                        <Label htmlFor="cancelNotes">Ghi chú bổ sung</Label>
-                        <Textarea
-                          id="cancelNotes"
-                          value={cancelNotes}
-                          onChange={(e) => setCancelNotes(e.target.value)}
-                          placeholder="Nhập ghi chú về lý do đổi lịch..."
-                          className="mt-1"
-                          rows={4}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        <DialogFooter className="border-t pt-4 mt-4">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Hủy
-          </Button>
-          <Button 
-            onClick={handleReschedule} 
-            disabled={loading || loadingData || !isFormValid}
-            className="min-w-[140px]"
+  {/* Tab 2: New Appointment Details */ }
+  <TabsContent value="new" className="space-y-4 mt-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* New Doctor */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <UserCog className="h-4 w-4" />
+            Bác sĩ mới <span className="text-destructive">*</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={newEmployeeCode}
+            onValueChange={(value) => setNewEmployeeCode(value)}
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Đang xử lý...
-              </>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn bác sĩ" />
+            </SelectTrigger>
+            <SelectContent>
+              {employees.map((employee) => (
+                <SelectItem key={employee.employeeCode} value={employee.employeeCode}>
+                  <div className="flex items-center gap-2">
+                    <span>{employee.fullName}</span>
+                    <span className="text-muted-foreground text-xs">
+                      ({employee.employeeCode})
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* New Room */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Phòng mới <span className="text-destructive">*</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={newRoomCode} onValueChange={(value) => setNewRoomCode(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn phòng" />
+            </SelectTrigger>
+            <SelectContent>
+              {rooms.map((room) => (
+                <SelectItem key={room.roomCode} value={room.roomCode}>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    <span>{room.roomName}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+    </div>
+
+    {/* Date and Time */}
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Ngày & Giờ mới <span className="text-destructive">*</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="newDate">Ngày</Label>
+            <Input
+              id="newDate"
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              min={minDate}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="newTime">Giờ</Label>
+            <TimePicker value={newTime} onChange={setNewTime} />
+          </div>
+        </div>
+
+        {/* Doctor Shift Availability */}
+        {newEmployeeCode && newDate && (
+          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <h4 className="font-semibold text-sm">Lịch làm việc của bác sĩ</h4>
+            </div>
+            {loadingShifts ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Đang tải...</span>
+              </div>
             ) : (
               <>
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Xác nhận đổi lịch
+                {getShiftsForDate(newDate, doctorShifts).length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="text-xs text-muted-foreground">
+                      Ca làm việc của {selectedEmployee?.fullName} vào{' '}
+                      {format(new Date(newDate), 'PPP')}:
+                    </div>
+                    {getShiftsForDate(newDate, doctorShifts).map((shift) => (
+                      <div
+                        key={shift.employeeShiftId}
+                        className="flex items-center gap-2 text-sm bg-background p-2 rounded border"
+                      >
+                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                        <span className="font-medium">
+                          {shift.workShift?.shiftName || 'Ca làm việc'}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {shift.workShift?.startTime} - {shift.workShift?.endTime}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>
+                      Không có ca làm việc cho {selectedEmployee?.fullName} vào{' '}
+                      {format(new Date(newDate), 'PPP')}
+                    </span>
+                  </div>
+                )}
               </>
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* Services (Optional) */}
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Stethoscope className="h-4 w-4" />
+          Dịch vụ (Tùy chọn)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-muted-foreground mb-3">
+          Để trống để giữ nguyên dịch vụ hiện tại
+        </p>
+        <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+          {services.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Không có dịch vụ nào
+            </p>
+          ) : (
+            services.map((service) => (
+              <div key={service.serviceId} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`service-${service.serviceId}`}
+                  checked={newServiceIds.includes(service.serviceId)}
+                  onCheckedChange={() => handleToggleService(service.serviceId)}
+                />
+                <label
+                  htmlFor={`service-${service.serviceId}`}
+                  className="text-sm font-medium leading-none cursor-pointer flex-1"
+                >
+                  {service.serviceName}
+                  <span className="text-muted-foreground ml-2 text-xs">
+                    ({service.serviceCode})
+                  </span>
+                </label>
+              </div>
+            ))
+          )}
+        </div>
+        {newServiceIds.length === 0 && (
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <Info className="h-3 w-3" />
+            Dịch vụ hiện tại sẽ được giữ nguyên
+          </p>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* Participants (Optional) */}
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Người tham gia (Tùy chọn)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-muted-foreground mb-3">
+          Chỉ nhân viên y tế (STANDARD specialization) mới có thể được chọn
+        </p>
+        <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+          {eligibleParticipants.length === 0 ? (
+            <div className="text-center py-4 text-xs text-muted-foreground">
+              Không có người tham gia phù hợp
+            </div>
+          ) : (
+            eligibleParticipants.map((employee) => (
+              <div key={employee.employeeCode} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`participant-${employee.employeeCode}`}
+                  checked={newParticipantCodes.includes(employee.employeeCode)}
+                  onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
+                />
+                <label
+                  htmlFor={`participant-${employee.employeeCode}`}
+                  className="text-sm font-medium leading-none cursor-pointer flex-1"
+                >
+                  {employee.fullName}
+                  <span className="text-muted-foreground ml-2 text-xs">
+                    ({employee.employeeCode})
+                  </span>
+                </label>
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  </TabsContent>
+
+  {/* Tab 3: Reason */ }
+  <TabsContent value="reason" className="space-y-4 mt-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Lý do đổi lịch <span className="text-destructive">*</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="reasonCode">Mã lý do</Label>
+          <Select
+            value={reasonCode}
+            onValueChange={(value) => setReasonCode(value as AppointmentReasonCode)}
+          >
+            <SelectTrigger id="reasonCode" className="mt-1">
+              <SelectValue placeholder="Chọn lý do đổi lịch" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Cancel Notes - Only show when "Lý do khác" (OTHER) is selected */}
+        {reasonCode === AppointmentReasonCode.OTHER && (
+          <div>
+            <Label htmlFor="cancelNotes">Ghi chú bổ sung</Label>
+            <Textarea
+              id="cancelNotes"
+              value={cancelNotes}
+              onChange={(e) => setCancelNotes(e.target.value)}
+              placeholder="Nhập ghi chú về lý do đổi lịch..."
+              className="mt-1"
+              rows={4}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  </TabsContent>
+            </Tabs >
+          </div >
+        )
+}
+
+<DialogFooter className="border-t pt-4 mt-4">
+  <Button variant="outline" onClick={onClose} disabled={loading}>
+    Hủy
+  </Button>
+  <Button
+    onClick={handleReschedule}
+    disabled={loading || loadingData || !isFormValid}
+    className="min-w-[140px]"
+  >
+    {loading ? (
+      <>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Đang xử lý...
+      </>
+    ) : (
+      <>
+        <ArrowRight className="h-4 w-4 mr-2" />
+        Xác nhận đổi lịch
+      </>
+    )}
+  </Button>
+</DialogFooter>
+      </DialogContent >
+    </Dialog >
   );
 }

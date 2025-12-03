@@ -245,15 +245,15 @@ export default function AdminAppointmentDetailPage() {
   const canUpdateStatus = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || false;
   const canDelay = user?.permissions?.includes('DELAY_APPOINTMENT') || false;
   // Reschedule permission: can reschedule if has UPDATE_APPOINTMENT_STATUS or can create appointments
-  const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || 
-                         user?.permissions?.includes('CREATE_APPOINTMENT') || false;
+  const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') ||
+    user?.permissions?.includes('CREATE_APPOINTMENT') || false;
   // Clinical Record permissions
   const canWriteClinicalRecord = user?.permissions?.includes('WRITE_CLINICAL_RECORD') || false;
-  
+
   // Check if appointment status allows clinical record creation/editing
   // BE requires: IN_PROGRESS or CHECKED_IN
   const canCreateOrEditClinicalRecord = appointment && (
-    appointment.status === 'IN_PROGRESS' || 
+    appointment.status === 'IN_PROGRESS' ||
     appointment.status === 'CHECKED_IN'
   );
 
@@ -706,13 +706,13 @@ export default function AdminAppointmentDetailPage() {
 
       // ✅ FIX: Update appointment with response data (BE now returns DTO)
       setAppointment(updated);
-      
+
       // ✅ FIX: Reset clinical record loading state when appointment status changes
       // This allows clinical record to be reloaded if user switches to that tab
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
       setClinicalRecordError(null);
-      
+
       // If currently on clinical record tab, reload it
       if (activeTab === 'clinical-record' && updated.appointmentId) {
         // Small delay to ensure state is updated
@@ -720,7 +720,7 @@ export default function AdminAppointmentDetailPage() {
           loadClinicalRecord();
         }, 100);
       }
-      
+
       // Reset form
       setShowStatusModal(false);
       setSelectedStatus(null);
@@ -774,12 +774,12 @@ export default function AdminAppointmentDetailPage() {
 
       // Update appointment with new data
       setAppointment(updated);
-      
+
       // ✅ FIX: Reset clinical record loading state when appointment changes
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
       setClinicalRecordError(null);
-      
+
       // Reset form
       setShowDelayModal(false);
       setDelayNewStartTime('');
@@ -1103,8 +1103,8 @@ export default function AdminAppointmentDetailPage() {
                     <br />
                     Trạng thái hiện tại: <span className="font-semibold">{appointment.status}</span>
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setActiveTab('details')}
                   >
                     Quay lại chi tiết
@@ -1126,8 +1126,8 @@ export default function AdminAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Lỗi khi tải bệnh án</h3>
                   <p className="text-muted-foreground mb-4">{clinicalRecordError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingClinicalRecord(false);
                       setClinicalRecordError(null);
