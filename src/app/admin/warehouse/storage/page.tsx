@@ -796,7 +796,11 @@ export default function StorageInOutPage() {
                               >
                                 <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
                               </Button>
-                              <Button
+                              {/* 
+                                ⚠️ EDIT BUTTON HIDDEN: User requested to hide edit button
+                                Edit functionality is disabled as BE doesn't support updating transaction content
+                              */}
+                              {/* <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleEdit(txn)}
@@ -804,7 +808,7 @@ export default function StorageInOutPage() {
                                 className="h-8 w-8 p-0"
                               >
                                 <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
-                              </Button>
+                              </Button> */}
                               {/* 
                                 ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
                                 TransactionHistoryController chỉ có GET endpoints.

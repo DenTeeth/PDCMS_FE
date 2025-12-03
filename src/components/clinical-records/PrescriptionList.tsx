@@ -11,17 +11,24 @@ import React from 'react';
 import { PrescriptionDTO } from '@/types/clinicalRecord';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
-import { Pill, Calendar } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Pill, Calendar, Edit, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 interface PrescriptionListProps {
   prescriptions: PrescriptionDTO[];
+  canEdit?: boolean;
+  onEdit?: (prescription: PrescriptionDTO) => void;
+  onCreate?: () => void;
 }
 
 export default function PrescriptionList({
   prescriptions,
+  canEdit = false,
+  onEdit,
+  onCreate,
 }: PrescriptionListProps) {
   const formatDateTime = (dateTime: string) => {
     try {
@@ -34,10 +41,35 @@ export default function PrescriptionList({
   if (!prescriptions || prescriptions.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Pill className="h-5 w-5" />
+              Đơn Thuốc
+            </CardTitle>
+            {canEdit && onCreate && (
+              <Button onClick={onCreate} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Kê Đơn Thuốc
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Pill className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>Chưa có đơn thuốc nào được kê</p>
+            {canEdit && onCreate && (
+              <Button
+                onClick={onCreate}
+                variant="outline"
+                className="mt-4"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Kê Đơn Thuốc
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -46,15 +78,22 @@ export default function PrescriptionList({
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-center gap-2">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
             <Pill className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">
-              Đơn Thuốc ({prescriptions.length})
-            </h3>
-          </div>
+            Đơn Thuốc ({prescriptions.length})
+          </CardTitle>
+          {canEdit && onCreate && (
+            <Button onClick={onCreate} variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Kê Đơn Thuốc
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
 
           {/* Prescriptions List */}
           <div className="space-y-4">
@@ -79,6 +118,16 @@ export default function PrescriptionList({
                         </div>
                       )}
                     </div>
+                    {canEdit && onEdit && (
+                      <Button
+                        onClick={() => onEdit(prescription)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Chỉnh sửa
+                      </Button>
+                    )}
                   </div>
 
                   {/* Prescription Items */}
