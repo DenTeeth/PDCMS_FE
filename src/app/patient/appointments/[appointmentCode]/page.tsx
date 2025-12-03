@@ -264,21 +264,17 @@ export default function PatientAppointmentDetailPage() {
     setHasTriedLoadingClinicalRecord(true);
 
     try {
+      // BE now returns HTTP 200 with null instead of 404 when no record exists (Issue #37 fix)
       const record = await clinicalRecordService.getByAppointmentId(appointment.appointmentId);
-      setClinicalRecord(record);
-    } catch (error: any) {
-      // 404 is expected if no clinical record exists yet
-      // Check both error.status (from createApiError) and error.response?.status (from axios)
-      const status = error.status || error.response?.status;
-      if (status === 404) {
-        setClinicalRecord(null);
-        setClinicalRecordError(null); // No error, just no record yet
+      setClinicalRecord(record); // record can be null if no clinical record exists
+      if (!record) {
         console.log('📋 [CLINICAL RECORD] No record found for appointment');
-      } else {
-        console.error('Error loading clinical record:', error);
-        setClinicalRecordError(error.message || 'Không thể tải bệnh án');
-        handleError(error);
       }
+    } catch (error: any) {
+      // Only real errors (appointment not found, access denied, etc.)
+      console.error('Error loading clinical record:', error);
+      setClinicalRecordError(error.message || 'Không thể tải bệnh án');
+      handleError(error);
     } finally {
       setLoadingClinicalRecord(false);
     }
