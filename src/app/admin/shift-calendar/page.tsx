@@ -152,7 +152,14 @@ export default function AdminShiftCalendarPage() {
       // Load employees (Admin luôn có quyền xem tất cả)
       const employeeService = new EmployeeService();
       const employeesResponse = await employeeService.getEmployees({});
-      setEmployees(employeesResponse.content || []);
+      const employeesList = employeesResponse.content || [];
+      setEmployees(employeesList);
+
+      console.log('✅ Employees loaded:', {
+        count: employeesList.length,
+        sample: employeesList[0],
+        allIds: employeesList.map(e => ({ id: e.employeeId, type: typeof e.employeeId, name: e.fullName }))
+      });
 
       // Don't auto-load shifts - wait for user to click "Xem lịch"
     } catch (error: any) {
@@ -231,9 +238,31 @@ export default function AdminShiftCalendarPage() {
 
   // Convert shifts to calendar events
   const getCalendarEvents = () => {
-    return shifts.map(shift => {
+    console.log('🗓️ getCalendarEvents called:', {
+      shiftsCount: shifts.length,
+      workShiftsCount: workShifts.length,
+      employeesCount: employees.length,
+      sampleShift: shifts[0],
+      sampleEmployee: employees[0]
+    });
+
+    const events = shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
-      const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
+
+      // Try multiple matching strategies
+      const employee = employees.find(emp =>
+        emp.employeeId === shift.employeeId ||
+        emp.employeeId === String(shift.employeeId) ||
+        String(emp.employeeId) === String(shift.employeeId)
+      );
+
+      if (!employee && shifts.indexOf(shift) === 0) {
+        console.warn('⚠️ Employee not found for shift:', {
+          shiftEmployeeId: shift.employeeId,
+          shiftEmployeeIdType: typeof shift.employeeId,
+          availableEmployeeIds: employees.map(e => ({ id: e.employeeId, type: typeof e.employeeId }))
+        });
+      }
 
       const title = `${employee?.fullName || 'N/A'} - ${workShift?.shiftName || shift.workShiftId}`;
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
@@ -249,6 +278,9 @@ export default function AdminShiftCalendarPage() {
         borderColor: getEventColor(shift.status),
       };
     });
+
+    console.log('🗓️ Calendar events generated:', events.length);
+    return events;
   };
 
   const getEventColor = (status: ShiftStatus) => {

@@ -47,10 +47,9 @@ export class TimeOffRequestService {
     };
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 TimeOffRequestService.createTimeOffRequest:', {
-        original: data,
-        transformed: requestBody
-      });
+      console.log('🔍 TimeOffRequestService.createTimeOffRequest:');
+      console.log('  Original:', JSON.stringify(data, null, 2));
+      console.log('  Transformed:', JSON.stringify(requestBody, null, 2));
     }
 
     try {
@@ -61,12 +60,11 @@ export class TimeOffRequestService {
       return response.data;
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ TimeOffRequestService.createTimeOffRequest failed:', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          requestBody
-        });
+        console.error('❌ TimeOffRequestService.createTimeOffRequest failed:');
+        console.error('  Status:', error.response?.status);
+        console.error('  Status Text:', error.response?.statusText);
+        console.error('  Error Data:', JSON.stringify(error.response?.data, null, 2));
+        console.error('  Request Body:', JSON.stringify(requestBody, null, 2));
       }
       throw error;
     }

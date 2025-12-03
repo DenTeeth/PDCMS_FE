@@ -52,10 +52,10 @@ type ViewMode = 'transactions' | 'reports';
 export default function StorageInOutPage() {
   // RBAC: Check VIEW_WAREHOUSE_COST permission (BE uses VIEW_WAREHOUSE_COST, not VIEW_COST)
   const hasViewCost = usePermission('VIEW_WAREHOUSE_COST');
-  
+
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('transactions');
-  
+
   // Filter & Pagination state
   const [activeFilter, setActiveFilter] = useState<TransactionFilter>('ALL');
   const [page, setPage] = useState(0);
@@ -64,7 +64,7 @@ export default function StorageInOutPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortField, setSortField] = useState<string>('transactionDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  
+
   // Advanced filters (API 6.6)
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('');
@@ -73,7 +73,7 @@ export default function StorageInOutPage() {
   const [supplierIdFilter, setSupplierIdFilter] = useState<number | undefined>(undefined);
   const [appointmentIdFilter, setAppointmentIdFilter] = useState<number | undefined>(undefined);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  
+
   // Modal states
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -176,10 +176,10 @@ export default function StorageInOutPage() {
   });
 
   // Extract array from response (handle both array and Page response)
-  const allItems: InventorySummary[] = inventorySummaryError 
+  const allItems: InventorySummary[] = inventorySummaryError
     ? [] // Return empty array if error occurs
-    : (Array.isArray(allItemsResponse) 
-      ? allItemsResponse 
+    : (Array.isArray(allItemsResponse)
+      ? allItemsResponse
       : (allItemsResponse as any)?.content || []);
 
   const { data: categories = [] } = useQuery({
@@ -363,456 +363,455 @@ export default function StorageInOutPage() {
   return (
     <ProtectedRoute requiredPermissions={['VIEW_WAREHOUSE']}>
       <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Xuất/Nhập Kho</h1>
-          <p className="text-slate-600 mt-1">Quản lý giao dịch nhập/xuất kho & báo cáo</p>
-        </div>
-        
-        {/* View Mode Toggle */}
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'transactions' ? 'default' : 'outline'}
-            onClick={() => setViewMode('transactions')}
-            className="gap-2"
-          >
-            <FontAwesomeIcon icon={faBoxes} />
-            Giao dịch
-          </Button>
-          <Button
-            variant={viewMode === 'reports' ? 'default' : 'outline'}
-            onClick={() => setViewMode('reports')}
-            className="gap-2"
-          >
-            <FontAwesomeIcon icon={faChartLine} />
-            Báo cáo
-          </Button>
-        </div>
-      </div>
-
-      {/* Backend Error Warning */}
-      {error && viewMode === 'transactions' && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <span className="text-red-600">⚠️</span>
-              <div>
-                <p className="text-sm font-medium text-red-900">Lỗi kết nối Backend</p>
-                <p className="text-xs text-red-700">Server trả về lỗi 500. Vui lòng liên hệ Backend để kiểm tra API /api/v1/warehouse/transactions</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Conditional Content Based on View Mode */}
-      {viewMode === 'transactions' ? (
-        <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Phiếu nhập kho
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {filterStats.IMPORT}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Phiếu nhập trong tháng
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Phiếu xuất kho
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {filterStats.EXPORT}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Phiếu xuất trong tháng
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Tổng giao dịch
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {filterStats.ALL}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Tất cả loại phiếu
-                </p>
-              </CardContent>
-            </Card>
-            
-            {/* API 6.6 Statistics */}
-            {transactionStats && (
-              <>
-                {transactionStats.pendingApprovalCount !== undefined && (
-                  <Card className="border-orange-200 bg-orange-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-orange-700">
-                        Chờ duyệt
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-orange-600">
-                        {transactionStats.pendingApprovalCount}
-                      </div>
-                      <p className="text-xs text-orange-600 mt-1">
-                        Phiếu đang chờ
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {hasViewCost && transactionStats.totalImportValue !== undefined && (
-                  <Card className="border-blue-200 bg-blue-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">
-                        Tổng giá trị nhập
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫
-                      </div>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {transactionStats.periodStart && transactionStats.periodEnd
-                          ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
-                          : 'Trong kỳ'}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            )}
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Xuất/Nhập Kho</h1>
+            <p className="text-slate-600 mt-1">Quản lý giao dịch nhập/xuất kho & báo cáo</p>
           </div>
 
-      {/* Search Bar & Advanced Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp..."
-                  className="pl-10"
-                  value={searchKeyword}
-                  onChange={handleSearchChange}
-                />
+          {/* View Mode Toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'transactions' ? 'default' : 'outline'}
+              onClick={() => setViewMode('transactions')}
+              className="gap-2"
+            >
+              <FontAwesomeIcon icon={faBoxes} />
+              Giao dịch
+            </Button>
+            <Button
+              variant={viewMode === 'reports' ? 'default' : 'outline'}
+              onClick={() => setViewMode('reports')}
+              className="gap-2"
+            >
+              <FontAwesomeIcon icon={faChartLine} />
+              Báo cáo
+            </Button>
+          </div>
+        </div>
+
+        {/* Backend Error Warning */}
+        {error && viewMode === 'transactions' && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div>
+                  <p className="text-sm font-medium text-red-900">Lỗi kết nối Backend</p>
+                  <p className="text-xs text-red-700">Server trả về lỗi 500. Vui lòng liên hệ Backend để kiểm tra API /api/v1/warehouse/transactions</p>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              >
-                <FontAwesomeIcon icon={faLayerGroup} className="h-4 w-4 mr-2" />
-                {showAdvancedFilters ? 'Ẩn bộ lọc' : 'Bộ lọc nâng cao'}
-              </Button>
-              <Button onClick={() => setIsImportModalOpen(true)} className="bg-green-600 hover:bg-green-700">
-                <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
-                Nhập kho
-              </Button>
-              <Button onClick={() => setIsExportModalOpen(true)} variant="destructive">
-                <FontAwesomeIcon icon={faUpload} className="h-4 w-4 mr-2" />
-                Xuất kho
-              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Conditional Content Based on View Mode */}
+        {viewMode === 'transactions' ? (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Phiếu nhập kho
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {filterStats.IMPORT}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Phiếu nhập trong tháng
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Phiếu xuất kho
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">
+                    {filterStats.EXPORT}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Phiếu xuất trong tháng
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Tổng giao dịch
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {filterStats.ALL}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tất cả loại phiếu
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* API 6.6 Statistics */}
+              {transactionStats && (
+                <>
+                  {transactionStats.pendingApprovalCount !== undefined && (
+                    <Card className="border-orange-200 bg-orange-50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-orange-700">
+                          Chờ duyệt
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-orange-600">
+                          {transactionStats.pendingApprovalCount}
+                        </div>
+                        <p className="text-xs text-orange-600 mt-1">
+                          Phiếu đang chờ
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {hasViewCost && transactionStats.totalImportValue !== undefined && (
+                    <Card className="border-blue-200 bg-blue-50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-blue-700">
+                          Tổng giá trị nhập
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {transactionStats.periodStart && transactionStats.periodEnd
+                            ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
+                            : 'Trong kỳ'}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Advanced Filters Panel */}
-            {showAdvancedFilters && (
-              <div className="border-t pt-4 space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Status Filter */}
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái duyệt</label>
-                    <Select value={statusFilter || 'ALL'} onValueChange={(value) => { setStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Tất cả" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Tất cả</SelectItem>
-                        <SelectItem value="DRAFT">Nháp</SelectItem>
-                        <SelectItem value="PENDING_APPROVAL">Chờ duyệt</SelectItem>
-                        <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                        <SelectItem value="REJECTED">Từ chối</SelectItem>
-                        <SelectItem value="CANCELLED">Đã hủy</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Payment Status Filter (only for IMPORT) */}
-                  {activeFilter === 'IMPORT' && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái thanh toán</label>
-                      <Select value={paymentStatusFilter || 'ALL'} onValueChange={(value) => { setPaymentStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Tất cả" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">Tất cả</SelectItem>
-                          <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-                          <SelectItem value="PARTIAL">Thanh toán một phần</SelectItem>
-                          <SelectItem value="PAID">Đã thanh toán</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* From Date */}
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">Từ ngày</label>
-                    <Input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => { setFromDate(e.target.value); setPage(0); }}
-                    />
-                  </div>
-
-                  {/* To Date */}
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">Đến ngày</label>
-                    <Input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => { setToDate(e.target.value); setPage(0); }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Supplier Filter (only for IMPORT) */}
-                  {activeFilter === 'IMPORT' && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-700 mb-1 block">Nhà cung cấp</label>
-                      <Select
-                        value={supplierIdFilter?.toString() || 'ALL'}
-                        onValueChange={(value) => {
-                          setSupplierIdFilter(value === 'ALL' ? undefined : Number(value));
-                          setPage(0);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Tất cả nhà cung cấp" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">Tất cả nhà cung cấp</SelectItem>
-                          {suppliers.map((supplier: any) => (
-                            <SelectItem key={supplier.supplierId} value={supplier.supplierId.toString()}>
-                              {supplier.supplierName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Appointment Filter (only for EXPORT) */}
-                  {activeFilter === 'EXPORT' && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-700 mb-1 block">Ca điều trị (ID)</label>
+            {/* Search Bar & Advanced Filters */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex-1">
+                      <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        type="number"
-                        placeholder="Nhập ID ca điều trị"
-                        value={appointmentIdFilter || ''}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setAppointmentIdFilter(value ? Number(value) : undefined);
-                          setPage(0);
-                        }}
+                        type="text"
+                        placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp..."
+                        className="pl-10"
+                        value={searchKeyword}
+                        onChange={handleSearchChange}
                       />
                     </div>
-                  )}
-
-                  {/* Clear Filters Button */}
-                  <div className="flex items-end">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        setStatusFilter('');
-                        setPaymentStatusFilter('');
-                        setFromDate('');
-                        setToDate('');
-                        setSupplierIdFilter(undefined);
-                        setAppointmentIdFilter(undefined);
-                        setPage(0);
-                      }}
-                      className="w-full"
+                      onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                     >
-                      Xóa bộ lọc
+                      <FontAwesomeIcon icon={faLayerGroup} className="h-4 w-4 mr-2" />
+                      {showAdvancedFilters ? 'Ẩn bộ lọc' : 'Bộ lọc nâng cao'}
+                    </Button>
+                    <Button onClick={() => setIsImportModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+                      <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+                      Nhập kho
+                    </Button>
+                    <Button onClick={() => setIsExportModalOpen(true)} variant="destructive">
+                      <FontAwesomeIcon icon={faUpload} className="h-4 w-4 mr-2" />
+                      Xuất kho
                     </Button>
                   </div>
+
+                  {/* Advanced Filters Panel */}
+                  {showAdvancedFilters && (
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Status Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái duyệt</label>
+                          <Select value={statusFilter || 'ALL'} onValueChange={(value) => { setStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Tất cả" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ALL">Tất cả</SelectItem>
+                              <SelectItem value="DRAFT">Nháp</SelectItem>
+                              <SelectItem value="PENDING_APPROVAL">Chờ duyệt</SelectItem>
+                              <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                              <SelectItem value="REJECTED">Từ chối</SelectItem>
+                              <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Payment Status Filter (only for IMPORT) */}
+                        {activeFilter === 'IMPORT' && (
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Trạng thái thanh toán</label>
+                            <Select value={paymentStatusFilter || 'ALL'} onValueChange={(value) => { setPaymentStatusFilter(value === 'ALL' ? '' : value); setPage(0); }}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Tất cả" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ALL">Tất cả</SelectItem>
+                                <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+                                <SelectItem value="PARTIAL">Thanh toán một phần</SelectItem>
+                                <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* From Date */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-700 mb-1 block">Từ ngày</label>
+                          <Input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => { setFromDate(e.target.value); setPage(0); }}
+                          />
+                        </div>
+
+                        {/* To Date */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-700 mb-1 block">Đến ngày</label>
+                          <Input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => { setToDate(e.target.value); setPage(0); }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Supplier Filter (only for IMPORT) */}
+                        {activeFilter === 'IMPORT' && (
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Nhà cung cấp</label>
+                            <Select
+                              value={supplierIdFilter?.toString() || 'ALL'}
+                              onValueChange={(value) => {
+                                setSupplierIdFilter(value === 'ALL' ? undefined : Number(value));
+                                setPage(0);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Tất cả nhà cung cấp" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ALL">Tất cả nhà cung cấp</SelectItem>
+                                {suppliers.map((supplier: any) => (
+                                  <SelectItem key={supplier.supplierId} value={supplier.supplierId.toString()}>
+                                    {supplier.supplierName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* Appointment Filter (only for EXPORT) */}
+                        {activeFilter === 'EXPORT' && (
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Ca điều trị (ID)</label>
+                            <Input
+                              type="number"
+                              placeholder="Nhập ID ca điều trị"
+                              value={appointmentIdFilter || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setAppointmentIdFilter(value ? Number(value) : undefined);
+                                setPage(0);
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Clear Filters Button */}
+                        <div className="flex items-end">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setStatusFilter('');
+                              setPaymentStatusFilter('');
+                              setFromDate('');
+                              setToDate('');
+                              setSupplierIdFilter(undefined);
+                              setAppointmentIdFilter(undefined);
+                              setPage(0);
+                            }}
+                            className="w-full"
+                          >
+                            Xóa bộ lọc
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 border-b">
-        {(['ALL', 'IMPORT', 'EXPORT'] as TransactionFilter[]).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => {
-              setActiveFilter(filter);
-              setPage(0);
-            }}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
-              activeFilter === filter
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {filter === 'ALL' ? 'Tất cả' : getTypeLabel(filter)} ({filterStats[filter]})
-          </button>
-        ))}
-      </div>
+            {/* Filter Tabs */}
+            <div className="flex gap-2 border-b">
+              {(['ALL', 'IMPORT', 'EXPORT'] as TransactionFilter[]).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => {
+                    setActiveFilter(filter);
+                    setPage(0);
+                  }}
+                  className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeFilter === filter
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                    }`}
+                >
+                  {filter === 'ALL' ? 'Tất cả' : getTypeLabel(filter)} ({filterStats[filter]})
+                </button>
+              ))}
+            </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="text-center py-8">Đang tải...</div>
-          ) : transactions.length === 0 ? (
-            <EmptyState
-              icon={faUpload}
-              title={debouncedSearch ? "Không tìm thấy giao dịch" : "Chưa có giao dịch nào"}
-              description={debouncedSearch ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc" : "Tạo phiếu nhập hoặc xuất kho đầu tiên"}
-              actionLabel={!debouncedSearch ? "Tạo phiếu nhập" : undefined}
-              onAction={!debouncedSearch ? () => setIsImportModalOpen(true) : undefined}
-            />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionCode')}>
-                        <div className="flex items-center gap-2 font-semibold text-sm">
-                          Mã phiếu
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                        </div>
-                      </th>
-                      <th className="text-left p-3 font-semibold text-sm">Loại</th>
-                      <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionDate')}>
-                        <div className="flex items-center gap-2 font-semibold text-sm">
-                          Ngày
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                        </div>
-                      </th>
-                      <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
-                      <th className="text-left p-3 font-semibold text-sm">Nhà cung cấp</th>
-                      {hasViewCost && (
-                        <th className="text-right p-3 font-semibold text-sm">Giá trị</th>
-                      )}
-                      {activeFilter === 'IMPORT' && (
-                        <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
-                      )}
-                      <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
-                      <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((txn) => {
-                      const getStatusBadge = (status?: string) => {
-                        if (!status) return null;
-                        const config: Record<string, { variant?: any; className?: string; label: string }> = {
-                          DRAFT: { variant: 'outline', label: 'Nháp' },
-                          PENDING_APPROVAL: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Chờ duyệt' },
-                          APPROVED: { variant: 'default', label: 'Đã duyệt' },
-                          REJECTED: { variant: 'destructive', label: 'Từ chối' },
-                          CANCELLED: { variant: 'secondary', label: 'Đã hủy' },
-                        };
-                        const cfg = config[status] || { variant: 'outline', label: status };
-                        if (cfg.className) {
-                          return <Badge className={cfg.className}>{cfg.label}</Badge>;
-                        }
-                        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
-                      };
+            {/* Table */}
+            <Card>
+              <CardContent className="pt-6">
+                {isLoading ? (
+                  <div className="text-center py-8">Đang tải...</div>
+                ) : transactions.length === 0 ? (
+                  <EmptyState
+                    icon={faUpload}
+                    title={debouncedSearch ? "Không tìm thấy giao dịch" : "Chưa có giao dịch nào"}
+                    description={debouncedSearch ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc" : "Tạo phiếu nhập hoặc xuất kho đầu tiên"}
+                    actionLabel={!debouncedSearch ? "Tạo phiếu nhập" : undefined}
+                    onAction={!debouncedSearch ? () => setIsImportModalOpen(true) : undefined}
+                  />
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-max">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionCode')}>
+                              <div className="flex items-center gap-2 font-semibold text-sm">
+                                Mã phiếu
+                                <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                              </div>
+                            </th>
+                            <th className="text-left p-3 font-semibold text-sm">Loại</th>
+                            <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionDate')}>
+                              <div className="flex items-center gap-2 font-semibold text-sm">
+                                Ngày
+                                <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                              </div>
+                            </th>
+                            <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
+                            <th className="text-left p-3 font-semibold text-sm">Nhà cung cấp</th>
+                            {hasViewCost && (
+                              <th className="text-right p-3 font-semibold text-sm">Giá trị</th>
+                            )}
+                            {activeFilter === 'IMPORT' && (
+                              <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
+                            )}
+                            <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
+                            <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transactions.map((txn) => {
+                            const getStatusBadge = (status?: string) => {
+                              if (!status) return null;
+                              const config: Record<string, { variant?: any; className?: string; label: string }> = {
+                                DRAFT: { variant: 'outline', label: 'Nháp' },
+                                PENDING_APPROVAL: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Chờ duyệt' },
+                                APPROVED: { variant: 'default', label: 'Đã duyệt' },
+                                REJECTED: { variant: 'destructive', label: 'Từ chối' },
+                                CANCELLED: { variant: 'secondary', label: 'Đã hủy' },
+                              };
+                              const cfg = config[status] || { variant: 'outline', label: status };
+                              if (cfg.className) {
+                                return <Badge className={cfg.className}>{cfg.label}</Badge>;
+                              }
+                              return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+                            };
 
-                      const getPaymentStatusBadge = (paymentStatus?: string) => {
-                        if (!paymentStatus) return <span className="text-gray-400">-</span>;
-                        const config: Record<string, { className: string; label: string }> = {
-                          UNPAID: { className: 'text-red-600', label: 'Chưa thanh toán' },
-                          PARTIAL: { className: 'text-orange-600', label: 'Thanh toán một phần' },
-                          PAID: { className: 'text-green-600', label: 'Đã thanh toán' },
-                        };
-                        const cfg = config[paymentStatus] || { className: 'text-gray-600', label: paymentStatus };
-                        return <span className={cfg.className}>{cfg.label}</span>;
-                      };
+                            const getPaymentStatusBadge = (paymentStatus?: string) => {
+                              if (!paymentStatus) return <span className="text-gray-400">-</span>;
+                              const config: Record<string, { className: string; label: string }> = {
+                                UNPAID: { className: 'text-red-600', label: 'Chưa thanh toán' },
+                                PARTIAL: { className: 'text-orange-600', label: 'Thanh toán một phần' },
+                                PAID: { className: 'text-green-600', label: 'Đã thanh toán' },
+                              };
+                              const cfg = config[paymentStatus] || { className: 'text-gray-600', label: paymentStatus };
+                              return <span className={cfg.className}>{cfg.label}</span>;
+                            };
 
-                      return (
-                        <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
-                          <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
-                          <td className="p-3">
-                            <Badge className={getTypeColor(txn.transactionType)}>
-                              {getTypeLabel(txn.transactionType)}
-                            </Badge>
-                          </td>
-                          <td className="p-3">{formatDate(txn.transactionDate)}</td>
-                          <td className="p-3">
-                            {getStatusBadge(txn.status)}
-                          </td>
-                          <td className="p-3">{txn.supplierName || '-'}</td>
-                          {hasViewCost && (
-                            <td className="p-3 text-right text-sm font-medium">
-                              {txn.totalValue !== null && txn.totalValue !== undefined
-                                ? `${txn.totalValue.toLocaleString('vi-VN')} ₫`
-                                : <span className="text-gray-400">-</span>}
-                            </td>
-                          )}
-                          {activeFilter === 'IMPORT' && (
-                            <td className="p-3 text-sm">
-                              {getPaymentStatusBadge(txn.paymentStatus)}
-                              {hasViewCost && txn.paymentStatus === 'PARTIAL' && txn.remainingDebt !== null && txn.remainingDebt !== undefined && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Còn nợ: {txn.remainingDebt.toLocaleString('vi-VN')} ₫
-                                </div>
-                              )}
-                            </td>
-                          )}
-                          <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
-                          <td className="p-3">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleViewDetail(txn.transactionId)}
-                                title="Xem chi tiết"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEdit(txn)}
-                                title="Sửa ghi chú"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
-                              </Button>
-                              {/* 
+                            return (
+                              <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
+                                <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
+                                <td className="p-3">
+                                  <Badge className={getTypeColor(txn.transactionType)}>
+                                    {getTypeLabel(txn.transactionType)}
+                                  </Badge>
+                                </td>
+                                <td className="p-3">{formatDate(txn.transactionDate)}</td>
+                                <td className="p-3">
+                                  {getStatusBadge(txn.status)}
+                                </td>
+                                <td className="p-3">{txn.supplierName || '-'}</td>
+                                {hasViewCost && (
+                                  <td className="p-3 text-right text-sm font-medium">
+                                    {txn.totalValue !== null && txn.totalValue !== undefined
+                                      ? `${txn.totalValue.toLocaleString('vi-VN')} ₫`
+                                      : <span className="text-gray-400">-</span>}
+                                  </td>
+                                )}
+                                {activeFilter === 'IMPORT' && (
+                                  <td className="p-3 text-sm">
+                                    {getPaymentStatusBadge(txn.paymentStatus)}
+                                    {hasViewCost && txn.paymentStatus === 'PARTIAL' && txn.remainingDebt !== null && txn.remainingDebt !== undefined && (
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        Còn nợ: {txn.remainingDebt.toLocaleString('vi-VN')} ₫
+                                      </div>
+                                    )}
+                                  </td>
+                                )}
+                                <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
+                                <td className="p-3">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleViewDetail(txn.transactionId)}
+                                      title="Xem chi tiết"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleEdit(txn)}
+                                      title="Sửa ghi chú"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
+                                    </Button>
+                                    {/* 
                                 ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
                                 TransactionHistoryController chỉ có GET endpoints.
                                 Nếu cần xóa, có thể set status = CANCELLED thay vì delete.
                               */}
-                              {/* <Button
+                                    {/* <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDelete(txn)}
@@ -822,334 +821,334 @@ export default function StorageInOutPage() {
                               >
                                 <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-400" />
                               </Button> */}
-                            </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="text-sm text-gray-600">
+                        Hiển thị {pageStart} - {pageEnd} trong tổng số {totalElements} giao dịch
+                        {debouncedSearch && (
+                          <span className="text-muted-foreground ml-2">
+                            (đã lọc theo: "{debouncedSearch}")
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(0)}
+                          disabled={page === 0}
+                        >
+                          Đầu
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(page - 1)}
+                          disabled={page === 0}
+                        >
+                          <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
+                        </Button>
+                        <span className="px-4 py-2 text-sm">
+                          Trang {page + 1} / {totalPages || 1}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(page + 1)}
+                          disabled={page >= totalPages - 1}
+                        >
+                          <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(totalPages - 1)}
+                          disabled={page >= totalPages - 1}
+                        >
+                          Cuối
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          /* ========== REPORTS VIEW ========== */
+          <>
+            {/* Overview Stats */}
+            <div className="grid grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faBoxes} className="w-4 h-4" />
+                    Tổng vật tư
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{allItems.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4 text-red-600" />
+                    Sắp hết
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{inventoryStats?.lowStockCount || 0}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faSnowflake} className="w-4 h-4 text-orange-600" />
+                    Sắp hết hạn
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{inventoryStats?.expiringWithin30Days || 0}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faLayerGroup} className="w-4 h-4" />
+                    Danh mục
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{categories.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Low Stock Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-red-600" />
+                  Top 10 Vật tư sắp hết
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Mã VT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Tên VT</th>
+                        <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Tồn kho</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Min/Max</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {lowStockItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                            Không có vật tư sắp hết
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-600">
-                  Hiển thị {pageStart} - {pageEnd} trong tổng số {totalElements} giao dịch
-                  {debouncedSearch && (
-                    <span className="text-muted-foreground ml-2">
-                      (đã lọc theo: "{debouncedSearch}")
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(0)}
-                    disabled={page === 0}
-                  >
-                    Đầu
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 0}
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
-                  </Button>
-                  <span className="px-4 py-2 text-sm">
-                    Trang {page + 1} / {totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= totalPages - 1}
-                  >
-                    <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(totalPages - 1)}
-                    disabled={page >= totalPages - 1}
-                  >
-                      Cuối
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-        </>
-      ) : (
-        /* ========== REPORTS VIEW ========== */
-        <>
-          {/* Overview Stats */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faBoxes} className="w-4 h-4" />
-                  Tổng vật tư
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{allItems.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4 text-red-600" />
-                  Sắp hết
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{inventoryStats?.lowStockCount || 0}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faSnowflake} className="w-4 h-4 text-orange-600" />
-                  Sắp hết hạn
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{inventoryStats?.expiringWithin30Days || 0}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faLayerGroup} className="w-4 h-4" />
-                  Danh mục
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{categories.length}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Low Stock Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-red-600" />
-                Top 10 Vật tư sắp hết
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Mã VT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Tên VT</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Tồn kho</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Min/Max</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {lowStockItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                          Không có vật tư sắp hết
-                        </td>
-                      </tr>
-                    ) : (
-                      lowStockItems.map((item, idx) => (
-                        <tr key={item.itemMasterId} className="hover:bg-gray-50 transition">
-                          <td className="px-4 py-3">{idx + 1}</td>
-                          <td className="px-4 py-3 font-mono text-sm">{item.itemCode}</td>
-                          <td className="px-4 py-3 font-medium">{item.itemName}</td>
-                          <td className="px-4 py-3 text-right font-bold text-red-600">{item.totalQuantity || 0}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {item.minStockLevel} / {item.maxStockLevel}
-                          </td>
-                          <td className="px-4 py-3">{getStockBadge(item.stockStatus || 'NORMAL')}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Expiring Soon Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faSnowflake} className="w-5 h-5 text-orange-600" />
-                Top 10 Vật tư sắp hết hạn (Kho lạnh)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Mã VT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Tên VT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Hạn sử dụng</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Còn lại</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {expiringSoonItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          Không có vật tư sắp hết hạn
-                        </td>
-                      </tr>
-                    ) : (
-                      expiringSoonItems.map((item, idx) => {
-                        const daysLeft = getDaysUntilExpiry(item.nearestExpiryDate!);
-                        return (
+                      ) : (
+                        lowStockItems.map((item, idx) => (
                           <tr key={item.itemMasterId} className="hover:bg-gray-50 transition">
                             <td className="px-4 py-3">{idx + 1}</td>
                             <td className="px-4 py-3 font-mono text-sm">{item.itemCode}</td>
                             <td className="px-4 py-3 font-medium">{item.itemName}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {new Date(item.nearestExpiryDate!).toLocaleDateString('vi-VN')}
+                            <td className="px-4 py-3 text-right font-bold text-red-600">{item.totalQuantity || 0}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {item.minStockLevel} / {item.maxStockLevel}
                             </td>
+                            <td className="px-4 py-3">{getStockBadge(item.stockStatus || 'NORMAL')}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Expiring Soon Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faSnowflake} className="w-5 h-5 text-orange-600" />
+                  Top 10 Vật tư sắp hết hạn (Kho lạnh)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Mã VT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Tên VT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Hạn sử dụng</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Còn lại</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {expiringSoonItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            Không có vật tư sắp hết hạn
+                          </td>
+                        </tr>
+                      ) : (
+                        expiringSoonItems.map((item, idx) => {
+                          const daysLeft = getDaysUntilExpiry(item.nearestExpiryDate!);
+                          return (
+                            <tr key={item.itemMasterId} className="hover:bg-gray-50 transition">
+                              <td className="px-4 py-3">{idx + 1}</td>
+                              <td className="px-4 py-3 font-mono text-sm">{item.itemCode}</td>
+                              <td className="px-4 py-3 font-medium">{item.itemName}</td>
+                              <td className="px-4 py-3 text-sm">
+                                {new Date(item.nearestExpiryDate!).toLocaleDateString('vi-VN')}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge
+                                  variant={daysLeft <= 30 ? 'destructive' : 'secondary'}
+                                  className="text-xs"
+                                >
+                                  {daysLeft} ngày
+                                </Badge>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Inventory by Category */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faLayerGroup} className="w-5 h-5" />
+                  Tồn kho theo Danh mục
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Danh mục</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Loại kho</th>
+                        <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Số loại VT</th>
+                        <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Tổng số lượng</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {inventoryByCategory.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            Chưa có dữ liệu
+                          </td>
+                        </tr>
+                      ) : (
+                        inventoryByCategory.map((cat, idx) => (
+                          <tr key={cat.categoryName} className="hover:bg-gray-50 transition">
+                            <td className="px-4 py-3">{idx + 1}</td>
+                            <td className="px-4 py-3 font-medium">{cat.categoryName}</td>
                             <td className="px-4 py-3">
-                              <Badge
-                                variant={daysLeft <= 30 ? 'destructive' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {daysLeft} ngày
+                              <Badge variant="outline">
+                                {cat.warehouseType === 'COLD' ? (
+                                  <>
+                                    <FontAwesomeIcon icon={faSnowflake} className="w-3 h-3 mr-1" />
+                                    Kho lạnh
+                                  </>
+                                ) : (
+                                  'Kho thường'
+                                )}
                               </Badge>
                             </td>
+                            <td className="px-4 py-3 text-right">{cat.itemCount}</td>
+                            <td className="px-4 py-3 text-right font-bold">{cat.totalQuantity}</td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
-          {/* Inventory by Category */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faLayerGroup} className="w-5 h-5" />
-                Tồn kho theo Danh mục
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">STT</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Danh mục</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Loại kho</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Số loại VT</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Tổng số lượng</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {inventoryByCategory.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          Chưa có dữ liệu
-                        </td>
-                      </tr>
-                    ) : (
-                      inventoryByCategory.map((cat, idx) => (
-                        <tr key={cat.categoryName} className="hover:bg-gray-50 transition">
-                          <td className="px-4 py-3">{idx + 1}</td>
-                          <td className="px-4 py-3 font-medium">{cat.categoryName}</td>
-                          <td className="px-4 py-3">
-                            <Badge variant="outline">
-                              {cat.warehouseType === 'COLD' ? (
-                                <>
-                                  <FontAwesomeIcon icon={faSnowflake} className="w-3 h-3 mr-1" />
-                                  Kho lạnh
-                                </>
-                              ) : (
-                                'Kho thường'
-                              )}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-right">{cat.itemCount}</td>
-                          <td className="px-4 py-3 text-right font-bold">{cat.totalQuantity}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+        {/* Modals - Only for transactions view */}
+        {viewMode === 'transactions' && (
+          <>
+            <ImportTransactionFormNew
+              isOpen={isImportModalOpen}
+              onClose={() => {
+                setIsImportModalOpen(false);
+                queryClient.invalidateQueries({ queryKey: ['transactions'] });
+                queryClient.invalidateQueries({ queryKey: ['storageStats'] });
+              }}
+            />
+            <ExportTransactionFormNew
+              isOpen={isExportModalOpen}
+              onClose={() => {
+                setIsExportModalOpen(false);
+                queryClient.invalidateQueries({ queryKey: ['transactions'] });
+                queryClient.invalidateQueries({ queryKey: ['storageStats'] });
+              }}
+              warehouseType="NORMAL"
+            />
+            <StorageDetailModal
+              isOpen={isViewModalOpen}
+              onClose={() => setIsViewModalOpen(false)}
+              transactionId={viewingTransactionId}
+            />
+            <UpdateStorageNotesModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onSave={handleUpdateNotes}
+              transaction={editingTransaction}
+            />
+            <EditImportModal
+              isOpen={!!editImportId}
+              onClose={() => setEditImportId(null)}
+              transactionId={editImportId}
+            />
+            <EditExportModal
+              isOpen={!!editExportId}
+              onClose={() => setEditExportId(null)}
+              transactionId={editExportId}
+            />
 
-      {/* Modals - Only for transactions view */}
-      {viewMode === 'transactions' && (
-        <>
-          <ImportTransactionFormNew 
-            isOpen={isImportModalOpen} 
-            onClose={() => {
-              setIsImportModalOpen(false);
-              queryClient.invalidateQueries({ queryKey: ['transactions'] });
-              queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-            }} 
-          />
-          <ExportTransactionFormNew 
-            isOpen={isExportModalOpen} 
-            onClose={() => {
-              setIsExportModalOpen(false);
-              queryClient.invalidateQueries({ queryKey: ['transactions'] });
-              queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-            }}
-            warehouseType="NORMAL"
-          />
-      <StorageDetailModal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        transactionId={viewingTransactionId}
-      />
-      <UpdateStorageNotesModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleUpdateNotes}
-        transaction={editingTransaction}
-      />
-      <EditImportModal
-        isOpen={!!editImportId}
-        onClose={() => setEditImportId(null)}
-        transactionId={editImportId}
-      />
-      <EditExportModal
-        isOpen={!!editExportId}
-        onClose={() => setEditExportId(null)}
-        transactionId={editExportId}
-      />
-
-      {/* Delete Confirmation */}
-      <ConfirmDialog
-        isOpen={deleteConfirm.isOpen}
-        onClose={() => setDeleteConfirm({ isOpen: false, transaction: null })}
-        onConfirm={confirmDelete}
-        title="Xác nhận xóa phiếu"
-        description={`Bạn có chắc chắc muốn xóa phiếu ${deleteConfirm.transaction?.transactionCode}? Hành động này không thể khôi phục.`}
-        confirmLabel="Xóa"
-        variant="destructive"
-      />
-        </>
-      )}
+            {/* Delete Confirmation */}
+            <ConfirmDialog
+              isOpen={deleteConfirm.isOpen}
+              onClose={() => setDeleteConfirm({ isOpen: false, transaction: null })}
+              onConfirm={confirmDelete}
+              title="Xác nhận xóa phiếu"
+              description={`Bạn có chắc chắc muốn xóa phiếu ${deleteConfirm.transaction?.transactionCode}? Hành động này không thể khôi phục.`}
+              confirmLabel="Xóa"
+              variant="destructive"
+            />
+          </>
+        )}
       </div>
     </ProtectedRoute>
   );

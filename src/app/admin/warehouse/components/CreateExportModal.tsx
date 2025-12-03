@@ -78,7 +78,7 @@ export default function CreateExportModal({
     onError: (error: any) => {
       const errorCode = error.code || error.response?.data?.error;
       const errorMessage = error.message || error.response?.data?.message || 'Có lỗi xảy ra khi xuất kho!';
-      
+
       // Handle specific error codes
       if (errorCode === 'INSUFFICIENT_STOCK') {
         toast.error('Không đủ tồn kho để xuất!', {
@@ -99,7 +99,7 @@ export default function CreateExportModal({
       } else {
         toast.error(errorMessage);
       }
-      
+
       console.error('Export transaction error:', {
         code: errorCode,
         message: errorMessage,
@@ -158,27 +158,27 @@ export default function CreateExportModal({
 
     try {
       const unitId = await ensureUnitId(selection.itemMasterId);
-    const newItem: ExportItem = {
+      const newItem: ExportItem = {
         batchId: selection.batch.batchId,
         batchLotNumber: selection.batch.lotNumber,
         itemName: selection.itemName ?? selection.itemCode ?? '',
         itemCode: selection.itemCode,
         itemMasterId: selection.itemMasterId,
         unitId,
-      quantity,
+        quantity,
         importPrice: undefined,
         expiryDate: selection.batch.expiryDate,
-    };
+      };
 
-    if (editingIndex !== null) {
-      const updatedItems = [...items];
-      updatedItems[editingIndex] = newItem;
-      setItems(updatedItems);
-    } else {
+      if (editingIndex !== null) {
+        const updatedItems = [...items];
+        updatedItems[editingIndex] = newItem;
+        setItems(updatedItems);
+      } else {
         setItems((prev) => [...prev, newItem]);
-    }
+      }
 
-    setEditingIndex(null);
+      setEditingIndex(null);
     } catch {
       // ensureUnitId already handles toast
     }
@@ -230,18 +230,18 @@ export default function CreateExportModal({
 
   const getExpiryBadge = (expiryDate?: string) => {
     if (!expiryDate) return <Badge variant="secondary">Không HSD</Badge>;
-    
+
     const days = getDaysUntilExpiry(expiryDate);
     if (!days) return null;
 
     if (days < 0) {
-      return <Badge variant="destructive" className="animate-pulse">⚠️ Đã hết hạn</Badge>;
+      return <Badge variant="destructive" className="animate-pulse">Đã hết hạn</Badge>;
     } else if (days <= 30) {
-      return <Badge variant="destructive">⚠️ {days} ngày</Badge>;
+      return <Badge variant="destructive">{days} ngày</Badge>;
     } else if (days <= 90) {
-      return <Badge className="bg-amber-500 text-white">⚡ {days} ngày</Badge>;
+      return <Badge className="bg-amber-500 text-white">{days} ngày</Badge>;
     } else {
-      return <Badge variant="default" className="bg-emerald-500">✓ {days} ngày</Badge>;
+      return <Badge variant="default" className="bg-emerald-500">{days} ngày</Badge>;
     }
   };
 
@@ -333,7 +333,7 @@ export default function CreateExportModal({
               <div className="text-sm space-y-1">
                 <p className="font-semibold text-violet-900">🤖 FEFO - First Expired, First Out</p>
                 <p className="text-violet-700">
-                  Hệ thống tự động gợi ý lô hàng có HSD sớm nhất để xuất trước. 
+                  Hệ thống tự động gợi ý lô hàng có HSD sớm nhất để xuất trước.
                   Bạn có thể chọn lô khác nếu cần.
                 </p>
               </div>

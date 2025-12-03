@@ -99,9 +99,9 @@ export default function SupplierDetailModal({
   const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
     return (
       <Badge className={getStatusColor(status) + ' flex items-center gap-1 w-fit'}>
-        <FontAwesomeIcon 
-          icon={status === 'ACTIVE' ? faCheckCircle : faTimesCircle} 
-          className="w-3 h-3" 
+        <FontAwesomeIcon
+          icon={status === 'ACTIVE' ? faCheckCircle : faTimesCircle}
+          className="w-3 h-3"
         />
         {getStatusLabel(status)}
       </Badge>
@@ -170,7 +170,7 @@ export default function SupplierDetailModal({
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-yellow-600 mt-0.5" />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-yellow-800 mb-1">⚠️ Nhà cung cấp không hoạt động</h3>
+                        <h3 className="font-semibold text-yellow-800 mb-1">Nhà cung cấp không hoạt động</h3>
                         <p className="text-sm text-yellow-700">
                           Không có đơn hàng trong hơn 6 tháng. Cần kiểm tra lại tình trạng nhà cung cấp.
                         </p>
@@ -184,7 +184,7 @@ export default function SupplierDetailModal({
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                     Thông tin cơ bản
                   </h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 text-muted-foreground mt-1" />
@@ -209,7 +209,7 @@ export default function SupplierDetailModal({
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                     Business Metrics
                   </h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faShoppingCart} className="w-4 h-4 text-muted-foreground mt-1" />
@@ -260,7 +260,7 @@ export default function SupplierDetailModal({
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                     Thông tin liên hệ
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 gap-3">
                     {(supplierDetail as any)?.contactPerson && (
                       <div className="flex items-start gap-3">

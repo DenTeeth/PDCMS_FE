@@ -241,7 +241,7 @@ export default function AdminTimeOffRequestsPage() {
     if (overlappingRequests.length > 0) {
       const selectedEmployee = employees?.find(emp => emp.employeeId.toString() === finalEmployeeId.toString());
       const confirmSubmit = confirm(
-        '⚠️ Cảnh báo: Trùng lịch nghỉ phép!\n\n' +
+        'Cảnh báo: Trùng lịch nghỉ phép!\n\n' +
         `Nhân viên "${selectedEmployee?.fullName || finalEmployeeId}" đã có ${overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này.\n\n` +
         'Bạn có chắc chắn muốn tiếp tục tạo yêu cầu mới?'
       );
@@ -281,12 +281,24 @@ export default function AdminTimeOffRequestsPage() {
       });
 
       const status = error.response?.status;
-      const errorCode = error.response?.data?.code || error.response?.data?.error;
+      const errorCode = error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error;
       const errorMsg = error.response?.data?.message || error.message || '';
       let displayMsg = '';
 
       // Handle specific errors with detailed messages
-      if (status === 409 || errorCode === 'DUPLICATE_TIMEOFF_REQUEST') {
+      if (errorCode === 'DUPLICATE_BALANCE_RECORDS') {
+        // Data corruption - duplicate balance records in database
+        const backendMsg = error.response?.data?.message;
+        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
+          ? backendMsg
+          : 'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.';
+      } else if (errorCode === 'BALANCE_NOT_FOUND') {
+        // No balance record - needs HR to initialize
+        const backendMsg = error.response?.data?.message;
+        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
+          ? backendMsg
+          : 'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
+      } else if (status === 409 || errorCode === 'DUPLICATE_TIMEOFF_REQUEST') {
         displayMsg = error.response?.data?.detail || error.response?.data?.message ||
           'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
       } else if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
@@ -926,7 +938,7 @@ export default function AdminTimeOffRequestsPage() {
                             <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
                             <div className="flex-1">
                               <h4 className="font-semibold text-yellow-900 mb-2">
-                                ⚠️ Cảnh báo: Trùng lịch nghỉ phép
+                                Cảnh báo: Trùng lịch nghỉ phép
                               </h4>
                               <p className="text-sm text-yellow-800 mb-2">
                                 Nhân viên <strong>{selectedEmployee?.fullName || finalEmployeeId}</strong> đã có {overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này:
