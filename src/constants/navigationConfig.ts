@@ -39,6 +39,7 @@ import {
   faListCheck,
   faWallet,
   faComments,
+  faImage,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { GroupedPermissions } from '@/types/auth';
@@ -468,6 +469,12 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faChartLine,
       requiredPermissionGroup: 'ANALYTICS', // Adjust based on actual permission group
     },
+    // NII Image Viewer
+    {
+      name: 'CBCT Viewer',
+      href: '/employee/nii-viewer',
+      icon: faImage,
+    },
     // Settings
     {
       name: 'Settings',
@@ -610,6 +617,11 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Medical Records',
       href: '/patient/records',
       icon: faFolderOpen,
+    },
+    {
+      name: 'CBCT Viewer',
+      href: '/patient/nii-viewer',
+      icon: faImage,
     },
     {
       name: 'Billing',

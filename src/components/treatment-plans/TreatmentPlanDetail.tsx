@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus } from '@/types/treatmentPlan';
+import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus } from '@/types/treatmentPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -48,6 +48,7 @@ import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculatePlanStatus } from '@/utils/treatmentPlanStatus';
 
 interface TreatmentPlanDetailProps {
   plan: TreatmentPlanDetailResponse;
@@ -67,7 +68,21 @@ export default function TreatmentPlanDetail({
   onBookPlanItems,
 }: TreatmentPlanDetailProps) {
   const { user } = useAuth();
-  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[plan.status];
+  
+  // Phase 5: Bulk selection for booking
+  const [selectedPlanItemIds, setSelectedPlanItemIds] = useState<number[]>([]);
+
+  const allPlanItems = useMemo(
+    () => plan.phases.flatMap((phase) => phase.items),
+    [plan.phases]
+  );
+  
+  // Calculate actual plan status using utility function
+  // This handles BE lazy loading bug by calculating from phases/items as fallback
+  // See: src/utils/treatmentPlanStatus.ts
+  const actualStatus = calculatePlanStatus(plan.status, plan.phases || []);
+  const statusKey = actualStatus;
+  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
 
   const canCreateAppointment = Boolean(
     user?.permissions?.includes('CREATE_APPOINTMENT')
@@ -79,14 +94,6 @@ export default function TreatmentPlanDetail({
 
   // V21.4: API 5.13 - Update Prices (Finance)
   const [showUpdatePricesModal, setShowUpdatePricesModal] = useState(false);
-
-  // Phase 5: Bulk selection for booking
-  const [selectedPlanItemIds, setSelectedPlanItemIds] = useState<number[]>([]);
-
-  const allPlanItems = useMemo(
-    () => plan.phases.flatMap((phase) => phase.items),
-    [plan.phases]
-  );
 
   const selectedPlanItems = useMemo(
     () => allPlanItems.filter((item) => selectedPlanItemIds.includes(item.itemId)),
