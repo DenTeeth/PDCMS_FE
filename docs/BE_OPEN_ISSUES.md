@@ -3,7 +3,8 @@
 **Last Updated:** 2025-12-05  
 **Total Open Issues:** 3  
 **High Priority Issues:** 3 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System)  
-**Medium Priority Issues:** 0
+**Medium Priority Issues:** 0  
+**Resolved Issues:** 4 (Issue #27, #31, #32, #33) - Removed from this document
 
 ---
 
@@ -20,6 +21,15 @@
 | #42 | API 3.7 - Reschedule appointment không chuyển plan items từ SCHEDULED về READY_FOR_BOOKING | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-05 |
 | #43 | API 5.9 - Xóa prerequisite services khỏi seed data | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
 | #44 | API 7.x - Xóa toàn bộ hệ thống work shifts, employee shifts, registrations và slots | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
+| # | Issue | Status | Priority | Reported Date |
+|---|-------|--------|----------|---------------|
+| #28 | API - Transaction Stats endpoint trả về 400 INVALID_PARAMETER_TYPE | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
+| #29 | Seed Data - Thêm Employee Shifts cho tháng này và tháng sau | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
+| #30 | Seed Data - Điều chỉnh Treatment Plan Templates để các dịch vụ có cùng specialization | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
+| #34 | API 5.5 - searchTerm parameter gây lỗi 500 Internal Server Error | 🔴 **OPEN** | **HIGH** | 2025-12-02 |
+| #35 | API 5.5 - TreatmentPlanSummaryDTO thiếu progressSummary để FE tính toán status | 🔴 **OPEN** | **MEDIUM** | 2025-12-02 |
+| #36 | API 8.1 - ClinicalRecordResponse thiếu field followUpDate | 🔴 **OPEN** | **MEDIUM** | 2025-12-03 |
+| #37 | API 8.1 - Tab bệnh án bị disable khi appointment status là COMPLETED và chưa có clinical record | 🔴 **OPEN** | **MEDIUM** | 2025-12-03 |
 
 ---
 
@@ -1367,5 +1377,152 @@ CREATE TABLE employee_working_hours (
     UNIQUE (employee_id, work_date)
 );
 ```
+
+---
+
+### Issue #37: API 8.1 - Tab bệnh án bị disable khi appointment status là COMPLETED và chưa có clinical record
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-03  
+**Endpoint:** `GET /api/v1/appointments/{appointmentId}/clinical-record`  
+**Related:** Clinical Record Tab UI behavior
+
+#### Problem Description
+
+Khi trạng thái chi tiết cuộc hẹn appointment là **"Hoàn Thành" (COMPLETED)** và chưa có clinical record, Tab bệnh án trên FE bị disable (không thể click vào). Cần xác định đây là lỗi của FE hay là business rule của BE.
+
+**Current Behavior:**
+- Khi appointment status = `COMPLETED` và chưa có clinical record → Tab "Clinical Record" bị disable
+- User không thể click vào tab để xem hoặc tạo clinical record
+- Nếu đã có clinical record, tab vẫn có thể truy cập được (chỉ disable khi không có record)
+
+**Expected Behavior (cần xác nhận với BE):**
+- **Option 1:** User vẫn có thể VIEW tab (read-only) để xem thông tin rằng chưa có clinical record, nhưng không thể tạo mới
+- **Option 2:** Tab bị disable hoàn toàn (như hiện tại) nếu BE không cho phép tạo/view clinical record khi appointment đã COMPLETED
+
+#### Frontend Implementation
+
+**Files:**
+- `src/app/admin/booking/appointments/[appointmentCode]/page.tsx` (line 894)
+- `src/app/employee/booking/appointments/[appointmentCode]/page.tsx` (line 960)
+
+**Current Logic:**
+```typescript
+// Check if appointment status allows clinical record creation/editing
+// BE requires: IN_PROGRESS or CHECKED_IN
+const canCreateOrEditClinicalRecord = appointment && (
+  appointment.status === 'IN_PROGRESS' || 
+  appointment.status === 'CHECKED_IN'
+);
+
+// Tab is disabled when:
+disabled={!appointment || (appointment.status !== 'IN_PROGRESS' && appointment.status !== 'CHECKED_IN' && !clinicalRecord)}
+```
+
+**Logic Breakdown:**
+- Tab được ENABLE khi:
+  - Status = `IN_PROGRESS` hoặc `CHECKED_IN` (bất kể có clinical record hay không)
+  - Hoặc đã có clinical record (bất kể status là gì)
+- Tab bị DISABLE khi:
+  - Status ≠ `IN_PROGRESS` và ≠ `CHECKED_IN` VÀ chưa có clinical record
+  - → **Vấn đề:** Khi status = `COMPLETED` và chưa có clinical record → tab bị disable
+
+#### Root Cause Analysis
+
+**Question:** Đây là lỗi của FE hay BE?
+
+**FE Comment Analysis:**
+- Comment trong code: `"BE requires: IN_PROGRESS or CHECKED_IN"`
+- Comment này có thể ám chỉ:
+  1. **BE chỉ cho phép CREATE/EDIT** khi status là IN_PROGRESS hoặc CHECKED_IN
+  2. **BE cũng block VIEW** khi status là COMPLETED và chưa có record
+
+**Possible Scenarios:**
+
+**Scenario 1: FE Bug (Tab should be viewable)**
+- BE cho phép VIEW clinical record (API 8.1) bất kể appointment status
+- BE chỉ block CREATE/EDIT khi status không phải IN_PROGRESS/CHECKED_IN
+- **Fix:** FE nên cho phép VIEW tab (read-only) ngay cả khi status = COMPLETED, nhưng disable form creation
+
+**Scenario 2: BE Business Rule (Current behavior is correct)**
+- BE block cả VIEW và CREATE khi appointment đã COMPLETED và chưa có clinical record
+- **Fix:** Cần xác nhận với BE team về business rule này, có thể cần thay đổi BE để cho phép VIEW
+
+**Scenario 3: Mixed (View allowed, Create blocked)**
+- BE cho phép VIEW nhưng block CREATE khi status = COMPLETED
+- **Fix:** FE nên enable tab nhưng hiển thị message "Không thể tạo bệnh án mới khi appointment đã hoàn thành" thay vì disable tab
+
+#### Test Cases Needed
+
+**Test 1: Verify BE API 8.1 behavior with COMPLETED appointment (no record)**
+```
+Given: Appointment with status = COMPLETED, no clinical record exists
+When: GET /api/v1/appointments/{appointmentId}/clinical-record
+Expected: 
+  - Option A: 404 NOT_FOUND (BE blocks viewing)
+  - Option B: 200 OK with null/empty (BE allows viewing but no record)
+Actual: ❓ Need to test
+```
+
+**Test 2: Verify BE API 8.2 behavior with COMPLETED appointment**
+```
+Given: Appointment with status = COMPLETED, no clinical record exists
+When: POST /api/v1/clinical-records { appointmentId: ..., ... }
+Expected:
+  - Option A: 400 BAD_REQUEST with error "Cannot create clinical record for completed appointment"
+  - Option B: 201 CREATED (BE allows creating even after completion)
+Actual: ❓ Need to test
+```
+
+**Test 3: Verify BE API 8.1 behavior with COMPLETED appointment (has record)**
+```
+Given: Appointment with status = COMPLETED, clinical record exists
+When: GET /api/v1/appointments/{appointmentId}/clinical-record
+Expected: 200 OK with clinical record data
+Actual: ✅ Should work (FE allows access in this case)
+```
+
+#### Suggested Investigation Steps
+
+1. **Test BE API directly:**
+   - Gọi API 8.1 với appointment status = COMPLETED (chưa có record)
+   - Gọi API 8.2 để tạo clinical record với appointment status = COMPLETED
+   - Xác định BE có block hay không
+
+2. **Check BE documentation/spec:**
+   - Xem API spec có quy định gì về appointment status requirements
+   - Xem business rules về clinical record creation/viewing
+
+3. **Determine correct behavior:**
+   - Nếu BE cho phép VIEW → Fix FE: Enable tab, show read-only view
+   - Nếu BE block VIEW → Document BE behavior, keep FE as is
+   - Nếu BE cho phép CREATE → Fix FE: Enable tab, allow creation
+
+#### Impact
+
+- **Medium Priority:** UX issue - Users không thể truy cập tab bệnh án khi appointment đã hoàn thành
+- Confusion: "Tại sao không thể xem bệnh án khi appointment đã hoàn thành?"
+- Potential data loss: Nếu user quên tạo clinical record trước khi complete appointment, không thể tạo sau đó
+- Inconsistency: Tab có thể truy cập nếu đã có record, nhưng không thể nếu chưa có
+
+#### Related Files
+
+**Frontend:**
+- `src/app/admin/booking/appointments/[appointmentCode]/page.tsx` (line 257-260, 894)
+- `src/app/employee/booking/appointments/[appointmentCode]/page.tsx` (line 258-263, 960)
+- `src/services/clinicalRecordService.ts` (API 8.1, 8.2)
+
+**Backend (cần kiểm tra):**
+- `files_from_BE/clinical_records/service/ClinicalRecordService.java`
+- `files_from_BE/clinical_records/controller/ClinicalRecordController.java`
+- Business rules về appointment status validation
+
+#### Next Steps
+
+1. ✅ **Log issue** (this document)
+2. ⏳ **Test BE APIs** với appointment status = COMPLETED
+3. ⏳ **Xác nhận với BE team** về business rules
+4. ⏳ **Fix FE hoặc document BE behavior** dựa trên kết quả test
 
 ---
