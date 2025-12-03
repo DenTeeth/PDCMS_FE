@@ -22,6 +22,7 @@ import {
   faDownload,
   faFilter,
   faCalendar,
+  faSnowflake,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryService } from '@/services/inventoryService';
 import { storageService, StorageTransaction } from '@/services/storageService';
@@ -190,8 +191,11 @@ export default function WarehouseReportsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ALL">Tất cả kho</SelectItem>
-                      <SelectItem value="COLD">❄️ Kho lạnh</SelectItem>
-                      <SelectItem value="NORMAL">📦 Kho thường</SelectItem>
+                      <SelectItem value="COLD">
+                        <FontAwesomeIcon icon={faSnowflake} className="mr-2" />
+                        Kho lạnh
+                      </SelectItem>
+                      <SelectItem value="NORMAL">Kho thường</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -225,7 +229,12 @@ export default function WarehouseReportsPage() {
                             <td className="py-3 px-4 font-mono text-sm">{item.itemCode}</td>
                             <td className="py-3 px-4">{item.itemName}</td>
                             <td className="py-3 px-4 text-center">
-                              {item.warehouseType === 'COLD' ? '❄️ Lạnh' : '📦 Thường'}
+                              {item.warehouseType === 'COLD' ? (
+                                <>
+                                  <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                                  Lạnh
+                                </>
+                              ) : 'Thường'}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold">
                               {item.currentStock || item.totalQuantity || 0}
@@ -301,9 +310,6 @@ export default function WarehouseReportsPage() {
                                     {formatDate(txn.transactionDate)}
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="bg-white text-blue-700 border-blue-300">
-                                  +{totalItems} dòng vật tư
-                                </Badge>
                               </div>
                               <div className="flex justify-between text-sm text-gray-600">
                                 <span>Mã phiếu</span>
@@ -371,9 +377,6 @@ export default function WarehouseReportsPage() {
                                     {formatDate(txn.transactionDate)}
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="bg-white text-orange-700 border-orange-300">
-                                  -{totalItems} dòng vật tư
-                                </Badge>
                               </div>
                               <div className="flex justify-between text-sm text-gray-600">
                                 <span>Mã phiếu</span>
