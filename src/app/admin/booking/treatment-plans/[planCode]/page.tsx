@@ -75,25 +75,25 @@ export default function AdminTreatmentPlanDetailPage() {
     const loadPlan = async () => {
       try {
         setLoading(true);
-        
-        // ✅ Backend fix applied: planCode is now included in summary DTO
+
+        // Backend fix applied: planCode is now included in summary DTO
         // No more workaround needed - planCode should always be available
         // If numeric, it's likely a legacy patientPlanId from old navigation
         // In that case, we should redirect to list page or show error
-        
+
         const isNumeric = /^\d+$/.test(planCode);
-        
+
         if (isNumeric) {
           // Legacy patientPlanId - should not happen if navigation uses planCode
           // Redirect to list page with helpful message
-          console.warn('⚠️ Received numeric planCode (likely patientPlanId). Redirecting to list page.');
+          console.warn('Received numeric planCode (likely patientPlanId). Redirecting to list page.');
           toast.error('Mã lộ trình không hợp lệ', {
             description: 'Vui lòng chọn lộ trình từ danh sách để xem chi tiết.',
           });
           router.push(`/admin/booking/treatment-plans?patientCode=${patientCode}`);
           return;
         }
-        
+
         // planCode is actual planCode, use it directly
         const detail = await TreatmentPlanService.getTreatmentPlanDetail(
           patientCode,

@@ -187,21 +187,21 @@ export default function PatientsPage() {
       if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
 
       // Debug logging
-      console.log('📤 Creating patient with payload:', payload);
-      console.log('📍 API Endpoint: POST /api/v1/patients');
+      console.log('� Creating patient with payload:', payload);
+      console.log('� API Endpoint: POST /api/v1/patients');
       console.log('⏰ Timestamp:', new Date().toISOString());
 
       const result = await patientService.createPatient(payload);
       
-      // ⚠️ Note: BE may fail to send email but patient still created (graceful degradation)
+      //  Note: BE may fail to send email but patient still created (graceful degradation)
       // Account status will be PENDING_VERIFICATION until password is set via email
-      console.log('✅ Patient created:', result);
-      console.log('🔍 Account Info Check:', {
+      console.log(' Patient created:', result);
+      console.log(' Account Info Check:', {
         hasAccount: result.hasAccount,
         accountStatus: result.accountStatus,
         email: result.email,
-        note: result.hasAccount === undefined ? '⚠️ BE không trả về hasAccount - cần fix BE' : '✅ OK',
-        accountStatusNote: result.accountStatus === undefined ? '⚠️ BE không trả về accountStatus - cần fix BE' : '✅ OK',
+        note: result.hasAccount === undefined ? ' BE không trả về hasAccount - cần fix BE' : ' OK',
+        accountStatusNote: result.accountStatus === undefined ? ' BE không trả về accountStatus - cần fix BE' : ' OK',
       });
       
       // Show success message with account status info

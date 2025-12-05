@@ -256,8 +256,8 @@ export default function TestAPIPage() {
       const queryString = params.toString();
       const fullUrl = `http://localhost:8080/api/v1/appointments/available-times?${queryString}`;
       
-      console.log('📡 Calling API:', fullUrl);
-      console.log('📋 Query Params:', {
+      console.log(' Calling API:', fullUrl);
+      console.log(' Query Params:', {
         date: availableDate,
         employeeCode: selectedEmployeeCode,
         serviceCodes: selectedServiceCodes,
@@ -271,9 +271,9 @@ export default function TestAPIPage() {
         participantCodes: selectedParticipantCodes.length > 0 ? selectedParticipantCodes : undefined
       });
       
-      console.log('✅ Response:', result);
-      console.log('📊 Total Duration:', result.totalDurationNeeded);
-      console.log('📅 Available Slots:', result.availableSlots.length);
+      console.log(' Response:', result);
+      console.log('� Total Duration:', result.totalDurationNeeded);
+      console.log('� Available Slots:', result.availableSlots.length);
       
       // Include the URL in results for debugging
       setResults({ 
@@ -301,7 +301,7 @@ export default function TestAPIPage() {
         }
       }
     } catch (error: any) {
-      console.error('❌ Error:', error);
+      console.error(' Error:', error);
       setResults({ type: 'appointmentService.findAvailableTimes', success: false, error: error.response?.data || error.message });
       toast.error('Test failed: ' + (error.response?.data?.message || error.message));
     } finally {
@@ -923,7 +923,7 @@ export default function TestAPIPage() {
             <div className="space-y-4">
               {/* Data Summary */}
               <div className="bg-muted p-4 rounded-md">
-                <h3 className="font-semibold mb-2">📊 Data Summary</h3>
+                <h3 className="font-semibold mb-2">� Data Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div>
                     <span className="font-medium">Rooms:</span> {rooms.length}
@@ -944,7 +944,7 @@ export default function TestAPIPage() {
               <div className="space-y-4">
                 {/* Room Test Cases */}
                 <div className="border rounded-md p-4">
-                  <h3 className="font-semibold mb-2">1️⃣ Room Service Test Cases</h3>
+                  <h3 className="font-semibold mb-2">1⃣ Room Service Test Cases</h3>
                   <div className="space-y-2 text-sm">
                     <div>
                       <strong>TC1.1.1 - Get Room by Code (Valid):</strong>
@@ -992,7 +992,7 @@ Response: Updated RoomServicesResponse`}
 
                 {/* Service Test Cases */}
                 <div className="border rounded-md p-4">
-                  <h3 className="font-semibold mb-2">2️⃣ Service Service Test Cases</h3>
+                  <h3 className="font-semibold mb-2">2⃣ Service Service Test Cases</h3>
                   <div className="space-y-2 text-sm">
                     {services[0] && (
                       <div>
@@ -1021,7 +1021,7 @@ Response fields: serviceCode, serviceName, price, defaultDurationMinutes`}
 }
 Expected: 201 Created
 Response fields: serviceId, serviceCode, serviceName, description, defaultDurationMinutes, defaultBufferMinutes, price, specializationId, specializationName, isActive, createdAt, updatedAt
-⚠️ WARNING: This will create actual service in database`}
+ WARNING: This will create actual service in database`}
                         </pre>
                       </div>
                     )}
@@ -1032,7 +1032,7 @@ Response fields: serviceId, serviceCode, serviceName, description, defaultDurati
 {`Service Code: ${services[0].serviceCode}
 Update Data: { serviceName: "Test Updated Service", price: 350000 }
 Expected: 200 OK
-⚠️ WARNING: This will update actual data in database`}
+ WARNING: This will update actual data in database`}
                         </pre>
                       </div>
                     )}
@@ -1041,7 +1041,7 @@ Expected: 200 OK
 
                 {/* Appointment Test Cases */}
                 <div className="border rounded-md p-4">
-                  <h3 className="font-semibold mb-2">3️⃣ Appointment Service Test Cases</h3>
+                  <h3 className="font-semibold mb-2">3⃣ Appointment Service Test Cases</h3>
                   <div className="space-y-2 text-sm">
                     {employees[0] && services[0] && (
                       <div>
@@ -1079,7 +1079,7 @@ Service Codes: [${services[0].serviceCode}]
 Appointment Start Time: [From available times result]
 Expected: 201 Created
 Response: CreateAppointmentResponse with appointmentCode
-⚠️ WARNING: This will create actual appointment in database`}
+ WARNING: This will create actual appointment in database`}
                         </pre>
                       </div>
                     )}
@@ -1088,7 +1088,7 @@ Response: CreateAppointmentResponse with appointmentCode
 
                 {/* Data Mẫu cho Checklist */}
                 <div className="border rounded-md p-4 bg-blue-50 dark:bg-blue-950">
-                  <h3 className="font-semibold mb-2">📝 Data Mẫu cho Checklist</h3>
+                  <h3 className="font-semibold mb-2"> Data Mẫu cho Checklist</h3>
                   <div className="space-y-2 text-sm">
                     <div>
                       <strong>Rooms:</strong>

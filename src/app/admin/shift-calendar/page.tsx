@@ -155,7 +155,7 @@ export default function AdminShiftCalendarPage() {
       const employeesList = employeesResponse.content || [];
       setEmployees(employeesList);
 
-      console.log('✅ Employees loaded:', {
+      console.log(' Employees loaded:', {
         count: employeesList.length,
         sample: employeesList[0],
         allIds: employeesList.map(e => ({ id: e.employeeId, type: typeof e.employeeId, name: e.fullName }))
@@ -238,7 +238,7 @@ export default function AdminShiftCalendarPage() {
 
   // Convert shifts to calendar events
   const getCalendarEvents = () => {
-    console.log('🗓️ getCalendarEvents called:', {
+    console.log('� getCalendarEvents called:', {
       shiftsCount: shifts.length,
       workShiftsCount: workShifts.length,
       employeesCount: employees.length,
@@ -257,7 +257,7 @@ export default function AdminShiftCalendarPage() {
       );
 
       if (!employee && shifts.indexOf(shift) === 0) {
-        console.warn('⚠️ Employee not found for shift:', {
+        console.warn(' Employee not found for shift:', {
           shiftEmployeeId: shift.employeeId,
           shiftEmployeeIdType: typeof shift.employeeId,
           availableEmployeeIds: employees.map(e => ({ id: e.employeeId, type: typeof e.employeeId }))
@@ -279,7 +279,7 @@ export default function AdminShiftCalendarPage() {
       };
     });
 
-    console.log('🗓️ Calendar events generated:', events.length);
+    console.log('� Calendar events generated:', events.length);
     return events;
   };
 
@@ -351,7 +351,7 @@ export default function AdminShiftCalendarPage() {
       await loadShifts();
 
       // Show success message
-      console.log('✅ Shift created successfully');
+      console.log(' Shift created successfully');
       toast.success("Tạo ca làm việc thành công!");
 
     } catch (error: any) {
@@ -417,7 +417,7 @@ export default function AdminShiftCalendarPage() {
       await loadShifts();
 
       // Show success message
-      console.log('✅ Shift updated successfully');
+      console.log(' Shift updated successfully');
       toast.success("Cập nhật ca làm việc thành công!");
 
     } catch (error: any) {
@@ -466,7 +466,7 @@ export default function AdminShiftCalendarPage() {
       await loadShifts();
 
       // Show success message
-      console.log('✅ Shift deleted successfully');
+      console.log(' Shift deleted successfully');
       toast.success("Hủy ca làm việc thành công!");
 
     } catch (error: any) {

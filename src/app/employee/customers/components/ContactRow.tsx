@@ -46,9 +46,9 @@ const ContactRow = memo(function ContactRow({ contact, showDelete, basePath }: {
     if (!confirm('Xác nhận xóa contact này?')) return;
     try {
       await del.mutateAsync(contact.id);
-      console.log('✅ Delete success for contact:', contact.id);
+      console.log(' Delete success for contact:', contact.id);
     } catch (err: any) {
-      console.error('❌ Delete failed for contact:', contact.id);
+      console.error(' Delete failed for contact:', contact.id);
       console.error('Error details:', {
         status: err.response?.status,
         statusText: err.response?.statusText,

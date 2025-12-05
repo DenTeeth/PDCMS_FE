@@ -106,7 +106,7 @@ export default function AdminTreatmentPlansPage() {
 
     try {
       setLoading(true);
-        // ✅ Backend fix applied: Use pagination support
+        //  Backend fix applied: Use pagination support
         const pageResponse = await TreatmentPlanService.getTreatmentPlans(
           targetPatientCode,
           currentPage,
@@ -244,7 +244,7 @@ export default function AdminTreatmentPlansPage() {
   }, []);
 
   // Handle row click - navigate to detail page
-  // ✅ Backend fix applied (2025-11-15): patientCode is now included in API 5.1 response
+  //  Backend fix applied (2025-11-15): patientCode is now included in API 5.1 response
   const handleRowClick = useCallback((plan: TreatmentPlanSummaryDTO) => {
     if (!plan.planCode) {
       console.error('planCode missing in summary - this should not happen after backend fix');
@@ -254,7 +254,7 @@ export default function AdminTreatmentPlansPage() {
       return;
     }
 
-    // ✅ Simplified: Use patientCode from plan (always available after backend fix)
+    //  Simplified: Use patientCode from plan (always available after backend fix)
     // Fallback to filter/URL patientCode for backward compatibility
     const targetPatientCode = plan.patientCode || filters.patientCode || patientCode;
     

@@ -56,7 +56,7 @@ export const toothStatusService = {
         method: 'GET',
       });
       
-      console.error('❌ [TOOTH STATUS] Error fetching tooth status:', {
+      console.error(' [TOOTH STATUS] Error fetching tooth status:', {
         patientId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -102,7 +102,7 @@ export const toothStatusService = {
         }
       );
       
-      console.log('✅ [TOOTH STATUS] Updated tooth status:', {
+      console.log(' [TOOTH STATUS] Updated tooth status:', {
         patientId,
         toothNumber: request.toothNumber,
         status: request.status,
@@ -115,7 +115,7 @@ export const toothStatusService = {
         method: 'PUT',
       });
       
-      console.error('❌ [TOOTH STATUS] Error updating tooth status:', {
+      console.error(' [TOOTH STATUS] Error updating tooth status:', {
         patientId,
         toothNumber: request.toothNumber,
         message: enhancedError.message,

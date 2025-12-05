@@ -79,7 +79,7 @@ class AuthenticationService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     // Log request for debugging
-    console.log('🔐 Reset password request:', {
+    console.log('� Reset password request:', {
       token: token.substring(0, 8) + '...', // Only log first 8 chars for security
       hasNewPassword: !!newPassword,
       hasConfirmPassword: !!confirmPassword,
@@ -93,14 +93,14 @@ class AuthenticationService {
         confirmPassword,
       });
       
-      console.log('✅ Reset password success:', response.data);
+      console.log(' Reset password success:', response.data);
       
       if (response.data?.data) {
         return response.data.data;
       }
       return response.data || { message: 'Password reset successfully' };
     } catch (error: any) {
-      console.error('❌ Reset password error:', {
+      console.error(' Reset password error:', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,

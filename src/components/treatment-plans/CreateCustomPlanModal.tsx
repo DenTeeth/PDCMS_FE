@@ -175,7 +175,7 @@ export default function CreateCustomPlanModal({
       if (isDoctor && user?.employeeCode) {
         // Auto-fill current doctor
         setDoctorEmployeeCode(user.employeeCode);
-        console.log('✅ Auto-filled doctor:', user.employeeCode);
+        console.log(' Auto-filled doctor:', user.employeeCode);
       } else {
         // Load doctors list for admin/manager to select
         loadDoctors();
@@ -230,7 +230,7 @@ export default function CreateCustomPlanModal({
   // Reload services when doctor is selected/changed (to filter by doctor's specializations)
   useEffect(() => {
     if (open && canViewServices && doctorEmployeeCode && doctors.length > 0) {
-      console.log('🔄 Doctor selected, reloading services with specialization filter...', doctorEmployeeCode);
+      console.log(' Doctor selected, reloading services with specialization filter...', doctorEmployeeCode);
       loadServices(debouncedSearch);
     }
   }, [doctorEmployeeCode, doctors, open, canViewServices]);
@@ -400,7 +400,7 @@ export default function CreateCustomPlanModal({
           return !service.specializationId || selectedDoctorSpecializationIds.includes(service.specializationId);
         });
         
-        console.log(`✅ Filtered services for doctor ${selectedDoctor.fullName}: ${filteredServices.length}/${allServices.length} services match specializations`);
+        console.log(` Filtered services for doctor ${selectedDoctor.fullName}: ${filteredServices.length}/${allServices.length} services match specializations`);
         setServices(filteredServices);
         return;
       }
@@ -420,12 +420,12 @@ export default function CreateCustomPlanModal({
             sortBy: 'serviceName',
             sortDirection: 'ASC',
           });
-          console.log('✅ Loaded services from /my-specializations (current user is doctor):', response.content?.length || 0);
+          console.log(' Loaded services from /my-specializations (current user is doctor):', response.content?.length || 0);
           setServices(response.content || []);
           return;
         } catch (apiError: any) {
           // If new API fails (500, 404, etc.), fallback to regular endpoint
-          console.warn('⚠️ /my-specializations API failed, falling back to /services:', apiError.response?.status, apiError.response?.data?.message);
+          console.warn(' /my-specializations API failed, falling back to /services:', apiError.response?.status, apiError.response?.data?.message);
           if (apiError.response?.status === 500 || apiError.response?.status === 404) {
             // API not available yet, use regular endpoint
             response = await ServiceService.getServices({
@@ -436,7 +436,7 @@ export default function CreateCustomPlanModal({
               sortBy: 'serviceName',
               sortDirection: 'ASC',
             });
-            console.log('✅ Fallback: Loaded services from /services:', response.content?.length || 0);
+            console.log(' Fallback: Loaded services from /services:', response.content?.length || 0);
           } else {
             throw apiError; // Re-throw other errors
           }
@@ -451,7 +451,7 @@ export default function CreateCustomPlanModal({
           sortBy: 'serviceName',
           sortDirection: 'ASC',
         });
-        console.log('✅ Loaded services from /services (no doctor selected or non-doctor user):', response.content?.length || 0);
+        console.log(' Loaded services from /services (no doctor selected or non-doctor user):', response.content?.length || 0);
       }
       setServices(response.content || []);
     } catch (error: any) {
@@ -934,7 +934,7 @@ export default function CreateCustomPlanModal({
         planName: planName.trim(),
         doctorEmployeeCode,
         paymentType,
-        // ✅ FIX: BE requires @NotNull, so send 0 instead of undefined
+        //  FIX: BE requires @NotNull, so send 0 instead of undefined
         discountAmount: discountAmount === '' ? 0 : Number(discountAmount),
         // BE expects LocalDate (yyyy-MM-dd format) or null
         // Send null if empty string, otherwise send the date string
@@ -990,10 +990,10 @@ export default function CreateCustomPlanModal({
       }
     } catch (error: any) {
       // Enhanced error logging for debugging
-      console.error('❌ Error creating treatment plan:', error);
-      console.error('📤 Request payload:', JSON.stringify(request, null, 2));
-      console.error('📥 Error response:', error.response?.data);
-      console.error('🔍 Error details:', {
+      console.error(' Error creating treatment plan:', error);
+      console.error('� Request payload:', JSON.stringify(request, null, 2));
+      console.error('� Error response:', error.response?.data);
+      console.error(' Error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         errorCode: error.response?.data?.errorCode || error.response?.data?.error,
@@ -1002,8 +1002,8 @@ export default function CreateCustomPlanModal({
         data: error.response?.data?.data,
         fullResponse: error.response?.data,
       });
-      console.error('📋 Request URL:', `/patients/${selectedPatientCode}/treatment-plans/custom`);
-      console.error('📦 Phases details:', request.phases.map((p, idx) => ({
+      console.error(' Request URL:', `/patients/${selectedPatientCode}/treatment-plans/custom`);
+      console.error('� Phases details:', request.phases.map((p, idx) => ({
         phaseIndex: idx,
         phaseNumber: p.phaseNumber,
         phaseName: p.phaseName,
@@ -1016,7 +1016,7 @@ export default function CreateCustomPlanModal({
           price: item.price,
         })),
       })));
-      console.error('🔗 Error stack:', error.stack);
+      console.error('� Error stack:', error.stack);
       
       // V21.4: Handle specialization validation errors
       // BE returns error code as 'error.doctorSpecializationMismatch' or 'doctorSpecializationMismatch'

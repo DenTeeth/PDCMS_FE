@@ -124,7 +124,7 @@ export default function ExportTransactionFormNew({
           updatedAt: item.updatedAt,
         }));
       } catch (error: any) {
-        console.error('❌ Failed to fetch item masters:', error);
+        console.error(' Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
           description: error.response?.data?.message || 'Vui lòng thử lại',
         });
@@ -212,7 +212,7 @@ export default function ExportTransactionFormNew({
             return;
           }
         } catch (baseUnitError) {
-          console.warn('⚠️ Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
+          console.warn(' Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
         }
         
         // If both fail, BE will auto-create base unit from unitOfMeasure
@@ -270,7 +270,7 @@ export default function ExportTransactionFormNew({
         return updated;
       });
     } catch (error: any) {
-      console.error('❌ Failed to fetch units:', error);
+      console.error(' Failed to fetch units:', error);
       
       // Fallback: Try getBaseUnit
       try {
@@ -291,7 +291,7 @@ export default function ExportTransactionFormNew({
           return;
         }
       } catch (baseUnitError) {
-        console.warn('⚠️ getBaseUnit also failed');
+        console.warn(' getBaseUnit also failed');
       }
       
       // Final fallback: BE will auto-create
@@ -320,7 +320,7 @@ export default function ExportTransactionFormNew({
   const handleItemSelect = async (item: ItemMasterV1, rowIndex: number) => {
     // Check if item has valid id
     if (!item || item.id === undefined || item.id === null) {
-      console.error('❌ Invalid item:', item);
+      console.error(' Invalid item:', item);
       toast.error('Lỗi: Không thể xác định ID vật tư', {
         description: 'Vui lòng thử chọn lại vật tư khác',
       });
@@ -329,7 +329,7 @@ export default function ExportTransactionFormNew({
 
     const itemId = Number(item.id);
     if (!itemId || isNaN(itemId) || itemId <= 0) {
-      console.error('❌ Invalid itemId:', item.id, 'for item:', item);
+      console.error(' Invalid itemId:', item.id, 'for item:', item);
       toast.error('Lỗi: ID vật tư không hợp lệ', {
         description: `ID: ${item.id}`,
       });
@@ -563,9 +563,9 @@ export default function ExportTransactionFormNew({
                   <SelectValue placeholder="Chọn loại xuất kho" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USAGE">📋 Xuất Dùng (USAGE)</SelectItem>
-                  <SelectItem value="DISPOSAL">🗑️ Xuất Hủy (DISPOSAL)</SelectItem>
-                  <SelectItem value="RETURN">↩️ Trả NCC (RETURN)</SelectItem>
+                  <SelectItem value="USAGE"> Xuất Dùng (USAGE)</SelectItem>
+                  <SelectItem value="DISPOSAL"> Xuất Hủy (DISPOSAL)</SelectItem>
+                  <SelectItem value="RETURN">↩ Trả NCC (RETURN)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

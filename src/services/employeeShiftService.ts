@@ -94,7 +94,7 @@ export class EmployeeShiftService {
       ? `${this.BASE_URL}?${queryParams.toString()}`
       : this.BASE_URL;
 
-    console.log('🔍 EmployeeShiftService.getShifts - API Call:', {
+    console.log(' EmployeeShiftService.getShifts - API Call:', {
       url,
       params,
       queryString: queryParams.toString()
@@ -103,7 +103,7 @@ export class EmployeeShiftService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<PaginatedResponse<EmployeeShiftApiResponse>>(url);
 
-    console.log('✅ EmployeeShiftService.getShifts - Response:', {
+    console.log(' EmployeeShiftService.getShifts - Response:', {
       status: response.status,
       totalElements: response.data.totalElements,
       totalPages: response.data.totalPages,
@@ -117,7 +117,7 @@ export class EmployeeShiftService {
       this.convertApiResponse(apiShift)
     );
 
-    console.log('📊 Converted shifts:', {
+    console.log('� Converted shifts:', {
       count: convertedShifts.length,
       shifts: convertedShifts
     });
@@ -209,12 +209,12 @@ export class EmployeeShiftService {
     work_shift_id: string;
     notes?: string;
   }): Promise<EmployeeShift> {
-    console.log('🔍 EmployeeShiftService.createShift - API Call:', shiftData);
+    console.log(' EmployeeShiftService.createShift - API Call:', shiftData);
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.post<ApiResponse<EmployeeShift>>(`${this.BASE_URL}`, shiftData);
 
-    console.log('✅ EmployeeShiftService.createShift - Response:', { status: response.status, data: response.data });
+    console.log(' EmployeeShiftService.createShift - Response:', { status: response.status, data: response.data });
 
     return response.data.data;
   }
@@ -229,12 +229,12 @@ export class EmployeeShiftService {
       notes?: string;
     }
   ): Promise<EmployeeShift> {
-    console.log('🔍 EmployeeShiftService.updateShift - API Call:', { shiftId, updateData });
+    console.log(' EmployeeShiftService.updateShift - API Call:', { shiftId, updateData });
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<ApiResponse<EmployeeShift>>(`${this.BASE_URL}/${shiftId}`, updateData);
 
-    console.log('✅ EmployeeShiftService.updateShift - Response:', { status: response.status, data: response.data });
+    console.log(' EmployeeShiftService.updateShift - Response:', { status: response.status, data: response.data });
 
     return response.data.data;
   }
@@ -243,12 +243,12 @@ export class EmployeeShiftService {
    * Delete a shift
    */
   static async deleteShift(shiftId: string): Promise<void> {
-    console.log('🔍 EmployeeShiftService.deleteShift - API Call:', shiftId);
+    console.log(' EmployeeShiftService.deleteShift - API Call:', shiftId);
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.delete<ApiResponse<void>>(`${this.BASE_URL}/${shiftId}`);
 
-    console.log('✅ EmployeeShiftService.deleteShift - Response:', { status: response.status, data: response.data });
+    console.log(' EmployeeShiftService.deleteShift - Response:', { status: response.status, data: response.data });
   }
 }
 

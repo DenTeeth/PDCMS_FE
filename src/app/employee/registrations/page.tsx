@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/types/permission';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -119,15 +119,40 @@ const dayOfWeekToNumber = (day: DayOfWeek): number => {
   return map[day] ?? 0;
 };
 
-// Helper: Calculate hours from shift time (e.g., "08:00-12:00" = 4 hours, "8h-12h" = 4 hours)
-const calculateShiftHours = (shiftName: string): number => {
-  // Match patterns like "8h-12h" or "08:00-12:00" or "8:00-12:00"
-  const timeMatch = shiftName.match(/(\d{1,2})[h:](\d{0,2})\D*(\d{1,2})[h:](\d{0,2})/);
+// Helper: Calculate hours from shift time
+// Priority 1: Look up from workShifts data (has durationHours)
+// Priority 2: Parse from shift name format
+const calculateShiftHours = (shiftName: string, workShiftsData?: WorkShift[]): number => {
+  // Try to find shift in workShifts data first (most accurate)
+  if (workShiftsData && workShiftsData.length > 0) {
+    const shift = workShiftsData.find(s => s.shiftName === shiftName);
+    if (shift && shift.durationHours) {
+      return shift.durationHours;
+    }
+  }
+
+  // Fallback: Parse from shift name
+  // Try to match patterns like:
+  // - "8h-12h" or "(8h-12h)" 
+  // - "08:00-12:00" or "(08:00-12:00)"
+  // - "8:00-12:00"
+
+  // First try: Match "Xh-Yh" format (e.g., "8h-12h", "18h-21h")
+  let timeMatch = shiftName.match(/(\d{1,2})h\s*-\s*(\d{1,2})h/);
+  if (timeMatch) {
+    const startHour = parseInt(timeMatch[1]);
+    const endHour = parseInt(timeMatch[2]);
+    return endHour - startHour;
+  }
+
+  // Second try: Match "X:MM-Y:MM" format (e.g., "08:00-12:00")
+  timeMatch = shiftName.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
   if (timeMatch) {
     const startHour = parseInt(timeMatch[1]);
     const endHour = parseInt(timeMatch[3]);
     return endHour - startHour;
   }
+
   return 0;
 };
 
@@ -477,22 +502,23 @@ export default function EmployeeRegistrationsPage() {
   };
 
   // Helper: Calculate total approved hours from registrations
-  const calculateTotalApprovedHours = useMemo(() => {
+  const calculateTotalApprovedHours = () => {
     return partTimeRegistrations
       .filter(r => r.status === 'APPROVED')
       .reduce((total, reg) => {
         const weeks = calculateWeeksBetween(reg.effectiveFrom, reg.effectiveTo);
-        const hours = calculateShiftHours(reg.shiftName || '');
+        const hours = calculateShiftHours(reg.shiftName || '', workShifts);
         return total + (hours * weeks);
       }, 0);
-  }, [partTimeRegistrations]);
+  };
 
   // Update current approved hours whenever registrations change
   useEffect(() => {
-    setCurrentApprovedHours(calculateTotalApprovedHours);
-  }, [calculateTotalApprovedHours]);
+    setCurrentApprovedHours(calculateTotalApprovedHours());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partTimeRegistrations]);
 
-  // ❌ REMOVED EDIT MODAL STATE - Registrations are immutable
+  // REMOVED EDIT MODAL STATE - Registrations are immutable
   // const [showPartTimeEditModal, setShowPartTimeEditModal] = useState(false);
   // const [partTimeEditingRegistration, setPartTimeEditingRegistration] = useState<ShiftRegistration | null>(null);
   // const [partTimeUpdating, setPartTimeUpdating] = useState(false);
@@ -571,7 +597,7 @@ export default function EmployeeRegistrationsPage() {
           }
         }
       } catch (error) {
-        console.error('❌ [currentEmployeeId] Error extracting from token:', error);
+        console.error('[currentEmployeeId] Error extracting from token:', error);
       }
     }
 
@@ -584,16 +610,16 @@ export default function EmployeeRegistrationsPage() {
     if (activeTab === 'part-time' && availableTabs.includes('part-time')) {
       // For Part-Time Flex registration, employeeId is optional (backend gets from token)
       // So we can still fetch available slots even without currentEmployeeId
-      console.log('📋 [useEffect] Fetching Part-Time Registrations...');
+      console.log('[useEffect] Fetching Part-Time Registrations...');
       fetchPartTimeRegistrations();
 
       // Load available slots if user has VIEW_AVAILABLE_SLOTS permission (PART_TIME_FLEX)
       // Note: available slots API doesn't require employeeId in request
       if (isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS)) {
-        console.log('✅ [useEffect] Fetching Available Slots (PART_TIME_FLEX or has VIEW_AVAILABLE_SLOTS permission)');
+        console.log('[useEffect] Fetching Available Slots (PART_TIME_FLEX or has VIEW_AVAILABLE_SLOTS permission)');
         fetchAvailableSlots();
       } else {
-        console.log('⚠️ [useEffect] Not fetching available slots - not PART_TIME_FLEX and no VIEW_AVAILABLE_SLOTS permission');
+        console.log('[useEffect] Not fetching available slots - not PART_TIME_FLEX and no VIEW_AVAILABLE_SLOTS permission');
         if (!isPartTimeFlex) {
           fetchWorkShifts();
         }
@@ -606,9 +632,9 @@ export default function EmployeeRegistrationsPage() {
       fetchWorkSlotsData();
 
       if (!currentEmployeeId) {
-        console.warn('⚠️ [useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
+        console.warn('[useEffect] currentEmployeeId is null/NaN - Part-Time Flex registration might still work (backend gets from token)');
       } else {
-        console.log('✅ [useEffect] currentEmployeeId available:', currentEmployeeId);
+        console.log('[useEffect] currentEmployeeId available:', currentEmployeeId);
       }
     } else if (activeTab === 'fixed' && availableTabs.includes('fixed')) {
       // Fetch fixed registrations
@@ -622,7 +648,7 @@ export default function EmployeeRegistrationsPage() {
     try {
       setPartTimeLoading(true);
 
-      // ✅ UPDATED: Backend now returns paginated response
+      // UPDATED: Backend now returns paginated response
       const response = await shiftRegistrationService.getMyRegistrations({
         page: partTimeCurrentPage,
         size: 10,
@@ -631,7 +657,7 @@ export default function EmployeeRegistrationsPage() {
       }, 'part-time-flex');
 
       // Backend now ALWAYS returns paginated response (Spring Data Page object)
-      console.log('✅ Part-time registrations (paginated):', {
+      console.log('Part-time registrations (paginated):', {
         totalElements: response.totalElements,
         totalPages: response.totalPages,
         currentPage: response.pageable?.pageNumber ?? partTimeCurrentPage,
@@ -642,12 +668,12 @@ export default function EmployeeRegistrationsPage() {
       setPartTimeTotalPages(response.totalPages || 0);
       setPartTimeTotalElements(response.totalElements || 0);
     } catch (error: any) {
-      console.error('❌ Failed to fetch part-time registrations:', error);
+      console.error('Failed to fetch part-time registrations:', error);
 
       // Extract detailed error message from 500 response
       let errorMessage = 'Failed to fetch your shift registrations';
       if (error.response?.status === 500) {
-        console.error('🔥 [Backend 500 Error] Server error details:', {
+        console.error('� [Backend 500 Error] Server error details:', {
           fullResponse: error.response,
           data: error.response.data,
           message: error.response.data?.message,
@@ -671,11 +697,11 @@ export default function EmployeeRegistrationsPage() {
       setWorkShifts(shiftsResponse || []);
 
       if (!shiftsResponse || shiftsResponse.length === 0) {
-        toast.warning('No work shifts available. Please contact admin to create work shifts.');
+        toast.warning('Hiện chưa có ca làm việc nào. Vui lòng liên hệ quản trị viên để tạo ca làm việc.');
       }
     } catch (error: any) {
       console.error('Failed to fetch work shifts:', error);
-      toast.error('Failed to load work shifts: ' + (error.response?.data?.message || error.message));
+      toast.error('Không thể tải danh sách ca làm việc: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingWorkShifts(false);
     }
@@ -684,7 +710,7 @@ export default function EmployeeRegistrationsPage() {
   /**
    * Fetch work slots (PartTimeSlot[]) for mapping shift names
    * 
-   * ⚠️ LƯU Ý QUAN TRỌNG:
+   * LƯU Ý QUAN TRỌNG:
    * - API này yêu cầu permission MANAGE_WORK_SLOTS (chỉ dành cho Admin/Manager)
    * - Employee KHÔNG có quyền này → Sẽ gây lỗi 403
    * - Chỉ gọi API này nếu user có permission MANAGE_WORK_SLOTS
@@ -694,7 +720,7 @@ export default function EmployeeRegistrationsPage() {
     // Chỉ fetch nếu user có permission MANAGE_WORK_SLOTS
     // (Thường là Admin/Manager mới có permission này)
     if (!hasManagePermission) {
-      console.log('ℹ️ [fetchWorkSlotsData] Skipping - User does not have MANAGE_WORK_SLOTS permission');
+      console.log('[fetchWorkSlotsData] Skipping - User does not have MANAGE_WORK_SLOTS permission');
       setWorkSlots([]); // Set empty array
       return;
     }
@@ -703,16 +729,16 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkSlots(true);
       const slotsResponse = await workSlotService.getWorkSlots();
       setWorkSlots(slotsResponse || []);
-      console.log('📋 [fetchWorkSlotsData] Loaded work slots:', {
+      console.log('[fetchWorkSlotsData] Loaded work slots:', {
         count: slotsResponse?.length || 0,
         slots: slotsResponse
       });
     } catch (error: any) {
-      console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
+      console.error('[fetchWorkSlotsData] Failed to fetch work slots:', error);
 
       // Nếu lỗi 403 → User không có permission (expected cho employee)
       if (error.response?.status === 403) {
-        console.log('ℹ️ [fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
+        console.log('[fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
         // Don't show error toast - this is expected for employees
       } else {
         // Các lỗi khác (500, network, etc.) - có thể log nhưng không hiển thị toast
@@ -728,22 +754,22 @@ export default function EmployeeRegistrationsPage() {
   // Fetch available slots for PART_TIME_FLEX employees
   const fetchAvailableSlots = async () => {
     try {
-      console.log('🚀 [fetchAvailableSlots] Starting fetch...');
-      console.log('📊 [fetchAvailableSlots] Current state:', {
+      console.log('[fetchAvailableSlots] Starting fetch...');
+      console.log('� [fetchAvailableSlots] Current state:', {
         slotMonthFilter,
         isPartTimeFlex,
         hasViewPermission: hasPermission(Permission.VIEW_AVAILABLE_SLOTS)
       });
       setLoadingAvailableSlots(true);
 
-      // ⚠️ IMPORTANT: Month filter might hide slots that are still available
+      // IMPORTANT: Month filter might hide slots that are still available
       // Backend filters by effectiveFrom month, but slots can span multiple months
       const monthParam = slotMonthFilter !== 'ALL' ? slotMonthFilter : undefined;
-      console.log(`📡 [fetchAvailableSlots] Calling API with month filter: ${monthParam || 'NO FILTER (showing all)'}`);
+      console.log(`[fetchAvailableSlots] Calling API with month filter: ${monthParam || 'NO FILTER (showing all)'}`);
 
       const slots = await shiftRegistrationService.getAvailableSlots(monthParam);
 
-      console.log('✅ [fetchAvailableSlots] API Response received:', {
+      console.log('[fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
@@ -753,10 +779,10 @@ export default function EmployeeRegistrationsPage() {
 
       const slotsArray = slots || [];
 
-      // 🔍 DEBUG: Check each slot's availability
-      console.log('🔍 [fetchAvailableSlots] Analyzing slot availability:');
+      // DEBUG: Check each slot's availability
+      console.log('[fetchAvailableSlots] Analyzing slot availability:');
 
-      // 🔧 Map backend field names to frontend
+      // Map backend field names to frontend
       // Backend uses: totalWeeksAvailable, availableWeeks, fullWeeks
       // Frontend expects: totalDatesAvailable, totalDatesEmpty, totalDatesFull
       const slotsWithMappedFields = slotsArray.map(slot => {
@@ -793,13 +819,13 @@ export default function EmployeeRegistrationsPage() {
         });
 
         if (isFull) {
-          console.warn(`  ⚠️ Slot ${slot.slotId} (${slot.shiftName}) is FULL (0 weeks available)!`);
+          console.warn(`  Slot ${slot.slotId} (${slot.shiftName}) is FULL (0 weeks available)!`);
         } else if (hasSpace) {
-          console.log(`  ✅ Slot ${slot.slotId} has ${slot.totalDatesEmpty}/${slot.totalDatesAvailable} weeks available!`);
+          console.log(`  Slot ${slot.slotId} has ${slot.totalDatesEmpty}/${slot.totalDatesAvailable} weeks available!`);
         }
       });
 
-      console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
+      console.log('[fetchAvailableSlots] Setting availableSlots:', {
         count: slotsWithMappedFields.length,
         fullSlots: slotsWithMappedFields.filter(s => s.totalDatesEmpty === 0).length,
         partialSlots: slotsWithMappedFields.filter(s => s.totalDatesEmpty > 0 && s.totalDatesEmpty < s.totalDatesAvailable).length,
@@ -823,13 +849,13 @@ export default function EmployeeRegistrationsPage() {
       setSlotDetailsMap(detailsMap);
 
       if (!slots || slotsArray.length === 0) {
-        console.warn('⚠️ [fetchAvailableSlots] No available slots found');
+        console.warn('[fetchAvailableSlots] No available slots found');
         toast.info('Hiện tại không có suất nào còn trống. Vui lòng thử lại sau.');
       } else {
-        console.log('✅ [fetchAvailableSlots] Successfully loaded', slotsArray.length, 'available slots');
+        console.log('[fetchAvailableSlots] Successfully loaded', slotsArray.length, 'available slots');
       }
     } catch (error: any) {
-      console.error('❌ [fetchAvailableSlots] Error fetching available slots:', {
+      console.error('[fetchAvailableSlots] Error fetching available slots:', {
         error,
         message: error.message,
         response: error.response,
@@ -841,7 +867,7 @@ export default function EmployeeRegistrationsPage() {
       // Extract detailed error message from 500 response
       let errorMessage = 'Failed to load available slots';
       if (error.response?.status === 500) {
-        console.error('🔥 [Backend 500 Error] Server error details:', {
+        console.error('� [Backend 500 Error] Server error details:', {
           fullResponse: error.response,
           data: error.response.data,
           message: error.response.data?.message,
@@ -854,7 +880,7 @@ export default function EmployeeRegistrationsPage() {
 
       toast.error(error.response?.data?.message || error.message || errorMessage);
     } finally {
-      console.log('🏁 [fetchAvailableSlots] Finished (set loading to false)');
+      console.log('[fetchAvailableSlots] Finished (set loading to false)');
       setLoadingAvailableSlots(false);
     }
   };
@@ -899,43 +925,43 @@ export default function EmployeeRegistrationsPage() {
   // ==================== PART-TIME REGISTRATION HANDLERS ====================
   const handlePartTimeCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 [handlePartTimeCreate] Starting registration creation...');
-    console.log('📋 Form data:', partTimeCreateFormData);
-    console.log('👤 User type:', { isPartTimeFlex, employeeType: user?.employmentType });
+    console.log('[handlePartTimeCreate] Starting registration creation...');
+    console.log('Form data:', partTimeCreateFormData);
+    console.log('� User type:', { isPartTimeFlex, employeeType: user?.employmentType });
 
     // Validate based on employee type
     if (isPartTimeFlex) {
       // PART_TIME_FLEX: Need all required fields
       if (!partTimeCreateFormData.partTimeSlotId) {
-        console.error('❌ Validation failed: No slot selected');
+        console.error('Validation failed: No slot selected');
         toast.error('Vui lòng chọn suất làm việc');
         setFormErrors({ general: 'Vui lòng chọn suất làm việc' });
         return;
       }
       // Use selected slot days from selected slot instead of form dayOfWeek
       const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
-      console.log('🎯 Selected slot:', selectedSlot);
+      console.log('Selected slot:', selectedSlot);
 
       const slotDays = selectedSlot?.dayOfWeek ? selectedSlot.dayOfWeek.split(',').map(d => d.trim()) : [];
       if (!slotDays || slotDays.length === 0) {
-        console.error('❌ Validation failed: No days configured for slot');
+        console.error('Validation failed: No days configured for slot');
         toast.error('Suất này chưa cấu hình ngày làm việc. Vui lòng chọn suất khác.');
         setFormErrors({ general: 'Suất này chưa cấu hình ngày làm việc' });
         return;
       }
 
       if (!partTimeCreateFormData.effectiveFrom) {
-        console.error('❌ Validation failed: No start date');
+        console.error('Validation failed: No start date');
         toast.error('Vui lòng chọn tuần bắt đầu');
         setFormErrors({ general: 'Vui lòng chọn tuần bắt đầu' });
         return;
       }
 
-      console.log('✅ Basic validation passed');
-      console.log('📅 Slot days:', slotDays);
-      console.log('📅 Date range:', { from: partTimeCreateFormData.effectiveFrom, to: partTimeCreateFormData.effectiveTo });
+      console.log('Basic validation passed');
+      console.log('� Slot days:', slotDays);
+      console.log('� Date range:', { from: partTimeCreateFormData.effectiveFrom, to: partTimeCreateFormData.effectiveTo });
 
-      // ✅ VALIDATE 21H WEEKLY LIMIT (CLIENT-SIDE)
+      // VALIDATE 21H WEEKLY LIMIT (CLIENT-SIDE)
       if (hoursPerWeek > 0 && currentApprovedHours + hoursPerWeek > 21) {
         const totalHours = currentApprovedHours + hoursPerWeek;
         toast.error(
@@ -993,11 +1019,11 @@ export default function EmployeeRegistrationsPage() {
         }
       }
 
-      console.log('📤 Sending request to API:', requestData);
+      console.log('� Sending request to API:', requestData);
 
       const result = await shiftRegistrationService.createRegistration(requestData);
 
-      console.log('✅ Registration created successfully:', result);
+      console.log('Registration created successfully:', result);
       toast.success('Đăng ký ca làm việc thành công! Chờ quản lý phê duyệt.', { duration: 5000 });
 
       setShowPartTimeCreateModal(false);
@@ -1012,7 +1038,7 @@ export default function EmployeeRegistrationsPage() {
         await fetchAvailableSlots();
       }
     } catch (error: any) {
-      console.error('❌ Failed to create registration:', error);
+      console.error('Failed to create registration:', error);
 
       // Handle specific error codes
       if (error.errorCode === 'INVALID_EMPLOYEE_TYPE' || error.response?.data?.errorCode === 'INVALID_EMPLOYEE_TYPE') {
@@ -1021,7 +1047,7 @@ export default function EmployeeRegistrationsPage() {
         toast.error('Suất này đã đủ người đăng ký. Vui lòng chọn suất khác.');
         await fetchAvailableSlots(); // Refresh available slots
       } else if (error.errorCode === 'WEEKLY_HOURS_LIMIT_EXCEEDED' || error.response?.data?.errorCode === 'WEEKLY_HOURS_LIMIT_EXCEEDED') {
-        // ✅ HANDLE WEEKLY_HOURS_LIMIT_EXCEEDED FROM BACKEND
+        // HANDLE WEEKLY_HOURS_LIMIT_EXCEEDED FROM BACKEND
         const errorData = error.response?.data;
         const currentHours = errorData?.currentApprovedHours || currentApprovedHours;
         const requestedHours = errorData?.requestedHours || hoursPerWeek;
@@ -1058,7 +1084,7 @@ export default function EmployeeRegistrationsPage() {
     }
   };
 
-  // ❌ REMOVED handlePartTimeEdit and handlePartTimeUpdate functions
+  // REMOVED handlePartTimeEdit and handlePartTimeUpdate functions
   // Registrations are immutable per backend design
   // Employees should delete and create new registration to modify
 
@@ -1180,12 +1206,12 @@ export default function EmployeeRegistrationsPage() {
   const sortedAvailableSlots = useMemo(() => {
     let slots = [...availableSlots];
 
-    // ❌ TEMPORARILY DISABLED - Backend may return totalDatesEmpty=0 even when slots available
-    // ✅ TODO: Fix after confirming backend field names
+    // TEMPORARILY DISABLED - Backend may return totalDatesEmpty=0 even when slots available
+    // TODO: Fix after confirming backend field names
     // slots = slots.filter(slot => slot.totalDatesEmpty > 0);
 
     // Show ALL slots for now - users can see availability in details
-    console.log('🔍 [sortedAvailableSlots] Processing slots:', {
+    console.log('[sortedAvailableSlots] Processing slots:', {
       total: slots.length,
       slots: slots.map(s => ({
         id: s.slotId,
@@ -1263,7 +1289,7 @@ export default function EmployeeRegistrationsPage() {
     Object.values(slotDetailsMap).forEach(details => {
       if (details?.availabilityByMonth) {
         details.availabilityByMonth.forEach(month => {
-          if (month.totalDatesAvailable > 0) {
+          if (month.totalDatesAvailable > 0 && month.monthName) {
             // Parse "November 2025" to "2025-11"
             const [monthName, year] = month.monthName.split(' ');
             const monthNumber = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
@@ -1575,9 +1601,13 @@ export default function EmployeeRegistrationsPage() {
                             <tbody className="bg-white divide-y divide-gray-200">
                               {sortedAvailableSlots.map((slot) => {
                                 const slotDetails = slotDetailsMap[slot.slotId];
-                                const shiftHours = calculateShiftHours(slot.shiftName);
+                                const shiftHours = calculateShiftHours(slot.shiftName, workShifts);
 
-                                // ✅ FIX: Calculate TOTAL working days from slotDetails
+                                // Calculate days per week from slot.dayOfWeek
+                                const daysPerWeek = slot.dayOfWeek ? slot.dayOfWeek.split(',').length : 0;
+                                const hoursPerWeek = shiftHours * daysPerWeek;
+
+                                // FIX: Calculate TOTAL working days from slotDetails
                                 // totalDatesAvailable = days with space (CHANGES with bookings)
                                 // We need: TOTAL working days (NEVER changes)
                                 let totalWorkingDays = 0;
@@ -1592,12 +1622,12 @@ export default function EmployeeRegistrationsPage() {
                                 }
 
                                 // Calculate availability based on actual slots, not weeks
-                                // ⚠️ IMPORTANT: Backend only counts APPROVED registrations
+                                // IMPORTANT: Backend only counts APPROVED registrations
                                 // Pending registrations do NOT reduce quota until approved by admin
                                 let totalSlots, availableSlots, approvedSlots, availablePercent;
 
                                 if (slotDetails && slotDetails.quota && slotDetails.availabilityByMonth) {
-                                  // ✅ CORRECT: Calculate from monthly breakdown (not overallRemaining which is wrong)
+                                  // CORRECT: Calculate from monthly breakdown (not overallRemaining which is wrong)
                                   totalSlots = slotDetails.availabilityByMonth.reduce((sum, m) => sum + (m.totalWorkingDays * slotDetails.quota), 0);
                                   availableSlots = slotDetails.availabilityByMonth.reduce((sum, m) => sum + (m.totalDatesAvailable * slotDetails.quota), 0);
                                   approvedSlots = totalSlots - availableSlots;
@@ -1646,7 +1676,7 @@ export default function EmployeeRegistrationsPage() {
                                         </div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <div className="text-sm font-semibold text-gray-900">{shiftHours}h</div>
+                                        <div className="text-sm font-semibold text-gray-900">{hoursPerWeek}h</div>
                                       </td>
                                       <td className="px-4 py-3">
                                         <div className="text-sm text-gray-600">{totalWorkingDays} tuần</div>
@@ -1712,7 +1742,7 @@ export default function EmployeeRegistrationsPage() {
                                           {/* Summary Info - Simple Text */}
                                           <div className="mb-3 text-xs text-gray-600">
                                             {(() => {
-                                              // ✅ FIX: Calculate from monthly breakdown instead of overallRemaining
+                                              // FIX: Calculate from monthly breakdown instead of overallRemaining
                                               const totalSlots = slotDetails.availabilityByMonth?.reduce((sum, m) => sum + (m.totalWorkingDays * slotDetails.quota), 0) || 0;
                                               const availableSlots = slotDetails.availabilityByMonth?.reduce((sum, m) => sum + (m.totalDatesAvailable * slotDetails.quota), 0) || 0;
 
@@ -1738,7 +1768,7 @@ export default function EmployeeRegistrationsPage() {
                                               </thead>
                                               <tbody className="bg-white divide-y divide-gray-100">
                                                 {slotDetails.availabilityByMonth.map((month, idx) => {
-                                                  // ✅ LOGIC: Slot khả dụng = Tổng slot - Slot đã duyệt
+                                                  // LOGIC: Slot khả dụng = Tổng slot - Slot đã duyệt
                                                   // totalWorkingDays = tổng ngày làm việc trong tháng
                                                   // totalDatesAvailable = số ngày còn slot trống
                                                   const totalSlots = month.totalWorkingDays * slotDetails.quota;
@@ -2128,7 +2158,7 @@ export default function EmployeeRegistrationsPage() {
 
                                 // Calculate hours per week from shift duration
                                 if (foundSlot) {
-                                  const hours = calculateShiftHours(foundSlot.shiftName);
+                                  const hours = calculateShiftHours(foundSlot.shiftName, workShifts);
                                   setHoursPerWeek(hours);
                                 }
                               }}
@@ -2150,7 +2180,7 @@ export default function EmployeeRegistrationsPage() {
                                   : 0;
 
                                 // Color indicator
-                                const indicator = isFull ? '🔴' : availPercent > 70 ? '🟢' : availPercent > 30 ? '🟡' : '🟠';
+                                const indicator = isFull ? '�' : availPercent > 70 ? '�' : availPercent > 30 ? '�' : '�';
 
                                 return (
                                   <option
@@ -2402,7 +2432,7 @@ export default function EmployeeRegistrationsPage() {
           </div>
         )}
 
-        {/* ❌ REMOVED EDIT MODAL - Registrations are immutable per backend design */}
+        {/* REMOVED EDIT MODAL - Registrations are immutable per backend design */}
         {/* Edit feature removed - employees should delete and create new registration instead */}
 
         {/* PART-TIME DELETE MODAL */}

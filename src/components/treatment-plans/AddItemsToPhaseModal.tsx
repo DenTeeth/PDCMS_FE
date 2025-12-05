@@ -135,10 +135,10 @@ export default function AddItemsToPhaseModal({
             sortBy: 'serviceName',
             sortDirection: 'ASC',
           });
-          console.log('✅ Loaded services from /my-specializations:', response.content?.length || 0);
+          console.log(' Loaded services from /my-specializations:', response.content?.length || 0);
         } catch (apiError: any) {
           // If new API fails (500, 404, etc.), fallback to regular endpoint
-          console.warn('⚠️ /my-specializations API failed, falling back to /services:', apiError.response?.status, apiError.response?.data?.message);
+          console.warn(' /my-specializations API failed, falling back to /services:', apiError.response?.status, apiError.response?.data?.message);
           if (apiError.response?.status === 500 || apiError.response?.status === 404) {
             // API not available yet, use regular endpoint
             response = await ServiceService.getServices({
@@ -149,7 +149,7 @@ export default function AddItemsToPhaseModal({
               sortBy: 'serviceName',
               sortDirection: 'ASC',
             });
-            console.log('✅ Fallback: Loaded services from /services:', response.content?.length || 0);
+            console.log(' Fallback: Loaded services from /services:', response.content?.length || 0);
           } else {
             throw apiError; // Re-throw other errors
           }
@@ -164,7 +164,7 @@ export default function AddItemsToPhaseModal({
           sortBy: 'serviceName',
           sortDirection: 'ASC',
         });
-        console.log('✅ Loaded services from /services (non-doctor):', response.content?.length || 0);
+        console.log(' Loaded services from /services (non-doctor):', response.content?.length || 0);
       }
       
       console.log('Services loaded:', { count: response.content.length, services: response.content });
@@ -638,7 +638,7 @@ export default function AddItemsToPhaseModal({
                 <p>• Tổng chi phí thêm: <strong>{totalCost.toLocaleString('vi-VN')} VND</strong></p>
                 {planApprovalStatus === ApprovalStatus.APPROVED ? (
                   <p className="text-orange-600 font-medium">
-                    ⚠️ Lộ trình sẽ chuyển sang trạng thái "Chờ duyệt"
+                     Lộ trình sẽ chuyển sang trạng thái "Chờ duyệt"
                   </p>
                 ) : (
                   <p className="text-green-600 font-medium">
