@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const token = getToken();
         const userData = getUserData();
-        
+
         if (token && userData) {
           // Extract employeeId from token if not already in userData
           if (!userData.employeeId && token) {
@@ -67,11 +67,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log('✅ Extracted employeeId from token:', employeeId);
             }
           }
-          
+
           // Token exists, set authenticated
           setUser(userData);
           setIsAuthenticated(true);
-          
+
           console.log('✅ User authenticated from localStorage', {
             username: userData.username,
             employeeId: userData.employeeId,
@@ -96,11 +96,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('🔄 Attempting to refresh token...');
       const response = await apiClient.refreshToken();
-      
+
       if (response.accessToken) {
         // Update access token in localStorage (already done in apiClient)
         setToken(response.accessToken);
-        
+
         // Update user data with new token and expiration time
         const currentUser = getUserData();
         if (currentUser) {
@@ -110,15 +110,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             tokenExpiresAt: response.accessTokenExpiresAt,
             refreshTokenExpiresAt: response.refreshTokenExpiresAt,
           };
-          
+
           setUserData(updatedUser);
           setUser(updatedUser);
           setIsAuthenticated(true);
-          
-          const expiresIn = response.accessTokenExpiresAt 
+
+          const expiresIn = response.accessTokenExpiresAt
             ? response.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
             : 'unknown';
-          
+
           console.log('✅ Token refreshed successfully');
           console.log(`⏰ New token expires in: ${expiresIn} seconds`);
           console.log('🍪 Refresh token rotated by backend');
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const refreshDelay = Math.max((timeUntilExpiry - refreshBeforeExpiry) * 1000, 1000); // Convert to ms, min 1 second
 
       console.log(`⏰ Token expires in ${timeUntilExpiry}s, will refresh in ${Math.floor(refreshDelay / 1000)}s (${refreshBeforeExpiry}s before expiry)`);
-      
+
       return refreshDelay;
     };
 
@@ -217,14 +217,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('🔐 Starting login process...');
       const response = await apiClient.login(credentials);
-      
+
       console.log('📥 Login response received:', response);
-      
+
       // Response now directly contains the data (no statusCode wrapper)
       if (response.token) {
         // Extract employeeId from JWT token
         const employeeId = getEmployeeIdFromToken(response.token);
-        
+
         const userData: User = {
           username: response.username,
           email: response.email,
@@ -244,11 +244,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Store user data in localStorage
         setUserData(userData);
-        
-        const expiresIn = response.tokenExpiresAt 
+
+        const expiresIn = response.tokenExpiresAt
           ? response.tokenExpiresAt - Math.floor(Date.now() / 1000)
           : 'unknown';
-        
+
         // Note: accessToken already stored in apiClient.login()
         // Note: refreshToken automatically stored in HTTP-Only Cookie by backend
         console.log('✅ Login successful');
@@ -259,7 +259,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Update state IMMEDIATELY
         setUser(userData);
         setIsAuthenticated(true);
-        
+
         console.log('✅ Auth state updated - isAuthenticated: true');
       } else {
         throw new Error('Login failed - no token received');
@@ -329,11 +329,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getHomePath = useCallback((): string => {
     if (!user?.baseRole) return '/';
-    return getBasePathByBaseRole(user.baseRole);
+    // Pass roles to detect ROLE_ACCOUNTANT
+    return getBasePathByBaseRole(user.baseRole, user.roles);
   }, [user]);
 
   const getLayoutType = useCallback((): 'admin' | 'employee' | 'patient' => {
     if (!user?.baseRole) return 'patient';
+    // Check if accountant
+    if (user.roles?.includes('ROLE_ACCOUNTANT')) return 'employee'; // Use employee layout
     return user.baseRole as 'admin' | 'employee' | 'patient';
   }, [user]);
 

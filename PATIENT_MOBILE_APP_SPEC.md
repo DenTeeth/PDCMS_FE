@@ -1,9 +1,10 @@
 # 📱 PATIENT MOBILE APP - FLUTTER SPECIFICATION
 
-> **Phiên bản**: 1.0  
-> **Ngày**: 23/11/2025  
+> **Phiên bản**: 2.0  
+> **Ngày**: 25/11/2025  
 > **Frontend Reference**: Next.js 14 (React) - PDCMS Patient Portal  
-> **Target**: Android Mobile App (Flutter)
+> **Target**: Android Mobile App (Flutter)  
+> **Status**: COMPLETE DETAILED SPECIFICATION - 1:1 Web Parity
 
 ---
 
@@ -11,12 +12,22 @@
 
 1. [Tổng quan ứng dụng](#1-tổng-quan-ứng-dụng)
 2. [Authentication & Authorization](#2-authentication--authorization)
-3. [Navigation Structure](#3-navigation-structure)
-4. [Chi tiết từng màn hình](#4-chi-tiết-từng-màn-hình)
-5. [UI/UX Guidelines](#5-uiux-guidelines)
-6. [API Integration](#6-api-integration)
-7. [State Management](#7-state-management)
-8. [Offline & Caching](#8-offline--caching)
+3. [Landing Page - Public (Chưa đăng nhập)](#3-landing-page---public-chưa-đăng-nhập)
+4. [Navigation Structure](#4-navigation-structure)
+5. [Chi tiết từng màn hình](#5-chi-tiết-từng-màn-hình)
+6. [UI/UX Guidelines](#6-uiux-guidelines)
+7. [API Integration](#7-api-integration)
+8. [State Management](#8-state-management)
+9. [Offline & Caching](#9-offline--caching)
+10. [Testing Strategy](#10-testing-strategy)
+11. [Performance Optimization](#11-performance-optimization)
+12. [Security Best Practices](#12-security-best-practices)
+13. [Analytics & Monitoring](#13-analytics--monitoring)
+14. [Push Notifications](#14-push-notifications-fcm)
+15. [Localization](#15-localization-optional)
+16. [Build & Deployment](#16-build--deployment)
+17. [Checklist](#17-checklist-trước-khi-bắt-đầu)
+18. [Contact & Support](#18-contact--support)
 
 ---
 
@@ -28,7 +39,6 @@
 
 - Lịch hẹn khám
 - Hồ sơ bệnh án
-- Thanh toán hóa đơn
 - Thông báo
 - Thông tin cá nhân
 
@@ -179,9 +189,587 @@ Future<bool> isAuthenticated() async {
 
 ---
 
-## 3. NAVIGATION STRUCTURE
+## 3. LANDING PAGE - PUBLIC (Chưa đăng nhập)
+
+### 3.1 Purpose
+
+Màn hình chính cho người dùng **CHƯA ĐĂNG NHẬP**, giới thiệu phòng khám, dịch vụ, bác sĩ và khuyến khích đăng ký/đăng nhập.
+
+### 3.2 Structure & Layout
+
+Landing page bao gồm các section scroll được từ trên xuống dưới:
+
+#### 3.2.1 Navigation Bar (Fixed Top)
+
+```
+┌─────────────────────────────────────┐
+│ 🦷 DenTeeth     🇻🇳▼  [Login] │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: White (#FFFFFF) với shadow nhẹ
+- **Height**: 56dp (mobile standard)
+- **Logo**: DenTeeth logo 120x45 dp, align left
+- **Language Dropdown**:
+  - Button: Gray bg (#F3F4F6), rounded 8dp
+  - Icon: Flag emoji (🇻🇳/🇬🇧)
+  - Text: Hidden on mobile, show on tablet+
+  - Dropdown: White card, shadow-lg, 2 options
+- **Login Button**:
+  - Background: Primary (#8B5FBF)
+  - Text: White, font-weight 600
+  - Padding: 12x24 dp
+  - Border-radius: 8dp
+  - Hover: Darken 10% (#7A4EAE)
+
+**Behavior:**
+
+- Fixed position, z-index 50
+- Scroll down → shadow increases
+- Tap logo → scroll to top
+- Language dropdown: tap outside to close
+
+#### 3.2.2 Hero Section
+
+```
+┌─────────────────────────────────────┐
+│  🌅 Background Image (Dental Clinic)│
+│      with Gradient Overlay         │
+│                                     │
+│                                     │
+│   ELEVATE YOUR SMILE WITH          │
+│   ─────────────────────────        │
+│   Professional Care and            │
+│    Gentle Touch                    │
+│                                     │
+│  Family Dental Care - High-quality │
+│  dental services with experienced  │
+│  team and modern technology.       │
+│                                     │
+│  ┌─────────────────┐                │
+│  │ Book Appointment│  [Our Services]│
+│  └─────────────────┘                │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết UI:**
+
+- **Height**: 100vh (full screen)
+- **Background**:
+  - Image: `/Hero.jpg` với `object-fit: cover`
+  - Overlay: Gradient from top-left to bottom-right
+    - `from-background/80 via-background/70 to-primary/65`
+    - Creates softer, more visible image effect
+- **Content Container**:
+  - Max-width: 600dp (mobile)
+  - Padding: 16dp horizontal
+  - Center aligned vertically & horizontally
+- **Main Heading**:
+  - Font: 32sp (mobile), 48sp (tablet), 56sp (desktop)
+  - Font-weight: 700 (bold)
+  - Color: Foreground (#1E3A5F)
+  - Line-height: 1.2
+  - Animated: Fade in + slide up on appear
+- **Gradient Text** ("Professional Care and Gentle Touch"):
+  - Gradient: `from-primary via-secondary to-primary`
+  - Creates purple→navy→purple flow effect
+  - Animation: Gentle shimmer (optional)
+- **Description Text**:
+  - Font: 16sp (mobile), 20sp (tablet)
+  - Color: Muted foreground (#6B7280)
+  - Line-height: 1.6
+  - Max-width: 500dp
+  - Margin-top: 16dp
+- **CTA Buttons Row**:
+  - Layout: Column on mobile (<600dp), Row on tablet+
+  - Gap: 16dp
+  - Margin-top: 40dp
+  - **Primary Button** ("Book Appointment"):
+    - Background: Primary (#8B5FBF)
+    - Text: White, font-size 16sp, weight 600
+    - Padding: 16x40 dp
+    - Border-radius: 12dp
+    - Shadow: Large (elevation 8)
+    - Hover: Scale 1.05, shadow-xl
+  - **Secondary Button** ("Our Services"):
+    - Background: White/90 with backdrop blur
+    - Border: 2dp solid primary/30
+    - Text: Foreground, font-size 16sp, weight 600
+    - Same padding/radius as primary
+    - Shadow: Large
+    - Hover: Scale 1.05, bg white
+
+**Animations:**
+
+1. Heading: Opacity 0→1, translateY(30)→0, duration 600ms, delay 100ms
+2. Subheading: Opacity 0→1, duration 600ms, delay 200ms
+3. Description: Opacity 0→1, duration 600ms, delay 300ms
+4. Buttons: Opacity 0→1, translateY(20)→0, duration 600ms, delay 400ms
+
+**Behaviors:**
+
+- Parallax scroll (background slower than content) - optional
+- Buttons navigate to sections or login
+- Auto-detect language from device (fallback: Vietnamese)
+
+#### 3.2.3 Stats Section
+
+```
+┌─────────────────────────────────────┐
+│  Background: Light gradient         │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│                                     │
+│   ┌───────┐  ┌───────┐             │
+│   │ 500+  │  │  15+  │             │
+│   │Patients│  │ Years │             │
+│   └───────┘  └───────┘             │
+│   ┌───────┐  ┌───────┐             │
+│   │  10+  │  │ 4.9/5 │             │
+│   │Doctors│  │ Rating│             │
+│   └───────┘  └───────┘             │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: Gradient `from-accent to-white` (#F9FAFB → #FFFFFF)
+- **Padding**: 48dp vertical, 16dp horizontal
+- **Grid**: 2x2 on mobile, 4x1 on tablet+
+- **Gap**: 24dp
+- **Each Stat Card**:
+  - Background: White with subtle shadow
+  - Padding: 24dp
+  - Border-radius: 16dp
+  - Center aligned
+  - **Number**:
+    - Font: 36sp, weight 700
+    - Color: Primary (#8B5FBF)
+    - Margin-bottom: 8dp
+  - **Label**:
+    - Font: 14sp, weight 400
+    - Color: Muted (#6B7280)
+- **Animation**: Fade in + count up animation khi scroll vào view
+- **Data**:
+  - `500+ Happy Patients`
+  - `15+ Years Experience`
+  - `10+ Professional Doctors`
+  - `4.9/5 Customer Rating`
+
+#### 3.2.4 About Section
+
+```
+┌─────────────────────────────────────┐
+│  ABOUT DENTEETH                     │
+│  ━━━━━━━━━━━                        │
+│                                     │
+│  [📷 Clinic Photo]                  │
+│                                     │
+│  Your Smile, Our Mission            │
+│                                     │
+│  We are a modern dental clinic...   │
+│  Lorem ipsum dolor sit amet...      │
+│                                     │
+│  ✓ Patient-first approach           │
+│  ✓ Experienced team                 │
+│  ✓ Modern technology                │
+│  ✓ Quality guaranteed               │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: White
+- **Padding**: 64dp vertical, 16dp horizontal
+- **Layout**: Column (image top, content bottom) on mobile
+- **Section Title**:
+  - "ABOUT DENTEETH"
+  - Font: 12sp, uppercase, weight 700, letter-spacing 2
+  - Color: Primary (#8B5FBF)
+  - Margin-bottom: 16dp
+- **Main Heading**:
+  - "Your Smile, Our Mission"
+  - Font: 32sp, weight 700
+  - Color: Foreground (#1E3A5F)
+  - Margin-bottom: 24dp
+- **Description**:
+  - Paragraph text
+  - Font: 16sp, line-height 1.6
+  - Color: Muted (#6B7280)
+  - Max-width: 600dp
+  - Margin-bottom: 32dp
+- **Feature List**:
+  - 4 items in 2x2 grid
+  - Each item:
+    - Icon: ✓ checkmark (or Shield, Users, Tooth, Award icons)
+    - Title: Font 16sp, weight 600, color foreground
+    - Description: Font 14sp, color muted
+    - Background: Light primary tint
+    - Padding: 16dp
+    - Border-radius: 12dp
+- **Image**:
+  - Aspect ratio: 16:9
+  - Border-radius: 16dp
+  - Shadow: Medium
+  - Object-fit: cover
+
+#### 3.2.5 Services Section (ID: "services")
+
+```
+┌─────────────────────────────────────┐
+│  OUR SERVICES                       │
+│  ━━━━━━━━━━━                        │
+│                                     │
+│  Comprehensive Dental Care          │
+│                                     │
+│  ┌──────────────┐  ┌──────────────┐│
+│  │ 🦷 General   │  │ 💎 Cosmetic  ││
+│  │   Dentistry  │  │   Dentistry  ││
+│  └──────────────┘  └──────────────┘│
+│  ┌──────────────┐  ┌──────────────┐│
+│  │ 🔧 Orthodon  │  │ 🦷 Implants  ││
+│  │   tics       │  │              ││
+│  └──────────────┘  └──────────────┘│
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: Light accent (#F9FAFB)
+- **Padding**: 64dp vertical
+- **Section Title**: Same style as About
+- **Main Heading**: "Comprehensive Dental Care"
+- **Grid**: 2 columns on mobile, 3-4 on tablet+
+- **Gap**: 24dp
+- **Service Card**:
+  - Background: White
+  - Padding: 32dp
+  - Border-radius: 16dp
+  - Shadow: Small, hover → large
+  - Transition: All 300ms ease
+  - Hover: Transform translateY(-8dp)
+  - **Icon**: 48x48dp, color primary
+  - **Title**: Font 18sp, weight 600, color foreground
+  - **Description**: Font 14sp, color muted, line-height 1.5
+  - **Button** (optional): "Learn More →" link style
+
+**Service List** (tối thiểu 4 items):
+
+1. **General Dentistry**: Checkups, cleanings, fillings
+2. **Cosmetic Dentistry**: Whitening, veneers, smile makeovers
+3. **Orthodontics**: Braces, Invisalign, alignment
+4. **Dental Implants**: Permanent tooth replacement
+
+#### 3.2.6 Doctors Section
+
+```
+┌─────────────────────────────────────┐
+│  OUR TEAM                           │
+│  ━━━━━━━                            │
+│                                     │
+│  Meet Our Expert Dentists           │
+│                                     │
+│  ┌──────────────┐  ┌──────────────┐│
+│  │ [👨‍⚕️ Photo]  │  │ [👩‍⚕️ Photo]  ││
+│  │              │  │              ││
+│  │ Dr. Name     │  │ Dr. Name     ││
+│  │ Specialist   │  │ Specialist   ││
+│  │ 15+ years    │  │ 12+ years    ││
+│  └──────────────┘  └──────────────┘│
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: White
+- **Padding**: 64dp vertical
+- **Grid**: 1 column mobile, 2-3 columns tablet+
+- **Doctor Card**:
+  - Background: White
+  - Border: 1dp solid gray-200
+  - Border-radius: 16dp
+  - Padding: 24dp
+  - Shadow: Small → medium on hover
+  - Transition: Transform 300ms
+  - Hover: Scale 1.02
+  - **Avatar**:
+    - Size: 120x120 dp
+    - Border-radius: 60dp (circular)
+    - Border: 4dp solid primary/20
+    - Object-fit: cover
+    - Centered
+  - **Name**:
+    - Font: 20sp, weight 700
+    - Color: Foreground
+    - Margin-top: 16dp
+  - **Specialty**:
+    - Font: 14sp, weight 500
+    - Color: Primary
+    - Margin-top: 4dp
+  - **Experience**:
+    - Font: 14sp
+    - Color: Muted
+    - Margin-top: 8dp
+  - **Description**:
+    - Font: 14sp, line-height 1.5
+    - Color: Muted
+    - Margin-top: 12dp
+    - 2-3 lines max
+
+**Sample Data** (min 3 doctors):
+
+1. Dr. Sarah Bennett - General Dentistry - 15+ years
+2. Dr. Maya Lin - Cosmetic Dentistry - 12+ years
+3. Dr. Michael Reyes - Orthodontics - 10+ years
+
+#### 3.2.7 Appointment Section (ID: "appointment")
+
+```
+┌─────────────────────────────────────┐
+│  📅 BOOK YOUR APPOINTMENT           │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│                                     │
+│  Ready to get started?              │
+│  Schedule your visit today          │
+│                                     │
+│  ┌─────────────────────────────────┐│
+│  │  Book Appointment Now  →       ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  Or call us: 01234568               │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: Gradient primary to secondary
+- **Text**: All white
+- **Padding**: 64dp vertical, centered
+- **Heading**: Font 28sp, weight 700, white
+- **Subheading**: Font 18sp, white/80, margin-top 12dp
+- **CTA Button**:
+  - Background: White
+  - Text: Primary color
+  - Font: 16sp, weight 600
+  - Padding: 16x48 dp
+  - Border-radius: 12dp
+  - Shadow: Large
+  - Margin-top: 32dp
+  - Icon: → arrow, 16dp
+  - Hover: Scale 1.05, shadow-xl
+- **Contact Info**:
+  - Font: 16sp, white/90
+  - Margin-top: 16dp
+  - Phone clickable (tel: link)
+
+#### 3.2.8 Footer
+
+```
+┌─────────────────────────────────────┐
+│  🦷 DenTeeth                         │
+│  Modern Dental Clinic Management    │
+│                                     │
+│  📍 123 Main St, City               │
+│  📞 01234568                        │
+│  ✉️ info@denteeth.com               │
+│                                     │
+│  Quick Links:                       │
+│  About | Services | Doctors         │
+│  Contact | Privacy | Terms          │
+│                                     │
+│  © 2024 DenTeeth. All rights        │
+│  reserved.                          │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Background**: Dark (#1E3A5F)
+- **Text**: Light gray (#D1D5DB)
+- **Padding**: 48dp vertical, 24dp horizontal
+- **Logo**: Same as header, white version
+- **Description**: Font 14sp, gray-300
+- **Contact Items**:
+  - Icon + text horizontal
+  - Font 14sp
+  - Gap 12dp between items
+  - Icons: 16dp, primary color
+- **Links Section**:
+  - Font 14sp
+  - Color: Gray-300
+  - Hover: Primary color
+  - Separator: " | "
+  - Margin-top: 24dp
+- **Copyright**:
+  - Font 12sp
+  - Color: Gray-400
+  - Margin-top: 24dp
+  - Center aligned
+
+### 3.3 Scroll Behavior
+
+- **Smooth Scroll**: All anchor links scroll smoothly
+- **Scroll Progress**: Optional progress bar at top
+- **Lazy Load**: Images load on viewport enter
+- **Animations**: Sections fade/slide in when scrolling into view (IntersectionObserver)
+
+### 3.4 Responsive Breakpoints
+
+```dart
+// Mobile: < 600dp
+// Tablet: 600-900dp
+// Desktop: > 900dp
+
+const double mobileBreakpoint = 600;
+const double tabletBreakpoint = 900;
+```
+
+### 3.5 Navigation from Landing Page
+
+- **Login Button** → Navigate to Login Screen
+- **Book Appointment** → Navigate to Login Screen (redirect to booking after login)
+- **Language Dropdown** → Change app locale, persist in preferences
+
+---
+
+## 4. NAVIGATION STRUCTURE
 
 ### 3.1 Bottom Navigation Bar (Main Tabs)
+
+```
+┌────────────────────────────────────┐
+│          Screen Content            │
+│                                    │
+│                                    │
+│                                    │
+└────────────────────────────────────┘
+┌─────┬─────┬─────┬─────┬──────┐
+│ 🏠  │ 📅  │ 📄  │ 💳  │  👤  │
+│Home │Appt │Recs │Bill │Prof  │
+└─────┴─────┴─────┴─────┴──────┘
+```
+
+**Chi tiết UI:**
+
+- **Container**:
+  - Height: 64dp
+  - Background: White (#FFFFFF)
+  - Shadow: Elevation 8, upward shadow
+  - Safe area bottom padding
+- **Items**: 4 tabs, equal width
+- **Active Tab**:
+  - Icon color: Primary (#8B5FBF)
+  - Label color: Primary
+  - Background indicator: Small pill behind icon (8dp height, primary/10)
+- **Inactive Tab**:
+  - Icon color: Gray-400 (#9CA3AF)
+  - Label color: Gray-600
+- **Icon Size**: 24x24 dp
+- **Label**:
+  - Font: 12sp
+  - Weight: 500 (medium)
+  - Margin-top: 4dp
+- **Ripple Effect**: On tap, circular ripple expands from tap point
+- **Transition**: Smooth color transition 200ms ease
+
+#### Tab Configuration
+
+```dart
+List<BottomNavigationBarItem> tabs = [
+  BottomNavigationBarItem(
+    icon: Icon(Icons.home_rounded),
+    activeIcon: Icon(Icons.home), // Filled version
+    label: 'Home',
+    // Route: /patient/dashboard
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.calendar_today_outlined),
+    activeIcon: Icon(Icons.calendar_today),
+    label: 'Appointments',
+    // Route: /patient/appointments
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.folder_outlined),
+    activeIcon: Icon(Icons.folder),
+    label: 'Records',
+    // Route: /patient/records
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline),
+    activeIcon: Icon(Icons.person),
+    label: 'Profile',
+    // Route: /patient/profile
+  ),
+];
+```
+
+### 3.2 Secondary Navigation
+
+**Top App Bar** (Present on all screens):
+
+```
+┌────────────────────────────────────┐
+│ ← [Screen Title]        🔔(2) ⚙️  │
+└────────────────────────────────────┘
+```
+
+**Chi tiết:**
+
+- **Height**: 56dp
+- **Background**: Primary gradient (subtle)
+- **Elevation**: 2dp
+- **Leading**:
+  - Back button (when nested) - Icon 24dp, white/black based on bg
+  - Hamburger menu (root screens) - NOT USED (bottom nav instead)
+- **Title**:
+  - Font: 20sp, weight 600
+  - Color: White (on primary bg) or Foreground
+  - Align: Left (with back button) or Center
+- **Actions**:
+  - **Notification Bell**:
+    - Icon: 24dp, white
+    - Badge: Red circle, white text, 16dp diameter
+    - Badge position: Top-right of icon
+    - Tap → Navigate to `/patient/notifications`
+  - **Settings Gear** (only on Profile tab):
+    - Icon: 24dp, white
+    - Tap → Navigate to `/patient/settings`
+
+### 3.3 Logout Action
+
+- **Location**: Profile screen → Settings → Logout button (red, bottom)
+- **Confirmation Dialog**:
+  ```
+  ┌─────────────────────────────┐
+  │  ⚠️ Logout Confirmation     │
+  ├─────────────────────────────┤
+  │  Are you sure you want to  │
+  │  logout from your account? │
+  │                             │
+  │  [Cancel] [Logout]          │
+  └─────────────────────────────┘
+  ```
+- **Actions**:
+  - Cancel: Dismiss dialog
+  - Logout:
+    1. Clear access/refresh tokens from secure storage
+    2. Clear cached data (optional)
+    3. Navigate to Landing Page
+    4. Show toast: "Logged out successfully"
+
+---
+
+## 5. CHI TIẾT TỪNG MÀN HÌNH
+
+### 5.1 Dashboard (Home) - `/patient/dashboard`
 
 ```
 ┌────────────────────────────────────┐
@@ -238,7 +826,406 @@ List<BottomNavigationBarItem> tabs = [
 
 ## 4. CHI TIẾT TỪNG MÀN HÌNH
 
-### 4.1 Dashboard (Home) - `/dashboard`
+### 5.1 Dashboard (Home) - `/patient/dashboard`
+
+#### Purpose
+
+Tổng quan nhanh về sức khỏe, lịch hẹn sắp tới, thông báo quan trọng.
+
+#### Complete Layout Structure
+
+```
+AppBar: "Welcome back, {FirstName}!"
+  └─ Bell Icon (notifications badge: 2)
+
+┌─────────────────────────────────────┐
+│ 🎨 Gradient Header Card             │
+│   ┌─────────────────────────────┐   │
+│   │ Welcome back, John!         │   │
+│   │ Here's what's happening     │   │
+│   │ with your health today      │   │
+│   │                             │   │
+│   │ Next Appointment:           │   │
+│   │ 📅 Jan 25, 2024 🕐10:00 AM │   │
+│   │                             │   │
+│   └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+
+┌─── Quick Stats (Grid 1x3) ──────────┐
+│ ┌──────────┐  ┌──────────┐          │
+│ │ 📅       │  │ 📄       │          │
+│ │ Upcoming │  │ Medical  │          │
+│ │ Appts    │  │ Records  │          │
+│ │    2     │  │    12    │          │
+│ └──────────┘  └──────────┘          │
+│ ┌──────────┐                        │
+│ │ 🔔       │                        │
+│ │ Notifs   │                        │
+│ │    3     │                        │
+│ └──────────┘                        │
+└─────────────────────────────────────┘
+
+┌─── Upcoming Appointments ───────────┐
+│ [📅 Upcoming Appointments]          │
+│ Your scheduled appointments         │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │ 🕐 [Icon] ⏰ General Checkup    │ │
+│ │           General Medicine      │ │
+│ │           Jan 25, 2024 10:00 AM │ │
+│ │           with Dr. Nguyen Van A │ │
+│ │           [✓ Confirmed]         │ │
+│ └─────────────────────────────────┘ │
+│ ┌─────────────────────────────────┐ │
+│ │ 🕐 [Icon] ⏰ Dental Cleaning    │ │
+│ │           Dentistry             │ │
+│ │           Jan 30, 2024 2:00 PM  │ │
+│ │           with Dr. Le Thi B     │ │
+│ │           [⏳ Pending]          │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [View All Appointments →]           │
+└─────────────────────────────────────┘
+
+┌─── Recent Medical Records ──────────┐
+│ [📄 Recent Medical Records]         │
+│ Your latest medical documents       │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │ ✅ [Icon] X-Ray                 │ │
+│ │           Jan 15, 2024          │ │
+│ │           Dr. Nguyen Van A      │ │
+│ │           [Completed]           │ │
+│ └─────────────────────────────────┘ │
+│ ┌─────────────────────────────────┐ │
+│ │ ✅ [Icon] Blood Test            │ │
+│ │           Jan 10, 2024          │ │
+│ │           Dr. Le Thi B          │ │
+│ │           [Completed]           │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [View All Records →]                │
+└─────────────────────────────────────┘
+
+┌─── Recent Notifications ────────────┐
+│ [🔔 Recent Notifications]           │
+│ Stay updated with your health       │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │ 📅 [Icon] Appointment Reminder  │ │
+│ │           Your appointment with │ │
+│ │           Dr. A is tomorrow at  │ │
+│ │           10:00 AM              │ │
+│ │           2 hours ago     ●     │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [View All Notifications →]          │
+└─────────────────────────────────────┘
+
+┌─── Quick Actions (Grid 1x3) ────────┐
+│ ┌────────────┐  ┌────────────┐      │
+│ │ 📅         │  │ 📄         │      │
+│ │ Book       │  │ View       │      │
+│ │ Appointment│  │ Records    │      │
+│ └────────────┘  └────────────┘      │
+│ ┌────────────┐                      │
+│ │ 👤         │                      │
+│ │ Update     │                      │
+│ │ Profile    │                      │
+│ └────────────┘                      │
+└─────────────────────────────────────┘
+```
+
+#### Detailed UI Specifications
+
+**1. Gradient Header Card**
+
+- **Background**: Gradient `from-primary to-secondary` (#8B5FBF → #1E3A5F)
+- **Padding**: 24dp all sides
+- **Border-radius**: 16dp
+- **Margin**: 16dp horizontal, 16dp top
+- **Shadow**: Medium elevation (4dp)
+- **Content**:
+  - **Greeting**:
+    - "Welcome back, {FirstName}!"
+    - Font: 24sp, weight 700, color white
+    - Margin-bottom: 8dp
+  - **Subtitle**:
+    - "Here's what's happening with your health today"
+    - Font: 14sp, color white/80
+    - Margin-bottom: 16dp
+  - **Next Appointment Box** (if exists):
+    - Background: White/10 backdrop blur
+    - Padding: 12dp
+    - Border-radius: 12dp
+    - Border: 1dp white/20
+    - **Text**: "Next Appointment:"
+      - Font: 12sp, weight 500, color white/90
+    - **Date/Time Row**:
+      - Icon: Calendar 16dp, white
+      - Text: "Jan 25, 2024 at 10:00 AM"
+      - Font: 14sp, weight 600, color white
+      - Icon spacing: 8dp gap
+
+**2. Quick Stats Grid**
+
+- **Layout**: 3 columns, 1 row (on mobile: 1 column, 3 rows)
+- **Gap**: 16dp between cards
+- **Margin**: 24dp horizontal, 16dp vertical
+- **Each Stat Card**:
+  - Background: White
+  - Padding: 20dp
+  - Border-radius: 16dp
+  - Shadow: Small (2dp elevation)
+  - Border: 1dp solid gray-100
+  - **Layout**: Row with space-between
+  - **Left Side (Text)**:
+    - **Label**:
+      - Font: 12sp, weight 500
+      - Color: Muted foreground (#6B7280)
+      - Margin-bottom: 4dp
+    - **Value**:
+      - Font: 28sp, weight 700
+      - Color: Foreground (#1E3A5F)
+  - **Right Side (Icon)**:
+    - Size: 32x32 dp
+    - Color: Primary (#8B5FBF)
+    - Icon options:
+      - 📅 `Icons.calendar_today` for Appointments
+      - 📄 `Icons.folder_open` for Records
+      - 🔔 `Icons.notifications` for Notifications
+- **Tap Behavior**: Navigate to corresponding screen
+- **Hover/Press**: Scale 0.98, shadow large
+
+**3. Upcoming Appointments Section**
+
+- **Card Container**:
+  - Background: White
+  - Padding: 20dp
+  - Border-radius: 16dp
+  - Shadow: Small
+  - Margin: 16dp horizontal, 8dp vertical
+- **Header**:
+  - Icon + Title row
+  - Icon: 📅 24dp, primary color
+  - Title: "Upcoming Appointments"
+    - Font: 18sp, weight 600, color foreground
+  - Subtitle: "Your scheduled appointments"
+    - Font: 14sp, color muted, margin-top 4dp
+  - Divider: 1dp gray-200, margin 16dp vertical
+- **Appointment List Item** (max 2 shown):
+  - Container:
+    - Background: White
+    - Padding: 16dp
+    - Border: 1dp solid gray-200
+    - Border-radius: 12dp
+    - Margin-bottom: 12dp (except last)
+  - **Left Icon**:
+    - Circle background: Primary/10
+    - Size: 40x40 dp
+    - Icon: 🕐 Clock, 20dp, primary color
+    - Flex: fixed width
+  - **Content Column** (flex: 1):
+    - **Type**:
+      - Font: 16sp, weight 600, color foreground
+      - Text: "General Checkup"
+    - **Department**:
+      - Font: 14sp, color muted
+      - Text: "General Medicine"
+      - Margin-top: 4dp
+    - **Date/Time Row**:
+      - Font: 14sp, color foreground
+      - Icon: Calendar 14dp, margin-right 6dp
+      - Text: "Jan 25, 2024 at 10:00 AM"
+      - Margin-top: 8dp
+    - **Doctor**:
+      - Font: 14sp, color muted
+      - Text: "with Dr. Nguyen Van A"
+      - Margin-top: 4dp
+  - **Status Badge** (right aligned):
+    - **Confirmed**:
+      - Background: Green-100 (#DCFCE7)
+      - Text: "Confirmed", green-800
+      - Icon: ✓ checkmark
+    - **Pending**:
+      - Background: Yellow-100 (#FEF3C7)
+      - Text: "Pending", yellow-800
+      - Icon: ⏳ hourglass
+    - Padding: 6x12 dp
+    - Border-radius: 8dp
+    - Font: 12sp, weight 600
+- **View All Button**:
+  - Text: "View All Appointments"
+  - Icon: → arrow right
+  - Color: Primary
+  - Font: 14sp, weight 600
+  - Padding: 12x16 dp
+  - Border: 1dp primary
+  - Border-radius: 8dp
+  - Full width
+  - Margin-top: 12dp
+  - Ripple effect on tap
+
+**4. Recent Medical Records Section**
+
+- **Same Card Structure** as Appointments
+- **Header**:
+  - Icon: 📄 Folder
+  - Title: "Recent Medical Records"
+  - Subtitle: "Your latest medical documents"
+- **Record List Item** (max 2 shown):
+  - **Left Icon**:
+    - Circle bg: Green-100
+    - Icon: ✅ Check circle, green-600
+    - Size: 40x40 dp
+  - **Content**:
+    - **Type**: "X-Ray" (16sp, weight 600)
+    - **Date**: "Jan 15, 2024" (14sp, muted)
+    - **Doctor**: "Dr. Nguyen Van A" (14sp, muted)
+  - **Status Badge**: "Completed" (green)
+- **View All Button**: Navigate to `/patient/records`
+
+**5. Recent Notifications Section**
+
+- **Same Card Structure**
+- **Header**:
+  - Icon: 🔔 Bell
+  - Title: "Recent Notifications"
+  - Subtitle: "Stay updated with your health"
+- **Notification Item** (max 1 shown):
+  - **Icon**: Based on type
+    - 📅 Calendar (blue) for reminders
+    - 📄 File (green) for results
+    - 💳 Credit card (green) for payments
+  - **Content**:
+    - **Title**: "Appointment Reminder" (16sp, weight 600)
+    - **Message**: "Your appointment with Dr. A is tomorrow..." (14sp, muted, 2 lines max)
+    - **Time**: "2 hours ago" (12sp, muted)
+  - **Unread Indicator**: Blue dot (8dp) on right if unread
+- **View All Button**: Navigate to `/patient/notifications`
+
+**6. Quick Actions Grid**
+
+- **Layout**: 1x3 grid (on mobile: 1 column, 3 rows)
+- **Gap**: 16dp
+- **Margin**: 16dp horizontal
+- **Each Action Card**:
+  - Background: White
+  - Border: 1dp primary/20
+  - Border-radius: 12dp
+  - Padding: 24dp vertical
+  - Shadow: Small
+  - Hover: Shadow medium, scale 1.02
+  - **Icon**:
+    - Size: 32dp
+    - Color: Primary
+    - Center aligned
+  - **Label**:
+    - Font: 14sp, weight 600
+    - Color: Foreground
+    - Center aligned
+    - Margin-top: 12dp
+    - Max 2 lines
+- **Actions**:
+  1. 📅 Book Appointment → `/patient/appointments` (booking flow)
+  2. 📄 View Records → `/patient/records`
+  3. 👤 Update Profile → `/patient/profile`
+
+#### Data Models
+
+```dart
+class DashboardData {
+  User user;
+  QuickStats stats;
+  List<Appointment> upcomingAppointments; // max 2
+  List<MedicalRecord> recentRecords;      // max 2
+  List<Notification> notifications;       // max 1
+}
+
+class QuickStats {
+  int upcomingAppointments;
+  int medicalRecords;
+  int pendingPayments;
+  int unreadNotifications;
+}
+
+class User {
+  String id;
+  String username;
+  String firstName;
+  String lastName;
+  String email;
+  List<String> roles;
+}
+```
+
+#### API Endpoints
+
+```dart
+GET /api/v1/patients/dashboard
+Response: DashboardData
+
+// Or separate calls:
+GET /api/v1/patients/{id}/stats
+Response: QuickStats
+
+GET /api/v1/patients/{id}/appointments?limit=2&status=upcoming
+Response: List<Appointment>
+
+GET /api/v1/patients/{id}/records?limit=2
+Response: List<MedicalRecord>
+
+GET /api/v1/patients/{id}/notifications?limit=1&isRead=false
+Response: List<Notification>
+```
+
+#### Behaviors & Interactions
+
+1. **Pull to Refresh**:
+
+   - Swipe down from top
+   - Show circular progress indicator
+   - Reload all data
+   - Toast: "Dashboard updated"
+
+2. **Card Tap Actions**:
+
+   - Stats cards → Navigate to respective screen
+   - Appointment card → Open appointment details bottom sheet
+   - Record card → Open record details
+   - Notification → Mark as read, navigate to related screen
+
+3. **View All Buttons**:
+
+   - Ripple effect on tap
+   - Navigate with slide transition
+
+4. **Quick Actions**:
+
+   - Scale animation on press
+   - Navigate or open modal
+   - Haptic feedback on tap
+
+5. **Error Handling**:
+
+   - Network error → Show retry banner at top
+   - Empty data → Show empty state with illustration
+   - Loading → Shimmer skeleton effect
+
+6. **Scroll Behavior**:
+
+   - AppBar collapses slightly when scrolling down
+   - Returns when scrolling up
+   - Bottom nav always visible (fixed)
+
+7. **Refresh Strategy**:
+   - Auto refresh on tab focus
+   - Background fetch every 5 minutes
+   - Cache data for offline view
+
+---
+
+### 5.2 Appointments - `/patient/appointments`
 
 #### Purpose
 
@@ -260,17 +1247,17 @@ AppBar: "Welcome back, {FirstName}!"
 │   Jan 25, 2024 at 10:00 AM         │
 └─────────────────────────────────────┘
 
-┌─── Quick Stats (Grid 2x2) ──────────┐
+┌─── Quick Stats (Grid 1x3) ──────────┐
 │ ┌──────────┐  ┌──────────┐          │
 │ │ 📅       │  │ 📄       │          │
 │ │ Upcoming │  │ Medical  │          │
 │ │    2     │  │    12    │          │
 │ └──────────┘  └──────────┘          │
-│ ┌──────────┐  ┌──────────┐          │
-│ │ 💳       │  │ 🔔       │          │
-│ │ Pending  │  │ Notifs   │          │
-│ │    1     │  │    3     │          │
-│ └──────────┘  └──────────┘          │
+│ ┌──────────┐                        │
+│ │ 🔔       │                        │
+│ │ Notifs   │                        │
+│ │    3     │                        │
+│ └──────────┘                        │
 └─────────────────────────────────────┘
 
 ┌─── Upcoming Appointments ───────────┐
@@ -316,15 +1303,15 @@ AppBar: "Welcome back, {FirstName}!"
 │ [View All Notifications →]          │
 └─────────────────────────────────────┘
 
-┌─── Quick Actions (Grid 2x2) ────────┐
+┌─── Quick Actions (Grid 1x3) ────────┐
 │ ┌────────────┐  ┌────────────┐      │
 │ │ 📅 Book    │  │ 📄 View    │      │
 │ │ Appointment│  │ Records    │      │
 │ └────────────┘  └────────────┘      │
-│ ┌────────────┐  ┌────────────┐      │
-│ │ 💳 Make    │  │ 👤 Update  │      │
-│ │ Payment    │  │ Profile    │      │
-│ └────────────┘  └────────────┘      │
+│ ┌────────────┐                      │
+│ │ 👤 Update  │                      │
+│ │ Profile    │                      │
+│ └────────────┘                      │
 └─────────────────────────────────────┘
 ```
 
@@ -366,11 +1353,11 @@ Response: QuickStats
 
 ---
 
-### 4.2 Appointments - `/appointments`
+### 5.2 Appointments - `/patient/appointments`
 
 #### Purpose
 
-Quản lý lịch hẹn: xem, đặt mới, hủy, reschedule.
+Quản lý lịch hẹn: xem, đặt mới, hủy, reschedule. Hỗ trợ 2 chế độ xem: **List View** và **Calendar View**.
 
 #### View Modes
 
@@ -626,147 +1613,7 @@ Response: File stream (PDF/Image)
 
 ---
 
-### 4.4 Billing & Payments - `/billing`
-
-#### Purpose
-
-Xem hóa đơn, thanh toán online, lịch sử giao dịch.
-
-#### Layout
-
-```
-AppBar: "Billing & Payments"
-  └─ Button: "+ Make Payment"
-
-┌─── Summary Cards ───────────────────┐
-│ ⚠️ Outstanding: $75.50              │
-│ ✅ Total Paid: $350.00              │
-│ 💳 Payment Methods: 2               │
-└─────────────────────────────────────┘
-
-┌─── Filters ─────────────────────────┐
-│ 🔍 [Search bills...]                │
-│                                     │
-│ Status: [All] [Pending] [Overdue]  │
-│         [Paid]                      │
-└─────────────────────────────────────┘
-
-┌─── Bill Card (Pending) ─────────────┐
-│ ⏰ [Pending]                        │
-│                                     │
-│ INV-2024-002                        │
-│ Dental cleaning and checkup         │
-│                                     │
-│ 💰 $75.50                           │
-│ Due: Feb 20, 2024                   │
-│                                     │
-│ 👤 Dr. Le Thi B | Dentistry        │
-│ 📅 Jan 20, 2024                     │
-│                                     │
-│ [👁 View] [⬇️ PDF] [💳 Pay Now]    │
-└─────────────────────────────────────┘
-
-┌─── Bill Card (Paid) ────────────────┐
-│ ✅ [Paid]                           │
-│                                     │
-│ INV-2024-001                        │
-│ General consultation                │
-│                                     │
-│ 💰 $150.00                          │
-│ Due: Feb 15, 2024                   │
-│                                     │
-│ ✓ Paid on Jan 16, 2024              │
-│   via Credit Card                   │
-│                                     │
-│ [👁 View] [⬇️ PDF]                  │
-└─────────────────────────────────────┘
-```
-
-#### Payment Modal
-
-```
-┌─────────────────────────────────────┐
-│ Make Payment               [✕]      │
-├─────────────────────────────────────┤
-│                                     │
-│ Amount                              │
-│ ┌─────────────────────────────────┐ │
-│ │ $ 75.50                         │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ Payment Method                      │
-│ ┌─────────────────────────────────┐ │
-│ │ Credit Card **** 1234       ▼  │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ ┌─────────────────────────────────┐ │
-│ │     Process Payment             │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-#### Data Model
-
-```dart
-class Bill {
-  String id;
-  String invoiceNumber;
-  String date;
-  String dueDate;
-  double amount;
-  BillStatus status;
-  String description;
-  String doctor;
-  String department;
-  String? paymentMethod;
-  String? paidDate;
-}
-
-enum BillStatus {
-  paid,
-  pending,
-  overdue,
-  cancelled
-}
-
-class PaymentMethod {
-  String id;
-  String type;         // Credit Card, Bank Account
-  String lastFour;     // **** 1234
-  String? expiryDate;  // 12/25
-  bool isDefault;
-}
-```
-
-#### API Endpoints
-
-```dart
-GET /api/v1/patients/{id}/bills
-Query Params:
-  - status: paid|pending|overdue
-  - search: string
-
-POST /api/v1/bills/{id}/payment
-Body: {
-  amount: double,
-  paymentMethodId: string
-}
-
-GET /api/v1/patients/{id}/payment-methods
-```
-
-#### Behaviors
-
-1. **Filter by Status**: Button toggle
-2. **Pay Now**: Open payment modal → Process → Show receipt
-3. **View Bill**: Bottom sheet with full details
-4. **Download PDF**: Generate & save invoice
-5. **Outstanding Alert**: Red banner if có hóa đơn quá hạn
-
----
-
-### 4.5 Profile - `/profile`
+### 4.4 Profile - `/profile`
 
 #### Purpose
 
@@ -840,7 +1687,7 @@ Body: UpdateProfileRequest
 
 ---
 
-### 4.6 Notifications - `/notifications`
+### 4.5 Notifications - `/notifications`
 
 #### Layout
 
@@ -885,7 +1732,6 @@ AppBar: "Notifications"
 Map<String, IconData> notificationIcons = {
   'reminder': Icons.calendar_today,    // 🔵 Blue
   'results': Icons.folder,             // 🟢 Green
-  'payment': Icons.payment,            // 🟢 Green
   'cancellation': Icons.warning,       // 🔴 Red
   'prescription': Icons.info,          // 🟣 Purple
 };
@@ -915,7 +1761,7 @@ void onMessageReceived(RemoteMessage message) {
 
 ---
 
-### 4.7 Settings - `/settings`
+### 4.6 Settings - `/settings`
 
 #### Layout
 
@@ -992,9 +1838,9 @@ Body: {
 
 ---
 
-## 5. UI/UX GUIDELINES
+## 6. UI/UX GUIDELINES
 
-### 5.1 Design System
+### 6.1 Design System
 
 #### Typography
 
@@ -1052,7 +1898,7 @@ BoxShadow cardShadow = BoxShadow(
 );
 ```
 
-### 5.2 Components
+### 6.2 Components
 
 #### Card Component
 
@@ -1111,7 +1957,7 @@ Container(
 );
 ```
 
-### 5.3 Animations
+### 6.3 Animations
 
 #### Page Transitions
 
@@ -1139,7 +1985,7 @@ Shimmer.fromColors(
 );
 ```
 
-### 5.4 Empty States
+### 6.4 Empty States
 
 Mỗi list cần có empty state với:
 
@@ -1180,16 +2026,16 @@ Column(
 
 ---
 
-## 6. API INTEGRATION
+## 7. API INTEGRATION
 
-### 6.1 Base URL
+### 7.1 Base URL
 
 ```dart
 const String baseUrl = 'http://localhost:8080/api/v1';
 // Production: 'https://pdcms.denteeth.com/api/v1'
 ```
 
-### 6.2 HTTP Client Setup (Dio)
+### 7.2 HTTP Client Setup (Dio)
 
 ```dart
 class ApiClient {
@@ -1214,7 +2060,7 @@ class ApiClient {
 }
 ```
 
-### 6.3 Auth Interceptor
+### 7.3 Auth Interceptor
 
 ```dart
 class AuthInterceptor extends Interceptor {
@@ -1248,7 +2094,7 @@ class AuthInterceptor extends Interceptor {
 }
 ```
 
-### 6.4 Error Handling
+### 7.4 Error Handling
 
 ```dart
 class ApiException implements Exception {
@@ -1278,9 +2124,9 @@ try {
 
 ---
 
-## 7. STATE MANAGEMENT
+## 8. STATE MANAGEMENT
 
-### 7.1 Recommended: Riverpod
+### 8.1 Recommended: Riverpod
 
 #### Provider Example
 
@@ -1364,7 +2210,7 @@ class LoginScreen extends ConsumerWidget {
 }
 ```
 
-### 7.2 Alternative: Provider
+### 8.2 Alternative: Provider
 
 ```dart
 // Auth provider
@@ -1414,9 +2260,9 @@ Consumer<AuthProvider>(
 
 ---
 
-## 8. OFFLINE & CACHING
+## 9. OFFLINE & CACHING
 
-### 8.1 Cache Strategy
+### 9.1 Cache Strategy
 
 #### Local Database (SQLite)
 
@@ -1488,7 +2334,7 @@ class AppointmentRepository {
 }
 ```
 
-### 8.2 Offline Indicator
+### 9.2 Offline Indicator
 
 ```dart
 // Connection listener
@@ -1520,9 +2366,9 @@ if (!isOnline)
 
 ---
 
-## 9. TESTING STRATEGY
+## 10. TESTING STRATEGY
 
-### 9.1 Unit Tests
+### 10.1 Unit Tests
 
 ```dart
 // Test auth logic
@@ -1536,7 +2382,7 @@ test('login success should update state', () async {
 });
 ```
 
-### 9.2 Widget Tests
+### 10.2 Widget Tests
 
 ```dart
 // Test login screen
@@ -1551,7 +2397,7 @@ testWidgets('login form should validate inputs', (tester) async {
 });
 ```
 
-### 9.3 Integration Tests
+### 10.3 Integration Tests
 
 ```dart
 // Test full login flow
@@ -1569,9 +2415,9 @@ testWidgets('login flow should navigate to dashboard', (tester) async {
 
 ---
 
-## 10. PERFORMANCE OPTIMIZATION
+## 11. PERFORMANCE OPTIMIZATION
 
-### 10.1 Image Optimization
+### 11.1 Image Optimization
 
 ```dart
 // Lazy loading images
@@ -1583,7 +2429,7 @@ CachedNetworkImage(
 );
 ```
 
-### 10.2 List Performance
+### 11.2 List Performance
 
 ```dart
 // Use ListView.builder for long lists
@@ -1599,7 +2445,7 @@ ListView.builder(
 // BAD: ListView(children: appointments.map(...).toList())
 ```
 
-### 10.3 Pagination
+### 11.3 Pagination
 
 ```dart
 class AppointmentListScreen extends StatefulWidget {
@@ -1655,9 +2501,9 @@ class _AppointmentListScreenState extends State<AppointmentListScreen> {
 
 ---
 
-## 11. SECURITY BEST PRACTICES
+## 12. SECURITY BEST PRACTICES
 
-### 11.1 Secure Storage
+### 12.1 Secure Storage
 
 ```dart
 // NEVER store sensitive data in SharedPreferences
@@ -1676,7 +2522,7 @@ await secureStorage.delete(key: 'accessToken');
 await secureStorage.deleteAll();
 ```
 
-### 11.2 SSL Pinning
+### 12.2 SSL Pinning
 
 ```dart
 class ApiClient {
@@ -1699,7 +2545,7 @@ class ApiClient {
 }
 ```
 
-### 11.3 Biometric Authentication
+### 12.3 Biometric Authentication
 
 ```dart
 // Optional: Thêm Face ID / Fingerprint
@@ -1729,9 +2575,9 @@ if (await authenticate()) {
 
 ---
 
-## 12. ANALYTICS & MONITORING
+## 13. ANALYTICS & MONITORING
 
-### 12.1 Firebase Analytics
+### 13.1 Firebase Analytics
 
 ```dart
 class AnalyticsService {
@@ -1750,20 +2596,10 @@ class AnalyticsService {
       },
     );
   }
-
-  void logPaymentMade(double amount, String method) {
-    _analytics.logEvent(
-      name: 'payment_made',
-      parameters: {
-        'amount': amount,
-        'method': method,
-      },
-    );
-  }
 }
 ```
 
-### 12.2 Crash Reporting (Firebase Crashlytics)
+### 13.2 Crash Reporting (Firebase Crashlytics)
 
 ```dart
 void main() async {
@@ -1786,9 +2622,9 @@ try {
 
 ---
 
-## 13. PUSH NOTIFICATIONS (FCM)
+## 14. PUSH NOTIFICATIONS (FCM)
 
-### 13.1 Setup
+### 14.1 Setup
 
 ```dart
 class NotificationService {
@@ -1835,7 +2671,7 @@ class NotificationService {
 }
 ```
 
-### 13.2 Notification Payload
+### 14.2 Notification Payload
 
 ```json
 {
@@ -1853,9 +2689,9 @@ class NotificationService {
 
 ---
 
-## 14. LOCALIZATION (Optional)
+## 15. LOCALIZATION (Optional)
 
-### 14.1 Setup
+### 15.1 Setup
 
 ```yaml
 # pubspec.yaml
@@ -1868,7 +2704,7 @@ flutter:
   generate: true
 ```
 
-### 14.2 Usage
+### 15.2 Usage
 
 ```dart
 // l10n/app_en.arb
@@ -1898,9 +2734,9 @@ Text(AppLocalizations.of(context).welcome('John'))
 
 ---
 
-## 15. BUILD & DEPLOYMENT
+## 16. BUILD & DEPLOYMENT
 
-### 15.1 Build Commands
+### 16.1 Build Commands
 
 ```bash
 # Development build
@@ -1916,7 +2752,7 @@ flutter build appbundle --release
 flutter build apk --flavor production --release
 ```
 
-### 15.2 Flavors (Optional)
+### 16.2 Flavors (Optional)
 
 ```dart
 // android/app/build.gradle
@@ -1933,7 +2769,7 @@ productFlavors {
 }
 ```
 
-### 15.3 CI/CD (GitHub Actions example)
+### 16.3 CI/CD (GitHub Actions example)
 
 ```yaml
 name: Build & Deploy
@@ -1964,7 +2800,7 @@ jobs:
 
 ---
 
-## 16. CHECKLIST TRƯỚC KHI BẮT ĐẦU
+## 17. CHECKLIST TRƯỚC KHI BẮT ĐẦU
 
 ### ✅ Prerequisites
 
@@ -1989,7 +2825,6 @@ jobs:
 - [ ] Dashboard screen
 - [ ] Appointments (List + Calendar)
 - [ ] Medical Records
-- [ ] Billing & Payments
 - [ ] Profile management
 - [ ] Notifications
 - [ ] Settings
@@ -2020,7 +2855,7 @@ jobs:
 
 ---
 
-## 17. CONTACT & SUPPORT
+## 18. CONTACT & SUPPORT
 
 **Backend API Questions:**
 

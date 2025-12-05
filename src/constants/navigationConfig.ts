@@ -369,6 +369,66 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
 };
 
 /**
+ * ACCOUNTANT NAVIGATION CONFIG
+ * Dành cho nhân viên kế toán
+ */
+export const ACCOUNTANT_NAVIGATION_CONFIG: NavigationConfig = {
+  title: 'PDCMS Accountant',
+  items: [
+    {
+      name: 'Dashboard',
+      href: '/accountant',
+      icon: faTachometerAlt,
+    },
+    {
+      name: 'Sổ Quỹ (Thu Chi)',
+      href: '/accountant/transactions',
+      icon: faWallet,
+    },
+    {
+      name: 'Chi Xuất Nhập Kho',
+      href: '/accountant/warehouse-expenses',
+      icon: faBoxes,
+    },
+    {
+      name: 'Công Nợ NCC',
+      href: '/accountant/supplier-debt',
+      icon: faUsers,
+    },
+    {
+      name: 'Công Nợ Labo',
+      href: '/accountant/lab-debt',
+      icon: faWarehouse,
+    },
+    {
+      name: 'Tính Lương & Hoa Hồng',
+      href: '/accountant/payroll',
+      icon: faMoneyBillWave,
+    },
+    {
+      name: 'Báo Cáo Lãi/Lỗ',
+      href: '/accountant/profit-loss',
+      icon: faChartLine,
+    },
+    {
+      name: 'Báo Cáo Doanh Thu',
+      href: '/accountant/revenue-report',
+      icon: faChartLine,
+    },
+    {
+      name: 'Dòng Tiền Thu Chi',
+      href: '/accountant/cashflow-report',
+      icon: faMoneyBillWave,
+    },
+    {
+      name: 'Settings',
+      href: '/accountant/settings',
+      icon: faCog,
+    },
+  ],
+};
+
+/**
  * PATIENT NAVIGATION CONFIG
  */
 export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
@@ -480,6 +540,8 @@ export const filterNavigationItems = (
 export const getNavigationConfigByRole = (roles: string[]): NavigationConfig => {
   if (roles.includes('ROLE_ADMIN')) {
     return ADMIN_NAVIGATION_CONFIG;
+  } else if (roles.includes('ROLE_ACCOUNTANT')) {
+    return ACCOUNTANT_NAVIGATION_CONFIG;
   } else if (roles.includes('ROLE_EMPLOYEE') || roles.includes('ROLE_RECEPTIONIST') || roles.includes('ROLE_DOCTOR')) {
     return EMPLOYEE_NAVIGATION_CONFIG;
   } else if (roles.includes('ROLE_PATIENT')) {
@@ -491,11 +553,18 @@ export const getNavigationConfigByRole = (roles: string[]): NavigationConfig => 
 
 /**
  * Generate dynamic navigation config based on groupedPermissions
+ * Also handles ROLE_ACCOUNTANT detection
  */
 export const generateNavigationConfig = (
   baseRole: string,
-  groupedPermissions: GroupedPermissions | undefined
+  groupedPermissions: GroupedPermissions | undefined,
+  roles?: string[]
 ): NavigationConfig => {
+  // Check if user has ROLE_ACCOUNTANT
+  if (roles && roles.includes('ROLE_ACCOUNTANT')) {
+    return ACCOUNTANT_NAVIGATION_CONFIG;
+  }
+
   const baseConfig = getNavigationConfigByRole([`ROLE_${baseRole.toUpperCase()}`]);
 
   if (!groupedPermissions) {
@@ -519,11 +588,19 @@ export const generateNavigationConfig = (
 
 /**
  * Helper function: Get base path by baseRole
+ * Also handles ROLE_ACCOUNTANT detection
  */
-export const getBasePathByBaseRole = (baseRole: string): string => {
+export const getBasePathByBaseRole = (baseRole: string, roles?: string[]): string => {
+  // Check if user has ROLE_ACCOUNTANT
+  if (roles && roles.includes('ROLE_ACCOUNTANT')) {
+    return '/accountant';
+  }
+
   switch (baseRole) {
     case 'admin':
       return '/admin';
+    case 'accountant':
+      return '/accountant';
     case 'employee':
       return '/employee';
     case 'patient':
@@ -539,6 +616,8 @@ export const getBasePathByBaseRole = (baseRole: string): string => {
 export const getBasePathByRole = (roles: string[]): string => {
   if (roles.includes('ROLE_ADMIN')) {
     return '/admin';
+  } else if (roles.includes('ROLE_ACCOUNTANT')) {
+    return '/accountant';
   } else if (roles.includes('ROLE_EMPLOYEE') || roles.includes('ROLE_RECEPTIONIST') || roles.includes('ROLE_DOCTOR')) {
     return '/employee';
   } else if (roles.includes('ROLE_PATIENT')) {

@@ -156,17 +156,26 @@ const NavItem = memo(({
 
 NavItem.displayName = 'NavItem';
 
-export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
+export default function ModernSidebar({ title }: ModernSidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false); // Collapsed state for desktop
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const pathname = usePathname();
   const { user } = useAuth();
 
+  // Dynamic title based on role
+  const sidebarTitle = useMemo(() => {
+    if (title) return title;
+    if (user?.roles?.includes('ROLE_ACCOUNTANT')) return 'PDCMS Accountant';
+    if (user?.roles?.includes('ROLE_ADMIN')) return 'PDCMS Admin';
+    if (user?.roles?.includes('ROLE_EMPLOYEE')) return 'PDCMS Employee';
+    return 'PDCMS';
+  }, [title, user?.roles]);
+
   // Memoize navigation config
   const navigationConfig = useMemo(() => {
-    return user ? generateNavigationConfig(user.baseRole, user.groupedPermissions) : null;
-  }, [user?.baseRole, user?.groupedPermissions]);
+    return user ? generateNavigationConfig(user.baseRole, user.groupedPermissions, user.roles) : null;
+  }, [user?.baseRole, user?.groupedPermissions, user?.roles]);
 
   // Memoize filtered items
   const filteredItems = useMemo(() => {
