@@ -48,7 +48,7 @@ export class LeaveBalanceService {
       return response.data;
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ LeaveBalanceService.getEmployeeBalances error:', {
+        console.error(' LeaveBalanceService.getEmployeeBalances error:', {
           employeeId,
           cycleYear: cycleYear || new Date().getFullYear(),
           status: error.response?.status,
@@ -107,17 +107,17 @@ export class LeaveBalanceService {
     const axios = apiClient.getAxiosInstance();
 
     try {
-      console.log('🔄 Calling annual-reset with:', data);
+      console.log(' Calling annual-reset with:', data);
 
       const response = await axios.post<AnnualResetResponse>(
         `${this.BASE_URL}/leave-balances/annual-reset`,
         data
       );
 
-      console.log('✅ Annual-reset response:', response.data);
+      console.log(' Annual-reset response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Annual-reset error:', {
+      console.error(' Annual-reset error:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,

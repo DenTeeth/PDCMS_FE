@@ -69,7 +69,7 @@ export default function PatientAppointmentDetailPage() {
   // State
   const [appointment, setAppointment] = useState<AppointmentDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Treatment Plan state (lazy loading)
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
   const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
@@ -121,10 +121,10 @@ export default function PatientAppointmentDetailPage() {
         // Use P3.4 endpoint to get appointment detail
         // Backend will automatically apply RBAC filtering based on JWT token
         const detail = await appointmentService.getAppointmentDetail(appointmentCode);
-        
+
         // Check if request was cancelled or component unmounted
         if (abortController.signal.aborted || !isMounted) return;
-        
+
         setAppointment(detail);
       } catch (error: any) {
         // Don't show error if request was cancelled
@@ -268,7 +268,7 @@ export default function PatientAppointmentDetailPage() {
       const record = await clinicalRecordService.getByAppointmentId(appointment.appointmentId);
       setClinicalRecord(record); // record can be null if no clinical record exists
       if (!record) {
-        console.log('📋 [CLINICAL RECORD] No record found for appointment');
+        console.log('[CLINICAL RECORD] No record found for appointment');
       }
     } catch (error: any) {
       // Only real errors (appointment not found, access denied, etc.)
@@ -296,9 +296,9 @@ export default function PatientAppointmentDetailPage() {
     // 4. Not currently loading
     // 5. Haven't tried loading before
     if (
-      activeTab === 'treatment-plan' && 
-      appointment && 
-      !treatmentPlan && 
+      activeTab === 'treatment-plan' &&
+      appointment &&
+      !treatmentPlan &&
       !loadingTreatmentPlan &&
       !hasTriedLoadingTreatmentPlan
     ) {
@@ -604,8 +604,8 @@ export default function PatientAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Lỗi khi tải bệnh án</h3>
                   <p className="text-muted-foreground mb-4">{clinicalRecordError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingClinicalRecord(false);
                       setClinicalRecordError(null);
@@ -653,8 +653,8 @@ export default function PatientAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
                   <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingTreatmentPlan(false);
                       setTreatmentPlanError(null);

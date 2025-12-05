@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -249,7 +249,7 @@ export default function EmployeesPage() {
         };
       }
 
-      console.log('📤 Creating employee with payload:', payload);
+      console.log('� Creating employee with payload:', payload);
 
       await employeeService.createEmployee(payload);
       toast.success('Employee created successfully');
@@ -1028,7 +1028,7 @@ export default function EmployeesPage() {
                           ) : specializations.length === 0 ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                               <p className="text-sm text-yellow-800">
-                                ⚠️ <strong>Note:</strong> No active specializations available.
+                                 <strong>Note:</strong> No active specializations available.
                               </p>
                             </div>
                           ) : (
@@ -1309,7 +1309,7 @@ export default function EmployeesPage() {
                         ) : specializations.length === 0 ? (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <p className="text-sm text-yellow-800">
-                              ⚠️ No active specializations available.
+                               No active specializations available.
                             </p>
                           </div>
                         ) : (

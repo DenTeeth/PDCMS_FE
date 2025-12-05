@@ -87,7 +87,7 @@ export default function StorageDetailModal({
       const canShowSubmitButton = transaction.status === 'DRAFT' && hasUpdatePermission;
       const canShowCancelButton = (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission;
 
-      console.log('🔍 [StorageDetailModal] Permission Debug:', {
+      console.log(' [StorageDetailModal] Permission Debug:', {
         transactionId: transaction.transactionId,
         transactionCode: transaction.transactionCode,
         transactionStatus: transaction.status,
@@ -227,7 +227,7 @@ export default function StorageDetailModal({
               return updated;
             });
           } catch (error) {
-            console.error('❌ Fallback fetch failed for itemMasterId:', itemMasterId, error);
+            console.error(' Fallback fetch failed for itemMasterId:', itemMasterId, error);
           }
         }
       } finally {

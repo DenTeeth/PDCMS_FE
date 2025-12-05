@@ -2,7 +2,7 @@
 
 /**
  * Inventory Page - Warehouse API 6.x (Item Master Management) - Employee
- * ✅ Using /api/v1/warehouse endpoints for summary + items
+ *  Using /api/v1/warehouse endpoints for summary + items
  */
 
 import { useState } from 'react';

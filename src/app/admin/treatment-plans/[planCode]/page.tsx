@@ -78,19 +78,19 @@ export default function AdminTreatmentPlanDetailPage() {
     const loadPlan = async () => {
       try {
         setLoading(true);
-        
+
         const isNumeric = /^\d+$/.test(planCode);
-        
+
         if (isNumeric) {
           // Legacy patientPlanId - redirect to list page
-          console.warn('⚠️ Received numeric planCode (likely patientPlanId). Redirecting to list page.');
+          console.warn('Received numeric planCode (likely patientPlanId). Redirecting to list page.');
           toast.error('Mã lộ trình không hợp lệ', {
             description: 'Vui lòng chọn lộ trình từ danh sách để xem chi tiết.',
           });
           router.push('/admin/treatment-plans');
           return;
         }
-        
+
         // API 5.2 requires patientCode in path
         // patientCode should always be passed from list page navigation (plan.patientCode is available)
         // If missing, redirect to list page
@@ -101,7 +101,7 @@ export default function AdminTreatmentPlanDetailPage() {
           router.push('/admin/treatment-plans');
           return;
         }
-        
+
         // planCode is actual planCode, use it directly
         const detail = await TreatmentPlanService.getTreatmentPlanDetail(
           patientCode,
@@ -228,16 +228,16 @@ export default function AdminTreatmentPlanDetailPage() {
         patientCode,
         planCode
       );
-      
+
       // Debug: Log updated plan to check approvalStatus
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Plan refreshed after update:', {
+        console.log('Plan refreshed after update:', {
           planCode: updatedPlan.planCode,
           status: updatedPlan.status,
           approvalStatus: updatedPlan.approvalStatus,
         });
       }
-      
+
       setPlan(updatedPlan);
     } catch (error: any) {
       console.error('Error refreshing plan data:', error);
@@ -337,7 +337,7 @@ export default function AdminTreatmentPlanDetailPage() {
           initialServiceCodes={prefilledAppointmentData.serviceCodes}
           initialPlanItemIds={prefilledAppointmentData.planItemIds}
         />
-        
+
         {/* New modal for booking from treatment plan */}
         {plan && (
           <BookAppointmentFromPlanModal

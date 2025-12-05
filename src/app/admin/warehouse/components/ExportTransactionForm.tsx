@@ -142,7 +142,7 @@ export default function ExportTransactionForm({
         });
         return result;
       } catch (error: any) {
-        console.error('❌ Failed to fetch item masters:', error);
+        console.error(' Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
           description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập',
         });
@@ -166,7 +166,7 @@ export default function ExportTransactionForm({
       setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
       setValue(`items.${rowIndex}.unitId`, baseUnit.unitId);
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit:', error);
+      console.error(' Failed to fetch base unit:', error);
       toast.error('Không thể tải đơn vị cơ sở', {
         description: error.response?.data?.message || 'Vui lòng thử lại',
       });

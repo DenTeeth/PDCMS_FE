@@ -59,7 +59,7 @@ export const supplierService = {
         params,
       });
       
-      console.error('❌ Error fetching suppliers:', {
+      console.error(' Error fetching suppliers:', {
         message: enhancedError.message,
         status: enhancedError.status,
         endpoint: enhancedError.endpoint,
@@ -118,7 +118,7 @@ export const supplierService = {
         params,
       });
       
-      console.error('❌ Error fetching suppliers with metrics:', {
+      console.error(' Error fetching suppliers with metrics:', {
         message: enhancedError.message,
         status: enhancedError.status,
         endpoint: enhancedError.endpoint,
@@ -155,7 +155,7 @@ export const supplierService = {
         method: 'GET',
       });
       
-      console.error('❌ Error fetching supplier detail:', {
+      console.error(' Error fetching supplier detail:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -189,7 +189,7 @@ export const supplierService = {
         method: 'GET',
       });
       
-      console.error('❌ Error fetching supplied items:', {
+      console.error(' Error fetching supplied items:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -239,7 +239,7 @@ export const supplierService = {
         params: requestData,
       });
       
-      console.error('❌ Error creating supplier:', {
+      console.error(' Error creating supplier:', {
         message: enhancedError.message,
         status: enhancedError.status,
         endpoint: enhancedError.endpoint,
@@ -278,7 +278,7 @@ export const supplierService = {
         params: data,
       });
       
-      console.error('❌ Error updating supplier:', {
+      console.error(' Error updating supplier:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -303,7 +303,7 @@ export const supplierService = {
         method: 'DELETE',
       });
       
-      console.error('❌ Error deleting supplier:', {
+      console.error(' Error deleting supplier:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,

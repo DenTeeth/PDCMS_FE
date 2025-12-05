@@ -525,7 +525,7 @@ export default function SuppliersPage() {
         title="Xác nhận xóa nhà cung cấp"
         description={`Bạn có chắc chắc muốn xóa nhà cung cấp "${deleteConfirm.supplierName}"? 
 
-⚠️ Lưu ý: Không thể xóa nhà cung cấp đã có lịch sử giao dịch. Nếu nhà cung cấp này đã có đơn hàng, hệ thống sẽ từ chối và đề xuất vô hiệu hóa (isActive=false) thay vì xóa.`}
+ Lưu ý: Không thể xóa nhà cung cấp đã có lịch sử giao dịch. Nếu nhà cung cấp này đã có đơn hàng, hệ thống sẽ từ chối và đề xuất vô hiệu hóa (isActive=false) thay vì xóa.`}
         confirmLabel="Xóa"
         variant="destructive"
       />

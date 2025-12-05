@@ -11,28 +11,28 @@ const teamMembers: TeamMember[] = [
     name: "Dr. Nguyen Van An",
     position: "Head of Department",
     description: "The most experienced doctor in the team. Patients love him for his carefulness and wisdom.",
-    avatar: "👨‍⚕️",
+    avatar: "",
     bgColor: "bg-secondary"
   },
   {
     name: "Dr. Tran Thi Binh", 
     position: "Deputy Head",
     description: "She has provided dental services at the clinic for 10 years. She is thoughtful and professional.",
-    avatar: "👩‍⚕️",
+    avatar: "",
     bgColor: "bg-pink-200"
   },
   {
     name: "Dr. Le Van Cuong",
     position: "Doctor", 
     description: "His smile is what patients admire most. He says his dream is to help everyone have the best smile.",
-    avatar: "👨‍⚕️",
+    avatar: "",
     bgColor: "bg-green-200"
   },
   {
     name: "Dr. Pham Thi Dieu",
     position: "Doctor",
     description: "She loves children and has a special talent for dealing with them. Most of her patients are children.",
-    avatar: "👩‍⚕️", 
+    avatar: "", 
     bgColor: "bg-yellow-200"
   }
 ];

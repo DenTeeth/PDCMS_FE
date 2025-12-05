@@ -45,7 +45,7 @@ export const serviceConsumableService = {
         method: 'GET',
       });
       
-      console.error('❌ Error fetching service consumables:', {
+      console.error(' Error fetching service consumables:', {
         serviceId,
         message: enhancedError.message,
         status: enhancedError.status,

@@ -144,7 +144,7 @@ export default function DelayAppointmentModal({
         notes: notes.trim() || undefined,
       };
 
-      console.log('🔄 Delaying appointment:', {
+      console.log(' Delaying appointment:', {
         appointmentCode: appointment.appointmentCode,
         request,
       });
@@ -160,7 +160,7 @@ export default function DelayAppointmentModal({
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      console.error('❌ Failed to delay appointment:', error);
+      console.error(' Failed to delay appointment:', error);
 
       // Handle 409 Conflict errors with detailed Vietnamese messages
       if (error.response?.status === 409) {

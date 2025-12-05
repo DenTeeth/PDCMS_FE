@@ -180,7 +180,7 @@ export default function ImportTransactionForm({
         });
         return page;
       } catch (error: any) {
-        console.error('❌ Failed to fetch suppliers:', error);
+        console.error(' Failed to fetch suppliers:', error);
         toast.error('Không thể tải danh sách nhà cung cấp', {
           description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập',
         });
@@ -202,7 +202,7 @@ export default function ImportTransactionForm({
         });
         return result;
       } catch (error: any) {
-        console.error('❌ Failed to fetch item masters:', error);
+        console.error(' Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
           description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập',
         });
@@ -214,7 +214,7 @@ export default function ImportTransactionForm({
 
   const fetchBaseUnitForItem = async (itemMasterId: number, rowIndex: number) => {
     if (!itemMasterId || itemMasterId <= 0) {
-      console.warn('⚠️ Invalid itemMasterId:', itemMasterId);
+      console.warn(' Invalid itemMasterId:', itemMasterId);
       return;
     }
 
@@ -247,7 +247,7 @@ export default function ImportTransactionForm({
         shouldTouch: true
       });
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit:', error);
+      console.error(' Failed to fetch base unit:', error);
       toast.error('Không thể tải đơn vị cơ sở', {
         description: error.response?.data?.message || error.message || 'Vui lòng thử lại',
       });
@@ -399,7 +399,7 @@ export default function ImportTransactionForm({
 
         <form onSubmit={handleSubmit(onSubmit, (errors) => {
           // Log validation errors for debugging
-          console.error('❌ Form validation errors:', errors);
+          console.error(' Form validation errors:', errors);
           // Show first error to user
           const firstError = Object.values(errors).find(Boolean);
           if (firstError) {

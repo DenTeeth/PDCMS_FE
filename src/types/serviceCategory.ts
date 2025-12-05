@@ -1,5 +1,5 @@
 // Service Category Types
-// ✅ Match V17 Service Category API (service/controller/ServiceCategoryController.java)
+//  Match V17 Service Category API (service/controller/ServiceCategoryController.java)
 // Created: 2025-01-26
 
 export interface ServiceCategory {

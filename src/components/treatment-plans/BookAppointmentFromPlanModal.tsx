@@ -100,7 +100,7 @@ export default function BookAppointmentFromPlanModal({
   const [roomCode, setRoomCode] = useState<string>('');
   const [appointmentDate, setAppointmentDate] = useState<string>('');
   const [appointmentStartTime, setAppointmentStartTime] = useState<string>('');
-  const [participantCode, setParticipantCode] = useState<string>(''); // ✅ Changed: Only 1 participant allowed
+  const [participantCode, setParticipantCode] = useState<string>(''); //  Changed: Only 1 participant allowed
   const [notes, setNotes] = useState<string>('');
 
   // Data states
@@ -118,7 +118,7 @@ export default function BookAppointmentFromPlanModal({
       .filter(item => planItemIds.includes(item.itemId));
 
     // Debug: Log plan items to check estimatedTimeMinutes
-    console.log('📋 Plan Items for Booking (RAW):', items.map(item => ({
+    console.log(' Plan Items for Booking (RAW):', items.map(item => ({
       itemId: item.itemId,
       itemName: item.itemName,
       serviceCode: item.serviceCode,
@@ -128,7 +128,7 @@ export default function BookAppointmentFromPlanModal({
     return items;
   }, [plan, planItemIds]);
 
-  // 🛠️ FE WORKAROUND: Enrich plan items with duration from service master data
+  //  FE WORKAROUND: Enrich plan items with duration from service master data
   // This fixes BE bug where service/domain/DentalService.java maps to wrong column
   const enrichedPlanItems = useMemo(() => {
     return planItems.map(item => {
@@ -142,9 +142,9 @@ export default function BookAppointmentFromPlanModal({
       const durationFromService = service?.defaultDurationMinutes || 0;
 
       if (durationFromService > 0) {
-        console.log(`✅ Enriched item ${item.itemId} with duration ${durationFromService} from service ${item.serviceCode}`);
+        console.log(` Enriched item ${item.itemId} with duration ${durationFromService} from service ${item.serviceCode}`);
       } else {
-        console.warn(`⚠️ Item ${item.itemId} (${item.serviceCode}) has NO duration in plan AND service not found`);
+        console.warn(` Item ${item.itemId} (${item.serviceCode}) has NO duration in plan AND service not found`);
       }
 
       return {
@@ -164,11 +164,11 @@ export default function BookAppointmentFromPlanModal({
   // Calculate total estimated time (use enriched items)
   const totalEstimatedTime = useMemo(() => {
     const total = enrichedPlanItems.reduce((sum, item) => sum + (item.estimatedTimeMinutes || 0), 0);
-    console.log('⏱️  Total Estimated Time:', total, 'minutes (from enriched items)');
+    console.log('  Total Estimated Time:', total, 'minutes (from enriched items)');
     return total;
   }, [enrichedPlanItems]);
 
-  // 🛠️ FE WORKAROUND: Fetch services to get duration (fixes BE column mapping bug)
+  //  FE WORKAROUND: Fetch services to get duration (fixes BE column mapping bug)
   useEffect(() => {
     const fetchServices = async () => {
       if (!open || serviceCodes.length === 0) return;
@@ -192,9 +192,9 @@ export default function BookAppointmentFromPlanModal({
         });
 
         setServicesMap(map);
-        console.log(`✅ Loaded ${map.size} services for duration enrichment`);
+        console.log(` Loaded ${map.size} services for duration enrichment`);
       } catch (error) {
-        console.error('⚠️ Failed to load services for duration enrichment:', error);
+        console.error(' Failed to load services for duration enrichment:', error);
         toast.error('Không thể tải thông tin dịch vụ');
       } finally {
         setLoadingServices(false);
@@ -232,16 +232,16 @@ export default function BookAppointmentFromPlanModal({
   const loadInitialData = async () => {
     setLoadingData(true);
     try {
-      // ✅ FIX: Load ALL employees (doctors, assistants, nurses) - increase size to get all
+      //  FIX: Load ALL employees (doctors, assistants, nurses) - increase size to get all
       const employeeService = new EmployeeService();
       const employeesResponse = await employeeService.getEmployees({
         page: 0,
-        size: 1000, // ✅ FIX: Increase size to ensure we get all employees including assistants/nurses
+        size: 1000, //  FIX: Increase size to ensure we get all employees including assistants/nurses
         isActive: true,
       });
 
-      // ✅ DEBUG: Log employees to see what we're getting
-      console.log('📋 Loaded employees:', {
+      //  DEBUG: Log employees to see what we're getting
+      console.log(' Loaded employees:', {
         total: employeesResponse.content.length,
         byRole: employeesResponse.content.reduce((acc: any, emp: any) => {
           const role = emp.roleName || 'UNKNOWN';
@@ -275,7 +275,7 @@ export default function BookAppointmentFromPlanModal({
     if (open && plan?.doctor.employeeCode) {
       loadAllShiftsForMonth();
     }
-  }, [open, selectedMonth, plan?.doctor.employeeCode, employees]); // ✅ FIX: Removed participantCode dependency - we load all participants' shifts now
+  }, [open, selectedMonth, plan?.doctor.employeeCode, employees]); //  FIX: Removed participantCode dependency - we load all participants' shifts now
 
   const loadAllShiftsForMonth = async () => {
     if (!plan?.doctor.employeeCode || employees.length === 0) return;
@@ -305,7 +305,7 @@ export default function BookAppointmentFromPlanModal({
         }
       }
 
-      // ✅ FIX: Load shifts for ALL eligible participants (assistants/nurses/doctors)
+      //  FIX: Load shifts for ALL eligible participants (assistants/nurses/doctors)
       // This is needed to filter eligibleParticipants correctly
       // Only load for employees who could be participants (exclude plan doctor)
       const potentialParticipants = employees.filter((emp) => {
@@ -320,7 +320,7 @@ export default function BookAppointmentFromPlanModal({
         return isAssistant || isDoctor;
       });
 
-      console.log(`📅 Loading shifts for ${potentialParticipants.length} potential participants...`);
+      console.log(`� Loading shifts for ${potentialParticipants.length} potential participants...`);
 
       // Load shifts for all potential participants in parallel (limit to avoid too many requests)
       const shiftPromises = potentialParticipants.slice(0, 20).map(async (emp) => {
@@ -341,7 +341,7 @@ export default function BookAppointmentFromPlanModal({
 
       const results = await Promise.all(shiftPromises);
       const totalShifts = results.reduce((sum, r) => sum + r.count, 0);
-      console.log(`✅ Loaded shifts for ${results.length} participants (${totalShifts} total shifts)`);
+      console.log(` Loaded shifts for ${results.length} participants (${totalShifts} total shifts)`);
 
       setAllEmployeeShifts(shiftsMap);
     } catch (error: any) {
@@ -567,12 +567,12 @@ export default function BookAppointmentFromPlanModal({
       return []; // Doctor has no shift, so no participants needed
     }
 
-    // ✅ FIX: Filter employees:
+    //  FIX: Filter employees:
     // 1. Exclude the plan's primary doctor
     // 2. Role is ASSISTANT or NURSE (or DOCTOR/DENTIST - doctors can also be assistants)
     // 3. Has shift on selected date (same as doctor)
     const filtered = employees.filter((emp) => {
-      // ✅ FIX: Exclude the plan's primary doctor
+      //  FIX: Exclude the plan's primary doctor
       if (emp.employeeCode === plan.doctor.employeeCode) {
         return false;
       }
@@ -587,8 +587,8 @@ export default function BookAppointmentFromPlanModal({
       return shifts.length > 0;
     });
 
-    // ✅ DEBUG: Log eligible participants
-    console.log('👥 Eligible participants:', {
+    //  DEBUG: Log eligible participants
+    console.log('� Eligible participants:', {
       date: appointmentDate,
       totalEmployees: employees.length,
       filtered: filtered.length,
@@ -875,7 +875,7 @@ export default function BookAppointmentFromPlanModal({
                       </div>
                       {!participantCode && (
                         <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                          💡 <strong>Gợi ý:</strong> Chọn phụ tá sau khi chọn ngày và giờ để xem ngày cả bác sĩ và phụ tá đều có ca làm
+                           <strong>Gợi ý:</strong> Chọn phụ tá sau khi chọn ngày và giờ để xem ngày cả bác sĩ và phụ tá đều có ca làm
                         </div>
                       )}
                     </>
@@ -1027,7 +1027,7 @@ export default function BookAppointmentFromPlanModal({
                     <Select
                       value={participantCode || '__NONE__'}
                       onValueChange={(value) => {
-                        // ✅ FIX: Convert __NONE__ back to empty string
+                        //  FIX: Convert __NONE__ back to empty string
                         setParticipantCode(value === '__NONE__' ? '' : value);
                       }}
                       disabled={loadingData}
@@ -1036,7 +1036,7 @@ export default function BookAppointmentFromPlanModal({
                         <SelectValue placeholder="Chọn phụ tá (tùy chọn)" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* ✅ FIX: Cannot use empty string as value, use special value instead */}
+                        {/*  FIX: Cannot use empty string as value, use special value instead */}
                         <SelectItem value="__NONE__">Không chọn phụ tá</SelectItem>
                         {eligibleParticipants.map((participant) => (
                           <SelectItem key={participant.employeeId} value={participant.employeeCode}>

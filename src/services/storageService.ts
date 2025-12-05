@@ -99,7 +99,7 @@ const mapTransactionSummary = (item: any): StorageTransactionV3 => {
   
   // Debug: Log if totalValue is missing
   if (process.env.NODE_ENV === 'development' && !totalValue && calculatedTotalValue === null) {
-    console.log('⚠️ [mapTransactionSummary] Missing totalValue:', {
+    console.log(' [mapTransactionSummary] Missing totalValue:', {
       transactionId: item.transactionId ?? item.transaction_id,
       transactionCode: item.transactionCode ?? item.transaction_code,
       hasItems: Array.isArray(item.items) && item.items.length > 0,
@@ -247,7 +247,7 @@ export const storageService = {
         totalTransactionsCount: data.totalTransactionsCount ?? data.total_transactions_count ?? 0,
         expiredItemsCount: data.expiredItemsCount ?? data.expired_items_count,
       };
-      console.log('✅ Get storage stats:', mapped);
+      console.log(' Get storage stats:', mapped);
       return mapped;
     } catch (error: any) {
       const errorMessage = extractErrorMessage(error);
@@ -256,7 +256,7 @@ export const storageService = {
       const requestUrl = error.config?.url;
       
       // Log error but don't throw - return default values to prevent UI crash
-      console.warn('⚠️ Get storage stats error (returning defaults):', {
+      console.warn(' Get storage stats error (returning defaults):', {
         message: errorMessage,
         status: statusCode,
         data: errorDetails,
@@ -335,7 +335,7 @@ export const storageService = {
           }
         : undefined;
 
-      console.log('✅ Get transactions:', content.length);
+      console.log(' Get transactions:', content.length);
       return { content, meta, stats };
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -344,7 +344,7 @@ export const storageService = {
         params: buildTransactionParams(filter),
       });
       
-      console.error('❌ Get all transactions error:', {
+      console.error(' Get all transactions error:', {
         message: enhancedError.message,
         status: enhancedError.status,
         endpoint: enhancedError.endpoint,
@@ -379,7 +379,7 @@ export const storageService = {
       }
       
       const mapped = mapTransactionDetail(data);
-      console.log('✅ Get transaction detail:', mapped.transactionCode);
+      console.log(' Get transaction detail:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -387,7 +387,7 @@ export const storageService = {
         method: 'GET',
       });
       
-      console.error('❌ Get transaction detail error:', {
+      console.error(' Get transaction detail error:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -410,7 +410,7 @@ export const storageService = {
       });
       const payload = extractPayload(response);
       const mapped = mapTransactionDetail(payload.data ?? payload);
-      console.log('✅ Update transaction notes:', mapped.transactionCode);
+      console.log(' Update transaction notes:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -419,7 +419,7 @@ export const storageService = {
         params: { notes },
       });
       
-      console.error('❌ Update transaction notes error:', {
+      console.error(' Update transaction notes error:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -438,7 +438,7 @@ export const storageService = {
       const response = await api.post(`${TRANSACTION_BASE}/${id}/approve`, notes ? { notes } : undefined);
       const payload = extractPayload(response);
       const mapped = mapTransactionDetail(payload.data ?? payload);
-      console.log('✅ Approve transaction:', mapped.transactionCode);
+      console.log(' Approve transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -446,7 +446,7 @@ export const storageService = {
         method: 'POST',
       });
       
-      console.error('❌ Approve transaction error:', {
+      console.error(' Approve transaction error:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -465,7 +465,7 @@ export const storageService = {
       const response = await api.post(`${TRANSACTION_BASE}/${id}/reject`, { rejectionReason });
       const payload = extractPayload(response);
       const mapped = mapTransactionDetail(payload.data ?? payload);
-      console.log('✅ Reject transaction:', mapped.transactionCode);
+      console.log(' Reject transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -473,7 +473,7 @@ export const storageService = {
         method: 'POST',
       });
       
-      console.error('❌ Reject transaction error:', {
+      console.error(' Reject transaction error:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -506,7 +506,7 @@ export const storageService = {
       }
       
       const mapped = mapTransactionDetail(data);
-      console.log('✅ Cancel transaction:', mapped.transactionCode);
+      console.log(' Cancel transaction:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -515,7 +515,7 @@ export const storageService = {
         params: { cancellationReason },
       });
       
-      console.error('❌ Cancel transaction error:', {
+      console.error(' Cancel transaction error:', {
         id,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -530,7 +530,7 @@ export const storageService = {
   /**
    * DELETE /api/v1/warehouse/transactions/{id} - Xóa phiếu nhập/xuất kho (admin)
    * 
-   * ⚠️ NOTE: BE chưa implement DELETE endpoint trong TransactionHistoryController.
+   *  NOTE: BE chưa implement DELETE endpoint trong TransactionHistoryController.
    * API 6.6/6.7 chỉ có GET endpoints. Delete functionality đã bị disable trong UI.
    * 
    * Nếu cần delete, có thể:

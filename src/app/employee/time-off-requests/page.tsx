@@ -96,7 +96,7 @@ export default function EmployeeTimeOffRequestsPage() {
     // Validate employeeId exists and is a valid number
     if (!user?.employeeId) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️ Cannot load leave balances: user.employeeId is missing');
+        console.warn(' Cannot load leave balances: user.employeeId is missing');
         console.warn('User object:', user);
       }
       return;
@@ -105,7 +105,7 @@ export default function EmployeeTimeOffRequestsPage() {
     const employeeIdNum = Number(user.employeeId);
     if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ Invalid employeeId:');
+        console.error(' Invalid employeeId:');
         console.error('  Raw value:', user.employeeId);
         console.error('  Parsed value:', employeeIdNum);
         console.error('  Type:', typeof user.employeeId);
@@ -123,11 +123,11 @@ export default function EmployeeTimeOffRequestsPage() {
       setLeaveBalances(balances);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Leave balances loaded:', balances);
+        console.log(' Leave balances loaded:', balances);
       }
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ Error loading leave balances:', {
+        console.error(' Error loading leave balances:', {
           employeeId: employeeIdNum,
           status: error?.response?.status,
           message: error?.response?.data?.message || error.message
@@ -192,7 +192,7 @@ export default function EmployeeTimeOffRequestsPage() {
   const handleCreateTimeOffRequest = async () => {
     // Prevent duplicate submissions
     if (processing) {
-      console.log('⚠️ Already processing, ignoring duplicate submit');
+      console.log(' Already processing, ignoring duplicate submit');
       return;
     }
 
@@ -226,7 +226,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
     if (hasOverlap) {
       const confirmSubmit = confirm(
-        '⚠️ Cảnh báo: Đã có yêu cầu nghỉ phép trong khoảng thời gian này.\n\n' +
+        ' Cảnh báo: Đã có yêu cầu nghỉ phép trong khoảng thời gian này.\n\n' +
         'Bạn có chắc chắn muốn tiếp tục tạo yêu cầu mới?'
       );
       if (!confirmSubmit) {
@@ -278,8 +278,8 @@ export default function EmployeeTimeOffRequestsPage() {
       setProcessing(true);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Creating time-off request:', requestData);
-        console.log('🔍 User context:', {
+        console.log(' Creating time-off request:', requestData);
+        console.log(' User context:', {
           employeeId: user?.employeeId,
           type: typeof user?.employeeId,
           user: user
@@ -300,11 +300,11 @@ export default function EmployeeTimeOffRequestsPage() {
       alert(`Tạo yêu cầu nghỉ phép thành công!\n\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ Error creating time off request:', error.message);
-        console.error('📋 Status:', error.response?.status);
-        console.error('📋 Error Data:', JSON.stringify(error.response?.data, null, 2));
-        console.error('📋 Message:', error.response?.data?.message);
-        console.error('📋 Detail:', error.response?.data?.detail);
+        console.error(' Error creating time off request:', error.message);
+        console.error(' Status:', error.response?.status);
+        console.error(' Error Data:', JSON.stringify(error.response?.data, null, 2));
+        console.error(' Message:', error.response?.data?.message);
+        console.error(' Detail:', error.response?.data?.detail);
       }
 
       const status = error.response?.status;
@@ -737,7 +737,7 @@ export default function EmployeeTimeOffRequestsPage() {
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
                         <div className="flex-1">
                           <h4 className="font-semibold text-yellow-900 mb-2">
-                            ⚠️ Cảnh báo: Trùng lịch nghỉ phép
+                             Cảnh báo: Trùng lịch nghỉ phép
                           </h4>
                           <p className="text-sm text-yellow-800 mb-2">
                             Đã có {overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này:

@@ -15,8 +15,8 @@
  * Enum định nghĩa các trạng thái của renewal request
  * 
  * Workflow:
- * PENDING_ACTION → CONFIRMED → FINALIZED ✅
- *               → DECLINED ❌
+ * PENDING_ACTION → CONFIRMED → FINALIZED 
+ *               → DECLINED 
  *               → EXPIRED ⏰ (tự động bởi Job P10)
  */
 export enum RenewalStatus {

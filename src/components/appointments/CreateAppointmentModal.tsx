@@ -820,7 +820,7 @@ export default function CreateAppointmentModal({
   // Load available slots using available-times API
   const loadAvailableSlots = async () => {
     if (!employeeCode || !appointmentDate || serviceCodes.length === 0) {
-      console.log('❌ Missing required fields for loadAvailableSlots:', {
+      console.log(' Missing required fields for loadAvailableSlots:', {
         employeeCode,
         appointmentDate,
         serviceCodes,
@@ -841,9 +841,9 @@ export default function CreateAppointmentModal({
         participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
       };
 
-      console.log('🔍 Calling available-times API with request:', request);
+      console.log(' Calling available-times API with request:', request);
       const response = await appointmentService.findAvailableTimes(request);
-      console.log('✅ Available-times API response:', response);
+      console.log(' Available-times API response:', response);
 
       setAvailableSlots(response.availableSlots || []);
 
@@ -859,16 +859,16 @@ export default function CreateAppointmentModal({
       // Auto-select first available slot if slots are found
       if (response.availableSlots.length > 0) {
         const firstSlot = response.availableSlots[0];
-        console.log('✅ Auto-selecting first slot:', firstSlot);
+        console.log(' Auto-selecting first slot:', firstSlot);
         setAppointmentStartTime(firstSlot.startTime);
         if (firstSlot.availableCompatibleRoomCodes.length > 0) {
           setRoomCode(firstSlot.availableCompatibleRoomCodes[0]);
         }
       } else {
-        console.warn('⚠️ No available slots found in response');
+        console.warn(' No available slots found in response');
       }
     } catch (error: any) {
-      console.error('❌ Failed to load available slots:', error);
+      console.error(' Failed to load available slots:', error);
       console.error('Error details:', {
         message: error.message,
         response: error.response?.data,
@@ -965,7 +965,7 @@ export default function CreateAppointmentModal({
     services.forEach((service) => {
       const specId = service.specializationId || 'none';
       if (!grouped.has(specId)) {
-        // ✅ Fix: Compare both string and number versions of specializationId
+        //  Fix: Compare both string and number versions of specializationId
         const specialization = specId !== 'none'
           ? specializations.find(s =>
             String(s.specializationId) === String(specId) ||
@@ -1000,7 +1000,7 @@ export default function CreateAppointmentModal({
     if (codesToUse.length === 0) {
       // If booking from plan items but serviceCodes not loaded yet, show all doctors with specializations
       if (planItemIds.length > 0) {
-        console.log('🔍 getCompatibleDoctors - Booking from plan items, serviceCodes not loaded yet, showing all doctors');
+        console.log(' getCompatibleDoctors - Booking from plan items, serviceCodes not loaded yet, showing all doctors');
         return employees.filter((employee) => {
           // Must be ROLE_DENTIST or ROLE_DOCTOR
           if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
@@ -1032,7 +1032,7 @@ export default function CreateAppointmentModal({
     });
 
     // Log for debugging
-    console.log('🔍 getCompatibleDoctors - Debug Info:', {
+    console.log(' getCompatibleDoctors - Debug Info:', {
       serviceCodes,
       requiredSpecializationIds: Array.from(requiredSpecializationIds),
       servicesWithoutSpecialization: servicesWithoutSpecialization.map(s => ({
@@ -1067,7 +1067,7 @@ export default function CreateAppointmentModal({
 
         // Log for debugging
         if (!hasMatchingSpecialization) {
-          console.log(`❌ Employee ${employee.employeeCode} (${employee.fullName}) filtered out:`, {
+          console.log(` Employee ${employee.employeeCode} (${employee.fullName}) filtered out:`, {
             employeeSpecializationIds,
             requiredSpecializationIds: Array.from(requiredSpecializationIds),
             roleName: employee.roleName
@@ -1079,14 +1079,14 @@ export default function CreateAppointmentModal({
 
       // If no services require specialization (all selected services have no specializationId),
       // show all doctors with specializations (they can handle general services)
-      console.log(`✅ Employee ${employee.employeeCode} (${employee.fullName}) included (no specialization required):`, {
+      console.log(` Employee ${employee.employeeCode} (${employee.fullName}) included (no specialization required):`, {
         employeeSpecializationIds,
         servicesWithoutSpecialization: servicesWithoutSpecialization.length
       });
       return true;
     });
 
-    console.log('✅ getCompatibleDoctors - Result:', {
+    console.log(' getCompatibleDoctors - Result:', {
       totalCompatible: compatibleDoctors.length,
       compatibleDoctors: compatibleDoctors.map(d => ({
         code: d.employeeCode,
@@ -1277,7 +1277,7 @@ export default function CreateAppointmentModal({
 
       await appointmentService.createAppointment(request);
 
-      toast.success('✅ Đặt lịch hẹn thành công!');
+      toast.success(' Đặt lịch hẹn thành công!');
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -2127,7 +2127,7 @@ export default function CreateAppointmentModal({
                           {/* Friendly suggestions */}
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <p className="text-xs font-medium text-blue-800 mb-2">
-                              💡 Gợi ý giải pháp:
+                               Gợi ý giải pháp:
                             </p>
                             <ul className="text-xs text-blue-700 space-y-1.5">
                               <li className="flex items-start gap-2">
@@ -2158,7 +2158,7 @@ export default function CreateAppointmentModal({
                                 </div>
                                 <div className="bg-amber-50 border border-amber-200 p-2 rounded">
                                   <p className="text-amber-800">
-                                    ⚙️ <strong>Yêu cầu cấu hình:</strong> Admin cần cấu hình ánh xạ phòng-dịch vụ tại trang quản lý phòng
+                                    ⚙ <strong>Yêu cầu cấu hình:</strong> Admin cần cấu hình ánh xạ phòng-dịch vụ tại trang quản lý phòng
                                   </p>
                                 </div>
                               </div>
@@ -2325,7 +2325,7 @@ export default function CreateAppointmentModal({
                                 <div className="flex items-center gap-2 text-xs text-red-600">
                                   <AlertCircle className="h-3 w-3" />
                                   <span>
-                                    ⚠️ No shifts scheduled for this date
+                                     No shifts scheduled for this date
                                   </span>
                                 </div>
                               )}

@@ -4,12 +4,12 @@
  * ADMIN TIME-OFF TYPES MANAGEMENT PAGE (P6.1)
  * 
  * Features:
- * ✅ View all time-off types (including inactive)
- * ✅ Create new time-off types
- * ✅ Update existing types
- * ✅ Toggle active status (soft delete)
- * ✅ RBAC permissions
- * ✅ Error handling (DUPLICATE_TYPE_CODE, TIMEOFF_TYPE_IN_USE)
+ *  View all time-off types (including inactive)
+ *  Create new time-off types
+ *  Update existing types
+ *  Toggle active status (soft delete)
+ *  RBAC permissions
+ *  Error handling (DUPLICATE_TYPE_CODE, TIMEOFF_TYPE_IN_USE)
  * 
  * RBAC Permissions:
  * - VIEW_TIMEOFF_TYPE_ALL: Required to access page
@@ -243,9 +243,9 @@ export default function AdminTimeOffTypesPage() {
         isPaid: formData.isPaid,
       };
 
-      console.log('🟢 Creating Time-Off Type:', createDto);
-      console.log('🔍 Payload detail:', JSON.stringify(createDto, null, 2));
-      console.log('🔍 Type check:', {
+      console.log('� Creating Time-Off Type:', createDto);
+      console.log(' Payload detail:', JSON.stringify(createDto, null, 2));
+      console.log(' Type check:', {
         typeCode: typeof createDto.typeCode,
         typeName: typeof createDto.typeName,
         description: typeof createDto.description,
@@ -259,8 +259,8 @@ export default function AdminTimeOffTypesPage() {
       resetForm();
       loadTimeOffTypes();
     } catch (error: any) {
-      console.error('❌ Create Time-Off Type Error:', error);
-      console.error('📋 Error Response:', {
+      console.error(' Create Time-Off Type Error:', error);
+      console.error(' Error Response:', {
         status: error?.response?.status,
         data: error?.response?.data,
         message: error?.message,

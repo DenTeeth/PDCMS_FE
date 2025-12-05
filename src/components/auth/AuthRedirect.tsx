@@ -20,12 +20,12 @@ export const AuthRedirect = ({ children, redirectTo }: AuthRedirectProps) => {
         router.push(redirectTo);
       } else if (user.baseRole) {
         // Redirect based on baseRole
-        console.log(`🔄 Redirecting ${user.baseRole} to appropriate layout...`);
+        console.log(` Redirecting ${user.baseRole} to appropriate layout...`);
         const redirectPath = getRedirectPath(user.baseRole);
         router.push(redirectPath);
       } else {
         // Fallback to patient layout if no baseRole
-        console.log('🔄 No baseRole found, redirecting to patient layout...');
+        console.log(' No baseRole found, redirecting to patient layout...');
         router.push('/patient');
       }
     }

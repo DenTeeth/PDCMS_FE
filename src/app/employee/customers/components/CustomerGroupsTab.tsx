@@ -60,7 +60,7 @@ export default function CustomerGroupsTab() {
     };
 
     const getGenderIcon = (gender: string) => {
-        return gender === 'male' ? '👨' : gender === 'female' ? '👩' : '👤';
+        return gender === 'male' ? '' : gender === 'female' ? '' : '�';
     };
 
     const formatCurrency = (amount: number) => {

@@ -143,11 +143,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${
-          disabled
-            ? 'bg-muted cursor-not-allowed opacity-50'
-            : 'bg-background hover:border-primary'
-        }`}
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer transition-colors ${disabled
+          ? 'bg-muted cursor-not-allowed opacity-50'
+          : 'bg-background hover:border-primary'
+          }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -165,11 +164,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {hours.map((h) => (
                   <div
                     key={h}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      h === hour
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
-                    }`}
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${h === hour
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
+                      }`}
                     onClick={() => handleHourChange(h)}
                   >
                     {h}
@@ -187,11 +185,10 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                 {minutes.map((m) => (
                   <div
                     key={m}
-                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${
-                      m === minute
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
-                    }`}
+                    className={`px-2 py-1.5 text-sm text-center cursor-pointer transition-all ${m === minute
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted'
+                      }`}
                     onClick={() => handleMinuteChange(m)}
                   >
                     {m}
@@ -229,7 +226,7 @@ export default function EmployeeAppointmentDetailPage() {
   const [delayNotes, setDelayNotes] = useState<string>('');
   const [updating, setUpdating] = useState(false);
   const [delaying, setDelaying] = useState(false);
-  
+
   // Treatment Plan state (lazy loading)
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlanDetailResponse | null>(null);
   const [loadingTreatmentPlan, setLoadingTreatmentPlan] = useState(false);
@@ -364,10 +361,10 @@ export default function EmployeeAppointmentDetailPage() {
         // Use P3.4 endpoint to get appointment detail
         // Backend will automatically apply RBAC filtering based on JWT token
         const detail = await appointmentService.getAppointmentDetail(appointmentCode);
-        
+
         // Check if request was cancelled or component unmounted
         if (abortController.signal.aborted || !isMounted) return;
-        
+
         setAppointment(detail);
       } catch (error: any) {
         // Don't show error if request was cancelled
@@ -375,7 +372,7 @@ export default function EmployeeAppointmentDetailPage() {
           return;
         }
         console.error('Error loading appointment:', error);
-        
+
         // Check if 404 - appointment not found or not authorized
         if (error.response?.status === 404) {
           toast.error('Appointment not found', {
@@ -590,7 +587,7 @@ export default function EmployeeAppointmentDetailPage() {
       setClinicalRecord(record); // record can be null if no clinical record exists
       setIsEditingClinicalRecord(false);
       if (!record) {
-        console.log('📋 [CLINICAL RECORD] No record found for appointment, showing create form');
+        console.log('[CLINICAL RECORD] No record found for appointment, showing create form');
       }
     } catch (error: any) {
       // Only real errors (appointment not found, access denied, etc.)
@@ -618,9 +615,9 @@ export default function EmployeeAppointmentDetailPage() {
     // 4. Not currently loading
     // 5. Haven't tried loading before (or if we want to allow retry, check hasTriedLoadingTreatmentPlan)
     if (
-      activeTab === 'treatment-plan' && 
-      appointment && 
-      !treatmentPlan && 
+      activeTab === 'treatment-plan' &&
+      appointment &&
+      !treatmentPlan &&
       !loadingTreatmentPlan &&
       !hasTriedLoadingTreatmentPlan
     ) {
@@ -694,34 +691,34 @@ export default function EmployeeAppointmentDetailPage() {
 
     try {
       setUpdating(true);
-      
+
       const request: UpdateAppointmentStatusRequest = {
         status: selectedStatus,
         reasonCode: selectedStatus === 'CANCELLED' ? (statusUpdateReason as AppointmentReasonCode) : undefined,
         notes: statusUpdateNotes || null,
       };
 
-      console.log('🔄 Updating appointment status:', {
+      console.log('Updating appointment status:', {
         appointmentCode: appointment.appointmentCode,
         currentStatus: appointment.status,
         newStatus: selectedStatus,
       });
 
-      // ✅ BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
+      // BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
       const updated = await appointmentService.updateAppointmentStatus(appointment.appointmentCode, request);
-      
-      // ✅ FIX: Verify response has updated status
+
+      // FIX: Verify response has updated status
       if (!updated || !updated.status) {
-        console.error('❌ Invalid response from updateAppointmentStatus:', updated);
+        console.error('Invalid response from updateAppointmentStatus:', updated);
         toast.error('Failed to update status', {
           description: 'Response from server is invalid',
         });
         return;
       }
-      
-      // ✅ Verify status matches what we requested
+
+      // Verify status matches what we requested
       if (updated.status !== selectedStatus) {
-        console.warn('⚠️ Status mismatch:', {
+        console.warn('Status mismatch:', {
           requested: selectedStatus,
           received: updated.status,
         });
@@ -730,12 +727,12 @@ export default function EmployeeAppointmentDetailPage() {
           duration: 5000,
         });
       }
-      
+
       // Check if appointment might be linked to treatment plan items
       // (BE auto-updates plan items when appointment status changes)
       const isPlanRelated = updated.services && updated.services.length > 0;
       const statusChangesPlanItems = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(selectedStatus);
-      
+
       if (isPlanRelated && statusChangesPlanItems) {
         toast.success('Status updated successfully', {
           description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}. Linked treatment plan items have been automatically updated.`,
@@ -746,16 +743,16 @@ export default function EmployeeAppointmentDetailPage() {
           description: `Appointment status changed to ${APPOINTMENT_STATUS_COLORS[selectedStatus].text}`,
         });
       }
-      
-      // ✅ FIX: Update appointment with response data (BE now returns DTO)
+
+      // FIX: Update appointment with response data (BE now returns DTO)
       setAppointment(updated);
-      
-      // ✅ FIX: Reset clinical record loading state when appointment status changes
+
+      // FIX: Reset clinical record loading state when appointment status changes
       // This allows clinical record to be reloaded if user switches to that tab
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
       setClinicalRecordError(null);
-      
+
       // If currently on clinical record tab, reload it
       if (activeTab === 'clinical-record' && updated.appointmentId) {
         // Small delay to ensure state is updated
@@ -763,12 +760,12 @@ export default function EmployeeAppointmentDetailPage() {
           loadClinicalRecord();
         }, 100);
       }
-      
+
       // Double-check: Log after a short delay to see if state actually updated
       setTimeout(() => {
-        console.log('🔍 State check after update (this is async, may not reflect current state)');
+        console.log('State check after update (this is async, may not reflect current state)');
       }, 100);
-      
+
       // Reset form
       setShowStatusModal(false);
       setSelectedStatus(null);
@@ -798,7 +795,7 @@ export default function EmployeeAppointmentDetailPage() {
     const originalStart = new Date(appointment.appointmentStartTime);
     const [hours, minutes] = delayTime.split(':');
     const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);
-    
+
     if (newStart <= originalStart) {
       toast.error('Invalid time', {
         description: 'New start time must be after the original start time',
@@ -808,7 +805,7 @@ export default function EmployeeAppointmentDetailPage() {
 
     try {
       setDelaying(true);
-      
+
       const request: DelayAppointmentRequest = {
         newStartTime: delayNewStartTime, // ISO 8601 format
         reasonCode: delayReason ? (delayReason as AppointmentReasonCode) : undefined,
@@ -816,14 +813,14 @@ export default function EmployeeAppointmentDetailPage() {
       };
 
       const updated = await appointmentService.delayAppointment(appointment.appointmentCode, request);
-      
+
       toast.success('Appointment delayed successfully', {
         description: `New start time: ${formatDateTime(delayNewStartTime)}`,
       });
-      
+
       // Update appointment with new data
       setAppointment(updated);
-      
+
       // Reset form
       setShowDelayModal(false);
       setDelayNewStartTime('');
@@ -914,15 +911,10 @@ export default function EmployeeAppointmentDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* ✅ FIX: Add key to force re-render when status changes */}
-            {appointment && (
-              <div key={`status-${appointment.status}-${appointment.appointmentCode}`}>
-                {/* ✅ FIX: Add key to force re-render when status changes */}
+            {/* FIX: Add key to force re-render when status changes */}
             {appointment && (
               <div key={`status-${appointment.status}-${appointment.appointmentCode}`}>
                 {getStatusBadge(appointment.status)}
-              </div>
-            )}
               </div>
             )}
             {renderActionMenu()}
@@ -979,7 +971,6 @@ export default function EmployeeAppointmentDetailPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    {/* ✅ FIX: Add key to force re-render when status changes */}
                     <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
                       {getStatusBadge(appointment.status)}
                     </div>
@@ -1168,8 +1159,8 @@ export default function EmployeeAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Lỗi khi tải bệnh án</h3>
                   <p className="text-muted-foreground mb-4">{clinicalRecordError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingClinicalRecord(false);
                       setClinicalRecordError(null);
@@ -1233,8 +1224,8 @@ export default function EmployeeAppointmentDetailPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
                   <p className="text-muted-foreground mb-4">{treatmentPlanError}</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setHasTriedLoadingTreatmentPlan(false);
                       setTreatmentPlanError(null);
@@ -1298,8 +1289,8 @@ export default function EmployeeAppointmentDetailPage() {
         </Tabs>
 
         {/* Status Update Modal */}
-        <Dialog 
-          open={showStatusModal} 
+        <Dialog
+          open={showStatusModal}
           onOpenChange={(open) => {
             setShowStatusModal(open);
             if (!open) {
@@ -1397,9 +1388,9 @@ export default function EmployeeAppointmentDetailPage() {
               <Button
                 onClick={handleStatusUpdate}
                 disabled={
-                  updating || 
-                  !selectedStatus || 
-                  selectedStatus === appointment.status || 
+                  updating ||
+                  !selectedStatus ||
+                  selectedStatus === appointment.status ||
                   (selectedStatus === 'CANCELLED' && !statusUpdateReason) ||
                   (selectedStatus && !getValidNextStatuses(appointment.status).includes(selectedStatus))
                 }
@@ -1421,8 +1412,8 @@ export default function EmployeeAppointmentDetailPage() {
         </Dialog>
 
         {/* Delay Appointment Modal */}
-        <Dialog 
-          open={showDelayModal} 
+        <Dialog
+          open={showDelayModal}
           onOpenChange={(open) => {
             setShowDelayModal(open);
             if (!open) {
@@ -1516,7 +1507,7 @@ export default function EmployeeAppointmentDetailPage() {
               <Button
                 onClick={handleDelay}
                 disabled={
-                  delaying || 
+                  delaying ||
                   !delayDate ||
                   !delayTime ||
                   (appointment && delayDate && delayTime ? (() => {
@@ -1562,7 +1553,7 @@ export default function EmployeeAppointmentDetailPage() {
           }}
         /> */}
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 }
 

@@ -67,21 +67,21 @@ class RenewalService {
       // Fallback: return empty array
       return [];
     } catch (error: any) {
-      console.error('❌ [renewalService.getPendingRenewals] Failed:', error);
+      console.error(' [renewalService.getPendingRenewals] Failed:', error);
       
       // Handle specific error codes
       if (error.response?.status === 404) {
         // Endpoint not found - backend might not have implemented this yet
-        console.warn('⚠️ [renewalService.getPendingRenewals] Endpoint not found (404) - Backend might not have implemented renewal API yet');
+        console.warn(' [renewalService.getPendingRenewals] Endpoint not found (404) - Backend might not have implemented renewal API yet');
         return []; // Return empty array instead of throwing
       } else if (error.response?.status === 500) {
         // Server error - backend might have issue
-        console.error('❌ [renewalService.getPendingRenewals] Server error (500) - Backend might have issue');
+        console.error(' [renewalService.getPendingRenewals] Server error (500) - Backend might have issue');
         // Return empty array instead of throwing to avoid breaking UI
         return [];
       } else if (error.response?.status === 403) {
         // Permission denied
-        console.warn('⚠️ [renewalService.getPendingRenewals] Permission denied (403)');
+        console.warn(' [renewalService.getPendingRenewals] Permission denied (403)');
         return []; // Return empty array instead of throwing
       }
       
@@ -142,7 +142,7 @@ class RenewalService {
       
       return response.data;
     } catch (error: any) {
-      console.error('❌ [renewalService.respondToRenewal] Failed:', error);
+      console.error(' [renewalService.respondToRenewal] Failed:', error);
       
       // Handle specific error codes
       if (error.response?.status === 400) {
@@ -226,21 +226,21 @@ class RenewalService {
       // Fallback: return empty array
       return [];
     } catch (error: any) {
-      console.error('❌ [renewalService.getAllRenewals] Failed:', error);
+      console.error(' [renewalService.getAllRenewals] Failed:', error);
       
       // Handle specific error codes
       if (error.response?.status === 404) {
         // Endpoint not found - backend might not have implemented this yet
-        console.warn('⚠️ [renewalService.getAllRenewals] Endpoint not found (404) - Backend might not have implemented admin renewal API yet');
+        console.warn(' [renewalService.getAllRenewals] Endpoint not found (404) - Backend might not have implemented admin renewal API yet');
         return []; // Return empty array instead of throwing
       } else if (error.response?.status === 500) {
         // Server error - backend might have issue
-        console.error('❌ [renewalService.getAllRenewals] Server error (500) - Backend might have issue');
+        console.error(' [renewalService.getAllRenewals] Server error (500) - Backend might have issue');
         // Return empty array instead of throwing to avoid breaking UI
         return [];
       } else if (error.response?.status === 403) {
         // Permission denied
-        console.warn('⚠️ [renewalService.getAllRenewals] Permission denied (403)');
+        console.warn(' [renewalService.getAllRenewals] Permission denied (403)');
         throw new Error('Bạn không có quyền xem danh sách renewal requests. Cần permission: MANAGE_FIXED_REGISTRATIONS');
       }
       
@@ -308,7 +308,7 @@ class RenewalService {
       
       return response.data;
     } catch (error: any) {
-      console.error('❌ [renewalService.finalizeRenewal] Failed:', error);
+      console.error(' [renewalService.finalizeRenewal] Failed:', error);
       
       // Handle specific error codes
       if (error.response?.status === 400) {

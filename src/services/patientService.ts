@@ -84,7 +84,7 @@ class PatientService {
     const response = await axiosInstance.post(this.endpoint, data);
     
     // Log full response for debugging
-    console.log('📥 Full BE Response:', {
+    console.log('� Full BE Response:', {
       status: response.status,
       data: response.data,
       hasAccount: response.data?.hasAccount,

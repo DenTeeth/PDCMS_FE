@@ -120,7 +120,7 @@ export default function CreateExportModal({
       setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit.unitId }));
       return baseUnit.unitId;
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit for export:', error);
+      console.error(' Failed to fetch base unit for export:', error);
       toast.error('Không thể lấy đơn vị cơ sở của vật tư', {
         description: error.response?.data?.message || 'Vui lòng thử lại hoặc liên hệ admin',
       });
@@ -403,7 +403,7 @@ export default function CreateExportModal({
                                 size="sm"
                                 onClick={() => handleEditItem(index)}
                               >
-                                ✏️
+                                ✏
                               </Button>
                               <Button
                                 type="button"

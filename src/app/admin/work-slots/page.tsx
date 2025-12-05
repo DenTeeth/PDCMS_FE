@@ -96,7 +96,7 @@ export default function WorkSlotsManagementPage() {
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
     } catch (error: any) {
-      console.error('❌ Failed to fetch dropdown data:', error);
+      console.error(' Failed to fetch dropdown data:', error);
       toast.error('Failed to load work shifts');
     } finally {
       setLoadingDropdowns(false);
@@ -154,7 +154,7 @@ export default function WorkSlotsManagementPage() {
         dayOfWeek: selectedDays.join(',')
       };
 
-      console.log('📤 Creating work slot:', payload);
+      console.log('� Creating work slot:', payload);
 
       await workSlotService.createWorkSlot(payload);
       toast.success('Work slot created successfully');
@@ -164,7 +164,7 @@ export default function WorkSlotsManagementPage() {
       // Refresh the work slots list
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to create work slot:', error);
+      console.error(' Failed to create work slot:', error);
 
       let errorMessage = 'Failed to create work slot';
       if (error.response?.data?.message) {
@@ -228,7 +228,7 @@ export default function WorkSlotsManagementPage() {
     try {
       setUpdating(true);
 
-      console.log('📤 Updating work slot:', editingSlot.slotId, editFormData);
+      console.log('� Updating work slot:', editingSlot.slotId, editFormData);
 
       await workSlotService.updateWorkSlot(editingSlot.slotId, editFormData);
       toast.success('Work slot updated successfully');
@@ -236,7 +236,7 @@ export default function WorkSlotsManagementPage() {
       setEditingSlot(null);
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to update work slot:', error);
+      console.error(' Failed to update work slot:', error);
 
       // Handle specific error codes
       if (error.errorCode === 'QUOTA_VIOLATION' || error.response?.data?.errorCode === 'QUOTA_VIOLATION') {
@@ -272,13 +272,13 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setDeleting(true);
-      console.log('🗑️ Deleting work slot:', slot.slotId);
+      console.log(' Deleting work slot:', slot.slotId);
 
       await workSlotService.deleteWorkSlot(slot.slotId);
       toast.success('Work slot deleted successfully');
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to delete work slot:', error);
+      console.error(' Failed to delete work slot:', error);
 
       let errorMessage = 'Failed to delete work slot';
       if (error.response?.data?.message) {

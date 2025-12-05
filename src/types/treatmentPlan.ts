@@ -95,8 +95,8 @@ export interface ProgressSummaryDTO {
 // API 5.1: Treatment Plan Summary (List)
 export interface TreatmentPlanSummaryDTO {
   patientPlanId: number;
-  planCode: string; // ✅ Backend now includes this field
-  patientCode: string; // ✅ Backend fix 2025-11-15: Required for Admin navigation from list to detail
+  planCode: string; //  Backend now includes this field
+  patientCode: string; //  Backend fix 2025-11-15: Required for Admin navigation from list to detail
   planName: string;
   status: TreatmentPlanStatus | null; // V32: Can be null when approval_status = DRAFT (not activated yet)
   approvalStatus?: ApprovalStatus; // V19: Optional for backward compatibility
@@ -139,7 +139,7 @@ export interface TreatmentPlanDetailResponse {
   status: TreatmentPlanStatus | null; // V32: Can be null when approval_status = DRAFT (not activated yet)
   approvalStatus?: ApprovalStatus; // V19: Optional for backward compatibility
   approvalMetadata?: ApprovalMetadataDTO; // V20: Approval metadata (who, when, notes)
-  submitNotes?: string; // ✅ NEW: Notes from doctor when submitting for review (API 5.12)
+  submitNotes?: string; //  NEW: Notes from doctor when submitting for review (API 5.12)
   doctor: DoctorInfoDTO;
   patient: PatientInfoDTO;
   startDate: string | null;
@@ -180,7 +180,7 @@ export interface CreateCustomPlanItemRequest {
 export interface CreateCustomPlanRequest {
   planName: string;
   doctorEmployeeCode: string;
-  discountAmount: number; // ✅ Required by BE (@NotNull) - must be >= 0
+  discountAmount: number; //  Required by BE (@NotNull) - must be >= 0
   paymentType: PaymentType;
   startDate?: string | null;
   expectedEndDate?: string | null;
@@ -509,13 +509,13 @@ export interface UpdatePricesRequest {
 
 export interface UpdatePricesResponse {
   planCode: string;
-  totalCostBefore: number; // ✅ BE field name
-  totalCostAfter: number; // ✅ BE field name
-  finalCost: number; // ✅ BE field name (after discount)
+  totalCostBefore: number; //  BE field name
+  totalCostAfter: number; //  BE field name
+  finalCost: number; //  BE field name (after discount)
   itemsUpdated: number;
-  discountUpdated: boolean; // ✅ BE field
-  updatedBy: string; // ✅ BE field (fullName only)
-  updatedByEmployeeCode: string; // ✅ BE field
+  discountUpdated: boolean; //  BE field
+  updatedBy: string; //  BE field (fullName only)
+  updatedByEmployeeCode: string; //  BE field
   updatedAt: string;
 }
 

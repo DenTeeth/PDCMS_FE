@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * ⚠️ ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
+ *  ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
  * 
  * FEATURES:
  * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE_ALL)
@@ -309,15 +309,15 @@ export default function AdminLeaveBalancesPage() {
         default_allowance: annualResetFormData.defaultAllowance!
       };
 
-      console.log('🔄 Annual reset request:', requestData);
+      console.log(' Annual reset request:', requestData);
 
       const result = await LeaveBalanceService.annualReset(requestData);
 
-      console.log('✅ Annual reset success:', result);
+      console.log(' Annual reset success:', result);
       alert('Job đã được kích hoạt thành công!');
       setShowAnnualResetModal(false);
     } catch (error: any) {
-      console.error('❌ Annual reset error:', {
+      console.error(' Annual reset error:', {
         status: error?.response?.status,
         data: error?.response?.data,
         message: error?.message,

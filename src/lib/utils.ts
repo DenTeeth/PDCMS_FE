@@ -26,7 +26,7 @@ export function decodeJWT(token: string): any | null {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
-      console.error('❌ [decodeJWT] Invalid JWT format');
+      console.error(' [decodeJWT] Invalid JWT format');
       return null;
     }
 
@@ -38,10 +38,10 @@ export function decodeJWT(token: string): any | null {
     const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
 
     const decoded = JSON.parse(atob(padded));
-    console.log('✅ [decodeJWT] Decoded payload:', decoded);
+    console.log(' [decodeJWT] Decoded payload:', decoded);
     return decoded;
   } catch (error) {
-    console.error('❌ [decodeJWT] Failed to decode token:', error);
+    console.error(' [decodeJWT] Failed to decode token:', error);
     return null;
   }
 }
@@ -54,15 +54,15 @@ export function decodeJWT(token: string): any | null {
  */
 export function getEmployeeIdFromToken(token: string): string | null {
   try {
-    console.log('🔍 [getEmployeeIdFromToken] Decoding token...');
+    console.log(' [getEmployeeIdFromToken] Decoding token...');
     const payload = decodeJWT(token);
     if (!payload) {
-      console.warn('⚠️ [getEmployeeIdFromToken] Failed to decode token payload');
+      console.warn(' [getEmployeeIdFromToken] Failed to decode token payload');
       return null;
     }
 
-    console.log('📋 [getEmployeeIdFromToken] Token payload keys:', Object.keys(payload));
-    console.log('📋 [getEmployeeIdFromToken] Full payload:', payload);
+    console.log(' [getEmployeeIdFromToken] Token payload keys:', Object.keys(payload));
+    console.log(' [getEmployeeIdFromToken] Full payload:', payload);
 
     // Try different possible field names for employeeId
     // Note: sub might be username, not employeeId, so check other fields first
@@ -78,15 +78,15 @@ export function getEmployeeIdFromToken(token: string): string | null {
 
     if (employeeId) {
       const employeeIdStr = String(employeeId).trim();
-      console.log('✅ [getEmployeeIdFromToken] Found employeeId:', employeeIdStr, '(type:', typeof employeeId, ')');
+      console.log(' [getEmployeeIdFromToken] Found employeeId:', employeeIdStr, '(type:', typeof employeeId, ')');
       return employeeIdStr;
     } else {
-      console.warn('⚠️ [getEmployeeIdFromToken] No employeeId found in token payload. Available fields:', Object.keys(payload));
-      console.warn('⚠️ [getEmployeeIdFromToken] Payload values:', payload);
+      console.warn(' [getEmployeeIdFromToken] No employeeId found in token payload. Available fields:', Object.keys(payload));
+      console.warn(' [getEmployeeIdFromToken] Payload values:', payload);
       return null;
     }
   } catch (error) {
-    console.error('❌ [getEmployeeIdFromToken] Failed to extract employeeId:', error);
+    console.error(' [getEmployeeIdFromToken] Failed to extract employeeId:', error);
     return null;
   }
 }
@@ -101,7 +101,7 @@ export function getPatientCodeFromToken(token: string): string | null {
   try {
     const payload = decodeJWT(token);
     if (!payload) {
-      console.warn('⚠️ [getPatientCodeFromToken] Failed to decode token payload');
+      console.warn(' [getPatientCodeFromToken] Failed to decode token payload');
       return null;
     }
 
@@ -111,14 +111,14 @@ export function getPatientCodeFromToken(token: string): string | null {
 
     if (patientCode) {
       const patientCodeStr = String(patientCode).trim();
-      console.log('✅ [getPatientCodeFromToken] Found patientCode:', patientCodeStr);
+      console.log(' [getPatientCodeFromToken] Found patientCode:', patientCodeStr);
       return patientCodeStr;
     } else {
-      console.warn('⚠️ [getPatientCodeFromToken] No patientCode found in token payload. Available fields:', Object.keys(payload));
+      console.warn(' [getPatientCodeFromToken] No patientCode found in token payload. Available fields:', Object.keys(payload));
       return null;
     }
   } catch (error) {
-    console.error('❌ [getPatientCodeFromToken] Failed to extract patientCode:', error);
+    console.error(' [getPatientCodeFromToken] Failed to extract patientCode:', error);
     return null;
   }
 }
@@ -133,7 +133,7 @@ export function getEmployeeCodeFromToken(token: string): string | null {
   try {
     const payload = decodeJWT(token);
     if (!payload) {
-      console.warn('⚠️ [getEmployeeCodeFromToken] Failed to decode token payload');
+      console.warn(' [getEmployeeCodeFromToken] Failed to decode token payload');
       return null;
     }
 
@@ -143,14 +143,14 @@ export function getEmployeeCodeFromToken(token: string): string | null {
 
     if (employeeCode) {
       const employeeCodeStr = String(employeeCode).trim();
-      console.log('✅ [getEmployeeCodeFromToken] Found employeeCode:', employeeCodeStr);
+      console.log(' [getEmployeeCodeFromToken] Found employeeCode:', employeeCodeStr);
       return employeeCodeStr;
     } else {
-      console.warn('⚠️ [getEmployeeCodeFromToken] No employeeCode found in token payload. Available fields:', Object.keys(payload));
+      console.warn(' [getEmployeeCodeFromToken] No employeeCode found in token payload. Available fields:', Object.keys(payload));
       return null;
     }
   } catch (error) {
-    console.error('❌ [getEmployeeCodeFromToken] Failed to extract employeeCode:', error);
+    console.error(' [getEmployeeCodeFromToken] Failed to extract employeeCode:', error);
     return null;
   }
 }

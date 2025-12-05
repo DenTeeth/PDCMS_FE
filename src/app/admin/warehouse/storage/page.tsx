@@ -2,7 +2,7 @@
 
 /**
  * Storage In/Out Page - API V1 (Transactions Management)
- * ✅ Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
+ * Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
  */
 
 import { useState, useEffect } from 'react';
@@ -768,8 +768,8 @@ export default function StorageInOutPage() {
                   setPage(0);
                 }}
                 className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeFilter === filter
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
                   }`}
               >
                 {filter === 'ALL' ? 'Tất cả' : getTypeLabel(filter)} ({filterStats[filter]})
@@ -864,7 +864,7 @@ export default function StorageInOutPage() {
                                   <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
                                 </Button>
                                 {/* 
-                                  ⚠️ Tạm thời ẩn nút sửa/xóa vì chưa được BE support.
+                                  Tạm thời ẩn nút sửa/xóa vì chưa được BE support.
                                   Nếu BE implement update hoặc xoá thì mở lại ở đây nhé bạn!
                                 */}
                               </div>

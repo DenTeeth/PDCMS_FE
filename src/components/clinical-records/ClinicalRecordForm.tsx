@@ -209,7 +209,7 @@ export default function ClinicalRecordForm({
         // Refetch the updated record
         const updatedRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
         
-        // ✅ Reload tooth statuses after updating clinical record
+        //  Reload tooth statuses after updating clinical record
         // Odontogram may have been updated separately, so refresh to show latest state
         if (effectivePatientId) {
           try {
@@ -221,7 +221,7 @@ export default function ClinicalRecordForm({
           }
         }
 
-        // ✅ Reload prescription after updating clinical record
+        //  Reload prescription after updating clinical record
         if (updatedRecord.clinicalRecordId) {
           try {
             const prescriptionData = await clinicalRecordService.getPrescription(
