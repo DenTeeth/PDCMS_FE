@@ -16,7 +16,8 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import inventoryService, { type InventorySummary, type BatchResponse } from '@/services/inventoryService';
+import inventoryService, { type InventorySummary } from '@/services/inventoryService';
+import type { BatchResponse } from '@/types/warehouse';
 import { Package, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export interface SelectedBatchPayload {

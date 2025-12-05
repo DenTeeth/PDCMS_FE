@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChartLine,
@@ -277,7 +278,7 @@ export default function AnalyticsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Select
+                    <CustomSelect
                         options={[
                             { value: 'THIS_WEEK', label: 'This Week' },
                             { value: 'THIS_MONTH', label: 'This Month' },
@@ -285,7 +286,7 @@ export default function AnalyticsPage() {
                             { value: 'CUSTOM', label: 'Custom Range' },
                         ]}
                         value={dateRange}
-                        onChange={(value: any) => setDateRange(value)}
+                        onChange={(value: string) => setDateRange(value as DateRangeFilter)}
                         placeholder="Select date range"
                         className="w-48"
                     />

@@ -249,10 +249,8 @@ export default function AdminShiftCalendarPage() {
     const events = shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
 
-      // Try multiple matching strategies
+      // Try multiple matching strategies (employeeId is string in Employee, number in EmployeeShift)
       const employee = employees.find(emp =>
-        emp.employeeId === shift.employeeId ||
-        emp.employeeId === String(shift.employeeId) ||
         String(emp.employeeId) === String(shift.employeeId)
       );
 

@@ -41,10 +41,15 @@ export default function WorkSlotsTestPage() {
       setError(null);
       console.log('Testing createWorkSlot...');
       
+      const today = new Date();
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
       const response = await workSlotService.createWorkSlot({
         workShiftId: 'WKS_MORNING_02',
         dayOfWeek: DayOfWeek.MONDAY,
-        quota: 5
+        quota: 5,
+        effectiveFrom: today.toISOString().split('T')[0],
+        effectiveTo: nextMonth.toISOString().split('T')[0]
       });
       
       console.log('Create work slot response:', response);

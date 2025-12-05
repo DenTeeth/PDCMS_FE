@@ -118,12 +118,12 @@ export default function UserRecords() {
     return matchesSearch && matchesType;
   });
 
-  const getFileTypeIcon = (fileType) => {
-    const IconComponent = fileTypeIcons[fileType] || faFileAlt;
+  const getFileTypeIcon = (fileType: string) => {
+    const IconComponent = (fileTypeIcons as Record<string, any>)[fileType] || faFileAlt;
     return <FontAwesomeIcon icon={IconComponent} className="h-5 w-5" />;
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'available':
         return <Badge variant="default" className="flex items-center"><FontAwesomeIcon icon={faCheckCircle} className="mr-1 h-3 w-3" />Available</Badge>;

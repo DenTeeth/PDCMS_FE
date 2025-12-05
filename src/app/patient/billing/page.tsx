@@ -116,7 +116,7 @@ export default function UserBilling() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
         return <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-green-600" />;
@@ -248,7 +248,7 @@ export default function UserBilling() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(bill.status)}
-                    <Badge variant={statusColors[bill.status]}>
+                    <Badge variant={(statusColors as Record<string, any>)[bill.status]}>
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </Badge>
                   </div>
