@@ -72,7 +72,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
       {/* Rating Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Rating Distribution</CardTitle>
+          <CardTitle>Phân bố đánh giá</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -123,7 +123,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
       {/* Trend Over Time */}
       <Card>
         <CardHeader>
-          <CardTitle>Rating Trend Over Time</CardTitle>
+          <CardTitle>Xu hướng đánh giá theo thời gian</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>

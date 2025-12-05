@@ -904,7 +904,7 @@ export default function EmployeeAppointmentDetailPage() {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Appointment Details</h1>
+              <h1 className="text-3xl font-bold">Chi tiết lịch hẹn</h1>
               <p className="text-muted-foreground mt-1">
                 Code: {appointment.appointmentCode}
               </p>
@@ -1011,7 +1011,7 @@ export default function EmployeeAppointmentDetailPage() {
                   {appointment.createdAt && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Created At</label>
-                      <p className="text-base text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
                     </div>
                   )}
                 </div>
@@ -1347,7 +1347,7 @@ export default function EmployeeAppointmentDetailPage() {
                     onValueChange={(value) => setStatusUpdateReason(value as AppointmentReasonCode)}
                   >
                     <SelectTrigger id="reasonCode" className="mt-1">
-                      <SelectValue placeholder="Select reason" />
+                      <SelectValue placeholder="Chọn lý do" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
@@ -1367,7 +1367,7 @@ export default function EmployeeAppointmentDetailPage() {
                   id="statusNotes"
                   value={statusUpdateNotes}
                   onChange={(e) => setStatusUpdateNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder="Thêm ghi chú bổ sung..."
                   className="mt-1"
                   rows={3}
                 />
@@ -1468,7 +1468,7 @@ export default function EmployeeAppointmentDetailPage() {
                   onValueChange={(value) => setDelayReason(value === '__NONE__' ? '' : (value as AppointmentReasonCode || ''))}
                 >
                   <SelectTrigger id="delayReason" className="mt-1">
-                    <SelectValue placeholder="Select reason (optional)" />
+                    <SelectValue placeholder="Chọn lý do (không bắt buộc)" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__NONE__">None</SelectItem>
@@ -1488,7 +1488,7 @@ export default function EmployeeAppointmentDetailPage() {
                   id="delayNotes"
                   value={delayNotes}
                   onChange={(e) => setDelayNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder="Thêm ghi chú bổ sung..."
                   className="mt-1"
                   rows={3}
                 />

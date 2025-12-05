@@ -105,7 +105,7 @@ class FixedRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to create fixed shift registration');
+        throw new Error('Không thể tạo đăng ký ca cố định');
       }
     }
   }
@@ -142,7 +142,7 @@ class FixedRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to update fixed shift registration');
+        throw new Error('Không thể cập nhật đăng ký ca cố định');
       }
     }
   }
@@ -163,7 +163,7 @@ class FixedRegistrationService {
       } else if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);
       } else {
-        throw new Error('Failed to delete fixed shift registration');
+        throw new Error('Không thể xóa đăng ký ca cố định');
       }
     }
   }

@@ -609,10 +609,10 @@ export default function BookingServicesPage() {
     },
     {
       key: 'isActive',
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (service) => (
         <Badge variant={service.isActive ? 'default' : 'secondary'}>
-          {service.isActive ? 'Active' : 'Inactive'}
+          {service.isActive ? 'Hoạt động' : 'Không hoạt động'}
         </Badge>
       ),
     },
@@ -915,7 +915,7 @@ export default function BookingServicesPage() {
                   id="create-description"
                   value={createForm.description || ''}
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                  placeholder="Service description"
+                  placeholder="Mô tả dịch vụ"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -990,7 +990,7 @@ export default function BookingServicesPage() {
                     }}
                   >
                     <SelectTrigger id="create-specialization">
-                      <SelectValue placeholder="Select specialization (optional)" />
+                      <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none-selected">None</SelectItem>
@@ -1032,9 +1032,9 @@ export default function BookingServicesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                Cancel
+                Hủy
               </Button>
-              <Button onClick={handleCreateService}>Create</Button>
+              <Button onClick={handleCreateService}>Tạo</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1074,7 +1074,7 @@ export default function BookingServicesPage() {
                   id="update-description"
                   value={updateForm.description || ''}
                   onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
-                  placeholder="Service description"
+                  placeholder="Mô tả dịch vụ"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -1149,7 +1149,7 @@ export default function BookingServicesPage() {
                     }}
                   >
                     <SelectTrigger id="update-specialization">
-                      <SelectValue placeholder="Select specialization (optional)" />
+                      <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none-selected">None</SelectItem>
@@ -1191,9 +1191,9 @@ export default function BookingServicesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
-                Cancel
+                Hủy
               </Button>
-              <Button onClick={handleUpdateService}>Update</Button>
+              <Button onClick={handleUpdateService}>Cập nhật</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -108,7 +108,7 @@ class WorkSlotService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to create work slot');
+        throw new Error('Không thể tạo slot làm việc');
       }
     }
   }
@@ -153,7 +153,7 @@ class WorkSlotService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to update work slot');
+        throw new Error('Không thể cập nhật slot làm việc');
       }
     }
   }
@@ -171,7 +171,7 @@ class WorkSlotService {
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else {
-        throw new Error('Failed to delete work slot');
+        throw new Error('Không thể xóa slot làm việc');
       }
     }
   }

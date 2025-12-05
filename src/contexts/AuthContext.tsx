@@ -277,11 +277,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         console.log(' Auth state updated - isAuthenticated: true');
       } else {
-        throw new Error('Login failed - no token received');
+        throw new Error('Đăng nhập thất bại - không nhận được token');
       }
     } catch (error) {
       console.error(' Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
       setError(errorMessage);
       throw error;
     } finally {

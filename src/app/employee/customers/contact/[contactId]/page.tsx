@@ -42,7 +42,7 @@ export default function ViewContactPage() {
     const { user } = useAuth();
     const canDelete = user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT');
 
-    if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+    if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
     if (error) {
         return (
@@ -58,7 +58,7 @@ export default function ViewContactPage() {
                         <span>Back</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">View Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
                     </div>
                 </div>
                 <Card>
@@ -86,7 +86,7 @@ export default function ViewContactPage() {
                         <span>Back</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">View Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
                     </div>
                 </div>
                 <Card>

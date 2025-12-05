@@ -94,14 +94,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
+            <p className="text-gray-600 mb-4">Bạn không có quyền truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required baseRole: {requiredBaseRole}</p>
             <button 
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Go to Dashboard
+              Trở về Trang chủ
             </button>
           </div>
         </div>
@@ -118,14 +118,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
+            <p className="text-gray-600 mb-4">Bạn không có quyền truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required: {requiredPermissions.join(', ')}</p>
             <button 
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Go to Dashboard
+              Trở về Trang chủ
             </button>
           </div>
         </div>
@@ -140,14 +140,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600 mb-4">You don't have the required role to access this page.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
+            <p className="text-gray-600 mb-4">Bạn không có vai trò cần thiết để truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required role: {requiredRoles.join(', ')}</p>
             <button 
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Go to Dashboard
+              Trở về Trang chủ
             </button>
           </div>
         </div>

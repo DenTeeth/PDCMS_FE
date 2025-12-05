@@ -84,14 +84,15 @@ export function CarouselContent({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   const ctx = React.useContext(CarouselContext);
-  if (!ctx) return null;
-  const { index, perView, setCount } = ctx;
-
   const items = React.Children.toArray(children);
 
   React.useEffect(() => {
-    setCount(items.length);
-  }, [items.length, setCount]);
+    if (!ctx) return;
+    ctx.setCount(items.length);
+  }, [items.length, ctx]);
+
+  if (!ctx) return null;
+  const { index, perView } = ctx;
 
   const translatePercent = (index * 100) / perView;
 

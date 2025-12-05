@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faSort,
@@ -102,7 +102,7 @@ export default function EmployeePerformanceTable({
             {/* Filters */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Performance Analytics</CardTitle>
+                    <CardTitle>Phân tích hiệu suất</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col md:flex-row gap-4">
@@ -122,14 +122,19 @@ export default function EmployeePerformanceTable({
                         </div>
                         <div className="w-full md:w-48">
                             <Select
-                                options={[
-                                    { value: 'all', label: 'All Roles' },
-                                    ...roles.map((role) => ({ value: role, label: role })),
-                                ]}
                                 value={roleFilter}
-                                onChange={setRoleFilter}
-                                placeholder="Filter by role"
-                            />
+                                onValueChange={setRoleFilter}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Lọc theo vai trò" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả vai trò</SelectItem>
+                                    {roles.map((role) => (
+                                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardContent>
@@ -138,7 +143,7 @@ export default function EmployeePerformanceTable({
             {/* Top Performers Chart */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Top Performers by Revenue</CardTitle>
+                    <CardTitle>Nhân viên xuất sắc nhất theo doanh thu</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -157,7 +162,7 @@ export default function EmployeePerformanceTable({
             {/* Performance Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Employee Performance</CardTitle>
+                    <CardTitle>Hiệu suất nhân viên</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">

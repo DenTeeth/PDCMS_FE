@@ -14,6 +14,7 @@ export interface Service {
   categoryId?: number; //  NEW: Service Category (V17)
   categoryCode?: string; //  NEW: Category code (e.g., "GEN", "COS")
   categoryName?: string; //  NEW: Category name (e.g., "A. General Dentistry")
+  displayOrder?: number; // Optional display order for sorting
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;

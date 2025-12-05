@@ -174,7 +174,7 @@ export default function EmployeeDashboard() {
       {/* Recent Activity (Placeholder) */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>Hoạt động gần đây</CardTitle>
           <CardDescription>
             Your recent actions in the system
           </CardDescription>

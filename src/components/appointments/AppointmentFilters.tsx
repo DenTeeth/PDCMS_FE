@@ -305,10 +305,10 @@ export default function AppointmentFilters({
               }}
             >
               <SelectTrigger id="datePreset" className="mt-1">
-                <SelectValue placeholder="Select date preset" />
+                <SelectValue placeholder="Chọn khoảng thời gian" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">All Dates</SelectItem>
+                <SelectItem value="none">Tất cả</SelectItem>
                 {Object.entries(datePresetLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {label}
@@ -320,7 +320,7 @@ export default function AppointmentFilters({
 
           {/* Date From */}
           <div className="min-w-[150px]">
-            <Label htmlFor="dateFrom">Date From</Label>
+            <Label htmlFor="dateFrom">Ngày bắt đầu</Label>
             <Input
               id="dateFrom"
               type="date"
@@ -334,7 +334,7 @@ export default function AppointmentFilters({
 
           {/* Date To */}
           <div className="min-w-[150px]">
-            <Label htmlFor="dateTo">Date To</Label>
+            <Label htmlFor="dateTo">Ngày kết thúc</Label>
             <Input
               id="dateTo"
               type="date"
