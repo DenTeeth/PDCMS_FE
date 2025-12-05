@@ -66,12 +66,12 @@ export function ServiceRevenueChart({ data }: ServiceAnalyticsChartsProps) {
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                         <Pie
-                            data={sortedData}
+                            data={sortedData as any}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ serviceName, revenue }) =>
-                                `${serviceName}: $${revenue.toLocaleString()}`
+                            label={({ serviceName, revenue }: any) =>
+                                `${serviceName}: $${Number(revenue).toLocaleString()}`
                             }
                             outerRadius={80}
                             fill="#8884d8"

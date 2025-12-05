@@ -16,9 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import inventoryService, {
-  type BatchResponse,
-} from '@/services/inventoryService';
+import inventoryService from '@/services/inventoryService';
+import type { BatchResponse } from '@/types/warehouse';
 import type {
   CreateExportTransactionDto,
   ExportType,

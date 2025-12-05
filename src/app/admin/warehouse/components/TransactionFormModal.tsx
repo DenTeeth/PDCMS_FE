@@ -106,7 +106,7 @@ export default function TransactionFormModal({
     e.preventDefault();
 
     // Validate
-    if (type === TransactionType.IN && !formData.supplierId) {
+    if (type === TransactionType.IMPORT && !formData.supplierId) {
       alert('Vui lòng chọn nhà cung cấp cho phiếu nhập');
       return;
     }
@@ -117,7 +117,7 @@ export default function TransactionFormModal({
     }
 
     // Validate expiry date for cold storage IN transactions
-    if (type === TransactionType.IN && warehouseType === WarehouseType.COLD) {
+    if (type === TransactionType.IMPORT && warehouseType === WarehouseType.COLD) {
       const missingExpiryDate = formData.items.some((item) => !item.expiryDate);
       if (missingExpiryDate) {
         alert('Hạn sử dụng là bắt buộc cho phiếu nhập kho lạnh');
@@ -156,18 +156,18 @@ export default function TransactionFormModal({
           <DialogTitle>
             {transaction
               ? 'Chỉnh sửa phiếu'
-              : type === TransactionType.IN
+              : type === TransactionType.IMPORT
               ? 'Thêm phiếu nhập'
               : 'Thêm phiếu xuất'}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {transaction ? 'Cập nhật thông tin phiếu giao dịch' : type === TransactionType.IN ? 'Tạo phiếu nhập kho mới' : 'Tạo phiếu xuất kho mới'}
+            {transaction ? 'Cập nhật thông tin phiếu giao dịch' : type === TransactionType.IMPORT ? 'Tạo phiếu nhập kho mới' : 'Tạo phiếu xuất kho mới'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {type === TransactionType.IN && (
+            {type === TransactionType.IMPORT && (
               <div>
                 <Label htmlFor="supplierId">Nhà cung cấp *</Label>
                 <Select
@@ -191,7 +191,7 @@ export default function TransactionFormModal({
 
             <div>
               <Label htmlFor="transactionDate">
-                {type === TransactionType.IN ? 'Ngày nhập' : 'Ngày xuất'} *
+                {type === TransactionType.IMPORT ? 'Ngày nhập' : 'Ngày xuất'} *
               </Label>
               <Input
                 id="transactionDate"
@@ -219,7 +219,7 @@ export default function TransactionFormModal({
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-600">Vật tư</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-600 w-24">Số lượng</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-600 w-32">Đơn giá</th>
-                    {type === TransactionType.IN && warehouseType === WarehouseType.COLD && (
+                    {type === TransactionType.IMPORT && warehouseType === WarehouseType.COLD && (
                       <th className="text-left py-2 px-3 text-sm font-medium text-gray-600 w-32">Hạn SD</th>
                     )}
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-600 w-32">Thành tiền</th>
@@ -266,7 +266,7 @@ export default function TransactionFormModal({
                           required
                         />
                       </td>
-                      {type === TransactionType.IN && warehouseType === WarehouseType.COLD && (
+                      {type === TransactionType.IMPORT && warehouseType === WarehouseType.COLD && (
                         <td className="py-2 px-3">
                           <Input
                             type="date"
@@ -296,7 +296,7 @@ export default function TransactionFormModal({
                   <tr>
                     <td
                       colSpan={
-                        type === TransactionType.IN && warehouseType === WarehouseType.COLD ? 4 : 3
+                        type === TransactionType.IMPORT && warehouseType === WarehouseType.COLD ? 4 : 3
                       }
                       className="py-2 px-3 text-right font-medium"
                     >

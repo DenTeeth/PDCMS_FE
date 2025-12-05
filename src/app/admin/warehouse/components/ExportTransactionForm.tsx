@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -67,14 +67,12 @@ const exportFormSchema = z.object({
     },
     { message: 'Ngày xuất không được là tương lai' }
   ),
-  exportType: z.enum(['USAGE', 'DISPOSAL', 'RETURN'], {
-    required_error: 'Vui lòng chọn loại phiếu xuất',
-  }),
+  exportType: z.enum(['USAGE', 'DISPOSAL', 'RETURN'] as [string, ...string[]]),
   referenceCode: z.string().max(100, 'Mã tham chiếu không được vượt quá 100 ký tự').optional().or(z.literal('')),
   departmentName: z.string().max(200, 'Tên phòng ban không được vượt quá 200 ký tự').optional().or(z.literal('')),
   requestedBy: z.string().max(200, 'Người yêu cầu không được vượt quá 200 ký tự').optional().or(z.literal('')),
   notes: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự').optional().or(z.literal('')),
-  allowExpired: z.boolean().optional().default(false),
+  allowExpired: z.boolean().default(false),
   items: z.array(exportItemSchema).min(1, 'Phải có ít nhất 1 vật tư'),
 });
 
@@ -101,8 +99,8 @@ export default function ExportTransactionForm({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<ExportFormData>({
-    resolver: zodResolver(exportFormSchema),
+  } = useForm({
+    resolver: zodResolver(exportFormSchema) as any,
     defaultValues: {
       transactionDate: new Date().toISOString().split('T')[0],
       exportType: 'USAGE',
@@ -232,10 +230,10 @@ export default function ExportTransactionForm({
     setSearchQueries({});
   };
 
-  const onSubmit = (data: ExportFormData) => {
+  const onSubmit: SubmitHandler<ExportFormData> = (data) => {
     const payload: CreateExportTransactionDto = {
       transactionDate: `${data.transactionDate}T00:00:00`,
-      exportType: data.exportType,
+      exportType: data.exportType as ExportType,
       referenceCode: data.referenceCode?.trim() || undefined,
       departmentName: data.departmentName?.trim() || undefined,
       requestedBy: data.requestedBy?.trim() || undefined,
@@ -289,7 +287,7 @@ export default function ExportTransactionForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
           {/* Header Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border">
             <div>

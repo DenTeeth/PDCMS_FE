@@ -43,13 +43,13 @@ export default function PatientTreatmentPlanTrackingPage() {
     const loadPlans = async () => {
       try {
         setLoading(true);
-        const response = await TreatmentPlanService.getTreatmentPlans({
+        const response = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
           page: 0,
           size: 100,
         });
         setPlans(response.content || []);
       } catch (error: any) {
-        if (is403Error(error)) {
+        if (error.response?.status === 403) {
           return; // UnauthorizedMessage will be shown
         }
         handleError(error);
@@ -66,7 +66,16 @@ export default function PatientTreatmentPlanTrackingPage() {
   const handlePlanSelect = async (planCode: string) => {
     try {
       setLoadingDetail(true);
-      const plan = await TreatmentPlanService.getTreatmentPlanDetail(planCode);
+      // Get patientCode from plan or extract from planCode
+      // For patient context, we can use getAllTreatmentPlansWithRBAC which filters by user
+      // But for detail, we need patientCode - try to get from selected plan or use a workaround
+      const patientCode = selectedPlan?.patient?.patientCode;
+      if (!patientCode) {
+        // If we don't have patientCode, we can't load detail - this is a limitation
+        toast.error('Không thể tải chi tiết - thiếu thông tin bệnh nhân');
+        return;
+      }
+      const plan = await TreatmentPlanService.getTreatmentPlanDetail(patientCode, planCode);
       setSelectedPlan(plan);
       setActiveView('timeline');
     } catch (error: any) {

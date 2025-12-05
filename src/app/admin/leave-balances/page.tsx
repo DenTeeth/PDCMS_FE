@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { employeeService } from '@/services/employeeService';
@@ -411,10 +412,10 @@ export default function AdminLeaveBalancesPage() {
                 </p>
               )}
               <div className="mt-2">
-                <Select
+                <CustomSelect
                   label=""
                   value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value) => setSelectedEmployeeId(Number(value))}
+                  onChange={(value: string) => setSelectedEmployeeId(Number(value))}
                   options={[
                     { value: '', label: '-- Chọn nhân viên --' },
                     ...filteredEmployees.map(emp => ({
@@ -631,10 +632,10 @@ export default function AdminLeaveBalancesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Select
+                  <CustomSelect
                     label="Loại Phép *"
                     value={adjustFormData.timeOffTypeId}
-                    onChange={(value) => {
+                    onChange={(value: string) => {
                       setAdjustFormData({ ...adjustFormData, timeOffTypeId: value });
                       const newErrors = { ...adjustFormErrors };
                       delete newErrors.timeOffTypeId;
@@ -803,9 +804,9 @@ export default function AdminLeaveBalancesPage() {
 
               <div>
                 <Label htmlFor="reset-type">Loại Phép <span className="text-red-500">*</span></Label>
-                <Select
+                <CustomSelect
                   value={annualResetFormData.applyToTypeId}
-                  onChange={(value) => {
+                  onChange={(value: string) => {
                     setAnnualResetFormData({ ...annualResetFormData, applyToTypeId: value });
                     const newErrors = { ...annualResetFormErrors };
                     delete newErrors.applyToTypeId;
