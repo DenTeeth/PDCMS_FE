@@ -408,9 +408,9 @@ export default function AdminRenewalsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quản Lý Renewal Requests</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý yêu cầu gia hạn</h1>
             <p className="text-gray-600 mt-1">
-              Quản lý và finalize các yêu cầu gia hạn lịch làm việc
+              Quản lý và hoàn tất các yêu cầu gia hạn lịch làm việc
             </p>
           </div>
           <Button

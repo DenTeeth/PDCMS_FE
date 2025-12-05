@@ -236,8 +236,8 @@ export default function PatientDetailPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Patient Details</h1>
-            <p className="text-gray-600">View detailed information about patient</p>
+            <h1 className="text-3xl font-bold text-gray-900">Chi tiết bệnh nhân</h1>
+            <p className="text-gray-600">Xem thông tin chi tiết về bệnh nhân</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -311,33 +311,33 @@ export default function PatientDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">First Name</Label>
+                <Label className="text-gray-600">Tên</Label>
                 <p className="font-medium">{patient.firstName}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Last Name</Label>
+                <Label className="text-gray-600">Họ</Label>
                 <p className="font-medium">{patient.lastName}</p>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Full Name</Label>
+              <Label className="text-gray-600">Họ và tên</Label>
               <p className="font-medium">{patient.fullName}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">Gender</Label>
+                <Label className="text-gray-600">Giới tính</Label>
                 <p className="font-medium">{getGenderLabel(patient.gender)}</p>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Calendar className="h-4 w-4" />
                 <div>
-                  <Label className="text-gray-600">Date of Birth</Label>
+                  <Label className="text-gray-600">Ngày sinh</Label>
                   <p className="font-medium">{formatDate(patient.dateOfBirth)}</p>
                 </div>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Status</Label>
+              <Label className="text-gray-600">Trạng thái</Label>
               <Badge
                 variant={patient.isActive ? 'default' : 'secondary'}
                 className={
@@ -357,14 +357,14 @@ export default function PatientDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Phone className="h-5 w-5 text-blue-600" />
-              Contact Information
+              Thông tin liên hệ
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-gray-700">
               <Phone className="h-4 w-4" />
               <div className="flex-1">
-                <Label className="text-gray-600">Phone Number</Label>
+                <Label className="text-gray-600">Số điện thoại</Label>
                 <p className="font-medium">{patient.phone || 'N/A'}</p>
               </div>
             </div>
@@ -378,7 +378,7 @@ export default function PatientDetailPage() {
             <div className="flex items-center gap-2 text-gray-700">
               <MapPin className="h-4 w-4" />
               <div className="flex-1">
-                <Label className="text-gray-600">Address</Label>
+                <Label className="text-gray-600">Địa chỉ</Label>
                 <p className="font-medium">{patient.address || 'N/A'}</p>
               </div>
             </div>
@@ -390,20 +390,20 @@ export default function PatientDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-5 w-5 text-red-600" />
-              Medical Information
+              Thông tin y tế
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Medical History</Label>
+              <Label className="text-gray-600">Tiền sử bệnh lý</Label>
               <p className="font-medium text-sm whitespace-pre-wrap">
-                {patient.medicalHistory || 'None'}
+                {patient.medicalHistory || 'Không có'}
               </p>
             </div>
             <div>
-              <Label className="text-gray-600">Allergies</Label>
+              <Label className="text-gray-600">Dị ứng</Label>
               <p className="font-medium text-sm whitespace-pre-wrap">
-                {patient.allergies || 'None'}
+                {patient.allergies || 'Không có'}
               </p>
             </div>
           </CardContent>
@@ -414,25 +414,25 @@ export default function PatientDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-orange-600" />
-              Emergency Contact
+              Liên hệ khẩn cấp
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-gray-700">
               <Users className="h-4 w-4" />
               <div className="flex-1">
-                <Label className="text-gray-600">Contact Name</Label>
+                <Label className="text-gray-600">Tên người liên hệ</Label>
                 <p className="font-medium">
-                  {patient.emergencyContactName || 'Not provided'}
+                  {patient.emergencyContactName || 'Chưa cung cấp'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-gray-700">
               <Phone className="h-4 w-4" />
               <div className="flex-1">
-                <Label className="text-gray-600">Contact Phone</Label>
+                <Label className="text-gray-600">Số điện thoại</Label>
                 <p className="font-medium">
-                  {patient.emergencyContactPhone || 'Not provided'}
+                  {patient.emergencyContactPhone || 'Chưa cung cấp'}
                 </p>
               </div>
             </div>
@@ -527,38 +527,38 @@ export default function PatientDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
-              <CardTitle>Edit Patient - {patient?.patientCode}</CardTitle>
+              <CardTitle>Chỉnh sửa bệnh nhân - {patient?.patientCode}</CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdatePatient} className="space-y-6">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin cơ bản</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Label htmlFor="edit-firstName">Tên</Label>
                       <Input
                         id="edit-firstName"
                         value={editFormData.firstName}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, firstName: e.target.value })
                         }
-                        placeholder="Enter first name"
+                        placeholder="Nhập tên"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Label htmlFor="edit-lastName">Họ</Label>
                       <Input
                         id="edit-lastName"
                         value={editFormData.lastName}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, lastName: e.target.value })
                         }
-                        placeholder="Enter last name"
+                        placeholder="Nhập họ"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-gender">Gender</Label>
+                      <Label htmlFor="edit-gender">Giới tính</Label>
                       <select
                         id="edit-gender"
                         value={editFormData.gender || ''}
@@ -570,14 +570,14 @@ export default function PatientDetailPage() {
                         }
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select gender</option>
-                        <option value="MALE">Male</option>
-                        <option value="FEMALE">Female</option>
-                        <option value="OTHER">Other</option>
+                        <option value="">Chọn giới tính</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                      <Label htmlFor="edit-dateOfBirth">Ngày sinh</Label>
                       <Input
                         id="edit-dateOfBirth"
                         type="date"
@@ -592,7 +592,7 @@ export default function PatientDetailPage() {
 
                 {/* Contact Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin liên hệ</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-email">Email</Label>
@@ -603,29 +603,29 @@ export default function PatientDetailPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, email: e.target.value })
                         }
-                        placeholder="Enter email"
+                        placeholder="Nhập email"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-phone">Phone Number</Label>
+                      <Label htmlFor="edit-phone">Số điện thoại</Label>
                       <Input
                         id="edit-phone"
                         value={editFormData.phone}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, phone: e.target.value })
                         }
-                        placeholder="Enter phone number"
+                        placeholder="Nhập số điện thoại"
                       />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="edit-address">Address</Label>
+                      <Label htmlFor="edit-address">Địa chỉ</Label>
                       <Input
                         id="edit-address"
                         value={editFormData.address}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, address: e.target.value })
                         }
-                        placeholder="Enter address"
+                        placeholder="Nhập địa chỉ"
                       />
                     </div>
                   </div>
@@ -633,30 +633,30 @@ export default function PatientDetailPage() {
 
                 {/* Medical Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Medical Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin y tế</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-medicalHistory">Medical History</Label>
+                      <Label htmlFor="edit-medicalHistory">Tiền sử bệnh lý</Label>
                       <textarea
                         id="edit-medicalHistory"
                         value={editFormData.medicalHistory}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, medicalHistory: e.target.value })
                         }
-                        placeholder="Enter medical history"
+                        placeholder="Nhập tiền sử bệnh lý"
                         rows={3}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-allergies">Allergies</Label>
+                      <Label htmlFor="edit-allergies">Dị ứng</Label>
                       <textarea
                         id="edit-allergies"
                         value={editFormData.allergies}
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, allergies: e.target.value })
                         }
-                        placeholder="Enter allergies"
+                        placeholder="Nhập dị ứng (nếu có)"
                         rows={2}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -666,10 +666,10 @@ export default function PatientDetailPage() {
 
                 {/* Emergency Contact */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Emergency Contact</h3>
+                  <h3 className="text-lg font-semibold mb-3">Liên hệ khẩn cấp</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-emergencyContactName">Contact Name</Label>
+                      <Label htmlFor="edit-emergencyContactName">Tên người liên hệ</Label>
                       <Input
                         id="edit-emergencyContactName"
                         value={editFormData.emergencyContactName}
@@ -679,11 +679,11 @@ export default function PatientDetailPage() {
                             emergencyContactName: e.target.value,
                           })
                         }
-                        placeholder="Enter emergency contact name"
+                        placeholder="Nhập tên người liên hệ khẩn cấp"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-emergencyContactPhone">Contact Phone</Label>
+                      <Label htmlFor="edit-emergencyContactPhone">Số điện thoại</Label>
                       <Input
                         id="edit-emergencyContactPhone"
                         value={editFormData.emergencyContactPhone}
@@ -693,7 +693,7 @@ export default function PatientDetailPage() {
                             emergencyContactPhone: e.target.value,
                           })
                         }
-                        placeholder="Enter emergency contact phone"
+                        placeholder="Nhập số điện thoại khẩn cấp"
                       />
                     </div>
                   </div>
@@ -701,9 +701,9 @@ export default function PatientDetailPage() {
 
                 {/* Status */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Status</h3>
+                  <h3 className="text-lg font-semibold mb-3">Trạng thái</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-isActive">Active Status</Label>
+                    <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
                     <select
                       id="edit-isActive"
                       value={editFormData.isActive ? 'true' : 'false'}
@@ -712,8 +712,8 @@ export default function PatientDetailPage() {
                       }
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">Hoạt động</option>
+                      <option value="false">Không hoạt động</option>
                     </select>
                   </div>
                 </div>

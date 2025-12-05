@@ -35,7 +35,7 @@ export default function SpecializationsPage() {
             console.error(' Error data:', error.response?.data);
 
             if (error.response?.status === 401) {
-                toast.error('Please login first to view specializations');
+                toast.error('Vui lòng đăng nhập để xem chuyên khoa');
             } else {
                 toast.error(error.response?.data?.message || 'Failed to fetch specializations');
             }
@@ -136,7 +136,7 @@ export default function SpecializationsPage() {
                     {(!specializations || specializations.length === 0) && (
                         <div className="text-center py-12 text-gray-500">
                             <p className="text-lg font-medium">No specializations found</p>
-                            <p className="text-sm mt-1">No data available</p>
+                            <p className="text-sm mt-1">Không có dữ liệu</p>
                         </div>
                     )}
                 </CardContent>

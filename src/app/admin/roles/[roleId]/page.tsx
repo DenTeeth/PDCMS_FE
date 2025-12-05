@@ -177,7 +177,7 @@ export default function RoleDetailPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Role Details</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Chi tiết vai trò</h1>
             <p className="text-gray-600">View detailed information about role</p>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function RoleDetailPage() {
                   <div className="flex items-center gap-3">
                     <Lock className="h-8 w-8 text-purple-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Permissions</p>
+                      <p className="text-sm font-medium text-gray-600">Tổng số quyền</p>
                       <p className="text-2xl font-bold text-purple-600">{permissions.length}</p>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ export default function RoleDetailPage() {
                   </Label>
                   <textarea
                     id="editDescription"
-                    placeholder="Describe the role's purpose and responsibilities..."
+                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
                     value={editFormData.description}
                     onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                     disabled={updating}

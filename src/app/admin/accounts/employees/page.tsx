@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
@@ -364,8 +364,8 @@ export default function EmployeesPage() {
         {/* ==================== HEADER ==================== */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-            <p className="text-gray-600">View and manage employee information</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý nhân viên</h1>
+            <p className="text-gray-600">Xem và quản lý thông tin nhân viên</p>
           </div>
           <Button
             onClick={() => setShowCreateModal(true)}
@@ -418,7 +418,7 @@ export default function EmployeesPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              <Label htmlFor="search">Search</Label>
+              <Label htmlFor="search">Tìm kiếm</Label>
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -476,7 +476,7 @@ export default function EmployeesPage() {
                       }}
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="all">All Roles</option>
+                      <option value="all">Tất cả vai trò</option>
                       {roles.map((role) => (
                         <option key={role.roleId} value={role.roleId}>
                           {role.roleName}
@@ -486,7 +486,7 @@ export default function EmployeesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Status</Label>
+                    <Label>Trạng thái</Label>
                     <select
                       value={filterStatus}
                       onChange={(e) => {
@@ -495,9 +495,9 @@ export default function EmployeesPage() {
                       }}
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="all">Tất cả trạng thái</option>
+                      <option value="active">Hoạt động</option>
+                      <option value="inactive">Không hoạt động</option>
                     </select>
                   </div>
 
@@ -559,12 +559,12 @@ export default function EmployeesPage() {
                             : 'bg-gray-100 text-gray-800'
                           }`}>
                           {employee.employeeType === EmploymentType.FULL_TIME 
-                            ? 'Full Time' 
+                            ? 'Toàn thời gian' 
                             : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                            ? 'Part Time - Fixed'
+                            ? 'Bán thời gian - Cố định'
                             : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                            ? 'Part Time - Flex'
-                            : 'Part Time'}
+                            ? 'Bán thời gian - Linh hoạt'
+                            : 'Bán thời gian'}
                         </span>
                       </p>
                     </div>
@@ -686,12 +686,12 @@ export default function EmployeesPage() {
                               : 'bg-gray-100 text-gray-800'
                             }`}>
                             {employee.employeeType === EmploymentType.FULL_TIME 
-                              ? 'Full Time' 
+                              ? 'Toàn thời gian' 
                               : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                              ? 'Part Time - Fixed'
+                              ? 'Bán thời gian - Cố định'
                               : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                              ? 'Part Time - Flex'
-                              : 'Part Time'}
+                              ? 'Bán thời gian - Linh hoạt'
+                              : 'Bán thời gian'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -841,7 +841,7 @@ export default function EmployeesPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-600" />
-                  Create New Employee
+                  Tạo nhân viên mới
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -849,7 +849,7 @@ export default function EmployeesPage() {
                   {/* Role Selection - Always shown first */}
                   <div>
                     <Label htmlFor="roleId">
-                      Role <span className="text-red-500">*</span>
+                      Vai trò <span className="text-red-500">*</span>
                     </Label>
                     <select
                       id="roleId"
@@ -859,7 +859,7 @@ export default function EmployeesPage() {
                       required
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Select a role</option>
+                      <option value="">Chọn một vai trò</option>
                       {roles.map((role) => (
                         <option key={role.roleId} value={role.roleId}>
                           {role.roleName}
@@ -871,7 +871,7 @@ export default function EmployeesPage() {
                   {/* Employment Type Selection */}
                   <div>
                     <Label htmlFor="employeeType">
-                      Employment Type <span className="text-red-500">*</span>
+                      Loại hình lao động <span className="text-red-500">*</span>
                     </Label>
                     <select
                       id="employeeType"
@@ -881,14 +881,14 @@ export default function EmployeesPage() {
                       required
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
-                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
+                      <option value={EmploymentType.FULL_TIME}>Toàn thời gian</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Bán thời gian - Cố định</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Bán thời gian - Linh hoạt</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      <strong>Full Time:</strong> Làm việc toàn thời gian, Admin gán lịch cố định<br />
-                      <strong>Part Time - Fixed:</strong> Part-time với lịch cố định (Admin gán)<br />
-                      <strong>Part Time - Flex:</strong> Part-time linh hoạt (Tự đăng ký ca từ các slot có sẵn)
+                      <strong>Toàn thời gian:</strong> Làm việc toàn thời gian, Admin gán lịch cố định<br />
+                      <strong>Bán thời gian - Cố định:</strong> Part-time với lịch cố định (Admin gán)<br />
+                      <strong>Bán thời gian - Linh hoạt:</strong> Part-time linh hoạt (Tự đăng ký ca từ các slot có sẵn)
                     </p>
                   </div>
 
@@ -1028,17 +1028,17 @@ export default function EmployeesPage() {
                           ) : specializations.length === 0 ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                               <p className="text-sm text-yellow-800">
-                                 <strong>Note:</strong> No active specializations available.
+                                 <strong>Lưu ý:</strong> Không có chuyên khoa đang hoạt động.
                               </p>
                             </div>
                           ) : (
                             <div className="space-y-3">
                               <div>
                                 <Label>
-                                  Select Specializations <span className="text-red-500">*</span>
+                                  Chọn chuyên khoa <span className="text-red-500">*</span>
                                 </Label>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Choose one or more specializations for this employee
+                                  Chọn một hoặc nhiều chuyên khoa cho nhân viên này
                                 </p>
                               </div>
 
@@ -1178,7 +1178,7 @@ export default function EmployeesPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
-                <CardTitle>Edit Employee</CardTitle>
+                <CardTitle>Chỉnh sửa nhân viên</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleUpdateEmployee} className="space-y-6">
@@ -1186,11 +1186,11 @@ export default function EmployeesPage() {
                   <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">Employee Code</p>
+                        <p className="text-sm text-muted-foreground">Mã nhân viên</p>
                         <p className="font-semibold">{editingEmployee.employeeCode}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Current Role</p>
+                        <p className="text-sm text-muted-foreground">Vai trò hiện tại</p>
                         <Badge>{editingEmployee.roleName}</Badge>
                       </div>
                     </div>
@@ -1198,25 +1198,30 @@ export default function EmployeesPage() {
 
                   {/* Role Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="edit-role">Change Role</Label>
+                    <Label htmlFor="edit-role">Thay đổi vai trò</Label>
                     <Select
-                      options={roles.map((role) => ({
-                        value: role.roleId,
-                        label: role.roleName,
-                        description: role.description,
-                      }))}
                       value={editFormData.roleId}
-                      onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
-                      placeholder="Select a role"
-                    />
+                      onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                    >
+                      <SelectTrigger id="edit-role">
+                        <SelectValue placeholder="Chọn một vai trò" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.roleId} value={role.roleId}>
+                            {role.roleName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-sm text-muted-foreground">
-                      Update employee role if needed
+                      Cập nhật vai trò nhân viên nếu cần
                     </p>
                   </div>
 
                   {/* Employment Type */}
                   <div>
-                    <Label htmlFor="editEmployeeType">Employment Type</Label>
+                    <Label htmlFor="editEmployeeType">Loại hình lao động</Label>
                     <select
                       id="editEmployeeType"
                       value={editFormData.employeeType}
@@ -1224,9 +1229,9 @@ export default function EmployeesPage() {
                       disabled={updating}
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value={EmploymentType.FULL_TIME}>Full Time</option>
-                      <option value={EmploymentType.PART_TIME_FIXED}>Part Time - Fixed</option>
-                      <option value={EmploymentType.PART_TIME_FLEX}>Part Time - Flex</option>
+                      <option value={EmploymentType.FULL_TIME}>Toàn thời gian</option>
+                      <option value={EmploymentType.PART_TIME_FIXED}>Bán thời gian - Cố định</option>
+                      <option value={EmploymentType.PART_TIME_FLEX}>Bán thời gian - Linh hoạt</option>
                     </select>
                     <p className="text-sm text-muted-foreground">
                       Update employment type if needed
@@ -1237,7 +1242,7 @@ export default function EmployeesPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* LEFT COLUMN: Personal Information */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Personal Information</h3>
+                      <h3 className="text-lg font-semibold">Thông tin cá nhân</h3>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
@@ -1246,7 +1251,7 @@ export default function EmployeesPage() {
                             id="edit-firstName"
                             value={editFormData.firstName}
                             onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                            placeholder="Enter first name"
+                            placeholder="Nhập tên"
                           />
                         </div>
 
@@ -1256,7 +1261,7 @@ export default function EmployeesPage() {
                             id="edit-lastName"
                             value={editFormData.lastName}
                             onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                            placeholder="Enter last name"
+                            placeholder="Nhập họ"
                           />
                         </div>
                       </div>
@@ -1267,7 +1272,7 @@ export default function EmployeesPage() {
                           id="edit-phone"
                           value={editFormData.phone}
                           onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                          placeholder="Enter phone number"
+                          placeholder="Nhập số điện thoại"
                         />
                       </div>
 
@@ -1287,7 +1292,7 @@ export default function EmployeesPage() {
                           id="edit-address"
                           value={editFormData.address}
                           onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                          placeholder="Enter address"
+                          placeholder="Nhập địa chỉ"
                           rows={3}
                           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -1300,24 +1305,24 @@ export default function EmployeesPage() {
                       return editingRole?.requiresSpecialization === true;
                     })() && (
                       <div className="lg:border-l lg:pl-6">
-                        <h3 className="text-lg font-semibold mb-4">Specializations</h3>
+                        <h3 className="text-lg font-semibold mb-4">Chuyên khoa</h3>
                         {loadingSpecializations ? (
                           <div className="flex items-center gap-2 text-gray-500">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Loading specializations...</span>
+                            <span className="text-sm">Đang tải chuyên khoa...</span>
                           </div>
                         ) : specializations.length === 0 ? (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <p className="text-sm text-yellow-800">
-                               No active specializations available.
+                               Không có chuyên khoa đang hoạt động.
                             </p>
                           </div>
                         ) : (
                           <div className="space-y-3">
                             <div>
-                              <Label>Update Specializations</Label>
+                              <Label>Cập nhật chuyên khoa</Label>
                               <p className="text-xs text-gray-500 mt-1">
-                                Modify employee specializations
+                                Thay đổi chuyên khoa của nhân viên
                               </p>
                             </div>
 

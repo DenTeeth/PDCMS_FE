@@ -5,24 +5,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const pathname = usePathname();
-  let t: any;
-  let locale: string;
-
-  try {
-    t = useTranslations('Navigation');
-    locale = useLocale();
-  } catch (error) {
-    // Fallback if translations fail
-    console.warn('Translation failed, using fallback:', error);
-    t = (key: string) => key;
-    locale = 'vi';
-  }
-
-  const router = useRouter();
+  
+  // Always call hooks unconditionally
+  const t = useTranslations('Navigation');
+  const locale = useLocale();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;

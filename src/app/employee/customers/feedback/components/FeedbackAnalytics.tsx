@@ -46,7 +46,7 @@ export default function FeedbackAnalytics({ data }: FeedbackAnalyticsProps) {
       {/* Sentiment Analysis */}
       <Card>
         <CardHeader>
-          <CardTitle>Sentiment Analysis</CardTitle>
+          <CardTitle>Phân tích cảm xúc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -121,7 +121,7 @@ export default function FeedbackAnalytics({ data }: FeedbackAnalyticsProps) {
       {/* Common Keywords */}
       <Card>
         <CardHeader>
-          <CardTitle>Common Keywords from Reviews</CardTitle>
+          <CardTitle>Từ khóa phổ biến từ đánh giá</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -149,7 +149,7 @@ export default function FeedbackAnalytics({ data }: FeedbackAnalyticsProps) {
               icon={faExclamationTriangle}
               className="text-orange-600"
             />
-            <CardTitle>Areas of Improvement</CardTitle>
+            <CardTitle>Các khu vực cần cải thiện</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -193,7 +193,7 @@ export default function FeedbackAnalytics({ data }: FeedbackAnalyticsProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faRobot} className="text-blue-600" />
-              <CardTitle>AI-Generated Summary</CardTitle>
+              <CardTitle>Tóm tắt do AI tạo ra</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

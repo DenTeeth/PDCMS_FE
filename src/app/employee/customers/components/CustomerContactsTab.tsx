@@ -69,7 +69,7 @@ export default function CustomerContactsTab() {
             {/* Header with New Contact button */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-semibold text-foreground">Customer Contacts</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Liên hệ khách hàng</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                         Manage customer contact records and inquiries
                     </p>
@@ -92,7 +92,7 @@ export default function CustomerContactsTab() {
                     <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search contacts..."
+                        placeholder="Tìm kiếm liên hệ..."
                         className="pl-10"
                     />
                 </div>

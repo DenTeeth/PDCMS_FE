@@ -37,7 +37,7 @@ export function MostUsedServicesChart({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Most Used Services</CardTitle>
+                <CardTitle>Dịch vụ được sử dụng nhiều nhất</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -60,18 +60,18 @@ export function ServiceRevenueChart({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Revenue by Service</CardTitle>
+                <CardTitle>Doanh thu theo dịch vụ</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                         <Pie
-                            data={sortedData}
+                            data={sortedData as any}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ serviceName, revenue }) =>
-                                `${serviceName}: $${revenue.toLocaleString()}`
+                            label={({ serviceName, revenue }: any) =>
+                                `${serviceName}: $${Number(revenue).toLocaleString()}`
                             }
                             outerRadius={80}
                             fill="#8884d8"
@@ -93,7 +93,7 @@ export function ServiceAnalyticsTable({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Service Analytics Details</CardTitle>
+                <CardTitle>Chi tiết phân tích dịch vụ</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">

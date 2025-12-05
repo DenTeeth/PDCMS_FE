@@ -80,7 +80,7 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Dentist Ratings</CardTitle>
+          <CardTitle>Đánh giá nha sĩ</CardTitle>
           <div className="flex flex-wrap gap-2">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
@@ -89,7 +89,7 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <Input
-                placeholder="Search dentist..."
+                placeholder="Tìm kiếm nha sĩ..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"

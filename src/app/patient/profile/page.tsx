@@ -62,8 +62,8 @@ export default function UserProfile() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Profile</h1>
-          <p className="text-muted-foreground">Manage your personal information and preferences</p>
+          <h1 className="text-3xl font-bold">Hồ sơ của tôi</h1>
+          <p className="text-muted-foreground">Quản lý thông tin cá nhân và tùy chọn của bạn</p>
         </div>
         <div className="flex space-x-2">
           {isEditing ? (
@@ -341,7 +341,7 @@ export default function UserProfile() {
           {/* Account Status */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Status</CardTitle>
+              <CardTitle>Trạng thái tài khoản</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">

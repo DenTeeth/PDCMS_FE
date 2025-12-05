@@ -466,7 +466,7 @@ export default function PatientAppointmentDetailPage() {
                   {appointment.createdAt && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Ngày Tạo</label>
-                      <p className="text-base text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
                     </div>
                   )}
                 </div>

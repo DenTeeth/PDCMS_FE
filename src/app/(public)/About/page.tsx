@@ -34,8 +34,8 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <DynamicBreadcrumb />
 
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">About Us</h1>
-          <p className="text-gray-600 mt-2 max-w-2xl">We are a modern dental clinic focused on comfort, precision, and long-term oral health.</p>
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Giới thiệu về chúng tôi</h1>
+          <p className="text-gray-600 mt-2 max-w-2xl">Chúng tôi là một phòng khám nha khoa hiện đại tập trung vào sự thoải mái, chính xác và sức khỏe răng miệng lâu dài.</p>
         </div>
       </section>
 
@@ -53,23 +53,23 @@ export default function AboutPage() {
           >
             <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary ring-1 ring-secondary">
               <FontAwesomeIcon icon={faTooth} className="h-4 w-4" />
-              About DenTeeth
+              Giới thiệu DenTeeth
             </span>
             <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Caring for smiles with modern technology and heart
+              Chăm sóc nụ cười bằng công nghệ hiện đại và trái tim
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-              We combine experienced dentists, advanced equipment, and a patient-first mindset to bring you a calm, confident experience.
+              Chúng tôi kết hợp các nha sĩ giàu kinh nghiệm, thiết bị tiên tiến và tư duy đặt bệnh nhân lên hàng đầu để mang đến cho bạn trải nghiệm yên tâm và tự tin.
             </p>
             <div className="mt-8 inline-flex gap-4">
               <Link href="/" className="inline-flex items-center">
                 <Button className="bg-primary hover:bg-primary/90">
-                  Book an appointment
+                  Đặt lịch hẹn
                   <FontAwesomeIcon icon={faArrowRight} className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/services" className="inline-flex items-center">
-                <Button variant="outline" className="border-primary text-primary hover:bg-accent">Explore services</Button>
+                <Button variant="outline" className="border-primary text-primary hover:bg-accent">Khám phá dịch vụ</Button>
               </Link>
             </div>
           </motion.div>
@@ -121,10 +121,10 @@ export default function AboutPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Our mission</CardTitle>
+                <CardTitle>Sứ mệnh của chúng tôi</CardTitle>
               </CardHeader>
               <CardContent className="text-slate-600">
-                Provide precise, comfortable dental care by blending expertise, empathy, and technology.
+                Cung cấp dịch vụ nha khoa chính xác, thoải mái bằng cách kết hợp chuyên môn, sự đồng cảm và công nghệ.
               </CardContent>
             </Card>
           </motion.div>
@@ -132,23 +132,23 @@ export default function AboutPage() {
           <div className="lg:col-span-2 grid grid-cols-1 gap-6 sm:grid-cols-2">
             {[
               {
-                title: "Patient-first",
-                desc: "Transparent, gentle care at every visit.",
+                title: "Sự thoải mái của bệnh nhân",
+                desc: "Chăm sóc minh bạch, nhẹ nhàng ở mọi lần khám.",
                 icon: faShieldHalved,
               },
               {
-                title: "Experienced team",
-                desc: "Specialists across orthodontics, implants, and more.",
+                title: "Đội ngũ giàu kinh nghiệm",
+                desc: "Chuyên gia về chỉnh nha, cấy ghép và nhiều hơn nữa.",
                 icon: faUsers,
               },
               {
-                title: "Modern tech",
-                desc: "Digital imaging, guided surgery, clean-room hygiene.",
+                title: "Công nghệ hiện đại",
+                desc: "Chụp ảnh kỹ thuật số, phẫu thuật có hướng dẫn, vệ sinh phòng sạch.",
                 icon: faTooth,
               },
               {
-                title: "Quality guaranteed",
-                desc: "Consistent outcomes backed by protocols and audits.",
+                title: "Đảm bảo chất lượng",
+                desc: "Kết quả nhất quán được hỗ trợ bởi quy trình và kiểm toán.",
                 icon: faAward,
               },
             ].map((f, i) => (
@@ -178,15 +178,15 @@ export default function AboutPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Meet our doctors</h2>
-            <p className="text-slate-600">A friendly team dedicated to your smile.</p>
+            <h2 className="text-2xl font-semibold text-slate-900">Gặp gỡ các bác sĩ của chúng tôi</h2>
+            <p className="text-slate-600">Một đội ngũ thân thiện tận tâm với nụ cười của bạn.</p>
           </div>
           <Link href="/services" className="hidden sm:inline-flex">
-            <Button variant="outline">See full team</Button>
+            <Button variant="outline">Xem toàn bộ đội ngũ</Button>
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {["Dr. Nguyen", "Dr. Tran", "Dr. Le"].map((name, i) => (
+          {["BS. Nguyễn", "BS. Trần", "BS. Lê"].map((name, i) => (
             <motion.div
               key={name}
               initial={{ opacity: 0, y: 16 }}
@@ -209,7 +209,7 @@ export default function AboutPage() {
                   </div> */}
                   <div>
                     <p className="font-semibold text-slate-800">{name}</p>
-                    <p className="text-sm text-slate-500">Dentist</p>
+                    <p className="text-sm text-slate-500">Nha sĩ</p>
                   </div>
                 </CardContent>
               </Card>
@@ -225,14 +225,14 @@ export default function AboutPage() {
             <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h3 className="text-xl font-semibold">Ready for a brighter smile?</h3>
+                <h3 className="text-xl font-semibold">Sẵn sàng cho một nụ cười rạng rỡ hơn?</h3>
                 <p className="text-primary-foreground/80">
-                  Book an appointment today and experience the best in dental care.
+                  Đặt lịch hẹn hôm nay và trải nghiệm dịch vụ nha khoa tốt nhất.
                 </p>
               </div>
               <Link href="/">
                 <Button variant="secondary" className="text-primary">
-                  Book now
+                  Đặt lịch ngay
                 </Button>
               </Link>
             </div>

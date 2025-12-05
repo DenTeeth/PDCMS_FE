@@ -537,10 +537,10 @@ export default function RegistrationsPage() {
                             <th className="text-left p-3 font-medium">Slot ID</th>
                             <th className="text-left p-3 font-medium">Work Shift</th>
                             <th className="text-left p-3 font-medium">Day</th>
-                            <th className="text-left p-3 font-medium">Quota</th>
-                            <th className="text-left p-3 font-medium">Registered</th>
-                            <th className="text-left p-3 font-medium">Status</th>
-                            <th className="text-left p-3 font-medium">Actions</th>
+                            <th className="text-left p-3 font-medium">Hạn mức</th>
+                            <th className="text-left p-3 font-medium">Đã đăng ký</th>
+                            <th className="text-left p-3 font-medium">Trạng thái</th>
+                            <th className="text-left p-3 font-medium">Hành động</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -582,7 +582,7 @@ export default function RegistrationsPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSlotDetailClick(slot)}
-                                  title="View Slot Details"
+                                  title="Xem chi tiết slot"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -688,10 +688,10 @@ export default function RegistrationsPage() {
                             <th className="text-left p-3 font-medium">ID</th>
                             <th className="text-left p-3 font-medium">Employee</th>
                             <th className="text-left p-3 font-medium">Work Shift</th>
-                            <th className="text-left p-3 font-medium">Days</th>
-                            <th className="text-left p-3 font-medium">Effective Period</th>
-                            <th className="text-left p-3 font-medium">Status</th>
-                            <th className="text-left p-3 font-medium">Actions</th>
+                            <th className="text-left p-3 font-medium">Ngày</th>
+                            <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
+                            <th className="text-left p-3 font-medium">Trạng thái</th>
+                            <th className="text-left p-3 font-medium">Hành động</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -743,7 +743,7 @@ export default function RegistrationsPage() {
                                       setFixedDetailsRegistration(registration);
                                       setShowFixedDetailsModal(true);
                                     }}
-                                    title="View Details"
+                                    title="Xem chi tiết"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -813,11 +813,11 @@ export default function RegistrationsPage() {
                           <Input value={getDayOfWeekLabel(slotDetail.dayOfWeek as DayOfWeek)} disabled />
                         </div>
                         <div>
-                          <Label>Status</Label>
-                          <Input value={slotDetail.isActive ? 'Active' : 'Inactive'} disabled />
+                          <Label>Trạng thái</Label>
+                          <Input value={slotDetail.isActive ? 'Đang hoạt động' : 'Không hoạt động'} disabled />
                         </div>
                         <div>
-                          <Label>Quota</Label>
+                          <Label>Hạn mức</Label>
                           <Input value={slotDetail.quota} disabled />
                         </div>
                         <div>
@@ -849,10 +849,10 @@ export default function RegistrationsPage() {
                           <table className="w-full border-collapse">
                             <thead>
                               <tr className="border-b">
-                                <th className="text-left p-3 font-medium">Employee</th>
-                                <th className="text-left p-3 font-medium">Employee Code</th>
-                                <th className="text-left p-3 font-medium">Effective From</th>
-                                <th className="text-left p-3 font-medium">Effective To</th>
+                                <th className="text-left p-3 font-medium">Nhân viên</th>
+                                <th className="text-left p-3 font-medium">Mã nhân viên</th>
+                                <th className="text-left p-3 font-medium">Hiệu lực từ</th>
+                                <th className="text-left p-3 font-medium">Hiệu lực đến</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1193,8 +1193,8 @@ export default function RegistrationsPage() {
                   </div>
                 </div>
                 <div>
-                  <Label>Status</Label>
-                  <Input value={fixedDetailsRegistration.isActive ? 'Active' : 'Inactive'} disabled />
+                  <Label>Trạng thái</Label>
+                  <Input value={fixedDetailsRegistration.isActive ? 'Đang hoạt động' : 'Không hoạt động'} disabled />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">

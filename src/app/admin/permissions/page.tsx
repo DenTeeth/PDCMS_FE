@@ -83,7 +83,7 @@ export default function PermissionsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Key className="h-8 w-8 text-blue-600" />
-              Permission Management
+              Quản lý quyền
             </h1>
             <p className="text-gray-500 mt-1">
               Manage system permissions and their role associations
@@ -102,7 +102,7 @@ export default function PermissionsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search permissions..."
+                  placeholder="Tìm kiếm quyền..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
