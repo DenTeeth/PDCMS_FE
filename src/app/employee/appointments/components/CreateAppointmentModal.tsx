@@ -222,8 +222,8 @@ export default function CreateAppointmentModal({
                 return;
             }
 
-            // Create appointment
-            await appointmentService.createAppointment(data);
+            // Create appointment using legacy format
+            await appointmentService.createAppointmentLegacy(data);
 
             toast.success('Appointment Created', {
                 description: 'The appointment has been successfully scheduled',

@@ -84,10 +84,19 @@ export default function AdminEmployeeShiftsPage() {
         sort: 'workDate,asc'
       };
 
-      const response = await EmployeeShiftService.getEmployeeShifts(params);
-      setShifts(response.content);
-      setTotalPages(Math.ceil(response.totalElements / 20));
-      setTotalElements(response.totalElements);
+      const shiftsArray = await EmployeeShiftService.getShifts({
+        start_date: params.startDate,
+        end_date: params.endDate,
+        employee_id: params.employeeId,
+        status: params.status,
+        page: params.page,
+        size: params.size,
+        sort: params.sort
+      });
+      setShifts(shiftsArray);
+      // Note: getShifts doesn't return pagination info, so we'll use array length
+      setTotalPages(Math.ceil(shiftsArray.length / 20));
+      setTotalElements(shiftsArray.length);
     } catch (error) {
       console.error('Error loading employee shifts:', error);
     } finally {
@@ -130,15 +139,15 @@ export default function AdminEmployeeShiftsPage() {
   // Get status badge color
   const getStatusBadgeColor = (status: ShiftStatus) => {
     switch (status) {
-      case 'SCHEDULED':
+      case ShiftStatus.SCHEDULED:
         return 'bg-blue-100 text-blue-800';
-      case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'COMPLETED':
+      case ShiftStatus.COMPLETED:
         return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
+      case ShiftStatus.CANCELLED:
         return 'bg-red-100 text-red-800';
-      case 'NO_SHOW':
+      case ShiftStatus.ON_LEAVE:
+        return 'bg-yellow-100 text-yellow-800';
+      case ShiftStatus.ABSENT:
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -148,13 +157,13 @@ export default function AdminEmployeeShiftsPage() {
   // Get source badge color
   const getSourceBadgeColor = (source: ShiftSource) => {
     switch (source) {
-      case 'BATCH_JOB':
+      case ShiftSource.BATCH_JOB:
         return 'bg-purple-100 text-purple-800';
-      case 'REGISTRATION_JOB':
+      case ShiftSource.REGISTRATION_JOB:
         return 'bg-blue-100 text-blue-800';
-      case 'MANUAL':
+      case ShiftSource.MANUAL_ENTRY:
         return 'bg-orange-100 text-orange-800';
-      case 'OVERTIME':
+      case ShiftSource.OT_APPROVAL:
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -164,15 +173,15 @@ export default function AdminEmployeeShiftsPage() {
   // Get status icon
   const getStatusIcon = (status: ShiftStatus) => {
     switch (status) {
-      case 'SCHEDULED':
+      case ShiftStatus.SCHEDULED:
         return <Clock className="h-4 w-4" />;
-      case 'IN_PROGRESS':
-        return <RotateCcw className="h-4 w-4" />;
-      case 'COMPLETED':
+      case ShiftStatus.COMPLETED:
         return <CheckCircle className="h-4 w-4" />;
-      case 'CANCELLED':
+      case ShiftStatus.CANCELLED:
         return <XCircle className="h-4 w-4" />;
-      case 'NO_SHOW':
+      case ShiftStatus.ON_LEAVE:
+        return <RotateCcw className="h-4 w-4" />;
+      case ShiftStatus.ABSENT:
         return <AlertCircle className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
@@ -182,8 +191,8 @@ export default function AdminEmployeeShiftsPage() {
   // Filter shifts based on search
   const filteredShifts = shifts.filter(shift => {
     const matchesSearch = searchTerm === '' ||
-      shift.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shift.workShift.shiftName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.employee?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.workShift?.shiftName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shift.notes?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesSearch;
@@ -334,18 +343,18 @@ export default function AdminEmployeeShiftsPage() {
             ) : (
               <div className="space-y-4">{filteredShifts.map((shift) => (
                 <div
-                  key={shift.shiftId}
+                  key={shift.employeeShiftId}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {shift.employeeName}
+                          {shift.employee?.fullName || 'N/A'}
                         </h3>
                         <span className="text-gray-500">-</span>
                         <span className="text-lg font-medium text-gray-700">
-                          {shift.workShift.shiftName}
+                          {shift.workShift?.shiftName || 'N/A'}
                         </span>
                         <Badge className={getStatusBadgeColor(shift.status)}>
                           <div className="flex items-center space-x-1">
@@ -353,8 +362,8 @@ export default function AdminEmployeeShiftsPage() {
                             <span>{shift.status}</span>
                           </div>
                         </Badge>
-                        <Badge className={getSourceBadgeColor(shift.source)}>
-                          {shift.source}
+                        <Badge className={getSourceBadgeColor(shift.shiftType)}>
+                          {shift.shiftType}
                         </Badge>
                       </div>
 
@@ -370,21 +379,14 @@ export default function AdminEmployeeShiftsPage() {
                         <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4" />
                           <span>
-                            {formatTime(shift.workShift.startTime)} - {formatTime(shift.workShift.endTime)}
+                            {formatTime(shift.workShift?.startTime)} - {formatTime(shift.workShift?.endTime)}
                           </span>
                         </div>
 
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">ID:</span>
-                          <span className="font-mono text-xs">{shift.shiftId}</span>
+                          <span className="font-mono text-xs">{shift.employeeShiftId}</span>
                         </div>
-
-                        {shift.registrationId && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Đăng ký:</span>
-                            <span className="font-mono text-xs">{shift.registrationId}</span>
-                          </div>
-                        )}
 
                         {shift.notes && (
                           <div className="md:col-span-4">
@@ -400,7 +402,7 @@ export default function AdminEmployeeShiftsPage() {
                         size="sm"
                         onClick={() => {
                           // TODO: Implement view details
-                          console.log('View shift details:', shift.shiftId);
+                          console.log('View shift details:', shift.employeeShiftId);
                         }}
                       >
                         <Eye className="h-4 w-4" />

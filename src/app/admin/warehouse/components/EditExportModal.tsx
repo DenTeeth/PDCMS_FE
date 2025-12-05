@@ -54,7 +54,7 @@ export default function EditExportModal({
       // Map transaction items to edit items
       setItems(transaction.items.map(item => ({
         batch_id: item.transactionItemId || 0, // Assuming batch_id is stored somewhere
-        lot_number: item.lotNumber,
+        lot_number: item.lotNumber || '',
         item_name: item.itemName,
         quantity: Math.abs(item.quantityChange), // Export is negative
         max_quantity: Math.abs(item.quantityChange), // Original export quantity

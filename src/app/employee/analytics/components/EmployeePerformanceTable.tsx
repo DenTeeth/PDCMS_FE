@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faSort,
@@ -121,13 +122,13 @@ export default function EmployeePerformanceTable({
                             </div>
                         </div>
                         <div className="w-full md:w-48">
-                            <Select
+                            <CustomSelect
                                 options={[
                                     { value: 'all', label: 'All Roles' },
                                     ...roles.map((role) => ({ value: role, label: role })),
                                 ]}
                                 value={roleFilter}
-                                onChange={setRoleFilter}
+                                onChange={(value: string) => setRoleFilter(value)}
                                 placeholder="Filter by role"
                             />
                         </div>

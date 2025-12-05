@@ -111,7 +111,7 @@ export default function SuppliersPage() {
   const handleSaveSupplier = async (data: CreateSupplierRequest | UpdateSupplierRequest) => {
     if (editingSupplier) {
       updateMutation.mutate(
-        { id: editingSupplier.supplierId, data },
+        { id: editingSupplier.supplierId, data: data as UpdateSupplierRequest },
         { onSuccess: () => handleCloseFormModal() }
       );
     } else {

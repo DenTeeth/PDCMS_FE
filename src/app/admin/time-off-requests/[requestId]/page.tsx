@@ -167,7 +167,7 @@ export default function AdminTimeOffDetailPage() {
     const canCancelRequest = () => {
         if (!request) return false;
         if (canCancelPending) return true;
-        if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+        if (canCancelOwn && String(request.employee.employeeId) === user?.employeeId) return true;
         return false;
     };
 
@@ -228,7 +228,7 @@ export default function AdminTimeOffDetailPage() {
                             <Label className="text-gray-600">Nhân viên</Label>
                             <div className="flex items-center gap-2 mt-1">
                                 <FontAwesomeIcon icon={faUser} className="text-gray-400" />
-                                <p className="font-medium">{request.employeeName}</p>
+                                <p className="font-medium">{request.employee.fullName}</p>
                             </div>
                         </div>
 
@@ -250,8 +250,8 @@ export default function AdminTimeOffDetailPage() {
                                         {' - '}
                                         {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
                                     </p>
-                                    {request.slotName && (
-                                        <p className="text-sm text-gray-500">{request.slotName}</p>
+                                    {request.workShiftName && (
+                                        <p className="text-sm text-gray-500">{request.workShiftName}</p>
                                     )}
                                 </div>
                             </div>
@@ -286,7 +286,7 @@ export default function AdminTimeOffDetailPage() {
                         <div className="flex items-center gap-2 mt-1">
                             <FontAwesomeIcon icon={faUser} className="text-purple-600" />
                             <div>
-                                <p className="font-medium">{request.requestedByName}</p>
+                                <p className="font-medium">{request.requestedBy.fullName}</p>
                                 <p className="text-xs text-gray-500">
                                     {format(new Date(request.requestedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                                 </p>
@@ -300,7 +300,7 @@ export default function AdminTimeOffDetailPage() {
                             <div className="flex items-center gap-2 mt-1">
                                 <FontAwesomeIcon icon={faCheck} className="text-green-600" />
                                 <div>
-                                    <p className="font-medium">{request.approvedByName}</p>
+                                    <p className="font-medium">{request.approvedBy?.fullName || 'N/A'}</p>
                                     <p className="text-xs text-gray-500">
                                         {format(new Date(request.approvedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                                     </p>
@@ -383,7 +383,7 @@ export default function AdminTimeOffDetailPage() {
                             <div className="space-y-4">
                                 <p className="text-sm text-gray-600">
                                     Bạn có chắc chắn muốn duyệt yêu cầu nghỉ phép của{' '}
-                                    <strong>{request.employeeName}</strong> từ ngày{' '}
+                                    <strong>{request.employee.fullName}</strong> từ ngày{' '}
                                     <strong>{format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })}</strong>{' '}
                                     đến ngày{' '}
                                     <strong>{format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}</strong>?
