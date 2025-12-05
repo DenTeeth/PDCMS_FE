@@ -178,10 +178,10 @@ export const inventoryService = {
       const response = await api.get<ItemMasterV1[]>('/warehouse/items', {
         params: filter,
       });
-      console.log('✅ Get all items:', response.data);
+      console.log(' Get all items:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Get all items error:', error.response?.data || error.message);
+      console.error(' Get all items error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -216,7 +216,7 @@ export const inventoryService = {
         updatedAt: data.updatedAt ?? data.updated_at,
       };
       
-      console.log('✅ Get item detail:', mapped);
+      console.log(' Get item detail:', mapped);
       return mapped;
     } catch (error: any) {
       const errorMessage = 
@@ -229,7 +229,7 @@ export const inventoryService = {
       const statusCode = error.response?.status || error.status;
       const requestUrl = error.config?.url || error.url || `/inventory/${id}`;
       
-      console.error('❌ Get item detail error:', {
+      console.error(' Get item detail error:', {
         message: errorMessage,
         status: statusCode,
         statusText: error.response?.statusText || error.statusText,
@@ -375,11 +375,11 @@ export const inventoryService = {
         },
       };
       
-      console.error('❌ Get inventory summary error:', errorLog);
+      console.error(' Get inventory summary error:', errorLog);
       
       // Also log to console in a format BE team can easily read
       if (statusCode === 500) {
-        console.error('🔴 BE 500 ERROR DETAILS:', {
+        console.error('� BE 500 ERROR DETAILS:', {
           endpoint: '/api/v1/inventory/summary',
           requestParams,
           errorResponse: errorDetails,
@@ -420,7 +420,7 @@ export const inventoryService = {
         normalStorageItems: undefined, // Not in WarehouseStatsResponse
       };
       
-      console.log('✅ Get inventory stats:', mapped);
+      console.log(' Get inventory stats:', mapped);
       return mapped;
     } catch (error: any) {
       // Better error logging with fallbacks
@@ -434,7 +434,7 @@ export const inventoryService = {
       const statusCode = error.response?.status || error.status;
       const requestUrl = error.config?.url || error.url || '/inventory/stats';
       
-      console.error('❌ Get inventory stats error:', {
+      console.error(' Get inventory stats error:', {
         message: errorMessage,
         status: statusCode,
         statusText: error.response?.statusText || error.statusText,
@@ -472,10 +472,10 @@ export const inventoryService = {
         warehouseType: cat.warehouseType ?? cat.warehouse_type,
         itemCount: cat.itemCount ?? cat.item_count,
       }));
-      console.log('✅ Get categories:', mapped);
+      console.log(' Get categories:', mapped);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Get categories error:', error.response?.data || error.message);
+      console.error(' Get categories error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -508,7 +508,7 @@ export const inventoryService = {
         isExpired: batch.isExpired ?? batch.is_expired ?? false,
       })) : [];
       
-      console.log('✅ Get batches (FEFO):', mapped.length, 'batches');
+      console.log(' Get batches (FEFO):', mapped.length, 'batches');
       return mapped;
     } catch (error: any) {
       const errorMessage = 
@@ -521,7 +521,7 @@ export const inventoryService = {
       const statusCode = error.response?.status || error.status;
       const requestUrl = error.config?.url || error.url || `/inventory/batches/${itemMasterId}`;
       
-      console.error('❌ Get batches error:', {
+      console.error(' Get batches error:', {
         message: errorMessage,
         status: statusCode,
         statusText: error.response?.statusText || error.statusText,
@@ -595,10 +595,10 @@ export const inventoryService = {
         })),
       };
 
-      console.log('✅ Get expiring alerts:', mapped);
+      console.log(' Get expiring alerts:', mapped);
       return mapped;
     } catch (error: any) {
-      console.error('❌ Get expiring alerts error:', error.response?.data || error.message);
+      console.error(' Get expiring alerts error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -609,10 +609,10 @@ export const inventoryService = {
   create: async (data: CreateItemMasterRequest): Promise<ItemMasterV1> => {
     try {
       const response = await api.post<ItemMasterV1>('/warehouse/items', data);
-      console.log('✅ Create item:', response.data);
+      console.log(' Create item:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Create item error:', error.response?.data || error.message);
+      console.error(' Create item error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -628,22 +628,22 @@ export const inventoryService = {
    */
   update: async (id: number, data: UpdateItemMasterRequest): Promise<UpdateItemMasterResponse> => {
     // Log request details for BE debugging
-    console.group('🔄 [WAREHOUSE] Update Item Request');
-    console.log('📋 Item ID:', id);
-    console.log('📦 Request Data:', JSON.stringify(data, null, 2));
-    console.log('🔗 Endpoint: PUT /warehouse/items/' + id);
+    console.group(' [WAREHOUSE] Update Item Request');
+    console.log(' Item ID:', id);
+    console.log('� Request Data:', JSON.stringify(data, null, 2));
+    console.log('� Endpoint: PUT /warehouse/items/' + id);
     console.log('⏰ Timestamp:', new Date().toISOString());
     
     try {
       const response = await api.put<UpdateItemMasterResponse>(`/warehouse/items/${id}`, data);
       
-      console.log('✅ [WAREHOUSE] Update Success');
-      console.log('📊 Response Data:', JSON.stringify(response.data, null, 2));
+      console.log(' [WAREHOUSE] Update Success');
+      console.log('� Response Data:', JSON.stringify(response.data, null, 2));
       
       // Show warning if Safety Lock was applied
       if (response.data.safetyLockApplied) {
-        console.warn('⚠️ [WAREHOUSE] Safety Lock was applied - some changes may have been blocked due to existing inventory');
-        console.warn('📌 Safety Lock Details:', {
+        console.warn(' [WAREHOUSE] Safety Lock was applied - some changes may have been blocked due to existing inventory');
+        console.warn('� Safety Lock Details:', {
           itemId: id,
           itemCode: data.itemCode || 'N/A',
           safetyLockApplied: response.data.safetyLockApplied,
@@ -655,32 +655,32 @@ export const inventoryService = {
       return response.data;
     } catch (error: any) {
       // Detailed error logging for BE debugging
-      console.error('❌ [WAREHOUSE] Update Item Error');
-      console.error('📋 Item ID:', id);
-      console.error('📦 Request Data:', JSON.stringify(data, null, 2));
-      console.error('🔗 Endpoint: PUT /warehouse/items/' + id);
+      console.error(' [WAREHOUSE] Update Item Error');
+      console.error(' Item ID:', id);
+      console.error('� Request Data:', JSON.stringify(data, null, 2));
+      console.error('� Endpoint: PUT /warehouse/items/' + id);
       console.error('⏰ Timestamp:', new Date().toISOString());
       
       // Log full error details
       if (error.response) {
-        console.error('📡 Response Status:', error.response.status);
-        console.error('📡 Response Headers:', error.response.headers);
-        console.error('📡 Response Data:', JSON.stringify(error.response.data, null, 2));
-        console.error('📡 Full Response:', error.response);
+        console.error(' Response Status:', error.response.status);
+        console.error(' Response Headers:', error.response.headers);
+        console.error(' Response Data:', JSON.stringify(error.response.data, null, 2));
+        console.error(' Full Response:', error.response);
       } else if (error.request) {
-        console.error('📡 Request made but no response received:', error.request);
+        console.error(' Request made but no response received:', error.request);
       } else {
-        console.error('📡 Error setting up request:', error.message);
+        console.error(' Error setting up request:', error.message);
       }
       
-      console.error('📡 Full Error Object:', error);
-      console.error('📡 Error Stack:', error.stack);
+      console.error(' Full Error Object:', error);
+      console.error(' Error Stack:', error.stack);
       
       // Handle validation errors (400 Bad Request) - Detailed logging
       if (error.response?.status === 400) {
         const errorData = error.response.data || {};
-        console.error('❌ [WAREHOUSE] Validation Error (400)');
-        console.error('📌 Validation Details:', {
+        console.error(' [WAREHOUSE] Validation Error (400)');
+        console.error('� Validation Details:', {
           itemId: id,
           itemCode: data.itemCode || 'N/A',
           status: 400,
@@ -700,8 +700,8 @@ export const inventoryService = {
       // Handle Safety Lock errors (409 CONFLICT) - Detailed logging
       if (error.response?.status === 409) {
         const conflictData = error.response.data || {};
-        console.error('🚫 [WAREHOUSE] CONFLICT (409) - Safety Lock Violation');
-        console.error('📌 Conflict Details:', {
+        console.error('� [WAREHOUSE] CONFLICT (409) - Safety Lock Violation');
+        console.error('� Conflict Details:', {
           itemId: id,
           itemCode: data.itemCode || 'N/A',
           status: 409,
@@ -719,7 +719,7 @@ export const inventoryService = {
       }
       
       // Log other error types
-      console.error('❌ [WAREHOUSE] Other Error Type:', {
+      console.error(' [WAREHOUSE] Other Error Type:', {
         status: error.response?.status || 'NO_STATUS',
         message: error.message || 'NO_MESSAGE',
         errorCode: error.response?.data?.errorCode || 'NO_ERROR_CODE',
@@ -737,9 +737,9 @@ export const inventoryService = {
   delete: async (id: number): Promise<void> => {
     try {
       await api.delete(`/warehouse/items/${id}`);
-      console.log('✅ Delete item:', id);
+      console.log(' Delete item:', id);
     } catch (error: any) {
-      console.error('❌ Delete item error:', error.response?.data || error.message);
+      console.error(' Delete item error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -750,10 +750,10 @@ export const inventoryService = {
   createCategory: async (data: { name: string; description?: string; warehouseType: 'COLD' | 'NORMAL' }): Promise<CategoryV1> => {
     try {
       const response = await api.post<CategoryV1>('/inventory/categories', data);
-      console.log('✅ Create category:', response.data);
+      console.log(' Create category:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Create category error:', error.response?.data || error.message);
+      console.error(' Create category error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -764,10 +764,10 @@ export const inventoryService = {
   updateCategory: async (id: number, data: { name?: string; description?: string }): Promise<CategoryV1> => {
     try {
       const response = await api.put<CategoryV1>(`/inventory/categories/${id}`, data);
-      console.log('✅ Update category:', response.data);
+      console.log(' Update category:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Update category error:', error.response?.data || error.message);
+      console.error(' Update category error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -778,9 +778,9 @@ export const inventoryService = {
   deleteCategory: async (id: number): Promise<void> => {
     try {
       await api.delete(`/inventory/categories/${id}`);
-      console.log('✅ Delete category:', id);
+      console.log(' Delete category:', id);
     } catch (error: any) {
-      console.error('❌ Delete category error:', error.response?.data || error.message);
+      console.error(' Delete category error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -793,10 +793,10 @@ export const inventoryService = {
   ): Promise<ImportTransactionResponse> => {
     try {
       const response = await api.post<ImportTransactionResponse>('/warehouse/import', data);
-      console.log('✅ Create import transaction:', response.data);
+      console.log(' Create import transaction:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Create import transaction error:', error.response?.data || error.message);
+      console.error(' Create import transaction error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -809,14 +809,14 @@ export const inventoryService = {
   ): Promise<ExportTransactionResponse> => {
     try {
       const response = await api.post<ExportTransactionResponse>('/inventory/export', data);
-      console.log('✅ Create export transaction:', response.data);
+      console.log(' Create export transaction:', response.data);
       return response.data;
     } catch (error: any) {
       const errorData = error.response?.data;
       const errorMessage = errorData?.message || errorData?.error || error.message;
       const errorCode = errorData?.error;
       
-      console.error('❌ Create export transaction error:', {
+      console.error(' Create export transaction error:', {
         message: errorMessage,
         code: errorCode,
         status: error.response?.status,

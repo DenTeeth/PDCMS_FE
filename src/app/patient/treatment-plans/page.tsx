@@ -37,7 +37,7 @@ export default function PatientTreatmentPlansPage() {
   // State
   const [plans, setPlans] = useState<TreatmentPlanSummaryDTO[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   // Get patientCode from JWT token
   const [patientCode, setPatientCode] = useState<string>(() => {
     if (user?.token) {
@@ -113,7 +113,7 @@ export default function PatientTreatmentPlansPage() {
 
     try {
       setLoading(true);
-      // ✅ Backend fix applied: Use pagination support
+      // Backend fix applied: Use pagination support
       const pageResponse = await TreatmentPlanService.getTreatmentPlans(
         targetPatientCode,
         currentPage,
@@ -123,7 +123,7 @@ export default function PatientTreatmentPlansPage() {
 
       // Check if request was cancelled or component unmounted
       if (abortController.signal.aborted || !isMounted) return;
-      
+
       let filteredData = pageResponse.content;
       // Apply status filter if any (client-side for now)
       if (filters.status) {
@@ -228,7 +228,7 @@ export default function PatientTreatmentPlansPage() {
 
   // Handle row click - navigate to detail page
   const handleRowClick = useCallback((plan: TreatmentPlanSummaryDTO) => {
-    // ✅ Backend fix applied: planCode is now always available in summary
+    // Backend fix applied: planCode is now always available in summary
     if (!plan.planCode) {
       console.error('planCode missing in summary - this should not happen after backend fix');
       toast.error('Không thể xem chi tiết', {
@@ -259,7 +259,7 @@ export default function PatientTreatmentPlansPage() {
     );
   }
 
-  // ✅ Backend fix applied: Plans are already paginated from backend
+  //  Backend fix applied: Plans are already paginated from backend
   // No need for client-side pagination
 
   return (

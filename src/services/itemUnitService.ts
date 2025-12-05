@@ -19,7 +19,7 @@ export const itemUnitService = {
       const response = await api.get<GetItemUnitsResponse>(`${BASE_PATH}/${itemMasterId}/units`, {
         params: { status },
       });
-      console.log(`✅ Get item units for item ${itemMasterId}:`, response.data);
+      console.log(` Get item units for item ${itemMasterId}:`, response.data);
       return extractApiResponse(response);
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -28,7 +28,7 @@ export const itemUnitService = {
         params: { status },
       });
       
-      console.error(`❌ Get item units error for item ${itemMasterId}:`, {
+      console.error(` Get item units error for item ${itemMasterId}:`, {
         message: enhancedError.message,
         status: enhancedError.status,
         originalError: error,
@@ -56,7 +56,7 @@ export const itemUnitService = {
         description: unit.description,
       }));
     } catch (error: any) {
-      console.error('❌ Get units error:', error.response?.data || error.message);
+      console.error(' Get units error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -68,7 +68,7 @@ export const itemUnitService = {
   getBaseUnit: async (itemMasterId: number): Promise<ItemUnitResponse> => {
     try {
       const response = await api.get<ItemUnitResponse>(`${BASE_PATH}/${itemMasterId}/units/base`);
-      console.log(`✅ Get base unit for item ${itemMasterId}:`, response.data);
+      console.log(` Get base unit for item ${itemMasterId}:`, response.data);
       return extractApiResponse(response);
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -76,7 +76,7 @@ export const itemUnitService = {
         method: 'GET',
       });
       
-      console.error(`❌ Get base unit error for item ${itemMasterId}:`, {
+      console.error(` Get base unit error for item ${itemMasterId}:`, {
         message: enhancedError.message,
         status: enhancedError.status,
         originalError: error,
@@ -96,7 +96,7 @@ export const itemUnitService = {
   convertUnits: async (request: ConversionRequest): Promise<ConversionResponse> => {
     try {
       const response = await api.post<ConversionResponse>(`${BASE_PATH}/units/convert`, request);
-      console.log('✅ Convert units:', response.data);
+      console.log(' Convert units:', response.data);
       return extractApiResponse(response);
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -105,7 +105,7 @@ export const itemUnitService = {
         params: request,
       });
       
-      console.error('❌ Convert units error:', {
+      console.error(' Convert units error:', {
         message: enhancedError.message,
         code: enhancedError.code,
         status: enhancedError.status,
@@ -132,7 +132,7 @@ export const itemUnitService = {
       const response = await api.get<number>(`${BASE_PATH}/units/convert`, {
         params: { fromUnitId, toUnitId, quantity },
       });
-      console.log(`✅ Convert quantity: ${quantity} from unit ${fromUnitId} to ${toUnitId} = ${response.data}`);
+      console.log(` Convert quantity: ${quantity} from unit ${fromUnitId} to ${toUnitId} = ${response.data}`);
       return extractApiResponse(response);
     } catch (error: any) {
       const enhancedError = createApiError(error, {
@@ -141,7 +141,7 @@ export const itemUnitService = {
         params: { fromUnitId, toUnitId, quantity },
       });
       
-      console.error('❌ Convert quantity error:', {
+      console.error(' Convert quantity error:', {
         message: enhancedError.message,
         status: enhancedError.status,
         params: { fromUnitId, toUnitId, quantity },

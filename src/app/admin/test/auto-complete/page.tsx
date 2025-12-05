@@ -116,14 +116,14 @@ export default function AutoCompleteTestPage() {
     const allPass = results.phase1Completed && results.phase2Completed && results.planCompleted;
     
     if (allPass) {
-      toast.success('✅ TẤT CẢ TEST PASS! BE auto-complete đang hoạt động đúng');
+      toast.success(' TẤT CẢ TEST PASS! BE auto-complete đang hoạt động đúng');
     } else {
       const failures = [];
       if (!results.phase1Completed) failures.push('Phase 1 không auto-complete');
       if (!results.phase2Completed) failures.push('Phase 2 không auto-complete');
       if (!results.planCompleted) failures.push('Plan không auto-complete');
       
-      toast.error(`❌ TEST FAILED: ${failures.join(', ')}`);
+      toast.error(` TEST FAILED: ${failures.join(', ')}`);
     }
   };
 
@@ -171,7 +171,7 @@ export default function AutoCompleteTestPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       verifyResults();
 
-      toast.success('✅ Auto test hoàn thành!');
+      toast.success(' Auto test hoàn thành!');
     } catch (error: any) {
       console.error('Error in auto test:', error);
       toast.error('Auto test failed: ' + (error.message || 'Unknown error'));
@@ -436,9 +436,9 @@ export default function AutoCompleteTestPage() {
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
             <strong>Expected Results:</strong>
             <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-              <li>✅ Phase 1 auto-completes khi tất cả items completed</li>
-              <li>✅ Phase 2 auto-completes khi tất cả items completed</li>
-              <li>✅ Plan auto-completes khi tất cả phases completed</li>
+              <li> Phase 1 auto-completes khi tất cả items completed</li>
+              <li> Phase 2 auto-completes khi tất cả items completed</li>
+              <li> Plan auto-completes khi tất cả phases completed</li>
             </ul>
           </div>
         </CardContent>

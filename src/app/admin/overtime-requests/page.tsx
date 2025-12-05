@@ -138,7 +138,7 @@ export default function AdminOvertimeRequestsPage() {
         employeeId: Number(formData.employeeId),
       };
 
-      console.log('🔍 Admin creating overtime request with data:', {
+      console.log(' Admin creating overtime request with data:', {
         requestData,
         employeeId: requestData.employeeId,
         employeeIdType: typeof requestData.employeeId,
@@ -157,10 +157,10 @@ export default function AdminOvertimeRequestsPage() {
         reason: '',
       });
       loadOvertimeRequests();
-      alert(`✅ Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nNhân viên: ${response.employee.fullName}\nTrạng thái: ${response.status}`);
+      alert(` Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nNhân viên: ${response.employee.fullName}\nTrạng thái: ${response.status}`);
     } catch (error: any) {
-      console.error('❌ Error creating overtime request:', error);
-      console.error('📋 Error details:', {
+      console.error(' Error creating overtime request:', error);
+      console.error(' Error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
@@ -191,7 +191,7 @@ export default function AdminOvertimeRequestsPage() {
           error.message || 'Không thể tạo yêu cầu làm thêm giờ';
       }
 
-      alert(`❌ Lỗi (${status || 'Unknown'}): ${errorMsg}`);
+      alert(` Lỗi (${status || 'Unknown'}): ${errorMsg}`);
       showOvertimeError(error);
     }
   };

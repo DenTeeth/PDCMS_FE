@@ -87,7 +87,7 @@ export default function RegistrationRequestsPage() {
       }
 
       const response = await shiftRegistrationService.getRegistrations(params, 'part-time-flex');
-      console.log('📋 Registrations:', response);
+      console.log(' Registrations:', response);
 
       // Handle both array and paginated responses
       if (Array.isArray(response)) {
@@ -167,7 +167,7 @@ export default function RegistrationRequestsPage() {
       toast.success('Registration approved successfully!');
       setShowApproveModal(false);
 
-      // ✅ Refresh slot details to update quota immediately
+      //  Refresh slot details to update quota immediately
       const slotId = selectedRegistration.partTimeSlotId;
       if (slotId) {
         try {
@@ -176,7 +176,7 @@ export default function RegistrationRequestsPage() {
             ...prev,
             [slotId]: updatedDetails
           }));
-          console.log('✅ Slot details refreshed after approval:', updatedDetails);
+          console.log(' Slot details refreshed after approval:', updatedDetails);
         } catch (error) {
           console.error('Failed to refresh slot details:', error);
         }
@@ -209,7 +209,7 @@ export default function RegistrationRequestsPage() {
       toast.success('Registration rejected successfully!');
       setShowRejectModal(false);
 
-      // ✅ Refresh slot details to update quota immediately (in case rejection frees up slots)
+      //  Refresh slot details to update quota immediately (in case rejection frees up slots)
       const slotId = selectedRegistration.partTimeSlotId;
       if (slotId) {
         try {
@@ -218,7 +218,7 @@ export default function RegistrationRequestsPage() {
             ...prev,
             [slotId]: updatedDetails
           }));
-          console.log('✅ Slot details refreshed after rejection:', updatedDetails);
+          console.log(' Slot details refreshed after rejection:', updatedDetails);
         } catch (error) {
           console.error('Failed to refresh slot details:', error);
         }

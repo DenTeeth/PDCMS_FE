@@ -109,14 +109,14 @@ export default function AdminTimeOffRequestsPage() {
     try {
       setLoading(true);
 
-      // ✅ Load timeOffTypes and workShifts FIRST (needed for enrichment)
+      //  Load timeOffTypes and workShifts FIRST (needed for enrichment)
       await Promise.all([
         loadTimeOffTypes(),
         loadEmployees(),
         loadWorkShifts()
       ]);
 
-      // ✅ Then load requests (uses timeOffTypes and workShifts for enrichment)
+      //  Then load requests (uses timeOffTypes and workShifts for enrichment)
       await loadTimeOffRequests();
     } catch (error) {
       console.error('Error loading data:', error);
@@ -134,7 +134,7 @@ export default function AdminTimeOffRequestsPage() {
       });
 
       if (response.content && response.content.length > 0) {
-        // ✅ Enrich data with timeOffTypeName, workShiftName, and totalDays
+        //  Enrich data with timeOffTypeName, workShiftName, and totalDays
         const enrichedRequests = TimeOffDataEnricher.enrichRequests(
           response.content,
           timeOffTypes,
@@ -181,7 +181,7 @@ export default function AdminTimeOffRequestsPage() {
   const loadWorkShifts = async () => {
     try {
       const shifts = await workShiftService.getAll(true); // Get only active shifts
-      console.log('📋 Work Shifts loaded:', shifts);
+      console.log(' Work Shifts loaded:', shifts);
       setWorkShifts(shifts);
     } catch (error) {
       console.error('Error loading work shifts:', error);
@@ -192,7 +192,7 @@ export default function AdminTimeOffRequestsPage() {
   const handleCreateTimeOffRequest = async () => {
     // Prevent duplicate submissions
     if (processing) {
-      console.log('⚠️ Already processing, ignoring duplicate submit');
+      console.log(' Already processing, ignoring duplicate submit');
       return;
     }
 
@@ -267,13 +267,13 @@ export default function AdminTimeOffRequestsPage() {
         reason: ''
       });
 
-      // ✅ Reload to get fresh data with enrichment
+      //  Reload to get fresh data with enrichment
       await loadTimeOffRequests();
 
-      alert(`✅ Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
+      alert(` Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
-      console.error('❌ Error creating time off request:', error);
-      console.error('📋 Error details:', {
+      console.error(' Error creating time off request:', error);
+      console.error(' Error details:', {
         status: error.response?.status,
         data: error.response?.data,
         message: error.response?.data?.message,
@@ -325,7 +325,7 @@ export default function AdminTimeOffRequestsPage() {
         displayMsg = error.response?.data?.detail || error.response?.data?.message || 'Không thể tạo yêu cầu nghỉ phép';
       }
 
-      alert(`❌ Lỗi (${status || 'Unknown'}): ${displayMsg}`);
+      alert(` Lỗi (${status || 'Unknown'}): ${displayMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -342,7 +342,7 @@ export default function AdminTimeOffRequestsPage() {
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadTimeOffRequests();
-      alert('✅ Đã duyệt yêu cầu nghỉ phép thành công!');
+      alert(' Đã duyệt yêu cầu nghỉ phép thành công!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleApproveError(error, selectedRequest.requestId);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -374,7 +374,7 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setRejectReason('');
       loadTimeOffRequests();
-      alert('✅ Đã từ chối yêu cầu nghỉ phép!');
+      alert(' Đã từ chối yêu cầu nghỉ phép!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleRejectError(error, selectedRequest.requestId, rejectReason);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -406,7 +406,7 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setCancelReason('');
       loadTimeOffRequests();
-      alert('✅ Đã hủy yêu cầu nghỉ phép!');
+      alert(' Đã hủy yêu cầu nghỉ phép!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleCancelError(error, selectedRequest.requestId, cancelReason);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -447,7 +447,7 @@ export default function AdminTimeOffRequestsPage() {
       // Gọi API để lấy chi tiết
       const details = await TimeOffRequestService.getTimeOffRequestById(request.requestId);
 
-      // ✅ Enrich detail data
+      //  Enrich detail data
       const enrichedDetails = TimeOffDataEnricher.enrichRequest(
         details,
         timeOffTypes,

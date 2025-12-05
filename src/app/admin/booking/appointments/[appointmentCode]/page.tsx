@@ -438,7 +438,7 @@ export default function AdminAppointmentDetailPage() {
       setClinicalRecord(record); // record can be null if no clinical record exists
       setIsEditingClinicalRecord(false);
       if (!record) {
-        console.log('📋 [CLINICAL RECORD] No record found for appointment, showing create form');
+        console.log('[CLINICAL RECORD] No record found for appointment, showing create form');
       }
     } catch (error: any) {
       // Only real errors (appointment not found, access denied, etc.)
@@ -650,27 +650,27 @@ export default function AdminAppointmentDetailPage() {
         notes: statusUpdateNotes || null,
       };
 
-      console.log('🔄 Updating appointment status:', {
+      console.log('Updating appointment status:', {
         appointmentCode: appointment.appointmentCode,
         currentStatus: appointment.status,
         newStatus: selectedStatus,
       });
 
-      // ✅ BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
+      // BE FIXED: updateAppointmentStatus now returns AppointmentDetailDTO
       const updated = await appointmentService.updateAppointmentStatus(appointment.appointmentCode, request);
 
-      // ✅ FIX: Verify response has updated status
+      // FIX: Verify response has updated status
       if (!updated || !updated.status) {
-        console.error('❌ Invalid response from updateAppointmentStatus:', updated);
+        console.error('Invalid response from updateAppointmentStatus:', updated);
         toast.error('Failed to update status', {
           description: 'Response from server is invalid',
         });
         return;
       }
 
-      // ✅ Verify status matches what we requested
+      // Verify status matches what we requested
       if (updated.status !== selectedStatus) {
-        console.warn('⚠️ Status mismatch:', {
+        console.warn('Status mismatch:', {
           requested: selectedStatus,
           received: updated.status,
         });
@@ -696,10 +696,10 @@ export default function AdminAppointmentDetailPage() {
         });
       }
 
-      // ✅ FIX: Update appointment with response data (BE now returns DTO)
+      // FIX: Update appointment with response data (BE now returns DTO)
       setAppointment(updated);
 
-      // ✅ FIX: Reset clinical record loading state when appointment status changes
+      // FIX: Reset clinical record loading state when appointment status changes
       // This allows clinical record to be reloaded if user switches to that tab
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
@@ -767,7 +767,7 @@ export default function AdminAppointmentDetailPage() {
       // Update appointment with new data
       setAppointment(updated);
 
-      // ✅ FIX: Reset clinical record loading state when appointment changes
+      // FIX: Reset clinical record loading state when appointment changes
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
       setClinicalRecordError(null);
@@ -850,7 +850,7 @@ export default function AdminAppointmentDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* ✅ FIX: Add key to force re-render when status changes */}
+            {/* FIX: Add key to force re-render when status changes */}
             {appointment && (
               <div key={`status-${appointment.status}-${appointment.appointmentCode}`}>
                 {getStatusBadge(appointment.status)}
@@ -910,7 +910,7 @@ export default function AdminAppointmentDetailPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    {/* ✅ FIX: Add key to force re-render when status changes */}
+                    {/* FIX: Add key to force re-render when status changes */}
                     <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
                       {getStatusBadge(appointment.status)}
                     </div>

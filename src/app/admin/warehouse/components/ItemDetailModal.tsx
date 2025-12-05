@@ -277,7 +277,7 @@ export default function ItemDetailModal({
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                     <p className="font-medium text-blue-800">
-                      💡 Danh sách lô hàng được sắp xếp theo nguyên tắc FEFO (First Expired, First Out)
+                       Danh sách lô hàng được sắp xếp theo nguyên tắc FEFO (First Expired, First Out)
                     </p>
                   </div>
 
@@ -364,7 +364,7 @@ export default function ItemDetailModal({
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                     <p className="font-medium text-blue-800">
-                      📜 Lịch sử các giao dịch xuất/nhập kho của vật tư này
+                      � Lịch sử các giao dịch xuất/nhập kho của vật tư này
                     </p>
                   </div>
 

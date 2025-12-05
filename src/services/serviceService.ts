@@ -3,14 +3,14 @@ import { specializationService } from './specializationService';
 import { apiClient } from '@/lib/api';
 
 export class ServiceService {
-    // ⚠️ IMPORTANT: BE has 2 Service APIs:
+    //  IMPORTANT: BE has 2 Service APIs:
     // 1. V17 READ-ONLY: /api/v1/services (DentalServiceController) - has categoryId, no CRUD
     // 2. Booking CRUD: /api/v1/booking/services (ServiceController) - has specializationId, full CRUD
     // Using Booking API for now because it has CREATE/UPDATE/DELETE endpoints
     private static readonly BASE_URL = 'booking/services';
 
     // Get paginated services with filters
-    // ✅ Updated to match Booking API params (ServiceController.java line 28-44)
+    //  Updated to match Booking API params (ServiceController.java line 28-44)
     static async getServices(filters: ServiceFilters = {}): Promise<ServiceListResponse> {
         const params = new URLSearchParams();
 
@@ -32,7 +32,7 @@ export class ServiceService {
             params.append('specializationId', String(filters.specializationId));
         }
 
-        // ✅ NEW: Booking API now supports categoryId (V17 update 2025-01-26)
+        //  NEW: Booking API now supports categoryId (V17 update 2025-01-26)
         if (filters.categoryId !== undefined && filters.categoryId !== '') {
             params.append('categoryId', String(filters.categoryId));
         }

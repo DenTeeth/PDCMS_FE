@@ -52,7 +52,7 @@ class ShiftRegistrationService {
       ? '/registrations/part-time-flex'
       : this.endpoint;
 
-    console.log(`📡 [getRegistrations] Fetching ${type} registrations from ${endpoint}...`);
+    console.log(` [getRegistrations] Fetching ${type} registrations from ${endpoint}...`);
 
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(endpoint, {
@@ -239,14 +239,14 @@ class ShiftRegistrationService {
    */
   async getAvailableSlots(month?: string): Promise<AvailableSlot[]> {
     const monthParam = month ? `?month=${month}` : '';
-    console.log(`🌐 [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/part-time-flex/available-slots${monthParam}...`);
+    console.log(`� [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/part-time-flex/available-slots${monthParam}...`);
     const axiosInstance = apiClient.getAxiosInstance();
 
     try {
       const params = month ? { month } : {};
       const response = await axiosInstance.get('/registrations/part-time-flex/available-slots', { params });
 
-      console.log('📥 [shiftRegistrationService.getAvailableSlots] API Response:', {
+      console.log('� [shiftRegistrationService.getAvailableSlots] API Response:', {
         status: response.status,
         statusText: response.statusText,
         data: response.data,
@@ -259,24 +259,24 @@ class ShiftRegistrationService {
       let slots: AvailableSlot[] = [];
 
       if (response.data?.data && Array.isArray(response.data.data)) {
-        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
+        console.log(' [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
         slots = response.data.data;
       } else if (Array.isArray(response.data)) {
-        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
+        console.log(' [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
         slots = response.data;
       } else {
-        console.warn('⚠️ [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
+        console.warn(' [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
         slots = [];
       }
 
-      console.log('📊 [shiftRegistrationService.getAvailableSlots] Returning slots:', {
+      console.log('� [shiftRegistrationService.getAvailableSlots] Returning slots:', {
         count: slots.length,
         slots: slots
       });
 
       return slots;
     } catch (error: any) {
-      console.error('❌ [shiftRegistrationService.getAvailableSlots] API Error:', {
+      console.error(' [shiftRegistrationService.getAvailableSlots] API Error:', {
         error,
         message: error.message,
         response: error.response,
@@ -294,13 +294,13 @@ class ShiftRegistrationService {
    * @returns Detailed slot information including availability by month
    */
   async getSlotDetails(slotId: number): Promise<SlotDetailsResponse> {
-    console.log(`🌐 [shiftRegistrationService.getSlotDetails] Making API call to /registrations/part-time-flex/slots/${slotId}/details...`);
+    console.log(`� [shiftRegistrationService.getSlotDetails] Making API call to /registrations/part-time-flex/slots/${slotId}/details...`);
     const axiosInstance = apiClient.getAxiosInstance();
 
     try {
       const response = await axiosInstance.get(`/registrations/part-time-flex/slots/${slotId}/details`);
 
-      console.log('📥 [shiftRegistrationService.getSlotDetails] API Response:', {
+      console.log('� [shiftRegistrationService.getSlotDetails] API Response:', {
         status: response.status,
         statusText: response.statusText,
         data: response.data
@@ -308,14 +308,14 @@ class ShiftRegistrationService {
 
       // Handle both response structures
       if (response.data?.data) {
-        console.log('✅ [shiftRegistrationService.getSlotDetails] Found wrapped response.data.data');
+        console.log(' [shiftRegistrationService.getSlotDetails] Found wrapped response.data.data');
         return response.data.data;
       }
 
-      console.log('✅ [shiftRegistrationService.getSlotDetails] Using direct response.data');
+      console.log(' [shiftRegistrationService.getSlotDetails] Using direct response.data');
       return response.data;
     } catch (error: any) {
-      console.error('❌ [shiftRegistrationService.getSlotDetails] API Error:', {
+      console.error(' [shiftRegistrationService.getSlotDetails] API Error:', {
         error,
         message: error.message,
         response: error.response,
@@ -359,7 +359,7 @@ class ShiftRegistrationService {
   /**
    * Get registrations for current user (employee)
    * 
-   * ✅ UPDATED: Backend now supports pagination!
+   *  UPDATED: Backend now supports pagination!
    * API: GET /registrations/part-time-flex?page=0&size=10&sort=effectiveFrom,desc
    * 
    * @param params Query parameters (page, size, sortBy, sortDirection)
@@ -380,10 +380,10 @@ class ShiftRegistrationService {
 
     const axiosInstance = apiClient.getAxiosInstance();
 
-    // ✅ UPDATED: Backend now has /part-time-flex endpoint with pagination
+    //  UPDATED: Backend now has /part-time-flex endpoint with pagination
     const endpoint = `${this.endpoint}/part-time-flex`;
 
-    console.log(`📡 [getMyRegistrations] Fetching registrations from ${endpoint}...`);
+    console.log(` [getMyRegistrations] Fetching registrations from ${endpoint}...`);
 
     try {
       const response = await axiosInstance.get<PaginatedShiftRegistrationResponse>(endpoint, {
@@ -395,7 +395,7 @@ class ShiftRegistrationService {
         }
       });
 
-      console.log('✅ [getMyRegistrations] Success:', {
+      console.log(' [getMyRegistrations] Success:', {
         endpoint,
         status: response.status,
         totalElements: response.data.totalElements,
@@ -408,7 +408,7 @@ class ShiftRegistrationService {
       return response.data;
 
     } catch (error: any) {
-      console.error('❌ [getMyRegistrations] Error:', {
+      console.error(' [getMyRegistrations] Error:', {
         endpoint,
         error: error.message,
         status: error.response?.status,
@@ -468,7 +468,7 @@ class ShiftRegistrationService {
         payload.reason = reason;
       }
 
-      console.log('🔄 Updating registration status:', {
+      console.log(' Updating registration status:', {
         registrationId,
         payload,
         url: `/admin/registrations/part-time-flex/${registrationId}/status`
@@ -479,7 +479,7 @@ class ShiftRegistrationService {
         payload
       );
 
-      console.log('✅ Registration status updated:', response.data);
+      console.log(' Registration status updated:', response.data);
 
       // Handle both response structures
       if (response.data?.data) {
@@ -487,7 +487,7 @@ class ShiftRegistrationService {
       }
       return response.data as unknown as ShiftRegistration;
     } catch (error: any) {
-      console.error('❌ Update registration status error:', {
+      console.error(' Update registration status error:', {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message

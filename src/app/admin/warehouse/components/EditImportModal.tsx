@@ -107,7 +107,7 @@ export default function EditImportModal({
         })),
       };
       
-      console.log('📝 Populating form with transaction data:', {
+      console.log(' Populating form with transaction data:', {
         transactionId,
         supplierId: formData.supplierId,
         itemsCount: formData.items.length,

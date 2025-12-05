@@ -65,7 +65,7 @@ export const attachmentService = {
         }
       );
       
-      console.log('✅ [ATTACHMENT] Uploaded attachment:', {
+      console.log(' [ATTACHMENT] Uploaded attachment:', {
         attachmentId: response.data?.attachmentId,
         recordId,
         fileName: file.name,
@@ -79,7 +79,7 @@ export const attachmentService = {
         method: 'POST',
       });
       
-      console.error('❌ [ATTACHMENT] Error uploading attachment:', {
+      console.error(' [ATTACHMENT] Error uploading attachment:', {
         recordId,
         fileName: file.name,
         fileSize: file.size,
@@ -112,7 +112,7 @@ export const attachmentService = {
         `/clinical-records/${recordId}/attachments`
       );
       
-      console.log('📎 [ATTACHMENT] Get attachments:', {
+      console.log('� [ATTACHMENT] Get attachments:', {
         recordId,
         count: Array.isArray(response.data) ? response.data.length : 0,
       });
@@ -125,7 +125,7 @@ export const attachmentService = {
         method: 'GET',
       });
       
-      console.error('❌ [ATTACHMENT] Error fetching attachments:', {
+      console.error(' [ATTACHMENT] Error fetching attachments:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -150,7 +150,7 @@ export const attachmentService = {
     try {
       await api.delete(`/attachments/${attachmentId}`);
       
-      console.log('✅ [ATTACHMENT] Deleted attachment:', {
+      console.log(' [ATTACHMENT] Deleted attachment:', {
         attachmentId,
       });
     } catch (error: any) {
@@ -159,7 +159,7 @@ export const attachmentService = {
         method: 'DELETE',
       });
       
-      console.error('❌ [ATTACHMENT] Error deleting attachment:', {
+      console.error(' [ATTACHMENT] Error deleting attachment:', {
         attachmentId,
         message: enhancedError.message,
         status: enhancedError.status,

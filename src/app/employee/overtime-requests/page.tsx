@@ -125,7 +125,7 @@ export default function EmployeeOvertimeRequestsPage() {
         workDate: formData.workDate,
         workShiftId: formData.workShiftId,
         reason: formData.reason
-        // ✅ KHÔNG gửi employeeId - backend tự động lấy từ JWT token
+        //  KHÔNG gửi employeeId - backend tự động lấy từ JWT token
       };
 
       // Validate form data (không cần employeeId)
@@ -136,7 +136,7 @@ export default function EmployeeOvertimeRequestsPage() {
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Employee creating overtime request (self):', {
+        console.log(' Employee creating overtime request (self):', {
           requestData,
           user: {
             employeeId: user?.employeeId,
@@ -403,7 +403,7 @@ export default function EmployeeOvertimeRequestsPage() {
                   {formData.workDate && hasExistingOvertimeForDate(formData.workDate) && (
                     <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <p className="text-sm text-red-700 font-medium">
-                        ⚠️ Bạn đã có đơn overtime cho ngày này rồi!
+                         Bạn đã có đơn overtime cho ngày này rồi!
                       </p>
                       <p className="text-xs text-red-600 mt-1">
                         Chỉ được gửi 1 đơn overtime cho mỗi ngày. Vui lòng kiểm tra danh sách đơn hiện tại.

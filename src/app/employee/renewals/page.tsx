@@ -143,18 +143,18 @@ export default function EmployeeRenewalsPage() {
   const fetchRenewals = async () => {
     try {
       setLoading(true);
-      console.log('🚀 [fetchRenewals] Fetching pending renewals...');
+      console.log(' [fetchRenewals] Fetching pending renewals...');
       
       const data = await renewalService.getPendingRenewals();
       
-      console.log('✅ [fetchRenewals] Received renewals:', {
+      console.log(' [fetchRenewals] Received renewals:', {
         count: data.length,
         renewals: data
       });
       
       setRenewals(data || []);
     } catch (error: any) {
-      console.error('❌ [fetchRenewals] Failed to fetch renewals:', error);
+      console.error(' [fetchRenewals] Failed to fetch renewals:', error);
       
       // Hiển thị error message
       toast.error(error.message || 'Không thể tải danh sách renewal requests');
@@ -232,7 +232,7 @@ export default function EmployeeRenewalsPage() {
     try {
       setResponding(true);
 
-      console.log('🚀 [handleRespondToRenewal] Responding to renewal:', {
+      console.log(' [handleRespondToRenewal] Responding to renewal:', {
         renewalId: selectedRenewal.renewalId,
         action: responseAction,
         hasDeclineReason: !!declineReason
@@ -244,7 +244,7 @@ export default function EmployeeRenewalsPage() {
         declineReason: responseAction === 'DECLINED' ? declineReason.trim() : null
       });
 
-      console.log('✅ [handleRespondToRenewal] Response successful:', response);
+      console.log(' [handleRespondToRenewal] Response successful:', response);
 
       // Hiển thị success message
       if (responseAction === 'CONFIRMED') {
@@ -260,7 +260,7 @@ export default function EmployeeRenewalsPage() {
       // Renewal này sẽ không còn trong pending list nữa (status đã thay đổi)
       await fetchRenewals();
     } catch (error: any) {
-      console.error('❌ [handleRespondToRenewal] Failed:', error);
+      console.error(' [handleRespondToRenewal] Failed:', error);
 
       // Hiển thị error message
       toast.error(error.message || 'Không thể phản hồi renewal. Vui lòng thử lại.');

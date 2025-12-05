@@ -108,11 +108,11 @@ export const clinicalRecordService = {
       
       // If response is null, undefined, or empty, return null (no record exists)
       if (!record) {
-        console.log('📋 [CLINICAL RECORD] No record found for appointment ID:', appointmentId);
+        console.log(' [CLINICAL RECORD] No record found for appointment ID:', appointmentId);
         return null;
       }
       
-      console.log('📋 [CLINICAL RECORD] Get by appointment ID:', {
+      console.log(' [CLINICAL RECORD] Get by appointment ID:', {
         appointmentId,
         clinicalRecordId: record?.clinicalRecordId,
         hasFollowUpDate: !!record?.followUpDate,
@@ -128,7 +128,7 @@ export const clinicalRecordService = {
         method: 'GET',
       });
       
-      console.error('❌ [CLINICAL RECORD] Error fetching clinical record:', {
+      console.error(' [CLINICAL RECORD] Error fetching clinical record:', {
         appointmentId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -163,7 +163,7 @@ export const clinicalRecordService = {
         request
       );
       
-      console.log('✅ [CLINICAL RECORD] Created:', {
+      console.log(' [CLINICAL RECORD] Created:', {
         clinicalRecordId: response.data?.clinicalRecordId,
         appointmentId: request.appointmentId,
       });
@@ -175,7 +175,7 @@ export const clinicalRecordService = {
         method: 'POST',
       });
       
-      console.error('❌ [CLINICAL RECORD] Error creating clinical record:', {
+      console.error(' [CLINICAL RECORD] Error creating clinical record:', {
         appointmentId: request.appointmentId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -211,7 +211,7 @@ export const clinicalRecordService = {
         request
       );
       
-      console.log('✅ [CLINICAL RECORD] Updated:', {
+      console.log(' [CLINICAL RECORD] Updated:', {
         clinicalRecordId: recordId,
         updatedAt: response.data?.updatedAt,
       });
@@ -223,7 +223,7 @@ export const clinicalRecordService = {
         method: 'PUT',
       });
       
-      console.error('❌ [CLINICAL RECORD] Error updating clinical record:', {
+      console.error(' [CLINICAL RECORD] Error updating clinical record:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -253,7 +253,7 @@ export const clinicalRecordService = {
         `/appointments/clinical-records/${recordId}/procedures`
       );
       
-      console.log('📋 [PROCEDURES] Get procedures:', {
+      console.log(' [PROCEDURES] Get procedures:', {
         recordId,
         count: Array.isArray(response.data) ? response.data.length : 0,
       });
@@ -266,7 +266,7 @@ export const clinicalRecordService = {
         method: 'GET',
       });
       
-      console.error('❌ [PROCEDURES] Error fetching procedures:', {
+      console.error(' [PROCEDURES] Error fetching procedures:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -297,7 +297,7 @@ export const clinicalRecordService = {
         request
       );
       
-      console.log('✅ [PROCEDURES] Added procedure:', {
+      console.log(' [PROCEDURES] Added procedure:', {
         procedureId: response.data?.procedureId,
         recordId,
         serviceId: request.serviceId,
@@ -310,7 +310,7 @@ export const clinicalRecordService = {
         method: 'POST',
       });
       
-      console.error('❌ [PROCEDURES] Error adding procedure:', {
+      console.error(' [PROCEDURES] Error adding procedure:', {
         recordId,
         serviceId: request.serviceId,
         message: enhancedError.message,
@@ -344,7 +344,7 @@ export const clinicalRecordService = {
         request
       );
       
-      console.log('✅ [PROCEDURES] Updated procedure:', {
+      console.log(' [PROCEDURES] Updated procedure:', {
         procedureId,
         recordId,
       });
@@ -356,7 +356,7 @@ export const clinicalRecordService = {
         method: 'PUT',
       });
       
-      console.error('❌ [PROCEDURES] Error updating procedure:', {
+      console.error(' [PROCEDURES] Error updating procedure:', {
         procedureId,
         recordId,
         message: enhancedError.message,
@@ -386,7 +386,7 @@ export const clinicalRecordService = {
         `/appointments/clinical-records/${recordId}/procedures/${procedureId}`
       );
       
-      console.log('✅ [PROCEDURES] Deleted procedure:', {
+      console.log(' [PROCEDURES] Deleted procedure:', {
         procedureId,
         recordId,
       });
@@ -396,7 +396,7 @@ export const clinicalRecordService = {
         method: 'DELETE',
       });
       
-      console.error('❌ [PROCEDURES] Error deleting procedure:', {
+      console.error(' [PROCEDURES] Error deleting procedure:', {
         procedureId,
         recordId,
         message: enhancedError.message,
@@ -431,7 +431,7 @@ export const clinicalRecordService = {
         `/appointments/clinical-records/${recordId}/prescription`
       );
       
-      console.log('📋 [PRESCRIPTION] Get prescription:', {
+      console.log(' [PRESCRIPTION] Get prescription:', {
         recordId,
         prescriptionId: response.data?.prescriptionId,
         itemsCount: response.data?.items?.length || 0,
@@ -446,13 +446,13 @@ export const clinicalRecordService = {
       
       // 404 is expected when no prescription exists yet - don't log as error
       if (error.response?.status === 404) {
-        console.log('ℹ️ [PRESCRIPTION] No prescription found (expected):', {
+        console.log(' [PRESCRIPTION] No prescription found (expected):', {
           recordId,
           status: 404,
         });
       } else {
         // Log other errors as actual errors
-        console.error('❌ [PRESCRIPTION] Error fetching prescription:', {
+        console.error(' [PRESCRIPTION] Error fetching prescription:', {
           recordId,
           message: enhancedError.message,
           status: enhancedError.status,
@@ -495,7 +495,7 @@ export const clinicalRecordService = {
         request
       );
       
-      console.log('✅ [PRESCRIPTION] Saved prescription:', {
+      console.log(' [PRESCRIPTION] Saved prescription:', {
         recordId,
         prescriptionId: response.data?.prescriptionId,
         itemsCount: request.items.length,
@@ -508,7 +508,7 @@ export const clinicalRecordService = {
         method: 'POST',
       });
       
-      console.error('❌ [PRESCRIPTION] Error saving prescription:', {
+      console.error(' [PRESCRIPTION] Error saving prescription:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -535,7 +535,7 @@ export const clinicalRecordService = {
         `/appointments/clinical-records/${recordId}/prescription`
       );
       
-      console.log('✅ [PRESCRIPTION] Deleted prescription:', {
+      console.log(' [PRESCRIPTION] Deleted prescription:', {
         recordId,
       });
     } catch (error: any) {
@@ -544,7 +544,7 @@ export const clinicalRecordService = {
         method: 'DELETE',
       });
       
-      console.error('❌ [PRESCRIPTION] Error deleting prescription:', {
+      console.error(' [PRESCRIPTION] Error deleting prescription:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -597,7 +597,7 @@ export const clinicalRecordService = {
         }
       );
       
-      console.log('✅ [ATTACHMENT] Uploaded attachment:', {
+      console.log(' [ATTACHMENT] Uploaded attachment:', {
         attachmentId: response.data?.attachmentId,
         recordId,
         fileName: file.name,
@@ -611,7 +611,7 @@ export const clinicalRecordService = {
         method: 'POST',
       });
       
-      console.error('❌ [ATTACHMENT] Error uploading attachment:', {
+      console.error(' [ATTACHMENT] Error uploading attachment:', {
         recordId,
         fileName: file.name,
         message: enhancedError.message,
@@ -638,7 +638,7 @@ export const clinicalRecordService = {
         `/clinical-records/${recordId}/attachments`
       );
       
-      console.log('📋 [ATTACHMENT] Get attachments:', {
+      console.log(' [ATTACHMENT] Get attachments:', {
         recordId,
         count: Array.isArray(response.data) ? response.data.length : 0,
       });
@@ -651,7 +651,7 @@ export const clinicalRecordService = {
         method: 'GET',
       });
       
-      console.error('❌ [ATTACHMENT] Error fetching attachments:', {
+      console.error(' [ATTACHMENT] Error fetching attachments:', {
         recordId,
         message: enhancedError.message,
         status: enhancedError.status,
@@ -677,7 +677,7 @@ export const clinicalRecordService = {
     try {
       await api.delete(`/attachments/${attachmentId}`);
       
-      console.log('✅ [ATTACHMENT] Deleted attachment:', {
+      console.log(' [ATTACHMENT] Deleted attachment:', {
         attachmentId,
       });
     } catch (error: any) {
@@ -686,7 +686,7 @@ export const clinicalRecordService = {
         method: 'DELETE',
       });
       
-      console.error('❌ [ATTACHMENT] Error deleting attachment:', {
+      console.error(' [ATTACHMENT] Error deleting attachment:', {
         attachmentId,
         message: enhancedError.message,
         status: enhancedError.status,

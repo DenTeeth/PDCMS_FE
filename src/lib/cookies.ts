@@ -12,7 +12,7 @@ export const setToken = (token: string) => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(TOKEN_KEY, token);
-    console.log('✅ Access token stored in localStorage');
+    console.log(' Access token stored in localStorage');
   } catch (error) {
     console.error('Failed to set access token:', error);
   }
@@ -34,7 +34,7 @@ export const removeToken = () => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(TOKEN_KEY);
-    console.log('🗑️ Access token removed from localStorage');
+    console.log(' Access token removed from localStorage');
   } catch (error) {
     console.error('Failed to remove access token:', error);
   }
@@ -49,7 +49,7 @@ export const setUserData = (userData: any) => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
-    console.log('✅ User data stored in localStorage');
+    console.log(' User data stored in localStorage');
   } catch (error) {
     console.error('Failed to set user data:', error);
   }
@@ -72,7 +72,7 @@ export const removeUserData = () => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(USER_KEY);
-    console.log('🗑️ User data removed from localStorage');
+    console.log(' User data removed from localStorage');
   } catch (error) {
     console.error('Failed to remove user data:', error);
   }
@@ -85,11 +85,11 @@ export const removeUserData = () => {
 export const clearAuthData = () => {
   removeToken();
   removeUserData();
-  console.log('🗑️ All auth data cleared from localStorage');
+  console.log(' All auth data cleared from localStorage');
   
   // Debug: Check if refreshToken cookie exists
   if (typeof document !== 'undefined') {
-    console.log('🍪 Current cookies:', document.cookie);
+    console.log('� Current cookies:', document.cookie);
   }
 };
 

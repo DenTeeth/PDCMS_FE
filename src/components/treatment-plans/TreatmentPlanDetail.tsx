@@ -347,7 +347,7 @@ export default function TreatmentPlanDetail({
 
   // Debug: Log approval status and permissions for troubleshooting
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 TreatmentPlanDetail Debug:', {
+    console.log(' TreatmentPlanDetail Debug:', {
       planCode: plan.planCode,
       status: plan.status, // TreatmentPlanStatus (PENDING, IN_PROGRESS, etc.)
       approvalStatus: plan.approvalStatus, // ApprovalStatus (DRAFT, PENDING_REVIEW, etc.) - có thể null/undefined
@@ -396,7 +396,7 @@ export default function TreatmentPlanDetail({
         notes: submitNotes || undefined,
       });
 
-      console.log('✅ Submit for review success - API 5.12 response:', {
+      console.log(' Submit for review success - API 5.12 response:', {
         planCode: updatedPlan.planCode,
         status: updatedPlan.status,
         approvalStatus: updatedPlan.approvalStatus, // Should be "PENDING_REVIEW"

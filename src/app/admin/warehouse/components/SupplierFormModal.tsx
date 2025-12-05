@@ -254,7 +254,7 @@ export default function SupplierFormModal({
                 {/* Info for create mode */}
                 {!supplier && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                    <p className="font-semibold mb-1">ℹ️ Lưu ý:</p>
+                    <p className="font-semibold mb-1"> Lưu ý:</p>
                     <ul className="list-disc list-inside space-y-1">
                       <li>Mã nhà cung cấp sẽ được tự động tạo (SUP-001, SUP-002, ...)</li>
                       <li>Tên nhà cung cấp phải là duy nhất (không phân biệt hoa thường)</li>

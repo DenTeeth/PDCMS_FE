@@ -99,7 +99,7 @@ export default function AdminTreatmentPlansPage() {
 
     try {
       setLoading(true);
-      // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
+      //  Use API 5.5: Get all treatment plans with RBAC and filters
       // This API automatically handles RBAC (Admin sees all, Doctor sees their own, etc.)
       const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
         page: currentPage,
@@ -113,7 +113,7 @@ export default function AdminTreatmentPlansPage() {
         if (!abortController.signal.aborted && isMounted) {
           // Debug: Log status for each plan to verify BE response
           if (process.env.NODE_ENV === 'development') {
-            console.log('📋 [TREATMENT PLANS LIST] Loaded plans:', {
+            console.log(' [TREATMENT PLANS LIST] Loaded plans:', {
               count: pageResponse.content.length,
               plans: pageResponse.content.map(p => ({
                 planCode: p.planCode,
@@ -157,7 +157,7 @@ export default function AdminTreatmentPlansPage() {
         const extraDelay = Math.max(0, 2000 - timeSinceDetailView);
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching after returning from detail (extra delay:', extraDelay, 'ms)');
+            console.log(' [TREATMENT PLANS LIST] Refetching after returning from detail (extra delay:', extraDelay, 'ms)');
           }
           loadPlans();
         }, extraDelay);
@@ -194,7 +194,7 @@ export default function AdminTreatmentPlansPage() {
         // BE may need time to update phase/plan status after item completion
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to visibility change (delay:', REFETCH_DELAY, 'ms)');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to visibility change (delay:', REFETCH_DELAY, 'ms)');
           }
           loadPlans();
         }, REFETCH_DELAY);
@@ -210,7 +210,7 @@ export default function AdminTreatmentPlansPage() {
         // Delay to ensure navigation is complete and BE status is updated
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to window focus (delay:', REFETCH_DELAY, 'ms)');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to window focus (delay:', REFETCH_DELAY, 'ms)');
           }
           loadPlans();
         }, REFETCH_DELAY);
@@ -226,7 +226,7 @@ export default function AdminTreatmentPlansPage() {
         
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to popstate (back/forward) (delay:', REFETCH_DELAY, 'ms)');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to popstate (back/forward) (delay:', REFETCH_DELAY, 'ms)');
           }
           loadPlans();
         }, REFETCH_DELAY);
@@ -281,7 +281,7 @@ export default function AdminTreatmentPlansPage() {
   }, []);
 
   // Handle row click - navigate to detail page
-  // ✅ Backend fix applied (2025-11-15): patientCode is now included in API 5.5 response
+  //  Backend fix applied (2025-11-15): patientCode is now included in API 5.5 response
   const handleRowClick = useCallback((plan: TreatmentPlanSummaryDTO) => {
     if (!plan.planCode) {
       console.error('planCode missing in summary - this should not happen after backend fix');
@@ -299,7 +299,7 @@ export default function AdminTreatmentPlansPage() {
       return;
     }
 
-    // ✅ Simplified: Use patientCode directly from plan (always available after backend fix)
+    //  Simplified: Use patientCode directly from plan (always available after backend fix)
     // Store timestamp when navigating to detail - will use for refetch timing
     sessionStorage.setItem('treatmentPlanDetailViewTime', Date.now().toString());
     router.push(`/admin/treatment-plans/${plan.planCode}?patientCode=${plan.patientCode}`);

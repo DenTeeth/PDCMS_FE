@@ -2,7 +2,7 @@
 
 /**
  * Storage In/Out Page - API V1 (Transactions Management)
- * ✅ Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
+ * Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
  */
 
 import { useState, useEffect } from 'react';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
@@ -673,8 +674,8 @@ export default function StorageInOutPage() {
                     setPage(0);
                   }}
                   className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeFilter === filter
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
                     }`}
                 >
                   {filter === 'ALL' ? 'Tất cả' : getTypeLabel(filter)} ({filterStats[filter]})
@@ -807,7 +808,7 @@ export default function StorageInOutPage() {
                                       <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
                                     </Button>
                                     {/* 
-                                ⚠️ DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
+                                DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
                                 TransactionHistoryController chỉ có GET endpoints.
                                 Nếu cần xóa, có thể set status = CANCELLED thay vì delete.
                               */}

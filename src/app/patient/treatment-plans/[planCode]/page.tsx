@@ -34,7 +34,7 @@ export default function PatientTreatmentPlanDetailPage() {
   const { is403Error, handleError } = useApiErrorHandler();
 
   const planCode = params?.planCode as string;
-  
+
   // Get patientCode from JWT token
   const [patientCode, setPatientCode] = useState<string>(() => {
     if (user?.token) {
@@ -103,21 +103,21 @@ export default function PatientTreatmentPlanDetailPage() {
     const loadPlan = async () => {
       try {
         setLoading(true);
-        
-        // ✅ Backend fix applied: planCode is now included in summary DTO
+
+        // Backend fix applied: planCode is now included in summary DTO
         // No more workaround needed
         const isNumeric = /^\d+$/.test(planCode);
-        
+
         if (isNumeric) {
           // Legacy patientPlanId - redirect to list page
-          console.warn('⚠️ Received numeric planCode (likely patientPlanId). Redirecting to list page.');
+          console.warn('Received numeric planCode (likely patientPlanId). Redirecting to list page.');
           toast.error('Mã lộ trình không hợp lệ', {
             description: 'Vui lòng chọn lộ trình từ danh sách để xem chi tiết.',
           });
           router.push('/patient/treatment-plans');
           return;
         }
-        
+
         // planCode is actual planCode, use it directly
         const detail = await TreatmentPlanService.getTreatmentPlanDetail(
           patientCode,

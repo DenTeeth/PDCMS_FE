@@ -87,23 +87,23 @@ export class TimeOffDiagnostics {
      * Log detailed structure analysis to console
      */
     static logStructure(request: any, label: string = 'Time-Off Request') {
-        console.group(`📊 ${label} Structure Analysis`);
+        console.group(`� ${label} Structure Analysis`);
 
         const validation = this.validateStructure(request);
 
-        console.log('🔍 Raw Data:', JSON.stringify(request, null, 2));
-        console.log('✅ Valid:', validation.isValid);
+        console.log(' Raw Data:', JSON.stringify(request, null, 2));
+        console.log(' Valid:', validation.isValid);
 
         if (validation.issues.length > 0) {
-            console.error('❌ Issues:', validation.issues);
+            console.error(' Issues:', validation.issues);
         }
 
         if (validation.warnings.length > 0) {
-            console.warn('⚠️ Warnings:', validation.warnings);
+            console.warn(' Warnings:', validation.warnings);
         }
 
         // Log structure summary
-        console.log('📋 Structure Summary:', {
+        console.log(' Structure Summary:', {
             hasNestedEmployee: !!request?.employee,
             hasNestedRequestedBy: !!request?.requestedBy,
             hasNestedApprovedBy: !!request?.approvedBy,
@@ -186,7 +186,7 @@ export class TimeOffDiagnostics {
 
         if (!request?.employee && request?.employeeId) {
             suggestions.push(
-                '🔧 Backend Migration Needed:\n' +
+                ' Backend Migration Needed:\n' +
                 '   Change from: { employeeId: number, employeeName: string }\n' +
                 '   Change to:   { employee: { employeeId, employeeCode, firstName, lastName, fullName } }'
             );
@@ -194,7 +194,7 @@ export class TimeOffDiagnostics {
 
         if (!request?.requestedBy && request?.requestedByName) {
             suggestions.push(
-                '🔧 Backend Migration Needed:\n' +
+                ' Backend Migration Needed:\n' +
                 '   Change from: { requestedBy: number, requestedByName: string }\n' +
                 '   Change to:   { requestedBy: { employeeId, fullName } }'
             );
@@ -202,7 +202,7 @@ export class TimeOffDiagnostics {
 
         if (request?.slotId || request?.slotName) {
             suggestions.push(
-                '🔧 Backend Migration Needed:\n' +
+                ' Backend Migration Needed:\n' +
                 '   Change from: { slotId: string, slotName: string }\n' +
                 '   Change to:   { workShiftId: string, workShiftName: string }'
             );
@@ -210,7 +210,7 @@ export class TimeOffDiagnostics {
 
         if (validation.issues.length > 0) {
             suggestions.push(
-                '❌ Critical Issues Found:\n' +
+                ' Critical Issues Found:\n' +
                 validation.issues.map(issue => `   - ${issue}`).join('\n')
             );
         }
@@ -263,7 +263,7 @@ export class TimeOffDiagnostics {
                 cancellationReason: request.cancellationReason
             };
         } catch (error) {
-            console.error('❌ Failed to adapt legacy structure:', error);
+            console.error(' Failed to adapt legacy structure:', error);
             return null;
         }
     }

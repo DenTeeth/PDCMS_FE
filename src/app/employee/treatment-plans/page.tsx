@@ -59,7 +59,7 @@ export default function EmployeeTreatmentPlansPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   // Permissions
-  // ✅ Backend fix (2025-11-15): Backend now checks role BEFORE permission
+  //  Backend fix (2025-11-15): Backend now checks role BEFORE permission
   // Employee will always be filtered by createdBy, even if they have VIEW_TREATMENT_PLAN_ALL
   const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') || 
                   user?.permissions?.includes('VIEW_TREATMENT_PLAN_OWN') || false;
@@ -103,8 +103,8 @@ export default function EmployeeTreatmentPlansPage() {
 
       try {
         setLoading(true);
-        // ✅ Use API 5.5: Get all treatment plans with RBAC and filters
-        // ✅ Backend fix (2025-11-15): Backend now checks role BEFORE permission
+        //  Use API 5.5: Get all treatment plans with RBAC and filters
+        //  Backend fix (2025-11-15): Backend now checks role BEFORE permission
         // - Employee: Always filtered by createdBy (regardless of permission)
         // - Patient: Always filtered by patient
         // - Admin: Can see all plans, can use doctorEmployeeCode/patientCode filters
@@ -123,7 +123,7 @@ export default function EmployeeTreatmentPlansPage() {
 
       // Debug: Log status for each plan to verify BE response
       if (process.env.NODE_ENV === 'development') {
-        console.log('📋 [TREATMENT PLANS LIST] Loaded plans:', {
+        console.log(' [TREATMENT PLANS LIST] Loaded plans:', {
           count: pageResponse.content.length,
           plans: pageResponse.content.map(p => ({
             planCode: p.planCode,
@@ -147,7 +147,7 @@ export default function EmployeeTreatmentPlansPage() {
         // Enhanced error logging for 500 errors
         if (error.response?.status === 500) {
           const errorMessage = error.response?.data?.message || error.message || '';
-          console.error('❌ [500 Error] Details:', {
+          console.error(' [500 Error] Details:', {
             status: error.response?.status,
             message: errorMessage,
             data: error.response?.data,
@@ -209,7 +209,7 @@ export default function EmployeeTreatmentPlansPage() {
         // Increased delay to ensure BE transaction is fully committed
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to visibility change');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to visibility change');
           }
           loadPlans();
         }, 500);
@@ -225,7 +225,7 @@ export default function EmployeeTreatmentPlansPage() {
         // Delay to ensure navigation is complete
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to window focus');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to window focus');
           }
           loadPlans();
         }, 500);
@@ -241,7 +241,7 @@ export default function EmployeeTreatmentPlansPage() {
         
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 [TREATMENT PLANS LIST] Refetching due to popstate (back/forward)');
+            console.log(' [TREATMENT PLANS LIST] Refetching due to popstate (back/forward)');
           }
           loadPlans();
         }, 500);
@@ -289,7 +289,7 @@ export default function EmployeeTreatmentPlansPage() {
   }, []);
 
   // Handle row click - navigate to detail page
-  // ✅ Backend fix applied (2025-11-15): patientCode is now included in API 5.1 response
+  //  Backend fix applied (2025-11-15): patientCode is now included in API 5.1 response
   const handleRowClick = useCallback((plan: TreatmentPlanSummaryDTO) => {
     if (!plan.planCode) {
       console.error('planCode missing in summary - this should not happen after backend fix');
@@ -299,7 +299,7 @@ export default function EmployeeTreatmentPlansPage() {
       return;
     }
 
-    // ✅ Simplified: Use patientCode from plan (always available after backend fix)
+    //  Simplified: Use patientCode from plan (always available after backend fix)
     // Fallback to filter/URL patientCode for backward compatibility
     const targetPatientCode = plan.patientCode || filters.patientCode || patientCode;
     
@@ -335,7 +335,7 @@ export default function EmployeeTreatmentPlansPage() {
     return <UnauthorizedMessage message="Bạn không có quyền xem lộ trình điều trị." />;
   }
 
-  // ✅ Backend fix applied: Plans are already paginated from backend
+  //  Backend fix applied: Plans are already paginated from backend
   // No need for client-side pagination
 
   return (

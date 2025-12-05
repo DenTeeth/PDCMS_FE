@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const employeeId = getEmployeeIdFromToken(token);
             if (employeeId) {
               userData.employeeId = employeeId;
-              console.log('✅ Extracted employeeId from token:', employeeId);
+              console.log(' Extracted employeeId from token:', employeeId);
             }
           }
           
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const employeeCode = getEmployeeCodeFromToken(token);
             if (employeeCode) {
               userData.employeeCode = employeeCode;
-              console.log('✅ Extracted employeeCode from token:', employeeCode);
+              console.log(' Extracted employeeCode from token:', employeeCode);
             }
           }
           
@@ -85,13 +85,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userData);
           setIsAuthenticated(true);
           
-          console.log('✅ User authenticated from localStorage', {
+          console.log(' User authenticated from localStorage', {
             username: userData.username,
             employeeId: userData.employeeId,
             employmentType: userData.employmentType
           });
         } else {
-          console.log('❌ No authentication data found');
+          console.log(' No authentication data found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Refresh auth function with useCallback to avoid re-creating on every render
   const refreshAuth = useCallback(async () => {
     try {
-      console.log('🔄 Attempting to refresh token...');
+      console.log(' Attempting to refresh token...');
       const response = await apiClient.refreshToken();
       
       if (response.accessToken) {
@@ -132,15 +132,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             ? response.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
             : 'unknown';
           
-          console.log('✅ Token refreshed successfully');
+          console.log(' Token refreshed successfully');
           console.log(`⏰ New token expires in: ${expiresIn} seconds`);
-          console.log('🍪 Refresh token rotated by backend');
+          console.log('� Refresh token rotated by backend');
         }
       } else {
         throw new Error('No access token received from refresh');
       }
     } catch (error) {
-      console.error('❌ Failed to refresh token:', error);
+      console.error(' Failed to refresh token:', error);
       clearAuthData();
       setUser(null);
       setIsAuthenticated(false);
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = getUserData();
       if (!userData?.tokenExpiresAt) {
         // Fallback: DISABLE auto-refresh if no expiration info
-        console.log('⚠️ No token expiration info, auto-refresh disabled');
+        console.log(' No token expiration info, auto-refresh disabled');
         return null; // Disable auto-refresh
       }
 
@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const expiresAt = userData.tokenExpiresAt; // Backend timestamp in seconds
       const timeUntilExpiry = expiresAt - now; // Seconds until expiration
 
-      console.log(`📊 Token expiration debug:`, {
+      console.log(`� Token expiration debug:`, {
         now,
         expiresAt,
         timeUntilExpiry,
@@ -173,15 +173,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         nowDate: new Date(now * 1000).toISOString()
       });
 
-      // ⚠️ If token expires in more than 6 hours, something is wrong
+      //  If token expires in more than 6 hours, something is wrong
       if (timeUntilExpiry > 6 * 60 * 60) {
-        console.warn('⚠️ Token expiration time seems too far in future, disabling auto-refresh');
+        console.warn(' Token expiration time seems too far in future, disabling auto-refresh');
         return null;
       }
 
-      // ⚠️ If token already expired, logout immediately
+      //  If token already expired, logout immediately
       if (timeUntilExpiry <= 0) {
-        console.warn('⚠️ Token already expired! Logging out...');
+        console.warn(' Token already expired! Logging out...');
         logout();
         return null;
       }
@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await refreshAuth();
         // Success: useEffect will re-run with new user data and set new timer
       } catch (error) {
-        console.error('❌ Auto-refresh failed:', error);
+        console.error(' Auto-refresh failed:', error);
         // User will be logged out (setIsAuthenticated(false) already called in refreshAuth)
         // useEffect will NOT re-run because dependencies changed, avoiding infinite loop
       }
@@ -228,10 +228,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      console.log('🔐 Starting login process...');
+      console.log('� Starting login process...');
       const response = await apiClient.login(credentials);
       
-      console.log('📥 Login response received:', response);
+      console.log('� Login response received:', response);
       
       // Response now directly contains the data (no statusCode wrapper)
       if (response.token) {
@@ -255,7 +255,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           employeeCode: employeeCode || undefined, // Add employeeCode from token
         };
 
-        console.log('👤 User data prepared:', userData);
+        console.log('� User data prepared:', userData);
 
         // Store user data in localStorage
         setUserData(userData);
@@ -266,27 +266,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Note: accessToken already stored in apiClient.login()
         // Note: refreshToken automatically stored in HTTP-Only Cookie by backend
-        console.log('✅ Login successful');
-        console.log('📦 Access token stored in localStorage');
+        console.log(' Login successful');
+        console.log('� Access token stored in localStorage');
         console.log(`⏰ Token expires in: ${expiresIn} seconds`);
-        console.log('🍪 Refresh token stored in HTTP-Only Cookie by backend');
+        console.log('� Refresh token stored in HTTP-Only Cookie by backend');
 
         // Update state IMMEDIATELY
         setUser(userData);
         setIsAuthenticated(true);
         
-        console.log('✅ Auth state updated - isAuthenticated: true');
+        console.log(' Auth state updated - isAuthenticated: true');
       } else {
         throw new Error('Login failed - no token received');
       }
     } catch (error) {
-      console.error('❌ Login error:', error);
+      console.error(' Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
-      console.log('🏁 Login process completed');
+      console.log(' Login process completed');
     }
   };
 
@@ -294,16 +294,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Call API logout (will clear HTTP-Only Cookie on backend)
       await apiClient.logout();
-      console.log('✅ Logout successful');
+      console.log(' Logout successful');
     } catch (error) {
-      console.warn('⚠️ Logout API call failed:', error);
+      console.warn(' Logout API call failed:', error);
     } finally {
       // Always clear state and localStorage
       clearAuthData();
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
-      console.log('🗑️ Local auth state cleared');
+      console.log(' Local auth state cleared');
     }
   };
 
@@ -311,7 +311,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
   };
 
-  // ✅ Permission helper functions
+  //  Permission helper functions
   const hasPermission = useCallback((permission: string): boolean => {
     if (!user?.permissions) return false;
     return user.permissions.includes(permission);
@@ -332,7 +332,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user.roles.includes(role);
   }, [user]);
 
-  // ✅ New RBAC helper functions
+  //  New RBAC helper functions
   const hasPermissionInGroup = useCallback((group: string, permission: string): boolean => {
     if (!user?.groupedPermissions?.[group]) return false;
     return user.groupedPermissions[group].includes(permission);

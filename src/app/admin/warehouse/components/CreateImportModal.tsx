@@ -104,7 +104,7 @@ export default function CreateImportModal({
       setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
       setValue(`items.${rowIndex}.unitId`, baseUnit.unitId);
     } catch (error: any) {
-      console.error('❌ Failed to fetch base unit:', error);
+      console.error(' Failed to fetch base unit:', error);
       toast.error('Không thể tải đơn vị cơ sở của vật tư', {
         description: error.response?.data?.message || 'Vui lòng thử lại hoặc liên hệ admin',
       });
@@ -126,7 +126,7 @@ export default function CreateImportModal({
         console.log('[WAREHOUSE] Suppliers fetched:', page.content?.length || 0);
         return page;
       } catch (error: any) {
-        console.error('❌ Failed to fetch suppliers:', error);
+        console.error(' Failed to fetch suppliers:', error);
         toast.error('Không thể tải danh sách nhà cung cấp', {
           description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập hoặc liên hệ admin',
         });
@@ -151,7 +151,7 @@ export default function CreateImportModal({
         console.log('[WAREHOUSE] Item Masters fetched:', result.length, 'items');
         return result;
       } catch (error: any) {
-        console.error('❌ Failed to fetch item masters:', error);
+        console.error(' Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
           description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập hoặc liên hệ admin',
         });

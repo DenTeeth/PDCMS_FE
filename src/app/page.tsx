@@ -1,4 +1,4 @@
-﻿import dynamic from "next/dynamic";
+import dynamic from "next/dynamic";
 import Navigation from "@/components/layout/Navigation";
 import HeroSection from "@/components/homepage/HeroSection";
 import StatsSection from "@/components/homepage/StatsSection";

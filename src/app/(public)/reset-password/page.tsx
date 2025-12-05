@@ -118,7 +118,7 @@ export default function ResetPasswordPage() {
         errorMessage = err.message;
       }
       
-      console.error('❌ Reset password error:', {
+      console.error(' Reset password error:', {
         error: err,
         response: err.response?.data,
         message: errorMessage,

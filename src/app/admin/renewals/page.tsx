@@ -197,7 +197,7 @@ export default function AdminRenewalsPage() {
   const fetchRenewals = async () => {
     try {
       setLoading(true);
-      console.log('🚀 [fetchRenewals] Fetching all renewals...');
+      console.log(' [fetchRenewals] Fetching all renewals...');
 
       const params: { status?: RenewalStatus; employeeId?: number } = {};
       if (statusFilter !== 'ALL') {
@@ -209,14 +209,14 @@ export default function AdminRenewalsPage() {
 
       const data = await renewalService.getAllRenewals(params);
 
-      console.log('✅ [fetchRenewals] Received renewals:', {
+      console.log(' [fetchRenewals] Received renewals:', {
         count: data.length,
         renewals: data
       });
 
       setAllRenewals(data || []);
     } catch (error: any) {
-      console.error('❌ [fetchRenewals] Failed to fetch renewals:', error);
+      console.error(' [fetchRenewals] Failed to fetch renewals:', error);
       toast.error(error.message || 'Không thể tải danh sách renewal requests');
       setAllRenewals([]);
     } finally {
@@ -240,7 +240,7 @@ export default function AdminRenewalsPage() {
       const employeeList = response.content || [];
       setEmployees(employeeList);
     } catch (error: any) {
-      console.error('❌ [fetchEmployees] Failed to fetch employees:', error);
+      console.error(' [fetchEmployees] Failed to fetch employees:', error);
     } finally {
       setLoadingEmployees(false);
     }
@@ -325,7 +325,7 @@ export default function AdminRenewalsPage() {
     try {
       setFinalizing(true);
 
-      console.log('🚀 [handleFinalizeRenewal] Finalizing renewal:', {
+      console.log(' [handleFinalizeRenewal] Finalizing renewal:', {
         renewalId: selectedRenewal.renewalId,
         newEffectiveTo
       });
@@ -337,7 +337,7 @@ export default function AdminRenewalsPage() {
 
       const response = await renewalService.finalizeRenewal(request);
 
-      console.log('✅ [handleFinalizeRenewal] Finalized successfully:', response);
+      console.log(' [handleFinalizeRenewal] Finalized successfully:', response);
 
       toast.success('Đã hoàn tất gia hạn! Lịch mới đã được tạo.');
 
@@ -347,7 +347,7 @@ export default function AdminRenewalsPage() {
       // Refresh danh sách
       await fetchRenewals();
     } catch (error: any) {
-      console.error('❌ [handleFinalizeRenewal] Failed:', error);
+      console.error(' [handleFinalizeRenewal] Failed:', error);
       toast.error(error.message || 'Không thể finalize renewal. Vui lòng thử lại.');
     } finally {
       setFinalizing(false);

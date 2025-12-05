@@ -78,7 +78,7 @@ export default function SpecializationTestPage() {
       {result && (
         <Card className="p-4">
           <h3 className="font-semibold mb-2">
-            {result.success ? '✅ Success' : '❌ Error'} 
+            {result.success ? ' Success' : ' Error'} 
             {result.method && ` (${result.method})`}
           </h3>
           

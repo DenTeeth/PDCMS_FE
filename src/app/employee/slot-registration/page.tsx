@@ -79,7 +79,7 @@ export default function SlotRegistrationPage() {
     try {
       setLoading(true);
       const slots = await shiftRegistrationService.getAvailableSlots();
-      console.log('📋 Available slots:', slots);
+      console.log(' Available slots:', slots);
 
       // Fetch details for each slot to get remaining quota
       const detailsMap = new Map<number, SlotDetailsResponse>();
@@ -100,7 +100,7 @@ export default function SlotRegistrationPage() {
         return details && details.overallRemaining > 0;
       });
 
-      console.log('✅ Filtered available slots:', availableSlotsWithQuota);
+      console.log(' Filtered available slots:', availableSlotsWithQuota);
       setAvailableSlots(availableSlotsWithQuota);
       setSlotDetails(detailsMap);
     } catch (error: any) {
@@ -122,7 +122,7 @@ export default function SlotRegistrationPage() {
       };
 
       const response = await shiftRegistrationService.getMyRegistrations(params);
-      console.log('📋 My registrations:', response);
+      console.log(' My registrations:', response);
       // Handle both array and paginated responses
       if (Array.isArray(response)) {
         setMyRegistrations(response);
@@ -185,7 +185,7 @@ export default function SlotRegistrationPage() {
         dayOfWeek: registerFormData.dayOfWeek
       };
 
-      console.log('📤 Registering for slot:', payload);
+      console.log('� Registering for slot:', payload);
 
       await shiftRegistrationService.createRegistration(payload);
       toast.success('Successfully registered for the slot!');
@@ -198,7 +198,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error('❌ Failed to register for slot:', error);
+      console.error(' Failed to register for slot:', error);
 
       let errorMessage = 'Failed to register for slot';
       if (error.response?.data?.message) {
@@ -223,7 +223,7 @@ export default function SlotRegistrationPage() {
 
     try {
       setDeleting(true);
-      console.log('🗑️ Cancelling registration:', registration.registrationId);
+      console.log(' Cancelling registration:', registration.registrationId);
 
       await shiftRegistrationService.deleteRegistration(registration.registrationId.toString());
       toast.success('Registration cancelled successfully');
@@ -234,7 +234,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error('❌ Failed to cancel registration:', error);
+      console.error(' Failed to cancel registration:', error);
 
       let errorMessage = 'Failed to cancel registration';
       if (error.response?.data?.message) {

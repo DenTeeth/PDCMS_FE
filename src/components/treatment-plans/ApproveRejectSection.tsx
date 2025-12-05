@@ -259,7 +259,7 @@ export default function ApproveRejectSection({
               <p className="text-yellow-700 font-medium">
                 Lộ trình đang chờ được duyệt. Quản lý cần duyệt trước khi có thể kích hoạt.
               </p>
-              {/* ✅ Display submit notes from doctor */}
+              {/*  Display submit notes from doctor */}
               {(() => {
                 // Check if plan has submitNotes field and it's not empty
                 // Handle both TreatmentPlanDetailResponse and TreatmentPlanDetailResponseWithApproval

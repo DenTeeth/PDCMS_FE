@@ -50,10 +50,10 @@ export default function EmployeeTreatmentPlanDetailPage() {
   const [loading, setLoading] = useState(true);
 
   // Permissions
-  // ✅ Backend fix (2025-11-15): Employee cần VIEW_TREATMENT_PLAN_OWN
+  // Backend fix (2025-11-15): Employee cần VIEW_TREATMENT_PLAN_OWN
   // Backend sẽ filter theo createdBy, dù có VIEW_TREATMENT_PLAN_ALL
-  const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') || 
-                  user?.permissions?.includes('VIEW_TREATMENT_PLAN_OWN') || false;
+  const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') ||
+    user?.permissions?.includes('VIEW_TREATMENT_PLAN_OWN') || false;
 
   // Request cancellation ref
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -82,25 +82,25 @@ export default function EmployeeTreatmentPlanDetailPage() {
     const loadPlan = async () => {
       try {
         setLoading(true);
-        
-        // ✅ Backend fix applied: planCode is now included in summary DTO
+
+        // Backend fix applied: planCode is now included in summary DTO
         // No more workaround needed
         const isNumeric = /^\d+$/.test(planCode);
-        
+
         if (isNumeric) {
           // Legacy patientPlanId - redirect to list page
-          console.warn('⚠️ Received numeric planCode (likely patientPlanId). Redirecting to list page.');
+          console.warn('Received numeric planCode (likely patientPlanId). Redirecting to list page.');
           toast.error('Mã lộ trình không hợp lệ', {
             description: 'Vui lòng chọn lộ trình từ danh sách để xem chi tiết.',
           });
           router.push('/employee/treatment-plans');
           return;
         }
-        
+
         // planCode is actual planCode
         // Try to get patientCode from URL query params first, then from plan detail response
         let targetPatientCode = patientCode;
-        
+
         // If no patientCode in URL, we'll get it from the plan detail response
         // But API 5.2 requires patientCode in path, so we need to handle this
         // For now, if patientCode is missing, try to load without it (may fail)
@@ -108,14 +108,14 @@ export default function EmployeeTreatmentPlanDetailPage() {
         if (!targetPatientCode) {
           // Try to extract from planCode or use a workaround
           // This should not happen in normal flow, but handle gracefully
-          console.warn('⚠️ patientCode missing from URL. Attempting to load plan without it.');
+          console.warn('patientCode missing from URL. Attempting to load plan without it.');
           // We'll need to get patientCode from the plan detail response
           // But API requires it in path, so this will likely fail
           // Better to redirect to list page
           router.push('/employee/treatment-plans');
           return;
         }
-        
+
         const detail = await TreatmentPlanService.getTreatmentPlanDetail(
           targetPatientCode,
           planCode
@@ -135,7 +135,7 @@ export default function EmployeeTreatmentPlanDetailPage() {
         // Enhanced error logging for 500 errors
         if (error.response?.status === 500) {
           const errorMessage = error.response?.data?.message || error.message || '';
-          console.error('❌ [500 Error] Details:', {
+          console.error('[500 Error] Details:', {
             status: error.response?.status,
             message: errorMessage,
             data: error.response?.data,
@@ -143,7 +143,7 @@ export default function EmployeeTreatmentPlanDetailPage() {
             isAccountIdError: /account_id|accountId|Unable to extract/.test(errorMessage),
             isEmployeeNotFound: /Employee not found/.test(errorMessage),
           });
-          
+
           // If it's an account_id extraction error, show specific message
           if (/account_id|accountId|Unable to extract/.test(errorMessage)) {
             toast.error('Lỗi xác thực', {
@@ -152,7 +152,7 @@ export default function EmployeeTreatmentPlanDetailPage() {
             });
             return;
           }
-          
+
           // If employee not found, show specific message
           if (/Employee not found/.test(errorMessage)) {
             toast.error('Lỗi dữ liệu', {

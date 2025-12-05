@@ -95,17 +95,17 @@ export default function CreateItemMasterModal({
     },
     onError: (error: any, variables: any) => {
       // Detailed error logging in component for BE debugging
-      console.group('❌ [WAREHOUSE MODAL] Update Item Error');
-      console.error('📋 Item ID:', item?.id);
-      console.error('📋 Item Code:', item?.itemCode || 'N/A');
+      console.group(' [WAREHOUSE MODAL] Update Item Error');
+      console.error(' Item ID:', item?.id);
+      console.error(' Item Code:', item?.itemCode || 'N/A');
       console.error('[WAREHOUSE] Request Variables:', JSON.stringify(variables, null, 2));
       console.error('⏰ Timestamp:', new Date().toISOString());
       
       // Handle Safety Lock errors (409 CONFLICT)
       if (error.response?.status === 409) {
         const conflictData = error.response.data || {};
-        console.error('🚫 [WAREHOUSE MODAL] CONFLICT (409) Detected');
-        console.error('📌 Conflict Details:', {
+        console.error('� [WAREHOUSE MODAL] CONFLICT (409) Detected');
+        console.error('� Conflict Details:', {
           itemId: item?.id,
           itemCode: item?.itemCode || 'N/A',
           status: 409,
@@ -140,7 +140,7 @@ export default function CreateItemMasterModal({
         const errorData = error.response.data || {};
         const message = errorData.message || error.message || 'Lỗi validation';
         
-        console.error('❌ [WAREHOUSE MODAL] Validation Error (400):', {
+        console.error(' [WAREHOUSE MODAL] Validation Error (400):', {
           status: 400,
           message: message,
           errorCode: errorData.errorCode || 'NO_ERROR_CODE',
@@ -172,7 +172,7 @@ export default function CreateItemMasterModal({
         toast.error(userMessage);
       } else {
         // Log other errors
-        console.error('❌ [WAREHOUSE MODAL] Other Error:', {
+        console.error(' [WAREHOUSE MODAL] Other Error:', {
           status: error.response?.status || 'NO_STATUS',
           message: error.message || 'NO_MESSAGE',
           errorCode: error.response?.data?.errorCode || 'NO_ERROR_CODE',
@@ -263,7 +263,7 @@ export default function CreateItemMasterModal({
           conversionRate: 1,
           isBaseUnit: true,
           displayOrder: 1,
-          isActive: true, // ✅ FIX: Required field - new units are active by default
+          isActive: true, //  FIX: Required field - new units are active by default
           isDefaultImportUnit: true,
           isDefaultExportUnit: true,
         },

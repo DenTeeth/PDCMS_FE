@@ -8,9 +8,9 @@ import { Role } from '@/types/permission';
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRoles?: (string | Role)[];      // Support both string and Role enum
-  requiredBaseRole?: string;              // ✅ NEW: Check theo baseRole (admin, employee, patient)
-  requiredPermissions?: string[];         // ✅ NEW: Check theo permissions (RBAC)
-  requireAll?: boolean;                   // ✅ NEW: true = cần ALL permissions, false = cần ANY permission
+  requiredBaseRole?: string;              //  NEW: Check theo baseRole (admin, employee, patient)
+  requiredPermissions?: string[];         //  NEW: Check theo permissions (RBAC)
+  requireAll?: boolean;                   //  NEW: true = cần ALL permissions, false = cần ANY permission
   fallbackPath?: string;
 }
 
@@ -41,7 +41,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
 
-      // ✅ Priority 1: Check baseRole (Recommended for layout protection)
+      //  Priority 1: Check baseRole (Recommended for layout protection)
       if (requiredBaseRole) {
         if (user?.baseRole !== requiredBaseRole) {
           console.warn(`Access denied. Required baseRole: ${requiredBaseRole}, current: ${user?.baseRole}`);
@@ -49,7 +49,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           return;
         }
       }
-      // ✅ Priority 2: Check permissions (RBAC - Recommended for feature protection)
+      //  Priority 2: Check permissions (RBAC - Recommended for feature protection)
       else if (requiredPermissions.length > 0) {
         const hasRequiredPermission = requireAll
           ? hasAllPermissions(requiredPermissions)
@@ -61,7 +61,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           return;
         }
       }
-      // ⚠️ Priority 3: Fallback to roles check (Legacy support)
+      //  Priority 3: Fallback to roles check (Legacy support)
       else if (requiredRoles.length > 0) {
         const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
         
@@ -88,7 +88,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // ✅ Check baseRole (Recommended for layout protection)
+  //  Check baseRole (Recommended for layout protection)
   if (requiredBaseRole) {
     if (user?.baseRole !== requiredBaseRole) {
       return (
@@ -108,7 +108,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       );
     }
   }
-  // ✅ Check permissions (RBAC - Recommended for feature protection)
+  //  Check permissions (RBAC - Recommended for feature protection)
   else if (requiredPermissions.length > 0) {
     const hasRequiredPermission = requireAll
       ? hasAllPermissions(requiredPermissions)
@@ -132,7 +132,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       );
     }
   }
-  // ⚠️ Fallback: Check roles (Legacy support)
+  //  Fallback: Check roles (Legacy support)
   else if (requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
     

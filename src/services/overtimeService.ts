@@ -31,7 +31,7 @@ export class OvertimeService {
     const axios = apiClient.getAxiosInstance();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 OvertimeService.createOvertimeRequest called with:', {
+      console.log(' OvertimeService.createOvertimeRequest called with:', {
         url: this.BASE_URL,
         data: data,
         hasEmployeeId: data.employeeId !== undefined,
@@ -45,12 +45,12 @@ export class OvertimeService {
         data
       );
       if (process.env.NODE_ENV === 'development') {
-        console.log('✅ OvertimeService.createOvertimeRequest success:', response.data);
+        console.log(' OvertimeService.createOvertimeRequest success:', response.data);
       }
       return response.data;
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ OvertimeService.createOvertimeRequest error:', {
+        console.error(' OvertimeService.createOvertimeRequest error:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,

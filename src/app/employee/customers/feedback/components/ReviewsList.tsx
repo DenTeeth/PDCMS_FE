@@ -167,7 +167,7 @@ export default function ReviewsList({
                   <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                     {review.dentistName && (
                       <span>
-                        👨‍⚕️ <strong>Dentist:</strong> {review.dentistName}
+                         <strong>Dentist:</strong> {review.dentistName}
                       </span>
                     )}
                     {review.serviceName && (
@@ -176,7 +176,7 @@ export default function ReviewsList({
                       </span>
                     )}
                     <span>
-                      📅 {format(new Date(review.createdAt), 'MMM dd, yyyy')}
+                      � {format(new Date(review.createdAt), 'MMM dd, yyyy')}
                     </span>
                   </div>
                 </div>

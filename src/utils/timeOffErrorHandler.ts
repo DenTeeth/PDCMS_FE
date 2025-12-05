@@ -22,7 +22,7 @@ export class TimeOffErrorHandler {
 
         // Log for debugging
         if (process.env.NODE_ENV === 'development') {
-            console.error('❌ Approve Error Details:', {
+            console.error(' Approve Error Details:', {
                 requestId,
                 status: errorStatus,
                 statusText: error.response?.statusText,
@@ -99,7 +99,7 @@ export class TimeOffErrorHandler {
         const errorMsg = errorData?.message || errorData?.error || error.message;
 
         if (process.env.NODE_ENV === 'development') {
-            console.error('❌ Reject Error Details:', {
+            console.error(' Reject Error Details:', {
                 requestId,
                 reason,
                 status: errorStatus,
@@ -174,7 +174,7 @@ export class TimeOffErrorHandler {
         const errorMsg = errorData?.message || errorData?.error || error.message;
 
         if (process.env.NODE_ENV === 'development') {
-            console.error('❌ Cancel Error Details:', {
+            console.error(' Cancel Error Details:', {
                 requestId,
                 reason,
                 status: errorStatus,
@@ -244,7 +244,7 @@ export class TimeOffErrorHandler {
      * Format error info into user-friendly alert message
      */
     static formatErrorMessage(errorInfo: TimeOffErrorInfo): string {
-        let message = `❌ ${errorInfo.title}\n\n${errorInfo.message}`;
+        let message = ` ${errorInfo.title}\n\n${errorInfo.message}`;
 
         if (errorInfo.details) {
             message += `\n\n${errorInfo.details}`;
