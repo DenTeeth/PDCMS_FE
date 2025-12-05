@@ -475,8 +475,8 @@ export default function PatientsPage() {
       {/* ==================== HEADER ==================== */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
-          <p className="text-gray-600">View and manage patient information</p>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý bệnh nhân</h1>
+          <p className="text-gray-600">Xem và quản lý thông tin bệnh nhân</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -535,7 +535,7 @@ export default function PatientsPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <Label htmlFor="search">Search</Label>
+            <Label htmlFor="search">Tìm kiếm</Label>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -590,15 +590,15 @@ export default function PatientsPage() {
                     onChange={(e) => setFilterGender(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="all">All Genders</option>
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                    <option value="OTHER">Other</option>
+                    <option value="all">Tất cả giới tính</option>
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                    <option value="OTHER">Khác</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Trạng thái</Label>
                   <select
                     value={filterStatus}
                     onChange={(e) => {
@@ -607,9 +607,9 @@ export default function PatientsPage() {
                     }}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Không hoạt động</option>
                   </select>
                 </div>
 
@@ -985,9 +985,9 @@ export default function PatientsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <Card className="w-full max-w-2xl my-8">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold">Create New Patient</CardTitle>
+              <CardTitle className="text-xl font-semibold">Tạo bệnh nhân mới</CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                Create a patient account. If email is provided, an account will be created automatically and a password setup email will be sent to the patient.
+                Tạo tài khoản bệnh nhân. Nếu cung cấp email, tài khoản sẽ được tạo tự động và email thiết lập mật khẩu sẽ được gửi đến bệnh nhân.
               </p>
             </CardHeader>
             <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto">
@@ -1001,11 +1001,11 @@ export default function PatientsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="username">
-                        Username
+                        Tên đăng nhập
                       </Label>
                       <Input
                         id="username"
-                        placeholder="e.g., minh.nguyen (auto-generated from email if empty)"
+                        placeholder="VD: minh.nguyen (tự động tạo từ email nếu để trống)"
                         value={formData.username || ''}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value || undefined })}
                         disabled={creating}
@@ -1035,7 +1035,7 @@ export default function PatientsPage() {
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
                     <User className="h-4 w-4 text-blue-600" />
-                    Personal Information
+                    Thông tin cá nhân
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
@@ -1229,7 +1229,7 @@ export default function PatientsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
-              <CardTitle>Edit Patient - {editingPatient?.patientCode}</CardTitle>
+              <CardTitle>Chỉnh sửa bệnh nhân - {editingPatient?.patientCode}</CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdatePatient} className="space-y-6">
@@ -1245,7 +1245,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, firstName: e.target.value })
                         }
-                        placeholder="Enter first name"
+                        placeholder="Nhập tên"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1256,7 +1256,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, lastName: e.target.value })
                         }
-                        placeholder="Enter last name"
+                        placeholder="Nhập họ"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1272,10 +1272,10 @@ export default function PatientsPage() {
                         }
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select gender</option>
-                        <option value="MALE">Male</option>
-                        <option value="FEMALE">Female</option>
-                        <option value="OTHER">Other</option>
+                        <option value="">Chọn giới tính</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -1294,7 +1294,7 @@ export default function PatientsPage() {
 
                 {/* Contact Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin liên hệ</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-email">Email</Label>
@@ -1305,7 +1305,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, email: e.target.value })
                         }
-                        placeholder="Enter email"
+                        placeholder="Nhập email"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1316,7 +1316,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, phone: e.target.value })
                         }
-                        placeholder="Enter phone number"
+                        placeholder="Nhập số điện thoại"
                       />
                     </div>
                     <div className="space-y-2 md:col-span-2">
@@ -1327,7 +1327,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, address: e.target.value })
                         }
-                        placeholder="Enter address"
+                        placeholder="Nhập địa chỉ"
                       />
                     </div>
                   </div>
@@ -1335,7 +1335,7 @@ export default function PatientsPage() {
 
                 {/* Medical Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Medical Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin y tế</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-medicalHistory">Medical History</Label>
@@ -1345,7 +1345,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, medicalHistory: e.target.value })
                         }
-                        placeholder="Enter medical history"
+                        placeholder="Nhập tiền sử bệnh lý"
                         rows={3}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -1358,7 +1358,7 @@ export default function PatientsPage() {
                         onChange={(e) =>
                           setEditFormData({ ...editFormData, allergies: e.target.value })
                         }
-                        placeholder="Enter allergies"
+                        placeholder="Nhập dị ứng (nếu có)"
                         rows={2}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -1368,7 +1368,7 @@ export default function PatientsPage() {
 
                 {/* Emergency Contact */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Emergency Contact</h3>
+                  <h3 className="text-lg font-semibold mb-3">Liên hệ khẩn cấp</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-emergencyContactName">Contact Name</Label>
@@ -1381,7 +1381,7 @@ export default function PatientsPage() {
                             emergencyContactName: e.target.value,
                           })
                         }
-                        placeholder="Enter emergency contact name"
+                        placeholder="Nhập tên người liên hệ khẩn cấp"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1395,7 +1395,7 @@ export default function PatientsPage() {
                             emergencyContactPhone: e.target.value,
                           })
                         }
-                        placeholder="Enter emergency contact phone"
+                        placeholder="Nhập số điện thoại khẩn cấp"
                       />
                     </div>
                   </div>

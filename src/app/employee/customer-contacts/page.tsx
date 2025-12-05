@@ -98,7 +98,7 @@ export default function ContactsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search contacts..."
+            placeholder="Tìm kiếm liên hệ..."
             className="pl-10"
           />
         </div>

@@ -82,14 +82,14 @@ export default function PatientDashboard() {
       <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-primary-foreground">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Welcome back, Patient!</h1>
+            <h1 className="text-3xl font-bold">Chào mừng trở lại!</h1>
             <p className="text-primary-foreground/80 mt-2">
-              Here's what's happening with your health today
+              Đây là những gì đang xảy ra với sức khỏe của bạn hôm nay
             </p>
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm opacity-80">Next Appointment</p>
+              <p className="text-sm opacity-80">Lịch hẹn tiếp theo</p>
               <p className="font-semibold">Jan 25, 2024 at 10:00 AM</p>
             </div>
             <FontAwesomeIcon icon={faCalendarAlt} className="h-8 w-8 opacity-80" />
@@ -103,7 +103,7 @@ export default function PatientDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Upcoming Appointments</p>
+                <p className="text-sm font-medium text-muted-foreground">Lịch hẹn sắp tới</p>
                 <p className="text-2xl font-bold">2</p>
               </div>
               <FontAwesomeIcon icon={faCalendarAlt} className="h-8 w-8 text-primary" />
@@ -115,7 +115,7 @@ export default function PatientDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Medical Records</p>
+                <p className="text-sm font-medium text-muted-foreground">Hồ sơ y tế</p>
                 <p className="text-2xl font-bold">12</p>
               </div>
               <FontAwesomeIcon icon={faFileAlt} className="h-8 w-8 text-primary" />
@@ -127,7 +127,7 @@ export default function PatientDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
+                <p className="text-sm font-medium text-muted-foreground">Thanh toán chờ xử lý</p>
                 <p className="text-2xl font-bold">1</p>
               </div>
               <FontAwesomeIcon icon={faCreditCard} className="h-8 w-8 text-primary" />
@@ -155,10 +155,10 @@ export default function PatientDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 h-5 w-5" />
-              Upcoming Appointments
+              Lịch hẹn sắp tới
             </CardTitle>
             <CardDescription>
-              Your scheduled appointments
+              Lịch hẹn đã lên lịch của bạn
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -196,10 +196,10 @@ export default function PatientDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FontAwesomeIcon icon={faFileAlt} className="mr-2 h-5 w-5" />
-              Recent Medical Records
+              Hồ sơ y tế gần đây
             </CardTitle>
             <CardDescription>
-              Your latest medical documents
+              Tài liệu y tế mới nhất của bạn
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -233,10 +233,10 @@ export default function PatientDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <FontAwesomeIcon icon={faBell} className="mr-2 h-5 w-5" />
-            Recent Notifications
+            Thông báo gần đây
           </CardTitle>
           <CardDescription>
-            Important updates and reminders
+            Cập nhật và lời nhắc quan trọng
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -270,28 +270,28 @@ export default function PatientDashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>Thao tác nhanh</CardTitle>
           <CardDescription>
-            Common tasks and shortcuts
+            Các tác vụ và phím tắt thường dùng
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <FontAwesomeIcon icon={faCalendarAlt} className="h-6 w-6" />
-              <span>Book Appointment</span>
+              <span>Đặt lịch hẹn</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <FontAwesomeIcon icon={faFileAlt} className="h-6 w-6" />
-              <span>View Records</span>
+              <span>Xem hồ sơ</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <FontAwesomeIcon icon={faCreditCard} className="h-6 w-6" />
-              <span>Make Payment</span>
+              <span>Thanh toán</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <FontAwesomeIcon icon={faUser} className="h-6 w-6" />
-              <span>Update Profile</span>
+              <span>Cập nhật hồ sơ</span>
             </Button>
           </div>
         </CardContent>

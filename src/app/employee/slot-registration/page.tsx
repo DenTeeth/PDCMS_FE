@@ -291,7 +291,7 @@ export default function SlotRegistrationPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Slot Registration</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Đăng ký slot làm việc</h1>
             <p className="text-gray-600 mt-1">Register for available part-time work slots</p>
           </div>
           <Button onClick={() => {
@@ -481,17 +481,17 @@ export default function SlotRegistrationPage() {
               </div>
               <form onSubmit={handleSubmitRegistration} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
-                  <Label>Work Shift</Label>
+                  <Label>Ca làm việc</Label>
                   <Input value={selectedSlot.shiftName} disabled />
                 </div>
 
                 <div>
-                  <Label>Day of Week (Slot)</Label>
+                  <Label>Thứ trong tuần (Slot)</Label>
                   <Input value={selectedSlot.dayOfWeek} disabled />
                 </div>
 
                 <div>
-                  <Label>Remaining Spots</Label>
+                  <Label>Số chỗ còn lại</Label>
                   <Input value={slotDetails.get(selectedSlot.slotId)?.overallRemaining || 0} disabled />
                 </div>
 
@@ -522,7 +522,7 @@ export default function SlotRegistrationPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="effectiveTo">Effective To</Label>
+                  <Label htmlFor="effectiveTo">Hiệu lực đến</Label>
                   <Input
                     id="effectiveTo"
                     type="date"

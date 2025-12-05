@@ -74,8 +74,8 @@ export default function UserSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account preferences and settings</p>
+          <h1 className="text-3xl font-bold">Cài đặt</h1>
+          <p className="text-muted-foreground">Quản lý tùy chọn và cài đặt tài khoản của bạn</p>
         </div>
         <div className="flex space-x-2">
           {isEditing ? (

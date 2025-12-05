@@ -79,7 +79,7 @@ export default function IncomeExpenseCharts({
             {/* Income vs Expenses Chart */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Income vs Expenses Over Time</CardTitle>
+                    <CardTitle>Thu nhập và Chi phí theo thời gian</CardTitle>
                     <Button onClick={onExport} variant="outline" size="sm">
                         <FontAwesomeIcon icon={faDownload} className="mr-2" />
                         Export Report
@@ -129,13 +129,13 @@ export default function IncomeExpenseCharts({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Expense Breakdown by Category</CardTitle>
+                        <CardTitle>Phân tích chi phí theo danh mục</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
-                                    data={expenseCategories}
+                                    data={expenseCategories as any}
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
@@ -156,7 +156,7 @@ export default function IncomeExpenseCharts({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Expense Categories Details</CardTitle>
+                        <CardTitle>Chi tiết danh mục chi phí</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">

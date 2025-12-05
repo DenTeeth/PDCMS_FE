@@ -223,7 +223,7 @@ export default function CreateAppointmentModal({
             }
 
             // Create appointment
-            await appointmentService.createAppointment(data);
+            await appointmentService.createAppointment(data as any);
 
             toast.success('Appointment Created', {
                 description: 'The appointment has been successfully scheduled',
@@ -270,7 +270,7 @@ export default function CreateAppointmentModal({
                                 <div className="relative">
                                     <Input
                                         id="patientSearch"
-                                        placeholder="Search by name or phone..."
+                                        placeholder="Tìm theo tên hoặc số điện thoại..."
                                         value={patientSearch}
                                         onChange={(e) => setPatientSearch(e.target.value)}
                                         className="pr-10"
@@ -428,7 +428,7 @@ export default function CreateAppointmentModal({
                                 <Label htmlFor="reasonForVisit">Reason for Visit (Optional)</Label>
                                 <Textarea
                                     id="reasonForVisit"
-                                    placeholder="e.g., Toothache, Regular checkup..."
+                                    placeholder="Ví dụ: Đau răng, Khám định kỳ..."
                                     {...register('reasonForVisit')}
                                     rows={3}
                                     className="mt-1"
@@ -438,7 +438,7 @@ export default function CreateAppointmentModal({
                                 <Label htmlFor="notes">Additional Notes (Optional)</Label>
                                 <Textarea
                                     id="notes"
-                                    placeholder="Any special instructions or information..."
+                                    placeholder="Bất kỳ hướng dẫn đặc biệt hoặc thông tin..."
                                     {...register('notes')}
                                     rows={3}
                                     className="mt-1"

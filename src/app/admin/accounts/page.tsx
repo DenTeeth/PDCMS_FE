@@ -134,7 +134,7 @@ export default function AccountsPage() {
             <div className="flex flex-col md:flex-row gap-4">
 
               <div className="md:w-48">
-                <Label htmlFor="role" className="mb-2">Role</Label>
+                <Label htmlFor="role" className="mb-2">Vai trò</Label>
                 <select
                   id="role"
                   value={filterRole}
@@ -150,12 +150,12 @@ export default function AccountsPage() {
                 </select>
               </div>
               <div className="flex-1">
-                <Label htmlFor="search" className="mb-2">Search</Label>
+                <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
-                    placeholder="Search by name or email..."
+                    placeholder="Tìm theo tên hoặc email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -171,11 +171,11 @@ export default function AccountsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Staff</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Department</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Last Login</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nhân viên</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Vai trò</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Phòng ban</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Đăng nhập lần cuối</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>

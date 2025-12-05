@@ -133,8 +133,8 @@ export default function UserNotifications() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">Stay updated with your health information</p>
+          <h1 className="text-3xl font-bold">Thông báo</h1>
+          <p className="text-muted-foreground">Cập nhật thông tin sức khỏe của bạn</p>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={markAllAsRead}>
@@ -275,7 +275,7 @@ export default function UserNotifications() {
         <Card>
           <CardContent className="p-12 text-center">
             <FontAwesomeIcon icon={faBell} className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No notifications found</h3>
+            <h3 className="text-lg font-semibold mb-2">Không có thông báo</h3>
             <p className="text-muted-foreground">
               {filter === 'unread' 
                 ? 'You\'re all caught up! No unread notifications.'

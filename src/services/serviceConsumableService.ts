@@ -35,7 +35,7 @@ export const serviceConsumableService = {
       const data = extractApiResponse(response);
       
       if (!data) {
-        throw new Error('Invalid response from service consumables API');
+        throw new Error('Phản hồi không hợp lệ từ API vật tư tiêu hao dịch vụ');
       }
       
       return data;

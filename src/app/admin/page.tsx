@@ -64,30 +64,30 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest changes in the system</CardDescription>
+            <CardTitle>Hoạt động gần đây</CardTitle>
+            <CardDescription>Thay đổi mới nhất trong hệ thống</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Dr. Nguyen Van A logged in</p>
-                  <p className="text-xs text-gray-500">2 minutes ago</p>
+                  <p className="text-sm font-medium">BS. Nguyễn Văn A đã đăng nhập</p>
+                  <p className="text-xs text-gray-500">2 phút trước</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">New appointment created</p>
-                  <p className="text-xs text-gray-500">15 minutes ago</p>
+                  <p className="text-sm font-medium">Tạo lịch hẹn mới</p>
+                  <p className="text-xs text-gray-500">15 phút trước</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">New blog post published</p>
-                  <p className="text-xs text-gray-500">1 hour ago</p>
+                  <p className="text-sm font-medium">Bài viết mới được xuất bản</p>
+                  <p className="text-xs text-gray-500">1 giờ trước</p>
                 </div>
               </div>
             </div>
@@ -96,8 +96,8 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Appointments</CardTitle>
-            <CardDescription>Today's scheduled appointments</CardDescription>
+            <CardTitle>Lịch hẹn sắp tới</CardTitle>
+            <CardDescription>Lịch hẹn đã lên lịch hôm nay</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

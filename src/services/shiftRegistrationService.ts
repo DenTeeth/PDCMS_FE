@@ -166,7 +166,7 @@ class ShiftRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to create shift registration');
+        throw new Error('Không thể tạo đăng ký ca làm việc');
       }
     }
   }
@@ -196,7 +196,7 @@ class ShiftRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to update shift registration');
+        throw new Error('Không thể cập nhật đăng ký ca làm việc');
       }
     }
   }
@@ -226,7 +226,7 @@ class ShiftRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to update effective date');
+        throw new Error('Không thể cập nhật ngày hiệu lực');
       }
     }
   }
@@ -500,7 +500,7 @@ class ShiftRegistrationService {
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {
-        throw new Error('Failed to update registration status');
+        throw new Error('Không thể cập nhật trạng thái đăng ký');
       }
     }
   }

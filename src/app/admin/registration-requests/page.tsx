@@ -381,7 +381,7 @@ export default function RegistrationRequestsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Search */}
               <div>
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -396,17 +396,17 @@ export default function RegistrationRequestsPage() {
 
               {/* Status Filter */}
               <div>
-                <Label htmlFor="filterStatus">Status</Label>
+                <Label htmlFor="filterStatus">Trạng thái</Label>
                 <select
                   id="filterStatus"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
                   className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="ALL">All Status</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="PENDING">Đang chờ</option>
+                  <option value="APPROVED">Đã duyệt</option>
+                  <option value="REJECTED">Đã từ chối</option>
                 </select>
               </div>
             </div>
@@ -650,7 +650,7 @@ export default function RegistrationRequestsPage() {
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
-                    placeholder="Enter reason for rejection..."
+                    placeholder="Nhập lý do từ chối..."
                     required
                   />
                 </div>

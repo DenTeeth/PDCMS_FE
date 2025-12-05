@@ -78,7 +78,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Service Ratings</CardTitle>
+          <CardTitle>Đánh giá dịch vụ</CardTitle>
           <div className="flex flex-wrap gap-2">
             <div className="relative flex-1 min-w-[200px]">
               <FontAwesomeIcon
@@ -86,7 +86,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <Input
-                placeholder="Search service..."
+                placeholder="Tìm kiếm dịch vụ..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"

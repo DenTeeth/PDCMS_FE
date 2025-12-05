@@ -375,7 +375,7 @@ export const storageService = {
       const data = rawData?.data ?? rawData;
       
       if (!data) {
-        throw new Error('Empty response from server');
+        throw new Error('Phản hồi trống từ máy chủ');
       }
       
       const mapped = mapTransactionDetail(data);
@@ -502,7 +502,7 @@ export const storageService = {
       const data = rawData?.data ?? rawData;
       
       if (!data) {
-        throw new Error('Empty response from server');
+        throw new Error('Phản hồi trống từ máy chủ');
       }
       
       const mapped = mapTransactionDetail(data);

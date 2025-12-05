@@ -86,10 +86,10 @@ export function OptimizedTable<T extends { [key: string]: any }>({
   loading = false,
   searchValue = '',
   onSearchChange,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = 'Tìm kiếm...',
   pagination,
   onRowClick,
-  emptyMessage = 'No data available',
+  emptyMessage = 'Không có dữ liệu',
   className = '',
 }: OptimizedTableProps<T>) {
   // Memoize filtered/searched data
@@ -196,7 +196,7 @@ export function OptimizedTable<T extends { [key: string]: any }>({
                 <TableCell colSpan={columns.length} className="text-center py-8">
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                    <span className="ml-2 text-muted-foreground">Loading...</span>
+                    <span className="ml-2 text-muted-foreground">Đang tải...</span>
                   </div>
                 </TableCell>
               </TableRow>

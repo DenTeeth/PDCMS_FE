@@ -44,7 +44,7 @@ export default function ViewContactPage() {
     const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
     const canEdit = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.update');
 
-    if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+    if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
     if (error) {
         return (
@@ -60,7 +60,7 @@ export default function ViewContactPage() {
                         <span>Back</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">View Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
                     </div>
                 </div>
                 <Card>

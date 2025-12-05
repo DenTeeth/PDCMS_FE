@@ -133,19 +133,19 @@ export default function BlogsPage() {
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">All Status</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="published">Đã xuất bản</option>
+                  <option value="draft">Bản nháp</option>
+                  <option value="archived">Đã lưu trữ</option>
                 </select>
               </div>
               <div className="flex-1">
-                <Label htmlFor="search" className="mb-2">Search</Label>
+                <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
-                    placeholder="Search by title or author..."
+                    placeholder="Tìm theo tiêu đề hoặc tác giả..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
