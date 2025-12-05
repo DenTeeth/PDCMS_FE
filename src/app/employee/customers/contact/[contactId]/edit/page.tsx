@@ -17,7 +17,7 @@ export default function EditContactPage() {
     const update = useUpdateContact();
     const del = useSoftDeleteContact();
     const { user } = useAuth();
-    const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
+    const canDelete = user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT');
 
     if (isLoading) return <div className="p-6 text-center">Loading...</div>;
 
@@ -28,7 +28,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -56,7 +56,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -117,7 +117,7 @@ export default function EditContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />

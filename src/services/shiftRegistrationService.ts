@@ -17,7 +17,7 @@ import {
   ShiftRegistrationListResponse,
   RegistrationErrorCode
 } from '@/types/shiftRegistration';
-import { AvailableSlot } from '@/types/workSlot';
+import { AvailableSlot, SlotDetailsResponse } from '@/types/workSlot';
 
 /**
  * Shift Registration Service Class
@@ -32,9 +32,13 @@ class ShiftRegistrationService {
    * - Employee view (VIEW_OWN): Returns array directly
    * - Admin view (UPDATE_REGISTRATIONS_ALL): May return array or paginated
    * @param params Query parameters (page, size, sortBy, sortDirection, employeeId, isActive)
+   * @param type Registration type filter ('part-time-flex' | 'all')
    * @returns Array of registrations OR paginated response
    */
-  async getRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
+  async getRegistrations(
+    params: ShiftRegistrationQueryParams = {},
+    type: 'part-time-flex' | 'all' = 'part-time-flex'
+  ): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
     const {
       page = 0,
       size = 10,
@@ -43,8 +47,15 @@ class ShiftRegistrationService {
       ...filters
     } = params;
 
+    // Use different endpoints based on type
+    const endpoint = type === 'part-time-flex'
+      ? '/registrations/part-time-flex'
+      : this.endpoint;
+
+    console.log(` [getRegistrations] Fetching ${type} registrations from ${endpoint}...`);
+
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(this.endpoint, {
+    const response = await axiosInstance.get(endpoint, {
       params: {
         page,
         size,
@@ -58,53 +69,58 @@ class ShiftRegistrationService {
     if (Array.isArray(response.data)) {
       return response.data;
     }
-    
+
     // Case 2: Wrapped array response { statusCode, data: [...] }
     if (response.data?.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
-    
+
     // Case 3: Paginated response { content: [...], totalPages, ... }
     if (response.data?.content && Array.isArray(response.data.content)) {
       return response.data;
     }
-    
+
     // Case 4: Wrapped paginated response { statusCode, data: { content: [...] } }
     if (response.data?.data?.content && Array.isArray(response.data.data.content)) {
       return response.data.data;
     }
-    
+
     // Fallback: return empty array
     return [];
   }
 
   /**
    * Fetch a single shift registration by ID
-   * @param registrationId Unique registration ID (e.g., "REG-250120-001")
-   * @returns Shift registration details
+   * GET /api/v1/registrations/part-time-flex/{registrationId}
+   * 
+   * Security:
+   * - Employee can only view own registrations (403 if not owner)
+   * - Admin can view all registrations
+   * 
+   * @param registrationId Registration ID (numeric, e.g., "4")
+   * @returns Shift registration details with employeeName field
    */
   async getRegistrationById(registrationId: string): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`);
-    
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as ShiftRegistration;
+    const response = await axiosInstance.get<ShiftRegistration>(
+      `${this.endpoint}/part-time-flex/${registrationId}`
+    );
+
+    return response.data;
   }
 
   /**
    * Create a new shift registration (Employee claims a slot)
+   * API: POST /registrations/part-time-flex
    * @param data Registration data (partTimeSlotId, effectiveFrom)
    * @returns Created shift registration
    */
   async createRegistration(data: CreateShiftRegistrationRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
-      const response = await axiosInstance.post<ShiftRegistrationResponse>(this.endpoint, data);
-      
+      const response = await axiosInstance.post<ShiftRegistrationResponse>('/registrations/part-time-flex', data);
+
       // Handle both response structures
       if (response.data?.data) {
         return response.data.data;
@@ -163,10 +179,10 @@ class ShiftRegistrationService {
    */
   async updateRegistration(registrationId: string, data: UpdateShiftRegistrationRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
       const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
-      
+
       // Handle both response structures
       if (response.data?.data) {
         return response.data.data;
@@ -193,10 +209,10 @@ class ShiftRegistrationService {
    */
   async updateEffectiveTo(registrationId: string, data: UpdateEffectiveToRequest): Promise<ShiftRegistration> {
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
       const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}/effective-to`, data);
-      
+
       // Handle both response structures
       if (response.data?.data) {
         return response.data.data;
@@ -217,16 +233,20 @@ class ShiftRegistrationService {
 
   /**
    * Get available slots for employee registration
+   * API: GET /registrations/part-time-flex/available-slots
+   * @param month Optional month filter in format YYYY-MM (e.g., "2025-12")
    * @returns List of available slots with remaining quota
    */
-  async getAvailableSlots(): Promise<AvailableSlot[]> {
-    console.log('🌐 [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/available-slots...');
+  async getAvailableSlots(month?: string): Promise<AvailableSlot[]> {
+    const monthParam = month ? `?month=${month}` : '';
+    console.log(`� [shiftRegistrationService.getAvailableSlots] Making API call to /registrations/part-time-flex/available-slots${monthParam}...`);
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
-      const response = await axiosInstance.get('/registrations/available-slots');
-      
-      console.log('📥 [shiftRegistrationService.getAvailableSlots] API Response:', {
+      const params = month ? { month } : {};
+      const response = await axiosInstance.get('/registrations/part-time-flex/available-slots', { params });
+
+      console.log('� [shiftRegistrationService.getAvailableSlots] API Response:', {
         status: response.status,
         statusText: response.statusText,
         data: response.data,
@@ -234,29 +254,29 @@ class ShiftRegistrationService {
         isArray: Array.isArray(response.data),
         dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : 'N/A'
       });
-      
+
       // Handle both response structures
       let slots: AvailableSlot[] = [];
-      
+
       if (response.data?.data && Array.isArray(response.data.data)) {
-        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
+        console.log(' [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
         slots = response.data.data;
       } else if (Array.isArray(response.data)) {
-        console.log('✅ [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
+        console.log(' [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
         slots = response.data;
       } else {
-        console.warn('⚠️ [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
+        console.warn(' [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
         slots = [];
       }
-      
-      console.log('📊 [shiftRegistrationService.getAvailableSlots] Returning slots:', {
+
+      console.log('� [shiftRegistrationService.getAvailableSlots] Returning slots:', {
         count: slots.length,
         slots: slots
       });
-      
+
       return slots;
     } catch (error: any) {
-      console.error('❌ [shiftRegistrationService.getAvailableSlots] API Error:', {
+      console.error(' [shiftRegistrationService.getAvailableSlots] API Error:', {
         error,
         message: error.message,
         response: error.response,
@@ -268,34 +288,154 @@ class ShiftRegistrationService {
   }
 
   /**
-   * Delete (soft delete) a shift registration
-   * @param registrationId Registration ID to delete
+   * Get detailed slot information with monthly availability
+   * API: GET /registrations/part-time-flex/slots/{slotId}/details
+   * @param slotId Part-time slot ID
+   * @returns Detailed slot information including availability by month
    */
-  async deleteRegistration(registrationId: string): Promise<void> {
+  async getSlotDetails(slotId: number): Promise<SlotDetailsResponse> {
+    console.log(`� [shiftRegistrationService.getSlotDetails] Making API call to /registrations/part-time-flex/slots/${slotId}/details...`);
     const axiosInstance = apiClient.getAxiosInstance();
-    
+
     try {
-      await axiosInstance.delete(`${this.endpoint}/${registrationId}`);
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else {
-        throw new Error('Failed to delete shift registration');
+      const response = await axiosInstance.get(`/registrations/part-time-flex/slots/${slotId}/details`);
+
+      console.log('� [shiftRegistrationService.getSlotDetails] API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      });
+
+      // Handle both response structures
+      if (response.data?.data) {
+        console.log(' [shiftRegistrationService.getSlotDetails] Found wrapped response.data.data');
+        return response.data.data;
       }
+
+      console.log(' [shiftRegistrationService.getSlotDetails] Using direct response.data');
+      return response.data;
+    } catch (error: any) {
+      console.error(' [shiftRegistrationService.getSlotDetails] API Error:', {
+        error,
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete (cancel) a shift registration
+   * DELETE /api/v1/registrations/part-time-flex/{registrationId}
+   * 
+   * What happens:
+   * - Sets status = "CANCELLED"
+   * - Sets isActive = false
+   * - Sets effectiveTo = today
+   * 
+   * Security:
+   * - Employee can only cancel PENDING status (409 if not PENDING)
+   * - Admin can cancel any status
+   * 
+   * @param registrationId Registration ID to delete
+   * @returns Updated registration with CANCELLED status
+   */
+  async deleteRegistration(registrationId: string): Promise<ShiftRegistration> {
+    const axiosInstance = apiClient.getAxiosInstance();
+
+    try {
+      const response = await axiosInstance.delete<ShiftRegistration>(
+        `${this.endpoint}/part-time-flex/${registrationId}`
+      );
+      return response.data;
+    } catch (error: any) {
+      // Re-throw with original error for proper error handling in component
+      throw error;
     }
   }
 
   /**
    * Get registrations for current user (employee)
-   * Uses the same endpoint but with user's token, BE will filter by ownership
-   * According to API spec: Returns array directly (NOT paginated) for employee view
-   * @param params Query parameters
-   * @returns User's shift registrations (array OR paginated)
+   * 
+   *  UPDATED: Backend now supports pagination!
+   * API: GET /registrations/part-time-flex?page=0&size=10&sort=effectiveFrom,desc
+   * 
+   * @param params Query parameters (page, size, sortBy, sortDirection)
+   * @param type Registration type filter (ignored for now, always uses part-time-flex)
+   * @returns Paginated shift registrations
    */
-  async getMyRegistrations(params: ShiftRegistrationQueryParams = {}): Promise<ShiftRegistration[] | PaginatedShiftRegistrationResponse> {
-    // Same as getRegistrations, but BE will filter based on user's permissions
-    // Employee view typically returns array directly
-    return this.getRegistrations(params);
+  async getMyRegistrations(
+    params: ShiftRegistrationQueryParams = {},
+    type: 'part-time-flex' | 'all' = 'all'
+  ): Promise<PaginatedShiftRegistrationResponse> {
+    const {
+      page = 0,
+      size = 10,
+      sortBy = 'effectiveFrom',
+      sortDirection = 'DESC',
+      ...filters
+    } = params;
+
+    const axiosInstance = apiClient.getAxiosInstance();
+
+    //  UPDATED: Backend now has /part-time-flex endpoint with pagination
+    const endpoint = `${this.endpoint}/part-time-flex`;
+
+    console.log(` [getMyRegistrations] Fetching registrations from ${endpoint}...`);
+
+    try {
+      const response = await axiosInstance.get<PaginatedShiftRegistrationResponse>(endpoint, {
+        params: {
+          page,
+          size,
+          sort: `${sortBy},${sortDirection.toLowerCase()}`,
+          ...filters
+        }
+      });
+
+      console.log(' [getMyRegistrations] Success:', {
+        endpoint,
+        status: response.status,
+        totalElements: response.data.totalElements,
+        totalPages: response.data.totalPages,
+        currentPage: response.data.pageable?.pageNumber ?? page,
+        itemsInPage: response.data.content?.length ?? 0
+      });
+
+      // Backend now ALWAYS returns Spring Data Page object
+      return response.data;
+
+    } catch (error: any) {
+      console.error(' [getMyRegistrations] Error:', {
+        endpoint,
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+
+      // Return empty paginated response on error
+      return {
+        content: [],
+        pageable: {
+          pageNumber: page,
+          pageSize: size,
+          sort: { sorted: false, unsorted: true },
+          offset: 0,
+          paged: true,
+          unpaged: false
+        },
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+        first: true,
+        size: size,
+        number: page,
+        numberOfElements: 0,
+        empty: true
+      };
+    }
   }
 
   /**
@@ -305,6 +445,64 @@ class ShiftRegistrationService {
    */
   async reactivateRegistration(registrationId: string): Promise<ShiftRegistration> {
     return this.updateRegistration(registrationId, { isActive: true });
+  }
+
+  /**
+   * Update registration status (APPROVED/REJECTED) - Admin only
+   * API: PATCH /admin/registrations/part-time-flex/{id}/status
+   * @param registrationId Registration ID to update
+   * @param status New status (APPROVED or REJECTED)
+   * @returns Updated shift registration
+   */
+  async updateRegistrationStatus(
+    registrationId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reason?: string
+  ): Promise<ShiftRegistration> {
+    const axiosInstance = apiClient.getAxiosInstance();
+
+    try {
+      // Build payload based on status
+      let payload: any = { status };
+      if (status === 'REJECTED' && reason) {
+        payload.reason = reason;
+      }
+
+      console.log(' Updating registration status:', {
+        registrationId,
+        payload,
+        url: `/admin/registrations/part-time-flex/${registrationId}/status`
+      });
+
+      const response = await axiosInstance.patch<ShiftRegistrationResponse>(
+        `/admin/registrations/part-time-flex/${registrationId}/status`,
+        payload
+      );
+
+      console.log(' Registration status updated:', response.data);
+
+      // Handle both response structures
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data as unknown as ShiftRegistration;
+    } catch (error: any) {
+      console.error(' Update registration status error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Failed to update registration status');
+      }
+    }
   }
 }
 

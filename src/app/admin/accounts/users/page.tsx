@@ -29,9 +29,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Edit,
+  Send,
 } from 'lucide-react';
 import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
+import { authenticationService } from '@/services/authenticationService';
 import { toast } from 'sonner';
 
 // ==================== TYPES ====================
@@ -64,9 +66,8 @@ export default function PatientsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState<CreatePatientWithAccountRequest>({
-    username: '',
-    password: '',
-    email: '',
+    username: '', // Optional - BE auto-generates from email if not provided
+    email: '', // Required - BE uses this to create account and send password setup email
     firstName: '',
     lastName: '',
     phone: '',
@@ -83,6 +84,9 @@ export default function PatientsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [updating, setUpdating] = useState(false);
+  
+  // Resend email states
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<UpdatePatientRequest>({
     firstName: '',
     lastName: '',
@@ -151,10 +155,9 @@ export default function PatientsPage() {
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.username || !formData.password || !formData.email ||
-      !formData.firstName || !formData.lastName) {
-      toast.error('Please fill in all required fields');
+    // Validation - email, firstName, lastName are required
+    if (!formData.email || !formData.firstName || !formData.lastName) {
+      toast.error('Please fill in all required fields (Email, First Name, Last Name)');
       return;
     }
 
@@ -163,12 +166,15 @@ export default function PatientsPage() {
 
       // Prepare payload - only include fields that have values
       const payload: CreatePatientWithAccountRequest = {
-        username: formData.username,
-        password: formData.password,
         email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
       };
+
+      // Add optional username if provided (BE auto-generates from email if not provided)
+      if (formData.username && formData.username.trim()) {
+        payload.username = formData.username.trim();
+      }
 
       // Add optional fields if they have values
       if (formData.phone) payload.phone = formData.phone;
@@ -180,13 +186,43 @@ export default function PatientsPage() {
       if (formData.emergencyContactName) payload.emergencyContactName = formData.emergencyContactName;
       if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
 
-      await patientService.createPatient(payload);
-      toast.success('Patient created successfully');
+      // Debug logging
+      console.log('� Creating patient with payload:', payload);
+      console.log('� API Endpoint: POST /api/v1/patients');
+      console.log('⏰ Timestamp:', new Date().toISOString());
+
+      const result = await patientService.createPatient(payload);
+      
+      //  Note: BE may fail to send email but patient still created (graceful degradation)
+      // Account status will be PENDING_VERIFICATION until password is set via email
+      console.log(' Patient created:', result);
+      console.log(' Account Info Check:', {
+        hasAccount: result.hasAccount,
+        accountStatus: result.accountStatus,
+        email: result.email,
+        note: result.hasAccount === undefined ? ' BE không trả về hasAccount - cần fix BE' : ' OK',
+        accountStatusNote: result.accountStatus === undefined ? ' BE không trả về accountStatus - cần fix BE' : ' OK',
+      });
+      
+      // Show success message with account status info
+      if (result.hasAccount) {
+        toast.success('Patient created successfully!', {
+          description: result.accountStatus === 'PENDING_VERIFICATION' 
+            ? 'Account created. Patient will receive a password setup email shortly.'
+            : 'Account created and activated.',
+          duration: 5000,
+        });
+      } else {
+        toast.success('Patient created successfully!', {
+          description: 'Patient record created without account.',
+          duration: 5000,
+        });
+      }
+      
       setShowCreateModal(false);
       // Reset form
       setFormData({
         username: '',
-        password: '',
         email: '',
         firstName: '',
         lastName: '',
@@ -202,9 +238,86 @@ export default function PatientsPage() {
       fetchPatients(); // Refresh list
     } catch (error: any) {
       console.error('Failed to create patient:', error);
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to create patient';
+      let errorDescription = '';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        console.error('Error Response:', {
+          status,
+          data,
+          headers: error.response.headers,
+        });
+        
+        if (status === 500) {
+          errorMessage = 'Server Error (500)';
+          errorDescription = data?.message || 'Internal server error occurred. This might be due to:\n' +
+            '• Email service configuration issue\n' +
+            '• Database connection problem\n' +
+            '• Account verification token creation failure\n\n' +
+            'Please check BE logs for details.';
+        } else if (status === 400) {
+          errorMessage = 'Validation Error';
+          errorDescription = data?.message || 'Please check your input:\n' +
+            '• Username might already exist\n' +
+            '• Email might already exist\n' +
+            '• Invalid field format';
+        } else if (status === 403) {
+          errorMessage = 'Permission Denied';
+          errorDescription = 'You do not have permission to create patients';
+        } else {
+          errorMessage = `Error ${status}`;
+          errorDescription = data?.message || error.message;
+        }
+      } else if (error.request) {
+        errorMessage = 'Network Error';
+        errorDescription = 'Cannot reach the server. Please check your connection.';
+      } else {
+        errorMessage = 'Request Error';
+        errorDescription = error.message;
+      }
+      
+      toast.error(errorMessage, {
+        description: errorDescription,
+        duration: 7000,
+      });
       toast.error(error.response?.data?.message || 'Failed to create patient');
     } finally {
       setCreating(false);
+    }
+  };
+
+  // ==================== RESEND PASSWORD SETUP EMAIL ====================
+  const handleResendPasswordSetupEmail = async (patient: Patient) => {
+    if (!patient.email) {
+      toast.error('Patient does not have an email address');
+      return;
+    }
+
+    if (patient.accountStatus !== 'PENDING_VERIFICATION') {
+      toast.info('Patient account is not in pending verification status');
+      return;
+    }
+
+    try {
+      setResendingEmail(patient.patientCode);
+      await authenticationService.resendPasswordSetupEmail(patient.email);
+      toast.success('Password setup email sent successfully!', {
+        description: `Email sent to ${patient.email}. Patient can now set their password.`,
+        duration: 5000,
+      });
+    } catch (error: any) {
+      console.error('Failed to resend password setup email:', error);
+      toast.error('Failed to resend password setup email', {
+        description: error.response?.data?.message || error.message || 'Please try again later.',
+        duration: 5000,
+      });
+    } finally {
+      setResendingEmail(null);
     }
   };
 
@@ -555,16 +668,18 @@ export default function PatientsPage() {
                     <CardTitle className="text-lg">{patient.fullName}</CardTitle>
                     <p className="text-sm text-gray-500">Code: {patient.patientCode}</p>
                   </div>
-                  <Badge
-                    variant={patient.isActive ? 'default' : 'secondary'}
-                    className={
-                      patient.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }
-                  >
-                    {patient.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <div className="flex flex-col gap-1 items-end">
+                    <Badge
+                      variant={patient.isActive ? 'default' : 'secondary'}
+                      className={
+                        patient.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }
+                    >
+                      {patient.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -593,29 +708,57 @@ export default function PatientsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 pt-3 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(patient);
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/admin/accounts/users/${patient.patientCode}`);
-                      }}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
+                  <div className="flex flex-col gap-2 pt-3 border-t">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(patient);
+                        }}
+                        className="flex-1"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/admin/accounts/users/${patient.patientCode}`);
+                        }}
+                        className="flex-1"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </div>
+                    {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResendPasswordSetupEmail(patient);
+                        }}
+                        disabled={resendingEmail === patient.patientCode}
+                        className="w-full"
+                      >
+                        {resendingEmail === patient.patientCode ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-1" />
+                            Resend Setup Email
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -685,31 +828,54 @@ export default function PatientsPage() {
                           variant={patient.isActive ? 'default' : 'secondary'}
                           className={
                             patient.isActive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-green-100 text-green-700 w-fit'
+                              : 'bg-gray-100 text-gray-700 w-fit'
                           }
                         >
                           {patient.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditModal(patient)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditModal(patient)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                          {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleResendPasswordSetupEmail(patient)}
+                              disabled={resendingEmail === patient.patientCode}
+                              className="w-full text-xs"
+                            >
+                              {resendingEmail === patient.patientCode ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Sending...
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Resend Setup Email
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -820,6 +986,9 @@ export default function PatientsPage() {
           <Card className="w-full max-w-2xl my-8">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Create New Patient</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Create a patient account. If email is provided, an account will be created automatically and a password setup email will be sent to the patient.
+              </p>
             </CardHeader>
             <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto">
               <form onSubmit={handleCreatePatient} className="space-y-4">
@@ -832,29 +1001,14 @@ export default function PatientsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="username">
-                        Username <span className="text-red-500">*</span>
+                        Username
                       </Label>
                       <Input
                         id="username"
-                        placeholder="e.g., minh.nguyen"
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        placeholder="e.g., minh.nguyen (auto-generated from email if empty)"
+                        value={formData.username || ''}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value || undefined })}
                         disabled={creating}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="password">
-                        Password <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Enter password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        disabled={creating}
-                        required
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -870,6 +1024,9 @@ export default function PatientsPage() {
                         disabled={creating}
                         required
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Patient will receive a password setup email at this address
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1030,7 +1187,6 @@ export default function PatientsPage() {
                       setShowCreateModal(false);
                       setFormData({
                         username: '',
-                        password: '',
                         email: '',
                         firstName: '',
                         lastName: '',

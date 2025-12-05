@@ -54,7 +54,7 @@ export default function SimpleServiceTestPage() {
       {result && (
         <Card className="p-4">
           <h3 className="font-semibold mb-2">
-            {result.success ? '✅ Success' : '❌ Error'}
+            {result.success ? ' Success' : ' Error'}
           </h3>
           
           {result.success ? (

@@ -120,12 +120,12 @@ export default function EmployeeDashboard() {
             <div className="space-y-2">
               {user?.permissions.includes('CREATE_APPOINTMENT') && (
                 <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                  📅 Create New Appointment
+                  � Create New Appointment
                 </button>
               )}
               {user?.permissions.includes('CREATE_PATIENT') && (
                 <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                  👤 Register New Patient
+                  � Register New Patient
                 </button>
               )}
               {user?.permissions.includes('VIEW_TREATMENT') && (
@@ -135,7 +135,7 @@ export default function EmployeeDashboard() {
               )}
               {user?.permissions.includes('VIEW_ACCOUNT') && (
                 <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                  💰 Check Financial Reports
+                  � Check Financial Reports
                 </button>
               )}
             </div>

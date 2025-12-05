@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ArrowLeft,
   User,
@@ -271,8 +277,8 @@ export default function EmployeeDetailPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   {employee.employeeCode} • {employee.roleName} •
                   <span className={`ml-1 px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-orange-100 text-orange-800'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-orange-100 text-orange-800'
                     }`}>
                     {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
                   </span>
@@ -443,8 +449,8 @@ export default function EmployeeDetailPage() {
               <Badge
                 variant="outline"
                 className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
-                    ? 'border-blue-200 text-blue-800'
-                    : 'border-orange-200 text-orange-800'
+                  ? 'border-blue-200 text-blue-800'
+                  : 'border-orange-200 text-orange-800'
                   }`}
               >
                 {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
@@ -542,15 +548,20 @@ export default function EmployeeDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-role">Role</Label>
                   <Select
-                    options={roles.map((role) => ({
-                      value: role.roleId,
-                      label: role.roleName,
-                      description: role.description,
-                    }))}
                     value={editFormData.roleId}
-                    onChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
-                    placeholder="Select role"
-                  />
+                    onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
+                  >
+                    <SelectTrigger id="edit-role">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-sm text-muted-foreground">
                     Change employee role if needed
                   </p>
@@ -625,7 +636,7 @@ export default function EmployeeDetailPage() {
                     ) : specializations.length === 0 ? (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <p className="text-sm text-yellow-800">
-                          ⚠️ No active specializations available.
+                          No active specializations available.
                         </p>
                       </div>
                     ) : (

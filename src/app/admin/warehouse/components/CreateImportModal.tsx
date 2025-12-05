@@ -15,10 +15,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Supplier, ItemMaster, CreateImportTransactionDto, CreateImportItemDto } from '@/types/warehouse';
-import { storageTransactionService, supplierServiceV3, itemMasterService } from '@/services/warehouseService';
+import type { SupplierSummaryResponse } from '@/types/supplier';
+import { CreateImportTransactionDto, CreateImportItemDto, ItemUnitResponse } from '@/types/warehouse';
+import inventoryService, { type ItemMasterV1 } from '@/services/inventoryService';
+import supplierService from '@/services/supplierService';
+import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, Package } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 
 interface CreateImportModalProps {
   isOpen: boolean;
@@ -26,12 +38,18 @@ interface CreateImportModalProps {
   warehouseType?: 'COLD' | 'NORMAL';
 }
 
+interface ImportItemForm extends Omit<CreateImportItemDto, 'unitId'> {
+  unitId?: number;
+  purchasePrice: number;
+}
+
 interface ImportFormData {
-  transaction_date: string;
-  supplier_id: number;
-  reference_code: string;
-  notes: string;
-  items: CreateImportItemDto[];
+  transactionDate: string;
+  supplierId: number;
+  invoiceNumber: string;
+  expectedDeliveryDate?: string;
+  notes?: string;
+  items: ImportItemForm[];
 }
 
 export default function CreateImportModal({
@@ -43,17 +61,18 @@ export default function CreateImportModal({
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ImportFormData>({
     defaultValues: {
-      transaction_date: new Date().toISOString().split('T')[0],
-      supplier_id: 0,
-      reference_code: '',
+      transactionDate: new Date().toISOString().split('T')[0],
+      supplierId: 0,
+      invoiceNumber: '',
+      expectedDeliveryDate: undefined,
       notes: '',
       items: [
         {
-          item_master_id: 0,
-          lot_number: '',
+          itemMasterId: 0,
+          lotNumber: '',
           quantity: 1,
-          import_price: 0,
-          expiry_date: '',
+          expiryDate: '',
+          purchasePrice: 0,
         },
       ],
     },
@@ -64,40 +83,98 @@ export default function CreateImportModal({
     name: 'items',
   });
 
-  // Fetch Suppliers
-  const { data: suppliersResponse = [] } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => supplierServiceV3.getAll(),
-    enabled: isOpen,
-  });
+  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse>>({});
+  const [unitLoading, setUnitLoading] = useState<Record<number, boolean>>({});
+  const [openPopovers, setOpenPopovers] = useState<Record<number, boolean>>({});
+  const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
 
-  // Extract suppliers array from Page response
-  const suppliers = Array.isArray(suppliersResponse)
-    ? suppliersResponse
-    : (suppliersResponse as any)?.content || [];
+  const fetchBaseUnitForItem = async (itemMasterId: number, rowIndex: number) => {
+    if (!itemMasterId) {
+      return;
+    }
 
-  // Fetch Item Masters
-  const { data: items = [] } = useQuery<ItemMaster[]>({
-    queryKey: ['itemMasters', warehouseType],
-    queryFn: async () => {
-      const result = await itemMasterService.getSummary({
-        warehouse_type: warehouseType,
+    if (unitCache[itemMasterId]) {
+      setValue(`items.${rowIndex}.unitId`, unitCache[itemMasterId].unitId);
+      return;
+    }
+
+    try {
+      setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
+      const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
+      setValue(`items.${rowIndex}.unitId`, baseUnit.unitId);
+    } catch (error: any) {
+      console.error(' Failed to fetch base unit:', error);
+      toast.error('Không thể tải đơn vị cơ sở của vật tư', {
+        description: error.response?.data?.message || 'Vui lòng thử lại hoặc liên hệ admin',
       });
-      return result;
+    } finally {
+      setUnitLoading((prev) => ({ ...prev, [rowIndex]: false }));
+    }
+  };
+
+  // Fetch Suppliers
+  const { data: suppliersResponse, isLoading: suppliersLoading, error: suppliersError } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: async () => {
+      try {
+        const page = await supplierService.getAll({
+          page: 0,
+          size: 1000,
+          sort: 'supplierName,asc',
+        });
+        console.log('[WAREHOUSE] Suppliers fetched:', page.content?.length || 0);
+        return page;
+      } catch (error: any) {
+        console.error(' Failed to fetch suppliers:', error);
+        toast.error('Không thể tải danh sách nhà cung cấp', {
+          description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập hoặc liên hệ admin',
+        });
+        return null;
+      }
     },
     enabled: isOpen,
   });
 
+  const suppliers: SupplierSummaryResponse[] = suppliersResponse?.content ?? [];
+
+  console.log('[WAREHOUSE] Processed suppliers:', suppliers.length, suppliers.length === 0 ? 'EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : 'OK');
+
+  // Fetch Item Masters
+  const { data: items = [], isLoading: itemsLoading, error: itemsError } = useQuery({
+    queryKey: ['itemMasters', warehouseType],
+    queryFn: async () => {
+      try {
+        const result = await inventoryService.getAll({
+          warehouseType,
+        });
+        console.log('[WAREHOUSE] Item Masters fetched:', result.length, 'items');
+        return result;
+      } catch (error: any) {
+        console.error(' Failed to fetch item masters:', error);
+        toast.error('Không thể tải danh sách vật tư', {
+          description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập hoặc liên hệ admin',
+        });
+        return [];
+      }
+    },
+    enabled: isOpen,
+  });
+  console.log('[WAREHOUSE] Processed items:', items.length, items.length === 0 ? 'EMPTY - Có thể thiếu dữ liệu hoặc quyền truy cập' : 'OK');
+
   // Create Import Mutation
   const mutation = useMutation({
     mutationFn: (data: CreateImportTransactionDto) =>
-      storageTransactionService.createImport(data),
+      inventoryService.createImportTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storageTransactions'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
       toast.success('Nhập kho thành công!');
       reset();
+      setUnitCache({});
+      setUnitLoading({});
       onClose();
     },
     onError: (error: any) => {
@@ -106,9 +183,13 @@ export default function CreateImportModal({
   });
 
   const onSubmit = (data: ImportFormData) => {
-    // Validation
-    if (!data.supplier_id || data.supplier_id === 0) {
+    if (!data.supplierId || data.supplierId === 0) {
       toast.error('Vui lòng chọn nhà cung cấp!');
+      return;
+    }
+
+    if (!data.invoiceNumber.trim()) {
+      toast.error('Vui lòng nhập số hóa đơn!');
       return;
     }
 
@@ -117,17 +198,16 @@ export default function CreateImportModal({
       return;
     }
 
-    // Validate each item
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i];
-      const itemMaster = items.find((im) => im.item_master_id === item.item_master_id);
+      const itemMaster = items.find((im) => im.id === item.itemMasterId);
 
-      if (!item.item_master_id || item.item_master_id === 0) {
+      if (!item.itemMasterId || item.itemMasterId === 0) {
         toast.error(`Dòng ${i + 1}: Vui lòng chọn vật tư!`);
         return;
       }
 
-      if (!item.lot_number.trim()) {
+      if (!item.lotNumber.trim()) {
         toast.error(`Dòng ${i + 1}: Số lô là bắt buộc!`);
         return;
       }
@@ -137,19 +217,39 @@ export default function CreateImportModal({
         return;
       }
 
-      // HSD validation for COLD storage non-tools
-      if (itemMaster?.warehouse_type === 'COLD' && !itemMaster.is_tool && !item.expiry_date) {
-        toast.error(`Dòng ${i + 1}: Hạn sử dụng là bắt buộc cho kho lạnh (trừ dụng cụ)!`);
+      if (!item.unitId) {
+        toast.error(`Dòng ${i + 1}: Không tìm thấy đơn vị quy đổi cho vật tư này.`);
+        return;
+      }
+
+      if (item.purchasePrice <= 0) {
+        toast.error(`Dòng ${i + 1}: Đơn giá phải lớn hơn 0!`);
+        return;
+      }
+
+      const isExpiryRequired = !itemMaster?.isTool;
+      if (isExpiryRequired && !item.expiryDate) {
+        toast.error(`Dòng ${i + 1}: Hạn sử dụng là bắt buộc!`);
         return;
       }
     }
 
     const payload: CreateImportTransactionDto = {
-      transaction_date: data.transaction_date,
-      supplier_id: data.supplier_id,
-      reference_code: data.reference_code || undefined,
-      notes: data.notes || undefined,
-      items: data.items,
+      supplierId: data.supplierId,
+      transactionDate: `${data.transactionDate}T00:00:00`,
+      invoiceNumber: data.invoiceNumber.trim(),
+      expectedDeliveryDate: data.expectedDeliveryDate ? `${data.expectedDeliveryDate}T00:00:00` : undefined,
+      notes: data.notes?.trim() || undefined,
+      items: data.items.map((item) => ({
+        itemMasterId: item.itemMasterId,
+        lotNumber: item.lotNumber.trim(),
+        expiryDate: item.expiryDate,
+        quantity: item.quantity,
+        unitId: item.unitId as number,
+        purchasePrice: item.purchasePrice,
+        binLocation: item.binLocation?.trim() || undefined,
+        notes: item.notes?.trim() || undefined,
+      })),
     };
 
     mutation.mutate(payload);
@@ -157,11 +257,11 @@ export default function CreateImportModal({
 
   const handleAddItem = () => {
     append({
-      item_master_id: 0,
-      lot_number: '',
+      itemMasterId: 0,
+      lotNumber: '',
       quantity: 1,
-      import_price: 0,
-      expiry_date: '',
+      purchasePrice: 0,
+      expiryDate: '',
     });
   };
 
@@ -179,7 +279,12 @@ export default function CreateImportModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-emerald-600" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? '🧊 (Kho Lạnh)' : '📦 (Kho Thường)'}
+            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+              <>
+                <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                (Kho Lạnh)
+              </>
+            ) : '(Kho Thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với thông tin nhà cung cấp và danh sách vật tư
@@ -194,34 +299,58 @@ export default function CreateImportModal({
                 Nhà Cung Cấp <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={String(watch('supplier_id'))}
-                onValueChange={(value) => setValue('supplier_id', Number(value))}
+                value={String(watch('supplierId'))}
+                onValueChange={(value) => setValue('supplierId', Number(value))}
+                disabled={suppliersLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn NCC" />
+                  <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn NCC"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((supplier: Supplier) => (
-                    <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
-                      {supplier.supplierName}
-                    </SelectItem>
-                  ))}
+                  {suppliers.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">
+                      {suppliersLoading ? "Đang tải..." : suppliersError ? "Lỗi khi tải dữ liệu" : "Không có nhà cung cấp. Vui lòng tạo mới."}
+                    </div>
+                  ) : (
+                    suppliers.map((supplier: SupplierSummaryResponse) => (
+                      <SelectItem key={supplier.supplierId} value={String(supplier.supplierId)}>
+                        {supplier.supplierName}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {suppliers.length === 0 && !suppliersLoading && (
+                <p className="text-xs text-red-500 mt-1">
+                  Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
+                </p>
+              )}
             </div>
 
             <div>
               <Label className="text-sm font-medium">
                 Ngày Nhập <span className="text-red-500">*</span>
               </Label>
-              <Input type="date" {...register('transaction_date')} required />
+              <Input type="date" {...register('transactionDate')} required />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Mã Tham Chiếu</Label>
+              <Label className="text-sm font-medium">
+                Số Hóa Đơn <span className="text-red-500">*</span>
+              </Label>
               <Input
-                {...register('reference_code')}
-                placeholder="VD: PO-2024-001"
+                {...register('invoiceNumber', { required: true })}
+                placeholder="VD: INV-2025-001"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Ngày Dự Kiến Giao</Label>
+              <Input
+                type="date"
+                {...register('expectedDeliveryDate')}
               />
             </div>
           </div>
@@ -247,42 +376,126 @@ export default function CreateImportModal({
                       <th className="p-3 text-left w-[30%]">Vật Tư *</th>
                       <th className="p-3 text-left w-[20%]">Số Lô *</th>
                       <th className="p-3 text-left w-[15%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[20%]">Hạn Sử Dụng</th>
+                      <th className="p-3 text-left w-[15%]">Đơn Giá (VNĐ) *</th>
+                      <th className="p-3 text-left w-[15%]">Hạn Sử Dụng *</th>
                       <th className="p-3 text-left w-[10%]">Hành Động</th>
                     </tr>
                   </thead>
                   <tbody>
                     {fields.map((field, index) => {
+                      const selectedItemId = watch(`items.${index}.itemMasterId`);
                       const selectedItem = items.find(
-                        (item) => item.item_master_id === watch(`items.${index}.item_master_id`)
+                        (item) => item.id === selectedItemId
                       );
-                      const isHSDRequired = selectedItem?.warehouse_type === 'COLD' && !selectedItem.is_tool;
-
+                      const baseUnit = selectedItem ? unitCache[selectedItem.id!] : undefined;
+                      const isExpiryRequired = !selectedItem?.isTool;
                       return (
                         <tr key={field.id} className="border-t hover:bg-slate-50">
                           <td className="p-3 text-center font-medium text-slate-600">
                             {index + 1}
                           </td>
                           <td className="p-3">
-                            <Select
-                              value={String(watch(`items.${index}.item_master_id`))}
-                              onValueChange={(value) => setValue(`items.${index}.item_master_id`, Number(value))}
+                            <Popover
+                              open={openPopovers[index] || false}
+                              onOpenChange={(open) => {
+                                setOpenPopovers((prev) => ({ ...prev, [index]: open }));
+                                if (!open) {
+                                  setSearchQueries((prev) => ({ ...prev, [index]: '' }));
+                                }
+                              }}
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Chọn vật tư" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {items.map((item) => (
-                                  <SelectItem key={item.item_master_id} value={String(item.item_master_id)}>
-                                    {item.item_code} - {item.item_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className="w-full justify-between"
+                                  disabled={itemsLoading}
+                                >
+                                  {selectedItem
+                                    ? `${selectedItem.itemCode} - ${selectedItem.itemName}`
+                                    : itemsLoading
+                                      ? "Đang tải..."
+                                      : items.length === 0
+                                        ? "Không có dữ liệu"
+                                        : "Chọn vật tư"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[400px] p-0" align="start">
+                                <div className="flex items-center border-b px-3">
+                                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                  <Input
+                                    placeholder="Tìm kiếm vật tư..."
+                                    value={searchQueries[index] || ''}
+                                    onChange={(e) => {
+                                      setSearchQueries((prev) => ({ ...prev, [index]: e.target.value }));
+                                    }}
+                                    className="h-9 border-0 focus-visible:ring-0"
+                                  />
+                                </div>
+                                <div className="max-h-[300px] overflow-auto">
+                                  {itemsLoading ? (
+                                    <div className="p-4 text-center text-sm text-gray-500">
+                                      Đang tải...
+                                    </div>
+                                  ) : items.length === 0 ? (
+                                    <div className="p-4 text-center text-sm text-gray-500">
+                                      {itemsError ? "Lỗi khi tải dữ liệu" : "Không có vật tư. Vui lòng tạo mới."}
+                                    </div>
+                                  ) : (
+                                    (() => {
+                                      const query = (searchQueries[index] || '').toLowerCase();
+                                      const filteredItems = items.filter(
+                                        (item) =>
+                                          item.itemCode?.toLowerCase().includes(query) ||
+                                          item.itemName?.toLowerCase().includes(query)
+                                      );
+                                      return filteredItems.length === 0 ? (
+                                        <div className="p-4 text-center text-sm text-gray-500">
+                                          Không tìm thấy vật tư
+                                        </div>
+                                      ) : (
+                                        filteredItems.map((item) => (
+                                          <div
+                                            key={item.id}
+                                            className="flex items-center px-4 py-2 hover:bg-slate-100 cursor-pointer"
+                                            onClick={() => {
+                                              const itemId = item.id!;
+                                              setValue(`items.${index}.itemMasterId`, itemId);
+                                              fetchBaseUnitForItem(itemId, index);
+                                              setOpenPopovers((prev) => ({ ...prev, [index]: false }));
+                                              setSearchQueries((prev) => ({ ...prev, [index]: '' }));
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                selectedItemId === item.id ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            <div className="flex-1">
+                                              <div className="font-medium">{item.itemCode} - {item.itemName}</div>
+                                              {item.unitOfMeasure && (
+                                                <div className="text-xs text-gray-500">Đơn vị: {item.unitOfMeasure}</div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))
+                                      );
+                                    })()
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            {items.length === 0 && !itemsLoading && index === 0 && (
+                              <p className="text-xs text-red-500 mt-1">
+                                Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
+                              </p>
+                            )}
                           </td>
                           <td className="p-3">
                             <Input
-                              {...register(`items.${index}.lot_number`)}
+                              {...register(`items.${index}.lotNumber`)}
                               placeholder="LOT-2024-001"
                               required
                             />
@@ -295,16 +508,38 @@ export default function CreateImportModal({
                               placeholder="1"
                               required
                             />
+                            <input
+                              type="hidden"
+                              {...register(`items.${index}.unitId`, { valueAsNumber: true })}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              {unitLoading[index]
+                                ? 'Đang tải đơn vị...'
+                                : baseUnit?.unitName
+                                  ? `Đơn vị: ${baseUnit.unitName}`
+                                  : selectedItem?.unitOfMeasure
+                                    ? `Đơn vị: ${selectedItem.unitOfMeasure}`
+                                    : 'Chưa chọn vật tư'}
+                            </p>
+                          </td>
+                          <td className="p-3">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1000"
+                              {...register(`items.${index}.purchasePrice`, { valueAsNumber: true })}
+                              placeholder="0"
+                              required
+                            />
                           </td>
                           <td className="p-3">
                             <Input
                               type="date"
-                              {...register(`items.${index}.expiry_date`)}
-                              required={isHSDRequired}
-                              disabled={!isHSDRequired}
-                              className={isHSDRequired ? 'border-amber-300' : 'bg-slate-100'}
+                              {...register(`items.${index}.expiryDate`)}
+                              required={isExpiryRequired}
+                              className={isExpiryRequired ? 'border-amber-300' : undefined}
                             />
-                            {isHSDRequired && (
+                            {isExpiryRequired && (
                               <p className="text-xs text-amber-600 mt-1">* Bắt buộc (kho lạnh)</p>
                             )}
                           </td>
@@ -352,3 +587,4 @@ export default function CreateImportModal({
     </Dialog>
   );
 }
+

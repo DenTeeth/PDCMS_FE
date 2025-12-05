@@ -20,17 +20,17 @@ class SpecializationService {
     try {
       const response = await apiClient.getAxiosInstance().get(this.endpoint);
       
-      console.log('📦 Raw response:', response);
-      console.log('📦 response.data:', response.data);
+      console.log('� Raw response:', response);
+      console.log('� response.data:', response.data);
       
       // BE có thể trả về wrapped hoặc trực tiếp
       if (response.data?.data) {
-        console.log('📦 Using response.data.data');
+        console.log('� Using response.data.data');
         return response.data.data;
       }
       
       // Nếu BE trả về trực tiếp array
-      console.log('📦 Using response.data directly');
+      console.log('� Using response.data directly');
       return response.data;
     } catch (error: any) {
       console.error('Failed to fetch specializations:', error);

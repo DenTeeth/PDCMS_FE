@@ -29,7 +29,8 @@ import { format, parseISO } from 'date-fns';
 // Import types and services
 import {
   AvailableSlot,
-  DayOfWeek
+  DayOfWeek,
+  SlotDetailsResponse
 } from '@/types/workSlot';
 import {
   ShiftRegistration,
@@ -45,6 +46,7 @@ export default function SlotRegistrationPage() {
 
   // State management
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [slotDetails, setSlotDetails] = useState<Map<number, SlotDetailsResponse>>(new Map());
   const [myRegistrations, setMyRegistrations] = useState<ShiftRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
@@ -56,7 +58,11 @@ export default function SlotRegistrationPage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
-  const [registerFormData, setRegisterFormData] = useState({
+  const [registerFormData, setRegisterFormData] = useState<{
+    effectiveFrom: string;
+    effectiveTo?: string;
+    dayOfWeek?: string[];
+  }>({
     effectiveFrom: ''
   });
 
@@ -73,8 +79,30 @@ export default function SlotRegistrationPage() {
     try {
       setLoading(true);
       const slots = await shiftRegistrationService.getAvailableSlots();
-      console.log('📋 Available slots:', slots);
-      setAvailableSlots(slots || []);
+      console.log(' Available slots:', slots);
+
+      // Fetch details for each slot to get remaining quota
+      const detailsMap = new Map<number, SlotDetailsResponse>();
+      const detailsPromises = (slots || []).map(async (slot) => {
+        try {
+          const details = await shiftRegistrationService.getSlotDetails(slot.slotId);
+          detailsMap.set(slot.slotId, details);
+        } catch (error) {
+          console.error(`Failed to fetch details for slot ${slot.slotId}:`, error);
+        }
+      });
+
+      await Promise.all(detailsPromises);
+
+      // Filter out slots with 0 remaining spots
+      const availableSlotsWithQuota = (slots || []).filter(slot => {
+        const details = detailsMap.get(slot.slotId);
+        return details && details.overallRemaining > 0;
+      });
+
+      console.log(' Filtered available slots:', availableSlotsWithQuota);
+      setAvailableSlots(availableSlotsWithQuota);
+      setSlotDetails(detailsMap);
     } catch (error: any) {
       console.error('Failed to fetch available slots:', error);
       toast.error(error.response?.data?.detail || 'Failed to fetch available slots');
@@ -94,7 +122,7 @@ export default function SlotRegistrationPage() {
       };
 
       const response = await shiftRegistrationService.getMyRegistrations(params);
-      console.log('📋 My registrations:', response);
+      console.log(' My registrations:', response);
       // Handle both array and paginated responses
       if (Array.isArray(response)) {
         setMyRegistrations(response);
@@ -113,7 +141,9 @@ export default function SlotRegistrationPage() {
   const handleRegisterSlot = (slot: AvailableSlot) => {
     setSelectedSlot(slot);
     setRegisterFormData({
-      effectiveFrom: new Date().toISOString().split('T')[0] // Today's date
+      effectiveFrom: slot.effectiveFrom, // Use slot's effective from date
+      effectiveTo: undefined,
+      dayOfWeek: []
     });
     setShowRegisterModal(true);
   };
@@ -129,13 +159,19 @@ export default function SlotRegistrationPage() {
       return;
     }
 
-    // Validate date is not in the past
-    const selectedDate = new Date(registerFormData.effectiveFrom);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Validate dayOfWeek is selected
+    if (!registerFormData.dayOfWeek || registerFormData.dayOfWeek.length === 0) {
+      toast.error('Please select at least one day of the week');
+      return;
+    }
 
-    if (selectedDate < today) {
-      toast.error('Effective date cannot be in the past');
+    // Validate date is within slot's period
+    const effectiveFrom = new Date(registerFormData.effectiveFrom);
+    const slotStart = new Date(selectedSlot.effectiveFrom);
+    const slotEnd = new Date(selectedSlot.effectiveTo);
+
+    if (effectiveFrom < slotStart || effectiveFrom > slotEnd) {
+      toast.error(`Effective date must be between ${formatDate(selectedSlot.effectiveFrom)} and ${formatDate(selectedSlot.effectiveTo)}`);
       return;
     }
 
@@ -144,10 +180,12 @@ export default function SlotRegistrationPage() {
 
       const payload: CreateShiftRegistrationRequest = {
         partTimeSlotId: selectedSlot.slotId,
-        effectiveFrom: registerFormData.effectiveFrom
+        effectiveFrom: registerFormData.effectiveFrom,
+        effectiveTo: registerFormData.effectiveTo,
+        dayOfWeek: registerFormData.dayOfWeek
       };
 
-      console.log('📤 Registering for slot:', payload);
+      console.log('� Registering for slot:', payload);
 
       await shiftRegistrationService.createRegistration(payload);
       toast.success('Successfully registered for the slot!');
@@ -160,7 +198,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error('❌ Failed to register for slot:', error);
+      console.error(' Failed to register for slot:', error);
 
       let errorMessage = 'Failed to register for slot';
       if (error.response?.data?.message) {
@@ -185,9 +223,9 @@ export default function SlotRegistrationPage() {
 
     try {
       setDeleting(true);
-      console.log('🗑️ Cancelling registration:', registration.registrationId);
+      console.log(' Cancelling registration:', registration.registrationId);
 
-      await shiftRegistrationService.deleteRegistration(registration.registrationId);
+      await shiftRegistrationService.deleteRegistration(registration.registrationId.toString());
       toast.success('Registration cancelled successfully');
 
       // Refresh both lists
@@ -196,7 +234,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error('❌ Failed to cancel registration:', error);
+      console.error(' Failed to cancel registration:', error);
 
       let errorMessage = 'Failed to cancel registration';
       if (error.response?.data?.message) {
@@ -291,26 +329,36 @@ export default function SlotRegistrationPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredAvailableSlots.map((slot) => {
                   const isRegistered = isAlreadyRegistered(slot.slotId);
+                  const details = slotDetails.get(slot.slotId);
+                  const remaining = details?.overallRemaining || 0;
+
                   return (
                     <Card key={slot.slotId} className={`${isRegistered ? 'opacity-50' : ''}`}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-lg">{slot.shiftName}</h3>
-                          <Badge variant={slot.remaining > 0 ? "default" : "secondary"}>
-                            {slot.remaining} left
+                          <Badge variant={remaining > 0 ? "default" : "secondary"}>
+                            {remaining} left
                           </Badge>
                         </div>
 
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
-                            <span>{getDayOfWeekLabel(slot.dayOfWeek)}</span>
+                            <span>{getDayOfWeekLabel(slot.dayOfWeek as DayOfWeek)}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-gray-500" />
                             <span className="text-sm text-gray-600">
-                              {slot.remaining} of {slot.remaining + (slot.remaining === 0 ? 1 : 0)} spots available
+                              Quota: {details?.quota || 0}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm text-gray-600">
+                              {formatDate(slot.effectiveFrom)} - {formatDate(slot.effectiveTo)}
                             </span>
                           </div>
                         </div>
@@ -321,22 +369,13 @@ export default function SlotRegistrationPage() {
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Already Registered
                             </Badge>
-                          ) : slot.remaining > 0 ? (
+                          ) : (
                             <Button
                               onClick={() => handleRegisterSlot(slot)}
                               className="w-full"
                               size="sm"
                             >
                               Register
-                            </Button>
-                          ) : (
-                            <Button
-                              disabled
-                              variant="outline"
-                              className="w-full"
-                              size="sm"
-                            >
-                              Full
                             </Button>
                           )}
                         </div>
@@ -388,7 +427,7 @@ export default function SlotRegistrationPage() {
                         <td className="p-3">{registration.shiftName}</td>
                         <td className="p-3">
                           <Badge variant="outline">
-                            {getDayOfWeekLabel(registration.dayOfWeek)}
+                            {getDayOfWeekLabel(registration.dayOfWeek as DayOfWeek)}
                           </Badge>
                         </td>
                         <td className="p-3">
@@ -436,7 +475,7 @@ export default function SlotRegistrationPage() {
         {/* Registration Modal */}
         {showRegisterModal && selectedSlot && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
               <div className="flex-shrink-0 border-b px-6 py-4">
                 <h2 className="text-xl font-bold">Register for Slot</h2>
               </div>
@@ -447,17 +486,24 @@ export default function SlotRegistrationPage() {
                 </div>
 
                 <div>
-                  <Label>Day of Week</Label>
-                  <Input value={getDayOfWeekLabel(selectedSlot.dayOfWeek)} disabled />
+                  <Label>Day of Week (Slot)</Label>
+                  <Input value={selectedSlot.dayOfWeek} disabled />
                 </div>
 
                 <div>
                   <Label>Remaining Spots</Label>
-                  <Input value={selectedSlot.remaining} disabled />
+                  <Input value={slotDetails.get(selectedSlot.slotId)?.overallRemaining || 0} disabled />
                 </div>
 
                 <div>
-                  <Label htmlFor="effectiveFrom">Effective From *</Label>
+                  <Label>Quota</Label>
+                  <Input value={slotDetails.get(selectedSlot.slotId)?.quota || 0} disabled />
+                </div>
+
+                <div>
+                  <Label htmlFor="effectiveFrom">
+                    Effective From <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="effectiveFrom"
                     type="date"
@@ -466,15 +512,73 @@ export default function SlotRegistrationPage() {
                       ...prev,
                       effectiveFrom: e.target.value
                     }))}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={selectedSlot.effectiveFrom}
+                    max={selectedSlot.effectiveTo}
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    Registration will be valid for 3 months from this date
+                    Valid period: {formatDate(selectedSlot.effectiveFrom)} - {formatDate(selectedSlot.effectiveTo)}
                   </p>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4">
+                <div>
+                  <Label htmlFor="effectiveTo">Effective To</Label>
+                  <Input
+                    id="effectiveTo"
+                    type="date"
+                    value={registerFormData.effectiveTo || ''}
+                    onChange={(e) => setRegisterFormData(prev => ({
+                      ...prev,
+                      effectiveTo: e.target.value
+                    }))}
+                    min={registerFormData.effectiveFrom || selectedSlot.effectiveFrom}
+                    max={selectedSlot.effectiveTo}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Leave empty to use slot's end date
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="dayOfWeek">
+                    Days to Register <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="space-y-2 mt-2">
+                    {selectedSlot.dayOfWeek.split(',').map(day => {
+                      const trimmedDay = day.trim();
+                      return (
+                        <label key={trimmedDay} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            value={trimmedDay}
+                            checked={registerFormData.dayOfWeek?.includes(trimmedDay)}
+                            onChange={(e) => {
+                              const currentDays = registerFormData.dayOfWeek || [];
+                              if (e.target.checked) {
+                                setRegisterFormData(prev => ({
+                                  ...prev,
+                                  dayOfWeek: [...currentDays, trimmedDay]
+                                }));
+                              } else {
+                                setRegisterFormData(prev => ({
+                                  ...prev,
+                                  dayOfWeek: currentDays.filter(d => d !== trimmedDay)
+                                }));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span>{getDayOfWeekLabel(trimmedDay as DayOfWeek)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Select which days you want to work for this shift (based on slot's available days)
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"

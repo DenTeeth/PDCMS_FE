@@ -11,7 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faCalendar, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 import storageService, { StorageTransaction } from '@/services/storageService';
-import { itemBatchService } from '@/services/warehouseService';
 
 interface EditExportModalProps {
   isOpen: boolean;

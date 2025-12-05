@@ -51,7 +51,7 @@ export default function ContactForm({ defaultValues, onSubmit }: { defaultValues
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Full name *</label>
+          <label className="block text-sm font-medium text-gray-700">Full name <span className="text-red-500">*</span></label>
           <input
             {...register('fullName')}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"

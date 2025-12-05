@@ -7,33 +7,37 @@
 
 /**
  * Part-Time Work Slot entity
+ * dayOfWeek can be single day (e.g., "MONDAY") or comma-separated (e.g., "MONDAY,TUESDAY,THURSDAY")
  */
 export interface PartTimeSlot {
   slotId: number;
   workShiftId: string;
   workShiftName: string;
-  dayOfWeek: DayOfWeek;
+  dayOfWeek: string;  // Changed from DayOfWeek enum to string to support comma-separated values
   quota: number;
   registered: number;
   isActive: boolean;
-  effectiveFrom: string; // ISO datetime string
+  effectiveFrom: string; // ISO date string (YYYY-MM-DD)
+  effectiveTo: string;   // ISO date string (YYYY-MM-DD)
 }
 
 /**
  * Available Slot for Employee Registration
- * Response from GET /api/v1/registrations/available-slots
+ * Response from GET /api/v1/registrations/part-time-flex/available-slots
  * 
- * Note: API response only includes: slotId, shiftName, dayOfWeek, remaining
- * workShiftId, quota, registered are optional (may not be in response)
+ * dayOfWeek can be single day or comma-separated values
  */
 export interface AvailableSlot {
   slotId: number;
-  shiftName: string;    // Note: shiftName (not workShiftName)
-  dayOfWeek: DayOfWeek;
-  remaining: number;    // Number of available spots
-  workShiftId?: string; // Optional: ID of work shift (may not be in response)
-  quota?: number;       // Optional: Total quota (may not be in response)
-  registered?: number;  // Optional: Number of registrations (may not be in response)
+  shiftName: string;
+  dayOfWeek: string;  // Changed to string to support comma-separated days
+  totalDatesAvailable: number;
+  totalDatesEmpty: number;
+  totalDatesFull: number;
+  effectiveFrom: string;
+  effectiveTo: string;
+  quota: number;
+  availabilitySummary: string;
 }
 
 /**
@@ -54,8 +58,11 @@ export enum DayOfWeek {
  */
 export interface CreateWorkSlotRequest {
   workShiftId: string;
-  dayOfWeek: DayOfWeek;
+  // Can be single day like "MONDAY" or comma-separated days like "MONDAY,TUESDAY"
+  dayOfWeek: string;
   quota: number;
+  effectiveFrom: string; // ISO date string (YYYY-MM-DD)
+  effectiveTo: string;   // ISO date string (YYYY-MM-DD)
 }
 
 /**
@@ -76,7 +83,8 @@ export interface WorkSlotQueryParams {
   sortBy?: 'slotId' | 'dayOfWeek' | 'quota' | 'registered';
   sortDirection?: 'ASC' | 'DESC';
   workShiftId?: string;
-  dayOfWeek?: DayOfWeek;
+  // Optional filter; accepts DayOfWeek or comma-separated string of days
+  dayOfWeek?: string | DayOfWeek;
   isActive?: boolean;
 }
 
@@ -155,4 +163,39 @@ export interface PartTimeSlotDetailResponse {
   registered: number; // Count of active registrations
   isActive: boolean;
   registeredEmployees: RegisteredEmployeeInfo[];
+}
+
+/**
+ * Monthly Availability Information
+ * Part of SlotDetailsResponse
+ * 
+ * Updated based on Frontend Integration Guide (Issue #1)
+ * - totalDatesAvailable: Dates with NO approved registrations (registered == 0)
+ * - totalDatesPartial: Dates with some approved registrations but not full (0 < registered < quota)
+ * - totalDatesFull: Dates at maximum capacity (registered >= quota)
+ */
+export interface MonthlyAvailability {
+  month: string; // Format: "YYYY-MM"
+  monthName?: string; // Format: "Month YYYY" (e.g., "November 2025") - optional for backward compatibility
+  totalWorkingDays: number; // Total working days in this month for this day of week
+  totalDatesAvailable: number; // Dates completely empty (registered == 0)
+  totalDatesPartial: number; // Dates with some slots available (0 < registered < quota)
+  totalDatesFull: number; // Dates at full capacity (registered >= quota)
+  status: 'AVAILABLE' | 'FULL'; // AVAILABLE if has space, FULL if all dates full
+}
+
+/**
+ * Slot Details Response
+ * Response from GET /api/v1/registrations/part-time-flex/slots/{slotId}/details
+ * Provides detailed availability information by month
+ */
+export interface SlotDetailsResponse {
+  slotId: number;
+  shiftName: string;
+  dayOfWeek: string;
+  quota: number;
+  effectiveFrom: string; // ISO date string (YYYY-MM-DD)
+  effectiveTo: string;   // ISO date string (YYYY-MM-DD)
+  overallRemaining: number;
+  availabilityByMonth: MonthlyAvailability[];
 }

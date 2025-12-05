@@ -73,7 +73,7 @@ class PatientService {
 
   /**
    * Create a new patient (with or without account)
-   * If username/password/email provided → creates account (patient can login)
+   * If email provided → BE automatically creates account with PENDING_VERIFICATION status
    * If not → simple patient record (cannot login)
    * 
    * @param data Patient creation data
@@ -82,6 +82,15 @@ class PatientService {
   async createPatient(data: CreatePatientRequest): Promise<Patient> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post(this.endpoint, data);
+    
+    // Log full response for debugging
+    console.log('� Full BE Response:', {
+      status: response.status,
+      data: response.data,
+      hasAccount: response.data?.hasAccount,
+      accountStatus: response.data?.accountStatus,
+      note: 'Nếu hasAccount/accountStatus là undefined → BE chưa trả về các field này',
+    });
     
     if (response.data?.data) {
       return response.data.data;

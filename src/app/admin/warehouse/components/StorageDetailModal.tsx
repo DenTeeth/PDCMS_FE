@@ -1,14 +1,34 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { storageService, StorageTransaction } from '@/services/storageService';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { storageService } from '@/services/storageService';
+import { inventoryService } from '@/services/inventoryService';
+import type { StorageTransactionItemV3 } from '@/types/warehouse';
+import { usePermission, useRole } from '@/hooks/usePermissions';
+import { toast } from 'sonner';
+import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileInvoice,
+  faPaperPlane,
   faInfoCircle,
   faBoxes,
   faCalendarAlt,
@@ -18,6 +38,10 @@ import {
   faBarcode,
   faBox,
   faMoneyBill,
+  faCheckCircle,
+  faTimesCircle,
+  faBan,
+  faHospital,
 } from '@fortawesome/free-solid-svg-icons';
 
 interface StorageDetailModalProps {
@@ -31,11 +55,194 @@ export default function StorageDetailModal({
   onClose,
   transactionId,
 }: StorageDetailModalProps) {
-  const { data: transaction, isLoading } = useQuery({
+  const [itemFallbacks, setItemFallbacks] = useState<Record<string, { itemCode?: string; expiryDate?: string }>>({});
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  // RBAC: Check VIEW_WAREHOUSE_COST permission (BE uses VIEW_WAREHOUSE_COST, not VIEW_COST)
+  const hasViewCost = usePermission('VIEW_WAREHOUSE_COST');
+  // BE checks: hasRole('ADMIN') or hasAuthority('APPROVE_TRANSACTION')
+  const isAdmin = useRole('ROLE_ADMIN');
+  const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');
+  const hasUpdatePermission = usePermission('UPDATE_WAREHOUSE') || usePermission('CANCEL_WAREHOUSE');
+
+  // Fetch transaction data first (must be declared before useEffect that uses it)
+  const { data: transaction, isLoading, isError, error } = useQuery({
     queryKey: ['storageTransaction', transactionId],
     queryFn: () => storageService.getById(transactionId!),
     enabled: isOpen && !!transactionId,
+    retry: 1, // Only retry once
+    retryDelay: 1000,
   });
+
+  // Debug: Log permission info (moved after transaction declaration)
+  useEffect(() => {
+    if (transaction && isOpen) {
+      const canShowApproveButton = transaction.status === 'PENDING_APPROVAL' && hasApprovePermission;
+      const canShowSubmitButton = transaction.status === 'DRAFT' && hasUpdatePermission;
+      const canShowCancelButton = (transaction.status === 'DRAFT' || transaction.status === 'PENDING_APPROVAL') && hasUpdatePermission;
+
+      console.log(' [StorageDetailModal] Permission Debug:', {
+        transactionId: transaction.transactionId,
+        transactionCode: transaction.transactionCode,
+        transactionStatus: transaction.status,
+        isAdmin,
+        hasApprovePermission,
+        hasUpdatePermission,
+        hasViewCost,
+        userRoles: user?.roles || [],
+        userPermissions: user?.permissions || [],
+        canShowApproveButton,
+        canShowSubmitButton,
+        canShowCancelButton,
+        reasonNoApproveButton: !canShowApproveButton
+          ? (transaction.status !== 'PENDING_APPROVAL'
+            ? `Status is ${transaction.status}, not PENDING_APPROVAL`
+            : `hasApprovePermission is ${hasApprovePermission}`)
+          : 'OK',
+      });
+    }
+  }, [transaction, isOpen, isAdmin, hasApprovePermission, hasUpdatePermission, hasViewCost, user]);
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: (notes?: string) => {
+      if (!transactionId) throw new Error('Transaction ID is required');
+      return storageService.approve(transactionId, notes);
+    },
+    onSuccess: () => {
+      toast.success('Đã duyệt phiếu thành công');
+      queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Lỗi khi duyệt phiếu');
+    },
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: (reason: string) => storageService.reject(transactionId!, reason),
+    onSuccess: () => {
+      toast.success('Đã từ chối phiếu thành công');
+      queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      setShowRejectDialog(false);
+      setRejectionReason('');
+      onClose();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Lỗi khi từ chối phiếu');
+    },
+  });
+
+  // Cancel mutation
+  const cancelMutation = useMutation({
+    mutationFn: (reason?: string) => storageService.cancel(transactionId!, reason),
+    onSuccess: () => {
+      toast.success('Đã hủy phiếu thành công');
+      queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      setShowCancelDialog(false);
+      setCancellationReason('');
+      onClose();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || error.response?.data?.message || 'Lỗi khi hủy phiếu';
+      console.error('Cancel transaction error:', error);
+      toast.error(errorMessage);
+    },
+  });
+
+  const getItemFallbackKey = (item: StorageTransactionItemV3) => {
+    if (item.transactionItemId) return String(item.transactionItemId);
+    const masterId = item.itemMasterId ?? 'unknown';
+    const lot = item.lotNumber ?? 'no-lot';
+    return `${masterId}-${lot}`;
+  };
+
+  useEffect(() => {
+    if (!transaction?.items?.length) {
+      setItemFallbacks({});
+      return;
+    }
+
+    const itemsNeedingFallback = transaction.items.filter(
+      (item) =>
+        item.itemMasterId &&
+        (!item.itemCode || (transaction.transactionType === 'IMPORT' && !item.expiryDate))
+    );
+
+    if (itemsNeedingFallback.length === 0) {
+      setItemFallbacks({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchFallbackData = async () => {
+      setFallbackLoading(true);
+      try {
+        const grouped = itemsNeedingFallback.reduce<Record<number, StorageTransactionItemV3[]>>(
+          (acc, item) => {
+            const id = item.itemMasterId!;
+            if (!acc[id]) acc[id] = [];
+            acc[id].push(item);
+            return acc;
+          },
+          {}
+        );
+
+        for (const [itemMasterIdStr, items] of Object.entries(grouped)) {
+          const itemMasterId = Number(itemMasterIdStr);
+          try {
+            const [itemDetail, batches] = await Promise.all([
+              inventoryService.getById(itemMasterId),
+              inventoryService.getBatchesByItemId(itemMasterId),
+            ]);
+
+            if (cancelled) return;
+
+            setItemFallbacks((prev) => {
+              const updated = { ...prev };
+              items.forEach((item) => {
+                const key = getItemFallbackKey(item);
+                if (!updated[key]) {
+                  const matchedBatch = item.lotNumber
+                    ? batches.find((batch) => batch.lotNumber === item.lotNumber)
+                    : undefined;
+
+                  updated[key] = {
+                    itemCode: itemDetail?.itemCode,
+                    expiryDate: matchedBatch?.expiryDate,
+                  };
+                }
+              });
+              return updated;
+            });
+          } catch (error) {
+            console.error(' Fallback fetch failed for itemMasterId:', itemMasterId, error);
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setFallbackLoading(false);
+        }
+      }
+    };
+
+    fetchFallbackData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [transaction]);
 
   if (!transactionId) return null;
 
@@ -65,6 +272,43 @@ export default function StorageDetailModal({
       case 'LOSS': return 'Hao hụt';
       default: return type;
     }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    if (!status) return null;
+    const statusMap: Record<string, { label: string; className: string }> = {
+      DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-800 border-gray-200' },
+      PENDING_APPROVAL: { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+      APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-800 border-green-200' },
+      REJECTED: { label: 'Đã từ chối', className: 'bg-red-100 text-red-800 border-red-200' },
+      CANCELLED: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800 border-gray-200' },
+    };
+    const statusInfo = statusMap[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
+    return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
+  };
+
+  const formatCurrency = (amount?: number) => {
+    if (amount === undefined || amount === null) return 'N/A';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  };
+
+  const handleApprove = () => {
+    approveMutation.mutate(undefined); // No notes for approval
+  };
+
+  const handleReject = () => {
+    if (!rejectionReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối');
+      return;
+    }
+    rejectMutation.mutate(rejectionReason);
+  };
+
+  const handleCancel = () => {
+    cancelMutation.mutate(cancellationReason || undefined);
   };
 
   return (
@@ -97,7 +341,23 @@ export default function StorageDetailModal({
             {isLoading ? (
               <div className="text-center py-8">Đang tải thông tin...</div>
             ) : !transaction ? (
-              <div className="text-center py-8 text-red-500">Không thể tải thông tin phiếu</div>
+              <div className="text-center py-8 space-y-2">
+                <div className="text-red-500 font-semibold">Không thể tải thông tin phiếu</div>
+                {isError && error && (
+                  <div className="text-sm text-muted-foreground">
+                    {error instanceof Error
+                      ? error.message
+                      : (error as any)?.response?.data?.message ||
+                      (error as any)?.response?.data?.error ||
+                      'Lỗi không xác định'}
+                  </div>
+                )}
+                {(error as any)?.response?.status === 500 && (
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Lỗi máy chủ (500). Vui lòng thử lại sau hoặc liên hệ quản trị viên.
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 {/* Basic Information */}
@@ -105,7 +365,7 @@ export default function StorageDetailModal({
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                     Thông tin cơ bản
                   </h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faBarcode} className="w-4 h-4 text-muted-foreground mt-1" />
@@ -124,6 +384,16 @@ export default function StorageDetailModal({
                         </Badge>
                       </div>
                     </div>
+
+                    {transaction.status && (
+                      <div className="flex items-start gap-3">
+                        <FontAwesomeIcon icon={faInfoCircle} className="w-4 h-4 text-muted-foreground mt-1" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Trạng thái</p>
+                          {getStatusBadge(transaction.status)}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-start gap-3">
                       <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 text-muted-foreground mt-1" />
@@ -150,8 +420,78 @@ export default function StorageDetailModal({
                         <p className="font-medium">{transaction.createdByName || 'N/A'}</p>
                       </div>
                     </div>
+
+                    {transaction.approvedByName && (
+                      <div className="flex items-start gap-3">
+                        <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4 text-green-600 mt-1" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Người duyệt</p>
+                          <p className="font-medium">{transaction.approvedByName}</p>
+                          {transaction.approvedAt && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatDateTime(transaction.approvedAt)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {transaction.rejectionReason && (
+                      <div className="flex items-start gap-3 col-span-2">
+                        <FontAwesomeIcon icon={faTimesCircle} className="w-4 h-4 text-red-600 mt-1" />
+                        <div>
+                          <p className="text-xs text-red-600 font-semibold">Lý do từ chối</p>
+                          <p className="text-sm">{transaction.rejectionReason}</p>
+                          {transaction.rejectedAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDateTime(transaction.rejectedAt)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {transaction.cancellationReason && (
+                      <div className="flex items-start gap-3 col-span-2">
+                        <FontAwesomeIcon icon={faBan} className="w-4 h-4 text-gray-600 mt-1" />
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">Lý do hủy</p>
+                          <p className="text-sm">{transaction.cancellationReason}</p>
+                          {transaction.cancelledAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDateTime(transaction.cancelledAt)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Appointment Info (for EXPORT) */}
+                {transaction.transactionType === 'EXPORT' && transaction.relatedAppointmentId && (
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b pb-2 flex items-center gap-2">
+                      <FontAwesomeIcon icon={faHospital} className="w-4 h-4" />
+                      Thông tin ca điều trị
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Ca điều trị:</span>
+                      <Link
+                        href={`/admin/appointments/${transaction.relatedAppointmentId}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {transaction.relatedAppointmentCode || `#${transaction.relatedAppointmentId}`}
+                      </Link>
+                    </div>
+                    {transaction.patientName && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Bệnh nhân:</span>
+                        <span className="font-medium">{transaction.patientName}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Notes */}
                 {transaction.notes && (
@@ -171,12 +511,15 @@ export default function StorageDetailModal({
                       <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
                       <span>Ngày tạo: {formatDateTime(transaction.createdAt)}</span>
                     </div>
-                    {transaction.updatedAt && (
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
-                        <span>Cập nhật: {formatDateTime(transaction.updatedAt)}</span>
-                      </div>
-                    )}
+                    {(() => {
+                      const updatedAt = (transaction as any).updatedAt ?? transaction.updated_at;
+                      return updatedAt ? (
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="w-3 h-3" />
+                          <span>Cập nhật: {formatDateTime(updatedAt)}</span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </>
@@ -205,47 +548,205 @@ export default function StorageDetailModal({
                     <thead className="bg-slate-100">
                       <tr className="text-xs font-semibold text-slate-700">
                         <th className="p-3 text-left">STT</th>
-                        <th className="p-3 text-left">Mã vật tư</th>
+                        <th className="p-3 text-left">Mã vật tư / Hạn sử dụng</th>
                         <th className="p-3 text-left">Tên vật tư</th>
                         <th className="p-3 text-left">Số lô</th>
                         <th className="p-3 text-right">Số lượng</th>
-                        {transaction.transactionType === 'IMPORT' && (
-                          <th className="p-3 text-center bg-amber-50 text-amber-900 font-bold">⚠️ Hạn sử dụng</th>
-                        )}
                       </tr>
                     </thead>
                     <tbody>
-                      {transaction.items.map((item, index) => (
-                        <tr key={item.transactionItemId || index} className="border-t hover:bg-slate-50">
-                          <td className="p-3 text-center text-slate-600">{index + 1}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {item.itemCode || '-'}
-                            </Badge>
-                          </td>
-                          <td className="p-3 font-medium">{item.itemName || '-'}</td>
-                          <td className="p-3 font-mono text-sm">{item.lotNumber}</td>
-                          <td className="p-3 text-right font-semibold">
-                            {item.quantityChange.toLocaleString()}
-                          </td>
-                          {transaction.transactionType === 'IMPORT' && (
-                            <td className="p-3 text-center text-sm">
-                              {item.expiryDate ? formatDate(item.expiryDate) : '-'}
+                      {transaction.items.map((item, index) => {
+                        const fallback = itemFallbacks[getItemFallbackKey(item)];
+                        const displayItemCode = item.itemCode || fallback?.itemCode;
+                        const displayExpiry = item.expiryDate || fallback?.expiryDate;
+
+                        return (
+                          <tr key={item.transactionItemId || index} className="border-t hover:bg-slate-50">
+                            <td className="p-3 text-center text-slate-600">{index + 1}</td>
+                            <td className="p-3">
+                              <div className="flex flex-col gap-1">
+                                {displayItemCode ? (
+                                  <Badge variant="outline" className="font-mono text-xs w-fit">
+                                    {displayItemCode}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">Chưa có mã</span>
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                  {displayExpiry
+                                    ? `HSD: ${formatDate(displayExpiry)}`
+                                    : 'HSD: Chưa có'}
+                                </span>
+                              </div>
                             </td>
-                          )}
-                        </tr>
-                      ))}
+                            <td className="p-3 font-medium">
+                              {item.itemName || <span className="text-muted-foreground italic">Chưa có dữ liệu</span>}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-col">
+                                <span className="font-mono text-sm">{item.lotNumber || '-'}</span>
+                                {item.itemMasterId && (
+                                  <span className="text-[11px] text-muted-foreground">
+                                    ID vật tư: {item.itemMasterId}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-right font-semibold">
+                              {Math.abs(item.quantityChange).toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  {fallbackLoading && (
+                    <div className="text-center text-xs text-muted-foreground py-2">
+                      Đang đồng bộ thông tin vật tư...
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end pt-4 border-t mt-6">
+        <div className="flex justify-between items-center pt-4 border-t mt-6">
+          {/* Approval Workflow Buttons */}
+          <div className="flex gap-2">
+            {/* Submit button: DISABLED - BE không có endpoint submit riêng */}
+            {/* 
+              Note: BE không có endpoint để submit transaction từ DRAFT sang PENDING_APPROVAL.
+              Transactions thường được tạo với status PENDING_APPROVAL ngay từ đầu, hoặc cần BE implement endpoint submit.
+              Tạm thời ẩn button này để tránh lỗi 500.
+            */}
+            {false && transaction?.status === 'DRAFT' && hasUpdatePermission && (
+              <Button
+                disabled
+                className="bg-gray-400 text-white cursor-not-allowed"
+                title="Chức năng chưa khả dụng - BE chưa có endpoint submit"
+              >
+                <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4 mr-2" />
+                Gửi duyệt (Chưa khả dụng)
+              </Button>
+            )}
+
+            {/* Approve/Reject buttons: Show when status = PENDING_APPROVAL */}
+            {transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission && (
+              <>
+                <Button
+                  onClick={handleApprove}
+                  disabled={approveMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4 mr-2" />
+                  {approveMutation.isPending ? 'Đang duyệt...' : 'Duyệt'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowRejectDialog(true)}
+                  disabled={rejectMutation.isPending}
+                >
+                  <FontAwesomeIcon icon={faTimesCircle} className="w-4 h-4 mr-2" />
+                  Từ chối
+                </Button>
+              </>
+            )}
+
+            {/* Cancel button: Show when status = DRAFT or PENDING_APPROVAL */}
+            {(transaction?.status === 'DRAFT' || transaction?.status === 'PENDING_APPROVAL') && hasUpdatePermission && (
+              <Button
+                variant="outline"
+                onClick={() => setShowCancelDialog(true)}
+                disabled={cancelMutation.isPending}
+              >
+                <FontAwesomeIcon icon={faBan} className="w-4 h-4 mr-2" />
+                {cancelMutation.isPending ? 'Đang hủy...' : 'Hủy phiếu'}
+              </Button>
+            )}
+
+            {/* Debug info: Show why buttons are not visible */}
+            {process.env.NODE_ENV === 'development' && transaction && (
+              <div className="text-xs text-muted-foreground ml-4 flex items-center">
+                {transaction.status === 'DRAFT' && !hasUpdatePermission && (
+                  <span className="text-orange-600">Cần quyền UPDATE_WAREHOUSE để gửi duyệt</span>
+                )}
+                {transaction.status === 'PENDING_APPROVAL' && !hasApprovePermission && (
+                  <span className="text-orange-600">Cần quyền APPROVE_TRANSACTION hoặc ROLE_ADMIN để duyệt</span>
+                )}
+              </div>
+            )}
+          </div>
           <Button onClick={onClose}>Đóng</Button>
         </div>
+
+        {/* Reject Dialog */}
+        <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Từ chối phiếu</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vui lòng nhập lý do từ chối phiếu này. Lý do này sẽ được lưu lại và hiển thị cho người tạo phiếu.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="rejectionReason">Lý do từ chối *</Label>
+                <Input
+                  id="rejectionReason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Nhập lý do từ chối..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setRejectionReason('')}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReject}
+                disabled={!rejectionReason.trim() || rejectMutation.isPending}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {rejectMutation.isPending ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Cancel Dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hủy phiếu</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn hủy phiếu này? Bạn có thể nhập lý do hủy (tùy chọn).
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="cancellationReason">Lý do hủy (tùy chọn)</Label>
+                <Input
+                  id="cancellationReason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Nhập lý do hủy..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setCancellationReason('')}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancel}
+                disabled={cancelMutation.isPending}
+                className="bg-gray-600 hover:bg-gray-700"
+              >
+                {cancelMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

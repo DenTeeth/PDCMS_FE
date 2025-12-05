@@ -17,7 +17,8 @@ import {
   faArrowUp,
   faArrowDown,
 } from '@fortawesome/free-solid-svg-icons';
-import { inventoryService, type ItemMasterV1, type ItemBatchV1 } from '@/services/inventoryService';
+import { inventoryService, type ItemMasterV1 } from '@/services/inventoryService';
+import type { BatchResponse } from '@/types/warehouse';
 import { useQuery } from '@tanstack/react-query';
 
 // Import storage service for transaction history
@@ -53,18 +54,30 @@ export default function ItemDetailModal({
     queryKey: ['itemHistory', itemId],
     queryFn: async () => {
       if (!itemId) return [];
-      // Get all transactions and filter by itemMasterId
-      const allTransactions = await storageService.getAll({});
-      return allTransactions.filter((tx: StorageTransaction) => 
-        tx.items?.some((item: StorageTransactionItem) => item.itemMasterId === itemId)
-      ).sort((a: StorageTransaction, b: StorageTransaction) => 
-        new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+      const result = await storageService.getAll(
+        { page: 0, size: 30, sortBy: 'transactionDate', sortDirection: 'desc' },
+        { includeItems: true, detailLimit: 30 }
       );
+      return result.content
+        .filter((tx: StorageTransaction) =>
+          tx.items?.some((item: StorageTransactionItem) =>
+            item.itemMasterId === itemId ||
+            (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode)
+          )
+        )
+        .sort((a: StorageTransaction, b: StorageTransaction) =>
+          new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+        );
     },
-    enabled: !!itemId,
+    enabled: !!itemId && !!itemDetail,
   });
 
   if (!itemId) return null;
+
+  const totalBatchQuantity = batches.reduce(
+    (sum: number, batch: BatchResponse) => sum + (batch.quantityOnHand ?? 0),
+    0
+  );
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -204,7 +217,7 @@ export default function ItemDetailModal({
                   <div>
                     <p className="text-sm text-gray-600">Tồn kho hiện tại</p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {itemDetail.currentStock || 0} {itemDetail.unitOfMeasure}
+                      {totalBatchQuantity} {itemDetail.unitOfMeasure}
                     </p>
                   </div>
                   <div>
@@ -264,7 +277,7 @@ export default function ItemDetailModal({
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                     <p className="font-medium text-blue-800">
-                      💡 Danh sách lô hàng được sắp xếp theo nguyên tắc FEFO (First Expired, First Out)
+                       Danh sách lô hàng được sắp xếp theo nguyên tắc FEFO (First Expired, First Out)
                     </p>
                   </div>
 
@@ -280,7 +293,7 @@ export default function ItemDetailModal({
                         </tr>
                       </thead>
                       <tbody>
-                        {batches.map((batch: ItemBatchV1, index: number) => (
+                        {batches.map((batch: BatchResponse, index: number) => (
                           <tr 
                             key={batch.batchId} 
                             className={`border ${index === 0 ? 'bg-green-50' : 'hover:bg-gray-50'}`}
@@ -307,10 +320,10 @@ export default function ItemDetailModal({
                               )}
                             </td>
                             <td className="p-3 border">
-                              <span className="text-sm">{formatDate(batch.importDate)}</span>
+                              <span className="text-sm">{formatDate(batch.importedAt)}</span>
                             </td>
                             <td className="p-3 border">
-                              {getWarehouseTypeBadge(batch.warehouseType)}
+                              {getWarehouseTypeBadge(itemDetail.warehouseType)}
                             </td>
                           </tr>
                         ))}
@@ -328,7 +341,7 @@ export default function ItemDetailModal({
                       <div>
                         <p className="text-sm text-gray-600">Tổng tồn kho</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {batches.reduce((sum: number, b: ItemBatchV1) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
+                          {batches.reduce((sum: number, b: BatchResponse) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
                         </p>
                       </div>
                     </div>
@@ -351,7 +364,7 @@ export default function ItemDetailModal({
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                     <p className="font-medium text-blue-800">
-                      📜 Lịch sử các giao dịch xuất/nhập kho của vật tư này
+                      � Lịch sử các giao dịch xuất/nhập kho của vật tư này
                     </p>
                   </div>
 

@@ -16,21 +16,21 @@ const getStatusBadge = (status: string) => {
     switch (statusUpper) {
         case 'NEW':
         case 'PENDING':
-            return <Badge variant="default" className="bg-blue-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-blue-500 whitespace-nowrap">{status}</Badge>;
         case 'CONTACTED':
         case 'IN_PROGRESS':
-            return <Badge variant="default" className="bg-yellow-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-yellow-500 whitespace-nowrap">{status}</Badge>;
         case 'INTERESTED':
         case 'QUALIFIED':
-            return <Badge variant="default" className="bg-green-500">{status}</Badge>;
+            return <Badge variant="default" className="bg-green-500 whitespace-nowrap">{status}</Badge>;
         case 'NOT_INTERESTED':
         case 'REJECTED':
-            return <Badge variant="destructive">{status}</Badge>;
+            return <Badge variant="destructive" className="whitespace-nowrap">{status}</Badge>;
         case 'CONVERTED':
         case 'SUCCESS':
-            return <Badge variant="default" className="bg-emerald-600">{status}</Badge>;
+            return <Badge variant="default" className="bg-emerald-600 whitespace-nowrap">{status}</Badge>;
         default:
-            return <Badge variant="secondary">{status}</Badge>;
+            return <Badge variant="secondary" className="whitespace-nowrap">{status}</Badge>;
     }
 };
 
@@ -40,7 +40,7 @@ export default function ViewContactPage() {
     const { data: contact, isLoading, error } = useContact(contactId);
     const del = useSoftDeleteContact();
     const { user } = useAuth();
-    const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
+    const canDelete = user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT');
 
     if (isLoading) return <div className="p-6 text-center">Loading...</div>;
 
@@ -51,7 +51,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -79,7 +79,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -130,7 +130,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/employee/customers')}
+                        onClick={() => router.push('/employee/customer-contacts')}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
@@ -147,7 +147,7 @@ export default function ViewContactPage() {
                     <Button
                         variant="default"
                         size="sm"
-                        onClick={() => router.push(`/employee/customers/contact/${contactId}/edit`)}
+                        onClick={() => router.push(`/employee/customer-contacts/${contactId}/edit`)}
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />

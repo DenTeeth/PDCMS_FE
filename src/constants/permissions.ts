@@ -115,6 +115,12 @@ export const ADMIN_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_SERVICE],
     },
     {
+      name: 'Customer Contacts',
+      href: '/admin/customer-contacts',
+      icon: faComments,
+      requiredPermissions: [Permission.VIEW_CONTACT],
+    },
+    {
       name: 'Settings',
       href: '/admin/settings',
       icon: faCog,
@@ -150,10 +156,10 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       requiredPermissions: [Permission.VIEW_TREATMENT],
     },
     {
-      name: 'CustomerContact',
-      href: '/employee/customer-contacts',
-      icon: faCalendarAlt,
-      requiredPermissions: [Permission.VIEW_CONTACT_HISTORY],
+      name: 'Customer Contacts',
+      href: '/employee/customers',
+      icon: faComments,
+      requiredPermissions: [Permission.VIEW_CONTACT],
     },
     {
       name: 'Follow-ups',
@@ -167,12 +173,6 @@ export const EMPLOYEE_NAVIGATION: NavigationConfig = {
       href: '/employee/stages',
       icon: faProcedures,
       requiredPermissions: [Permission.VIEW_TREATMENT],
-    },
-    {
-      name: 'My Schedule',
-      href: '/employee/schedule',
-      icon: faCalendarAlt,
-      requiredPermissions: [Permission.VIEW_WORK_SHIFTS],
     },
     {
       name: 'My Shift Registrations',

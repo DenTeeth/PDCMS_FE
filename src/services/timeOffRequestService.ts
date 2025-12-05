@@ -35,11 +35,39 @@ export class TimeOffRequestService {
     data: CreateTimeOffRequestDto
   ): Promise<TimeOffRequestDetail> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<TimeOffRequestDetail>(
-      this.BASE_URL,
-      data
-    );
-    return response.data;
+
+    // Transform slotId → workShiftId to match backend API
+    const requestBody = {
+      employeeId: data.employeeId, // Required by backend
+      timeOffTypeId: data.timeOffTypeId,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      workShiftId: data.slotId || null, // Backend expects workShiftId not slotId
+      reason: data.reason
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(' TimeOffRequestService.createTimeOffRequest:');
+      console.log('  Original:', JSON.stringify(data, null, 2));
+      console.log('  Transformed:', JSON.stringify(requestBody, null, 2));
+    }
+
+    try {
+      const response = await axios.post<TimeOffRequestDetail>(
+        this.BASE_URL,
+        requestBody
+      );
+      return response.data;
+    } catch (error: any) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(' TimeOffRequestService.createTimeOffRequest failed:');
+        console.error('  Status:', error.response?.status);
+        console.error('  Status Text:', error.response?.statusText);
+        console.error('  Error Data:', JSON.stringify(error.response?.data, null, 2));
+        console.error('  Request Body:', JSON.stringify(requestBody, null, 2));
+      }
+      throw error;
+    }
   }
 
   /**

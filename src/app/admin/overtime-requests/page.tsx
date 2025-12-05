@@ -22,12 +22,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { OvertimeService } from '@/services/overtimeService';
 import { employeeService } from '@/services/employeeService';
 import { workShiftService } from '@/services/workShiftService';
 import { validateOvertimeForm, showOvertimeError } from '@/utils/overtimeErrorHandler';
+import { formatTimeToHHMM } from '@/lib/utils';
 import {
   OvertimeRequest,
   OvertimeStatus,
@@ -136,8 +137,18 @@ export default function AdminOvertimeRequestsPage() {
         ...formData,
         employeeId: Number(formData.employeeId),
       };
-      console.log('Admin creating overtime request:', requestData);
+
+      console.log(' Admin creating overtime request with data:', {
+        requestData,
+        employeeId: requestData.employeeId,
+        employeeIdType: typeof requestData.employeeId,
+        workDate: requestData.workDate,
+        workShiftId: requestData.workShiftId,
+        reason: requestData.reason
+      });
+
       const response = await OvertimeService.createOvertimeRequest(requestData);
+
       setShowCreateForm(false);
       setFormData({
         employeeId: undefined,
@@ -146,9 +157,41 @@ export default function AdminOvertimeRequestsPage() {
         reason: '',
       });
       loadOvertimeRequests();
-      alert(`Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nNhân viên: ${response.employee.fullName}\nTrạng thái: ${response.status}`);
+      alert(` Tạo yêu cầu làm thêm giờ thành công!\nMã yêu cầu: ${response.requestId}\nNhân viên: ${response.employee.fullName}\nTrạng thái: ${response.status}`);
     } catch (error: any) {
-      console.error('Error creating overtime request:', error);
+      console.error(' Error creating overtime request:', error);
+      console.error(' Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.response?.data?.message,
+        detail: error.response?.data?.detail,
+        errors: error.response?.data?.errors
+      });
+
+      const status = error.response?.status;
+      let errorMsg = '';
+
+      if (status === 500) {
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Lỗi server khi xử lý yêu cầu. Vui lòng kiểm tra:\n' +
+          '- Nhân viên có tồn tại?\n' +
+          '- Ca làm việc có hợp lệ?\n' +
+          '- Ngày làm việc có đúng định dạng?';
+      } else if (status === 400) {
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Dữ liệu không hợp lệ';
+      } else if (status === 409) {
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Đã có yêu cầu làm thêm giờ trong thời gian này';
+      } else if (status === 403) {
+        errorMsg = 'Không có quyền tạo yêu cầu làm thêm giờ';
+      } else {
+        errorMsg = error.response?.data?.detail || error.response?.data?.message ||
+          error.message || 'Không thể tạo yêu cầu làm thêm giờ';
+      }
+
+      alert(` Lỗi (${status || 'Unknown'}): ${errorMsg}`);
       showOvertimeError(error);
     }
   };
@@ -318,10 +361,10 @@ export default function AdminOvertimeRequestsPage() {
           </div>
 
           <div>
-            <Select
+            <CustomSelect
               label="Nhân viên"
               value={employeeFilter}
-              onChange={(value) => setEmployeeFilter(value)}
+              onChange={(value: string) => setEmployeeFilter(value)}
               options={[
                 { value: 'ALL', label: 'Tất cả nhân viên' },
                 ...employees.map((emp) => ({
@@ -333,10 +376,10 @@ export default function AdminOvertimeRequestsPage() {
           </div>
 
           <div>
-            <Select
+            <CustomSelect
               label="Trạng thái"
               value={statusFilter}
-              onChange={(value) => setStatusFilter(value as OvertimeStatus | 'ALL')}
+              onChange={(value: string) => setStatusFilter(value as OvertimeStatus | 'ALL')}
               options={[
                 { value: 'ALL', label: 'Tất cả' },
                 { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
@@ -487,17 +530,15 @@ export default function AdminOvertimeRequestsPage() {
             <CardContent>
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
                 <div>
-                  <Label htmlFor="employeeId">Nhân viên <span className="text-red-500">*</span></Label>
-                  <Select
-                    label="Chọn nhân viên"
+                  <Label>Nhân viên <span className="text-red-500">*</span></Label>
+                  <CustomSelect
                     value={formData.employeeId ? formData.employeeId.toString() : ''}
-                    onChange={(value) => setFormData({ ...formData, employeeId: parseInt(value) })}
+                    onChange={(value: string) => setFormData({ ...formData, employeeId: parseInt(value) })}
                     options={employees.map((employee) => ({
                       value: employee.employeeId.toString(),
                       label: `${employee.fullName} (${employee.employeeCode})`,
                     }))}
                     placeholder={employees.length === 0 ? "Đang tải danh sách nhân viên..." : "Chọn nhân viên"}
-                    required
                   />
                 </div>
 
@@ -514,17 +555,15 @@ export default function AdminOvertimeRequestsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="workShiftId">Ca làm việc <span className="text-red-500">*</span></Label>
-                  <Select
-                    label="Chọn ca làm việc"
+                  <Label>Ca làm việc <span className="text-red-500">*</span></Label>
+                  <CustomSelect
                     value={formData.workShiftId}
-                    onChange={(value) => setFormData({ ...formData, workShiftId: value })}
+                    onChange={(value: string) => setFormData({ ...formData, workShiftId: value })}
                     placeholder={workShifts.length === 0 ? "Đang tải danh sách ca làm việc..." : "Chọn ca làm việc"}
                     options={workShifts.map((shift) => ({
                       value: shift.workShiftId,
-                      label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`,
+                      label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`,
                     }))}
-                    required
                   />
                 </div>
 

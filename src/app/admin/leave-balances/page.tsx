@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * ⚠️ ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
+ *  ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
  * 
  * FEATURES:
  * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE_ALL)
@@ -303,15 +303,31 @@ export default function AdminLeaveBalancesPage() {
     try {
       setSubmittingAnnualReset(true);
 
-      const result = await LeaveBalanceService.annualReset({
+      const requestData = {
         cycle_year: annualResetFormData.cycleYear,
         apply_to_type_id: annualResetFormData.applyToTypeId,
         default_allowance: annualResetFormData.defaultAllowance!
-      });
+      };
 
-      alert(`Job đã được kích hoạt thành công!\n\nSố nhân viên được cập nhật: ${result.employees_affected || 'N/A'}`);
+      console.log(' Annual reset request:', requestData);
+
+      const result = await LeaveBalanceService.annualReset(requestData);
+
+      console.log(' Annual reset success:', result);
+      alert('Job đã được kích hoạt thành công!');
       setShowAnnualResetModal(false);
     } catch (error: any) {
+      console.error(' Annual reset error:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message,
+        requestData: {
+          cycle_year: annualResetFormData.cycleYear,
+          apply_to_type_id: annualResetFormData.applyToTypeId,
+          default_allowance: annualResetFormData.defaultAllowance
+        }
+      });
+
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
       if (errorMsg.includes('JOB_ALREADY_RUN') || error?.response?.status === 409) {
@@ -588,7 +604,7 @@ export default function AdminLeaveBalancesPage() {
             <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={openAdjustModal}
-                className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Điều Chỉnh Số Dư Ngày Nghỉ
@@ -709,7 +725,7 @@ export default function AdminLeaveBalancesPage() {
                 <Button
                   onClick={handleAdjust}
                   disabled={submittingAdjust}
-                  className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   {submittingAdjust ? 'Đang lưu...' : 'Lưu Điều Chỉnh'}
                 </Button>
@@ -733,7 +749,7 @@ export default function AdminLeaveBalancesPage() {
             <CardContent className="space-y-4">
               <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
                 <p className="text-sm text-red-800 font-medium mb-2">
-                  ⚠️ CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
+                  CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
                 </p>
                 <p className="text-sm text-red-700">
                   Job sẽ cộng số ngày phép mặc định cho tất cả nhân viên trong hệ thống cho năm được chọn.
@@ -786,8 +802,8 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div>
+                <Label htmlFor="reset-type">Loại Phép <span className="text-red-500">*</span></Label>
                 <Select
-                  label="Loại Phép *"
                   value={annualResetFormData.applyToTypeId}
                   onChange={(value) => {
                     setAnnualResetFormData({ ...annualResetFormData, applyToTypeId: value });

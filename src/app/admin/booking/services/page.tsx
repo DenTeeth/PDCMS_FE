@@ -36,9 +36,9 @@ import {
 } from '@/components/ui/dialog';
 import { ServiceService } from '@/services/serviceService';
 import { specializationService } from '@/services/specializationService';
-import { 
-  Service, 
-  ServiceListResponse, 
+import {
+  Service,
+  ServiceListResponse,
   ServiceFilters,
   CreateServiceRequest,
   UpdateServiceRequest,
@@ -49,7 +49,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { toast } from 'sonner';
-import { Eye, Plus, Search, ChevronLeft, ChevronRight, Edit, Trash2, X } from 'lucide-react';
+import { Eye, Plus, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Edit, Trash2, X, Filter } from 'lucide-react';
 
 interface ServiceFormData {
   serviceCode: string;
@@ -59,25 +59,26 @@ interface ServiceFormData {
   defaultBufferMinutes: number;
   price: number;
   specializationId?: number;
+  displayOrder?: number; // Display order
   isActive: boolean;
 }
 
 export default function BookingServicesPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
 
-  // State
+  // Services state
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   // Filter & Search states
   const [specializationFilter, setSpecializationFilter] = useState<string>('all');
-  const [isActiveFilter, setIsActiveFilter] = useState<string>('all');
-  
+  const [isActiveFilter, setIsActiveFilter] = useState<string>('active');
+
   // Sort states
   const [sortBy, setSortBy] = useState<string>('serviceName');
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('ASC');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(10);
@@ -100,6 +101,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -111,6 +113,7 @@ export default function BookingServicesPage() {
     defaultBufferMinutes: 10,
     price: 0,
     specializationId: undefined,
+    displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
     isActive: true,
   });
 
@@ -125,9 +128,13 @@ export default function BookingServicesPage() {
   // searchKeyword: what triggers search (set on Enter or debounced)
   const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  
+
   // Debounced search - longer delay (1000ms) or trigger on Enter
   const debouncedSearch = useDebounce(searchKeyword, 1000);
+
+  // Sort dropdown state
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load all specializations from getAllSpecialization API
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
@@ -175,7 +182,7 @@ export default function BookingServicesPage() {
 
   const loadServices = useCallback(async () => {
     if (!canView) return;
-    
+
     // Cancel previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -244,7 +251,7 @@ export default function BookingServicesPage() {
   // Load services khi filters hoặc page thay đổi
   useEffect(() => {
     loadServices();
-    
+
     // Cleanup: Cancel request on unmount or when dependencies change
     return () => {
       if (abortControllerRef.current) {
@@ -258,12 +265,34 @@ export default function BookingServicesPage() {
     setCurrentPage(0);
   }, [debouncedSearch, specializationFilter, isActiveFilter, sortBy, sortDirection]);
 
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Helper function to get sort label
+  const getSortLabel = () => {
+    const labels: Record<string, string> = {
+      serviceName: 'Tên dịch vụ',
+      serviceCode: 'Mã dịch vụ',
+      price: 'Giá',
+    };
+    return labels[sortBy] || 'Sắp xếp';
+  };
+
   // Clear all filters function
   const handleClearFilters = () => {
     setSearchInput('');
     setSearchKeyword('');
     setSpecializationFilter('all');
-    setIsActiveFilter('all');
+    setIsActiveFilter('active');
     setSortBy('serviceName');
     setSortDirection('ASC');
     setCurrentPage(0);
@@ -285,14 +314,29 @@ export default function BookingServicesPage() {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
+      // Validate duration must be multiple of 15
+      if (createForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
       if (createForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
+        return;
+      }
+      // Validate buffer must be multiple of 5
+      if (createForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
         return;
       }
       if (createForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a positive number (backend requires it)
+      const finalDisplayOrder = createForm.displayOrder && createForm.displayOrder > 0
+        ? createForm.displayOrder
+        : 1;
 
       const requestData: CreateServiceRequest = {
         serviceCode: createForm.serviceCode.trim(),
@@ -302,8 +346,11 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: createForm.defaultBufferMinutes,
         price: createForm.price,
         specializationId: createForm.specializationId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: createForm.isActive,
       };
+
+      console.log('Creating service with data:', JSON.stringify(requestData, null, 2));
 
       await ServiceService.createService(requestData);
 
@@ -316,6 +363,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: 10,
         price: 0,
         specializationId: undefined,
+        displayOrder: 1, // Reset to default 1
         isActive: true,
       });
 
@@ -328,7 +376,15 @@ export default function BookingServicesPage() {
       toast.success('Tạo dịch vụ thành công!');
     } catch (error: any) {
       console.error('Error creating service:', error);
-      handleCreateError(error);
+      console.error('Error response:', error.response?.data);
+
+      // Show more detailed error message
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.message || 'Lỗi server. Vui lòng kiểm tra lại dữ liệu hoặc liên hệ admin.';
+        toast.error(`Lỗi tạo dịch vụ: ${errorMessage}`);
+      } else {
+        handleCreateError(error);
+      }
     }
   };
 
@@ -365,18 +421,33 @@ export default function BookingServicesPage() {
         toast.error('Vui lòng nhập tên dịch vụ');
         return;
       }
-      if (updateForm.defaultDurationMinutes < 1) {
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes < 1) {
         toast.error('Thời gian thực hiện phải lớn hơn 0');
         return;
       }
-      if (updateForm.defaultBufferMinutes < 0) {
+      // Validate duration must be multiple of 15
+      if (updateForm.defaultDurationMinutes !== undefined && updateForm.defaultDurationMinutes % 15 !== 0) {
+        toast.error('Thời gian thực hiện phải là bội số của 15 phút (15, 30, 45, 60...)');
+        return;
+      }
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes < 0) {
         toast.error('Thời gian đệm phải lớn hơn hoặc bằng 0');
         return;
       }
-      if (updateForm.price < 0) {
+      // Validate buffer must be multiple of 5
+      if (updateForm.defaultBufferMinutes !== undefined && updateForm.defaultBufferMinutes % 5 !== 0) {
+        toast.error('Thời gian đệm phải là bội số của 5 phút (0, 5, 10, 15, 20...)');
+        return;
+      }
+      if (updateForm.price !== undefined && updateForm.price < 0) {
         toast.error('Giá phải lớn hơn hoặc bằng 0');
         return;
       }
+
+      // Ensure displayOrder is always a positive number (backend requires it)
+      const finalDisplayOrder = updateForm.displayOrder && updateForm.displayOrder > 0
+        ? updateForm.displayOrder
+        : (selectedService?.displayOrder || 1);
 
       const requestData: UpdateServiceRequest = {
         serviceName: updateForm.serviceName.trim(),
@@ -385,6 +456,7 @@ export default function BookingServicesPage() {
         defaultBufferMinutes: updateForm.defaultBufferMinutes,
         price: updateForm.price,
         specializationId: updateForm.specializationId || undefined,
+        displayOrder: finalDisplayOrder, // Always send a number (required by backend)
         isActive: updateForm.isActive,
       };
 
@@ -477,6 +549,7 @@ export default function BookingServicesPage() {
       defaultBufferMinutes: service.defaultBufferMinutes,
       price: service.price,
       specializationId: service.specializationId,
+      displayOrder: service.displayOrder,
       isActive: service.isActive,
     });
     setShowUpdateModal(true);
@@ -494,6 +567,8 @@ export default function BookingServicesPage() {
     setSelectedService(service);
     setShowDetailModal(true);
   }, []);
+
+  // ==================== CATEGORY HANDLERS ====================
 
   // Columns definition
   const columns: OptimizedTableColumn<Service>[] = useMemo(() => [
@@ -545,7 +620,7 @@ export default function BookingServicesPage() {
       key: 'actions',
       header: 'Actions',
       accessor: (service) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -553,9 +628,10 @@ export default function BookingServicesPage() {
               e.stopPropagation();
               handleRowClick(service);
             }}
+            className="hover:bg-gray-100"
+            title="Xem chi tiết"
           >
-            <Eye className="h-4 w-4 mr-1" />
-            View
+            <Eye className="h-4 w-4" />
           </Button>
           {canUpdate && (
             <Button
@@ -565,9 +641,10 @@ export default function BookingServicesPage() {
                 e.stopPropagation();
                 handleEditClick(service);
               }}
+              className="hover:bg-gray-100"
+              title="Chỉnh sửa"
             >
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
+              <Edit className="h-4 w-4" />
             </Button>
           )}
           {canDelete && service.isActive && (
@@ -578,15 +655,15 @@ export default function BookingServicesPage() {
                 e.stopPropagation();
                 handleDeleteClick(service);
               }}
-              className="text-red-600 hover:text-red-700"
+              className="hover:bg-red-50 text-red-600"
+              title="Vô hiệu hóa"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Deactivate
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>
       ),
-      className: 'w-[200px]',
+      className: 'w-[120px]',
     },
   ], [handleRowClick, canUpdate, canDelete, getSpecializationName]);
 
@@ -606,9 +683,13 @@ export default function BookingServicesPage() {
           <div>
             <h1 className="text-3xl font-bold">Services Management</h1>
             <p className="text-muted-foreground mt-2">
-              Manage clinic services and their configurations
+              Manage clinic services and their specialization requirements
             </p>
           </div>
+        </div>
+
+        {/* Header with Create Button */}
+        <div className="flex items-center justify-end">
           {canCreate && (
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -618,104 +699,148 @@ export default function BookingServicesPage() {
         </div>
 
         {/* Filter và Sort Controls */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-end gap-4 p-4 border rounded-lg bg-card">
-            {/* Search */}
-            <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Bar */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-[50%] -translate-y-[50%] h-4 w-4 text-gray-400" />
                 <Input
-                  id="search"
-                  type="text"
-                  placeholder="Search by service code, name... (Press Enter to search)"
+                  placeholder="Tìm kiếm theo tên ca, ID, thời gian..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       setSearchKeyword(searchInput);
-                      setCurrentPage(0); // Reset to first page
+                      setCurrentPage(0);
                     }
                   }}
-                  className="pl-10"
+                  className="pl-10 border-gray-300 focus:border-[#8b5fbf] focus:ring-[#8b5fbf] text-sm"
                 />
               </div>
             </div>
 
-            {/* Specialization Filter - From getAllSpecialization API */}
-            <div className="min-w-[200px]">
-              <Label htmlFor="specialization">Specialization</Label>
-              <Select value={specializationFilter} onValueChange={setSpecializationFilter}>
-                <SelectTrigger id="specialization" className="mt-1">
-                  <SelectValue placeholder="Tất cả chuyên khoa" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
-                  {availableSpecializations.map((spec) => (
-                    <SelectItem key={spec.id} value={String(spec.id)}>
-                      {spec.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Sort Dropdown + Direction */}
+            <div className="flex items-center gap-2">
+              {/* Dropdown chọn field */}
+              <div className="relative" ref={sortDropdownRef}>
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 border border-[#8b5fbf] rounded-lg text-xs sm:text-sm font-medium text-[#8b5fbf] hover:bg-[#f3f0ff] transition-colors bg-white whitespace-nowrap"
+                >
+                  <Filter className="h-4 w-4 flex-shrink-0" />
+                  <span>{getSortLabel()}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-            {/* Status Filter */}
-            <div className="min-w-[120px]">
-              <Label htmlFor="status">Status</Label>
-              <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-                <SelectTrigger id="status" className="mt-1">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {isSortDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+                    <div className="p-2">
+                      {[
+                        { value: 'serviceName', label: 'Tên dịch vụ' },
+                        { value: 'serviceCode', label: 'Mã dịch vụ' },
+                        { value: 'price', label: 'Giá' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${sortBy === option.value
+                            ? 'bg-[#8b5fbf] text-white'
+                            : 'text-gray-700 hover:bg-[#f3f0ff]'
+                            }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {/* Sort By */}
-            <div className="min-w-[150px]">
-              <Label htmlFor="sortBy">Sort By</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger id="sortBy" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="serviceName">Service Name</SelectItem>
-                  <SelectItem value="serviceCode">Service Code</SelectItem>
-                  <SelectItem value="price">Price</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Direction buttons */}
+              <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
+                <button
+                  onClick={() => setSortDirection('ASC')}
+                  className={`p-1.5 rounded transition-all ${sortDirection === 'ASC'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    }`}
+                  title="Tăng dần"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setSortDirection('DESC')}
+                  className={`p-1.5 rounded transition-all ${sortDirection === 'DESC'
+                    ? 'bg-[#8b5fbf] text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    }`}
+                  title="Giảm dần"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
             </div>
+          </div>
 
-            {/* Sort Direction */}
-            <div className="min-w-[120px]">
-              <Label htmlFor="sortDirection">Direction</Label>
-              <Select value={sortDirection} onValueChange={(value: 'ASC' | 'DESC') => setSortDirection(value)}>
-                <SelectTrigger id="sortDirection" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ASC">Ascending</SelectItem>
-                  <SelectItem value="DESC">Descending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Status Filter Tabs */}
+          <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3">
+            <button
+              onClick={() => setIsActiveFilter('active')}
+              className={
+                isActiveFilter === 'active'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+            >
+              <div className={
+                isActiveFilter === 'active'
+                  ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+              }>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="hidden sm:inline">Hoạt động</span>
+              <Badge className={
+                isActiveFilter === 'active'
+                  ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
+                  : 'text-xs bg-green-100 text-green-800'
+              }>
+                {services.filter(s => s.isActive).length}
+              </Badge>
+            </button>
 
-            {/* Clear Filters Button */}
-            <div className="min-w-[120px]">
-              <Label className="opacity-0">Clear</Label>
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                className="mt-1 w-full"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear Filters
-              </Button>
-            </div>
+            <button
+              onClick={() => setIsActiveFilter('inactive')}
+              className={
+                isActiveFilter === 'inactive'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-600 text-white shadow-[0_2px_8px_rgba(107,114,128,0.4)]'
+                  : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+            >
+              <div className={
+                isActiveFilter === 'inactive'
+                  ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+              }>
+                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="hidden sm:inline">Không hoạt động</span>
+              <Badge className={
+                isActiveFilter === 'inactive'
+                  ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
+                  : 'text-xs bg-gray-200 text-gray-700'
+              }>
+                {services.filter(s => !s.isActive).length}
+              </Badge>
+            </button>
           </div>
         </div>
 
@@ -766,7 +891,7 @@ export default function BookingServicesPage() {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="create-serviceCode">Service Code *</Label>
+                  <Label htmlFor="create-serviceCode">Service Code <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceCode"
                     value={createForm.serviceCode}
@@ -775,7 +900,7 @@ export default function BookingServicesPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-serviceName">Service Name *</Label>
+                  <Label htmlFor="create-serviceName">Service Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceName"
                     value={createForm.serviceName}
@@ -795,61 +920,104 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="create-duration">Duration (minutes) *</Label>
+                  <Label htmlFor="create-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-duration"
                     type="number"
-                    min="1"
+                    min="15"
+                    step="15"
                     value={createForm.defaultDurationMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setCreateForm({ ...createForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-buffer">Buffer (minutes) *</Label>
+                  <Label htmlFor="create-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-buffer"
                     type="number"
                     min="0"
+                    step="5"
                     value={createForm.defaultBufferMinutes}
-                    onChange={(e) => setCreateForm({ ...createForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setCreateForm({ ...createForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-price">Price (VND) *</Label>
+                  <Label htmlFor="create-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-price"
                     type="number"
                     min="0"
                     value={createForm.price}
-                    onChange={(e) => setCreateForm({ ...createForm, price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setCreateForm({ ...createForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setCreateForm({ ...createForm, price: value });
+                    }}
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="create-specialization">Specialization</Label>
-                <Select
-                  value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setCreateForm({ ...createForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="create-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="create-specialization">Specialization</Label>
+                  <Select
+                    value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setCreateForm({ ...createForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setCreateForm({ ...createForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="create-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="create-displayOrder">Display Order</Label>
+                  <Input
+                    id="create-displayOrder"
+                    type="number"
+                    min="1"
+                    value={createForm.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setCreateForm({ ...createForm, displayOrder: value });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Số càng nhỏ hiển thị càng trước. Giá trị mặc định: {createForm.displayOrder || 1}.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -892,7 +1060,7 @@ export default function BookingServicesPage() {
                 <p className="text-xs text-muted-foreground mt-1">Service code cannot be changed</p>
               </div>
               <div>
-                <Label htmlFor="update-serviceName">Service Name *</Label>
+                <Label htmlFor="update-serviceName">Service Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-serviceName"
                   value={updateForm.serviceName}
@@ -911,61 +1079,104 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="update-duration">Duration (minutes) *</Label>
+                  <Label htmlFor="update-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-duration"
                     type="number"
-                    min="1"
-                    value={updateForm.defaultDurationMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultDurationMinutes: parseInt(e.target.value) || 0 })}
+                    min="15"
+                    step="15"
+                    value={updateForm.defaultDurationMinutes !== undefined ? updateForm.defaultDurationMinutes : (selectedService?.defaultDurationMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 15
+                      const rounded = Math.round(value / 15) * 15;
+                      setUpdateForm({ ...updateForm, defaultDurationMinutes: rounded || 15 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-buffer">Buffer (minutes) *</Label>
+                  <Label htmlFor="update-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-buffer"
                     type="number"
                     min="0"
-                    value={updateForm.defaultBufferMinutes}
-                    onChange={(e) => setUpdateForm({ ...updateForm, defaultBufferMinutes: parseInt(e.target.value) || 0 })}
+                    step="5"
+                    value={updateForm.defaultBufferMinutes !== undefined ? updateForm.defaultBufferMinutes : (selectedService?.defaultBufferMinutes || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      // Round to nearest multiple of 5
+                      const rounded = Math.round(value / 5) * 5;
+                      setUpdateForm({ ...updateForm, defaultBufferMinutes: rounded || 0 });
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-price">Price (VND) *</Label>
+                  <Label htmlFor="update-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-price"
                     type="number"
                     min="0"
-                    value={updateForm.price}
-                    onChange={(e) => setUpdateForm({ ...updateForm, price: parseFloat(e.target.value) || 0 })}
+                    value={updateForm.price !== undefined ? updateForm.price : (selectedService?.price || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove leading zeros
+                      const cleaned = value.replace(/^0+/, '') || '0';
+                      const numValue = parseFloat(cleaned) || 0;
+                      setUpdateForm({ ...updateForm, price: numValue });
+                    }}
+                    onBlur={(e) => {
+                      // Ensure no leading zeros on blur
+                      const value = parseFloat(e.target.value) || 0;
+                      setUpdateForm({ ...updateForm, price: value });
+                    }}
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="update-specialization">Specialization</Label>
-                <Select
-                  value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
-                  onValueChange={(value) => {
-                    if (value === 'none-selected') {
-                      setUpdateForm({ ...updateForm, specializationId: undefined });
-                    } else {
-                      const specId = parseInt(value);
-                      setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
-                    }
-                  }}
-                >
-                  <SelectTrigger id="update-specialization">
-                    <SelectValue placeholder="Select specialization (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none-selected">None</SelectItem>
-                    {availableSpecializations.map((spec) => (
-                      <SelectItem key={spec.id} value={String(spec.id)}>
-                        {spec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="update-specialization">Specialization</Label>
+                  <Select
+                    value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
+                    onValueChange={(value) => {
+                      if (value === 'none-selected') {
+                        setUpdateForm({ ...updateForm, specializationId: undefined });
+                      } else {
+                        const specId = parseInt(value);
+                        setUpdateForm({ ...updateForm, specializationId: isNaN(specId) ? undefined : specId });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="update-specialization">
+                      <SelectValue placeholder="Select specialization (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none-selected">None</SelectItem>
+                      {availableSpecializations.map((spec) => (
+                        <SelectItem key={spec.id} value={String(spec.id)}>
+                          {spec.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="update-displayOrder">Display Order</Label>
+                  <Input
+                    id="update-displayOrder"
+                    type="number"
+                    min="1"
+                    value={updateForm.displayOrder || selectedService?.displayOrder || 1}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setUpdateForm({ ...updateForm, displayOrder: value });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Số càng nhỏ hiển thị càng trước.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -1067,6 +1278,8 @@ export default function BookingServicesPage() {
                       {getSpecializationName(selectedService.specializationId)}
                     </p>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Status</Label>
                     <Badge variant={selectedService.isActive ? 'default' : 'secondary'}>
@@ -1103,4 +1316,3 @@ export default function BookingServicesPage() {
     </ProtectedRoute>
   );
 }
-

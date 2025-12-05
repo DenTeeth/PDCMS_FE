@@ -99,11 +99,11 @@ export default function RenewalBadge({
 
       const renewals = await renewalService.getPendingRenewals();
       
-      console.log('✅ [RenewalBadge] Fetched pending count:', renewals.length);
+      console.log(' [RenewalBadge] Fetched pending count:', renewals.length);
       
       setPendingCount(renewals.length || 0);
     } catch (err: any) {
-      console.error('❌ [RenewalBadge] Failed to fetch pending count:', err);
+      console.error(' [RenewalBadge] Failed to fetch pending count:', err);
       
       // Không hiển thị error cho user (badge là optional)
       // Chỉ log để debug

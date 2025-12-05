@@ -25,6 +25,7 @@ import { WorkShift } from '@/types/workShift';
 import { workSlotService } from '@/services/workSlotService';
 import { workShiftService } from '@/services/workShiftService';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatTimeToHHMM } from '@/lib/utils';
 
 // ==================== MAIN COMPONENT ====================
 export default function WorkSlotsManagementPage() {
@@ -42,9 +43,14 @@ export default function WorkSlotsManagementPage() {
   const [creating, setCreating] = useState(false);
   const [createFormData, setCreateFormData] = useState<CreateWorkSlotRequest>({
     workShiftId: '',
-    dayOfWeek: DayOfWeek.MONDAY,
-    quota: 1
+    dayOfWeek: 'MONDAY', // Changed to string for comma-separated days support
+    quota: 1,
+    effectiveFrom: '',
+    effectiveTo: ''
   });
+
+  // Track selected days for multi-select checkbox
+  const [selectedDays, setSelectedDays] = useState<string[]>(['MONDAY']);
 
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -90,7 +96,7 @@ export default function WorkSlotsManagementPage() {
       const shiftsResponse = await workShiftService.getAll(true);
       setWorkShifts(shiftsResponse || []);
     } catch (error: any) {
-      console.error('❌ Failed to fetch dropdown data:', error);
+      console.error(' Failed to fetch dropdown data:', error);
       toast.error('Failed to load work shifts');
     } finally {
       setLoadingDropdowns(false);
@@ -113,17 +119,44 @@ export default function WorkSlotsManagementPage() {
       return;
     }
 
+    if (selectedDays.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một thứ trong tuần');
+      return;
+    }
+
     if (createFormData.quota < 1) {
       toast.error('Quota must be at least 1');
+      return;
+    }
+
+    if (!createFormData.effectiveFrom) {
+      toast.error('Vui lòng chọn ngày bắt đầu');
+      return;
+    }
+
+    if (!createFormData.effectiveTo) {
+      toast.error('Vui lòng chọn ngày kết thúc');
+      return;
+    }
+
+    // Validate effectiveTo >= effectiveFrom
+    if (new Date(createFormData.effectiveTo) < new Date(createFormData.effectiveFrom)) {
+      toast.error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
       return;
     }
 
     try {
       setCreating(true);
 
-      console.log('📤 Creating work slot:', createFormData);
+      // Join selected days into comma-separated string
+      const payload = {
+        ...createFormData,
+        dayOfWeek: selectedDays.join(',')
+      };
 
-      await workSlotService.createWorkSlot(createFormData);
+      console.log('� Creating work slot:', payload);
+
+      await workSlotService.createWorkSlot(payload);
       toast.success('Work slot created successfully');
       setShowCreateModal(false);
       resetCreateForm();
@@ -131,7 +164,7 @@ export default function WorkSlotsManagementPage() {
       // Refresh the work slots list
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to create work slot:', error);
+      console.error(' Failed to create work slot:', error);
 
       let errorMessage = 'Failed to create work slot';
       if (error.response?.data?.message) {
@@ -151,9 +184,12 @@ export default function WorkSlotsManagementPage() {
   const resetCreateForm = () => {
     setCreateFormData({
       workShiftId: '',
-      dayOfWeek: DayOfWeek.MONDAY,
-      quota: 1
+      dayOfWeek: 'MONDAY',
+      quota: 1,
+      effectiveFrom: '',
+      effectiveTo: ''
     });
+    setSelectedDays(['MONDAY']);
   };
 
   // ==================== UPDATE WORK SLOT ====================
@@ -192,7 +228,7 @@ export default function WorkSlotsManagementPage() {
     try {
       setUpdating(true);
 
-      console.log('📤 Updating work slot:', editingSlot.slotId, editFormData);
+      console.log('� Updating work slot:', editingSlot.slotId, editFormData);
 
       await workSlotService.updateWorkSlot(editingSlot.slotId, editFormData);
       toast.success('Work slot updated successfully');
@@ -200,7 +236,7 @@ export default function WorkSlotsManagementPage() {
       setEditingSlot(null);
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to update work slot:', error);
+      console.error(' Failed to update work slot:', error);
 
       // Handle specific error codes
       if (error.errorCode === 'QUOTA_VIOLATION' || error.response?.data?.errorCode === 'QUOTA_VIOLATION') {
@@ -236,13 +272,13 @@ export default function WorkSlotsManagementPage() {
 
     try {
       setDeleting(true);
-      console.log('🗑️ Deleting work slot:', slot.slotId);
+      console.log(' Deleting work slot:', slot.slotId);
 
       await workSlotService.deleteWorkSlot(slot.slotId);
       toast.success('Work slot deleted successfully');
       await fetchWorkSlots();
     } catch (error: any) {
-      console.error('❌ Failed to delete work slot:', error);
+      console.error(' Failed to delete work slot:', error);
 
       let errorMessage = 'Failed to delete work slot';
       if (error.response?.data?.message) {
@@ -262,7 +298,7 @@ export default function WorkSlotsManagementPage() {
   // ==================== UTILITY FUNCTIONS ====================
   const getWorkShiftName = (workShiftId: string) => {
     const shift = workShifts.find(shift => shift.workShiftId === workShiftId);
-    return shift ? `${shift.shiftName} (${shift.startTime}-${shift.endTime})` : workShiftId;
+    return shift ? `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)}-${formatTimeToHHMM(shift.endTime)})` : workShiftId;
   };
 
   const formatDate = (dateString: string) => {
@@ -273,7 +309,7 @@ export default function WorkSlotsManagementPage() {
     }
   };
 
-  const getDayOfWeekLabel = (day: DayOfWeek) => {
+  const getDayOfWeekLabel = (day: DayOfWeek | string): string => {
     const dayMap = {
       [DayOfWeek.MONDAY]: 'Thứ 2',
       [DayOfWeek.TUESDAY]: 'Thứ 3',
@@ -283,7 +319,17 @@ export default function WorkSlotsManagementPage() {
       [DayOfWeek.SATURDAY]: 'Thứ 7',
       [DayOfWeek.SUNDAY]: 'Chủ nhật'
     };
-    return dayMap[day] || day;
+    return dayMap[day as DayOfWeek] || day;
+  };
+
+  /**
+   * Parse and format comma-separated days to Vietnamese label
+   * e.g., "MONDAY,TUESDAY,FRIDAY" -> "T2, T3, T6"
+   */
+  const formatDaysOfWeek = (days: string): string => {
+    if (!days) return '';
+    const daysArray = days.split(',').map(d => d.trim());
+    return daysArray.map(day => getDayOfWeekLabel(day)).join(', ');
   };
 
   // ==================== RENDER ====================
@@ -291,36 +337,6 @@ export default function WorkSlotsManagementPage() {
   return (
     <ProtectedRoute requiredPermissions={[Permission.MANAGE_WORK_SLOTS]}>
       <div className="container mx-auto p-6 space-y-6">
-        {/* Info Card - 303v2-p1 */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start space-x-3">
-              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-blue-800">Work Slots Management (303v2-p1)</h3>
-                  <Badge variant="outline" className="text-xs">Part-Time Flex</Badge>
-                </div>
-                <p className="text-sm text-blue-700 mb-3">
-                  Quản lý các suất làm việc part-time linh hoạt. Tạo suất mới (VD: Cần 2 người Ca Sáng T3),
-                  cập nhật quota hoặc đóng/mở suất. Nhân viên <strong>PART_TIME_FLEX</strong> sẽ thấy các suất còn trống và tự đăng ký.
-                </p>
-                <div className="flex items-center gap-4 text-xs text-blue-600">
-                  <Link
-                    href="/admin/registrations"
-                    className="flex items-center gap-1 hover:text-blue-800 hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Xem Part-Time Registrations
-                  </Link>
-                  <span className="text-blue-300">|</span>
-                  <span>Endpoint: <code className="bg-blue-100 px-1 rounded">/api/v1/work-slots</code></span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -375,7 +391,7 @@ export default function WorkSlotsManagementPage() {
                         <td className="p-3">{slot.workShiftName || getWorkShiftName(slot.workShiftId)}</td>
                         <td className="p-3">
                           <Badge variant="outline">
-                            {getDayOfWeekLabel(slot.dayOfWeek)}
+                            {formatDaysOfWeek(slot.dayOfWeek)}
                           </Badge>
                         </td>
                         <td className="p-3 font-semibold">{slot.quota}</td>
@@ -434,7 +450,7 @@ export default function WorkSlotsManagementPage() {
               </div>
               <form onSubmit={handleCreateWorkSlot} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
-                  <Label htmlFor="createWorkShift">Mẫu ca *</Label>
+                  <Label htmlFor="createWorkShift">Mẫu ca <span className="text-red-500">*</span></Label>
                   <select
                     id="createWorkShift"
                     value={createFormData.workShiftId}
@@ -448,34 +464,37 @@ export default function WorkSlotsManagementPage() {
                     <option value="">Chọn mẫu ca</option>
                     {workShifts.map(shift => (
                       <option key={shift.workShiftId} value={shift.workShiftId}>
-                        {shift.shiftName} ({shift.startTime}-{shift.endTime})
+                        {shift.shiftName} ({formatTimeToHHMM(shift.startTime)}-{formatTimeToHHMM(shift.endTime)})
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <Label htmlFor="createDayOfWeek">Thứ trong tuần *</Label>
-                  <select
-                    id="createDayOfWeek"
-                    value={createFormData.dayOfWeek}
-                    onChange={(e) => setCreateFormData(prev => ({
-                      ...prev,
-                      dayOfWeek: e.target.value as DayOfWeek
-                    }))}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    {Object.values(DayOfWeek).map(day => (
-                      <option key={day} value={day}>
-                        {getDayOfWeekLabel(day)}
-                      </option>
+                  <Label>Thứ trong tuần <span className="text-red-500">*</span></Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {Object.values(DayOfWeek).map((day) => (
+                      <label key={day} className="inline-flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedDays.includes(day)}
+                          onChange={() => {
+                            setSelectedDays(prev => {
+                              if (prev.includes(day)) return prev.filter(d => d !== day);
+                              return [...prev, day];
+                            });
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">{getDayOfWeekLabel(day)}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                  <p className="text-muted text-sm mt-2">Chọn một hoặc nhiều thứ trong tuần cho suất làm việc này.</p>
                 </div>
 
                 <div>
-                  <Label htmlFor="createQuota">Số lượng cần *</Label>
+                  <Label htmlFor="createQuota">Số lượng cần <span className="text-red-500">*</span></Label>
                   <Input
                     id="createQuota"
                     type="number"
@@ -487,6 +506,39 @@ export default function WorkSlotsManagementPage() {
                     }))}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="createEffectiveFrom">Ngày bắt đầu <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="createEffectiveFrom"
+                    type="date"
+                    value={createFormData.effectiveFrom || ''}
+                    onChange={(e) => setCreateFormData(prev => ({
+                      ...prev,
+                      effectiveFrom: e.target.value
+                    }))}
+                    min={new Date().toISOString().split('T')[0]} // Minimum today
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="createEffectiveTo">Ngày kết thúc <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="createEffectiveTo"
+                    type="date"
+                    value={createFormData.effectiveTo || ''}
+                    onChange={(e) => setCreateFormData(prev => ({
+                      ...prev,
+                      effectiveTo: e.target.value
+                    }))}
+                    min={createFormData.effectiveFrom || new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Chọn thời gian hiệu lực cho suất làm việc này
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">

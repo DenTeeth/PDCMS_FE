@@ -30,30 +30,34 @@ export class OvertimeService {
   ): Promise<OvertimeRequestDetail> {
     const axios = apiClient.getAxiosInstance();
 
-    console.log('🔍 OvertimeService.createOvertimeRequest called with:', {
-      url: this.BASE_URL,
-      data: data,
-      hasEmployeeId: data.employeeId !== undefined,
-      employeeId: data.employeeId
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(' OvertimeService.createOvertimeRequest called with:', {
+        url: this.BASE_URL,
+        data: data,
+        hasEmployeeId: data.employeeId !== undefined,
+        employeeId: data.employeeId
+      });
+    }
 
     try {
       const response = await axios.post<OvertimeRequestDetail>(
         this.BASE_URL,
         data
       );
-      console.log('✅ OvertimeService.createOvertimeRequest success:', response.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(' OvertimeService.createOvertimeRequest success:', response.data);
+      }
       return response.data;
     } catch (error: any) {
-      console.error('❌ OvertimeService.createOvertimeRequest error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        code: error.response?.data?.code,
-        message: error.response?.data?.message,
-        fullResponse: error.response,
-        originalError: error.message
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error(' OvertimeService.createOvertimeRequest error:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          code: error.response?.data?.code,
+          message: error.response?.data?.message,
+        });
+      }
       throw error;
     }
   }

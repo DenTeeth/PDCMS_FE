@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Inventory, CreateInventoryDto, UpdateInventoryDto, WarehouseType, UnitType, InventoryStatus } from '@/types/warehouse';
-import { warehouseService } from '@/services/warehouseService';
+import supplierService from '@/services/supplierService';
+import type { SupplierSummaryResponse } from '@/types/supplier';
 import { toast } from 'sonner';
 
 interface InventoryFormModalProps {
@@ -40,14 +41,18 @@ export default function InventoryFormModal({
     notes: '',
   });
   const [loading, setLoading] = useState(false);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierSummaryResponse[]>([]);
 
   // Fetch suppliers
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
-        const data = await warehouseService.getSuppliers({ page: 0, size: 1000 });
-        setSuppliers(data.content || []);
+        const data = await supplierService.getAll({
+          page: 0,
+          size: 1000,
+          sort: 'supplierName,asc',
+        });
+        setSuppliers(data?.content || []);
       } catch (error) {
         console.error('Error fetching suppliers:', error);
         toast.error('Không thể tải danh sách nhà cung cấp');
@@ -187,8 +192,8 @@ export default function InventoryFormModal({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 required
               >
-                <option value={WarehouseType.COLD}>❄️ Kho lạnh</option>
-                <option value={WarehouseType.NORMAL}>📦 Kho thường</option>
+                <option value={WarehouseType.COLD}>Kho lạnh</option>
+                <option value={WarehouseType.NORMAL}>Kho thường</option>
               </select>
             </div>
 

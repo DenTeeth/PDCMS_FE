@@ -94,10 +94,10 @@ export default function TestPage() {
 
         <div>
           <h2 className="text-lg font-semibold">Room Permissions:</h2>
-          <p>VIEW_ROOM: {user?.permissions?.includes('VIEW_ROOM') ? '✅' : '❌'}</p>
-          <p>CREATE_ROOM: {user?.permissions?.includes('CREATE_ROOM') ? '✅' : '❌'}</p>
-          <p>UPDATE_ROOM: {user?.permissions?.includes('UPDATE_ROOM') ? '✅' : '❌'}</p>
-          <p>DELETE_ROOM: {user?.permissions?.includes('DELETE_ROOM') ? '✅' : '❌'}</p>
+          <p>VIEW_ROOM: {user?.permissions?.includes('VIEW_ROOM') ? '' : ''}</p>
+          <p>CREATE_ROOM: {user?.permissions?.includes('CREATE_ROOM') ? '' : ''}</p>
+          <p>UPDATE_ROOM: {user?.permissions?.includes('UPDATE_ROOM') ? '' : ''}</p>
+          <p>DELETE_ROOM: {user?.permissions?.includes('DELETE_ROOM') ? '' : ''}</p>
         </div>
 
         <div>

@@ -25,12 +25,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
 import { employeeService } from '@/services/employeeService';
 import { workShiftService } from '@/services/workShiftService';
+import { formatTimeToHHMM } from '@/lib/utils';
 import {
   TimeOffRequest,
   TimeOffStatus,
@@ -108,14 +109,14 @@ export default function AdminTimeOffRequestsPage() {
     try {
       setLoading(true);
 
-      // ✅ Load timeOffTypes and workShifts FIRST (needed for enrichment)
+      //  Load timeOffTypes and workShifts FIRST (needed for enrichment)
       await Promise.all([
         loadTimeOffTypes(),
         loadEmployees(),
         loadWorkShifts()
       ]);
 
-      // ✅ Then load requests (uses timeOffTypes and workShifts for enrichment)
+      //  Then load requests (uses timeOffTypes and workShifts for enrichment)
       await loadTimeOffRequests();
     } catch (error) {
       console.error('Error loading data:', error);
@@ -133,7 +134,7 @@ export default function AdminTimeOffRequestsPage() {
       });
 
       if (response.content && response.content.length > 0) {
-        // ✅ Enrich data with timeOffTypeName, workShiftName, and totalDays
+        //  Enrich data with timeOffTypeName, workShiftName, and totalDays
         const enrichedRequests = TimeOffDataEnricher.enrichRequests(
           response.content,
           timeOffTypes,
@@ -180,7 +181,7 @@ export default function AdminTimeOffRequestsPage() {
   const loadWorkShifts = async () => {
     try {
       const shifts = await workShiftService.getAll(true); // Get only active shifts
-      console.log('📋 Work Shifts loaded:', shifts);
+      console.log(' Work Shifts loaded:', shifts);
       setWorkShifts(shifts);
     } catch (error) {
       console.error('Error loading work shifts:', error);
@@ -189,6 +190,12 @@ export default function AdminTimeOffRequestsPage() {
   };
 
   const handleCreateTimeOffRequest = async () => {
+    // Prevent duplicate submissions
+    if (processing) {
+      console.log(' Already processing, ignoring duplicate submit');
+      return;
+    }
+
     // Auto-fill employeeId if user doesn't have VIEW_ALL permission
     const finalEmployeeId = canViewAll ? createForm.employeeId : Number(user?.employeeId);
 
@@ -201,6 +208,46 @@ export default function AdminTimeOffRequestsPage() {
     if (createForm.slotId && createForm.startDate !== createForm.endDate) {
       alert('Khi nghỉ theo ca, ngày bắt đầu và ngày kết thúc phải giống nhau');
       return;
+    }
+
+    // Validate dates
+    const startDate = new Date(createForm.startDate);
+    const endDate = new Date(createForm.endDate);
+
+    if (endDate < startDate) {
+      alert('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
+      return;
+    }
+
+    // Check for overlapping requests (client-side validation)
+    const overlappingRequests = timeOffRequests.filter(request => {
+      // Only check for the same employee
+      const requestEmployeeId = request.employee?.employeeId;
+      if (!requestEmployeeId || requestEmployeeId !== finalEmployeeId) {
+        return false;
+      }
+      // Only check pending/approved requests
+      if (request.status === 'REJECTED' || request.status === 'CANCELLED') {
+        return false;
+      }
+
+      const reqStart = new Date(request.startDate);
+      const reqEnd = new Date(request.endDate);
+
+      // Check if date ranges overlap
+      return (startDate <= reqEnd) && (endDate >= reqStart);
+    });
+
+    if (overlappingRequests.length > 0) {
+      const selectedEmployee = employees?.find(emp => emp.employeeId.toString() === finalEmployeeId.toString());
+      const confirmSubmit = confirm(
+        'Cảnh báo: Trùng lịch nghỉ phép!\n\n' +
+        `Nhân viên "${selectedEmployee?.fullName || finalEmployeeId}" đã có ${overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này.\n\n` +
+        'Bạn có chắc chắn muốn tiếp tục tạo yêu cầu mới?'
+      );
+      if (!confirmSubmit) {
+        return;
+      }
     }
 
     try {
@@ -220,39 +267,65 @@ export default function AdminTimeOffRequestsPage() {
         reason: ''
       });
 
-      // ✅ Reload to get fresh data with enrichment
+      //  Reload to get fresh data with enrichment
       await loadTimeOffRequests();
 
-      alert(`✅ Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
+      alert(` Tạo yêu cầu nghỉ phép thành công!\nMã yêu cầu: ${response.requestId}`);
     } catch (error: any) {
-      const errorCode = error.response?.data?.code || error.response?.data?.error;
+      console.error(' Error creating time off request:', error);
+      console.error(' Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.response?.data?.message,
+        detail: error.response?.data?.detail
+      });
+
+      const status = error.response?.status;
+      const errorCode = error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error;
       const errorMsg = error.response?.data?.message || error.message || '';
+      let displayMsg = '';
 
       // Handle specific errors with detailed messages
-      if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
-        alert('❌ Lỗi: Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư nghỉ phép của bạn hoặc chọn loại nghỉ phép khác.');
-      } else if (errorCode === 'INVALID_DATE_RANGE' || errorMsg?.includes('DATE_RANGE')) {
-        alert('❌ Lỗi: Khoảng thời gian không hợp lệ!\n\n- Ngày kết thúc phải sau hoặc bằng ngày bắt đầu\n- Khi chọn ca nghỉ (sáng/chiều), ngày bắt đầu và kết thúc phải giống nhau');
-      } else if (errorCode === 'DUPLICATE_TIMEOFF_REQUEST' || error.response?.status === 409) {
-        alert('⚠️ Lỗi: Yêu cầu nghỉ phép trùng lặp!\n\nĐã tồn tại một yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu của bạn.');
+      if (errorCode === 'DUPLICATE_BALANCE_RECORDS') {
+        // Data corruption - duplicate balance records in database
+        const backendMsg = error.response?.data?.message;
+        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
+          ? backendMsg
+          : 'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.';
+      } else if (errorCode === 'BALANCE_NOT_FOUND') {
+        // No balance record - needs HR to initialize
+        const backendMsg = error.response?.data?.message;
+        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
+          ? backendMsg
+          : 'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
+      } else if (status === 409 || errorCode === 'DUPLICATE_TIMEOFF_REQUEST') {
+        displayMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
+      } else if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
+        displayMsg = 'Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư nghỉ phép của bạn hoặc chọn loại nghỉ phép khác.';
+      } else if (status === 400 || errorCode === 'INVALID_DATE_RANGE' || errorMsg?.includes('DATE_RANGE')) {
+        displayMsg = error.response?.data?.detail || error.response?.data?.message ||
+          'Khoảng thời gian không hợp lệ!\n\n- Ngày kết thúc phải sau hoặc bằng ngày bắt đầu\n- Khi chọn ca nghỉ (sáng/chiều), ngày bắt đầu và kết thúc phải giống nhau';
       } else if (errorCode === 'INVALID_SLOT_USAGE' || errorMsg?.includes('SLOT')) {
-        alert('❌ Lỗi: Sử dụng ca nghỉ không đúng!\n\nKhi chọn nghỉ theo ca (sáng hoặc chiều), ngày bắt đầu và ngày kết thúc phải giống nhau.');
-      } else if (errorCode === 'TYPE_NOT_FOUND' || errorMsg?.includes('TYPE') || error.response?.status === 404) {
-        alert('❌ Lỗi: Không tìm thấy loại nghỉ phép!\n\nLoại nghỉ phép bạn chọn không tồn tại hoặc đã bị vô hiệu hóa.');
-      } else if (error.response?.status === 403) {
-        alert('❌ Lỗi: Không có quyền!\n\nBạn không có quyền tạo yêu cầu nghỉ phép.');
-      } else if (error.response?.status === 400) {
+        displayMsg = 'Sử dụng ca nghỉ không đúng!\n\nKhi chọn nghỉ theo ca (sáng hoặc chiều), ngày bắt đầu và ngày kết thúc phải giống nhau.';
+      } else if (errorCode === 'TYPE_NOT_FOUND' || errorMsg?.includes('TYPE') || status === 404) {
+        displayMsg = 'Không tìm thấy loại nghỉ phép!\n\nLoại nghỉ phép bạn chọn không tồn tại hoặc đã bị vô hiệu hóa.';
+      } else if (status === 403) {
+        displayMsg = 'Không có quyền!\n\nBạn không có quyền tạo yêu cầu nghỉ phép.';
+      } else if (status === 400) {
         // Generic 400 errors - show validation errors if available
         const validationErrors = error.response?.data?.errors || [];
         if (validationErrors.length > 0) {
           const errorMessages = validationErrors.map((e: any) => `• ${e.field}: ${e.message}`).join('\n');
-          alert(`❌ Lỗi validation:\n\n${errorMessages}`);
+          displayMsg = `Lỗi validation:\n\n${errorMessages}`;
         } else {
-          alert(`❌ Lỗi: ${errorMsg || 'Dữ liệu không hợp lệ'}`);
+          displayMsg = error.response?.data?.detail || error.response?.data?.message || 'Dữ liệu không hợp lệ';
         }
       } else {
-        alert(`❌ Lỗi: ${errorMsg || 'Không thể tạo yêu cầu nghỉ phép. Vui lòng thử lại sau.'}`);
+        displayMsg = error.response?.data?.detail || error.response?.data?.message || 'Không thể tạo yêu cầu nghỉ phép';
       }
+
+      alert(` Lỗi (${status || 'Unknown'}): ${displayMsg}`);
     } finally {
       setProcessing(false);
     }
@@ -269,7 +342,7 @@ export default function AdminTimeOffRequestsPage() {
       setShowApproveModal(false);
       setSelectedRequest(null);
       loadTimeOffRequests();
-      alert('✅ Đã duyệt yêu cầu nghỉ phép thành công!');
+      alert(' Đã duyệt yêu cầu nghỉ phép thành công!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleApproveError(error, selectedRequest.requestId);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -301,7 +374,7 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setRejectReason('');
       loadTimeOffRequests();
-      alert('✅ Đã từ chối yêu cầu nghỉ phép!');
+      alert(' Đã từ chối yêu cầu nghỉ phép!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleRejectError(error, selectedRequest.requestId, rejectReason);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -333,7 +406,7 @@ export default function AdminTimeOffRequestsPage() {
       setSelectedRequest(null);
       setCancelReason('');
       loadTimeOffRequests();
-      alert('✅ Đã hủy yêu cầu nghỉ phép!');
+      alert(' Đã hủy yêu cầu nghỉ phép!');
     } catch (error: any) {
       const errorInfo = TimeOffErrorHandler.handleCancelError(error, selectedRequest.requestId, cancelReason);
       alert(TimeOffErrorHandler.formatErrorMessage(errorInfo));
@@ -374,7 +447,7 @@ export default function AdminTimeOffRequestsPage() {
       // Gọi API để lấy chi tiết
       const details = await TimeOffRequestService.getTimeOffRequestById(request.requestId);
 
-      // ✅ Enrich detail data
+      //  Enrich detail data
       const enrichedDetails = TimeOffDataEnricher.enrichRequest(
         details,
         timeOffTypes,
@@ -553,10 +626,10 @@ export default function AdminTimeOffRequestsPage() {
 
               {canViewAll && (
                 <div>
-                  <Select
+                  <CustomSelect
                     label="Nhân viên"
                     value={employeeFilter}
-                    onChange={(value) => setEmployeeFilter(value)}
+                    onChange={(value: string) => setEmployeeFilter(value)}
                     options={[
                       { value: 'ALL', label: 'Tất cả nhân viên' },
                       ...employees.map(emp => ({
@@ -569,10 +642,10 @@ export default function AdminTimeOffRequestsPage() {
               )}
 
               <div>
-                <Select
+                <CustomSelect
                   label="Trạng thái"
                   value={statusFilter}
-                  onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                  onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
                   options={[
                     { value: 'ALL', label: 'Tất cả' },
                     { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
@@ -748,27 +821,29 @@ export default function AdminTimeOffRequestsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {canViewAll && (
                       <div>
-                        <Label htmlFor="employee">Nhân viên <span className="text-red-500">*</span></Label>
-                        <Select
+                        <CustomSelect
+                          label="Nhân viên"
                           value={createForm.employeeId?.toString() || ''}
-                          onChange={(value) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
+                          onChange={(value: string) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
                           options={employees?.map(emp => ({
                             value: emp.employeeId.toString(),
                             label: `${emp.fullName} (${emp.employeeCode})`
                           })) || []}
+                          required
                         />
                       </div>
                     )}
 
                     <div>
-                      <Label htmlFor="timeOffType">Loại nghỉ phép <span className="text-red-500">*</span></Label>
-                      <Select
+                      <CustomSelect
+                        label="Loại nghỉ phép"
                         value={createForm.timeOffTypeId}
-                        onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
+                        onChange={(value: string) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
                         options={timeOffTypes?.filter(type => type.isActive).map(type => ({
                           value: type.typeId,
                           label: type.typeName
                         })) || []}
+                        required
                       />
                     </div>
 
@@ -803,10 +878,10 @@ export default function AdminTimeOffRequestsPage() {
                     </div>
 
                     <div className={canViewAll ? '' : 'md:col-span-2'}>
-                      <Label htmlFor="slot">Ca nghỉ (tùy chọn)</Label>
-                      <Select
+                      <CustomSelect
+                        label="Ca nghỉ (tùy chọn)"
                         value={createForm.slotId || ''}
-                        onChange={(value) => {
+                        onChange={(value: string) => {
                           const newSlotId = value || null;
                           setCreateForm(prev => ({
                             ...prev,
@@ -819,7 +894,7 @@ export default function AdminTimeOffRequestsPage() {
                           { value: '', label: 'Nghỉ cả ngày' },
                           ...workShifts.map(shift => ({
                             value: shift.workShiftId,
-                            label: `${shift.shiftName} (${shift.startTime} - ${shift.endTime})`
+                            label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`
                           }))
                         ]}
                       />
@@ -839,6 +914,55 @@ export default function AdminTimeOffRequestsPage() {
                       rows={3}
                     />
                   </div>
+
+                  {/* Conflict Warning */}
+                  {createForm.employeeId && createForm.startDate && createForm.endDate && (() => {
+                    const finalEmployeeId = canViewAll ? createForm.employeeId : Number(user?.employeeId);
+                    const startDate = new Date(createForm.startDate);
+                    const endDate = new Date(createForm.endDate);
+
+                    const overlappingRequests = timeOffRequests.filter(request => {
+                      const requestEmployeeId = request.employee?.employeeId;
+                      if (!requestEmployeeId || requestEmployeeId?.toString() !== finalEmployeeId?.toString()) return false;
+                      if (request.status === 'REJECTED' || request.status === 'CANCELLED') return false;
+                      const reqStart = new Date(request.startDate);
+                      const reqEnd = new Date(request.endDate);
+                      return (startDate <= reqEnd) && (endDate >= reqStart);
+                    });
+
+                    if (overlappingRequests.length > 0) {
+                      const selectedEmployee = employees?.find(emp => emp.employeeId.toString() === finalEmployeeId?.toString());
+                      return (
+                        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                          <div className="flex items-start">
+                            <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-yellow-900 mb-2">
+                                Cảnh báo: Trùng lịch nghỉ phép
+                              </h4>
+                              <p className="text-sm text-yellow-800 mb-2">
+                                Nhân viên <strong>{selectedEmployee?.fullName || finalEmployeeId}</strong> đã có {overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này:
+                              </p>
+                              <ul className="text-sm text-yellow-700 space-y-1">
+                                {overlappingRequests.map(req => (
+                                  <li key={req.requestId} className="flex items-center">
+                                    <Badge variant={req.status === 'PENDING' ? 'default' : 'secondary'} className="mr-2">
+                                      {TIME_OFF_STATUS_CONFIG[req.status]?.label || req.status}
+                                    </Badge>
+                                    <span>
+                                      {format(new Date(req.startDate), 'dd/MM/yyyy')} - {format(new Date(req.endDate), 'dd/MM/yyyy')}
+                                      {req.timeOffTypeName ? ` - ${req.timeOffTypeName}` : ''}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   <div className="flex gap-3 mt-4 justify-end">
                     <Button
@@ -970,7 +1094,7 @@ export default function AdminTimeOffRequestsPage() {
                 </div>
 
                 <div className="mb-4">
-                  <Label htmlFor="rejectReason">Lý do từ chối *</Label>
+                  <Label htmlFor="rejectReason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="rejectReason"
                     value={rejectReason}
@@ -1003,7 +1127,7 @@ export default function AdminTimeOffRequestsPage() {
               <div className="bg-white rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
                 <div className="mb-4">
-                  <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="cancelReason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="cancelReason"
                     value={cancelReason}

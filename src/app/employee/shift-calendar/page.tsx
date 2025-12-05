@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, subDays, addDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSyncAlt, faCalendarAlt, faUser, faPlus, faChartBar, faClock, faUserCheck, faUserTimes, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faSyncAlt, faCalendarAlt, faUser, faPlus, faChartBar, faClock, faUserCheck, faUserTimes, faExclamationTriangle, faListAlt } from '@fortawesome/free-solid-svg-icons';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ import { EmployeeShift, ShiftStatus, ShiftSummaryResponse } from '@/types/employ
 import { WorkShift as WorkShiftTemplate } from '@/types/workShift';
 import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatTimeToHHMM } from '@/lib/utils';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
@@ -37,7 +38,7 @@ import { toast } from 'sonner';
 export default function ShiftCalendarPage() {
   const { user } = useAuth();
   const { is403Error, handleError } = useApiErrorHandler();
-  
+
   // State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
@@ -56,7 +57,7 @@ export default function ShiftCalendarPage() {
     startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
   });
-  
+
   // Modal states
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -64,7 +65,7 @@ export default function ShiftCalendarPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState<EmployeeShift | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  
+
   // Form states
   const [createForm, setCreateForm] = useState({
     employee_id: '',
@@ -72,12 +73,12 @@ export default function ShiftCalendarPage() {
     work_shift_id: '',
     notes: '',
   });
-  
+
   const [updateForm, setUpdateForm] = useState({
     status: '',
     notes: '',
   });
-  
+
   // Permissions
   const canViewAll = user?.permissions?.includes('VIEW_SHIFTS_ALL') || false;
   const canViewOwn = user?.permissions?.includes('VIEW_SHIFTS_OWN') || false;
@@ -89,7 +90,7 @@ export default function ShiftCalendarPage() {
   // Manager có thể xem tất cả nếu có quyền VIEW_SHIFTS_ALL hoặc là manager
   const isManager = user?.roles?.includes('ROLE_MANAGER') || false;
   const canViewShifts = canViewAll || canViewOwn || isManager;
-  
+
   // Debug permissions
   console.log('User permissions:', user?.permissions);
   console.log('User roles:', user?.roles);
@@ -97,6 +98,7 @@ export default function ShiftCalendarPage() {
   console.log('Can view own:', canViewOwn);
   console.log('Is manager:', isManager);
   console.log('Can view shifts:', canViewShifts);
+  console.log(' User employeeId:', user?.employeeId); // Debug employeeId
 
   // Load data
   useEffect(() => {
@@ -124,21 +126,27 @@ export default function ShiftCalendarPage() {
   // Handle FullCalendar view changes
   const handleDatesSet = (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
-    const newDate = new Date(dateInfo.start);
-    
+
+    // Get the middle date of the view to determine the correct month/year
+    // This fixes the issue where start date might be from previous month
+    const startDate = new Date(dateInfo.start);
+    const endDate = new Date(dateInfo.end);
+    const middleDate = new Date((startDate.getTime() + endDate.getTime()) / 2);
+
     // Update currentDate to keep title in sync with calendar
     setCurrentDate(prevDate => {
       const prevMonth = prevDate.getMonth();
       const prevYear = prevDate.getFullYear();
-      const newMonth = newDate.getMonth();
-      const newYear = newDate.getFullYear();
-      
+      const newMonth = middleDate.getMonth();
+      const newYear = middleDate.getFullYear();
+
       // Only update if month/year actually changed to avoid unnecessary re-renders
       if (prevMonth !== newMonth || prevYear !== newYear) {
         console.log('Month/Year changed from', prevMonth + 1, prevYear, 'to', newMonth + 1, newYear);
-        return newDate;
+        return middleDate;
       }
-      
+
+      // Return prevDate to avoid triggering useEffect
       return prevDate;
     });
   };
@@ -147,27 +155,33 @@ export default function ShiftCalendarPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+      console.log(' Loading shift calendar data...');
+
       // Load work shifts
       const workShiftsData = await workShiftService.getAll();
       setWorkShifts(workShiftsData);
-      
+      console.log(' Work shifts loaded:', workShiftsData.length);
+
       // Load employees if can view all or is manager
       if (canViewAll || isManager) {
         try {
           const employeeService = new EmployeeService();
           const employeesResponse = await employeeService.getEmployees({});
           setEmployees(employeesResponse.content || []);
+          console.log(' Employees loaded:', employeesResponse.content?.length || 0);
         } catch (error: any) {
           console.warn('Cannot load employees list:', error.message);
+          toast.warning('Không thể tải danh sách nhân viên');
           // Nếu không load được employees, vẫn tiếp tục với shifts
           setEmployees([]);
         }
       }
-      
+
       // Load shifts
       await loadShifts();
     } catch (error: any) {
+      console.error(' Error loading data:', error);
+      toast.error('Không thể tải dữ liệu lịch làm việc');
       handleError(error);
     } finally {
       setLoading(false);
@@ -176,20 +190,46 @@ export default function ShiftCalendarPage() {
 
   const loadShifts = async () => {
     try {
+      // Don't set loading here to avoid re-render loop
+      // setLoading(true); // ⭐ REMOVED to prevent infinite loop
+
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
-      const shiftsData = await EmployeeShiftService.getShifts({
+      // Build params object
+      const params: any = {
         start_date: startDate,
         end_date: endDate,
-        employee_id: selectedEmployee || undefined,
-      });
+      };
 
+      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
+      if ((canViewAll || isManager) && selectedEmployee) {
+        params.employee_id = selectedEmployee;
+        console.log(' Admin/Manager viewing employee_id:', selectedEmployee);
+      } else if (canViewOwn) {
+        // Employee with VIEW_SHIFTS_OWN:
+        // KHÔNG truyền employee_id - Backend tự động filter theo JWT token
+        console.log(' Employee with VIEW_SHIFTS_OWN - Backend will auto-filter by JWT token');
+      }
+
+      console.log(' API params:', params);
+      console.log(' Fetching shifts from API...');
+
+      const shiftsData = await EmployeeShiftService.getShifts(params);
+
+      console.log(' Shifts loaded:', shiftsData.length, 'shifts');
+      console.log('� Shifts data:', shiftsData);
       setShifts(shiftsData);
+
+      if (shiftsData.length === 0) {
+        toast.info(`Không có ca làm việc nào trong tháng ${format(currentDate, 'MM/yyyy')}`);
+      }
     } catch (error: any) {
-      console.error('Error loading shifts:', error);
+      console.error(' Error loading shifts:', error);
+      toast.error('Không thể tải danh sách ca làm việc');
       handleError(error);
     }
+    // Don't set loading false here - let loadData handle it
   };
 
   // Load summary data
@@ -204,23 +244,35 @@ export default function ShiftCalendarPage() {
       setSummaryLoading(true);
       setSummaryError(null);
 
-      console.log('Loading summary with params:', {
+      // Build params object for summary
+      const params: any = {
         start_date: summaryDateRange.startDate,
         end_date: summaryDateRange.endDate,
-        employee_id: selectedEmployee || undefined,
-      });
+      };
 
-      const summaryData = await EmployeeShiftService.getShiftSummary({
-        start_date: summaryDateRange.startDate,
-        end_date: summaryDateRange.endDate,
-        ...(selectedEmployee && { employee_id: selectedEmployee }),
-      });
+      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
+      if ((canViewAll || isManager) && selectedEmployee) {
+        params.employee_id = selectedEmployee;
+      }
+      // Nếu VIEW_SHIFTS_OWN: KHÔNG truyền employee_id, backend tự filter
 
-      console.log('Summary data received:', summaryData);
+      console.log('Loading summary with params:', params);
+
+      const summaryData = await EmployeeShiftService.getShiftSummary(params);
+
+      console.log(' Summary data received:', summaryData);
       setSummaryData(summaryData);
+
+      if (summaryData.length > 0) {
+        const totalShifts = summaryData.reduce((sum, item) => sum + item.total_shifts, 0);
+        toast.success(`Đã tải thống kê: ${totalShifts} ca làm việc`);
+      } else {
+        toast.info('Không có dữ liệu ca làm việc trong khoảng thời gian này');
+      }
     } catch (error: any) {
-      console.error('Error loading summary:', error);
+      console.error(' Error loading summary:', error);
       setSummaryError('Không thể tải dữ liệu thống kê');
+      toast.error('Không thể tải dữ liệu thống kê');
     } finally {
       setSummaryLoading(false);
     }
@@ -231,13 +283,13 @@ export default function ShiftCalendarPage() {
     return shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
       const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
-      
+
       const employeeName = employee?.fullName || 'N/A';
       const shiftName = workShift?.shiftName || shift.workShiftId;
-      
+
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
       const end = `${shift.workDate}T${workShift?.endTime || '17:00:00'}`;
-      
+
       return {
         id: shift.employeeShiftId,
         title: `${employeeName} - ${shiftName}`,
@@ -275,7 +327,7 @@ export default function ShiftCalendarPage() {
       setDetailLoading(true);
       const shiftId = clickInfo.event.id;
       console.log('Event clicked:', shiftId);
-      
+
       // Find shift in current data first
       const existingShift = shifts.find(shift => shift.employeeShiftId === shiftId);
       if (existingShift) {
@@ -284,7 +336,7 @@ export default function ShiftCalendarPage() {
         setDetailLoading(false);
         return;
       }
-      
+
       // If not found, fetch from API
       const shiftDetail = await EmployeeShiftService.getShiftById(shiftId);
       setSelectedShift(shiftDetail);
@@ -300,8 +352,11 @@ export default function ShiftCalendarPage() {
   // Handle create shift
   const handleCreateShift = async () => {
     try {
-      console.log('Creating shift:', createForm);
-      
+      console.log(' Creating shift:', createForm);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang tạo ca làm việc...");
+
       const shiftData = {
         employee_id: parseInt(createForm.employee_id),
         work_date: createForm.work_date,
@@ -309,8 +364,12 @@ export default function ShiftCalendarPage() {
         notes: createForm.notes || undefined,
       };
 
-      await EmployeeShiftService.createShift(shiftData);
-      
+      const createdShift = await EmployeeShiftService.createShift(shiftData);
+      console.log(' Shift created:', createdShift);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
       // Reset form
       setCreateForm({
         employee_id: '',
@@ -318,19 +377,22 @@ export default function ShiftCalendarPage() {
         work_shift_id: '',
         notes: '',
       });
-      
+
       // Close modal
       setShowCreateModal(false);
-      
-      // Reload shifts
+
+      // Show success message với thông tin chi tiết
+      const employeeName = employees.find(emp => emp.employeeId === createForm.employee_id)?.fullName || 'nhân viên';
+      const shiftName = workShifts.find(ws => ws.workShiftId === createForm.work_shift_id)?.shiftName || createForm.work_shift_id;
+      toast.success(`Đã tạo ca làm cho ${employeeName} - ${shiftName} vào ngày ${format(new Date(createForm.work_date), 'dd/MM/yyyy')}`);
+
+      // Reload shifts để hiển thị ca làm mới lên calendar
+      console.log(' Reloading shifts to display new shift on calendar...');
       await loadShifts();
-      
-      // Show success message
-      console.log('✅ Shift created successfully');
-      toast.success("Tạo ca làm việc thành công!");
-      
+      console.log(' Calendar updated with new shift');
+
     } catch (error: any) {
-      console.error('Error creating shift:', error);
+      console.error(' Error creating shift:', error);
       handleCreateError(error);
     }
   };
@@ -339,7 +401,7 @@ export default function ShiftCalendarPage() {
   const handleCreateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'HOLIDAY_CONFLICT':
         toast.error("Không thể tạo ca làm vào ngày nghỉ lễ. Vui lòng sử dụng quy trình OT.");
@@ -367,36 +429,47 @@ export default function ShiftCalendarPage() {
   // Handle update shift
   const handleUpdateShift = async () => {
     if (!selectedShift) return;
-    
+
     try {
-      console.log('Updating shift:', selectedShift.employeeShiftId, updateForm);
-      
+      console.log(' Updating shift:', selectedShift.employeeShiftId, updateForm);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang cập nhật ca làm việc...");
+
       const updateData = {
         status: updateForm.status || undefined,
         notes: updateForm.notes || undefined,
       };
 
-      await EmployeeShiftService.updateShift(selectedShift.employeeShiftId, updateData);
-      
+      const updatedShift = await EmployeeShiftService.updateShift(selectedShift.employeeShiftId, updateData);
+      console.log(' Shift updated:', updatedShift);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
       // Reset form
       setUpdateForm({
         status: '',
         notes: '',
       });
-      
+
       // Close modals
       setShowUpdateModal(false);
       setShowDetailModal(false);
-      
-      // Reload shifts
+
+      // Show success message với thông tin chi tiết
+      const statusText = updateForm.status === 'COMPLETED' ? 'Hoàn thành' :
+        updateForm.status === 'CANCELLED' ? 'Đã hủy' :
+          updateForm.status === 'ABSENT' ? 'Vắng mặt' : updateForm.status;
+      toast.success(`Đã cập nhật ca làm thành: ${statusText}`);
+
+      // Reload shifts để hiển thị trạng thái mới lên calendar
+      console.log(' Reloading shifts to display updated status on calendar...');
       await loadShifts();
-      
-      // Show success message
-      console.log('✅ Shift updated successfully');
-      toast.success("Cập nhật ca làm việc thành công!");
-      
+      console.log(' Calendar updated with new status');
+
     } catch (error: any) {
-      console.error('Error updating shift:', error);
+      console.error(' Error updating shift:', error);
       handleUpdateError(error);
     }
   };
@@ -405,7 +478,7 @@ export default function ShiftCalendarPage() {
   const handleUpdateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'SHIFT_FINALIZED':
         toast.error("Không thể cập nhật ca làm đã hoàn thành/đã hủy.");
@@ -427,25 +500,35 @@ export default function ShiftCalendarPage() {
   // Handle delete shift
   const handleDeleteShift = async () => {
     if (!selectedShift) return;
-    
+
     try {
-      console.log('Deleting shift:', selectedShift.employeeShiftId);
-      
+      console.log(' Deleting shift:', selectedShift.employeeShiftId);
+
+      // Show loading toast
+      const loadingToast = toast.loading("Đang hủy ca làm việc...");
+
       await EmployeeShiftService.deleteShift(selectedShift.employeeShiftId);
-      
+      console.log(' Shift deleted');
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
       // Close modals
       setShowDeleteModal(false);
       setShowDetailModal(false);
-      
-      // Reload shifts
-      await loadShifts();
-      
+
       // Show success message
-      console.log('✅ Shift deleted successfully');
-      toast.success("Hủy ca làm việc thành công!");
-      
+      const employeeName = selectedShift.employee?.fullName || 'nhân viên';
+      const shiftName = selectedShift.workShift?.shiftName || selectedShift.workShiftId;
+      toast.success(`Đã hủy ca làm của ${employeeName} - ${shiftName}`);
+
+      // Reload shifts để cập nhật calendar (xóa shift khỏi calendar)
+      console.log(' Reloading shifts to remove deleted shift from calendar...');
+      await loadShifts();
+      console.log(' Calendar updated - shift removed');
+
     } catch (error: any) {
-      console.error('Error deleting shift:', error);
+      console.error(' Error deleting shift:', error);
       handleDeleteError(error);
     }
   };
@@ -454,7 +537,7 @@ export default function ShiftCalendarPage() {
   const handleDeleteError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
-    
+
     switch (errorCode) {
       case 'CANNOT_CANCEL_BATCH':
         toast.error("Không thể hủy ca làm mặc định của nhân viên Full-time. Vui lòng tạo yêu cầu nghỉ phép.");
@@ -479,7 +562,7 @@ export default function ShiftCalendarPage() {
   }
 
   return (
-    <ProtectedRoute 
+    <ProtectedRoute
       requiredBaseRole="employee"
       requiredPermissions={['VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_ALL']}
       requireAll={false}
@@ -581,8 +664,8 @@ export default function ShiftCalendarPage() {
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
                   <span className="text-sm font-medium text-gray-700">Xem dữ liệu:</span>
                 </div>
-                <Button 
-                  onClick={loadSummary} 
+                <Button
+                  onClick={loadSummary}
                   size="sm"
                   disabled={summaryLoading || !summaryDateRange.startDate || !summaryDateRange.endDate}
                   className="bg-blue-600 hover:bg-blue-700"
@@ -606,10 +689,10 @@ export default function ShiftCalendarPage() {
               <div className="mt-6 text-center py-8 bg-red-50 rounded-lg border border-red-200">
                 <FontAwesomeIcon icon={faExclamationTriangle} className="text-2xl mb-2 text-red-500" />
                 <p className="text-red-600 font-medium">{summaryError}</p>
-                <Button 
-                  onClick={loadSummary} 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  onClick={loadSummary}
+                  variant="outline"
+                  size="sm"
                   className="mt-2 border-red-300 text-red-600 hover:bg-red-50"
                 >
                   Thử lại
@@ -668,21 +751,23 @@ export default function ShiftCalendarPage() {
         )}
 
         {/* Calendar */}
-        <Card>
-          <CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-white">
             <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCalendarAlt} />
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600 text-sm" />
+                </div>
                 {format(currentDate, 'MMMM yyyy', { locale: vi })}
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="h-[600px]">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <div className="text-gray-600">Đang tải lịch làm việc...</div>
                   </div>
                 </div>
@@ -710,13 +795,14 @@ export default function ShiftCalendarPage() {
                   eventOverlap={false}
                   eventDisplay="block"
                   eventMaxStack={10}
+                  dayMaxEvents={3}
+                  moreLinkClick="popover"
                   eventTimeFormat={{
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
                   }}
                   slotLabelContent={(arg) => {
-                    // Format as HH:mm (24h format without "giờ")
                     const date = arg.date;
                     const hours = date.getHours().toString().padStart(2, '0');
                     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -730,33 +816,89 @@ export default function ShiftCalendarPage() {
           </CardContent>
         </Card>
 
+        {/* Custom Calendar Styles */}
+        <style jsx global>{`
+          .fc {
+            font-family: inherit;
+          }
+          .fc .fc-button-primary {
+            background-color: #8b5fbf;
+            border-color: #8b5fbf;
+            transition: all 0.2s;
+          }
+          .fc .fc-button-primary:hover {
+            background-color: #7a4fb0;
+            border-color: #7a4fb0;
+          }
+          .fc .fc-button-primary:not(:disabled):active,
+          .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #6a3f9e;
+            border-color: #6a3f9e;
+          }
+          .fc .fc-daygrid-day.fc-day-today {
+            background-color: #faf5ff !important;
+          }
+          .fc .fc-daygrid-day-number {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 4px;
+          }
+          .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            background-color: #8b5fbf;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .fc-event:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+          }
+        `}</style>
+
 
         {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chú thích</CardTitle>
+        <Card className="shadow-sm border-purple-100">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
+                <FontAwesomeIcon icon={faListAlt} className="text-purple-600 text-xs" />
+              </div>
+              Chú thích trạng thái
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Đã lên lịch</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-blue-500"></div>
+                <span className="text-sm font-medium text-gray-700">Đã lên lịch</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-gray-600">Hoàn thành</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-700">Hoàn thành</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-gray-500"></div>
-                <span className="text-sm text-gray-600">Đã hủy</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-gray-500"></div>
+                <span className="text-sm font-medium text-gray-700">Đã hủy</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-500"></div>
-                <span className="text-sm text-gray-600">Nghỉ phép</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                <span className="text-sm font-medium text-gray-700">Nghỉ phép</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span className="text-sm text-gray-600">Vắng mặt</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
+                <div className="w-3 h-3 rounded bg-red-500"></div>
+                <span className="text-sm font-medium text-gray-700">Vắng mặt</span>
               </div>
             </div>
           </CardContent>
@@ -771,7 +913,7 @@ export default function ShiftCalendarPage() {
                 Chi tiết ca làm việc
               </DialogTitle>
             </DialogHeader>
-            
+
             {detailLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -802,21 +944,21 @@ export default function ShiftCalendarPage() {
                       {format(new Date(selectedShift.workDate), 'dd/MM/yyyy', { locale: vi })}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Ca làm việc:</span>
                     <span className="text-sm text-gray-900">
                       {selectedShift.workShift?.shiftName || selectedShift.workShiftId}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Thời gian:</span>
                     <span className="text-sm text-gray-900">
-                      {selectedShift.workShift?.startTime || '08:00'} - {selectedShift.workShift?.endTime || '17:00'}
+                      {formatTimeToHHMM(selectedShift.workShift?.startTime || '08:00')} - {formatTimeToHHMM(selectedShift.workShift?.endTime || '17:00')}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Trạng thái:</span>
                     <Badge
@@ -829,14 +971,14 @@ export default function ShiftCalendarPage() {
                       {selectedShift.status}
                     </Badge>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-600">Nguồn:</span>
                     <span className="text-sm text-gray-900">
                       {selectedShift.shiftType}
                     </span>
                   </div>
-                  
+
                   {selectedShift.notes && (
                     <div>
                       <span className="text-sm font-medium text-gray-600">Ghi chú:</span>
@@ -852,15 +994,15 @@ export default function ShiftCalendarPage() {
                 Không tìm thấy thông tin ca làm việc
               </div>
             )}
-            
+
             <DialogFooter>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowDetailModal(false)}>
                   Đóng
                 </Button>
                 {canUpdate && selectedShift && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     disabled={selectedShift.status === 'COMPLETED' || selectedShift.status === 'CANCELLED'}
                     onClick={() => {
                       setUpdateForm({
@@ -879,8 +1021,8 @@ export default function ShiftCalendarPage() {
                   </Button>
                 )}
                 {canDelete && selectedShift && (
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     onClick={() => setShowDeleteModal(true)}
                   >
                     Hủy ca
@@ -900,7 +1042,7 @@ export default function ShiftCalendarPage() {
                 Tạo ca làm mới
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               {/* Employee Selection */}
               <div>
@@ -950,7 +1092,7 @@ export default function ShiftCalendarPage() {
                   <option value="">Chọn mẫu ca</option>
                   {workShifts.map(workShift => (
                     <option key={workShift.workShiftId} value={workShift.workShiftId}>
-                      {workShift.shiftName} ({workShift.startTime} - {workShift.endTime})
+                      {workShift.shiftName} ({formatTimeToHHMM(workShift.startTime)} - {formatTimeToHHMM(workShift.endTime)})
                     </option>
                   ))}
                 </select>
@@ -971,12 +1113,12 @@ export default function ShiftCalendarPage() {
                 />
               </div>
             </div>
-            
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateShift}
                 disabled={!createForm.employee_id || !createForm.work_date || !createForm.work_shift_id}
               >
@@ -1036,7 +1178,7 @@ export default function ShiftCalendarPage() {
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 onClick={handleUpdateShift}
                 disabled={!updateForm.status}
               >
@@ -1087,7 +1229,7 @@ export default function ShiftCalendarPage() {
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={handleDeleteShift}
               >

@@ -9,8 +9,19 @@ import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const t = useTranslations('Navigation');
-  const locale = useLocale();
+  let t: any;
+  let locale: string;
+
+  try {
+    t = useTranslations('Navigation');
+    locale = useLocale();
+  } catch (error) {
+    // Fallback if translations fail
+    console.warn('Translation failed, using fallback:', error);
+    t = (key: string) => key;
+    locale = 'vi';
+  }
+
   const router = useRouter();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
 

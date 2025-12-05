@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { employeeService } from '@/services/employeeService';
@@ -331,10 +331,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 </p>
               )}
               <div className="mt-2">
-                <Select
-                  label=""
+                <CustomSelect
+                  label="Chọn nhân viên"
                   value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value) => setSelectedEmployeeId(value || null)}
+                  onChange={(value: string) => setSelectedEmployeeId(value || null)}
                   options={[
                     { value: '', label: '-- Chọn nhân viên --' },
                     ...filteredEmployees.map(emp => ({
@@ -673,7 +673,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             <CardContent className="space-y-4">
               <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
                 <p className="text-sm text-red-800 font-medium mb-2">
-                  ⚠️ CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
+                   CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
                 </p>
                 <p className="text-sm text-red-700">
                   Job sẽ cộng số ngày phép mặc định cho tất cả nhân viên trong hệ thống cho năm được chọn.

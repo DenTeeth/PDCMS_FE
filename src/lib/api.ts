@@ -19,7 +19,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true, // ⚠️ CRITICAL: Send cookies with requests (for refreshToken)
+      withCredentials: true, //  CRITICAL: Send cookies with requests (for refreshToken)
     });
 
     // Request interceptor: Add access token to headers
@@ -62,7 +62,7 @@ class ApiClient {
           !originalRequest.url?.includes('/auth/refresh-token') &&
           !originalRequest.url?.includes('/auth/login')
         ) {
-          console.log(`⚠️ Token expired detected (${error.response?.status}):`, error.response?.data);
+          console.log(` Token expired detected (${error.response?.status}):`, error.response?.data);
 
           if (this.isRefreshing) {
             // If already refreshing, queue this request
@@ -83,12 +83,12 @@ class ApiClient {
           this.isRefreshing = true;
 
           try {
-            console.log('🔄 Access token expired, refreshing...');
-            console.log('📤 Calling refresh endpoint with credentials...');
+            console.log(' Access token expired, refreshing...');
+            console.log('� Calling refresh endpoint with credentials...');
 
             // Debug: check if cookies exist (only in browser)
             if (typeof document !== 'undefined') {
-              console.log('🍪 Document cookies:', document.cookie);
+              console.log('� Document cookies:', document.cookie);
             }
 
             // Call refresh token endpoint (refreshToken sent via HTTP-Only Cookie)
@@ -103,23 +103,23 @@ class ApiClient {
 
             const response = await refreshAxios.post('/auth/refresh-token', {});
 
-            console.log('📥 Refresh response:', response.data);
+            console.log('� Refresh response:', response.data);
 
             // Handle different response structures
             // Could be: { accessToken: "..." } or { data: { accessToken: "..." } }
             const accessToken = response.data.accessToken || response.data.data?.accessToken;
 
             if (!accessToken) {
-              console.error('❌ No access token in response. Full response:', response.data);
+              console.error(' No access token in response. Full response:', response.data);
               throw new Error('No access token received from refresh');
             }
 
             // Update access token in localStorage
             setToken(accessToken);
-            console.log('✅ Access token refreshed successfully:', accessToken.substring(0, 20) + '...');
+            console.log(' Access token refreshed successfully:', accessToken.substring(0, 20) + '...');
 
             // Process all queued requests with new token
-            console.log(`✅ Processing ${this.failedQueue.length} queued requests`);
+            console.log(` Processing ${this.failedQueue.length} queued requests`);
             this.failedQueue.forEach((prom) => prom.resolve(accessToken));
             this.failedQueue = [];
 
@@ -127,18 +127,18 @@ class ApiClient {
             if (originalRequest.headers) {
               originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             }
-            console.log('🔄 Retrying original request with new token...');
+            console.log(' Retrying original request with new token...');
             return this.axiosInstance(originalRequest);
           } catch (refreshError: any) {
             // Refresh failed → Clear data and redirect to login
-            console.error('❌ Token refresh failed:', refreshError.response?.data || refreshError.message);
+            console.error(' Token refresh failed:', refreshError.response?.data || refreshError.message);
             this.failedQueue.forEach((prom) => prom.reject(refreshError));
             this.failedQueue = [];
 
             clearAuthData();
 
             if (typeof window !== 'undefined') {
-              console.log('🚪 Redirecting to login...');
+              console.log('� Redirecting to login...');
               window.location.href = '/login';
             }
 
@@ -186,11 +186,11 @@ class ApiClient {
       // Store access token in localStorage
       if (response.data.token) {
         setToken(response.data.token);
-        console.log('✅ Access token stored in localStorage');
+        console.log(' Access token stored in localStorage');
       }
 
       // Note: refreshToken is automatically stored in HTTP-Only Cookie by backend
-      console.log('🍪 Refresh token stored in HTTP-Only Cookie by backend');
+      console.log('� Refresh token stored in HTTP-Only Cookie by backend');
 
       return response.data;
     } catch (error: any) {
@@ -202,7 +202,7 @@ class ApiClient {
   // Refresh token (refreshToken sent automatically via HTTP-Only Cookie)
   async refreshToken(): Promise<RefreshTokenResponse> {
     try {
-      console.log('🔄 Refreshing access token...');
+      console.log(' Refreshing access token...');
 
       // POST to refresh endpoint - refreshToken sent automatically via cookie
       const response = await this.axiosInstance.post<RefreshTokenResponse>(
@@ -212,16 +212,18 @@ class ApiClient {
       // Store new access token in localStorage
       if (response.data.accessToken) {
         setToken(response.data.accessToken);
-        console.log('✅ New access token stored in localStorage');
+        console.log(' New access token stored in localStorage');
       }
 
       // Note: Backend automatically rotates refreshToken in HTTP-Only Cookie
-      console.log('🍪 Refresh token rotated by backend');
+      console.log('� Refresh token rotated by backend');
 
       return response.data;
     } catch (error: any) {
       const message = error.response?.data?.message || 'Token refresh failed';
-      console.error('❌ Refresh token failed:', message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(' Refresh token failed:', message);
+      }
       throw new Error(message);
     }
   }
@@ -230,14 +232,14 @@ class ApiClient {
     try {
       // Call logout API endpoint
       await this.axiosInstance.post('/auth/logout');
-      console.log('✅ Logout API call successful');
+      console.log(' Logout API call successful');
     } catch (error: any) {
       // Even if API call fails, we should still clear local data
-      console.warn('⚠️ Logout API call failed:', error.message);
+      console.warn(' Logout API call failed:', error.message);
     } finally {
       // Always clear localStorage
       clearAuthData();
-      console.log('🗑️ Local auth data cleared');
+      console.log('� Local auth data cleared');
     }
   }
 

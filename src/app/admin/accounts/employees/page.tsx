@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -171,10 +171,9 @@ export default function EmployeesPage() {
         params.roleId = filterRole;
       }
 
-      // Add status filter if not 'all' - BE filter
-      if (filterStatus && filterStatus !== 'all') {
-        params.isActive = filterStatus === 'active';
-      }
+      // Note: BE endpoint /employees only returns active employees by default
+      // isActive filter is not needed for this endpoint (always active=true)
+      // If we need to show inactive employees, use /employees/admin/all endpoint
 
       console.log('Fetching employees with params:', params);
       const response = await employeeService.getEmployees(params);
@@ -250,7 +249,7 @@ export default function EmployeesPage() {
         };
       }
 
-      console.log('📤 Creating employee with payload:', payload);
+      console.log('� Creating employee with payload:', payload);
 
       await employeeService.createEmployee(payload);
       toast.success('Employee created successfully');
@@ -1029,7 +1028,7 @@ export default function EmployeesPage() {
                           ) : specializations.length === 0 ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                               <p className="text-sm text-yellow-800">
-                                ⚠️ <strong>Note:</strong> No active specializations available.
+                                 <strong>Note:</strong> No active specializations available.
                               </p>
                             </div>
                           ) : (
@@ -1310,7 +1309,7 @@ export default function EmployeesPage() {
                         ) : specializations.length === 0 ? (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <p className="text-sm text-yellow-800">
-                              ⚠️ No active specializations available.
+                               No active specializations available.
                             </p>
                           </div>
                         ) : (

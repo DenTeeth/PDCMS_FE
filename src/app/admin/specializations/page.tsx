@@ -20,19 +20,19 @@ export default function SpecializationsPage() {
     const fetchSpecializations = async () => {
         try {
             setLoading(true);
-            console.log('🔄 Fetching specializations...');
-            console.log('🔑 Access Token:', localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING');
+            console.log(' Fetching specializations...');
+            console.log('� Access Token:', localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING');
 
             const data = await specializationService.getAll();
-            console.log('✅ Specializations data:', data);
-            console.log('📊 Is array?', Array.isArray(data));
-            console.log('📊 Length:', data?.length);
+            console.log(' Specializations data:', data);
+            console.log('� Is array?', Array.isArray(data));
+            console.log('� Length:', data?.length);
             setSpecializations(Array.isArray(data) ? data : []);
         } catch (error: any) {
-            console.error('❌ Failed to fetch specializations:', error);
-            console.error('❌ Error status:', error.response?.status);
-            console.error('❌ Error response:', error.response);
-            console.error('❌ Error data:', error.response?.data);
+            console.error(' Failed to fetch specializations:', error);
+            console.error(' Error status:', error.response?.status);
+            console.error(' Error response:', error.response);
+            console.error(' Error data:', error.response?.data);
 
             if (error.response?.status === 401) {
                 toast.error('Please login first to view specializations');
