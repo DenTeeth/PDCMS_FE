@@ -447,8 +447,8 @@ export default function RegistrationsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Shift Registrations</h1>
-            <p className="text-gray-600 mt-1">Manage part-time and fixed shift registrations</p>
+            <h1 className="text-3xl font-bold text-gray-900">Đăng kí ca làm</h1>
+            <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm bán thời gian và ca cố định</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -470,12 +470,12 @@ export default function RegistrationsPage() {
           <TabsList className="grid w-full grid-cols-2">
             {canViewPartTime && (
               <TabsTrigger value="part-time">
-                Part-Time Registrations
+                Đăng ký ca làm bán thời gian
               </TabsTrigger>
             )}
             {canViewFixed && (
               <TabsTrigger value="fixed">
-                Fixed Shift Registrations
+                Đăng ký ca làm cố định
               </TabsTrigger>
             )}
           </TabsList>
@@ -527,7 +527,7 @@ export default function RegistrationsPage() {
                     </div>
                   ) : partTimeSlots.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No part-time slots found
+                      Không có ca làm bán thời gian
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -535,8 +535,8 @@ export default function RegistrationsPage() {
                         <thead>
                           <tr className="border-b">
                             <th className="text-left p-3 font-medium">Slot ID</th>
-                            <th className="text-left p-3 font-medium">Work Shift</th>
-                            <th className="text-left p-3 font-medium">Day</th>
+                            <th className="text-left p-3 font-medium">Ca làm việc</th>
+                            <th className="text-left p-3 font-medium">Ngày</th>
                             <th className="text-left p-3 font-medium">Hạn mức</th>
                             <th className="text-left p-3 font-medium">Đã đăng ký</th>
                             <th className="text-left p-3 font-medium">Trạng thái</th>
@@ -567,12 +567,12 @@ export default function RegistrationsPage() {
                                   {slot.isActive ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />
-                                      Active
+                                      Hoạt động
                                     </>
                                   ) : (
                                     <>
                                       <XCircle className="h-3 w-3 mr-1" />
-                                      Inactive
+                                      Không hoạt động
                                     </>
                                   )}
                                 </Badge>
@@ -628,7 +628,7 @@ export default function RegistrationsPage() {
                 {canManageFixed && (
                   <Button onClick={() => setShowFixedCreateModal(true)} className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    Create Fixed Registration
+                    Tạo đăng ký cố định
                   </Button>
                 )}
               </div>
@@ -636,19 +636,19 @@ export default function RegistrationsPage() {
               {/* Filters */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Filters</CardTitle>
+                  <CardTitle>Bộ lọc</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-4 items-end">
                     <div className="flex-1">
-                      <Label htmlFor="filterEmployee">Employee</Label>
+                      <Label htmlFor="filterEmployee">Nhân viên</Label>
                       <select
                         id="filterEmployee"
                         value={filterEmployeeId?.toString() || ''}
                         onChange={(e) => setFilterEmployeeId(e.target.value ? parseInt(e.target.value) : null)}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">All Employees</option>
+                        <option value="">Tất cả nhân viên</option>
                         {employees.map(emp => (
                           <option key={emp.employeeId} value={emp.employeeId}>
                             {emp.fullName} ({emp.employeeCode})
@@ -657,7 +657,7 @@ export default function RegistrationsPage() {
                       </select>
                     </div>
                     <Button variant="outline" onClick={() => setFilterEmployeeId(null)}>
-                      Clear
+                  Xoá
                     </Button>
                   </div>
                 </CardContent>
@@ -668,7 +668,7 @@ export default function RegistrationsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Fixed Shift Registrations ({fixedRegistrations.length})
+                    Đăng ký ca làm cố định ({fixedRegistrations.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -678,7 +678,7 @@ export default function RegistrationsPage() {
                     </div>
                   ) : fixedRegistrations.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No fixed shift registrations found
+                     Không tìm thấy đăng ký ca cố định
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -686,8 +686,8 @@ export default function RegistrationsPage() {
                         <thead>
                           <tr className="border-b">
                             <th className="text-left p-3 font-medium">ID</th>
-                            <th className="text-left p-3 font-medium">Employee</th>
-                            <th className="text-left p-3 font-medium">Work Shift</th>
+                            <th className="text-left p-3 font-medium">Nhân viên</th>
+                            <th className="text-left p-3 font-medium">Ca làm việc</th>
                             <th className="text-left p-3 font-medium">Ngày</th>
                             <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
                             <th className="text-left p-3 font-medium">Trạng thái</th>
@@ -724,12 +724,12 @@ export default function RegistrationsPage() {
                                   {registration.isActive ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />
-                                      Active
+                                      Hoạt động
                                     </>
                                   ) : (
                                     <>
                                       <XCircle className="h-3 w-3 mr-1" />
-                                      Inactive
+                                      Không hoạt động
                                     </>
                                   )}
                                 </Badge>
@@ -795,7 +795,7 @@ export default function RegistrationsPage() {
                   {/* Slot Information */}
                   <Card className="mb-4">
                     <CardHeader>
-                      <CardTitle className="text-lg">Slot Information</CardTitle>
+                      <CardTitle className="text-lg">Thông tin slot</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
@@ -804,12 +804,12 @@ export default function RegistrationsPage() {
                           <Input value={slotDetail.slotId} disabled />
                         </div>
                         <div>
-                          <Label>Work Shift</Label>
+                          <Label>Ca làm việc</Label>
                           <Input value={slotDetail.workShiftName} disabled />
                           <div className="text-sm text-gray-500 mt-1">ID: {slotDetail.workShiftId}</div>
                         </div>
                         <div>
-                          <Label>Day of Week</Label>
+                          <Label>Ngày trong tuần</Label>
                           <Input value={getDayOfWeekLabel(slotDetail.dayOfWeek as DayOfWeek)} disabled />
                         </div>
                         <div>
@@ -821,11 +821,11 @@ export default function RegistrationsPage() {
                           <Input value={slotDetail.quota} disabled />
                         </div>
                         <div>
-                          <Label>Registered</Label>
+                          <Label>Đã đăng ký</Label>
                           <Input value={`${slotDetail.registered} / ${slotDetail.quota}`} disabled />
                         </div>
                         <div>
-                          <Label>Remaining</Label>
+                          <Label>Còn lại</Label>
                           <Input value={slotDetail.quota - slotDetail.registered} disabled />
                         </div>
                       </div>
@@ -836,13 +836,13 @@ export default function RegistrationsPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">
-                        Employees who claimed this slot ({slotDetail.registeredEmployees.length})
+                        Nhân viên đã đăng ký slot này ({slotDetail.registeredEmployees.length})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {slotDetail.registeredEmployees.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
-                          No employees have claimed this slot yet.
+                          Chưa có nhân viên nào đăng ký slot này.
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
@@ -878,7 +878,7 @@ export default function RegistrationsPage() {
                 </>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Failed to load slot details.
+                  Không thể tải thông tin slot.
                 </div>
               )}
 
@@ -891,7 +891,7 @@ export default function RegistrationsPage() {
                     setSlotDetail(null);
                   }}
                 >
-                  Close
+                  Đóng
                 </Button>
               </div>
             </div>
@@ -902,10 +902,10 @@ export default function RegistrationsPage() {
         {showFixedCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Create Fixed Shift Registration</h2>
+              <h2 className="text-xl font-bold mb-4">Tạo đăng ký ca cố định</h2>
               <form onSubmit={handleFixedCreate} className="space-y-4">
                 <div>
-                  <Label htmlFor="createEmployee">Employee <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="createEmployee">Nhân viên <span className="text-red-500">*</span></Label>
                   <select
                     id="createEmployee"
                     value={fixedCreateFormData.employeeId}
@@ -923,7 +923,7 @@ export default function RegistrationsPage() {
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="0">Select Employee</option>
+                    <option value="0">Chọn nhân viên</option>
                     {employees.map(emp => (
                       <option key={emp.employeeId} value={emp.employeeId}>
                         {emp.fullName} ({emp.employeeCode}) - {emp.employeeType}
@@ -933,7 +933,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="createWorkShift">Work Shift <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="createWorkShift">Ca làm việc <span className="text-red-500">*</span></Label>
                   <select
                     id="createWorkShift"
                     value={fixedCreateFormData.workShiftId}
@@ -944,7 +944,7 @@ export default function RegistrationsPage() {
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="">Select Work Shift</option>
+                    <option value="">Ca làm việc</option>
                     {workShifts.map(shift => (
                       <option key={shift.workShiftId} value={shift.workShiftId}>
                         {shift.shiftName} ({shift.startTime} - {shift.endTime})
@@ -983,7 +983,7 @@ export default function RegistrationsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="createEffectiveFrom">Effective From <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="createEffectiveFrom"> Hiệu lực từ <span className="text-red-500">*</span></Label>
                     <Input
                       id="createEffectiveFrom"
                       type="date"
@@ -996,7 +996,7 @@ export default function RegistrationsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="createEffectiveTo">Effective To (Optional)</Label>
+                    <Label htmlFor="createEffectiveTo">Hiệu lực đến (Tùy chọn)</Label>
                     <Input
                       id="createEffectiveTo"
                       type="date"
@@ -1006,7 +1006,7 @@ export default function RegistrationsPage() {
                         effectiveTo: e.target.value || null
                       }))}
                     />
-                    <p className="text-sm text-gray-500 mt-1">Leave empty for unlimited</p>
+                    <p className="text-sm text-gray-500 mt-1">Để trống nếu không giới hạn</p>
                   </div>
                 </div>
 
@@ -1019,16 +1019,16 @@ export default function RegistrationsPage() {
                       resetFixedCreateForm();
                     }}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={fixedCreating}>
                     {fixedCreating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
+                        Đang tạo...
                       </>
                     ) : (
-                      'Create Registration'
+                      'Tạo đăng ký'
                     )}
                   </Button>
                 </div>
@@ -1041,20 +1041,20 @@ export default function RegistrationsPage() {
         {showFixedEditModal && fixedEditingRegistration && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Edit Fixed Shift Registration</h2>
+              <h2 className="text-xl font-bold mb-4">Chỉnh sửa đăng ký ca cố định</h2>
               <form onSubmit={handleFixedUpdate} className="space-y-4">
                 <div>
-                  <Label>Registration ID</Label>
+                  <Label>ID</Label>
                   <Input value={fixedEditingRegistration.registrationId} disabled />
                 </div>
 
                 <div>
-                  <Label>Employee</Label>
+                  <Label>Nhân viên</Label>
                   <Input value={fixedEditingRegistration.employeeName} disabled />
                 </div>
 
                 <div>
-                  <Label htmlFor="editWorkShift">Work Shift</Label>
+                  <Label htmlFor="editWorkShift">Ca làm</Label>
                   <select
                     id="editWorkShift"
                     value={fixedEditFormData.workShiftId || fixedEditingRegistration.workShiftId}
@@ -1064,7 +1064,7 @@ export default function RegistrationsPage() {
                     }))}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Keep current: {fixedEditingRegistration.workShiftName}</option>
+                    <option value="">Giữ nguyên: {fixedEditingRegistration.workShiftName}</option>
                     {workShifts.map(shift => (
                       <option key={shift.workShiftId} value={shift.workShiftId}>
                         {shift.shiftName} ({shift.startTime} - {shift.endTime})
@@ -1074,7 +1074,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div>
-                  <Label>Days of Week</Label>
+                  <Label>Ngày trong tuần</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {[1, 2, 3, 4, 5, 6, 7].map(day => {
                       const currentDays = fixedEditFormData.daysOfWeek || fixedEditingRegistration.daysOfWeek;
@@ -1107,7 +1107,7 @@ export default function RegistrationsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="editEffectiveFrom">Effective From</Label>
+                    <Label htmlFor="editEffectiveFrom">Hiệu lực từ</Label>
                     <Input
                       id="editEffectiveFrom"
                       type="date"
@@ -1119,7 +1119,7 @@ export default function RegistrationsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="editEffectiveTo">Effective To</Label>
+                    <Label htmlFor="editEffectiveTo">Hiệu lực đến</Label>
                     <Input
                       id="editEffectiveTo"
                       type="date"
@@ -1129,7 +1129,7 @@ export default function RegistrationsPage() {
                         effectiveTo: e.target.value || null
                       }))}
                     />
-                    <p className="text-sm text-gray-500 mt-1">Leave empty for unlimited</p>
+                    <p className="text-sm text-gray-500 mt-1">Để trống nếu không giới hạn</p>
                   </div>
                 </div>
 
@@ -1148,10 +1148,10 @@ export default function RegistrationsPage() {
                     {fixedUpdating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
-                      'Update Registration'
+                      'Cập nhật đăng ký'
                     )}
                   </Button>
                 </div>
@@ -1164,31 +1164,31 @@ export default function RegistrationsPage() {
         {showFixedDetailsModal && fixedDetailsRegistration && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Registration Details</h2>
+              <h2 className="text-xl font-bold mb-4">Chi tiết đăng ký</h2>
               <div className="space-y-3">
                 <div>
-                  <Label>Registration ID</Label>
+                  <Label>ID đăng ký</Label>
                   <Input value={fixedDetailsRegistration.registrationId} disabled />
                 </div>
                 <div>
-                  <Label>Employee</Label>
+                  <Label>Nhân viên</Label>
                   <Input value={`${fixedDetailsRegistration.employeeName} (ID: ${fixedDetailsRegistration.employeeId})`} disabled />
                 </div>
                 <div>
-                  <Label>Work Shift</Label>
+                  <Label>Ca làm việc</Label>
                   <Input value={`${fixedDetailsRegistration.workShiftName} (${fixedDetailsRegistration.workShiftId})`} disabled />
                 </div>
                 <div>
-                  <Label>Days of Week</Label>
+                  <Label>Ngày trong tuần</Label>
                   <Input value={formatFixedDaysOfWeek(fixedDetailsRegistration.daysOfWeek)} disabled />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Effective From</Label>
+                    <Label>Hiệu lực từ</Label>
                     <Input value={formatDate(fixedDetailsRegistration.effectiveFrom)} disabled />
                   </div>
                   <div>
-                    <Label>Effective To</Label>
+                    <Label>Hiệu lực đến</Label>
                     <Input value={formatDate(fixedDetailsRegistration.effectiveTo)} disabled />
                   </div>
                 </div>
@@ -1205,7 +1205,7 @@ export default function RegistrationsPage() {
                     setFixedDetailsRegistration(null);
                   }}
                 >
-                  Close
+                  Đóng
                 </Button>
               </div>
             </div>

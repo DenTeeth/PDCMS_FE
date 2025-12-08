@@ -480,7 +480,7 @@ export default function PatientsPage() {
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Patient
+          Bệnh nhân mới
         </Button>
       </div>
 
@@ -488,7 +488,7 @@ export default function PatientsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Total Patients */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Total Patients</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng bệnh nhân</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Users className="h-6 w-6 text-blue-600" />
@@ -499,7 +499,7 @@ export default function PatientsPage() {
 
         {/* Active */}
         <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-green-800 mb-2">Active</p>
+          <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <UserCheck className="h-6 w-6 text-green-700" />
@@ -510,7 +510,7 @@ export default function PatientsPage() {
 
         {/* Male */}
         <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-blue-800 mb-2">Male</p>
+          <p className="text-sm font-semibold text-blue-800 mb-2">Nam</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <User className="h-6 w-6 text-blue-700" />
@@ -521,7 +521,7 @@ export default function PatientsPage() {
 
         {/* Female */}
         <div className="bg-pink-50 rounded-xl border border-pink-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-pink-800 mb-2">Female</p>
+          <p className="text-sm font-semibold text-pink-800 mb-2">Nữ</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <User className="h-6 w-6 text-pink-700" />
@@ -541,7 +541,7 @@ export default function PatientsPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Search by name, email, phone, or code..."
+                  placeholder="Tìm kiếm theo tên, email, điện thoại hoặc code..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -554,7 +554,7 @@ export default function PatientsPage() {
                   className="gap-2"
                 >
                   <Filter className="h-4 w-4" />
-                  Filter
+                  Bộ lọc
                   {(filterGender !== 'all' || filterStatus !== 'all') && (
                     <Badge variant="secondary" className="ml-1">
                       {(filterGender !== 'all' ? 1 : 0) + (filterStatus !== 'all' ? 1 : 0)}
@@ -584,7 +584,7 @@ export default function PatientsPage() {
             {showFilters && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                 <div className="space-y-2">
-                  <Label>Gender</Label>
+                  <Label>Giới tính</Label>
                   <select
                     value={filterGender}
                     onChange={(e) => setFilterGender(e.target.value)}
@@ -625,7 +625,7 @@ export default function PatientsPage() {
                       className="gap-2"
                     >
                       <X className="h-4 w-4" />
-                      Clear Filters
+                      Xóa bộ lọc
                     </Button>
                   </div>
                 )}
@@ -641,15 +641,15 @@ export default function PatientsPage() {
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium">No patients found on this page</p>
+              <p className="text-lg font-medium">Không tìm thấy bệnh nhân nào trên trang này</p>
               <p className="text-sm mt-1">
                 {patients.length > 0
-                  ? 'Try adjusting your filters or navigate to another page'
-                  : 'No patients available'}
+                  ? 'Thử điều chỉnh bộ lọc hoặc chuyển đến trang khác'
+                  : 'Không có bệnh nhân nào'}
               </p>
               {patients.length > 0 && filteredPatients.length === 0 && (
                 <p className="text-xs mt-2 text-gray-400">
-                  Showing page {page + 1} of {totalPages} • {patients.length} patients loaded, 0 match filters
+                  Hiển thị trang {page + 1} trong {totalPages} • {patients.length} bệnh nhân đã tải, 0 phù hợp với bộ lọc
                 </p>
               )}
             </div>
@@ -677,7 +677,7 @@ export default function PatientsPage() {
                           : 'bg-red-100 text-red-800'
                       }
                     >
-                      {patient.isActive ? 'Active' : 'Inactive'}
+                      {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
                     </Badge>
                   </div>
                 </div>
@@ -720,7 +720,7 @@ export default function PatientsPage() {
                         className="flex-1"
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Edit
+                        Chỉnh sửa
                       </Button>
                       <Button
                         variant="outline"
@@ -732,7 +732,7 @@ export default function PatientsPage() {
                         className="flex-1"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        Xem
                       </Button>
                     </div>
                     {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
@@ -749,12 +749,12 @@ export default function PatientsPage() {
                         {resendingEmail === patient.patientCode ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            Sending...
+                            Đang gửi...
                           </>
                         ) : (
                           <>
                             <Send className="h-4 w-4 mr-1" />
-                            Resend Setup Email
+                            Gửi lại email thiết lập
                           </>
                         )}
                       </Button>
@@ -777,25 +777,25 @@ export default function PatientsPage() {
                       Code
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Full Name
+                      Họ và tên
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Gender
+                      Giới tính     
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date of Birth
+                      Ngày sinh
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
+                      Số điện thoại
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Email
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Trạng thái
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      Hành động
                     </th>
                   </tr>
                 </thead>
@@ -832,7 +832,7 @@ export default function PatientsPage() {
                               : 'bg-gray-100 text-gray-700 w-fit'
                           }
                         >
-                          {patient.isActive ? 'Active' : 'Inactive'}
+                          {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -844,7 +844,7 @@ export default function PatientsPage() {
                               onClick={() => openEditModal(patient)}
                             >
                               <Edit className="h-4 w-4 mr-1" />
-                              Edit
+                              Chỉnh sửa
                             </Button>
                             <Button
                               variant="ghost"
@@ -852,7 +852,7 @@ export default function PatientsPage() {
                               onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              View
+                              Xem
                             </Button>
                           </div>
                           {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
@@ -866,12 +866,12 @@ export default function PatientsPage() {
                               {resendingEmail === patient.patientCode ? (
                                 <>
                                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  Sending...
+                                  Đang gửi...
                                 </>
                               ) : (
                                 <>
                                   <Send className="h-3 w-3 mr-1" />
-                                  Resend Setup Email
+                                  Gửi lại email thiết lập
                                 </>
                               )}
                             </Button>
@@ -996,7 +996,7 @@ export default function PatientsPage() {
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
                     <UserCheck className="h-4 w-4 text-blue-600" />
-                    Account Information
+                    Thông tin tài khoản
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
@@ -1025,7 +1025,7 @@ export default function PatientsPage() {
                         required
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Patient will receive a password setup email at this address
+                        Bệnh nhân sẽ nhận được email thiết lập mật khẩu tại địa chỉ này
                       </p>
                     </div>
                   </div>
@@ -1040,7 +1040,7 @@ export default function PatientsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="firstName">
-                        First Name <span className="text-red-500">*</span>
+                        Họ <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="firstName"
@@ -1053,7 +1053,7 @@ export default function PatientsPage() {
                     </div>
                     <div>
                       <Label htmlFor="lastName">
-                        Last Name <span className="text-red-500">*</span>
+                        Tên <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="lastName"
@@ -1065,7 +1065,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">Số điện thoại</Label>
                       <Input
                         id="phone"
                         placeholder="e.g., 0912345678"
@@ -1075,7 +1075,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                      <Label htmlFor="dateOfBirth">Ngày sinh</Label>
                       <Input
                         id="dateOfBirth"
                         type="date"
@@ -1085,7 +1085,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="gender" className="text-sm">Gender</Label>
+                      <Label htmlFor="gender" className="text-sm">Giới tính</Label>
                       <select
                         id="gender"
                         value={formData.gender || ''}
@@ -1093,14 +1093,14 @@ export default function PatientsPage() {
                         disabled={creating}
                         className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select gender</option>
-                        <option value="MALE">Male</option>
-                        <option value="FEMALE">Female</option>
-                        <option value="OTHER">Other</option>
+                        <option value="">Chọn giới tính</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="address" className="text-sm">Address</Label>
+                      <Label htmlFor="address" className="text-sm">Địa chỉ</Label>
                       <textarea
                         id="address"
                         placeholder="e.g., 123 Đường Lê Lợi, Quận 1, TP.HCM"
@@ -1118,11 +1118,11 @@ export default function PatientsPage() {
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
                     <AlertCircle className="h-4 w-4 text-blue-600" />
-                    Medical Information
+                    Thông tin y tế
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <Label htmlFor="medicalHistory" className="text-sm">Medical History</Label>
+                      <Label htmlFor="medicalHistory" className="text-sm">Tiền sử bệnh</Label>
                       <textarea
                         id="medicalHistory"
                         placeholder="e.g., Đã điều trị viêm lợi năm 2020"
@@ -1134,7 +1134,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="allergies" className="text-sm">Allergies</Label>
+                      <Label htmlFor="allergies" className="text-sm">Dị ứng</Label>
                       <textarea
                         id="allergies"
                         placeholder="e.g., Dị ứng thuốc tê lidocaine"
@@ -1156,7 +1156,7 @@ export default function PatientsPage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="emergencyContactName">Contact Name</Label>
+                      <Label htmlFor="emergencyContactName">Tên người liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactName"
                         placeholder="e.g., Tran Thi Hoa"
@@ -1166,7 +1166,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="emergencyContactPhone">Contact Phone</Label>
+                      <Label htmlFor="emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactPhone"
                         placeholder="e.g., 0987654321"
@@ -1202,18 +1202,18 @@ export default function PatientsPage() {
                     }}
                     disabled={creating}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={creating}>
                     {creating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
+                        Đang tạo...
                       </>
                     ) : (
                       <>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Patient
+                        Tạo bệnh nhân
                       </>
                     )}
                   </Button>
@@ -1235,10 +1235,10 @@ export default function PatientsPage() {
               <form onSubmit={handleUpdatePatient} className="space-y-6">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                  <h3 className="text-lg font-semibold mb-3">Thông tin cơ bản</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Label htmlFor="edit-firstName">Họ</Label>
                       <Input
                         id="edit-firstName"
                         value={editFormData.firstName}
@@ -1249,7 +1249,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Label htmlFor="edit-lastName">Tên</Label>
                       <Input
                         id="edit-lastName"
                         value={editFormData.lastName}
@@ -1260,7 +1260,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-gender">Gender</Label>
+                      <Label htmlFor="edit-gender">Giới tính</Label>
                       <select
                         id="edit-gender"
                         value={editFormData.gender || ''}
@@ -1279,7 +1279,7 @@ export default function PatientsPage() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                      <Label htmlFor="edit-dateOfBirth">Ngày sinh</Label>
                       <Input
                         id="edit-dateOfBirth"
                         type="date"
@@ -1309,7 +1309,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-phone">Phone Number</Label>
+                      <Label htmlFor="edit-phone">Số điện thoại</Label>
                       <Input
                         id="edit-phone"
                         value={editFormData.phone}
@@ -1320,7 +1320,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="edit-address">Address</Label>
+                      <Label htmlFor="edit-address">Địa chỉ</Label>
                       <Input
                         id="edit-address"
                         value={editFormData.address}
@@ -1338,7 +1338,7 @@ export default function PatientsPage() {
                   <h3 className="text-lg font-semibold mb-3">Thông tin y tế</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-medicalHistory">Medical History</Label>
+                      <Label htmlFor="edit-medicalHistory">Tiền sử bệnh lý</Label>
                       <textarea
                         id="edit-medicalHistory"
                         value={editFormData.medicalHistory}
@@ -1351,7 +1351,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-allergies">Allergies</Label>
+                      <Label htmlFor="edit-allergies">Dị ứng</Label>
                       <textarea
                         id="edit-allergies"
                         value={editFormData.allergies}
@@ -1371,7 +1371,7 @@ export default function PatientsPage() {
                   <h3 className="text-lg font-semibold mb-3">Liên hệ khẩn cấp</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-emergencyContactName">Contact Name</Label>
+                      <Label htmlFor="edit-emergencyContactName">Tên người liên hệ khẩn cấp</Label>
                       <Input
                         id="edit-emergencyContactName"
                         value={editFormData.emergencyContactName}
@@ -1385,7 +1385,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-emergencyContactPhone">Contact Phone</Label>
+                      <Label htmlFor="edit-emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
                       <Input
                         id="edit-emergencyContactPhone"
                         value={editFormData.emergencyContactPhone}
@@ -1403,9 +1403,9 @@ export default function PatientsPage() {
 
                 {/* Status */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Status</h3>
+                  <h3 className="text-lg font-semibold mb-3">Trạng thái</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-isActive">Active Status</Label>
+                    <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
                     <select
                       id="edit-isActive"
                       value={editFormData.isActive ? 'true' : 'false'}
@@ -1414,12 +1414,11 @@ export default function PatientsPage() {
                       }
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">Hoạt động</option>
+                      <option value="false">Không hoạt động</option>
                     </select>
                   </div>
                 </div>
-
                 {/* Form Actions */}
                 <div className="flex gap-3 justify-end pt-3 border-t">
                   <Button

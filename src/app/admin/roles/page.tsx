@@ -270,11 +270,11 @@ export default function RolesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý vai trò</h1>
-          <p className="text-gray-600">View and manage system roles</p>
+          <p className="text-gray-600">Xem và quản lý vai trò hệ thống</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Role
+          Tạo vai trò
         </Button>
       </div>
 
@@ -285,7 +285,7 @@ export default function RolesPage() {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Roles</p>
+                <p className="text-sm font-medium text-gray-600">Tổng số vai trò</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>

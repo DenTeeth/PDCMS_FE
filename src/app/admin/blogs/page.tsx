@@ -59,12 +59,12 @@ export default function BlogsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Blog Management</h1>
-            <p className="text-gray-600">Manage blog posts and news content</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý Blog</h1>
+            <p className="text-gray-600">Quản lý bài viết và nội dung tin tức</p>
           </div>
           <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            New Post
+            Bài viết mới
           </Button>
         </div>
 
@@ -76,7 +76,7 @@ export default function BlogsPage() {
               <div className="flex items-center">
                 <BookOpen className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-semibold text-gray-700">Total Posts</p>
+                  <p className="text-sm font-semibold text-gray-700">Tổng bài viết</p>
                   <p className="text-2xl font-bold text-gray-900">{blogs.length}</p>
                 </div>
               </div>
@@ -89,7 +89,7 @@ export default function BlogsPage() {
                 <span className="text-green-700 font-bold">P</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-semibold text-green-800">Published</p>
+                <p className="text-sm font-semibold text-green-800">Đã xuất bản</p>
                 <p className="text-2xl font-bold text-green-800">{blogs.filter(b => b.status === 'published').length}</p>
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function BlogsPage() {
                 <span className="text-yellow-700 font-bold">D</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-semibold text-yellow-800">Drafts</p>
+                <p className="text-sm font-semibold text-yellow-800">Bản nháp</p>
                 <p className="text-2xl font-bold text-yellow-800">{blogs.filter(b => b.status === 'draft').length}</p>
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function BlogsPage() {
                 <span className="text-purple-700 font-bold">A</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-semibold text-purple-800">Authors</p>
+                <p className="text-sm font-semibold text-purple-800">Tác giả</p>
                 <p className="text-2xl font-bold text-purple-800">{new Set(blogs.map(b => b.authorId)).size}</p>
               </div>
             </div>

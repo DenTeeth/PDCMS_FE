@@ -113,9 +113,9 @@ export default function UserNotifications() {
   const unreadCount = notificationsList.filter(n => !n.isRead).length;
 
   const markAsRead = (id: string) => {
-    setNotificationsList(prev => 
-      prev.map(notification => 
-        notification.id === id 
+    setNotificationsList(prev =>
+      prev.map(notification =>
+        notification.id === id
           ? { ...notification, isRead: true }
           : notification
       )
@@ -123,7 +123,7 @@ export default function UserNotifications() {
   };
 
   const markAllAsRead = () => {
-    setNotificationsList(prev => 
+    setNotificationsList(prev =>
       prev.map(notification => ({ ...notification, isRead: true }))
     );
   };
@@ -139,7 +139,7 @@ export default function UserNotifications() {
         <div className="flex space-x-2">
           <Button variant="outline" onClick={markAllAsRead}>
             <FontAwesomeIcon icon={faCheckDouble} className="mr-2 h-4 w-4" />
-            Mark All as Read
+            Đánh dấu đã đọc tất cả
           </Button>
         </div>
       </div>
@@ -150,7 +150,7 @@ export default function UserNotifications() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Unread</p>
+                <p className="text-sm font-medium text-muted-foreground">Chưa đọc</p>
                 <p className="text-2xl font-bold text-red-600">{unreadCount}</p>
               </div>
               <FontAwesomeIcon icon={faBell} className="h-8 w-8 text-red-600" />
@@ -162,7 +162,7 @@ export default function UserNotifications() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-sm font-medium text-muted-foreground">Tổng cộng</p>
                 <p className="text-2xl font-bold">{notificationsList.length}</p>
               </div>
               <FontAwesomeIcon icon={faCheckCircle} className="h-8 w-8 text-primary" />
@@ -174,7 +174,7 @@ export default function UserNotifications() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Read</p>
+                <p className="text-sm font-medium text-muted-foreground">Đã đọc</p>
                 <p className="text-2xl font-bold text-green-600">{notificationsList.length - unreadCount}</p>
               </div>
               <FontAwesomeIcon icon={faCheckCircle} className="h-8 w-8 text-green-600" />
@@ -192,21 +192,21 @@ export default function UserNotifications() {
               onClick={() => setFilter('all')}
               size="sm"
             >
-              All
+              Tất cả
             </Button>
             <Button
               variant={filter === 'unread' ? 'default' : 'outline'}
               onClick={() => setFilter('unread')}
               size="sm"
             >
-              Unread
+              Chưa đọc
             </Button>
             <Button
               variant={filter === 'read' ? 'default' : 'outline'}
               onClick={() => setFilter('read')}
               size="sm"
             >
-              Read
+              Đã đọc
             </Button>
           </div>
         </CardContent>
@@ -221,7 +221,7 @@ export default function UserNotifications() {
                 <div className="flex-shrink-0">
                   {getNotificationIcon(notification.type)}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -247,11 +247,11 @@ export default function UserNotifications() {
                       )}
                     </div>
                   </div>
-                  
+
                   <p className={`mt-2 ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {notification.message}
                   </p>
-                  
+
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                       <span>{notification.date}</span>
@@ -260,7 +260,7 @@ export default function UserNotifications() {
                     </div>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">
-                        View Details
+                        Xem chi tiết
                       </Button>
                     </div>
                   </div>
@@ -277,11 +277,11 @@ export default function UserNotifications() {
             <FontAwesomeIcon icon={faBell} className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Không có thông báo</h3>
             <p className="text-muted-foreground">
-              {filter === 'unread' 
+              {filter === 'unread'
                 ? 'You\'re all caught up! No unread notifications.'
                 : filter === 'read'
-                ? 'No read notifications found.'
-                : 'You don\'t have any notifications yet.'
+                  ? 'No read notifications found.'
+                  : 'You don\'t have any notifications yet.'
               }
             </p>
           </CardContent>

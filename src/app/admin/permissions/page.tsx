@@ -86,7 +86,7 @@ export default function PermissionsPage() {
               Quản lý quyền
             </h1>
             <p className="text-gray-500 mt-1">
-              Manage system permissions and their role associations
+              Quản lý quyền hệ thống và liên kết vai trò
             </p>
           </div>
           <Badge variant="outline" className="text-lg px-4 py-2">
@@ -145,7 +145,7 @@ export default function PermissionsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-gray-500 text-sm">Total Permissions</p>
+                <p className="text-gray-500 text-sm">Tổng số quyền</p>
                 <p className="text-3xl font-bold text-blue-600">{permissions.length}</p>
               </div>
             </CardContent>
@@ -153,7 +153,7 @@ export default function PermissionsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-gray-500 text-sm">Active</p>
+                <p className="text-gray-500 text-sm">Đang hoạt động</p>
                 <p className="text-3xl font-bold text-green-600">
                   {permissions.filter((p) => p.isActive).length}
                 </p>
@@ -163,7 +163,7 @@ export default function PermissionsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-gray-500 text-sm">Inactive</p>
+                <p className="text-gray-500 text-sm">Ngừng hoạt động</p>
                 <p className="text-3xl font-bold text-red-600">
                   {permissions.filter((p) => !p.isActive).length}
                 </p>
@@ -219,12 +219,12 @@ export default function PermissionsPage() {
                             {permission.isActive ? (
                               <Badge className="bg-green-100 text-green-800 border-green-300">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                Active
+                                Hoạt động
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="bg-gray-100 text-gray-800">
                                 <XCircle className="h-3 w-3 mr-1" />
-                                Inactive
+                                Ngừng hoạt động
                               </Badge>
                             )}
                           </div>
@@ -234,7 +234,7 @@ export default function PermissionsPage() {
                               {permission.permissionId}
                             </span>
                             <span>
-                              Created: {new Date(permission.createdAt).toLocaleDateString()}
+                              Tạo lúc: {new Date(permission.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
@@ -243,7 +243,7 @@ export default function PermissionsPage() {
                       {/* Associated Roles */}
                       {permission.roleNames && permission.roleNames.length > 0 && (
                         <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm text-gray-500 mb-2">Associated Roles:</p>
+                          <p className="text-sm text-gray-500 mb-2">Vai trò liên kết:</p>
                           <div className="flex flex-wrap gap-2">
                             {permission.roleNames.map((roleName) => (
                               <Badge key={roleName} variant="outline" className="text-blue-600">

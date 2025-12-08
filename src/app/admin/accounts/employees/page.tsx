@@ -348,7 +348,7 @@ export default function EmployeesPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading employees...</p>
+          <p className="mt-4 text-gray-600">Đang tải nhân viên...</p>
         </div>
       </div>
     );
@@ -373,7 +373,7 @@ export default function EmployeesPage() {
             title={!canCreate ? "Bạn không có quyền tạo nhân viên mới" : ""}
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Employee
+            Nhân viên mới
           </Button>
         </div>
 
@@ -384,7 +384,7 @@ export default function EmployeesPage() {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Employees</p>
+                  <p className="text-sm font-medium text-gray-600">Tổng nhân viên</p>
                   <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function EmployeesPage() {
               <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active</p>
+                  <p className="text-sm font-medium text-gray-600">Hoạt động</p>
                   <p className="text-2xl font-bold">{stats.active}</p>
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function EmployeesPage() {
               <div className="flex items-center">
                 <XCircle className="h-8 w-8 text-red-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Inactive</p>
+                  <p className="text-sm font-medium text-gray-600">Không hoạt động</p>
                   <p className="text-2xl font-bold">{stats.inactive}</p>
                 </div>
               </div>
@@ -424,7 +424,7 @@ export default function EmployeesPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
-                    placeholder="Search by name, email, phone, or code..."
+                    placeholder="Tìm kiếm theo tên, số điện thoại hoặc code..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -437,7 +437,7 @@ export default function EmployeesPage() {
                     className="gap-2"
                   >
                     <Filter className="h-4 w-4" />
-                    Filter
+                    Bộ lọc
                     {(filterRole !== 'all' || filterStatus !== 'all') && (
                       <Badge variant="secondary" className="ml-1">
                         {(filterRole !== 'all' ? 1 : 0) + (filterStatus !== 'all' ? 1 : 0)}
@@ -467,7 +467,7 @@ export default function EmployeesPage() {
               {showFilters && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                   <div className="space-y-2">
-                    <Label>Role</Label>
+                    <Label>Vai trò</Label>
                     <select
                       value={filterRole}
                       onChange={(e) => {
@@ -513,8 +513,8 @@ export default function EmployeesPage() {
                         className="gap-2"
                       >
                         <X className="h-4 w-4" />
-                        Clear Filters
-                      </Button>
+                          Xóa bộ lọc         
+             </Button>
                     </div>
                   )}
                 </div>
@@ -529,8 +529,8 @@ export default function EmployeesPage() {
             <CardContent className="py-12">
               <div className="text-center text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium">No employees found</p>
-                <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                <p className="text-lg font-medium">Không tìm thấy nhân viên</p>
+                <p className="text-sm mt-1">Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn</p>
               </div>
             </CardContent>
           </Card>
@@ -603,7 +603,7 @@ export default function EmployeesPage() {
                         title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        Xem
                       </Button>
                       <Button
                         variant="outline"
@@ -616,7 +616,7 @@ export default function EmployeesPage() {
                         title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Edit
+                        Chỉnh sửa
                       </Button>
                     </div>
                   </div>
@@ -715,7 +715,7 @@ export default function EmployeesPage() {
                               title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              View
+                              Xem
                             </Button>
                             <Button
                               variant="ghost"
@@ -728,7 +728,7 @@ export default function EmployeesPage() {
                               title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
                             >
                               <Edit className="h-4 w-4 mr-1" />
-                              Edit
+                              Chỉnh sửa
                             </Button>
                           </div>
                         </td>
@@ -769,7 +769,7 @@ export default function EmployeesPage() {
                     className="h-9 px-3"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
+                    Trước
                   </Button>
 
                   {/* Page numbers */}
@@ -813,7 +813,7 @@ export default function EmployeesPage() {
                     disabled={page >= totalPages - 1 || loading}
                     className="h-9 px-3"
                   >
-                    Next
+                    Tiếp theo
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
 
@@ -899,11 +899,11 @@ export default function EmployeesPage() {
                       <div className="space-y-6">
                         {/* Account Information - Always shown */}
                         <div>
-                          <h3 className="font-semibold mb-3 text-lg">Account Information</h3>
+                          <h3 className="font-semibold mb-3 text-lg">Thông tin tài khoản</h3>
                           <div className="space-y-4">
                             <div>
                               <Label htmlFor="username">
-                                Username <span className="text-red-500">*</span>
+                                Tên đăng nhập <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 id="username"
@@ -930,7 +930,7 @@ export default function EmployeesPage() {
                             </div>
                             <div>
                               <Label htmlFor="password">
-                                Password <span className="text-red-500">*</span>
+                                Mật khẩu <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 id="password"
@@ -942,7 +942,7 @@ export default function EmployeesPage() {
                                 required
                               />
                               <p className="text-xs text-gray-500 mt-1">
-                                Minimum 6 characters
+                                Tối thiểu 6 ký tự
                               </p>
                             </div>
                           </div>
@@ -950,12 +950,12 @@ export default function EmployeesPage() {
 
                         {/* Personal Information */}
                         <div className="border-t pt-6">
-                          <h3 className="font-semibold mb-3 text-lg">Personal Information</h3>
+                          <h3 className="font-semibold mb-3 text-lg">Thông tin cá nhân</h3>
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <Label htmlFor="firstName">
-                                  First Name <span className="text-red-500">*</span>
+                                  Họ <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                   id="firstName"
@@ -968,7 +968,7 @@ export default function EmployeesPage() {
                               </div>
                               <div>
                                 <Label htmlFor="lastName">
-                                  Last Name <span className="text-red-500">*</span>
+                                  Tên <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                   id="lastName"
@@ -981,7 +981,7 @@ export default function EmployeesPage() {
                               </div>
                             </div>
                             <div>
-                              <Label htmlFor="phone">Phone</Label>
+                              <Label htmlFor="phone">Số điện thoại</Label>
                               <Input
                                 id="phone"
                                 placeholder="e.g., 0123456789"
@@ -991,7 +991,7 @@ export default function EmployeesPage() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                              <Label htmlFor="dateOfBirth">Ngày tháng năm sinh</Label>
                               <Input
                                 id="dateOfBirth"
                                 type="date"
@@ -1001,7 +1001,7 @@ export default function EmployeesPage() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="address">Address</Label>
+                              <Label htmlFor="address">Đại chỉ</Label>
                               <textarea
                                 id="address"
                                 placeholder="Enter full address"
@@ -1019,11 +1019,11 @@ export default function EmployeesPage() {
                       {/* RIGHT COLUMN: Specialization (Only for roles that require specialization) */}
                       {requiresSpecialization && (
                         <div className="lg:border-l lg:pl-6">
-                          <h3 className="font-semibold mb-3 text-lg">Specialization</h3>
+                          <h3 className="font-semibold mb-3 text-lg">Chuyên khoa</h3>
                           {loadingSpecializations ? (
                             <div className="flex items-center gap-2 text-gray-500">
                               <Loader2 className="h-4 w-4 animate-spin" />
-                              <span className="text-sm">Loading specializations...</span>
+                              <span className="text-sm">Đang tải chuyên khoa...</span>
                             </div>
                           ) : specializations.length === 0 ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -1118,7 +1118,7 @@ export default function EmployeesPage() {
                               {/* Validation message */}
                               {formData.specializationIds?.length === 0 && (
                                 <p className="text-xs text-red-500">
-                                  Please select at least one specialization
+                                  Vui lòng chọn ít nhất một chuyên ngành
                                 </p>
                               )}
                             </div>
@@ -1151,18 +1151,18 @@ export default function EmployeesPage() {
                       }}
                       disabled={creating}
                     >
-                      Cancel
+                      Hủy
                     </Button>
                     <Button type="submit" disabled={creating || !formData.roleId}>
                       {creating ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Creating...
+                         Đang tạo...
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Create Employee
+                          Tạo nhân viên
                         </>
                       )}
                     </Button>
@@ -1234,7 +1234,7 @@ export default function EmployeesPage() {
                       <option value={EmploymentType.PART_TIME_FLEX}>Bán thời gian - Linh hoạt</option>
                     </select>
                     <p className="text-sm text-muted-foreground">
-                      Update employment type if needed
+                      Cập nhật loại hình lao động nếu cần
                     </p>
                   </div>
 
@@ -1246,7 +1246,7 @@ export default function EmployeesPage() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <Label htmlFor="edit-firstName">First Name</Label>
+                          <Label htmlFor="edit-firstName">Họ</Label>
                           <Input
                             id="edit-firstName"
                             value={editFormData.firstName}
@@ -1256,7 +1256,7 @@ export default function EmployeesPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="edit-lastName">Last Name</Label>
+                          <Label htmlFor="edit-lastName">Tên</Label>
                           <Input
                             id="edit-lastName"
                             value={editFormData.lastName}
@@ -1267,7 +1267,7 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="edit-phone">Phone</Label>
+                        <Label htmlFor="edit-phone">Số điện thoại</Label>
                         <Input
                           id="edit-phone"
                           value={editFormData.phone}
@@ -1277,7 +1277,7 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                        <Label htmlFor="edit-dateOfBirth">Ngày tháng năm sinh</Label>
                         <Input
                           id="edit-dateOfBirth"
                           type="date"
@@ -1287,7 +1287,7 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="edit-address">Address</Label>
+                        <Label htmlFor="edit-address">Địa chỉ</Label>
                         <textarea
                           id="edit-address"
                           value={editFormData.address}
@@ -1422,7 +1422,7 @@ export default function EmployeesPage() {
                         });
                       }}
                     >
-                      Cancel
+                      Hủy
                     </Button>
                     <Button
                       type="submit"
@@ -1432,12 +1432,12 @@ export default function EmployeesPage() {
                       {updating ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Updating...
+                          Đang cập nhật...
                         </>
                       ) : (
                         <>
                           <Edit className="h-4 w-4 mr-2" />
-                          Update Employee
+                          Cập nhật nhân viên
                         </>
                       )}
                     </Button>
