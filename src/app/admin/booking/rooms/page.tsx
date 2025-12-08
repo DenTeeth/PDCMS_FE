@@ -808,7 +808,7 @@ export default function BookingRoomsPage() {
                   id="create-room-code"
                   value={createForm.roomCode}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, roomCode: e.target.value }))}
-                  placeholder="Enter room code"
+                  placeholder="Nhập mã phòng"
                   className="mt-1"
                 />
               </div>
@@ -820,7 +820,7 @@ export default function BookingRoomsPage() {
                   id="create-room-name"
                   value={createForm.roomName}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, roomName: e.target.value }))}
-                  placeholder="Enter room name"
+                  placeholder="Nhập tên phòng"
                   className="mt-1"
                 />
               </div>
@@ -833,7 +833,7 @@ export default function BookingRoomsPage() {
                   onValueChange={(value) => setCreateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
                 >
                   <SelectTrigger id="create-room-type" className="mt-1">
-                    <SelectValue placeholder="Select room type" />
+                    <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
                   <SelectContent>
                     {availableRoomTypes.map((type) => (
@@ -890,7 +890,7 @@ export default function BookingRoomsPage() {
                   id="update-room-code"
                   value={updateForm.roomCode}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, roomCode: e.target.value }))}
-                  placeholder="Enter room code"
+                  placeholder="Nhập mã phòng"
                   className="mt-1"
                 />
               </div>
@@ -902,7 +902,7 @@ export default function BookingRoomsPage() {
                   id="update-room-name"
                   value={updateForm.roomName}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, roomName: e.target.value }))}
-                  placeholder="Enter room name"
+                  placeholder="Nhập tên phòng"
                   className="mt-1"
                 />
               </div>
@@ -915,7 +915,7 @@ export default function BookingRoomsPage() {
                   onValueChange={(value) => setUpdateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
                 >
                   <SelectTrigger id="update-room-type" className="mt-1">
-                    <SelectValue placeholder="Select room type" />
+                    <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
                   <SelectContent>
                     {availableRoomTypes.map((type) => (

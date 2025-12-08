@@ -188,7 +188,7 @@ export default function EmployeeDetailPage() {
     try {
       setDeleting(true);
       await employeeService.deleteEmployee(employeeCode);
-      toast.success('Employee deleted successfully');
+      toast.success('Xóa nhân viên thành công');
       router.push('/admin/accounts/employees');
     } catch (error: any) {
       console.error('Failed to delete employee:', error);
@@ -210,7 +210,7 @@ export default function EmployeeDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading employee details...</p>
+          <p className="text-gray-600">Đang tải chi tiết nhân viên...</p>
         </div>
       </div>
     );
@@ -244,8 +244,8 @@ export default function EmployeeDetailPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Employee Details</h1>
-            <p className="text-gray-600">View detailed information about employee</p>
+            <h1 className="text-3xl font-bold text-gray-900">Chi tiết nhân viên</h1>
+            <p className="text-gray-600">Xem thông tin chi tiết về nhân viên</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -280,7 +280,7 @@ export default function EmployeeDetailPage() {
                     ? 'bg-blue-100 text-blue-800'
                     : 'bg-orange-100 text-orange-800'
                     }`}>
-                    {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                    {employee.employeeType === EmploymentType.FULL_TIME ? 'Toàn thời gian' : 'Bán thời gian'}
                   </span>
                 </p>
               </div>
@@ -315,32 +315,32 @@ export default function EmployeeDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-600" />
-              Personal Information
+              Thông tin cá nhân
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Employee Code</Label>
+              <Label className="text-gray-600">Mã nhân viên</Label>
               <p className="font-medium text-lg">{employee.employeeCode}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">First Name</Label>
+                <Label className="text-gray-600">Tên</Label>
                 <p className="font-medium">{employee.firstName}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Last Name</Label>
+                <Label className="text-gray-600">Họ</Label>
                 <p className="font-medium">{employee.lastName}</p>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Full Name</Label>
+              <Label className="text-gray-600">Họ và tên</Label>
               <p className="font-medium">{employee.fullName}</p>
             </div>
             <div className="flex items-center gap-2 text-gray-700">
               <Calendar className="h-4 w-4" />
               <div>
-                <Label className="text-gray-600">Date of Birth</Label>
+                <Label className="text-gray-600">Ngày sinh</Label>
                 <p className="font-medium">{formatDate(employee.dateOfBirth)}</p>
               </div>
             </div>
@@ -352,14 +352,14 @@ export default function EmployeeDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Phone className="h-5 w-5 text-blue-600" />
-              Contact Information
+              Thông tin liên hệ
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-gray-700">
               <Phone className="h-4 w-4" />
               <div className="flex-1">
-                <Label className="text-gray-600">Phone Number</Label>
+                <Label className="text-gray-600">Số điện thoại</Label>
                 <p className="font-medium">{employee.phone || 'N/A'}</p>
               </div>
             </div>
@@ -387,18 +387,18 @@ export default function EmployeeDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
-              Account Information
+              Thông tin tài khoản
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {employee.account ? (
               <>
                 <div>
-                  <Label className="text-gray-600">Account ID</Label>
+                  <Label className="text-gray-600">ID tài khoản</Label>
                   <p className="font-medium text-sm break-all">{employee.account.accountId}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-600">Username</Label>
+                  <Label className="text-gray-600">Tên đăng nhập</Label>
                   <p className="font-medium">{employee.account.username}</p>
                 </div>
                 <div>
@@ -406,7 +406,7 @@ export default function EmployeeDetailPage() {
                   <p className="font-medium break-all">{employee.account.email}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-600">Account Status</Label>
+                  <Label className="text-gray-600">Trạng thái tài khoản</Label>
                   <Badge
                     variant={employee.account.status === 'ACTIVE' ? 'default' : 'secondary'}
                     className={
@@ -420,7 +420,7 @@ export default function EmployeeDetailPage() {
                 </div>
               </>
             ) : (
-              <p className="text-gray-500">No account information available</p>
+              <p className="text-gray-500">Không có thông tin tài khoản</p>
             )}
           </CardContent>
         </Card>
@@ -430,22 +430,22 @@ export default function EmployeeDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
-              Role & Specializations
+              Vai trò & Chuyên khoa
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Role ID</Label>
+              <Label className="text-gray-600">ID vai trò</Label>
               <p className="font-medium">{employee.roleId}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Role Name</Label>
+              <Label className="text-gray-600">Tên vai trò</Label>
               <Badge variant="outline" className="text-base px-3 py-1">
                 {employee.roleName}
               </Badge>
             </div>
             <div>
-              <Label className="text-gray-600">Employment Type</Label>
+              <Label className="text-gray-600">Loại hình lao động</Label>
               <Badge
                 variant="outline"
                 className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
@@ -453,11 +453,11 @@ export default function EmployeeDetailPage() {
                   : 'border-orange-200 text-orange-800'
                   }`}
               >
-                {employee.employeeType === EmploymentType.FULL_TIME ? 'Full Time' : 'Part Time'}
+                {employee.employeeType === EmploymentType.FULL_TIME ? 'Toàn thời gian' : 'Bán thời gian'}
               </Badge>
             </div>
             <div>
-              <Label className="text-gray-600">Specializations</Label>
+              <Label className="text-gray-600">Chuyên khoa</Label>
               {employee.specializations && employee.specializations.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {employee.specializations.map((spec: any) => (
@@ -467,11 +467,11 @@ export default function EmployeeDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm mt-1">No specializations</p>
+                <p className="text-gray-500 text-sm mt-1">Không có chuyên khoa</p>
               )}
             </div>
             <div>
-              <Label className="text-gray-600">Status</Label>
+              <Label className="text-gray-600">Trạng thái</Label>
               <Badge
                 variant={employee.isActive ? 'default' : 'secondary'}
                 className={
@@ -526,7 +526,7 @@ export default function EmployeeDetailPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
-              <CardTitle>Edit Employee</CardTitle>
+              <CardTitle>Chỉnh sửa nhân viên</CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleUpdateEmployee} className="space-y-6">
@@ -546,13 +546,13 @@ export default function EmployeeDetailPage() {
 
                 {/* Role Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="edit-role">Role</Label>
+                  <Label htmlFor="edit-role">Vai trò</Label>
                   <Select
                     value={editFormData.roleId}
                     onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
                   >
                     <SelectTrigger id="edit-role">
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
                     <SelectContent>
                       {roles.map((role) => (
@@ -563,13 +563,13 @@ export default function EmployeeDetailPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground">
-                    Change employee role if needed
+                    Thay đổi vai trò nhân viên nếu cần
                   </p>
                 </div>
 
                 {/* Personal Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Personal Information</h3>
+                  <h3 className="text-lg font-semibold">Thông tin cá nhân</h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -578,7 +578,7 @@ export default function EmployeeDetailPage() {
                         id="edit-firstName"
                         value={editFormData.firstName}
                         onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        placeholder="Enter first name"
+                        placeholder="Nhập tên"
                       />
                     </div>
 
@@ -588,7 +588,7 @@ export default function EmployeeDetailPage() {
                         id="edit-lastName"
                         value={editFormData.lastName}
                         onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        placeholder="Enter last name"
+                        placeholder="Nhập họ"
                       />
                     </div>
                   </div>
@@ -599,7 +599,7 @@ export default function EmployeeDetailPage() {
                       id="edit-phone"
                       value={editFormData.phone}
                       onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                      placeholder="Enter phone number"
+                      placeholder="Nhập số điện thoại"
                     />
                   </div>
 
@@ -619,7 +619,7 @@ export default function EmployeeDetailPage() {
                       id="edit-address"
                       value={editFormData.address}
                       onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                      placeholder="Enter address"
+                      placeholder="Nhập địa chỉ"
                     />
                   </div>
                 </div>
@@ -627,24 +627,24 @@ export default function EmployeeDetailPage() {
                 {/* Specializations - Only for Doctor/Nurse */}
                 {(employee.roleName === 'ROLE_DOCTOR' || employee.roleName === 'ROLE_NURSE') && (
                   <div className="space-y-4 border-t pt-4">
-                    <h3 className="text-lg font-semibold">Specializations</h3>
+                    <h3 className="text-lg font-semibold">Chuyên khoa</h3>
                     {loadingSpecializations ? (
                       <div className="flex items-center gap-2 text-gray-500">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Loading specializations...</span>
+                        <span className="text-sm">Đang tải chuyên khoa...</span>
                       </div>
                     ) : specializations.length === 0 ? (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <p className="text-sm text-yellow-800">
-                          No active specializations available.
+                          Không có chuyên khoa đang hoạt động.
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <Label>Update Specializations</Label>
+                          <Label>Cập nhật chuyên khoa</Label>
                           <p className="text-xs text-gray-500 mt-1">
-                            Modify employee specializations
+                            Thay đổi chuyên khoa của nhân viên
                           </p>
                         </div>
 
@@ -754,7 +754,7 @@ export default function EmployeeDetailPage() {
                     ) : (
                       <>
                         <Edit className="h-4 w-4 mr-2" />
-                        Update Employee
+                        Cập nhật nhân viên
                       </>
                     )}
                   </Button>

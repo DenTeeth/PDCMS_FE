@@ -19,7 +19,7 @@ export default function EditContactPage() {
   const { user } = useAuth();
   const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
 
-  if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+  if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
   if (error) {
     return (
@@ -35,7 +35,7 @@ export default function EditContactPage() {
             <span>Back</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
           </div>
         </div>
         <Card>
@@ -63,7 +63,7 @@ export default function EditContactPage() {
             <span>Back</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
           </div>
         </div>
         <Card>
@@ -124,7 +124,7 @@ export default function EditContactPage() {
             <span>Back</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
             <p className="text-muted-foreground mt-2">
               Update contact information for {contact.fullName}
             </p>

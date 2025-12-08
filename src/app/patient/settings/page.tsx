@@ -63,10 +63,10 @@ export default function UserSettings() {
   };
 
   const tabs = [
-    { id: 'profile', name: 'Profile', icon: faUser },
-    { id: 'notifications', name: 'Notifications', icon: faBell },
-    { id: 'privacy', name: 'Privacy', icon: faShieldAlt },
-    { id: 'security', name: 'Security', icon: faLock }
+    { id: 'profile', name: 'Hồ sơ', icon: faUser },
+    { id: 'notifications', name: 'Thông báo', icon: faBell },
+    { id: 'privacy', name: 'Quyền riêng tư', icon: faShieldAlt },
+    { id: 'security', name: 'Bảo mật', icon: faLock }
   ];
 
   return (
@@ -74,25 +74,25 @@ export default function UserSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account preferences and settings</p>
+          <h1 className="text-3xl font-bold">Cài đặt</h1>
+          <p className="text-muted-foreground">Quản lý tùy chọn và cài đặt tài khoản của bạn</p>
         </div>
         <div className="flex space-x-2">
           {isEditing ? (
             <>
               <Button onClick={handleSave} className="flex items-center">
                 <FontAwesomeIcon icon={faSave} className="mr-2 h-4 w-4" />
-                Save Changes
+                Lưu thay đổi
               </Button>
               <Button variant="outline" onClick={handleCancel} className="flex items-center">
                 <FontAwesomeIcon icon={faTimes} className="mr-2 h-4 w-4" />
-                Cancel
+                Hủy
               </Button>
             </>
           ) : (
             <Button onClick={() => setIsEditing(true)} className="flex items-center">
               <FontAwesomeIcon icon={faEdit} className="mr-2 h-4 w-4" />
-              Edit Settings
+              Chỉnh sửa
             </Button>
           )}
         </div>
@@ -108,11 +108,10 @@ export default function UserSettings() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted'
-                    }`}
+                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === tab.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-muted'
+                      }`}
                   >
                     <FontAwesomeIcon icon={tab.icon} className="h-4 w-4" />
                     <span>{tab.name}</span>
@@ -130,16 +129,16 @@ export default function UserSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FontAwesomeIcon icon={faUser} className="mr-2 h-5 w-5" />
-                  Profile Information
+                  Thông tin cá nhân
                 </CardTitle>
                 <CardDescription>
-                  Update your personal information
+                  Cập nhật thông tin cá nhân của bạn
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">Họ</Label>
                     <Input
                       id="firstName"
                       value={settings.profile.firstName}
@@ -151,7 +150,7 @@ export default function UserSettings() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">Tên</Label>
                     <Input
                       id="lastName"
                       value={settings.profile.lastName}
@@ -163,7 +162,7 @@ export default function UserSettings() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -177,9 +176,9 @@ export default function UserSettings() {
                     disabled={!isEditing}
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Số điện thoại</Label>
                   <Input
                     id="phone"
                     value={settings.profile.phone}
@@ -199,18 +198,18 @@ export default function UserSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FontAwesomeIcon icon={faBell} className="mr-2 h-5 w-5" />
-                  Notification Preferences
+                  Tùy chọn thông báo
                 </CardTitle>
                 <CardDescription>
-                  Choose how you want to be notified
+                  Chọn cách bạn muốn nhận thông báo
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="emailReminders">Email Reminders</Label>
-                      <p className="text-sm text-muted-foreground">Receive appointment reminders via email</p>
+                      <Label htmlFor="emailReminders">Nhắc nhở qua Email</Label>
+                      <p className="text-sm text-muted-foreground">Nhận lời nhắc lịch hẹn qua email</p>
                     </div>
                     <Switch
                       id="emailReminders"
@@ -222,11 +221,11 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="smsReminders">SMS Reminders</Label>
-                      <p className="text-sm text-muted-foreground">Receive appointment reminders via SMS</p>
+                      <Label htmlFor="smsReminders">Nhắc nhở qua SMS</Label>
+                      <p className="text-sm text-muted-foreground">Nhận lời nhắc lịch hẹn qua tin nhắn</p>
                     </div>
                     <Switch
                       id="smsReminders"
@@ -238,7 +237,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="appointmentAlerts">Appointment Alerts</Label>
@@ -254,7 +253,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="testResults">Test Results</Label>
@@ -270,7 +269,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="paymentReminders">Payment Reminders</Label>
@@ -286,7 +285,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="healthTips">Health Tips</Label>
@@ -335,7 +334,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="marketing">Marketing Communications</Label>
@@ -351,7 +350,7 @@ export default function UserSettings() {
                       disabled={!isEditing}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="dataRetention">Data Retention Period</Label>
                     <select
@@ -371,7 +370,7 @@ export default function UserSettings() {
                       <option value="indefinite">Indefinite</option>
                     </select>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
@@ -417,7 +416,7 @@ export default function UserSettings() {
                     disabled={!isEditing}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="newPassword">New Password</Label>
                   <Input
@@ -431,7 +430,7 @@ export default function UserSettings() {
                     disabled={!isEditing}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
                   <Input
@@ -445,7 +444,7 @@ export default function UserSettings() {
                     disabled={!isEditing}
                   />
                 </div>
-                
+
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-blue-600" />

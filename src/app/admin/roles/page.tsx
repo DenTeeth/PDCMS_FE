@@ -269,12 +269,12 @@ export default function RolesPage() {
       {/* ==================== HEADER ==================== */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Role Management</h1>
-          <p className="text-gray-600">View and manage system roles</p>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý vai trò</h1>
+          <p className="text-gray-600">Xem và quản lý vai trò hệ thống</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Role
+          Tạo vai trò
         </Button>
       </div>
 
@@ -285,7 +285,7 @@ export default function RolesPage() {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Roles</p>
+                <p className="text-sm font-medium text-gray-600">Tổng số vai trò</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
@@ -323,12 +323,12 @@ export default function RolesPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex-1">
-            <Label htmlFor="search" className="mb-2">Search</Label>
+            <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 id="search"
-                placeholder="Search by role name, description, or ID..."
+                placeholder="Tìm theo tên vai trò, mô tả, hoặc ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -514,7 +514,7 @@ export default function RolesPage() {
                   </Label>
                   <textarea
                     id="description"
-                    placeholder="Describe the role's purpose and responsibilities..."
+                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     disabled={creating}
@@ -639,7 +639,7 @@ export default function RolesPage() {
                   </Label>
                   <textarea
                     id="editDescription"
-                    placeholder="Describe the role's purpose and responsibilities..."
+                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
                     value={editFormData.description}
                     onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                     disabled={updating}

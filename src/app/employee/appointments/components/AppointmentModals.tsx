@@ -244,6 +244,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
 
         try {
             setLoading(true);
+<<<<<<< HEAD
             // RescheduleAppointmentRequest needs new structure
             const appointmentCode = (appointment as any).appointmentCode || String(appointment.id);
             const newStartTime = `${newDate}T${startTime}:00`;
@@ -353,7 +354,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                         <Label htmlFor="reason">Reason for Rescheduling <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="reason"
-                            placeholder="Please provide a reason for rescheduling..."
+                            placeholder="Vui lòng cung cấp lý do để dời lịch..."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             required
@@ -442,7 +443,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                         <div className="flex items-start gap-3">
                             <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 mt-1" />
                             <div>
-                                <div className="font-medium text-yellow-900 mb-1">Warning</div>
+                                <div className="font-medium text-yellow-900 mb-1">Cảnh báo</div>
                                 <div className="text-sm text-yellow-800">
                                     This action cannot be undone. The appointment will be permanently cancelled.
                                 </div>
@@ -454,7 +455,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                         <Label htmlFor="cancelReason">Reason for Cancellation <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="cancelReason"
-                            placeholder="Please provide a reason for cancelling this appointment..."
+                            placeholder="Vui lòng cung cấp lý do hủy lịch hẹn..."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             required

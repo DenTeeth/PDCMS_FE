@@ -177,7 +177,7 @@ export default function DoctorsSection() {
               href="/Doctors"
               className="inline-flex items-center bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
             >
-              View All Doctors
+              Xem toàn bộ bác sĩ
               <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

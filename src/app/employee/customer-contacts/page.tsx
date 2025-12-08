@@ -75,15 +75,15 @@ export default function ContactsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Customer Contacts</h2>
+          <h2 className="text-3xl font-bold text-foreground">Liên hệ khách hàng</h2>
           <p className="text-muted-foreground mt-2">
-            Manage customer contact records and inquiries
+            Quản lý hồ sơ liên hệ và xử lý yêu cầu của khách hàng
           </p>
         </div>
         <Link href="/employee/customer-contacts/new">
           <Button className="flex items-center space-x-2">
             <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-            <span>New Contact</span>
+            <span>Liên hệ mới</span>
           </Button>
         </Link>
       </div>
@@ -98,7 +98,7 @@ export default function ContactsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search contacts..."
+            placeholder="Tìm kiếm liên hệ..."
             className="pl-10"
           />
         </div>
@@ -109,9 +109,9 @@ export default function ContactsPage() {
             onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'status')}
             className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
           >
-            <option value="date">Sort by Date</option>
-            <option value="name">Sort by Name</option>
-            <option value="status">Sort by Status</option>
+            <option value="date">Sắp xếp theo ngày</option>
+            <option value="name">Sắp xếp theo tên</option>
+            <option value="status">Sắp xếp theo trạng thái</option>
           </select>
 
           <Button
@@ -129,7 +129,7 @@ export default function ContactsPage() {
             size="sm"
             onClick={togglePageSize}
           >
-            {pageSize === 20 ? 'Show All' : 'Show 20'}
+            {pageSize === 20 ? 'Hiển thị hết' : 'Hiển thị 20'}
           </Button>
         </div>
       </div>
@@ -162,15 +162,15 @@ export default function ContactsPage() {
                     {sortBy === 'name' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                   </div>
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Phone</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Số điện thoại</th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Email</th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Source</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Nguồn</th>
                 <th
                   className="py-3 px-4 text-left text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('status')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Status</span>
+                    <span>Trạng thái</span>
                     {sortBy === 'status' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                   </div>
                 </th>
@@ -179,11 +179,11 @@ export default function ContactsPage() {
                   onClick={() => toggleSort('date')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Created At</span>
+                    <span>Ngày tạo</span>
                     {sortBy === 'date' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                  </div>
+                  </div>  
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Action</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -194,7 +194,7 @@ export default function ContactsPage() {
           </table>
           {processedContacts.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              No contacts found
+              Không tìm thấy liên hệ nào
             </div>
           )}
         </div>

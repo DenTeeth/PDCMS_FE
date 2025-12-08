@@ -84,7 +84,7 @@ const CustomSelect = forwardRef<HTMLSelectElement, CustomSelectProps>(
                 <span className="mr-2 flex-shrink-0">{selectedOption.icon}</span>
               )}
               <span className={`block truncate ${!selectedOption ? 'text-gray-500' : ''}`}>
-                {selectedOption?.label || props.placeholder || 'Select an option'}
+                {selectedOption?.label || props.placeholder || 'Chọn một tùy chọn'}
               </span>
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

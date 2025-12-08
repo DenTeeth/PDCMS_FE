@@ -198,7 +198,7 @@ export default function UserBilling() {
               <div className="relative">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search bills..."
+                  placeholder="Tìm kiếm hóa đơn..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -318,7 +318,7 @@ export default function UserBilling() {
         <Card>
           <CardContent className="p-12 text-center">
             <FontAwesomeIcon icon={faReceipt} className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No bills found</h3>
+            <h3 className="text-lg font-semibold mb-2">Không tìm thấy hóa đơn</h3>
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
                 ? 'Try adjusting your search or filter criteria'
@@ -335,7 +335,7 @@ export default function UserBilling() {
           <Card className="w-full max-w-md">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Make Payment</CardTitle>
+                <CardTitle>Thanh toán</CardTitle>
                 <Button variant="outline" onClick={() => setShowPaymentModal(false)}>
                   <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
                 </Button>

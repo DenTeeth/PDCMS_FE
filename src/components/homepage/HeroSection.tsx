@@ -59,8 +59,7 @@ const HeroSection = memo(function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto"
             >
-              Family Dental Care - High-quality dental services with experienced team and modern technology.
-            </motion.p>
+              Chăm sóc răng miệng gia đình- Dịch vụ nha khoa chất lượng cao với đội ngũ giàu kinh nghiệm và công nghệ hiện đại.            </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

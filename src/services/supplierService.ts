@@ -48,7 +48,7 @@ export const supplierService = {
       // Ensure we always return a valid PageResponse
       if (!data || !data.content) {
         console.error('Invalid response structure:', data);
-        throw new Error('Invalid response from supplier API');
+        throw new Error('Phản hồi không hợp lệ từ API nhà cung cấp');
       }
       
       return data;
@@ -61,8 +61,8 @@ export const supplierService = {
       
       console.error(' Error fetching suppliers:', {
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
+        status: (enhancedError as any).status,
+        endpoint: (enhancedError as any).endpoint,
         originalError: error,
       });
       
@@ -107,7 +107,7 @@ export const supplierService = {
       const data = extractApiResponse(response);
       
       if (!data || !data.suppliers) {
-        throw new Error('Invalid response from supplier with metrics API');
+        throw new Error('Phản hồi không hợp lệ từ API thống kê nhà cung cấp');
       }
       
       return data;
@@ -120,8 +120,8 @@ export const supplierService = {
       
       console.error(' Error fetching suppliers with metrics:', {
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
+        status: (enhancedError as any).status,
+        endpoint: (enhancedError as any).endpoint,
         originalError: error,
       });
       
@@ -145,7 +145,7 @@ export const supplierService = {
       const data = extractApiResponse(response);
       
       if (!data) {
-        throw new Error('Invalid response from supplier detail API');
+        throw new Error('Phản hồi không hợp lệ từ API chi tiết nhà cung cấp');
       }
       
       return data;
@@ -158,7 +158,7 @@ export const supplierService = {
       console.error(' Error fetching supplier detail:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: (enhancedError as any).status,
         originalError: error,
       });
       
@@ -192,7 +192,7 @@ export const supplierService = {
       console.error(' Error fetching supplied items:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: (enhancedError as any).status,
         originalError: error,
       });
       
@@ -228,7 +228,7 @@ export const supplierService = {
       const result = extractApiResponse(response);
       
       if (!result) {
-        throw new Error('Invalid response from create supplier API');
+        throw new Error('Phản hồi không hợp lệ từ API tạo nhà cung cấp');
       }
       
       return result;
@@ -236,13 +236,12 @@ export const supplierService = {
       const enhancedError = createApiError(error, {
         endpoint: '/warehouse/suppliers',
         method: 'POST',
-        params: requestData,
       });
       
       console.error(' Error creating supplier:', {
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
+        status: (enhancedError as any).status,
+        endpoint: (enhancedError as any).endpoint,
         originalError: error,
       });
       
@@ -267,7 +266,7 @@ export const supplierService = {
       const result = extractApiResponse(response);
       
       if (!result) {
-        throw new Error('Invalid response from update supplier API');
+        throw new Error('Phản hồi không hợp lệ từ API cập nhật nhà cung cấp');
       }
       
       return result;
@@ -281,7 +280,7 @@ export const supplierService = {
       console.error(' Error updating supplier:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: (enhancedError as any).status,
         originalError: error,
       });
       
@@ -306,12 +305,12 @@ export const supplierService = {
       console.error(' Error deleting supplier:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: (enhancedError as any).status,
         originalError: error,
       });
       
       // Handle 409 Conflict (supplier has transactions)
-      if (enhancedError.status === 409) {
+      if ((enhancedError as any).status === 409) {
         const errorMessage = extractErrorMessage(error) || 
           'Không thể xóa nhà cung cấp vì đã có lịch sử giao dịch. Vui lòng vô hiệu hóa thay vì xóa.';
         throw new Error(errorMessage);

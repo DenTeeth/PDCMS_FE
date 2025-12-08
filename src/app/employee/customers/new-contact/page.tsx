@@ -37,7 +37,7 @@ export default function NewCustomerContactPage() {
                     <span>Back</span>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">New Customer Contact</h1>
+                    <h1 className="text-3xl font-bold text-foreground">Tạo liên hệ khách hàng mới</h1>
                     <p className="text-muted-foreground mt-2">
                         Add a new customer inquiry or contact record
                     </p>
