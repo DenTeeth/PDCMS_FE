@@ -29,6 +29,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -909,13 +917,6 @@ export default function AdminAppointmentDetailPage() {
                     <p className="text-base font-semibold">{appointment.appointmentCode}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    {/* FIX: Add key to force re-render when status changes */}
-                    <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                  </div>
-                  <div>
                     <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Clock className="h-4 w-4" />
                       Start Time
@@ -1007,12 +1008,29 @@ export default function AdminAppointmentDetailPage() {
               >
                 <h3 className="text-lg font-semibold mb-4">Services</h3>
                 {appointment.services.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {appointment.services.map((service) => (
-                      <Badge key={service.serviceCode} variant="outline" className="text-sm p-2">
-                        {service.serviceName} ({service.serviceCode})
-                      </Badge>
-                    ))}
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tên</TableHead>
+                          <TableHead>Mã dịch vụ</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {appointment.services.map((service) => (
+                          <TableRow key={service.serviceCode}>
+                            <TableCell>
+                              <div className="font-medium">{service.serviceName}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs font-mono">
+                                {service.serviceCode}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground space-y-1">

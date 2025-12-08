@@ -503,7 +503,7 @@ export default function PrescriptionForm({
                 {fields.map((field, index) => (
                   <Card key={field.id} className="p-4">
                     <div className="flex items-start justify-between mb-3">
-                      <Badge variant="outline">Thuốc {index + 1}</Badge>
+                      <Badge variant="outline">Thuốc men</Badge>
                       {!readOnly && fields.length > 1 && (
                         <Button
                           type="button"

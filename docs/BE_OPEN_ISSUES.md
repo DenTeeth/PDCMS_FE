@@ -1,10 +1,10 @@
 # Backend Open Issues
 
-**Last Updated:** 2025-12-05  
-**Total Open Issues:** 3  
-**High Priority Issues:** 3 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System)  
-**Medium Priority Issues:** 0  
-**Resolved Issues:** 4 (Issue #27, #31, #32, #33) - Removed from this document
+**Last Updated:** 2025-12-09  
+**Total Open Issues:** 5  
+**High Priority Issues:** 4 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System, Issue #49 - Price Update Triggers Status Change)  
+**Medium Priority Issues:** 1 (Issue #48 - AppointmentStatusService completion check)  
+**Resolved Issues:** 5 (Issue #27, #31, #32, #33, #47) - Removed from this document
 
 ---
 
@@ -18,6 +18,9 @@
 | #39 | API 3.7 - Reschedule appointment không link lại treatment plan items | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-04 |
 | #40 | API 5.4 - Phase và Plan không auto-complete do lazy loading issue (REGRESSION) | ✅ **RESOLVED** | **HIGH** | 2025-12-04 | 2025-12-05 |
 | #41 | API 5.9 - Database constraint thiếu WAITING_FOR_PREREQUISITE và SKIPPED status | ⚠️ **NEEDS VERIFICATION** | **HIGH** | 2025-12-04 | - |
+| #47 | Treatment Plan Status - Existing plans với tất cả phases completed nhưng status vẫn null | ✅ **RESOLVED** | **HIGH** | 2025-12-07 | 2025-12-09 |
+| #48 | Treatment Plan Status - AppointmentStatusService không check completion nếu plan status = null | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
+| #49 | API 5.13 - Update Prices trigger status change không đúng | 🔴 **OPEN** | **HIGH** | 2025-12-09 | - |
 | #42 | API 3.7 - Reschedule appointment không chuyển plan items từ SCHEDULED về READY_FOR_BOOKING | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-05 |
 | #43 | API 5.9 - Xóa prerequisite services khỏi seed data | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
 | #44 | API 7.x - Xóa toàn bộ hệ thống work shifts, employee shifts, registrations và slots | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
@@ -1524,5 +1527,101 @@ Actual: ✅ Should work (FE allows access in this case)
 2. ⏳ **Test BE APIs** với appointment status = COMPLETED
 3. ⏳ **Xác nhận với BE team** về business rules
 4. ⏳ **Fix FE hoặc document BE behavior** dựa trên kết quả test
+
+---
+
+### Issue #48: Treatment Plan Status - AppointmentStatusService không check completion nếu plan status = null
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-09  
+**Related Files:**
+- `docs/TREATMENT_PLAN_STATUS_UPDATE_APIS.md` - Full analysis
+- `files_from_BE/booking_appointment/service/AppointmentStatusService.java` (line 503-543)
+
+#### Problem Description
+
+Khi appointment status được update thành `COMPLETED`, BE có logic để auto-complete treatment plan nếu all phases completed. Tuy nhiên, logic này **chỉ check nếu plan status = IN_PROGRESS**, không check nếu plan status = `null`.
+
+**Expected Behavior:**
+- Khi appointment completed → Check nếu all phases completed
+- Nếu all phases completed → Auto-complete plan (bất kể plan status là null hay IN_PROGRESS)
+- Plan status được update từ `null` hoặc `IN_PROGRESS` → `COMPLETED`
+
+**Actual Behavior:**
+- Khi appointment completed → Check completion
+- **NHƯNG chỉ check nếu plan status = IN_PROGRESS** (line 512)
+- **Skip check nếu plan status = null** → Plan vẫn có status = null mặc dù all phases completed
+
+#### Root Cause Analysis
+
+**File:** `files_from_BE/booking_appointment/service/AppointmentStatusService.java`
+
+**Method:** `checkAndCompletePlan(Long planId)` (line 503-543)
+
+**Current Logic (INCORRECT):**
+```java
+// Line 512-515
+if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+    log.debug("Plan {} not in IN_PROGRESS status (current: {}), skipping completion check", 
+            planId, plan.getStatus());
+    return; // ❌ Skip nếu status = null
+}
+```
+
+**Vấn đề:**
+- Logic này chỉ cho phép auto-complete nếu plan đã ở trạng thái `IN_PROGRESS`
+- Nếu plan status = `null` (chưa được activate) → Skip check
+- Kết quả: Plan với all phases completed nhưng status = null không được auto-complete
+
+**So sánh với TreatmentPlanItemService:**
+- `TreatmentPlanItemService.checkAndCompletePlan()` (line 478-529) check completion **bất kể plan status** (chỉ skip nếu COMPLETED/CANCELLED)
+- Logic này đúng và hoạt động tốt
+
+#### Suggested Fix
+
+**File:** `files_from_BE/booking_appointment/service/AppointmentStatusService.java` (line 512)
+
+**Change:**
+```java
+// BEFORE
+if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+    return; // ❌ Skip nếu null
+}
+
+// AFTER
+if (plan.getStatus() == TreatmentPlanStatus.COMPLETED || 
+    plan.getStatus() == TreatmentPlanStatus.CANCELLED) {
+    return; // ✅ Chỉ skip nếu đã completed/cancelled
+}
+// ✅ Check completion cho cả null và IN_PROGRESS
+```
+
+**Lợi ích:**
+- Khi appointment completed → Auto-complete plan nếu all phases done
+- Hoạt động cho cả plan status = null và IN_PROGRESS
+- Đồng nhất với logic trong `TreatmentPlanItemService`
+
+#### Impact
+
+- **Medium Priority:** Plans với status = null và all phases completed sẽ được auto-complete khi appointment completed
+- **Consistency:** Logic đồng nhất giữa `TreatmentPlanItemService` và `AppointmentStatusService`
+- **User Experience:** Plan status được update đúng cách, không cần manual intervention
+
+#### Related Files
+
+**Backend:**
+- `files_from_BE/booking_appointment/service/AppointmentStatusService.java` - Method: `checkAndCompletePlan()` (line 503-543)
+- `files_from_BE/treatment_plans/service/TreatmentPlanItemService.java` - Method: `checkAndCompletePlan()` (line 478-529) - Reference implementation
+
+**Documentation:**
+- `docs/TREATMENT_PLAN_STATUS_UPDATE_APIS.md` - Full API analysis
+
+#### Next Steps
+
+1. ✅ **Log issue** (this document)
+2. ⏳ **Fix AppointmentStatusService** - Update logic để check cả null status
+3. ⏳ **Test** - Verify plan được auto-complete khi appointment completed
+4. ⏳ **Update documentation** - Document behavior change
 
 ---

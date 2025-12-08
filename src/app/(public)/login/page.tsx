@@ -127,7 +127,7 @@ export default function Page() {
                       id="username"
                       type="text"
                       required
-                      placeholder="E"
+                      placeholder="Tên tài khoản"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#8b5fbf] focus:ring-2 focus:ring-[#8b5fbf]/20"

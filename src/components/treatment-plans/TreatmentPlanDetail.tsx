@@ -48,7 +48,7 @@ import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { useAuth } from '@/contexts/AuthContext';
-import { calculatePlanStatus } from '@/utils/treatmentPlanStatus';
+// Issue #47 RESOLVED: No longer need calculatePlanStatus - trust BE status directly
 
 interface TreatmentPlanDetailProps {
   plan: TreatmentPlanDetailResponse;
@@ -77,29 +77,6 @@ export default function TreatmentPlanDetail({
     [plan.phases]
   );
   
-  // Calculate actual plan status using utility function
-  // This handles BE lazy loading bug by calculating from phases/items as fallback
-  // See: src/utils/treatmentPlanStatus.ts
-  const actualStatus = calculatePlanStatus(plan.status, plan.phases || []);
-  const statusKey = actualStatus;
-  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
-
-  const canCreateAppointment = Boolean(
-    user?.permissions?.includes('CREATE_APPOINTMENT')
-  );
-  // V21: API 5.12 - Submit for Review
-  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  const [submitNotes, setSubmitNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // V21.4: API 5.13 - Update Prices (Finance)
-  const [showUpdatePricesModal, setShowUpdatePricesModal] = useState(false);
-
-  const selectedPlanItems = useMemo(
-    () => allPlanItems.filter((item) => selectedPlanItemIds.includes(item.itemId)),
-    [allPlanItems, selectedPlanItemIds]
-  );
-
   // Normalize approval status (backend may return string or null/undefined)
   // Note: approvalStatus và status là 2 cột riêng biệt trong DB
   // - status: TreatmentPlanStatus (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
@@ -120,6 +97,78 @@ export default function TreatmentPlanDetail({
   };
 
   const normalizedApprovalStatus = normalizeApprovalStatus(plan.approvalStatus);
+  
+  // Issue #47: BE auto-complete logic only runs on item status update
+  // If plan has all phases completed but no recent action → status may still be null
+  // Fallback: Calculate from phases when status is null
+  const statusKey: TreatmentPlanStatus | 'NULL' = (() => {
+    if (plan.status) {
+      // Trust BE status directly
+      return plan.status;
+    }
+    
+    // Status is null - check if all phases are completed (fallback calculation)
+    if (plan.phases && plan.phases.length > 0) {
+      const allPhasesCompleted = plan.phases.every(
+        (phase) => phase.status?.toUpperCase() === 'COMPLETED'
+      );
+      
+      if (allPhasesCompleted) {
+        // All phases completed but BE status is null → COMPLETED (fallback)
+        console.warn(
+          `[TreatmentPlanDetail] Plan ${plan.planCode} has all phases completed but status is null. ` +
+          `Using fallback calculation: COMPLETED. This indicates BE auto-complete may not have run.`
+        );
+        
+        // FE Workaround: Save calculated status to sessionStorage for list page
+        // This allows list page to show correct status even when BE status is null
+        try {
+          const calculatedStatuses = JSON.parse(
+            sessionStorage.getItem('treatmentPlanCalculatedStatuses') || '{}'
+          );
+          calculatedStatuses[plan.planCode] = TreatmentPlanStatus.COMPLETED;
+          sessionStorage.setItem(
+            'treatmentPlanCalculatedStatuses',
+            JSON.stringify(calculatedStatuses)
+          );
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              `[TreatmentPlanDetail] Saved calculated status COMPLETED for plan ${plan.planCode} to sessionStorage`
+            );
+          }
+        } catch (error) {
+          console.error('Failed to save calculated status to sessionStorage:', error);
+        }
+        
+        return TreatmentPlanStatus.COMPLETED;
+      }
+    }
+    
+    // Status is null and not all phases completed - determine based on approvalStatus
+    if (normalizedApprovalStatus === ApprovalStatus.APPROVED) {
+      // Plan is approved but not started yet → PENDING
+      return TreatmentPlanStatus.PENDING;
+    }
+    // Otherwise → NULL (DRAFT or not activated)
+    return 'NULL';
+  })();
+  const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
+
+  const canCreateAppointment = Boolean(
+    user?.permissions?.includes('CREATE_APPOINTMENT')
+  );
+  // V21: API 5.12 - Submit for Review
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [submitNotes, setSubmitNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // V21.4: API 5.13 - Update Prices (Finance)
+  const [showUpdatePricesModal, setShowUpdatePricesModal] = useState(false);
+
+  const selectedPlanItems = useMemo(
+    () => allPlanItems.filter((item) => selectedPlanItemIds.includes(item.itemId)),
+    [allPlanItems, selectedPlanItemIds]
+  );
   const rejectionNote = plan.approvalMetadata?.notes?.trim();
   const isRejectedState =
     normalizedApprovalStatus === ApprovalStatus.REJECTED ||

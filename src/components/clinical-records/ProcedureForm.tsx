@@ -193,14 +193,25 @@ export default function ProcedureForm({
                 <SelectTrigger id="serviceId" className={errors.serviceId ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Chọn dịch vụ" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[400px]">
                   {services.map((service) => (
-                    <SelectItem key={service.serviceId} value={String(service.serviceId)}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{service.serviceName}</span>
-                        {service.serviceCode && (
-                          <span className="text-xs text-muted-foreground">
-                            ({service.serviceCode})
+                    <SelectItem 
+                      key={service.serviceId} 
+                      value={String(service.serviceId)}
+                      className="py-3"
+                    >
+                      <div className="flex flex-col gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{service.serviceName}</span>
+                          {service.serviceCode && (
+                            <span className="text-xs text-muted-foreground font-mono">
+                              ({service.serviceCode})
+                            </span>
+                          )}
+                        </div>
+                        {service.description && (
+                          <span className="text-xs text-muted-foreground line-clamp-2">
+                            {service.description}
                           </span>
                         )}
                       </div>
