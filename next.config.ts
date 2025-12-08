@@ -32,6 +32,13 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
     qualities: [75, 85, 90, 95, 100], // Add quality levels to fix Next.js 16 warning
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+    ],
   },
 
   // Bundle analyzer for debugging

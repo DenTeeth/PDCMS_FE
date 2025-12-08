@@ -38,10 +38,18 @@ export default function TreatmentPlanList({
     const status = plan.status;
     const approvalStatus = plan.approvalStatus;
     
+    // Issue #47: BE auto-complete logic only runs on item status update
+    // If plan has all phases completed but no recent action → status may still be null
+    // Note: TreatmentPlanSummaryDTO doesn't have phases/progressSummary, so we can't calculate here
+    // This is a limitation - BE should add progressSummary to SummaryDTO (Issue #35) or fix via SQL (Issue #47)
+    
     // If status is null, determine based on approvalStatus
     if (status === null) {
       if (approvalStatus === 'APPROVED') {
-        // Plan is approved but not started yet → Show PENDING
+        // Plan is approved but status is null
+        // Could be: (1) Not started yet → PENDING, or (2) All phases completed but BE didn't update → COMPLETED
+        // Without phases data, we can't determine. Show PENDING as default (plan not activated yet)
+        // TODO: BE should add progressSummary to SummaryDTO (Issue #35) to enable accurate calculation
         const statusInfo = TREATMENT_PLAN_STATUS_COLORS['PENDING'];
         return (
           <Badge
