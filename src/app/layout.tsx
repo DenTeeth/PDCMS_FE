@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PDCMS - Hệ thống quản lý phòng khám đa khoa",
+  title: "PDCMS",
   description: "Được tạo bởi tạo ứng dụng Next.js",
 };
 

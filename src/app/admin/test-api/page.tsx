@@ -759,9 +759,9 @@ export default function TestAPIPage() {
                 <Label>Participant Codes (optional, multi-select)</Label>
                 <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                   {loadingData ? (
-                    <p className="text-sm text-muted-foreground">Loading employees...</p>
+                    <p className="text-sm text-muted-foreground">Đang tải nhân viên...</p>
                   ) : employees.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No employees available</p>
+                    <p className="text-sm text-muted-foreground">Không có nhân viên nào</p>
                   ) : (
                     employees.map((employee) => (
                       <div key={employee.employeeId} className="flex items-center space-x-2">
@@ -873,9 +873,9 @@ export default function TestAPIPage() {
                   <Label>Participant Codes (optional, multi-select)</Label>
                   <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                     {loadingData ? (
-                      <p className="text-sm text-muted-foreground">Loading employees...</p>
+                      <p className="text-sm text-muted-foreground">Đang tải nhân viên...</p>
                     ) : employees.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No employees available</p>
+                      <p className="text-sm text-muted-foreground">Không có nhân viên nào</p>
                     ) : (
                       employees.map((employee) => (
                         <div key={employee.employeeId} className="flex items-center space-x-2">

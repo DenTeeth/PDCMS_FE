@@ -11,7 +11,7 @@ export interface Review {
     dentistCode?: string;
     serviceName?: string;
     serviceCode?: string;
-    rating: number; // 1-5 stars
+    rating: number; // 1-5 sao
     reviewText: string;
     createdAt: string;
     updatedAt?: string;

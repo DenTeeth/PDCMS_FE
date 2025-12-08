@@ -102,10 +102,10 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Ratings</SelectItem>
-                <SelectItem value="4+">4+ Stars</SelectItem>
-                <SelectItem value="3-4">3-4 Stars</SelectItem>
-                <SelectItem value="<3">&lt;3 Stars</SelectItem>
+                <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                <SelectItem value="4+">4+ Sao</SelectItem>
+                <SelectItem value="3-4">3-4 Sao</SelectItem>
+                <SelectItem value="<3">&lt;3 Sao</SelectItem>
               </SelectContent>
             </Select>
 
@@ -118,8 +118,8 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rating">By Rating</SelectItem>
-                <SelectItem value="reviews">By Reviews</SelectItem>
+                <SelectItem value="rating">Theo xếp hạng</SelectItem>
+                <SelectItem value="reviews">Theo đánh giá</SelectItem>
               </SelectContent>
             </Select>
 
@@ -140,11 +140,11 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Dentist Name</TableHead>
-                <TableHead>Average Rating</TableHead>
-                <TableHead>Total Reviews</TableHead>
-                <TableHead>Distribution</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Tên nha sĩ</TableHead>
+                <TableHead>Đánh giá trung bình</TableHead>
+                <TableHead>Tổng số đánh giá</TableHead>
+                <TableHead>Phân phối</TableHead>
+                <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,7 +170,7 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
                   </TableCell>
                   <TableCell>
                     <Badge variant={getRatingBadge(dentist.averageRating)}>
-                      {dentist.totalReviews} reviews
+                      {dentist.totalReviews} đánh giá
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -198,7 +198,7 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
                       onClick={() => onViewReviews(dentist.dentistCode)}
                     >
                       <FontAwesomeIcon icon={faEye} className="mr-2" />
-                      View Reviews
+                      Xem đánh giá
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -209,7 +209,7 @@ export default function DentistRatings({ data, onViewReviews }: DentistRatingsPr
 
         {filteredData.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No dentists found matching your filters
+            Không tìm thấy nha sĩ nào phù hợp với bộ lọc của bạn
           </div>
         )}
       </CardContent>

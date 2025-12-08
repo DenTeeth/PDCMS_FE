@@ -164,7 +164,7 @@ export default function FeedbackAnalytics({ data }: FeedbackAnalyticsProps) {
               <Bar
                 dataKey="averageRating"
                 fill="#ef4444"
-                name="Average Rating"
+                name="Đánh giá trung bình"
               />
             </BarChart>
           </ResponsiveContainer>

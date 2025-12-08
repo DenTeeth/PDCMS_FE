@@ -5,30 +5,30 @@ import { Users, Calendar, FileText, Settings, Activity } from 'lucide-react';
 export default function AdminDashboard() {
   const stats = [
     {
-      title: 'Total Staff',
+      title: 'Tổng nhân viên',
       value: '24',
-      description: '+2 from last month',
+      description: '+2 trong tháng',
       icon: Users,
       color: 'text-blue-600',
     },
     {
-      title: 'Today\'s Appointments',
+      title: 'Lịch hẹn hôm nay',
       value: '12',
-      description: '8 confirmed',
+      description: '8 đã xác nhận',
       icon: Calendar,
       color: 'text-green-600',
     },
     {
-      title: 'Blog Posts',
+      title: 'Bài viết Blog',
       value: '18',
-      description: '3 new this week',
+      description: '3 bài mới tuần này',
       icon: FileText,
       color: 'text-purple-600',
     },
     {
-      title: 'System Roles',
+      title: 'Vai trò hệ thống',
       value: '5',
-      description: '4 active roles',
+      description: '4 vai trò hoạt động',
       icon: Settings,
       color: 'text-orange-600',
     },
@@ -38,8 +38,8 @@ export default function AdminDashboard() {
     <ProtectedRoute requiredBaseRole="admin">
       <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Dental clinic management system overview</p>
+        <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
+        <p className="text-gray-600">Tổng quan hệ thống quản lý phòng khám</p>
       </div>
 
       {/* Stats Grid */}
@@ -104,21 +104,21 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Nguyen Thi B</p>
-                  <p className="text-xs text-gray-500">Regular dental checkup</p>
+                  <p className="text-xs text-gray-500">Khám răng định kỳ</p>
                 </div>
                 <span className="text-sm text-blue-600">09:00</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Tran Van C</p>
-                  <p className="text-xs text-gray-500">Wisdom tooth extraction</p>
+                  <p className="text-xs text-gray-500">Nhổ răng khôn</p>
                 </div>
                 <span className="text-sm text-blue-600">10:30</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Le Thi D</p>
-                  <p className="text-xs text-gray-500">Braces treatment</p>
+                  <p className="text-xs text-gray-500">Điều trị niềng răng</p>
                 </div>
                 <span className="text-sm text-blue-600">14:00</span>
               </div>

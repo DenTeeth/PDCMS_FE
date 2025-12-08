@@ -15,10 +15,10 @@ export default function EmployeeSettingsPage() {
       <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl font-bold text-primary-foreground mb-2">
           <FontAwesomeIcon icon={faCog} className="mr-3" />
-          Settings
+          Cài đặt
         </h1>
         <p className="text-primary-foreground/80">
-          Manage your account preferences
+          Quản lý tùy chọn tài khoản của bạn
         </p>
       </div>
 
@@ -27,15 +27,15 @@ export default function EmployeeSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FontAwesomeIcon icon={faUser} className="h-5 w-5 text-primary" />
-              Profile Settings
+              Cài đặt hồ sơ
             </CardTitle>
             <CardDescription>
-              Update your personal information
+              Cập nhật thông tin cá nhân của bạn
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Coming soon...
+              Sắp ra mắt...
             </p>
           </CardContent>
         </Card>
@@ -44,15 +44,15 @@ export default function EmployeeSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FontAwesomeIcon icon={faBell} className="h-5 w-5 text-primary" />
-              Notification Preferences
+              Tùy chọn thông báo
             </CardTitle>
             <CardDescription>
-              Manage how you receive notifications
+              Quản lý cách bạn nhận thông báo
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Coming soon...
+              Sắp ra mắt...
             </p>
           </CardContent>
         </Card>
@@ -61,15 +61,15 @@ export default function EmployeeSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FontAwesomeIcon icon={faShield} className="h-5 w-5 text-primary" />
-              Security
+              Bảo mật
             </CardTitle>
             <CardDescription>
-              Password and security settings
+              Cài đặt mật khẩu và bảo mật
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Coming soon...
+              Sắp ra mắt...
             </p>
           </CardContent>
         </Card>

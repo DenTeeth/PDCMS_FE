@@ -28,7 +28,7 @@ const fadeUp = {
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-accent via-white to-accent text-foreground">
-        <Navigation />
+      <Navigation />
       {/* Header (match Services) */}
       <section className="bg-gradient-to-r from-accent to-secondary py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,10 +80,10 @@ export default function AboutPage() {
       <section className="mx-auto max-w-7xl px-6 pb-10">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Years", value: "12+", icon: faClock },
-            { label: "Doctors", value: "18", icon: faUsers },
-            { label: "Awards", value: "9", icon: faAward },
-            { label: "Rating", value: "4.9/5", icon: faStar },
+            { label: "Năm kinh nghiệm", value: "12+", icon: faClock },
+            { label: "Bác sĩ", value: "18", icon: faUsers },
+            { label: "Giải thưởng", value: "9", icon: faAward },
+            { label: "Đánh giá", value: "4.9/5", icon: faStar },
           ].map((s, i) => (
             <motion.div
               key={s.label}
