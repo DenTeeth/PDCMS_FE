@@ -66,27 +66,27 @@ export interface NavigationConfig {
  * Dựa trên groupedPermissions từ BE
  */
 export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
-  title: 'PDCMS Admin',
+  title: 'Quản Trị Hệ Thống',
   items: [
     {
-      name: 'Dashboard',
+      name: 'Tổng Quan',
       href: '/admin',
       icon: faTachometerAlt,
     },
     {
-      name: 'Account Management',
+      name: 'Quản Lý Tài Khoản',
       icon: faUsers,
       hasSubmenu: true,
       requiredPermissionGroup: 'ACCOUNT',
       submenu: [
         {
-          name: 'User Accounts',
+          name: 'Tài Khoản Người Dùng',
           href: '/admin/accounts/users',
           icon: faUser,
           requiredPermissions: ['VIEW_ACCOUNT'],
         },
         {
-          name: 'Employee Accounts',
+          name: 'Tài Khoản Nhân Viên',
           href: '/admin/accounts/employees',
           icon: faUserTie,
           requiredPermissionGroup: 'EMPLOYEE',
@@ -94,30 +94,30 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Blog Management',
+      name: 'Quản Lý Blog',
       href: '/admin/blogs',
       icon: faFileAlt,
     },
     {
-      name: 'System Configuration',
+      name: 'Cấu Hình Hệ Thống',
       icon: faCog,
       hasSubmenu: true,
       requiredPermissionGroup: 'SYSTEM_CONFIGURATION',
       submenu: [
         {
-          name: 'Role Management',
+          name: 'Quản Lý Vai Trò',
           href: '/admin/roles',
           icon: faShieldAlt,
           requiredPermissions: ['VIEW_ROLE'],
         },
         {
-          name: 'Permission Management',
+          name: 'Quản Lý Quyền',
           href: '/admin/permissions',
           icon: faKey,
           requiredPermissions: ['VIEW_PERMISSION'],
         },
         {
-          name: 'Specializations',
+          name: 'Chuyên Khoa',
           href: '/admin/specializations',
           icon: faStethoscope,
           requiredPermissions: ['VIEW_SPECIALIZATION'],
@@ -125,32 +125,32 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Schedule Management',
+      name: 'Quản Lý Lịch Làm Việc',
       icon: faCalendarCheck,
       hasSubmenu: true,
       requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
       submenu: [
         {
-          name: 'Work Shifts',
+          name: 'Ca Làm Việc',
           href: '/admin/work-shifts',
           icon: faBusinessTime,
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Work Slots',
+          name: 'Khung Giờ Làm Việc',
           href: '/admin/work-slots',
           icon: faClock,
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Shift Registrations',
+          name: 'Đăng Ký Ca',
           href: '/admin/registrations',
           icon: faCalendarCheck,
           requiredPermissions: ['VIEW_REGISTRATION_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL'],
-          requireAll: false, // Show if user has either permission
+          requireAll: false,
         },
         {
-          name: 'Shift Calendar',
+          name: 'Lịch Ca Làm Việc',
           href: '/admin/shift-calendar',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SHIFTS_ALL'],
@@ -158,25 +158,25 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Request Management',
+      name: 'Quản Lý Yêu Cầu',
       icon: faClipboardList,
       hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
       submenu: [
         {
-          name: 'Overtime Requests',
+          name: 'Yêu Cầu Làm Thêm Giờ',
           href: '/admin/overtime-requests',
           icon: faClockFour,
           requiredPermissions: ['VIEW_OT_ALL'],
         },
         {
-          name: 'Time Off Requests',
+          name: 'Yêu Cầu Nghỉ Phép',
           href: '/admin/time-off-requests',
           icon: faUmbrellaBeach,
           requiredPermissions: ['VIEW_TIMEOFF_ALL'],
         },
         {
-          name: 'Registration Requests',
+          name: 'Yêu Cầu Đăng Ký Ca',
           href: '/admin/registration-requests',
           icon: faClipboard,
           requiredPermissions: ['VIEW_REGISTRATION_ALL'],
@@ -184,13 +184,13 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Leave Management',
+      name: 'Quản Lý Nghỉ Phép',
       icon: faListAlt,
       hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
       submenu: [
         {
-          name: 'Time Off Types',
+          name: 'Loại Nghỉ Phép',
           href: '/admin/time-off-types',
           icon: faListAlt,
           requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
@@ -198,7 +198,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Warehouse Management',
+      name: 'Quản Lý Kho',
       icon: faWarehouse,
       hasSubmenu: true,
       // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
@@ -239,38 +239,38 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Customer Contacts',
+      name: 'Liên Hệ Khách Hàng',
       href: '/admin/customer-contacts',
       icon: faPhone,
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
     },
     {
-      name: 'Booking Management',
+      name: 'Quản Lý Đặt Lịch',
       icon: faClipboardList,
       hasSubmenu: true,
       // Parent menu visibility is determined by submenu items - if user has permission for any submenu item, show parent
       // No requiredPermissions on parent - logic handled in filterNavigationItems
       submenu: [
         {
-          name: 'Rooms',
+          name: 'Phòng Khám',
           href: '/admin/booking/rooms',
           icon: faHospitalUser,
           requiredPermissionGroup: 'ROOM_MANAGEMENT',
         },
         {
-          name: 'Services',
+          name: 'Dịch Vụ',
           href: '/admin/booking/services',
           icon: faTeeth,
           requiredPermissionGroup: 'SERVICE_MANAGEMENT',
         },
         {
-          name: 'Appointments',
+          name: 'Lịch Hẹn',
           href: '/admin/booking/appointments',
           icon: faCalendarAlt,
           requiredPermissionGroup: 'APPOINTMENT',
         },
         {
-          name: 'Treatment Plans',
+          name: 'Kế Hoạch Điều Trị',
           href: '/admin/treatment-plans',
           icon: faListCheck,
           requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL'],
@@ -278,7 +278,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Settings',
+      name: 'Cài Đặt',
       href: '/admin/settings',
       icon: faCog,
     },
@@ -291,23 +291,23 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
  * Tổ chức theo nhóm chức năng
  */
 export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
-  title: 'PDCMS Employee',
+  title: 'Nhân Viên PDCMS',
   items: [
     {
-      name: 'Dashboard',
+      name: 'Tổng Quan',
       href: '/employee',
       icon: faTachometerAlt,
     },
     // Booking Management
     {
-      name: 'Booking Management',
+      name: 'Quản Lý Đặt Lịch',
       icon: faClipboardList,
       hasSubmenu: true,
       requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
       requireAll: false,
       submenu: [
         {
-          name: 'Appointments',
+          name: 'Lịch Hẹn',
           href: '/employee/appointments',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
@@ -317,7 +317,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Treatment Plans (separate from Booking Management)
     {
-      name: 'Treatment Plans',
+      name: 'Kế Hoạch Điều Trị',
       href: '/employee/treatment-plans',
       icon: faListCheck,
       requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
@@ -325,14 +325,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Schedule Management
     {
-      name: 'Schedule Management',
+      name: 'Quản Lý Lịch Làm Việc',
       icon: faCalendarCheck,
       hasSubmenu: true,
       requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
       requireAll: false,
       submenu: [
         {
-          name: 'My Registrations',
+          name: 'Đăng Ký Ca Của Tôi',
           href: '/employee/registrations',
           icon: faCalendarCheck,
           requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
@@ -340,14 +340,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           // Show for all employment types (has tabs inside)
         },
         {
-          name: 'Shift Calendar',
+          name: 'Lịch Ca Làm Việc',
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SHIFTS_OWN'],
           // Show for all employment types
         },
         {
-          name: 'My Calendar',
+          name: 'Lịch Của Tôi',
           href: '/employee/my-calendar',
           icon: faCalendarDays,
           requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_APPOINTMENT_OWN'],
@@ -355,14 +355,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
-          name: 'Fixed Registrations',
+          name: 'Đăng Ký Cố Định',
           href: '/employee/fixed-registrations',
           icon: faListCheck,
           requiredPermissions: ['VIEW_FIXED_REGISTRATIONS_OWN'],
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
-          name: 'Shift Renewals',
+          name: 'Gia Hạn Ca',
           href: '/employee/renewals',
           icon: faClockRotateLeft,
           requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
@@ -372,20 +372,20 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Request Management
     {
-      name: 'Request Management',
+      name: 'Quản Lý Yêu Cầu',
       icon: faClipboardList,
       hasSubmenu: true,
       requiredPermissionGroup: 'LEAVE_MANAGEMENT',
       submenu: [
         {
-          name: 'Overtime Requests',
+          name: 'Yêu Cầu Làm Thêm Giờ',
           href: '/employee/overtime-requests',
           icon: faClockFour,
           requiredPermissionGroup: 'LEAVE_MANAGEMENT',
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
-          name: 'Time Off Requests',
+          name: 'Yêu Cầu Nghỉ Phép',
           href: '/employee/time-off-requests',
           icon: faUmbrellaBeach,
           requiredPermissionGroup: 'LEAVE_MANAGEMENT',
@@ -395,25 +395,25 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Customer Management
     {
-      name: 'Customer Management',
+      name: 'Quản Lý Khách Hàng',
       icon: faUsers,
       hasSubmenu: true,
       requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
       submenu: [
         {
-          name: 'Customers',
+          name: 'Khách Hàng',
           href: '/employee/customers',
           icon: faUsers,
           requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
         },
         {
-          name: 'Customer Contacts',
+          name: 'Liên Hệ Khách Hàng',
           href: '/employee/customer-contacts',
           icon: faPhone,
           requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
         },
         {
-          name: 'Customer Feedback',
+          name: 'Phản Hồi Khách Hàng',
           href: '/employee/customers/feedback',
           icon: faComments,
           requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
@@ -422,7 +422,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Warehouse Management (for employee roles with VIEW_WAREHOUSE permission)
     {
-      name: 'Warehouse Management',
+      name: 'Quản Lý Kho',
       icon: faWarehouse,
       hasSubmenu: true,
       // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
@@ -464,20 +464,20 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Analytics
     {
-      name: 'Analytics',
+      name: 'Phân Tích',
       href: '/employee/analytics',
       icon: faChartLine,
       requiredPermissionGroup: 'ANALYTICS', // Adjust based on actual permission group
     },
     // NII Image Viewer
     {
-      name: 'CBCT Viewer',
+      name: 'Xem CBCT',
       href: '/employee/nii-viewer',
       icon: faImage,
     },
     // Settings
     {
-      name: 'Settings',
+      name: 'Cài Đặt',
       href: '/employee/settings',
       icon: faCog,
     },
@@ -490,20 +490,20 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
  * Patient role can have admin/employee permissions, so we show menu items based on actual permissions
  */
 export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
-  title: 'PDCMS Patient',
+  title: 'Bệnh Nhân PDCMS',
   items: [
     {
-      name: 'Dashboard',
+      name: 'Tổng Quan',
       href: '/patient',
       icon: faTachometerAlt,
     },
     {
-      name: 'My Appointments',
+      name: 'Lịch Hẹn Của Tôi',
       href: '/patient/appointments',
       icon: faCalendarAlt,
     },
     {
-      name: 'Treatment Plans',
+      name: 'Kế Hoạch Điều Trị',
       href: '/patient/treatment-plans',
       icon: faListCheck,
       requiredPermissions: ['VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_ALL'],
@@ -511,32 +511,32 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Booking Management - Show if user has any booking-related permissions
     {
-      name: 'Booking Management',
+      name: 'Quản Lý Đặt Lịch',
       icon: faClipboardList,
       hasSubmenu: true,
       // Parent menu visibility is determined by submenu items
       submenu: [
         {
-          name: 'Rooms',
+          name: 'Phòng Khám',
           href: '/admin/booking/rooms',
           icon: faHospitalUser,
           requiredPermissions: ['VIEW_ROOM'],
         },
         {
-          name: 'Services',
+          name: 'Dịch Vụ',
           href: '/admin/booking/services',
           icon: faTeeth,
           requiredPermissions: ['VIEW_SERVICE'],
         },
         {
-          name: 'Appointments',
+          name: 'Lịch Hẹn',
           href: '/admin/booking/appointments',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_APPOINTMENT', 'VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN'],
           requireAll: false,
         },
         {
-          name: 'Treatment Plans',
+          name: 'Kế Hoạch Điều Trị',
           href: '/admin/treatment-plans',
           icon: faListCheck,
           requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
@@ -546,25 +546,25 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // System Configuration - Show if user has system config permissions
     {
-      name: 'System Configuration',
+      name: 'Cấu Hình Hệ Thống',
       icon: faCog,
       hasSubmenu: true,
       // Parent menu visibility is determined by submenu items
       submenu: [
         {
-          name: 'Role Management',
+          name: 'Quản Lý Vai Trò',
           href: '/admin/roles',
           icon: faShieldAlt,
           requiredPermissions: ['VIEW_ROLE'],
         },
         {
-          name: 'Permission Management',
+          name: 'Quản Lý Quyền',
           href: '/admin/permissions',
           icon: faKey,
           requiredPermissions: ['VIEW_PERMISSION'],
         },
         {
-          name: 'Specializations',
+          name: 'Chuyên Khoa',
           href: '/admin/specializations',
           icon: faStethoscope,
           requiredPermissions: ['VIEW_SPECIALIZATION'],
@@ -573,7 +573,7 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
     },
     // Warehouse Management - Show if user has VIEW_WAREHOUSE permission
     {
-      name: 'Warehouse Management',
+      name: 'Quản Lý Kho',
       icon: faWarehouse,
       hasSubmenu: true,
       // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
@@ -614,32 +614,32 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       ],
     },
     {
-      name: 'Medical Records',
+      name: 'Hồ Sơ Bệnh Án',
       href: '/patient/records',
       icon: faFolderOpen,
     },
     {
-      name: 'CBCT Viewer',
+      name: 'Xem CBCT',
       href: '/patient/nii-viewer',
       icon: faImage,
     },
     {
-      name: 'Billing',
+      name: 'Thanh Toán',
       href: '/patient/billing',
       icon: faReceipt,
     },
     {
-      name: 'Notifications',
+      name: 'Thông Báo',
       href: '/patient/notifications',
       icon: faBell,
     },
     {
-      name: 'Profile',
+      name: 'Hồ Sơ Cá Nhân',
       href: '/patient/profile',
       icon: faUserCircle,
     },
     {
-      name: 'Settings',
+      name: 'Cài Đặt',
       href: '/patient/settings',
       icon: faCog,
     },

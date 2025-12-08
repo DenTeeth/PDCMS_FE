@@ -340,8 +340,8 @@ export default function WorkSlotsManagementPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Work Slots Management</h1>
-            <p className="text-gray-600 mt-1">Manage part-time work slots and quotas</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý slot làm việc</h1>
+            <p className="text-gray-600 mt-1">Quản lý các slot và hạn mức cho nhân viên bán thời gian</p>
           </div>
           {hasPermission(Permission.MANAGE_WORK_SLOTS) && (
             <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">

@@ -23,27 +23,27 @@ export default function Footer() {
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-6">Support</h3>
+            <h3 className="text-lg font-semibold mb-6">Hỗ trợ</h3>
             <ul className="space-y-3 text-gray-400">
-              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Our Services</Link></li>
-              <li><Link href="/appointment" className="hover:text-white transition-colors">Book Appointment</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">Về chúng tôi</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Liên hệ</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">Dịch vụ của chúng tôi</Link></li>
+              <li><Link href="/appointment" className="hover:text-white transition-colors">Đặt lịch hẹn</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-6">Treatments</h3>
+            <h3 className="text-lg font-semibold mb-6">Điều trị</h3>
             <ul className="space-y-3 text-gray-400">
-              <li><Link href="#" className="hover:text-white transition-colors">Preventive Dentistry</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Pediatric Dentistry</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Dental Implants</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Tooth Extraction</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Nha khoa dự phòng</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Nha khoa trẻ em</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Cấy ghép răng</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Nhổ răng</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-6">Follow Us</h3>
+            <h3 className="text-lg font-semibold mb-6">Theo dõi chúng tôi</h3>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                 <FontAwesomeIcon icon={faFacebook} className="h-6 w-6" />

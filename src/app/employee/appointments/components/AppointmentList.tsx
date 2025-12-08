@@ -125,10 +125,10 @@ export default function AppointmentList({
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl font-bold">Appointments</h2>
+                    <h2 className="text-2xl font-bold">Lịch hẹn</h2>
                     <div className="relative w-full sm:w-80">
                         <Input
-                            placeholder="Search by patient, dentist, service..."
+                            placeholder="Tìm theo bệnh nhân, nha sĩ, dịch vụ..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pr-10"

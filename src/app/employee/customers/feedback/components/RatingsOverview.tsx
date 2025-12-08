@@ -24,11 +24,11 @@ interface RatingsOverviewProps {
 export default function RatingsOverview({ data }: RatingsOverviewProps) {
   // Prepare distribution data for bar chart
   const distributionData = [
-    { rating: '5 Stars', count: data.ratingDistribution[5], percentage: ((data.ratingDistribution[5] / data.totalReviews) * 100).toFixed(1) },
-    { rating: '4 Stars', count: data.ratingDistribution[4], percentage: ((data.ratingDistribution[4] / data.totalReviews) * 100).toFixed(1) },
-    { rating: '3 Stars', count: data.ratingDistribution[3], percentage: ((data.ratingDistribution[3] / data.totalReviews) * 100).toFixed(1) },
-    { rating: '2 Stars', count: data.ratingDistribution[2], percentage: ((data.ratingDistribution[2] / data.totalReviews) * 100).toFixed(1) },
-    { rating: '1 Star', count: data.ratingDistribution[1], percentage: ((data.ratingDistribution[1] / data.totalReviews) * 100).toFixed(1) },
+    { rating: '5 Sao', count: data.ratingDistribution[5], percentage: ((data.ratingDistribution[5] / data.totalReviews) * 100).toFixed(1) },
+    { rating: '4 Sao', count: data.ratingDistribution[4], percentage: ((data.ratingDistribution[4] / data.totalReviews) * 100).toFixed(1) },
+    { rating: '3 Sao', count: data.ratingDistribution[3], percentage: ((data.ratingDistribution[3] / data.totalReviews) * 100).toFixed(1) },
+    { rating: '2 Sao', count: data.ratingDistribution[2], percentage: ((data.ratingDistribution[2] / data.totalReviews) * 100).toFixed(1) },
+    { rating: '1 Sao', count: data.ratingDistribution[1], percentage: ((data.ratingDistribution[1] / data.totalReviews) * 100).toFixed(1) },
   ];
 
   return (
@@ -39,12 +39,12 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Overall Rating</p>
+                <p className="text-sm text-gray-600 mb-1">Đánh giá tổng thể</p>
                 <div className="flex items-center gap-2">
                   <p className="text-4xl font-bold">{data.overallRating.toFixed(1)}</p>
                   <FontAwesomeIcon icon={faStar} className="text-yellow-500 text-2xl" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">out of 5.0</p>
+                <p className="text-xs text-gray-500 mt-1">trên 5.0</p>
               </div>
               <div className="bg-yellow-100 p-4 rounded-lg">
                 <FontAwesomeIcon icon={faStar} className="text-yellow-600 text-3xl" />
@@ -57,9 +57,9 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Reviews</p>
+                <p className="text-sm text-gray-600 mb-1">Tổng số đánh giá</p>
                 <p className="text-4xl font-bold">{data.totalReviews.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">all time</p>
+                <p className="text-xs text-gray-500 mt-1">tất cả thời gian</p>
               </div>
               <div className="bg-blue-100 p-4 rounded-lg">
                 <FontAwesomeIcon icon={faChartLine} className="text-blue-600 text-3xl" />
@@ -72,7 +72,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
       {/* Rating Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Rating Distribution</CardTitle>
+          <CardTitle>Phân bố đánh giá</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -96,7 +96,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
                 }}
               />
               <Legend />
-              <Bar dataKey="count" fill="#3b82f6" name="Number of Reviews" />
+              <Bar dataKey="count" fill="#3b82f6" name="Số lượng đánh giá" />
             </BarChart>
           </ResponsiveContainer>
 
@@ -123,7 +123,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
       {/* Trend Over Time */}
       <Card>
         <CardHeader>
-          <CardTitle>Rating Trend Over Time</CardTitle>
+          <CardTitle>Xu hướng đánh giá theo thời gian</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -155,7 +155,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
                 dataKey="rating"
                 stroke="#3b82f6"
                 strokeWidth={2}
-                name="Average Rating"
+                name="Đánh giá trung bình"
                 dot={{ fill: '#3b82f6', r: 4 }}
               />
             </LineChart>

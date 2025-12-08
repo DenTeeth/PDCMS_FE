@@ -251,12 +251,12 @@ export default function AppointmentsPage() {
             {/* Search and Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1">
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative mt-2">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
-                    placeholder="Search by patient name, doctor or service..."
+                    placeholder="Tìm theo tên bệnh nhân, bác sĩ hoặc dịch vụ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -264,18 +264,18 @@ export default function AppointmentsPage() {
                 </div>
               </div>
               <div className="md:w-48">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Trạng thái</Label>
                 <select
                   id="status"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="pending">Đang chờ</option>
+                  <option value="confirmed">Đã xác nhận</option>
+                  <option value="completed">Đã hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
                 </select>
               </div>
               <div className="md:w-48">

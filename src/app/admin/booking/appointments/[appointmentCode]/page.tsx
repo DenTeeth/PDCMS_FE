@@ -380,8 +380,8 @@ export default function AdminAppointmentDetailPage() {
 
         // Check if 404 - appointment not found
         if (error.response?.status === 404) {
-          toast.error('Appointment not found', {
-            description: `Could not find appointment with code: ${appointmentCode}`,
+          toast.error('Không tìm thấy lịch hẹn', {
+            description: `Không thể tìm thấy lịch hẹn với mã: ${appointmentCode}`,
           });
           setTimeout(() => {
             if (isMounted && !abortController.signal.aborted) {
@@ -951,7 +951,7 @@ export default function AdminAppointmentDetailPage() {
                   {appointment.createdAt && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Created At</label>
-                      <p className="text-base text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
                     </div>
                   )}
                 </div>
@@ -1054,7 +1054,7 @@ export default function AdminAppointmentDetailPage() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Patient Code</label>
+                    <label className="text-sm font-medium text-muted-foreground">Mã bệnh nhân</label>
                     <p className="text-base font-semibold">{appointment.patient.patientCode}</p>
                   </div>
                   <div>
@@ -1287,7 +1287,7 @@ export default function AdminAppointmentDetailPage() {
                     onValueChange={(value) => setStatusUpdateReason(value as AppointmentReasonCode)}
                   >
                     <SelectTrigger id="reasonCode" className="mt-1">
-                      <SelectValue placeholder="Select reason" />
+                      <SelectValue placeholder="Chọn lý do" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
@@ -1408,7 +1408,7 @@ export default function AdminAppointmentDetailPage() {
                   onValueChange={(value) => setDelayReason(value === '__NONE__' ? '' : (value as AppointmentReasonCode || ''))}
                 >
                   <SelectTrigger id="delayReason" className="mt-1">
-                    <SelectValue placeholder="Select reason (optional)" />
+                    <SelectValue placeholder="Chọn lý do (tùy chọn)" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__NONE__">None</SelectItem>

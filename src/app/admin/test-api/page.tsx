@@ -107,10 +107,10 @@ export default function TestAPIPage() {
       const specializationsData = await specializationService.getAll();
       setSpecializations(specializationsData);
 
-      toast.success('Data loaded from database!');
+      toast.success('Đã tải dữ liệu từ database!');
     } catch (error: any) {
       console.error('Failed to load data:', error);
-      toast.error('Failed to load data: ' + (error.response?.data?.message || error.message));
+      toast.error('Không thể tải dữ liệu: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingData(false);
     }
@@ -119,17 +119,17 @@ export default function TestAPIPage() {
   // Room Service Tests
   const testGetRoomByCode = async () => {
     if (!selectedRoomCode) {
-      toast.error('Please select a room');
+      toast.error('Vui lòng chọn phòng');
       return;
     }
     setLoading(true);
     try {
       const result = await RoomService.getRoomByCode(selectedRoomCode);
       setResults({ type: 'RoomService.getRoomByCode', success: true, data: result });
-      toast.success('Test passed!');
+      toast.success('Kiểm tra thành công!');
     } catch (error: any) {
       setResults({ type: 'RoomService.getRoomByCode', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -137,17 +137,17 @@ export default function TestAPIPage() {
 
   const testGetRoomServices = async () => {
     if (!selectedRoomCode) {
-      toast.error('Please select a room');
+      toast.error('Vui lòng chọn phòng');
       return;
     }
     setLoading(true);
     try {
       const result = await RoomService.getRoomServices(selectedRoomCode);
       setResults({ type: 'RoomService.getRoomServices', success: true, data: result });
-      toast.success('Test passed!');
+      toast.success('Kiểm tra thành công!');
     } catch (error: any) {
       setResults({ type: 'RoomService.getRoomServices', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -155,11 +155,11 @@ export default function TestAPIPage() {
 
   const testUpdateRoomServices = async () => {
     if (!selectedRoomCode) {
-      toast.error('Please select a room');
+      toast.error('Vui lòng chọn phòng');
       return;
     }
     if (selectedServiceCodes.length === 0) {
-      toast.error('Please select at least one service');
+      toast.error('Vui lòng chọn ít nhất một dịch vụ');
       return;
     }
     setLoading(true);
@@ -168,12 +168,12 @@ export default function TestAPIPage() {
         serviceCodes: selectedServiceCodes
       });
       setResults({ type: 'RoomService.updateRoomServices', success: true, data: result });
-      toast.success('Test passed!');
+      toast.success('Kiểm tra thành công!');
       // Reload room services after update
       await testGetRoomServices();
     } catch (error: any) {
       setResults({ type: 'RoomService.updateRoomServices', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -182,7 +182,7 @@ export default function TestAPIPage() {
   // Service Service Tests
   const testUpdateService = async () => {
     if (!selectedServiceCode) {
-      toast.error('Please select a service');
+      toast.error('Vui lòng chọn dịch vụ');
       return;
     }
     setLoading(true);
@@ -192,10 +192,10 @@ export default function TestAPIPage() {
         price: 350000
       });
       setResults({ type: 'ServiceService.updateService', success: true, data: result });
-      toast.success('Test passed!');
+      toast.success('Kiểm tra thành công!');
     } catch (error: any) {
       setResults({ type: 'ServiceService.updateService', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -203,19 +203,19 @@ export default function TestAPIPage() {
 
   const testDeleteService = async () => {
     if (!selectedServiceCode) {
-      toast.error('Please select a service');
+      toast.error('Vui lòng chọn dịch vụ');
       return;
     }
     setLoading(true);
     try {
       await ServiceService.deleteService(selectedServiceCode);
-      setResults({ type: 'ServiceService.deleteService', success: true, data: 'Service deleted successfully' });
-      toast.success('Test passed!');
+      setResults({ type: 'ServiceService.deleteService', success: true, data: 'Dịch vụ đã được xóa thành công' });
+      toast.success('Kiểm tra thành công!');
       // Reload services after delete
       await loadDataFromDatabase();
     } catch (error: any) {
       setResults({ type: 'ServiceService.deleteService', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -232,11 +232,11 @@ export default function TestAPIPage() {
 
   const testFindAvailableTimes = async () => {
     if (!selectedEmployeeCode) {
-      toast.error('Please select an employee');
+      toast.error('Vui lòng chọn nhân viên');
       return;
     }
     if (selectedServiceCodes.length === 0) {
-      toast.error('Please select at least one service');
+      toast.error('Vui lòng chọn ít nhất một dịch vụ');
       return;
     }
     setLoading(true);
@@ -290,7 +290,7 @@ export default function TestAPIPage() {
           }
         }
       });
-      toast.success(`Test passed! Found ${result.availableSlots.length} available slots.`);
+      toast.success(`Kiểm tra thành công! Tìm thấy ${result.availableSlots.length} khung giờ trống.`);
       
       // Auto-select first slot if available
       if (result.availableSlots && result.availableSlots.length > 0) {
@@ -303,7 +303,7 @@ export default function TestAPIPage() {
     } catch (error: any) {
       console.error(' Error:', error);
       setResults({ type: 'appointmentService.findAvailableTimes', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -311,23 +311,23 @@ export default function TestAPIPage() {
 
   const testCreateAppointment = async () => {
     if (!selectedPatientCode) {
-      toast.error('Please select a patient');
+      toast.error('Vui lòng chọn bệnh nhân');
       return;
     }
     if (!selectedEmployeeCode) {
-      toast.error('Please select an employee');
+      toast.error('Vui lòng chọn nhân viên');
       return;
     }
     if (!selectedRoomCode) {
-      toast.error('Please select a room');
+      toast.error('Vui lòng chọn phòng');
       return;
     }
     if (selectedServiceCodes.length === 0) {
-      toast.error('Please select at least one service');
+      toast.error('Vui lòng chọn ít nhất một dịch vụ');
       return;
     }
     if (!appointmentStartTime) {
-      toast.error('Please select a start time (use Find Available Times first)');
+      toast.error('Vui lòng chọn giờ bắt đầu (sử dụng Tìm khung giờ trống trước)');
       return;
     }
     setLoading(true);
@@ -344,10 +344,10 @@ export default function TestAPIPage() {
       
       const result = await appointmentService.createAppointment(request);
       setResults({ type: 'appointmentService.createAppointment', success: true, data: result });
-      toast.success('Appointment created!');
+      toast.success('Đã tạo lịch hẹn!');
     } catch (error: any) {
       setResults({ type: 'appointmentService.createAppointment', success: false, error: error.response?.data || error.message });
-      toast.error('Test failed: ' + (error.response?.data?.message || error.message));
+      toast.error('Kiểm tra thất bại: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -424,7 +424,7 @@ export default function TestAPIPage() {
       
       const result = await ServiceService.createService(requestBody as CreateServiceRequest);
       setResults({ type: 'ServiceService.createService', success: true, data: result });
-      toast.success('Service created successfully!');
+      toast.success('Tạo dịch vụ thành công!');
       
       // Reset form
       setCreateServiceForm({
@@ -463,7 +463,7 @@ export default function TestAPIPage() {
           </p>
         </div>
         <Button onClick={loadDataFromDatabase} disabled={loadingData} variant="outline">
-          {loadingData ? 'Loading...' : 'Reload Data'}
+          {loadingData ? 'Đang tải...' : 'Tải lại dữ liệu'}
         </Button>
       </div>
 
@@ -517,7 +517,7 @@ export default function TestAPIPage() {
               <Label>Room Code</Label>
               <Select value={selectedRoomCode} onValueChange={setSelectedRoomCode} disabled={loadingData || rooms.length === 0}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loadingData ? "Loading..." : rooms.length === 0 ? "No rooms available" : "Select a room"} />
+                  <SelectValue placeholder={loadingData ? "Đang tải..." : rooms.length === 0 ? "Không có phòng" : "Chọn phòng"} />
                 </SelectTrigger>
                 <SelectContent>
                   {rooms.map((room) => (
@@ -567,7 +567,7 @@ export default function TestAPIPage() {
           <CardContent className="space-y-4">
             {/* Create Service */}
             <div className="border rounded-md p-4 space-y-3 bg-muted/50">
-              <h3 className="font-semibold">Create New Service</h3>
+              <h3 className="font-semibold">Tạo dịch vụ mới</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Service Code *</Label>
@@ -639,7 +639,7 @@ export default function TestAPIPage() {
                     disabled={loadingData || specializations.length === 0}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={loadingData ? "Loading..." : specializations.length === 0 ? "No specializations" : "Select specialization"} />
+                      <SelectValue placeholder={loadingData ? "Đang tải..." : specializations.length === 0 ? "Không có chuyên khoa" : "Chọn chuyên khoa"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none-selected">None</SelectItem>
@@ -666,7 +666,7 @@ export default function TestAPIPage() {
               <Label>Service Code</Label>
               <Select value={selectedServiceCode} onValueChange={setSelectedServiceCode} disabled={loadingData || services.length === 0}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loadingData ? "Loading..." : services.length === 0 ? "No services available" : "Select a service"} />
+                  <SelectValue placeholder={loadingData ? "Đang tải..." : services.length === 0 ? "Không có dịch vụ" : "Chọn dịch vụ"} />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((service) => (
@@ -685,7 +685,7 @@ export default function TestAPIPage() {
               <Label>Service Code (to delete)</Label>
               <Select value={selectedServiceCode} onValueChange={setSelectedServiceCode} disabled={loadingData || services.length === 0}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loadingData ? "Loading..." : services.length === 0 ? "No services available" : "Select a service"} />
+                  <SelectValue placeholder={loadingData ? "Đang tải..." : services.length === 0 ? "Không có dịch vụ" : "Chọn dịch vụ"} />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((service) => (
@@ -715,10 +715,10 @@ export default function TestAPIPage() {
                 <Input type="date" value={availableDate} onChange={(e) => setAvailableDate(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Employee Code</Label>
+                <Label>Mã nhân viên</Label>
                 <Select value={selectedEmployeeCode} onValueChange={setSelectedEmployeeCode} disabled={loadingData || employees.length === 0}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={loadingData ? "Loading..." : employees.length === 0 ? "No employees available" : "Select an employee"} />
+                    <SelectValue placeholder={loadingData ? "Đang tải..." : employees.length === 0 ? "Không có nhân viên" : "Chọn nhân viên"} />
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((employee) => (
@@ -759,9 +759,9 @@ export default function TestAPIPage() {
                 <Label>Participant Codes (optional, multi-select)</Label>
                 <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                   {loadingData ? (
-                    <p className="text-sm text-muted-foreground">Loading employees...</p>
+                    <p className="text-sm text-muted-foreground">Đang tải nhân viên...</p>
                   ) : employees.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No employees available</p>
+                    <p className="text-sm text-muted-foreground">Không có nhân viên nào</p>
                   ) : (
                     employees.map((employee) => (
                       <div key={employee.employeeId} className="flex items-center space-x-2">
@@ -790,10 +790,10 @@ export default function TestAPIPage() {
               <h3 className="font-semibold mb-4">Create Appointment (P3.2)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Patient Code</Label>
+                  <Label>Mã bệnh nhân</Label>
                   <Select value={selectedPatientCode} onValueChange={setSelectedPatientCode} disabled={loadingData || patients.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={loadingData ? "Loading..." : patients.length === 0 ? "No patients available" : "Select a patient"} />
+                      <SelectValue placeholder={loadingData ? "Đang tải..." : patients.length === 0 ? "Không có bệnh nhân" : "Chọn bệnh nhân"} />
                     </SelectTrigger>
                     <SelectContent>
                       {patients.map((patient) => (
@@ -805,10 +805,10 @@ export default function TestAPIPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Employee Code</Label>
+                  <Label>Mã nhân viên</Label>
                   <Select value={selectedEmployeeCode} onValueChange={setSelectedEmployeeCode} disabled={loadingData || employees.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={loadingData ? "Loading..." : employees.length === 0 ? "No employees available" : "Select an employee"} />
+                      <SelectValue placeholder={loadingData ? "Đang tải..." : employees.length === 0 ? "Không có nhân viên" : "Chọn nhân viên"} />
                     </SelectTrigger>
                     <SelectContent>
                       {employees.map((employee) => (
@@ -823,7 +823,7 @@ export default function TestAPIPage() {
                   <Label>Room Code</Label>
                   <Select value={selectedRoomCode} onValueChange={setSelectedRoomCode} disabled={loadingData || rooms.length === 0}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={loadingData ? "Loading..." : rooms.length === 0 ? "No rooms available" : "Select a room"} />
+                      <SelectValue placeholder={loadingData ? "Đang tải..." : rooms.length === 0 ? "Không có phòng" : "Chọn phòng"} />
                     </SelectTrigger>
                     <SelectContent>
                       {rooms.map((room) => (
@@ -866,16 +866,16 @@ export default function TestAPIPage() {
                     type="datetime-local"
                     value={appointmentStartTime ? new Date(appointmentStartTime).toISOString().slice(0, 16) : ''}
                     onChange={(e) => setAppointmentStartTime(e.target.value ? new Date(e.target.value).toISOString() : '')}
-                    placeholder="Select time from available times"
+                    placeholder="Chọn giờ từ các khung giờ trống"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Participant Codes (optional, multi-select)</Label>
                   <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                     {loadingData ? (
-                      <p className="text-sm text-muted-foreground">Loading employees...</p>
+                      <p className="text-sm text-muted-foreground">Đang tải nhân viên...</p>
                     ) : employees.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No employees available</p>
+                      <p className="text-sm text-muted-foreground">Không có nhân viên nào</p>
                     ) : (
                       employees.map((employee) => (
                         <div key={employee.employeeId} className="flex items-center space-x-2">
@@ -900,7 +900,7 @@ export default function TestAPIPage() {
                   <Input
                     value={appointmentNotes}
                     onChange={(e) => setAppointmentNotes(e.target.value)}
-                    placeholder="Test appointment notes"
+                    placeholder="Ghi chú kiểm tra lịch hẹn"
                   />
                 </div>
               </div>

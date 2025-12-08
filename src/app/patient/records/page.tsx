@@ -158,7 +158,7 @@ export default function UserRecords() {
               <div className="relative">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search records..."
+                  placeholder="Tìm kiếm hồ sơ..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -245,7 +245,7 @@ export default function UserRecords() {
         <Card>
           <CardContent className="p-12 text-center">
             <FontAwesomeIcon icon={faFileAlt} className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No records found</h3>
+            <h3 className="text-lg font-semibold mb-2">Không tìm thấy hồ sơ</h3>
             <p className="text-muted-foreground">
               {searchTerm || typeFilter !== 'All' 
                 ? 'Try adjusting your search or filter criteria'
@@ -262,7 +262,7 @@ export default function UserRecords() {
           <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Record Details</CardTitle>
+                <CardTitle>Chi tiết hồ sơ</CardTitle>
                 <Button variant="outline" onClick={() => setSelectedRecord(null)}>
                   <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
                 </Button>

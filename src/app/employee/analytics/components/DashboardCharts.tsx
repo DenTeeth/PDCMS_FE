@@ -42,7 +42,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Revenue Trend (Last 12 Months)</CardTitle>
+                <CardTitle>Xu hướng doanh thu (12 tháng gần nhất)</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -87,7 +87,7 @@ export function AppointmentStatusChart({ data }: AppointmentStatusChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Appointments by Status</CardTitle>
+                <CardTitle>Lịch hẹn theo trạng thái</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -122,7 +122,7 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Top Services</CardTitle>
+                <CardTitle>Dịch vụ hàng đầu</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -149,7 +149,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Patient Acquisition</CardTitle>
+                <CardTitle>Tăng trưởng bệnh nhân</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>

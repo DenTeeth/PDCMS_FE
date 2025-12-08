@@ -20,7 +20,7 @@ export function AppointmentVolumeChart({ volumeData }: { volumeData: Appointment
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Appointment Volume</CardTitle>
+                <CardTitle>Số lượng lịch hẹn</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -97,7 +97,7 @@ export function PeakHoursHeatmap() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Peak Hours/Days (Heatmap)</CardTitle>
+                <CardTitle>Giờ/Ngày cao điểm (Bản đồ nhiệt)</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
