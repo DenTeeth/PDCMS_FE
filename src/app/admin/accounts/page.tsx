@@ -58,12 +58,12 @@ export default function AccountsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Account Management</h1>
-            <p className="text-gray-600">Manage clinic staff information</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý tài khoản</h1>
+            <p className="text-gray-600">Quản lý thông tin nhân viên phòng khám</p>
           </div>
           <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
-            Add Account
+            Thêm tài khoản
           </Button>
         </div>
 
@@ -75,7 +75,7 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-semibold text-gray-700">Total Staff</p>
+                  <p className="text-sm font-semibold text-gray-700">Tổng nhân viên</p>
                   <p className="text-2xl font-bold text-gray-900">{users.length}</p>
                 </div>
               </div>
@@ -88,7 +88,7 @@ export default function AccountsPage() {
                 <span className="text-green-700 font-bold">A</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-semibold text-green-800">Active</p>
+                <p className="text-sm font-semibold text-green-800">Hoạt động</p>
                 <p className="text-2xl font-bold text-green-800">{users.filter(u => u.status === 'active').length}</p>
               </div>
             </div>

@@ -70,17 +70,17 @@ export default function UserProfile() {
             <>
               <Button onClick={handleSave} className="flex items-center">
                 <FontAwesomeIcon icon={faSave} className="mr-2 h-4 w-4" />
-                Save Changes
+                Lưu thay đổi
               </Button>
               <Button variant="outline" onClick={handleCancel} className="flex items-center">
                 <FontAwesomeIcon icon={faTimes} className="mr-2 h-4 w-4" />
-                Cancel
+                Hủy
               </Button>
             </>
           ) : (
             <Button onClick={() => setIsEditing(true)} className="flex items-center">
               <FontAwesomeIcon icon={faEdit} className="mr-2 h-4 w-4" />
-              Edit Profile
+              Chỉnh sửa hồ sơ
             </Button>
           )}
         </div>
@@ -93,72 +93,72 @@ export default function UserProfile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FontAwesomeIcon icon={faUser} className="mr-2 h-5 w-5" />
-                Personal Information
+                Thông tin cá nhân
               </CardTitle>
               <CardDescription>
-                Your basic personal details
+                Thông tin cơ bản của bạn
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">Họ</Label>
                   <Input
                     id="firstName"
                     value={profile.firstName}
-                    onChange={(e) => setProfile({...profile, firstName: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
                     disabled={!isEditing}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Tên</Label>
                   <Input
                     id="lastName"
                     value={profile.lastName}
-                    onChange={(e) => setProfile({...profile, lastName: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
                     disabled={!isEditing}
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile({...profile, email: e.target.value})}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Số điện thoại</Label>
                 <Input
                   id="phone"
                   value={profile.phone}
-                  onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">Ngày sinh</Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
                   value={profile.dateOfBirth}
-                  onChange={(e) => setProfile({...profile, dateOfBirth: e.target.value})}
+                  onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Địa chỉ</Label>
                 <Input
                   id="address"
                   value={profile.address}
-                  onChange={(e) => setProfile({...profile, address: e.target.value})}
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
@@ -170,47 +170,47 @@ export default function UserProfile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FontAwesomeIcon icon={faPhone} className="mr-2 h-5 w-5" />
-                Emergency Contact
+                Liên hệ khẩn cấp
               </CardTitle>
               <CardDescription>
-                Contact information for emergencies
+                Thông tin liên hệ trong trường hợp khẩn cấp
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="emergencyName">Contact Name</Label>
+                <Label htmlFor="emergencyName">Tên người liên hệ</Label>
                 <Input
                   id="emergencyName"
                   value={profile.emergencyContact.name}
                   onChange={(e) => setProfile({
-                    ...profile, 
-                    emergencyContact: {...profile.emergencyContact, name: e.target.value}
+                    ...profile,
+                    emergencyContact: { ...profile.emergencyContact, name: e.target.value }
                   })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="emergencyRelationship">Relationship</Label>
+                <Label htmlFor="emergencyRelationship">Mối quan hệ</Label>
                 <Input
                   id="emergencyRelationship"
                   value={profile.emergencyContact.relationship}
                   onChange={(e) => setProfile({
-                    ...profile, 
-                    emergencyContact: {...profile.emergencyContact, relationship: e.target.value}
+                    ...profile,
+                    emergencyContact: { ...profile.emergencyContact, relationship: e.target.value }
                   })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="emergencyPhone">Phone Number</Label>
+                <Label htmlFor="emergencyPhone">Số điện thoại</Label>
                 <Input
                   id="emergencyPhone"
                   value={profile.emergencyContact.phone}
                   onChange={(e) => setProfile({
-                    ...profile, 
-                    emergencyContact: {...profile.emergencyContact, phone: e.target.value}
+                    ...profile,
+                    emergencyContact: { ...profile.emergencyContact, phone: e.target.value }
                   })}
                   disabled={!isEditing}
                 />
@@ -223,62 +223,62 @@ export default function UserProfile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FontAwesomeIcon icon={faShieldAlt} className="mr-2 h-5 w-5" />
-                Insurance Information
+                Thông tin bảo hiểm
               </CardTitle>
               <CardDescription>
-                Your health insurance details
+                Chi tiết bảo hiểm y tế của bạn
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="insuranceProvider">Insurance Provider</Label>
+                <Label htmlFor="insuranceProvider">Nhà cung cấp bảo hiểm</Label>
                 <Input
                   id="insuranceProvider"
                   value={profile.insuranceInfo.provider}
                   onChange={(e) => setProfile({
-                    ...profile, 
-                    insuranceInfo: {...profile.insuranceInfo, provider: e.target.value}
+                    ...profile,
+                    insuranceInfo: { ...profile.insuranceInfo, provider: e.target.value }
                   })}
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="policyNumber">Policy Number</Label>
+                  <Label htmlFor="policyNumber">Số hợp đồng</Label>
                   <Input
                     id="policyNumber"
                     value={profile.insuranceInfo.policyNumber}
                     onChange={(e) => setProfile({
-                      ...profile, 
-                      insuranceInfo: {...profile.insuranceInfo, policyNumber: e.target.value}
+                      ...profile,
+                      insuranceInfo: { ...profile.insuranceInfo, policyNumber: e.target.value }
                     })}
                     disabled={!isEditing}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="groupNumber">Group Number</Label>
+                  <Label htmlFor="groupNumber">Số nhóm</Label>
                   <Input
                     id="groupNumber"
                     value={profile.insuranceInfo.groupNumber}
                     onChange={(e) => setProfile({
-                      ...profile, 
-                      insuranceInfo: {...profile.insuranceInfo, groupNumber: e.target.value}
+                      ...profile,
+                      insuranceInfo: { ...profile.insuranceInfo, groupNumber: e.target.value }
                     })}
                     disabled={!isEditing}
                   />
                 </div>
               </div>
-              
+
               <div>
-                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Label htmlFor="expiryDate">Ngày hết hạn</Label>
                 <Input
                   id="expiryDate"
                   type="date"
                   value={profile.insuranceInfo.expiryDate}
                   onChange={(e) => setProfile({
-                    ...profile, 
-                    insuranceInfo: {...profile.insuranceInfo, expiryDate: e.target.value}
+                    ...profile,
+                    insuranceInfo: { ...profile.insuranceInfo, expiryDate: e.target.value }
                   })}
                   disabled={!isEditing}
                 />
@@ -293,42 +293,42 @@ export default function UserProfile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FontAwesomeIcon icon={faHeart} className="mr-2 h-5 w-5" />
-                Medical History
+                Lịch sử y tế
               </CardTitle>
               <CardDescription>
-                Your health information
+                Thông tin sức khỏe của bạn
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">Allergies</h4>
+                <h4 className="font-medium mb-2">Dị ứng</h4>
                 <div className="flex flex-wrap gap-2">
                   {profile.medicalHistory.allergies.map((allergy, index) => (
                     <Badge key={index} variant="destructive">{allergy}</Badge>
                   ))}
                 </div>
               </div>
-              
+
               <div>
-                <h4 className="font-medium mb-2">Current Medications</h4>
+                <h4 className="font-medium mb-2">Thuốc đang dùng</h4>
                 <div className="space-y-1">
                   {profile.medicalHistory.medications.map((medication, index) => (
                     <p key={index} className="text-sm text-muted-foreground">{medication}</p>
                   ))}
                 </div>
               </div>
-              
+
               <div>
-                <h4 className="font-medium mb-2">Medical Conditions</h4>
+                <h4 className="font-medium mb-2">Bệnh lý</h4>
                 <div className="flex flex-wrap gap-2">
                   {profile.medicalHistory.conditions.map((condition, index) => (
                     <Badge key={index} variant="secondary">{condition}</Badge>
                   ))}
                 </div>
               </div>
-              
+
               <div>
-                <h4 className="font-medium mb-2">Previous Surgeries</h4>
+                <h4 className="font-medium mb-2">Phẫu thuật trước đây</h4>
                 <div className="space-y-1">
                   {profile.medicalHistory.previousSurgeries.map((surgery, index) => (
                     <p key={index} className="text-sm text-muted-foreground">{surgery}</p>
@@ -346,16 +346,16 @@ export default function UserProfile() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Account Status</span>
-                  <Badge variant="default">Active</Badge>
+                  <span className="text-sm">Trạng thái tài khoản</span>
+                  <Badge variant="default">Hoạt động</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Member Since</span>
-                  <span className="text-sm text-muted-foreground">Jan 2020</span>
+                  <span className="text-sm">Thành viên từ</span>
+                  <span className="text-sm text-muted-foreground">Tháng 1/2020</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Last Login</span>
-                  <span className="text-sm text-muted-foreground">Today</span>
+                  <span className="text-sm">Đăng nhập lần cuối</span>
+                  <span className="text-sm text-muted-foreground">Hôm nay</span>
                 </div>
               </div>
             </CardContent>

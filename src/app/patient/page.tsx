@@ -139,7 +139,7 @@ export default function PatientDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Notifications</p>
+                <p className="text-sm font-medium text-muted-foreground">Thông báo</p>
                 <p className="text-2xl font-bold">3</p>
               </div>
               <FontAwesomeIcon icon={faBell} className="h-8 w-8 text-primary" />
@@ -186,7 +186,7 @@ export default function PatientDashboard() {
               ))}
             </div>
             <Button className="w-full mt-4" variant="outline">
-              View All Appointments
+              Xem tất cả lịch hẹn
             </Button>
           </CardContent>
         </Card>
@@ -217,12 +217,12 @@ export default function PatientDashboard() {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline">Completed</Badge>
+                  <Badge variant="outline">Hoàn thành</Badge>
                 </div>
               ))}
             </div>
             <Button className="w-full mt-4" variant="outline">
-              View All Records
+              Xem tất cả hồ sơ
             </Button>
           </CardContent>
         </Card>
@@ -244,9 +244,9 @@ export default function PatientDashboard() {
             {notifications.map((notification) => (
               <div key={notification.id} className="flex items-start space-x-3 p-4 border rounded-lg">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <FontAwesomeIcon 
-                    icon={notification.type === 'reminder' ? faClock : faExclamationTriangle} 
-                    className="h-4 w-4 text-blue-600" 
+                  <FontAwesomeIcon
+                    icon={notification.type === 'reminder' ? faClock : faExclamationTriangle}
+                    className="h-4 w-4 text-blue-600"
                   />
                 </div>
                 <div className="flex-1">
@@ -262,7 +262,7 @@ export default function PatientDashboard() {
             ))}
           </div>
           <Button className="w-full mt-4" variant="outline">
-            View All Notifications
+            Xem tất cả thông báo
           </Button>
         </CardContent>
       </Card>
