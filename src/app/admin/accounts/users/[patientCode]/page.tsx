@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,14 @@ import {
   Edit,
   Users,
   Trash2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Patient, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
 import { toast } from 'sonner';
+
+// Lazy load PatientImageManager để tối ưu performance - chỉ load khi cần
+const PatientImageManager = lazy(() => import('@/components/clinical-records/PatientImageManager'));
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -473,6 +477,35 @@ export default function PatientDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Patient Images - Lazy loaded để tối ưu performance */}
+      {patient.patientId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-blue-600" />
+              Hình Ảnh Bệnh Nhân
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <span className="ml-2 text-sm text-gray-500">
+                    Đang tải quản lý hình ảnh...
+                  </span>
+                </div>
+              }
+            >
+              <PatientImageManager
+                patientId={patient.patientId}
+                showFilters={true}
+              />
+            </Suspense>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
