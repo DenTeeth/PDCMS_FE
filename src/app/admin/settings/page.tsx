@@ -198,7 +198,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="sms-notifications">Thông báo qua SMS</Label>
-                <p className="text-sm text-gray-500">Nhận thông báo qua SMS</p>
+                <p className="text-sm text-gray-500">Receive notifications via SMS</p>
               </div>
               <input
                 id="sms-notifications"
@@ -213,8 +213,8 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="push-notifications">Thông báo</Label>
-                <p className="text-sm text-gray-500">Nhận thông báo trên trình duyệt</p>
+                <Label htmlFor="push-notifications">Push Notifications</Label>
+                <p className="text-sm text-gray-500">Receive browser notifications</p>
               </div>
               <input
                 id="push-notifications"
@@ -236,18 +236,18 @@ export default function SettingsPage() {
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Bảo mật
+              Security
             </CardTitle>
             <CardDescription>
-              Cấu hình các tùy chọn bảo mật
+              Configure security options
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="two-factor">Xác thực hai yếu tố</Label>
-                <p className="text-sm text-gray-500">Bảo vệ tài khoản với 2FA</p>
+                <Label htmlFor="two-factor">Two-Factor Authentication</Label>
+                <p className="text-sm text-gray-500">Secure account with 2FA</p>
               </div>
               <input
                 id="two-factor"
@@ -261,7 +261,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="session-timeout">Thời gian chờ phiên (phút)</Label>
+              <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
               <Input
                 id="session-timeout"
                 type="number"
@@ -274,7 +274,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="password-policy">Chính sách mật khẩu</Label>
+              <Label htmlFor="password-policy">Password Policy</Label>
               <select
                 id="password-policy"
                 value={settings.security.passwordPolicy}
@@ -284,9 +284,9 @@ export default function SettingsPage() {
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="weak">Yếu</option>
-                <option value="medium">Trung bình</option>
-                <option value="strong">Mạnh</option>
+                <option value="weak">Weak</option>
+                <option value="medium">Medium</option>
+                <option value="strong">Strong</option>
               </select>
             </div>
           </div>
@@ -297,7 +297,7 @@ export default function SettingsPage() {
       <div className="flex justify-end">
         <Button onClick={handleSave} className="flex items-center gap-2">
           <Save className="h-4 w-4" />
-          Lưu cài đặt
+          Save Settings
         </Button>
       </div>
     </div>

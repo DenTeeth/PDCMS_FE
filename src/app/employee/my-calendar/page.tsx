@@ -218,10 +218,12 @@ export default function MyCalendarPage() {
                 // This is a workaround - ideally backend should filter by employeeCode
                 return (response.content || []).filter((apt) => {
                   // Check if employee is doctor (primary employee)
-                  const isDoctor = apt.doctor?.employeeId === String(currentEmployeeId);
+                  const currentEmployeeCode = employeeInfo?.employeeCode || String(currentEmployeeId);
+                  // Check if employee is doctor (primary employee)
+                  const isDoctor = apt.doctor?.employeeCode === currentEmployeeCode;
                   // Check if employee is participant
                   const isParticipant = apt.participants?.some(
-                    (p) => p.employeeId === String(currentEmployeeId)
+                    (p) => p.employeeCode === currentEmployeeCode
                   );
                   return isDoctor || isParticipant;
                 });
@@ -545,6 +547,7 @@ export default function MyCalendarPage() {
                 }
               }}
               className="my-calendar"
+              {...({} as any)}
             />
 
             {/* Custom CSS for shift and appointment events */}

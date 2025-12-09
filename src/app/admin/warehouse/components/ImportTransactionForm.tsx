@@ -54,8 +54,7 @@ import itemUnitService from '@/services/itemUnitService';
 
 const importItemSchema = z.object({
   itemMasterId: z.number({
-    required_error: 'Vui lòng chọn vật tư',
-    invalid_type_error: 'Vui lòng chọn vật tư',
+    message: 'Vui lòng chọn vật tư',
   })
     .int('ID vật tư phải là số nguyên')
     .positive('Vui lòng chọn vật tư'),
@@ -71,21 +70,18 @@ const importItemSchema = z.object({
     { message: 'Hạn sử dụng phải sau ngày hiện tại' }
   ),
   quantity: z.number({
-    required_error: 'Số lượng là bắt buộc',
-    invalid_type_error: 'Số lượng phải là số',
+    message: 'Số lượng phải là số',
   })
     .int('Số lượng phải là số nguyên')
     .positive('Số lượng phải lớn hơn 0')
     .max(1000000, 'Số lượng không được vượt quá 1,000,000'),
   unitId: z.number({
-    required_error: 'Vui lòng chọn đơn vị',
-    invalid_type_error: 'Vui lòng chọn đơn vị',
+    message: 'Vui lòng chọn đơn vị',
   })
     .int('ID đơn vị phải là số nguyên')
     .positive('Vui lòng chọn đơn vị (hệ thống đang tải đơn vị cơ sở...)'),
   purchasePrice: z.number({
-    required_error: 'Đơn giá là bắt buộc',
-    invalid_type_error: 'Đơn giá phải là số',
+    message: 'Đơn giá phải là số',
   })
     .positive('Đơn giá phải lớn hơn 0')
     .min(0.01, 'Đơn giá phải >= 0.01 VNĐ')

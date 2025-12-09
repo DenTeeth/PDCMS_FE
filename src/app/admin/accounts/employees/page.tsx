@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
@@ -633,22 +634,22 @@ export default function EmployeesPage() {
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nhân viên
+                        Employee
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Vai trò
+                        Role
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loại
+                        Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Liên hệ
+                        Contact
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trạng thái
+                        Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hành động
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -1198,22 +1199,17 @@ export default function EmployeesPage() {
 
                   {/* Role Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="edit-role">Thay đổi vai trò</Label>
-                    <Select
+                    <Label htmlFor="edit-role">Change Role</Label>
+                    <CustomSelect
+                      options={roles.map((role) => ({
+                        value: role.roleId,
+                        label: role.roleName,
+                        description: role.description,
+                      }))}
                       value={editFormData.roleId}
-                      onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
-                    >
-                      <SelectTrigger id="edit-role">
-                        <SelectValue placeholder="Chọn một vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.roleId} value={role.roleId}>
-                            {role.roleName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(value: string) => setEditFormData({ ...editFormData, roleId: value })}
+                      placeholder="Select a role"
+                    />
                     <p className="text-sm text-muted-foreground">
                       Cập nhật vai trò nhân viên nếu cần
                     </p>

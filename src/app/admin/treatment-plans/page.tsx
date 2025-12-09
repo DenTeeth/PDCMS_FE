@@ -111,11 +111,63 @@ export default function AdminTreatmentPlansPage() {
       });
 
         if (!abortController.signal.aborted && isMounted) {
+          // FE Workaround: Apply calculated statuses from sessionStorage (from detail page)
+          // This fixes Issue #47: Plans with all phases completed but BE status is null
+          let plansWithCalculatedStatus = [...pageResponse.content];
+          try {
+            const calculatedStatuses = JSON.parse(
+              sessionStorage.getItem('treatmentPlanCalculatedStatuses') || '{}'
+            );
+            
+            if (Object.keys(calculatedStatuses).length > 0) {
+              // Clean up: Remove calculated statuses for plans that now have BE status
+              const cleanedStatuses: Record<string, TreatmentPlanStatus> = {};
+              
+              plansWithCalculatedStatus = pageResponse.content.map((plan) => {
+                // Only override if BE status is null and we have calculated status
+                if (plan.status === null && calculatedStatuses[plan.planCode]) {
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(
+                      `[TREATMENT PLANS LIST] Applying calculated status ${calculatedStatuses[plan.planCode]} ` +
+                      `for plan ${plan.planCode} (BE status was null)`
+                    );
+                  }
+                  // Keep this calculated status (plan still has null from BE)
+                  cleanedStatuses[plan.planCode] = calculatedStatuses[plan.planCode];
+                  return {
+                    ...plan,
+                    status: calculatedStatuses[plan.planCode] as TreatmentPlanStatus,
+                  };
+                } else if (plan.status !== null && calculatedStatuses[plan.planCode]) {
+                  // BE now has status - remove from calculated statuses (no longer needed)
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(
+                      `[TREATMENT PLANS LIST] Removing calculated status for plan ${plan.planCode} ` +
+                      `(BE now has status: ${plan.status})`
+                    );
+                  }
+                  // Don't add to cleanedStatuses (remove it)
+                }
+                return plan;
+              });
+              
+              // Update sessionStorage with cleaned statuses (only plans that still need it)
+              if (Object.keys(cleanedStatuses).length !== Object.keys(calculatedStatuses).length) {
+                sessionStorage.setItem(
+                  'treatmentPlanCalculatedStatuses',
+                  JSON.stringify(cleanedStatuses)
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Failed to read calculated statuses from sessionStorage:', error);
+          }
+
           // Debug: Log status for each plan to verify BE response
           if (process.env.NODE_ENV === 'development') {
             console.log(' [TREATMENT PLANS LIST] Loaded plans:', {
-              count: pageResponse.content.length,
-              plans: pageResponse.content.map(p => ({
+              count: plansWithCalculatedStatus.length,
+              plans: plansWithCalculatedStatus.map(p => ({
                 planCode: p.planCode,
                 planName: p.planName,
                 status: p.status,
@@ -124,7 +176,7 @@ export default function AdminTreatmentPlansPage() {
             });
           }
 
-          setPlans(pageResponse.content);
+          setPlans(plansWithCalculatedStatus);
           setTotalPages(pageResponse.totalPages);
         }
     } catch (error: any) {

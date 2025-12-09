@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import inventoryService from '@/services/inventoryService';
+import type { BatchResponse } from '@/types/warehouse';
 import type {
   CreateExportTransactionDto,
   ExportType,
-  BatchResponse,
 } from '@/types/warehouse';
 import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, TruckIcon, AlertCircle } from 'lucide-react';

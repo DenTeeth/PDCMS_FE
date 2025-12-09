@@ -29,6 +29,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -68,6 +76,7 @@ import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppo
 import DelayAppointmentModal from '@/components/appointments/DelayAppointmentModal';
 import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
 import ClinicalRecordForm from '@/components/clinical-records/ClinicalRecordForm';
+import PatientImageFolderView from '@/components/clinical-records/PatientImageFolderView';
 import {
   ArrowLeft,
   Calendar,
@@ -586,7 +595,7 @@ export default function AdminAppointmentDetailPage() {
           backgroundColor: statusInfo.bg,
           borderColor: statusInfo.border,
           color: 'white',
-          padding: '0.5rem 1rem',
+          padding: '0.5rem 0.8rem',
         }}
         className="text-sm font-medium whitespace-nowrap"
       >
@@ -633,12 +642,20 @@ export default function AdminAppointmentDetailPage() {
       return;
     }
 
-    // Validate: Require reasonCode for CANCELLED status
-    if (selectedStatus === 'CANCELLED' && !statusUpdateReason) {
-      toast.error('Reason required', {
-        description: 'Please select a reason for cancellation',
-      });
-      return;
+    // Validate: Require reasonCode and notes for CANCELLED status
+    if (selectedStatus === 'CANCELLED') {
+      if (!statusUpdateReason) {
+        toast.error('Lý do hủy bắt buộc', {
+          description: 'Vui lòng chọn lý do hủy lịch hẹn',
+        });
+        return;
+      }
+      if (!statusUpdateNotes || !statusUpdateNotes.trim()) {
+        toast.error('Ghi chú bắt buộc', {
+          description: 'Vui lòng nhập ghi chú về lý do hủy',
+        });
+        return;
+      }
     }
 
     try {
@@ -850,13 +867,7 @@ export default function AdminAppointmentDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* FIX: Add key to force re-render when status changes */}
-            {appointment && (
-              <div key={`status-${appointment.status}-${appointment.appointmentCode}`}>
-                {getStatusBadge(appointment.status)}
-              </div>
-            )}
-            {renderActionMenu()}
+            {/* Actions menu removed - status change is now integrated in the Appointment Information card */}
           </div>
         </div>
 
@@ -895,125 +906,208 @@ export default function AdminAppointmentDetailPage() {
           </TabsList>
 
           {/* Appointment Details Tab */}
-          <TabsContent value="details" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Appointment Info */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Appointment Information
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Appointment Code</label>
-                    <p className="text-base font-semibold">{appointment.appointmentCode}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    {/* FIX: Add key to force re-render when status changes */}
-                    <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Start Time
-                    </label>
-                    <p className="text-base">{formatDateTime(appointment.appointmentStartTime)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">End Time</label>
-                    <p className="text-base">{formatDateTime(appointment.appointmentEndTime)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Expected Duration</label>
-                    <p className="text-base">{appointment.expectedDurationMinutes} minutes</p>
-                  </div>
-                  {appointment.actualStartTime && (
+          <TabsContent value="details">
+            <section className="bg-card rounded-lg border p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b">
+                {/* Appointment Info */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Appointment Information
+                  </h3>
+                  <div className="space-y-4">
+                  {/* Appointment Code và Status cùng dòng */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Actual Start Time</label>
-                      <p className="text-base">{formatDateTime(appointment.actualStartTime)}</p>
+                      <label className="text-sm font-medium text-muted-foreground">Appointment Code</label>
+                      <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
                     </div>
-                  )}
-                  {appointment.actualEndTime && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Actual End Time</label>
-                      <p className="text-base">{formatDateTime(appointment.actualEndTime)}</p>
+                      <label className="text-sm font-medium text-muted-foreground">Status</label>
+                      <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1 flex items-center">
+                        {canUpdateStatus && getValidNextStatuses(appointment.status).length > 0 ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="cursor-pointer hover:opacity-80 transition-opacity">
+                                {getStatusBadge(appointment.status)}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" className="w-56 p-2">
+                              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                Thay đổi trạng thái
+                              </p>
+                              <div className="space-y-1">
+                                {getValidNextStatuses(appointment.status).map((status) => {
+                                  const color = APPOINTMENT_STATUS_COLORS[status];
+                                  return (
+                                    <Button
+                                      key={status}
+                                      variant="ghost"
+                                      className="w-full justify-start gap-2 text-sm h-auto py-2"
+                                      onClick={() => {
+                                        setSelectedStatus(status);
+                                        // Reset form fields
+                                        setStatusUpdateReason('');
+                                        setStatusUpdateNotes('');
+                                        // Show modal
+                                        setShowStatusModal(true);
+                                      }}
+                                    >
+                                      <div
+                                        className="w-3 h-3 rounded-sm shrink-0"
+                                        style={{ backgroundColor: color.bg, borderColor: color.border, borderWidth: 1 }}
+                                      />
+                                      <span>{color.text}</span>
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          getStatusBadge(appointment.status)
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Expected Duration và Created At cùng dòng */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Expected Duration</label>
+                      <p className="text-base mt-1">{appointment.expectedDurationMinutes} minutes</p>
+                    </div>
+                    {appointment.createdAt && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Created At</label>
+                        <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Start Time và End Time cùng dòng */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Start Time
+                      </label>
+                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
+                      {appointment.actualStartTime && (
+                        <>
+                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Actual Start Time</label>
+                          <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
+                        </>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">End Time</label>
+                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
+                      {appointment.actualEndTime && (
+                        <>
+                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Actual End Time</label>
+                          <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes để riêng vì có thể dài */}
                   {appointment.notes && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                      <p className="text-base">{appointment.notes}</p>
+                      <p className="text-base mt-1">{appointment.notes}</p>
                     </div>
                   )}
-                  {appointment.createdAt && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Created At</label>
-                      <p className="text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </Card>
 
-              {/* Doctor & Room Info */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <UserCog className="h-5 w-5" />
-                  Doctor & Room
-                </h3>
-                <div className="space-y-4">
-                  {appointment.doctor ? (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Doctor</label>
-                      <div className="mt-1">
-                        <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
-                        <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
+                {/* Doctor & Room Info */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <UserCog className="h-5 w-5" />
+                    Doctor & Room
+                  </h3>
+                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {appointment.doctor ? (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Doctor</label>
+                        <div className="mt-1">
+                          <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
+                          <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Doctor</label>
+                        <p className="text-base text-muted-foreground mt-1">N/A</p>
+                      </div>
+                    )}
+                    {appointment.room ? (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          Room
+                        </label>
+                        <div className="mt-1">
+                          <p className="text-base font-semibold">{appointment.room.roomName}</p>
+                          <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Room</label>
+                        <p className="text-base text-muted-foreground mt-1">N/A</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Participants */}
+                  {appointment.participants && appointment.participants.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <label className="text-sm font-medium text-muted-foreground mb-3 block">Participants</label>
+                      <div className="space-y-1.5">
+                        {appointment.participants.map((participant, index) => (
+                          <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{participant.fullName}</p>
+                                <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
+                              </div>
+                              <Badge variant="secondary" className="text-xs shrink-0">{participant.role}</Badge>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ) : (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Doctor</label>
-                      <p className="text-base text-muted-foreground">N/A</p>
-                    </div>
                   )}
-                  {appointment.room ? (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Room
-                      </label>
-                      <div className="mt-1">
-                        <p className="text-base font-semibold">{appointment.room.roomName}</p>
-                        <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Room</label>
-                      <p className="text-base text-muted-foreground">N/A</p>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </Card>
+              </div>
 
-              {/* Services */}
-              <Card
-                className={cn(
-                  'p-6 md:col-span-2',
-                  appointment.services.length === 0 && 'border-dashed bg-muted/30',
-                )}
-              >
+              {/* Services Table */}
+              <div>
                 <h3 className="text-lg font-semibold mb-4">Services</h3>
                 {appointment.services.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {appointment.services.map((service) => (
-                      <Badge key={service.serviceCode} variant="outline" className="text-sm p-2">
-                        {service.serviceName} ({service.serviceCode})
-                      </Badge>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tên dịch vụ</TableHead>
+                        <TableHead>Mã dịch vụ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {appointment.services.map((service) => (
+                        <TableRow key={service.serviceCode}>
+                          <TableCell className="font-medium">{service.serviceName}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{service.serviceCode}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 ) : (
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>No services assigned</p>
@@ -1022,79 +1116,72 @@ export default function AdminAppointmentDetailPage() {
                     </p>
                   </div>
                 )}
-              </Card>
-
-              {/* Participants */}
-              {appointment.participants && appointment.participants.length > 0 && (
-                <Card className="p-6 md:col-span-2">
-                  <h3 className="text-lg font-semibold mb-4">Participants</h3>
-                  <div className="space-y-2">
-                    {appointment.participants.map((participant, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{participant.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{participant.employeeCode}</p>
-                        </div>
-                        <Badge variant="secondary">{participant.role}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </div>
+              </div>
+            </section>
           </TabsContent>
 
           {/* Patient Information Tab */}
-          <TabsContent value="patient" className="space-y-4">
+          <TabsContent value="patient">
             {appointment.patient ? (
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Patient Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Mã bệnh nhân</label>
-                    <p className="text-base font-semibold">{appointment.patient.patientCode}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                    <p className="text-base">{appointment.patient.fullName}</p>
-                  </div>
-                  {appointment.patient.phone && (
+              <section className="bg-card rounded-lg border p-6 space-y-6">
+                <div className="pb-6 border-b">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Patient Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                      <p className="text-base">{appointment.patient.phone}</p>
+                      <label className="text-sm font-medium text-muted-foreground">Mã bệnh nhân</label>
+                      <p className="text-base font-semibold">{appointment.patient.patientCode}</p>
                     </div>
-                  )}
-                  {appointment.patient.dateOfBirth && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
-                      <p className="text-base">{format(new Date(appointment.patient.dateOfBirth), 'dd MMM yyyy')}</p>
+                      <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                      <p className="text-base">{appointment.patient.fullName}</p>
                     </div>
-                  )}
+                    {appointment.patient.phone && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                        <p className="text-base">{appointment.patient.phone}</p>
+                      </div>
+                    )}
+                    {appointment.patient.dateOfBirth && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
+                        <p className="text-base">{format(new Date(appointment.patient.dateOfBirth), 'dd MMM yyyy')}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Card>
+
+                {/* Patient Images Folder View */}
+                {appointment.patient && (
+                  <div>
+                    <PatientImageFolderView
+                      patientCode={appointment.patient.patientCode}
+                    />
+                  </div>
+                )}
+              </section>
             ) : (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <p className="text-muted-foreground">Patient information not available</p>
-              </Card>
+              </section>
             )}
           </TabsContent>
 
           {/* Clinical Record Tab */}
-          <TabsContent value="clinical-record" className="space-y-4">
+          <TabsContent value="clinical-record">
             {loadingClinicalRecord ? (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <div className="flex items-center justify-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     <p className="text-muted-foreground">Đang tải bệnh án...</p>
                   </div>
                 </div>
-              </Card>
+              </section>
             ) : clinicalRecordError ? (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <div className="text-center py-12">
                   <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Lỗi khi tải bệnh án</h3>
@@ -1110,56 +1197,52 @@ export default function AdminAppointmentDetailPage() {
                     Thử lại
                   </Button>
                 </div>
-              </Card>
+              </section>
             ) : isEditingClinicalRecord || !clinicalRecord ? (
-              <div className="space-y-4">
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">
-                    {clinicalRecord ? 'Chỉnh sửa bệnh án' : 'Tạo bệnh án mới'}
-                  </h3>
-                  <ClinicalRecordForm
-                    appointmentId={appointment?.appointmentId || 0}
-                    patientId={clinicalRecord?.patient.patientId}
-                    existingRecord={clinicalRecord || undefined}
-                    onSuccess={(record) => {
-                      setClinicalRecord(record);
+              <section className="bg-card rounded-lg border p-6">
+                <h3 className="text-lg font-semibold mb-4">
+                  {clinicalRecord ? 'Chỉnh sửa bệnh án' : 'Tạo bệnh án mới'}
+                </h3>
+                <ClinicalRecordForm
+                  appointmentId={appointment?.appointmentId || 0}
+                  patientId={clinicalRecord?.patient.patientId}
+                  existingRecord={clinicalRecord || undefined}
+                  onSuccess={(record) => {
+                    setClinicalRecord(record);
+                    setIsEditingClinicalRecord(false);
+                  }}
+                  onCancel={() => {
+                    if (clinicalRecord) {
                       setIsEditingClinicalRecord(false);
-                    }}
-                    onCancel={() => {
-                      if (clinicalRecord) {
-                        setIsEditingClinicalRecord(false);
-                      } else {
-                        setActiveTab('details');
-                      }
-                    }}
-                    readOnly={!canWriteClinicalRecord}
-                  />
-                </Card>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <ClinicalRecordView
-                  record={clinicalRecord}
-                  onEdit={() => setIsEditingClinicalRecord(true)}
-                  canEdit={canWriteClinicalRecord}
+                    } else {
+                      setActiveTab('details');
+                    }
+                  }}
+                  readOnly={!canWriteClinicalRecord}
                 />
-              </div>
+              </section>
+            ) : (
+              <ClinicalRecordView
+                record={clinicalRecord}
+                onEdit={() => setIsEditingClinicalRecord(true)}
+                canEdit={canWriteClinicalRecord}
+              />
             )}
           </TabsContent>
 
           {/* Treatment Plan Tab */}
-          <TabsContent value="treatment-plan" className="space-y-4">
+          <TabsContent value="treatment-plan">
             {loadingTreatmentPlan ? (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <div className="flex items-center justify-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     <p className="text-muted-foreground">Đang tải lộ trình điều trị...</p>
                   </div>
                 </div>
-              </Card>
+              </section>
             ) : treatmentPlanError ? (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <div className="text-center py-12">
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Không tìm thấy lộ trình điều trị</h3>
@@ -1175,11 +1258,11 @@ export default function AdminAppointmentDetailPage() {
                     Thử lại
                   </Button>
                 </div>
-              </Card>
+              </section>
             ) : treatmentPlan ? (
-              <div className="space-y-4">
+              <section className="bg-card rounded-lg border p-6 space-y-6">
                 {/* Plan Header */}
-                <Card className="p-6">
+                <div className="pb-6 border-b">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-xl font-bold mb-2">{treatmentPlan.planName}</h3>
@@ -1204,7 +1287,7 @@ export default function AdminAppointmentDetailPage() {
                       Xem chi tiết
                     </Button>
                   </div>
-                </Card>
+                </div>
 
                 {/* Timeline */}
                 <TreatmentPlanTimeline
@@ -1213,9 +1296,9 @@ export default function AdminAppointmentDetailPage() {
                     router.push(`/admin/booking/appointments/${appointmentCode}`);
                   }}
                 />
-              </div>
+              </section>
             ) : (
-              <Card className="p-6">
+              <section className="bg-card rounded-lg border p-6">
                 <div className="text-center py-12">
                   <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Treatment Plan</h3>
@@ -1223,7 +1306,7 @@ export default function AdminAppointmentDetailPage() {
                     Lịch hẹn này chưa được liên kết với lộ trình điều trị nào.
                   </p>
                 </div>
-              </Card>
+              </section>
             )}
           </TabsContent>
         </Tabs>
@@ -1243,51 +1326,23 @@ export default function AdminAppointmentDetailPage() {
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Update Appointment Status</DialogTitle>
-              <DialogDescription>
-                Current status: <span className="font-semibold">{APPOINTMENT_STATUS_COLORS[appointment.status].text}</span>
-              </DialogDescription>
+              <DialogTitle>
+                {selectedStatus === 'CANCELLED' ? 'Hủy Lịch Hẹn' : 'Cập Nhật Trạng Thái'}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              {/* Status Selection - Only show valid next statuses */}
-              <div>
-                <Label>New Status <span className="text-red-500">*</span></Label>
-                <div className="mt-2 space-y-2">
-                  {appointment && getValidNextStatuses(appointment.status).map((status) => {
-                    const color = APPOINTMENT_STATUS_COLORS[status];
-                    return (
-                      <Button
-                        key={status}
-                        variant={selectedStatus === status ? 'default' : 'outline'}
-                        className="w-full justify-start"
-                        onClick={() => setSelectedStatus(status)}
-                      >
-                        <div
-                          className="w-4 h-4 rounded mr-2"
-                          style={{ backgroundColor: color.bg, borderColor: color.border, borderWidth: 1 }}
-                        />
-                        {color.text}
-                      </Button>
-                    );
-                  })}
-                  {appointment && getValidNextStatuses(appointment.status).length === 0 && (
-                    <p className="text-sm text-muted-foreground py-2">
-                      No valid status transitions available. This appointment is in a terminal state.
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {/* Reason Code - Required for CANCELLED */}
               {selectedStatus === 'CANCELLED' && (
                 <div>
-                  <Label htmlFor="reasonCode">Lý do <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="reasonCode">
+                    Lý do hủy <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={statusUpdateReason || ''}
                     onValueChange={(value) => setStatusUpdateReason(value as AppointmentReasonCode)}
                   >
                     <SelectTrigger id="reasonCode" className="mt-1">
-                      <SelectValue placeholder="Chọn lý do" />
+                      <SelectValue placeholder="Chọn lý do hủy" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
@@ -1297,20 +1352,30 @@ export default function AdminAppointmentDetailPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Vui lòng chọn lý do hủy lịch hẹn
+                  </p>
                 </div>
               )}
 
               {/* Notes */}
               <div>
-                <Label htmlFor="statusNotes">Notes (Optional)</Label>
+                <Label htmlFor="statusNotes">
+                  Ghi chú {selectedStatus === 'CANCELLED' ? '(Bắt buộc)' : '(Tùy chọn)'}
+                </Label>
                 <Textarea
                   id="statusNotes"
                   value={statusUpdateNotes}
                   onChange={(e) => setStatusUpdateNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder={selectedStatus === 'CANCELLED' ? 'Nhập ghi chú về lý do hủy...' : 'Thêm ghi chú (nếu có)...'}
                   className="mt-1"
-                  rows={3}
+                  rows={selectedStatus === 'CANCELLED' ? 4 : 3}
                 />
+                {selectedStatus === 'CANCELLED' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Vui lòng cung cấp thông tin chi tiết về lý do hủy
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -1322,8 +1387,9 @@ export default function AdminAppointmentDetailPage() {
                   setStatusUpdateReason('');
                   setStatusUpdateNotes('');
                 }}
+                disabled={updating}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleStatusUpdate}
@@ -1331,19 +1397,20 @@ export default function AdminAppointmentDetailPage() {
                   updating ||
                   !selectedStatus ||
                   selectedStatus === appointment.status ||
-                  (selectedStatus === 'CANCELLED' && !statusUpdateReason) ||
+                  (selectedStatus === 'CANCELLED' && (!statusUpdateReason || !statusUpdateNotes.trim())) ||
                   (selectedStatus && !getValidNextStatuses(appointment.status).includes(selectedStatus))
                 }
+                variant={selectedStatus === 'CANCELLED' ? 'destructive' : 'default'}
               >
                 {updating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Updating...
+                    Đang cập nhật...
                   </>
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Update Status
+                    {selectedStatus === 'CANCELLED' ? 'Xác nhận hủy' : 'Cập nhật trạng thái'}
                   </>
                 )}
               </Button>

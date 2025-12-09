@@ -139,7 +139,7 @@ export default function IncomeExpenseCharts({
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={({ category, percentage }) => `${category}: ${percentage}%`}
+                                    label={({ category, percentage }: any) => `${category}: ${percentage}%`}
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="amount"

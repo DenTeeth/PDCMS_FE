@@ -223,7 +223,7 @@ export default function EmployeeDetailPage() {
           <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
           <p className="text-gray-600">Employee not found</p>
           <Button onClick={() => router.push('/admin/accounts/employees')} className="mt-4">
-            Trở lại trang nhân viên
+            Back to Employees
           </Button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default function EmployeeDetailPage() {
             onClick={() => router.push('/admin/accounts/employees')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay về
+            Back
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Chi tiết nhân viên</h1>
@@ -251,7 +251,7 @@ export default function EmployeeDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={openEditModal}>
             <Edit className="h-4 w-4 mr-2" />
-            Chỉnh sửa
+            Edit
           </Button>
           <Button
             variant="destructive"
@@ -259,7 +259,7 @@ export default function EmployeeDetailPage() {
             disabled={deleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Xóa
+            Delete
           </Button>
         </div>
       </div>
@@ -296,12 +296,12 @@ export default function EmployeeDetailPage() {
               {employee.isActive ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Hoạt động
+                  Active
                 </>
               ) : (
                 <>
                   <XCircle className="h-4 w-4 mr-2" />
-                  Không hoạt động
+                  Inactive
                 </>
               )}
             </Badge>
@@ -480,7 +480,7 @@ export default function EmployeeDetailPage() {
                     : 'bg-red-100 text-red-700'
                 }
               >
-                {employee.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                {employee.isActive ? 'Active' : 'Inactive'}
               </Badge>
             </div>
           </CardContent>
@@ -492,17 +492,17 @@ export default function EmployeeDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-blue-600" />
-            Thông tin hệ thống
+            System Information
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label className="text-gray-600">ID Nhân viên</Label>
+              <Label className="text-gray-600">Employee ID</Label>
               <p className="font-medium text-sm break-all">{employee.employeeId}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Ngày tạo</Label>
+              <Label className="text-gray-600">Created At</Label>
               <p className="font-medium">
                 {employee.createdAt
                   ? new Date(employee.createdAt).toLocaleString('en-US')
@@ -510,7 +510,7 @@ export default function EmployeeDetailPage() {
               </p>
             </div>
             <div>
-              <Label className="text-gray-600">Cập nhật gần nhất</Label>
+              <Label className="text-gray-600">Last Updated</Label>
               <p className="font-medium">
                 {employee.updatedAt
                   ? new Date(employee.updatedAt).toLocaleString('en-US')
@@ -534,11 +534,11 @@ export default function EmployeeDetailPage() {
                 <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Code</p>
+                      <p className="text-sm text-muted-foreground">Employee Code</p>
                       <p className="font-semibold">{employee.employeeCode}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Vai trò gần nhất</p>
+                      <p className="text-sm text-muted-foreground">Current Role</p>
                       <Badge>{employee.roleName}</Badge>
                     </div>
                   </div>
@@ -573,28 +573,28 @@ export default function EmployeeDetailPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">Họ</Label>
+                      <Label htmlFor="edit-firstName">First Name</Label>
                       <Input
                         id="edit-firstName"
                         value={editFormData.firstName}
                         onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        placeholder="Nhập họ"
+                        placeholder="Nhập tên"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Tên</Label>
+                      <Label htmlFor="edit-lastName">Last Name</Label>
                       <Input
                         id="edit-lastName"
                         value={editFormData.lastName}
                         onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        placeholder="Nhập tên"
+                        placeholder="Nhập họ"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-phone">Số điện thoại</Label>
+                    <Label htmlFor="edit-phone">Phone</Label>
                     <Input
                       id="edit-phone"
                       value={editFormData.phone}
@@ -604,7 +604,7 @@ export default function EmployeeDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-dateOfBirth">Ngày sinh</Label>
+                    <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
                     <Input
                       id="edit-dateOfBirth"
                       type="date"
@@ -614,7 +614,7 @@ export default function EmployeeDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-address">Địa chỉ</Label>
+                    <Label htmlFor="edit-address">Address</Label>
                     <Input
                       id="edit-address"
                       value={editFormData.address}
@@ -749,7 +749,7 @@ export default function EmployeeDetailPage() {
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang cập nhật...
+                        Updating...
                       </>
                     ) : (
                       <>
@@ -772,22 +772,23 @@ export default function EmployeeDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Xóa nhân viên
+                Delete Employee
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 mb-4">
-                Bạn có chắc là muốn xóa nhân viên này không <strong>{employee.fullName}</strong> ({employee.employeeCode})?
+                Are you sure you want to delete employee <strong>{employee.fullName}</strong> ({employee.employeeCode})?
               </p>
               <p className="text-sm text-gray-600 mb-6">
-                  Thao tác này sẽ đặt trạng thái nhân viên thành không hoạt động. Bạn có thể hủy thao tác này sau.              </p>
+                This will set the employee status to inactive. This action can be reversed later.
+              </p>
               <div className="flex gap-3 justify-end">
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   variant="destructive"
@@ -797,12 +798,12 @@ export default function EmployeeDetailPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang xóa...
+                      Deleting...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Xóa
+                      Delete
                     </>
                   )}
                 </Button>

@@ -165,7 +165,7 @@ export default function EmployeeInventoryPage() {
       maxStockLevel: item.maxStockLevel,
       currentStock: item.totalQuantity,
       stockStatus: item.stockStatus,
-      isTool: item.isTool,
+      isTool: item.isTool ?? false,
     };
     setEditingItem(itemMaster);
     setIsCreateModalOpen(true);

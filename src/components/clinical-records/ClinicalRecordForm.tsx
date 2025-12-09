@@ -270,200 +270,207 @@ export default function ClinicalRecordForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Chief Complaint & Diagnosis - Required fields for create */}
-      {!isEditMode && (
-        <>
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Chief Complaint & Diagnosis - Required fields for create */}
+          {!isEditMode && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="chiefComplaint" className="text-sm font-semibold">
+                  Triệu Chứng Chính <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="chiefComplaint"
+                  {...register('chiefComplaint', {
+                    required: 'Vui lòng nhập triệu chứng chính',
+                    minLength: { value: 1, message: 'Triệu chứng chính phải có ít nhất 1 ký tự' },
+                    maxLength: { value: 1000, message: 'Triệu chứng chính không được vượt quá 1000 ký tự' },
+                  })}
+                  placeholder="Mô tả triệu chứng chính của bệnh nhân..."
+                  rows={3}
+                  disabled={!canEdit}
+                  className={errors.chiefComplaint ? 'border-destructive' : ''}
+                />
+                {errors.chiefComplaint && (
+                  <p className="text-sm text-destructive">{errors.chiefComplaint.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="diagnosis" className="text-sm font-semibold">
+                  Chẩn Đoán <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="diagnosis"
+                  {...register('diagnosis', {
+                    required: 'Vui lòng nhập chẩn đoán',
+                    minLength: { value: 1, message: 'Chẩn đoán phải có ít nhất 1 ký tự' },
+                    maxLength: { value: 500, message: 'Chẩn đoán không được vượt quá 500 ký tự' },
+                  })}
+                  placeholder="Nhập chẩn đoán..."
+                  rows={2}
+                  disabled={!canEdit}
+                  className={errors.diagnosis ? 'border-destructive' : ''}
+                />
+                {errors.diagnosis && (
+                  <p className="text-sm text-destructive">{errors.diagnosis.message}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Read-only display for edit mode */}
+          {isEditMode && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Triệu Chứng Chính</Label>
+                <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
+                  {existingRecord.chiefComplaint}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Chẩn Đoán</Label>
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
+                  {existingRecord.diagnosis}
+                </div>
+              </div>
+            </>
+          )}
+
+          <Separator />
+
+          {/* Examination Findings */}
           <div className="space-y-2">
-            <Label htmlFor="chiefComplaint" className="text-sm font-semibold">
-              Triệu Chứng Chính <span className="text-destructive">*</span>
+            <Label htmlFor="examinationFindings" className="text-sm font-semibold">
+              Kết Quả Khám <span className="text-destructive">*</span>
             </Label>
             <Textarea
-              id="chiefComplaint"
-              {...register('chiefComplaint', {
-                required: 'Vui lòng nhập triệu chứng chính',
-                minLength: { value: 1, message: 'Triệu chứng chính phải có ít nhất 1 ký tự' },
-                maxLength: { value: 1000, message: 'Triệu chứng chính không được vượt quá 1000 ký tự' },
+              id="examinationFindings"
+              {...register('examinationFindings', {
+                required: 'Vui lòng nhập kết quả khám',
+                minLength: { value: 1, message: 'Kết quả khám phải có ít nhất 1 ký tự' },
+                maxLength: { value: 2000, message: 'Kết quả khám không được vượt quá 2000 ký tự' },
               })}
-              placeholder="Mô tả triệu chứng chính của bệnh nhân..."
-              rows={3}
+              placeholder="Mô tả kết quả khám lâm sàng..."
+              rows={5}
               disabled={!canEdit}
-              className={errors.chiefComplaint ? 'border-destructive' : ''}
+              className={errors.examinationFindings ? 'border-destructive' : ''}
             />
-            {errors.chiefComplaint && (
-              <p className="text-sm text-destructive">{errors.chiefComplaint.message}</p>
+            {errors.examinationFindings && (
+              <p className="text-sm text-destructive">{errors.examinationFindings.message}</p>
             )}
           </div>
 
+          {/* Treatment Notes */}
           <div className="space-y-2">
-            <Label htmlFor="diagnosis" className="text-sm font-semibold">
-              Chẩn Đoán <span className="text-destructive">*</span>
+            <Label htmlFor="treatmentNotes" className="text-sm font-semibold">
+              Ghi Chú Điều Trị
             </Label>
             <Textarea
-              id="diagnosis"
-              {...register('diagnosis', {
-                required: 'Vui lòng nhập chẩn đoán',
-                minLength: { value: 1, message: 'Chẩn đoán phải có ít nhất 1 ký tự' },
-                maxLength: { value: 500, message: 'Chẩn đoán không được vượt quá 500 ký tự' },
+              id="treatmentNotes"
+              {...register('treatmentNotes', {
+                maxLength: { value: 2000, message: 'Ghi chú không được vượt quá 2000 ký tự' },
               })}
-              placeholder="Nhập chẩn đoán..."
-              rows={2}
+              placeholder="Ghi chú về quá trình điều trị..."
+              rows={4}
               disabled={!canEdit}
-              className={errors.diagnosis ? 'border-destructive' : ''}
+              className={errors.treatmentNotes ? 'border-destructive' : ''}
             />
-            {errors.diagnosis && (
-              <p className="text-sm text-destructive">{errors.diagnosis.message}</p>
+            {errors.treatmentNotes && (
+              <p className="text-sm text-destructive">{errors.treatmentNotes.message}</p>
             )}
           </div>
-        </>
-      )}
+        </div>
 
-      {/* Read-only display for edit mode */}
-      {isEditMode && (
-        <>
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Triệu Chứng Chính</Label>
-            <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
-              {existingRecord.chiefComplaint}
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Vital Signs */}
+          <div className="space-y-4">
+            <Label className="text-sm font-semibold">Dấu Hiệu Sinh Tồn</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bloodPressure" className="text-xs text-muted-foreground">
+                  Huyết Áp (mmHg)
+                </Label>
+                <Input
+                  id="bloodPressure"
+                  {...register('bloodPressure')}
+                  placeholder="120/80"
+                  disabled={!canEdit}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="heartRate" className="text-xs text-muted-foreground">
+                  Nhịp Tim (bpm)
+                </Label>
+                <Input
+                  id="heartRate"
+                  {...register('heartRate')}
+                  placeholder="72"
+                  type="number"
+                  disabled={!canEdit}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="temperature" className="text-xs text-muted-foreground">
+                  Nhiệt Độ (°C)
+                </Label>
+                <Input
+                  id="temperature"
+                  {...register('temperature')}
+                  placeholder="36.5"
+                  type="number"
+                  step="0.1"
+                  disabled={!canEdit}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="respiratoryRate" className="text-xs text-muted-foreground">
+                  Nhịp Thở (lần/phút)
+                </Label>
+                <Input
+                  id="respiratoryRate"
+                  {...register('respiratoryRate')}
+                  placeholder="16"
+                  type="number"
+                  disabled={!canEdit}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oxygenSaturation" className="text-xs text-muted-foreground">
+                  SpO2 (%)
+                </Label>
+                <Input
+                  id="oxygenSaturation"
+                  {...register('oxygenSaturation')}
+                  placeholder="98"
+                  type="number"
+                  disabled={!canEdit}
+                />
+              </div>
             </div>
           </div>
 
+          {/* Follow-up Date */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Chẩn Đoán</Label>
-            <div className="p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
-              {existingRecord.diagnosis}
-            </div>
-          </div>
-        </>
-      )}
-
-      <Separator />
-
-      {/* Examination Findings */}
-      <div className="space-y-2">
-        <Label htmlFor="examinationFindings" className="text-sm font-semibold">
-          Kết Quả Khám <span className="text-destructive">*</span>
-        </Label>
-        <Textarea
-          id="examinationFindings"
-          {...register('examinationFindings', {
-            required: 'Vui lòng nhập kết quả khám',
-            minLength: { value: 1, message: 'Kết quả khám phải có ít nhất 1 ký tự' },
-            maxLength: { value: 2000, message: 'Kết quả khám không được vượt quá 2000 ký tự' },
-          })}
-          placeholder="Mô tả kết quả khám lâm sàng..."
-          rows={5}
-          disabled={!canEdit}
-          className={errors.examinationFindings ? 'border-destructive' : ''}
-        />
-        {errors.examinationFindings && (
-          <p className="text-sm text-destructive">{errors.examinationFindings.message}</p>
-        )}
-      </div>
-
-      {/* Treatment Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="treatmentNotes" className="text-sm font-semibold">
-          Ghi Chú Điều Trị
-        </Label>
-        <Textarea
-          id="treatmentNotes"
-          {...register('treatmentNotes', {
-            maxLength: { value: 2000, message: 'Ghi chú không được vượt quá 2000 ký tự' },
-          })}
-          placeholder="Ghi chú về quá trình điều trị..."
-          rows={4}
-          disabled={!canEdit}
-          className={errors.treatmentNotes ? 'border-destructive' : ''}
-        />
-        {errors.treatmentNotes && (
-          <p className="text-sm text-destructive">{errors.treatmentNotes.message}</p>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Vital Signs */}
-      <div className="space-y-4">
-        <Label className="text-sm font-semibold">Dấu Hiệu Sinh Tồn</Label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="bloodPressure" className="text-xs text-muted-foreground">
-              Huyết Áp (mmHg)
+            <Label htmlFor="followUpDate" className="text-sm font-semibold">
+              Ngày Tái Khám
             </Label>
             <Input
-              id="bloodPressure"
-              {...register('bloodPressure')}
-              placeholder="120/80"
-              disabled={!canEdit}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="heartRate" className="text-xs text-muted-foreground">
-              Nhịp Tim (bpm)
-            </Label>
-            <Input
-              id="heartRate"
-              {...register('heartRate')}
-              placeholder="72"
-              type="number"
-              disabled={!canEdit}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="temperature" className="text-xs text-muted-foreground">
-              Nhiệt Độ (°C)
-            </Label>
-            <Input
-              id="temperature"
-              {...register('temperature')}
-              placeholder="36.5"
-              type="number"
-              step="0.1"
-              disabled={!canEdit}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="respiratoryRate" className="text-xs text-muted-foreground">
-              Nhịp Thở (lần/phút)
-            </Label>
-            <Input
-              id="respiratoryRate"
-              {...register('respiratoryRate')}
-              placeholder="16"
-              type="number"
-              disabled={!canEdit}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="oxygenSaturation" className="text-xs text-muted-foreground">
-              SpO2 (%)
-            </Label>
-            <Input
-              id="oxygenSaturation"
-              {...register('oxygenSaturation')}
-              placeholder="98"
-              type="number"
+              id="followUpDate"
+              type="date"
+              {...register('followUpDate')}
               disabled={!canEdit}
             />
           </div>
         </div>
-      </div>
-
-      {/* Follow-up Date */}
-      <div className="space-y-2">
-        <Label htmlFor="followUpDate" className="text-sm font-semibold">
-          Ngày Tái Khám
-        </Label>
-        <Input
-          id="followUpDate"
-          type="date"
-          {...register('followUpDate')}
-          disabled={!canEdit}
-        />
       </div>
 
       <Separator />

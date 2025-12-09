@@ -460,7 +460,7 @@ export default function RegistrationsPage() {
               className="flex items-center gap-2"
             >
               <RotateCcw className="h-4 w-4" />
-              Tải lại
+              Refresh
             </Button>
           </div>
         </div>
@@ -517,7 +517,7 @@ export default function RegistrationsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Ca bán thời gian ({partTimeSlots.length})
+                    Part-Time Slots ({partTimeSlots.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1205,7 +1205,7 @@ export default function RegistrationsPage() {
                     setFixedDetailsRegistration(null);
                   }}
                 >
-                  Đóng  
+                  Đóng
                 </Button>
               </div>
             </div>
