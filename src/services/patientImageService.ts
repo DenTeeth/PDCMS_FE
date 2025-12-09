@@ -217,6 +217,7 @@ class PatientImageService {
 
   /**
    * Lấy danh sách hình ảnh theo clinical record
+   * BE Endpoint: GET /api/v1/patient-images/clinical-record/{clinicalRecordId}
    */
   async getImagesByClinicalRecord(
     clinicalRecordId: number
@@ -228,6 +229,33 @@ class PatientImageService {
       return response.data;
     } catch (error: any) {
       console.error("Error fetching images by clinical record:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch images"
+      );
+    }
+  }
+
+  /**
+   * Lấy danh sách hình ảnh theo appointment
+   * BE Endpoint: GET /api/v1/patient-images/appointment/{appointmentId}
+   */
+  async getImagesByAppointment(
+    appointmentId: number
+  ): Promise<PatientImageResponse[]> {
+    try {
+      const response = await api.get<PatientImageResponse[]>(
+        `${this.BASE_URL}/appointment/${appointmentId}`
+      );
+      return response.data;
+    } catch (error: any) {
+      // Handle 404 - appointment chưa có clinical record
+      if (error.response?.status === 404) {
+        console.log("No clinical record found for this appointment");
+        return [];
+      }
+      console.error("Error fetching images by appointment:", error);
       throw new Error(
         error.response?.data?.message ||
           error.message ||

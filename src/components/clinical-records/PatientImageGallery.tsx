@@ -10,7 +10,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Image as ImageIcon,
   Trash2,
@@ -100,8 +100,8 @@ export default function PatientImageGallery({
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load images
-  const loadImages = async () => {
+  // Load images - useCallback để tránh re-create function mỗi lần render
+  const loadImages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -133,11 +133,6 @@ export default function PatientImageGallery({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Load on mount and when filters change
-  useEffect(() => {
-    loadImages();
   }, [
     patientId,
     clinicalRecordId,
@@ -145,7 +140,13 @@ export default function PatientImageGallery({
     filterType,
     filterFromDate,
     filterToDate,
+    pageSize,
   ]);
+
+  // Load on mount and when filters change
+  useEffect(() => {
+    loadImages();
+  }, [loadImages]);
 
   // Handle delete
   const handleDelete = async () => {
