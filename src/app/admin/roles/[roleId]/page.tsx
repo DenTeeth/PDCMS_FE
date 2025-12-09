@@ -292,7 +292,7 @@ export default function RoleDetailPage() {
             {loadingPermissions ? (
               <div className="text-center py-4">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Loading permissions...</p>
+                <p className="text-sm text-gray-600">Đang tải quyền...</p>
               </div>
             ) : (
               <>
@@ -306,7 +306,7 @@ export default function RoleDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-gray-600 mb-2">Resources</Label>
+                  <Label className="text-gray-600 mb-2">Tài nguyên</Label>
                   <div className="flex flex-wrap gap-2">
                     {Object.keys(groupedPermissions).length > 0 ? (
                       Object.keys(groupedPermissions).map((resource) => (
@@ -315,7 +315,7 @@ export default function RoleDetailPage() {
                         </Badge>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No permissions assigned</p>
+                      <p className="text-sm text-gray-500">Không có quyền nào được chỉ định</p>
                     )}
                   </div>
                 </div>
@@ -330,14 +330,14 @@ export default function RoleDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5 text-purple-600" />
-            Permissions
+            Quyền
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loadingPermissions ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-              <p className="text-gray-600">Loading permissions...</p>
+              <p className="text-gray-600">Đang tải quyền...</p>
             </div>
           ) : permissions.length > 0 ? (
             <div className="space-y-6">
@@ -375,8 +375,8 @@ export default function RoleDetailPage() {
           ) : (
             <div className="text-center py-12">
               <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Permissions</h3>
-              <p className="text-gray-500">This role has no permissions assigned</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Không có quyền</h3>
+              <p className="text-gray-500">Vai trò này chưa được chỉ định quyền nào</p>
             </div>
           )}
         </CardContent>
@@ -395,18 +395,18 @@ export default function RoleDetailPage() {
             <CardContent>
               <form onSubmit={handleUpdateRole} className="space-y-4">
                 <div>
-                  <Label>Role ID</Label>
+                  <Label>ID</Label>
                   <Input
                     value={role.roleId}
                     disabled
                     className="bg-gray-100"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Role ID cannot be changed</p>
+                  <p className="text-xs text-gray-500 mt-1">ID không thể thay đổi</p>
                 </div>
 
                 <div>
                   <Label htmlFor="editRoleName">
-                    Role Name <span className="text-red-500">*</span>
+                    Tên vai trò <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="editRoleName"
@@ -420,7 +420,7 @@ export default function RoleDetailPage() {
 
                 <div>
                   <Label htmlFor="editDescription">
-                    Description <span className="text-red-500">*</span>
+                    Mô tả <span className="text-red-500">*</span>
                   </Label>
                   <textarea
                     id="editDescription"
@@ -443,18 +443,18 @@ export default function RoleDetailPage() {
                     }}
                     disabled={updating}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={updating}>
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>
                         <Edit className="h-4 w-4 mr-2" />
-                        Update Role
+                        Cập nhật vai trò
                       </>
                     )}
                   </Button>
@@ -472,31 +472,31 @@ export default function RoleDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Delete Role
+                Xóa vai trò
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> This will soft delete the role "{role.roleName}". 
-                  The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
+                  <strong>Note:</strong> Thao tác này sẽ xóa vai trò một cách nhẹ nhàng"{role.roleName}". 
+                  Vai trò sẽ được đánh dấu là không hoạt động (isActive = false) và không thể được chỉ định cho nhân viên mới.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-700">
-                  <strong>Role ID:</strong> <span className="font-mono">{role.roleId}</span>
+                  <strong>ID:</strong> <span className="font-mono">{role.roleId}</span>
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Role Name:</strong> {role.roleName}
+                  <strong>Tên vai trò:</strong> {role.roleName}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Description:</strong> {role.description}
+                  <strong>Mô tả:</strong> {role.description}
                 </p>
               </div>
 
               <p className="text-sm text-gray-600">
-                Are you sure you want to deactivate this role? You will be redirected to the roles list.
+                Bạn có chắc chắn muốn vô hiệu hóa vai trò này không? Bạn sẽ được chuyển hướng đến danh sách vai trò.
               </p>
 
               <div className="flex gap-3 justify-end pt-4 border-t">
@@ -516,12 +516,12 @@ export default function RoleDetailPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deactivating...
+                      Đang vô hiệu hóa...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Deactivate Role
+                      Vô hiệu hóa vai trò
                     </>
                   )}
                 </Button>

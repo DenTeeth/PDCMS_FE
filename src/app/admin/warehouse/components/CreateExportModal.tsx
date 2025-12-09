@@ -16,12 +16,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import inventoryService, {
-  type BatchResponse,
-} from '@/services/inventoryService';
+import inventoryService from '@/services/inventoryService';
 import type {
   CreateExportTransactionDto,
   ExportType,
+  BatchResponse,
 } from '@/types/warehouse';
 import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, TruckIcon, AlertCircle } from 'lucide-react';

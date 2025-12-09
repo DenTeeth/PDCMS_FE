@@ -128,11 +128,11 @@ export default function UserRecords() {
       case 'available':
         return <Badge variant="default" className="flex items-center"><FontAwesomeIcon icon={faCheckCircle} className="mr-1 h-3 w-3" />Available</Badge>;
       case 'processing':
-        return <Badge variant="secondary">Processing</Badge>;
+        return <Badge variant="secondary">Đang xử lý</Badge>;
       case 'pending':
-        return <Badge variant="outline">Pending</Badge>;
+        return <Badge variant="outline">Đang chờ</Badge>;
       default:
-        return <Badge variant="destructive">Error</Badge>;
+        return <Badge variant="destructive">Lỗi</Badge>;
     }
   };
 
@@ -141,8 +141,8 @@ export default function UserRecords() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Medical Records</h1>
-          <p className="text-muted-foreground">Access and download your medical documents</p>
+          <h1 className="text-3xl font-bold">Hồ sơ bệnh án</h1>
+          <p className="text-muted-foreground">Truy cập và tải xuống tài liệu y tế của bạn</p>
         </div>
         <Button variant="outline">
           <FontAwesomeIcon icon={faDownload} className="mr-2 h-4 w-4" />
@@ -248,7 +248,7 @@ export default function UserRecords() {
             <h3 className="text-lg font-semibold mb-2">Không tìm thấy hồ sơ</h3>
             <p className="text-muted-foreground">
               {searchTerm || typeFilter !== 'All' 
-                ? 'Try adjusting your search or filter criteria'
+                ? 'Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc lọc của bạn'
                 : 'You don\'t have any medical records yet'
               }
             </p>
@@ -270,7 +270,7 @@ export default function UserRecords() {
             </CardHeader>
             <CardContent>
               {/* Record detail content would go here */}
-              <p>Record details would be displayed here...</p>
+              <p>Chi tiết bản ghi sẽ được hiển thị ở đây...</p>
             </CardContent>
           </Card>
         </div>

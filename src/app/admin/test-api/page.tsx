@@ -838,9 +838,9 @@ export default function TestAPIPage() {
                   <Label>Service Codes (multi-select)</Label>
                   <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
                     {loadingData ? (
-                      <p className="text-sm text-muted-foreground">Loading services...</p>
+                      <p className="text-sm text-muted-foreground">Đang tải dịch vụ...</p>
                     ) : services.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No services available</p>
+                      <p className="text-sm text-muted-foreground">Không có dịch vụ nào</p>
                     ) : (
                       services.map((service) => (
                         <div key={service.serviceId} className="flex items-center space-x-2">

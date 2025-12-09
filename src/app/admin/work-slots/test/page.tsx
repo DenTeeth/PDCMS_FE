@@ -44,7 +44,9 @@ export default function WorkSlotsTestPage() {
       const response = await workSlotService.createWorkSlot({
         workShiftId: 'WKS_MORNING_02',
         dayOfWeek: DayOfWeek.MONDAY,
-        quota: 5
+        quota: 5,
+        effectiveFrom: '2025-12-08',
+        effectiveTo: '2026-12-31'
       });
       
       console.log('Create work slot response:', response);
