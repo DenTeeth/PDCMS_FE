@@ -69,7 +69,7 @@ export default function PermissionsPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-500"> Đang tải quyền...</p>
+          <p className="text-gray-500">Loading permissions...</p>
         </div>
       </div>
     );
@@ -90,7 +90,7 @@ export default function PermissionsPage() {
             </p>
           </div>
           <Badge variant="outline" className="text-lg px-4 py-2">
-            {filteredPermissions.length} Quyền{filteredPermissions.length !== 1 ? 's' : ''}
+            {filteredPermissions.length} Permission{filteredPermissions.length !== 1 ? 's' : ''}
           </Badge>
         </div>
 
@@ -131,9 +131,9 @@ export default function PermissionsPage() {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">Tất cả</option>
-                  <option value="active">Chỉ trạng thái hoạt động</option>
-                  <option value="inactive">Chỉ trạng thái ngừng hoạt động</option>
+                  <option value="all">All Status</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
                 </select>
               </div>
             </div>
@@ -182,14 +182,14 @@ export default function PermissionsPage() {
 
         {/* Permissions grouped by module */}
         {Object.keys(groupedPermissions).length === 0 ? (
-          <Card>    
+          <Card>
             <CardContent className="pt-6">
               <div className="text-center py-12">
                 <Key className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500 text-lg">Không tìm thấy quyền</p>
+                <p className="text-gray-500 text-lg">No permissions found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc lọc của bạn                
-</p>
+                  Try adjusting your search or filter criteria
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -201,7 +201,7 @@ export default function PermissionsPage() {
                   <Shield className="h-5 w-5 text-blue-600" />
                   {module}
                   <Badge variant="secondary" className="ml-2">
-                    {modulePermissions.length} quyền{modulePermissions.length !== 1 ? 's' : ''}
+                    {modulePermissions.length} permission{modulePermissions.length !== 1 ? 's' : ''}
                   </Badge>
                 </CardTitle>
               </CardHeader>

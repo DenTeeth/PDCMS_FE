@@ -249,7 +249,7 @@ export default function AdminShiftCalendarPage() {
     const events = shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
 
-      // Try multiple matching strategies
+      // Try multiple matching strategies (employeeId is string in Employee, number in EmployeeShift)
       const employee = employees.find(emp =>
         String(emp.employeeId) === String(shift.employeeId)
       );
@@ -510,7 +510,7 @@ export default function AdminShiftCalendarPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lịch ca làm việc - Admin</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lịch Ca Làm Việc - Admin</h1>
             <p className="text-gray-600 mt-1">Quản lý và theo dõi lịch làm việc của tất cả nhân viên</p>
           </div>
           <div className="flex gap-2">
@@ -539,7 +539,7 @@ export default function AdminShiftCalendarPage() {
                 <FontAwesomeIcon icon={faChartBar} className="text-purple-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Thống kê ca làm việc</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Thống kê Ca Làm Việc</h3>
                 <p className="text-sm text-gray-600">Theo dõi hiệu suất làm việc của nhân viên</p>
               </div>
             </div>

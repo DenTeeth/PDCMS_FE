@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
+import CustomSelect from '@/components/ui/custom-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faSort,
@@ -121,20 +122,15 @@ export default function EmployeePerformanceTable({
                             </div>
                         </div>
                         <div className="w-full md:w-48">
-                            <Select
+                            <CustomSelect
+                                options={[
+                                    { value: 'all', label: 'All Roles' },
+                                    ...roles.map((role) => ({ value: role, label: role })),
+                                ]}
                                 value={roleFilter}
-                                onValueChange={setRoleFilter}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Lọc theo vai trò" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tất cả vai trò</SelectItem>
-                                    {roles.map((role) => (
-                                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                onChange={(value: string) => setRoleFilter(value)}
+                                placeholder="Filter by role"
+                            />
                         </div>
                     </div>
                 </CardContent>

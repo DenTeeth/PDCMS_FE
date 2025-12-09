@@ -35,6 +35,14 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { appointmentService } from '@/services/appointmentService';
 import { ServiceService } from '@/services/serviceService';
 import { EmployeeService } from '@/services/employeeService';
@@ -301,6 +309,8 @@ export default function CreateAppointmentModal({
 
   // Step 3: Selected specialization filter
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
+  // Step 3: Selected doctor for filtering services by specialization (optional)
+  const [selectedDoctorForFilter, setSelectedDoctorForFilter] = useState<string>('all');
 
   // Current user's employee data (if employee)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
@@ -980,16 +990,40 @@ export default function CreateAppointmentModal({
     return grouped;
   }, [services, specializations]);
 
-  // Step 3: Get filtered services based on selected specialization filter
+  // Step 3: Get filtered services based on selected specialization filter and doctor's specialization
   const getFilteredServices = (): Service[] => {
-    if (selectedSpecializationFilter === 'all') {
-      return services;
+    let filtered = services;
+
+    // Filter by doctor's specialization if doctor is selected
+    if (selectedDoctorForFilter && selectedDoctorForFilter !== 'all') {
+      const selectedDoctor = employees.find((e) => e.employeeCode === selectedDoctorForFilter);
+      if (selectedDoctor && selectedDoctor.specializations && selectedDoctor.specializations.length > 0) {
+        const doctorSpecializationIds = selectedDoctor.specializations.map((spec: any) => {
+          const specId = typeof spec === 'string' ? parseInt(spec, 10) : (typeof spec === 'object' ? parseInt(String(spec.specializationId || spec.id || spec), 10) : spec);
+          return isNaN(specId) ? null : specId;
+        }).filter((id: number | null): id is number => id !== null);
+
+        // Only show services that match doctor's specializations or services without specialization
+        filtered = filtered.filter((service) => {
+          if (!service.specializationId) {
+            return true; // Show services without specialization
+          }
+          return doctorSpecializationIds.includes(service.specializationId);
+        });
+      }
     }
 
-    const specId = parseInt(selectedSpecializationFilter, 10);
-    return services.filter((service) =>
-      service.specializationId === specId || (!service.specializationId && selectedSpecializationFilter === 'none')
-    );
+    // Apply specialization filter if set
+    if (selectedSpecializationFilter !== 'all') {
+      if (selectedSpecializationFilter === 'none') {
+        filtered = filtered.filter((service) => !service.specializationId);
+      } else {
+        const specId = parseInt(selectedSpecializationFilter, 10);
+        filtered = filtered.filter((service) => service.specializationId === specId);
+      }
+    }
+
+    return filtered;
   };
 
   // Step 4: Get compatible doctors (ROLE_DENTIST + specialization match)
@@ -1770,13 +1804,51 @@ export default function CreateAppointmentModal({
             </div>
           )}
 
-          {/* Step 3: Select Services (grouped by category) */}
+          {/* Step 3: Select Services (table layout with doctor filter) */}
           {currentStep === 3 && (
             <div className="space-y-4">
               {/* Filter Row */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Specialization Filter - Only show if user has specializations */}
-                {hasUserSpecializations && (
+                {/* Doctor Filter - Filter services by doctor's specialization */}
+                <div>
+                  <Label>Lọc theo bác sĩ (tùy chọn)</Label>
+                  <Select
+                    value={selectedDoctorForFilter}
+                    onValueChange={(value) => {
+                      setSelectedDoctorForFilter(value);
+                      // Clear specialization filter when doctor is selected
+                      if (value) {
+                        setSelectedSpecializationFilter('all');
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Tất cả bác sĩ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả bác sĩ</SelectItem>
+                      {employees
+                        .filter((employee) => {
+                          // Only show doctors (ROLE_DENTIST or ROLE_DOCTOR) with specializations
+                          if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
+                            return false;
+                          }
+                          return employee.specializations && employee.specializations.length > 0;
+                        })
+                        .map((employee) => (
+                          <SelectItem key={employee.employeeId} value={employee.employeeCode}>
+                            {employee.fullName} ({employee.employeeCode})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Chọn bác sĩ để chỉ hiển thị dịch vụ phù hợp với chuyên khoa của bác sĩ
+                  </p>
+                </div>
+
+                {/* Specialization Filter - Only show if no doctor is selected */}
+                {(selectedDoctorForFilter === 'all' || !selectedDoctorForFilter) && hasUserSpecializations && (
                   <div>
                     <Label>Lọc theo chuyên khoa</Label>
                     <Select
@@ -1799,37 +1871,67 @@ export default function CreateAppointmentModal({
                   </div>
                 )}
 
+                {/* Show selected doctor info */}
+                {selectedDoctorForFilter && selectedDoctorForFilter !== 'all' && (
+                  <div>
+                    <Label>Bác sĩ đã chọn</Label>
+                    <Card className="p-3 mt-1 bg-primary/5 border-primary">
+                      <div className="flex items-center gap-2">
+                        <UserCog className="h-4 w-4 text-primary" />
+                        <div>
+                          <div className="font-medium text-sm">
+                            {employees.find((e) => e.employeeCode === selectedDoctorForFilter)?.fullName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {selectedDoctorForFilter}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
               </div>
 
               <div>
                 <Label>Chọn dịch vụ (ít nhất 1) <span className="text-red-500">*</span></Label>
-                <Card className="p-4 mt-1 max-h-96 overflow-y-auto">
+                <Card className="p-4 mt-1">
                   {loadingData ? (
-                    <p className="text-sm text-muted-foreground">Loading services...</p>
-                  ) : Array.from(getServicesGroupedBySpecialization.entries()).length === 0 ? (
-                    <Card className="p-4 bg-red-50 border-red-200">
-                      <p className="text-sm text-red-800">No services found.</p>
-                    </Card>
-                  ) : (
-                    <div className="space-y-4">
-                      {Array.from(getServicesGroupedBySpecialization.entries())
-                        .filter(([key, group]) => {
-                          // Apply specialization filter
-                          if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
-                            if (selectedSpecializationFilter === 'none') {
-                              return key === 'none'; // Only show services without specialization
-                            } else {
-                              const specId = parseInt(selectedSpecializationFilter, 10);
-                              return key === specId; // Only show services with matching specialization
-                            }
-                          }
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Đang tải dịch vụ...</span>
+                    </div>
+                  ) : (() => {
+                    const filteredServices = getFilteredServices();
+                    if (filteredServices.length === 0) {
+                      return (
+                        <Card className="p-4 bg-red-50 border-red-200">
+                          <p className="text-sm text-red-800">Không tìm thấy dịch vụ nào.</p>
+                        </Card>
+                      );
+                    }
 
-                          return true;
-                        })
-                        .map(([key, group]) => (
+                    // Group filtered services by specialization for table display
+                    const groupedServices = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
+                    filteredServices.forEach((service) => {
+                      const specId = service.specializationId || 'none';
+                      if (!groupedServices.has(specId)) {
+                        const specialization = specId !== 'none'
+                          ? specializations.find(s =>
+                            String(s.specializationId) === String(specId) ||
+                            (s.specializationId as any) === specId
+                          )
+                          : undefined;
+                        groupedServices.set(specId, { specialization, services: [] });
+                      }
+                      groupedServices.get(specId)!.services.push(service);
+                    });
+
+                    return (
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {Array.from(groupedServices.entries()).map(([key, group]) => (
                           <div key={key} className="space-y-2">
                             {/* Group Header - Specialization Name */}
-                            <div className="flex items-center gap-2 pb-2 border-b">
+                            <div className="flex items-center gap-2 pb-2 border-b sticky top-0 bg-white z-10">
                               <h4 className="font-semibold text-sm text-primary">
                                 {group.specialization?.specializationName || 'Chưa phân loại chuyên khoa'}
                               </h4>
@@ -1837,44 +1939,91 @@ export default function CreateAppointmentModal({
                                 {group.services.length} {group.services.length === 1 ? 'dịch vụ' : 'dịch vụ'}
                               </Badge>
                             </div>
-                            <div className="space-y-2 pl-4">
-                              {group.services.map((service) => {
-                                const isSelected = serviceCodes.includes(service.serviceCode);
-                                return (
-                                  <div key={service.serviceId} className="flex items-center space-x-2">
+
+                            {/* Table Layout */}
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-12">
                                     <Checkbox
-                                      id={`service-${service.serviceId}`}
-                                      checked={isSelected}
-                                      onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                      checked={group.services.every((s) => serviceCodes.includes(s.serviceCode))}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          // Select all services in this group
+                                          group.services.forEach((service) => {
+                                            if (!serviceCodes.includes(service.serviceCode)) {
+                                              handleToggleService(service.serviceCode);
+                                            }
+                                          });
+                                        } else {
+                                          // Deselect all services in this group
+                                          group.services.forEach((service) => {
+                                            if (serviceCodes.includes(service.serviceCode)) {
+                                              handleToggleService(service.serviceCode);
+                                            }
+                                          });
+                                        }
+                                      }}
                                     />
-                                    <Label
-                                      htmlFor={`service-${service.serviceId}`}
-                                      className={`text-sm font-normal cursor-pointer flex-1 ${isSelected ? 'font-semibold' : ''
-                                        }`}
+                                  </TableHead>
+                                  <TableHead>Tên dịch vụ</TableHead>
+                                  <TableHead>Mã dịch vụ</TableHead>
+                                  <TableHead>Chuyên khoa</TableHead>
+                                  <TableHead className="text-right">Thời gian</TableHead>
+                                  <TableHead className="text-right">Giá</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {group.services.map((service) => {
+                                  const isSelected = serviceCodes.includes(service.serviceCode);
+                                  return (
+                                    <TableRow
+                                      key={service.serviceId}
+                                      className={isSelected ? 'bg-primary/5' : ''}
                                     >
-                                      {service.serviceName} ({service.serviceCode})
-                                      <span className="text-muted-foreground ml-2">
-                                        • {service.defaultDurationMinutes} phút • {service.price?.toLocaleString()} VND
-                                      </span>
-                                      {service.specializationName && (
-                                        <Badge variant="outline" className="ml-2 text-xs">
-                                          {service.specializationName}
-                                        </Badge>
-                                      )}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                      <TableCell>
+                                        <Checkbox
+                                          checked={isSelected}
+                                          onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                        />
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {service.serviceName}
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground">
+                                        {service.serviceCode}
+                                      </TableCell>
+                                      <TableCell>
+                                        {service.specializationName ? (
+                                          <Badge variant="outline" className="text-xs">
+                                            {service.specializationName}
+                                          </Badge>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground">-</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {service.defaultDurationMinutes} phút
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium">
+                                        {service.price?.toLocaleString('vi-VN')} VND
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
                           </div>
                         ))}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </Card>
               </div>
 
               {selectedServices.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="text-sm font-medium">Đã chọn ({selectedServices.length}):</span>
                   {selectedServices.map((service) => (
                     <Badge key={service.serviceId} variant="secondary">
                       {service.serviceName}

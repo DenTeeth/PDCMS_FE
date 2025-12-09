@@ -258,7 +258,7 @@ export default function RolesPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Đang tải vai trò...</p>
+          <p className="text-gray-600">Loading roles...</p>
         </div>
       </div>
     );
@@ -298,7 +298,7 @@ export default function RolesPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Active</p>
                 <p className="text-2xl font-bold">{stats.active}</p>
               </div>
             </div>
@@ -311,7 +311,7 @@ export default function RolesPage() {
                 <XCircle className="h-4 w-4 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Không hoạt động</p>
+                <p className="text-sm font-medium text-gray-600">Inactive</p>
                 <p className="text-2xl font-bold">{stats.inactive}</p>
               </div>
             </div>
@@ -347,19 +347,19 @@ export default function RolesPage() {
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Vai trò
+                      Role
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Mô tả
+                      Description
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
+                      Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ngày tạo
+                      Created At
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hành động
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -404,7 +404,7 @@ export default function RolesPage() {
                             onClick={() => router.push(`/admin/roles/${role.roleId}`)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            Xem
+                            View
                           </Button>
                           <Button
                             variant="ghost"
@@ -415,7 +415,7 @@ export default function RolesPage() {
                             }}
                           >
                             <Edit className="h-4 w-4 mr-1" />
-                            Sửa
+                            Edit
                           </Button>
                           <Button
                             variant="ghost"
@@ -426,7 +426,7 @@ export default function RolesPage() {
                             }}
                           >
                             <Key className="h-4 w-4 mr-1" />
-                            Quyền
+                            Permissions
                           </Button>
                           <Button
                             variant="ghost"
@@ -438,7 +438,7 @@ export default function RolesPage() {
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Xóa
+                            Delete
                           </Button>
                         </div>
                       </td>
@@ -472,18 +472,18 @@ export default function RolesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-blue-600" />
-                Tạo vai trò mới
+                Create New Role
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateRole} className="space-y-4">
                 <div>
                   <Label htmlFor="roleId">
-                    ID <span className="text-red-500">*</span>
+                    Role ID <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="roleId"
-                    placeholder="ví dụ: ROLE_CUSTOM"
+                    placeholder="e.g., ROLE_CUSTOM"
                     value={formData.roleId}
                     onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                     disabled={creating}
@@ -496,11 +496,11 @@ export default function RolesPage() {
 
                 <div>
                   <Label htmlFor="roleName">
-                    Tên role <span className="text-red-500">*</span>
+                    Role Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="roleName"
-                    placeholder="ví dụ: Vai trò tùy chỉnh"
+                    placeholder="e.g., Custom Role"
                     value={formData.roleName}
                     onChange={(e) => setFormData({ ...formData, roleName: e.target.value })}
                     disabled={creating}
@@ -510,7 +510,7 @@ export default function RolesPage() {
 
                 <div>
                   <Label htmlFor="description">
-                    Mô tả <span className="text-red-500">*</span>
+                    Description <span className="text-red-500">*</span>
                   </Label>
                   <textarea
                     id="description"
@@ -526,7 +526,7 @@ export default function RolesPage() {
 
                 <div>
                   <Label htmlFor="baseRoleId">
-                    Vai trò cơ bản <span className="text-red-500">*</span>
+                    Base Role <span className="text-red-500">*</span>
                   </Label>
                   <select
                     id="baseRoleId"
@@ -536,13 +536,13 @@ export default function RolesPage() {
                     required
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Chọn vai trò cơ bản</option>
+                    <option value="">Select a base role</option>
                     <option value="ROLE_ADMIN">Admin (ROLE_ADMIN)</option>
-                    <option value="ROLE_EMPLOYEE">Nhân viên (ROLE_EMPLOYEE)</option>
-                    <option value="ROLE_PATIENT">Bệnh nhân (ROLE_PATIENT)</option>
+                    <option value="ROLE_EMPLOYEE">Employee (ROLE_EMPLOYEE)</option>
+                    <option value="ROLE_PATIENT">Patient (ROLE_PATIENT)</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Chọn vai trò cơ bản để kế thừa quyền từ
+                    Select a base role to inherit permissions from
                   </p>
                 </div>
 
@@ -557,11 +557,11 @@ export default function RolesPage() {
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <Label htmlFor="requiresSpecialization" className="cursor-pointer">
-                      Yêu cầu chuyên môn
+                      Requires Specialization
                     </Label>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 ml-6">
-                    Chọn nếu vai trò này yêu cầu chuyên môn (ví dụ: dành cho bác sĩ)
+                    Check if this role requires specialization (e.g., for doctors)
                   </p>
                 </div>
 
@@ -575,18 +575,18 @@ export default function RolesPage() {
                     }}
                     disabled={creating}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button type="submit" disabled={creating}>
                     {creating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang tạo...
+                        Creating...
                       </>
                     ) : (
                       <>
                         <Plus className="h-4 w-4 mr-2" />
-                        Tạo role
+                        Create Role
                       </>
                     )}
                   </Button>
@@ -604,28 +604,28 @@ export default function RolesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Edit className="h-5 w-5 text-blue-600" />
-               Chỉnh sửa vai trò
+                Edit Role
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleUpdateRole} className="space-y-4">
                 <div>
-                  <Label>ID</Label>
+                  <Label>Role ID</Label>
                   <Input
                     value={editingRole.roleId}
                     disabled
                     className="bg-gray-100"
                   />
-                  <p className="text-xs text-gray-500 mt-1">ID không thể bị thay đổi</p>
+                  <p className="text-xs text-gray-500 mt-1">Role ID cannot be changed</p>
                 </div>
 
                 <div>
                   <Label htmlFor="editRoleName">
-                    Tên vai trò <span className="text-red-500">*</span>
+                    Role Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="editRoleName"
-                    placeholder="ví dụ: Vai trò tùy chỉnh"
+                    placeholder="e.g., Custom Role"
                     value={editFormData.roleName}
                     onChange={(e) => setEditFormData({ ...editFormData, roleName: e.target.value })}
                     disabled={updating}
@@ -635,7 +635,7 @@ export default function RolesPage() {
 
                 <div>
                   <Label htmlFor="editDescription">
-                    Mô tả <span className="text-red-500">*</span>
+                    Description <span className="text-red-500">*</span>
                   </Label>
                   <textarea
                     id="editDescription"
@@ -659,18 +659,18 @@ export default function RolesPage() {
                     }}
                     disabled={updating}
                   >
-                    Huỷ
+                    Cancel
                   </Button>
                   <Button type="submit" disabled={updating}>
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang cập nhật...
+                        Updating...
                       </>
                     ) : (
                       <>
                         <Edit className="h-4 w-4 mr-2" />
-                        Cập nhật vai trò
+                        Update Role
                       </>
                     )}
                   </Button>
@@ -688,20 +688,20 @@ export default function RolesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Key className="h-5 w-5 text-blue-600" />
-                Chỉ định quyền cho{assigningRole.roleName}
+                Assign Permissions to {assigningRole.roleName}
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1">
               {loadingPermissions ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-3 text-gray-600">Đang tải quyền...</span>
+                  <span className="ml-3 text-gray-600">Loading permissions...</span>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4 pb-4 border-b">
-                    <p className="text-sm text-gray-600">                     
-                      Chọn quyền cho vai trò này ({selectedPermissions.length} đã chọn)
+                    <p className="text-sm text-gray-600">
+                      Select permissions for this role ({selectedPermissions.length} selected)
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -710,7 +710,7 @@ export default function RolesPage() {
                         size="sm"
                         onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
                       >
-                        Chọn toàn bộ
+                        Select All
                       </Button>
                       <Button
                         type="button"
@@ -718,7 +718,7 @@ export default function RolesPage() {
                         size="sm"
                         onClick={() => setSelectedPermissions([])}
                       >
-                        Xoá sạch
+                        Clear All
                       </Button>
                     </div>
                   </div>
@@ -780,7 +780,7 @@ export default function RolesPage() {
                   }}
                   disabled={assigning}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleAssignPermissions}
@@ -789,12 +789,12 @@ export default function RolesPage() {
                   {assigning ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang phân công...
+                      Assigning...
                     </>
                   ) : (
                     <>
                       <Key className="h-4 w-4 mr-2" />
-                      Chỉ định quyền
+                      Assign Permissions
                     </>
                   )}
                 </Button>
@@ -817,25 +817,25 @@ export default function RolesPage() {
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Điều này sẽ xoá mềm vai trò "{deletingRole.roleName}". 
-                  Vai trò sẽ được đánh dấu là không hoạt động (isActive = false) và không thể được chỉ định cho nhân viên mới.
+                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}". 
+                  The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-700">
-                  <strong>ID:</strong> <span className="font-mono">{deletingRole.roleId}</span>
+                  <strong>Role ID:</strong> <span className="font-mono">{deletingRole.roleId}</span>
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Tên vai trò:</strong> {deletingRole.roleName}
+                  <strong>Role Name:</strong> {deletingRole.roleName}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Mô tả:</strong> {deletingRole.description}
+                  <strong>Description:</strong> {deletingRole.description}
                 </p>
               </div>
 
               <p className="text-sm text-gray-600">
-                Bạn có chắc chắn muốn hủy kích hoạt vai trò này không?
+                Are you sure you want to deactivate this role?
               </p>
 
               <div className="flex gap-3 justify-end pt-4 border-t">
@@ -848,7 +848,7 @@ export default function RolesPage() {
                   }}
                   disabled={deleting}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleDeleteRole}
@@ -858,12 +858,12 @@ export default function RolesPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Vô hiệu hóa...
+                      Deactivating...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Vô hiệu hóa vai trò
+                      Deactivate Role
                     </>
                   )}
                 </Button>

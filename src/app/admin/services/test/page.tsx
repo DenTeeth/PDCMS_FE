@@ -19,7 +19,7 @@ export default function ServiceTestPage() {
         isActive: '',
         specializationId: '',
         sortBy: 'serviceName',
-        sortDirection: 'asc'
+        sortDirection: 'ASC'
       });
       setResults({ type: 'getServices', data: response });
     } catch (error: any) {

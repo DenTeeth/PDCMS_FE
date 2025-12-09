@@ -244,12 +244,17 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
 
         try {
             setLoading(true);
-            await appointmentService.rescheduleAppointment(String(appointment.id), {
-                appointmentDate: newDate,
-                startTime,
-                endTime,
-                reason: reason.trim(),
-            } as any);
+<<<<<<< HEAD
+            // RescheduleAppointmentRequest needs new structure
+            const appointmentCode = (appointment as any).appointmentCode || String(appointment.id);
+            const newStartTime = `${newDate}T${startTime}:00`;
+            await appointmentService.rescheduleAppointment(appointmentCode, {
+                newStartTime,
+                newEmployeeCode: (appointment as any).doctor?.employeeCode || String(appointment.dentistId),
+                newRoomCode: (appointment as any).room?.roomCode || '',
+                reasonCode: 'PATIENT_REQUEST' as any,
+                cancelNotes: reason.trim(),
+            });
 
             toast.success('Appointment Rescheduled', {
                 description: 'The appointment has been successfully rescheduled',

@@ -116,7 +116,7 @@ export default function UserBilling() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
         return <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-green-600" />;
@@ -248,7 +248,7 @@ export default function UserBilling() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(bill.status)}
-                    <Badge variant={statusColors[bill.status]}>
+                    <Badge variant={(statusColors as Record<string, any>)[bill.status]}>
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </Badge>
                   </div>
@@ -321,8 +321,8 @@ export default function UserBilling() {
             <h3 className="text-lg font-semibold mb-2">Không tìm thấy hóa đơn</h3>
             <p className="text-muted-foreground">
               {searchTerm || statusFilter !== 'all' 
-                ? 'Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc lọc của bạn'
-                : 'Bạn chưa có hóa đơn nào'
+                ? 'Try adjusting your search or filter criteria'
+                : 'You don\'t have any bills yet'
               }
             </p>
           </CardContent>

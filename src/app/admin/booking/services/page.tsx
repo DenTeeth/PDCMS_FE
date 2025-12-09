@@ -574,19 +574,19 @@ export default function BookingServicesPage() {
   const columns: OptimizedTableColumn<Service>[] = useMemo(() => [
     {
       key: 'serviceCode',
-      header: 'Code',
+      header: 'Service Code',
       accessor: (service) => (
         <span className="font-medium">{service.serviceCode}</span>
       ),
     },
     {
       key: 'serviceName',
-      header: 'Tên dịch vụ',
+      header: 'Service Name',
       accessor: (service) => service.serviceName,
     },
     {
       key: 'specialization',
-      header: 'Chuyên khoa',
+      header: 'Specialization',
       accessor: (service) => (
         <Badge variant="outline">
           {getSpecializationName(service.specializationId)}
@@ -595,14 +595,14 @@ export default function BookingServicesPage() {
     },
     {
       key: 'price',
-      header: 'Giá',
+      header: 'Price',
       accessor: (service) => (
         <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(service.price)}</span>
       ),
     },
     {
       key: 'duration',
-      header: 'Thời lượng',
+      header: 'Duration',
       accessor: (service) => (
         <span>{service.defaultDurationMinutes} phút</span>
       ),
@@ -618,7 +618,7 @@ export default function BookingServicesPage() {
     },
     {
       key: 'actions',
-      header: 'Hành động',
+      header: 'Actions',
       accessor: (service) => (
         <div className="flex items-center gap-1 sm:gap-2">
           <Button
@@ -681,9 +681,9 @@ export default function BookingServicesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Quản lý dịch vụ</h1>
+            <h1 className="text-3xl font-bold">Services Management</h1>
             <p className="text-muted-foreground mt-2">
-              Quản lý các dịch vụ của phòng khám và yêu cầu chuyên môn của chúng
+              Manage clinic services and their specialization requirements
             </p>
           </div>
         </div>
@@ -693,7 +693,7 @@ export default function BookingServicesPage() {
           {canCreate && (
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Tạo dịch vụ
+              Create Service
             </Button>
           )}
         </div>
@@ -862,10 +862,10 @@ export default function BookingServicesPage() {
               disabled={currentPage === 0 || loading}
             >
               <ChevronLeft className="h-4 w-4" />
-              Sau
+              Previous
             </Button>
             <span className="text-sm text-muted-foreground">
-              Trang {currentPage + 1} trên {totalPages}
+              Page {currentPage + 1} of {totalPages}
             </span>
             <Button
               variant="outline"
@@ -873,7 +873,7 @@ export default function BookingServicesPage() {
               onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
               disabled={currentPage >= totalPages - 1 || loading}
             >
-              Tiếp
+              Next
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -883,15 +883,15 @@ export default function BookingServicesPage() {
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Tạo dịch vụ mới</DialogTitle>
+              <DialogTitle>Create New Service</DialogTitle>
               <DialogDescription>
-                Điền thông tin để tạo dịch vụ mới
+                Fill in the details to create a new service
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="create-serviceCode">Code <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="create-serviceCode">Service Code <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceCode"
                     value={createForm.serviceCode}
@@ -900,7 +900,7 @@ export default function BookingServicesPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-serviceName">Tên dịch vụ <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="create-serviceName">Service Name <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceName"
                     value={createForm.serviceName}
@@ -910,7 +910,7 @@ export default function BookingServicesPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="create-description">Mô tả</Label>
+                <Label htmlFor="create-description">Description</Label>
                 <Input
                   id="create-description"
                   value={createForm.description || ''}
@@ -920,7 +920,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="create-duration">Thời lượng (phút) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="create-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-duration"
                     type="number"
@@ -937,7 +937,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-buffer">Thời gian chờ (phút) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="create-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-buffer"
                     type="number"
@@ -954,7 +954,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="create-price">Giá (VND) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="create-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-price"
                     type="number"
@@ -977,7 +977,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="create-specialization">Chuyên khoa</Label>
+                  <Label htmlFor="create-specialization">Specialization</Label>
                   <Select
                     value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
                     onValueChange={(value) => {
@@ -993,7 +993,7 @@ export default function BookingServicesPage() {
                       <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none-selected">Không chọn</SelectItem>
+                      <SelectItem value="none-selected">None</SelectItem>
                       {availableSpecializations.map((spec) => (
                         <SelectItem key={spec.id} value={String(spec.id)}>
                           {spec.name}
@@ -1003,7 +1003,7 @@ export default function BookingServicesPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="create-displayOrder">Thứ tự hiển thị</Label>
+                  <Label htmlFor="create-displayOrder">Display Order</Label>
                   <Input
                     id="create-displayOrder"
                     type="number"
@@ -1027,7 +1027,7 @@ export default function BookingServicesPage() {
                   onChange={(e) => setCreateForm({ ...createForm, isActive: e.target.checked })}
                   className="rounded"
                 />
-                <Label htmlFor="create-isActive">Kích hoạt</Label>
+                <Label htmlFor="create-isActive">Active</Label>
               </div>
             </div>
             <DialogFooter>
@@ -1043,24 +1043,24 @@ export default function BookingServicesPage() {
         <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Cập nhật dịch vụ</DialogTitle>
+              <DialogTitle>Update Service</DialogTitle>
               <DialogDescription>
-                Cập nhật thông tin dịch vụ
+                Update the service details
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="update-serviceCode">Code</Label>
+                <Label htmlFor="update-serviceCode">Service Code</Label>
                 <Input
                   id="update-serviceCode"
                   value={updateForm.serviceCode}
                   disabled
                   className="bg-muted"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Code không thể thay đổi</p>
+                <p className="text-xs text-muted-foreground mt-1">Service code cannot be changed</p>
               </div>
               <div>
-                <Label htmlFor="update-serviceName">Tên dịch vụ <span className="text-red-500">*</span></Label>
+                <Label htmlFor="update-serviceName">Service Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-serviceName"
                   value={updateForm.serviceName}
@@ -1069,7 +1069,7 @@ export default function BookingServicesPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="update-description">Mô tả</Label>
+                <Label htmlFor="update-description">Description</Label>
                 <Input
                   id="update-description"
                   value={updateForm.description || ''}
@@ -1079,7 +1079,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="update-duration">Thời lượng (phút) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="update-duration">Duration (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-duration"
                     type="number"
@@ -1096,7 +1096,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-buffer">Thời gian chờ (phút) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="update-buffer">Buffer (minutes) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-buffer"
                     type="number"
@@ -1113,7 +1113,7 @@ export default function BookingServicesPage() {
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
                 <div>
-                  <Label htmlFor="update-price">Giá (VND) <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="update-price">Price (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-price"
                     type="number"
@@ -1136,7 +1136,7 @@ export default function BookingServicesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="update-specialization">Chuyên khoa</Label>
+                  <Label htmlFor="update-specialization">Specialization</Label>
                   <Select
                     value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
                     onValueChange={(value) => {
@@ -1152,7 +1152,7 @@ export default function BookingServicesPage() {
                       <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none-selected">Không chọn</SelectItem>
+                      <SelectItem value="none-selected">None</SelectItem>
                       {availableSpecializations.map((spec) => (
                         <SelectItem key={spec.id} value={String(spec.id)}>
                           {spec.name}
@@ -1162,7 +1162,7 @@ export default function BookingServicesPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="update-displayOrder">Thứ tự hiển thị</Label>
+                  <Label htmlFor="update-displayOrder">Display Order</Label>
                   <Input
                     id="update-displayOrder"
                     type="number"
@@ -1186,7 +1186,7 @@ export default function BookingServicesPage() {
                   onChange={(e) => setUpdateForm({ ...updateForm, isActive: e.target.checked })}
                   className="rounded"
                 />
-                <Label htmlFor="update-isActive">Kích hoạt</Label>
+                <Label htmlFor="update-isActive">Active</Label>
               </div>
             </div>
             <DialogFooter>
@@ -1202,27 +1202,27 @@ export default function BookingServicesPage() {
         <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Vô hiệu hóa dịch vụ</DialogTitle>
+              <DialogTitle>Deactivate Service</DialogTitle>
               <DialogDescription>
-                Bạn có chắc chắn muốn vô hiệu hóa dịch vụ này? Hành động này có thể được hoàn tác sau.
+                Are you sure you want to deactivate this service? This action can be reversed later.
               </DialogDescription>
             </DialogHeader>
             {selectedService && (
               <div className="py-4">
                 <p className="text-sm">
-                  <strong>Code:</strong> {selectedService.serviceCode}
+                  <strong>Service Code:</strong> {selectedService.serviceCode}
                 </p>
                 <p className="text-sm">
-                  <strong>Tên dịch vụ:</strong> {selectedService.serviceName}
+                  <strong>Service Name:</strong> {selectedService.serviceName}
                 </p>
               </div>
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                Hủy
+                Cancel
               </Button>
               <Button variant="destructive" onClick={handleDeleteService}>
-                Vô hiệu hóa
+                Deactivate
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1232,40 +1232,40 @@ export default function BookingServicesPage() {
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Chi tiết dịch vụ</DialogTitle>
+              <DialogTitle>Service Details</DialogTitle>
               <DialogDescription>
-                Xem thông tin chi tiết về dịch vụ này
+                View detailed information about this service
               </DialogDescription>
             </DialogHeader>
             {selectedService && (
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Code</Label>
+                    <Label>Service Code</Label>
                     <p className="text-sm font-medium">{selectedService.serviceCode}</p>
                   </div>
                   <div>
-                    <Label>Tên dịch vụ</Label>
+                    <Label>Service Name</Label>
                     <p className="text-sm font-medium">{selectedService.serviceName}</p>
                   </div>
                 </div>
                 {selectedService.description && (
                   <div>
-                    <Label>Mô tả</Label>
+                    <Label>Description</Label>
                     <p className="text-sm">{selectedService.description}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label>Thời lượng</Label>
-                    <p className="text-sm">{selectedService.defaultDurationMinutes} phút</p>
+                    <Label>Duration</Label>
+                    <p className="text-sm">{selectedService.defaultDurationMinutes} minutes</p>
                   </div>
                   <div>
-                    <Label>Thời gian chờ</Label>
-                    <p className="text-sm">{selectedService.defaultBufferMinutes} phút</p>
+                    <Label>Buffer</Label>
+                    <p className="text-sm">{selectedService.defaultBufferMinutes} minutes</p>
                   </div>
                   <div>
-                    <Label>Giá</Label>
+                    <Label>Price</Label>
                     <p className="text-sm font-medium">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedService.price)}
                     </p>
@@ -1273,7 +1273,7 @@ export default function BookingServicesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Chuyên khoa</Label>
+                    <Label>Specialization</Label>
                     <p className="text-sm">
                       {getSpecializationName(selectedService.specializationId)}
                     </p>
@@ -1281,22 +1281,22 @@ export default function BookingServicesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Trạng thái</Label>
+                    <Label>Status</Label>
                     <Badge variant={selectedService.isActive ? 'default' : 'secondary'}>
-                      {selectedService.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                      {selectedService.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Ngày tạo</Label>
+                    <Label>Created At</Label>
                     <p className="text-sm">
                       {new Date(selectedService.createdAt).toLocaleString('vi-VN')}
                     </p>
                   </div>
                   {selectedService.updatedAt && (
                     <div>
-                      <Label>Ngày cập nhật</Label>
+                      <Label>Updated At</Label>
                       <p className="text-sm">
                         {new Date(selectedService.updatedAt).toLocaleString('vi-VN')}
                       </p>
@@ -1307,7 +1307,7 @@ export default function BookingServicesPage() {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDetailModal(false)}>
-                Đóng
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

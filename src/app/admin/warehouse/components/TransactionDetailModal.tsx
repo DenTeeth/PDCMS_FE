@@ -19,7 +19,7 @@ export default function TransactionDetailModal({
 }: TransactionDetailModalProps) {
   if (!transaction) return null;
 
-  const isInTransaction = transaction.type === TransactionType.IN;
+  const isInTransaction = transaction.type === TransactionType.IMPORT;
   const isColdStorage = transaction.warehouseType === WarehouseType.COLD;
 
   return (
