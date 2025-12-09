@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { appointmentService } from '@/services/appointmentService';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { clinicalRecordService } from '@/services/clinicalRecordService';
+import { patientService } from '@/services/patientService';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
@@ -42,6 +43,7 @@ import {
   TreatmentPlanSummaryDTO,
 } from '@/types/treatmentPlan';
 import { ClinicalRecordResponse } from '@/types/clinicalRecord';
+import { Patient } from '@/types/patient';
 import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
 import {
@@ -83,6 +85,10 @@ export default function PatientAppointmentDetailPage() {
   const [clinicalRecordError, setClinicalRecordError] = useState<string | null>(null);
   const [hasTriedLoadingClinicalRecord, setHasTriedLoadingClinicalRecord] = useState(false);
 
+  // Patient detail state
+  const [patientDetail, setPatientDetail] = useState<Patient | null>(null);
+  const [loadingPatientDetail, setLoadingPatientDetail] = useState(false);
+
   // Permissions
   // Patients only have VIEW_APPOINTMENT_OWN - backend automatically filters by patientId
   const canViewOwn = user?.permissions?.includes('VIEW_APPOINTMENT_OWN') || false;
@@ -98,6 +104,30 @@ export default function PatientAppointmentDetailPage() {
   useEffect(() => {
     handleErrorRef.current = handleError;
   }, [handleError]);
+
+  // Load patient detail when appointment is loaded
+  useEffect(() => {
+    if (!appointment?.patient?.patientCode) {
+      setPatientDetail(null);
+      return;
+    }
+
+    const loadPatientDetail = async () => {
+      try {
+        setLoadingPatientDetail(true);
+        const patient = await patientService.getPatientByCode(appointment.patient!.patientCode);
+        setPatientDetail(patient);
+      } catch (error: any) {
+        console.error('Error loading patient detail:', error);
+        // Don't show error - patient info from appointment is enough
+        setPatientDetail(null);
+      } finally {
+        setLoadingPatientDetail(false);
+      }
+    };
+
+    loadPatientDetail();
+  }, [appointment?.patient?.patientCode]);
 
   // Load appointment - only once on mount
   // NOTE: Backend automatically filters by patientId from JWT token for VIEW_APPOINTMENT_OWN
@@ -406,9 +436,12 @@ export default function PatientAppointmentDetailPage() {
               <Stethoscope className="h-4 w-4 mr-2" />
               Clinical Record
             </TabsTrigger>
-            <TabsTrigger value="treatment-plan">
+            <TabsTrigger 
+              value="treatment-plan"
+              disabled={!appointment?.linkedTreatmentPlanCode && hasTriedLoadingTreatmentPlan && !treatmentPlan}
+            >
               <ClipboardList className="h-4 w-4 mr-2" />
-              Kế Hoạch Điều Trị
+              Lộ trình điều trị
             </TabsTrigger>
           </TabsList>
 
@@ -578,23 +611,74 @@ export default function PatientAppointmentDetailPage() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Mã Bệnh Nhân</label>
+                    <label className="text-sm font-medium text-muted-foreground">Mã bệnh nhân</label>
                     <p className="text-base font-semibold">{appointment.patient.patientCode}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Họ Tên</label>
+                    <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
                     <p className="text-base">{appointment.patient.fullName}</p>
                   </div>
                   {appointment.patient.phone && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Số Điện Thoại</label>
+                      <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
                       <p className="text-base">{appointment.patient.phone}</p>
+                    </div>
+                  )}
+                  {patientDetail?.email && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Email</label>
+                      <p className="text-base">{patientDetail.email}</p>
                     </div>
                   )}
                   {appointment.patient.dateOfBirth && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Ngày Sinh</label>
-                      <p className="text-base">{format(new Date(appointment.patient.dateOfBirth), 'dd/MM/yyyy')}</p>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày sinh</label>
+                      <p className="text-base">{format(new Date(appointment.patient.dateOfBirth), 'dd MMM yyyy')}</p>
+                    </div>
+                  )}
+                  {patientDetail?.gender && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Giới tính</label>
+                      <p className="text-base">
+                        {patientDetail.gender === 'MALE' ? 'Nam' : patientDetail.gender === 'FEMALE' ? 'Nữ' : patientDetail.gender}
+                      </p>
+                    </div>
+                  )}
+                  {patientDetail?.address && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Địa chỉ</label>
+                      <p className="text-base">{patientDetail.address}</p>
+                    </div>
+                  )}
+                  {patientDetail?.emergencyContactName && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Người liên hệ khẩn cấp</label>
+                      <p className="text-base">{patientDetail.emergencyContactName}</p>
+                      {patientDetail.emergencyContactPhone && (
+                        <p className="text-sm text-muted-foreground mt-1">{patientDetail.emergencyContactPhone}</p>
+                      )}
+                    </div>
+                  )}
+                  {(patientDetail?.allergies || patientDetail?.medicalHistory) && (
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                      {patientDetail?.allergies && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                            Dị ứng
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-base">{patientDetail.allergies}</p>
+                        </div>
+                      )}
+                      {patientDetail?.medicalHistory && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                            Tiền sử bệnh
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-base whitespace-pre-wrap">{patientDetail.medicalHistory}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

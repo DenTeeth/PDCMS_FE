@@ -219,101 +219,10 @@ export default function ClinicalRecordView({
         )}
       </div>
 
-      {/* Appointment & People Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b">
-        {/* Appointment Info */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Thông Tin Lịch Hẹn
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <div className="text-sm text-muted-foreground">Mã lịch hẹn</div>
-              <div className="font-mono font-semibold">{record.appointment.appointmentCode}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Trạng thái</div>
-              <Badge variant="outline">{record.appointment.status}</Badge>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Thời gian</div>
-              <div className="font-medium">
-                {formatDateTime(record.appointment.appointmentStartTime)} - {formatDateTime(record.appointment.appointmentEndTime)}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Thời lượng</div>
-              <div className="font-medium">{record.appointment.expectedDurationMinutes} phút</div>
-            </div>
-            {record.appointment.notes && (
-              <div>
-                <div className="text-sm text-muted-foreground">Ghi chú</div>
-                <div className="text-sm">{record.appointment.notes}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Doctor & Patient Info */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Bác Sĩ & Bệnh Nhân
-          </h3>
-          <div className="space-y-4">
-            {/* Doctor */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <UserCog className="h-4 w-4 text-muted-foreground" />
-                <div className="text-sm font-semibold">Bác Sĩ</div>
-              </div>
-              <div className="pl-6 space-y-1 text-sm">
-                <div className="font-medium">{record.doctor.fullName}</div>
-                <div className="text-muted-foreground">Mã: {record.doctor.employeeCode}</div>
-                {record.doctor.phone && (
-                  <div className="text-muted-foreground">ĐT: {record.doctor.phone}</div>
-                )}
-                {record.doctor.email && (
-                  <div className="text-muted-foreground">Email: {record.doctor.email}</div>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Patient */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <div className="text-sm font-semibold">Bệnh Nhân</div>
-              </div>
-              <div className="pl-6 space-y-1 text-sm">
-                <div className="font-medium">{record.patient.fullName}</div>
-                <div className="text-muted-foreground">Mã: {record.patient.patientCode}</div>
-                {record.patient.phone && (
-                  <div className="text-muted-foreground">ĐT: {record.patient.phone}</div>
-                )}
-                {record.patient.dateOfBirth && (
-                  <div className="text-muted-foreground">
-                    Ngày sinh: {formatDate(record.patient.dateOfBirth)}
-                  </div>
-                )}
-                {record.patient.gender && (
-                  <div className="text-muted-foreground">
-                    Giới tính: {record.patient.gender === 'MALE' ? 'Nam' : record.patient.gender === 'FEMALE' ? 'Nữ' : record.patient.gender}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Clinical Information & Patient Images - 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6 border-b">
         {/* Left: Clinical Information */}
-        <div>
+        <div className="pr-6 border-r-2 border-gray-300">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Stethoscope className="h-5 w-5" />
             Thông Tin Lâm Sàng
@@ -388,18 +297,31 @@ export default function ClinicalRecordView({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Dấu Hiệu Sinh Tồn</Label>
+                  <Label className="text-sm font-semibold">Chỉ Số Sức Khỏe</Label>
                 </div>
                 <div className="pl-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.entries(record.vitalSigns).map(([key, value]) => (
-                      <div key={key} className="p-2 bg-muted rounded-md">
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {key.replace(/_/g, ' ')}
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(record.vitalSigns).map(([key, value]) => {
+                      // Map key to Vietnamese label
+                      const labelMap: Record<string, string> = {
+                        blood_pressure: 'Huyết áp',
+                        bloodPressure: 'Huyết áp',
+                        heart_rate: 'Nhịp tim',
+                        heartRate: 'Nhịp tim',
+                        temperature: 'Nhiệt độ',
+                        respiratory_rate: 'Nhịp thở',
+                        respiratoryRate: 'Nhịp thở',
+                        oxygen_saturation: 'SpO2',
+                        oxygenSaturation: 'SpO2',
+                      };
+                      const label = labelMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                      return (
+                        <div key={key} className="p-3 bg-muted rounded-md">
+                          <div className="text-xs text-muted-foreground mb-1">{label}</div>
+                          <div className="text-sm font-medium">{String(value)}</div>
                         </div>
-                        <div className="text-sm font-medium">{String(value)}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -409,7 +331,7 @@ export default function ClinicalRecordView({
 
         {/* Right: Patient Images - Lazy loaded để tối ưu performance */}
         {record.patient.patientId && (
-          <div>
+          <div className="pl-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
               Hình Ảnh Bệnh Nhân
@@ -448,24 +370,26 @@ export default function ClinicalRecordView({
       {/* Prescription & Procedures - 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Prescriptions */}
-        {loadingPrescription ? (
-          <div>
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Đang tải đơn thuốc...</span>
+        <div className="pr-6 border-r-2 border-gray-300">
+          {loadingPrescription ? (
+            <div>
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Đang tải đơn thuốc...</span>
+              </div>
             </div>
-          </div>
-        ) : (
-          <PrescriptionList
-            prescriptions={prescription ? [prescription] : (record.prescriptions || [])}
-            canEdit={canEdit}
-            onEdit={handleEditPrescription}
-            onCreate={handleCreatePrescription}
-          />
-        )}
+          ) : (
+            <PrescriptionList
+              prescriptions={prescription ? [prescription] : (record.prescriptions || [])}
+              canEdit={canEdit}
+              onEdit={handleEditPrescription}
+              onCreate={handleCreatePrescription}
+            />
+          )}
+        </div>
 
         {/* Right: Procedures */}
-        <div>
+        <div className="pl-6">
           <ProcedureList
             recordId={record.clinicalRecordId}
             canEdit={canEdit}

@@ -158,7 +158,7 @@ export default function ContactsPage() {
                   onClick={() => toggleSort('name')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Name</span>
+                    <span>Tên</span>
                     {sortBy === 'name' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                   </div>
                 </th>

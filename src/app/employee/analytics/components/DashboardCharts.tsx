@@ -132,8 +132,8 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
                         <YAxis dataKey="serviceName" type="category" width={150} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="count" fill="#FF6B6B" name="Usage Count" />
-                        <Bar dataKey="revenue" fill="#4ECDC4" name="Revenue ($)" />
+                        <Bar dataKey="count" fill="#FF6B6B" name="Số lần sử dụng" />
+                        <Bar dataKey="revenue" fill="#4ECDC4" name="Doanh thu ($)" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -164,7 +164,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
                             dataKey="newPatients"
                             stroke="#FFE66D"
                             strokeWidth={3}
-                            name="New Patients"
+                            name="Bệnh nhân mới"
                             dot={{ fill: '#FFE66D', r: 5 }}
                             activeDot={{ r: 7 }}
                         />
@@ -173,7 +173,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
                             dataKey="returningPatients"
                             stroke="#95E1D3"
                             strokeWidth={3}
-                            name="Returning Patients"
+                            name="Bệnh nhân quay lại"
                             dot={{ fill: '#95E1D3', r: 5 }}
                             activeDot={{ r: 7 }}
                         />

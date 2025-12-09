@@ -34,12 +34,12 @@ export default function NewCustomerContactPage() {
                     className="flex items-center space-x-2"
                 >
                     <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                    <span>Back</span>
+                    <span>Quay lại</span>
                 </Button>
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">Tạo liên hệ khách hàng mới</h1>
                     <p className="text-muted-foreground mt-2">
-                        Add a new customer inquiry or contact record
+                        Thêm liên hệ khách hàng mới
                     </p>
                 </div>
             </div>

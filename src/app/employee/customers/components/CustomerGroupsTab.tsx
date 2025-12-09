@@ -274,12 +274,12 @@ export default function CustomerGroupsTab() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Group Name</TableHead>
-                                <TableHead>Customers</TableHead>
-                                <TableHead>Total Revenue</TableHead>
-                                <TableHead>Average Value</TableHead>
-                                <TableHead>Last Activity</TableHead>
-                                <TableHead>Performance</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead>Khách hàng</TableHead>
+                                <TableHead>Tổng doanh thu</TableHead>
+                                <TableHead>Giá trị trung bình</TableHead>
+                                <TableHead>Hoạt động gần nhất</TableHead>
+                                <TableHead>Hiệu suất</TableHead>
+                                <TableHead>Thao tác</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

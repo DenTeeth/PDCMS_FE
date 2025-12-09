@@ -166,8 +166,8 @@ export default function AppointmentsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Appointment Management</h1>
-            <p className="text-gray-600">View and manage patient appointments</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý lịch hẹn</h1>
+            <p className="text-gray-600">Xem và quản lý lịch hẹn bệnh nhân</p>
           </div>
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
@@ -176,19 +176,19 @@ export default function AppointmentsPage() {
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
-                List
+                Danh sách
               </Button>
               <Button
                 variant={viewMode === 'calendar' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('calendar')}
               >
-                Calendar
+                Lịch
               </Button>
             </div>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Appointment
+              Lịch hẹn mới
             </Button>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function AppointmentsPage() {
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-semibold text-gray-700">Total Appointments</p>
+                  <p className="text-sm font-semibold text-gray-700">Tổng số lịch hẹn</p>
                   <p className="text-2xl font-bold text-gray-900">{appointments.length}</p>
                 </div>
               </div>

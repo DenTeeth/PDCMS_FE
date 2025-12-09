@@ -65,7 +65,7 @@ export default function IncomeExpenseCharts({
                 </Card>
                 <Card>
                     <CardContent className="pt-6">
-                        <div className="text-sm text-gray-600">Net Profit</div>
+                        <div className="text-sm text-gray-600">Lợi nhuận ròng</div>
                         <div
                             className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'
                                 }`}
@@ -117,7 +117,7 @@ export default function IncomeExpenseCharts({
                                 stroke="#FFE66D"
                                 strokeWidth={3}
                                 strokeDasharray="5 5"
-                                name="Net Profit"
+                                name="Lợi nhuận ròng"
                                 dot={{ fill: '#FFE66D', r: 5 }}
                             />
                         </LineChart>

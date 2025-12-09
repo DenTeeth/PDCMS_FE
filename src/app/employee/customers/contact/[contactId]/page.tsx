@@ -55,7 +55,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
@@ -83,7 +83,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
@@ -134,7 +134,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">{displayName}</h1>
@@ -151,7 +151,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                        <span>Edit</span>
+                        <span>Sửa</span>
                     </Button>
                     <Button
                         variant="destructive"
@@ -160,7 +160,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                        <span>Delete</span>
+                        <span>Xóa</span>
                     </Button>
                 </div>
             </div>
@@ -188,7 +188,7 @@ export default function ViewContactPage() {
                         <div className="space-y-1">
                             <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
                                 <FontAwesomeIcon icon={faPhone} className="h-4 w-4" />
-                                <span>Phone</span>
+                                <span>Số điện thoại</span>
                             </div>
                             <p className="text-lg font-medium">{phone}</p>
                         </div>
@@ -224,7 +224,7 @@ export default function ViewContactPage() {
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Status</p>
+                            <p className="text-sm font-medium text-muted-foreground">Trạng thái</p>
                             <div className="mt-1">
                                 {getStatusBadge(status)}
                             </div>

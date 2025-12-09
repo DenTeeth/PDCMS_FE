@@ -164,7 +164,7 @@ export default function CustomerContactsTab() {
                                     onClick={() => toggleSort('status')}
                                 >
                                     <div className="flex items-center space-x-1">
-                                        <span>Status</span>
+                                        <span>Trạng thái</span>
                                         {sortBy === 'status' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                                     </div>
                                 </th>
