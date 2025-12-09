@@ -594,7 +594,7 @@ export default function EmployeeDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-phone">Phone</Label>
+                    <Label htmlFor="edit-phone">Số điện thoại</Label>
                     <Input
                       id="edit-phone"
                       value={editFormData.phone}

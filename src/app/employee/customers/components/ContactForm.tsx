@@ -5,9 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 const ContactSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required'),
+  fullName: z.string().min(1, 'Vui lòng nhập họ và tên'),
   phone: z.string().optional(),
-  email: z.string().email('Invalid email').optional(),
+  email: z.string().email('Email không hợp lệ').optional(),
   source: z.string().optional(),
   serviceInterested: z.string().optional(),
   message: z.string().optional(),
@@ -16,7 +16,7 @@ const ContactSchema = z.object({
 export type ContactFormValues = z.infer<typeof ContactSchema>;
 
 const sourceOptions = [
-  { value: '', label: 'Select source...' },
+  { value: '', label: 'Chọn nguồn...' },
   { value: 'WEBSITE', label: 'Website' },
   { value: 'FACEBOOK', label: 'Facebook' },
   { value: 'ZALO', label: 'Zalo' },
@@ -25,7 +25,7 @@ const sourceOptions = [
 ];
 
 const serviceOptions = [
-  { value: '', label: 'Select service...' },
+  { value: '', label: 'Chọn dịch vụ...' },
   { value: 'GENERAL_CHECKUP', label: 'General Checkup' },
   { value: 'TEETH_CLEANING', label: 'Teeth Cleaning' },
   { value: 'TEETH_WHITENING', label: 'Teeth Whitening' },
@@ -60,7 +60,7 @@ export default function ContactForm({ defaultValues, onSubmit }: { defaultValues
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Phone</label>
+          <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
           <input
             {...register('phone')}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
@@ -77,7 +77,7 @@ export default function ContactForm({ defaultValues, onSubmit }: { defaultValues
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Source</label>
+          <label className="block text-sm font-medium text-gray-700">Nguồn</label>
           <select
             {...register('source')}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary bg-white"
@@ -105,7 +105,7 @@ export default function ContactForm({ defaultValues, onSubmit }: { defaultValues
         </div>
 
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Message</label>
+          <label className="block text-sm font-medium text-gray-700">Tin nhắn</label>
           <textarea
             {...register('message')}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"

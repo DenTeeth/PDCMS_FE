@@ -46,7 +46,7 @@ export function MostUsedServicesChart({ data }: ServiceAnalyticsChartsProps) {
                         <XAxis dataKey="serviceName" angle={-45} textAnchor="end" height={100} />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="usageCount" fill="#FF6B6B" name="Usage Count" />
+                        <Bar dataKey="usageCount" fill="#FF6B6B" name="Số lần sử dụng" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -100,10 +100,10 @@ export function ServiceAnalyticsTable({ data }: ServiceAnalyticsChartsProps) {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b">
-                                <th className="text-left p-3 font-semibold">Service Name</th>
-                                <th className="text-left p-3 font-semibold">Usage Count</th>
-                                <th className="text-left p-3 font-semibold">Revenue</th>
-                                <th className="text-left p-3 font-semibold">Utilization Rate</th>
+                                <th className="text-left p-3 font-semibold">Tên dịch vụ</th>
+                                <th className="text-left p-3 font-semibold">Số lần sử dụng</th>
+                                <th className="text-left p-3 font-semibold">Doanh thu</th>
+                                <th className="text-left p-3 font-semibold">Tỷ lệ sử dụng</th>
                                 <th className="text-left p-3 font-semibold">Average Price</th>
                             </tr>
                         </thead>

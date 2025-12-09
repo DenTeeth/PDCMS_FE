@@ -846,54 +846,6 @@ export default function TreatmentPlanDetail({
         </CardContent>
       </Card>
 
-      {canBulkBook && (
-        <Card className="border border-dashed border-primary/40 bg-primary/5">
-          <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-primary">
-                Đặt lịch trực tiếp từ hạng mục READY_FOR_BOOKING
-              </p>
-              {selectedPlanItemIds.length > 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Đã chọn {selectedPlanItemIds.length} hạng mục
-                  {selectedTotalDuration > 0 && ` · Tổng thời gian ~ ${selectedTotalDuration} phút`}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Chọn các hạng mục ở trạng thái READY_FOR_BOOKING để đặt lịch nhiều dịch vụ cùng lúc.
-                </p>
-              )}
-              {selectedPlanItems.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedPlanItems.map((item) => (
-                    <span
-                      key={item.itemId}
-                      className="px-2 py-1 text-xs border rounded-full bg-white text-muted-foreground"
-                    >
-                      {item.itemName}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={handleBookSelectedPlanItems}
-                disabled={selectedPlanItemIds.length === 0}
-              >
-                Đặt lịch ({selectedPlanItemIds.length})
-              </Button>
-              <Button
-                variant="outline"
-                onClick={clearSelectedPlanItems}
-                disabled={selectedPlanItemIds.length === 0}
-              >
-                Bỏ chọn
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Timeline/Progress Steps View */}
       <Card>

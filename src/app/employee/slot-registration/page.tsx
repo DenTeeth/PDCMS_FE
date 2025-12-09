@@ -412,12 +412,12 @@ export default function SlotRegistrationPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-3 font-medium">Registration ID</th>
-                      <th className="text-left p-3 font-medium">Work Shift</th>
-                      <th className="text-left p-3 font-medium">Day</th>
-                      <th className="text-left p-3 font-medium">Effective Period</th>
-                      <th className="text-left p-3 font-medium">Status</th>
-                      <th className="text-left p-3 font-medium">Actions</th>
+                      <th className="text-left p-3 font-medium">Mã đăng ký</th>
+                      <th className="text-left p-3 font-medium">Ca làm việc</th>
+                      <th className="text-left p-3 font-medium">Thứ</th>
+                      <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
+                      <th className="text-left p-3 font-medium">Trạng thái</th>
+                      <th className="text-left p-3 font-medium">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -446,7 +446,7 @@ export default function SlotRegistrationPage() {
                             ) : (
                               <>
                                 <XCircle className="h-3 w-3 mr-1" />
-                                Cancelled
+                                Đã hủy
                               </>
                             )}
                           </Badge>
@@ -587,7 +587,7 @@ export default function SlotRegistrationPage() {
                       setSelectedSlot(null);
                     }}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={registering}>
                     {registering ? (

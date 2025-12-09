@@ -32,7 +32,7 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
@@ -60,7 +60,7 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
@@ -121,12 +121,12 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
                         <p className="text-muted-foreground mt-2">
-                            Update contact information for {contact.fullName}
+                            Cập nhật thông tin liên hệ cho {contact.fullName}
                         </p>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                        <span>Delete</span>
+                        <span>Xóa</span>
                     </Button>
                 )}
             </div>

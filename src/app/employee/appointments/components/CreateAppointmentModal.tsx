@@ -34,6 +34,7 @@ import {
 } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface CreateAppointmentModalProps {
     open: boolean;
@@ -42,11 +43,11 @@ interface CreateAppointmentModalProps {
 }
 
 const appointmentSchema = z.object({
-    patientId: z.number().min(1, 'Please select a patient'),
-    serviceId: z.number().min(1, 'Please select a service'),
-    dentistId: z.number().min(1, 'Please select a dentist'),
-    appointmentDate: z.string().min(1, 'Please select a date'),
-    startTime: z.string().min(1, 'Please select a time'),
+    patientId: z.number().min(1, 'Vui lòng chọn bệnh nhân'),
+    serviceId: z.number().min(1, 'Vui lòng chọn dịch vụ'),
+    dentistId: z.number().min(1, 'Vui lòng chọn nha sĩ'),
+    appointmentDate: z.string().min(1, 'Vui lòng chọn ngày'),
+    startTime: z.string().min(1, 'Vui lòng chọn thời gian'),
     endTime: z.string().min(1),
     notes: z.string().optional(),
     reasonForVisit: z.string().optional(),
@@ -176,23 +177,23 @@ export default function CreateAppointmentModal({
     const handleNext = () => {
         // Validate current step before moving forward
         if (step === 1 && !selectedPatientId) {
-            toast.error('Please select a patient');
+            toast.error('Vui lòng chọn bệnh nhân');
             return;
         }
         if (step === 2 && !selectedServiceId) {
-            toast.error('Please select a service');
+            toast.error('Vui lòng chọn dịch vụ');
             return;
         }
         if (step === 3 && !selectedDate) {
-            toast.error('Please select a date');
+            toast.error('Vui lòng chọn ngày');
             return;
         }
         if (step === 3 && !selectedSlot) {
-            toast.error('Please select a time slot');
+            toast.error('Vui lòng chọn khung giờ');
             return;
         }
         if (step === 4 && !selectedDentistId) {
-            toast.error('Please select a dentist');
+            toast.error('Vui lòng chọn nha sĩ');
             return;
         }
 
@@ -232,8 +233,8 @@ export default function CreateAppointmentModal({
             handleClose();
             onSuccess();
         } catch (error: any) {
-            toast.error('Failed to create appointment', {
-                description: error.message || 'Please try again later',
+            toast.error('Không thể tạo lịch hẹn', {
+                description: error.message || 'Vui lòng thử lại sau',
             });
         } finally {
             setLoading(false);
@@ -257,8 +258,8 @@ export default function CreateAppointmentModal({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create New Appointment</DialogTitle>
-                    <DialogDescription>Step {step} of 6</DialogDescription>
+                    <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
+                    <DialogDescription>Bước {step} / 6</DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -266,7 +267,7 @@ export default function CreateAppointmentModal({
                     {step === 1 && (
                         <div className="space-y-4">
                             <div>
-                                <Label htmlFor="patientSearch">Search Patient</Label>
+                                <Label htmlFor="patientSearch">Tìm kiếm bệnh nhân</Label>
                                 <div className="relative">
                                     <Input
                                         id="patientSearch"
@@ -304,7 +305,7 @@ export default function CreateAppointmentModal({
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                                     <div className="flex items-center gap-2 text-green-700 font-medium mb-2">
                                         <FontAwesomeIcon icon={faCheck} />
-                                        Selected Patient
+                                        Bệnh nhân đã chọn
                                     </div>
                                     <div className="text-gray-900">{selectedPatient.fullName}</div>
                                     <div className="text-sm text-gray-600">{selectedPatient.phone}</div>
@@ -317,7 +318,7 @@ export default function CreateAppointmentModal({
                     {step === 2 && (
                         <div className="space-y-4">
                             <div>
-                                <Label htmlFor="serviceId">Select Service</Label>
+                                <Label htmlFor="serviceId">Chọn dịch vụ</Label>
                                 <div className="grid gap-3 mt-2">
                                     {services.map((service) => (
                                         <div
@@ -333,7 +334,7 @@ export default function CreateAppointmentModal({
                                                 <div className="text-sm text-gray-600 mt-1">{service.description}</div>
                                             )}
                                             <div className="flex items-center justify-between mt-2 text-sm">
-                                                <span className="text-gray-600">Duration: {service.duration} mins</span>
+                                                <span className="text-gray-600">Thời lượng: {service.duration} phút</span>
                                                 <span className="font-medium text-primary">
                                                     ${service.price.toFixed(2)}
                                                 </span>
@@ -349,7 +350,7 @@ export default function CreateAppointmentModal({
                     {step === 3 && (
                         <div className="space-y-4">
                             <div>
-                                <Label htmlFor="appointmentDate">Select Date</Label>
+                                <Label htmlFor="appointmentDate">Chọn ngày</Label>
                                 <Input
                                     id="appointmentDate"
                                     type="date"
@@ -361,12 +362,12 @@ export default function CreateAppointmentModal({
 
                             {selectedDate && (
                                 <div>
-                                    <Label>Available Time Slots</Label>
+                                    <Label>Khung giờ khả dụng</Label>
                                     {loading ? (
-                                        <div className="text-center py-8 text-gray-500">Loading available slots...</div>
+                                        <div className="text-center py-8 text-gray-500">Đang tải...</div>
                                     ) : availableSlots.length === 0 ? (
                                         <div className="text-center py-8 text-gray-500">
-                                            No available slots for this date
+                                            Không có khung giờ khả dụng cho ngày này
                                         </div>
                                     ) : (
                                         <div className="space-y-4 mt-2">
@@ -412,7 +413,7 @@ export default function CreateAppointmentModal({
                     {step === 4 && selectedDentist && (
                         <div className="space-y-4">
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="font-medium text-blue-900 mb-2">Assigned Dentist</div>
+                                <div className="font-medium text-blue-900 mb-2">Nha sĩ được phân công</div>
                                 <div className="text-gray-900">{selectedDentist.fullName}</div>
                                 {selectedDentist.specialization && (
                                     <div className="text-sm text-gray-600">{selectedDentist.specialization}</div>
@@ -425,7 +426,7 @@ export default function CreateAppointmentModal({
                     {step === 5 && (
                         <div className="space-y-4">
                             <div>
-                                <Label htmlFor="reasonForVisit">Reason for Visit (Optional)</Label>
+                                <Label htmlFor="reasonForVisit">Lý do khám (Tùy chọn)</Label>
                                 <Textarea
                                     id="reasonForVisit"
                                     placeholder="Ví dụ: Đau răng, Khám định kỳ..."
@@ -435,7 +436,7 @@ export default function CreateAppointmentModal({
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                                <Label htmlFor="notes">Ghi chú bổ sung (Tùy chọn)</Label>
                                 <Textarea
                                     id="notes"
                                     placeholder="Bất kỳ hướng dẫn đặc biệt hoặc thông tin..."
@@ -452,21 +453,21 @@ export default function CreateAppointmentModal({
                         <div className="space-y-4">
                             <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                                 <div>
-                                    <div className="text-sm text-gray-600">Patient</div>
+                                    <div className="text-sm text-gray-600">Bệnh nhân</div>
                                     <div className="font-medium">{selectedPatient?.fullName}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-600">Service</div>
+                                    <div className="text-sm text-gray-600">Dịch vụ</div>
                                     <div className="font-medium">{selectedService?.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-600">Date & Time</div>
+                                    <div className="text-sm text-gray-600">Ngày & Giờ</div>
                                     <div className="font-medium">
-                                        {format(new Date(selectedDate), 'PPP')} at {watch('startTime')}
+                                        {format(new Date(selectedDate), 'PPP', { locale: vi })} lúc {watch('startTime')}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-600">Dentist</div>
+                                    <div className="text-sm text-gray-600">Nha sĩ</div>
                                     <div className="font-medium">{selectedDentist?.fullName}</div>
                                 </div>
                             </div>
@@ -474,7 +475,7 @@ export default function CreateAppointmentModal({
                             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
                                 <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 mt-1" />
                                 <div className="text-sm text-yellow-800">
-                                    Please review all details carefully before confirming the appointment.
+                                    Vui lòng xem xét kỹ tất cả thông tin trước khi xác nhận lịch hẹn.
                                 </div>
                             </div>
                         </div>

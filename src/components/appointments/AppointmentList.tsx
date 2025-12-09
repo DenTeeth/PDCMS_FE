@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { AppointmentSummaryDTO, AppointmentStatus, APPOINTMENT_STATUS_COLORS } from '@/types/appointment';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface AppointmentListProps {
   appointments: AppointmentSummaryDTO[];
@@ -51,7 +52,7 @@ export default function AppointmentList({
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return format(date, 'MMM dd, yyyy HH:mm');
+      return format(date, 'dd/MM/yyyy HH:mm', { locale: vi });
     } catch {
       return dateTimeStr;
     }
@@ -69,14 +70,14 @@ export default function AppointmentList({
   const columns: OptimizedTableColumn<AppointmentSummaryDTO>[] = useMemo(() => [
     {
       key: 'appointmentCode',
-      header: 'Appointment Code',
+      header: 'Mã lịch hẹn',
       accessor: (appointment) => (
         <span className="font-medium">{appointment.appointmentCode}</span>
       ),
     },
     {
       key: 'patient',
-      header: 'Patient',
+      header: 'Bệnh nhân',
       accessor: (appointment) => (
         appointment.patient ? (
           <div>
@@ -84,13 +85,13 @@ export default function AppointmentList({
             <div className="text-sm text-muted-foreground">{appointment.patient.patientCode}</div>
           </div>
         ) : (
-          <span className="text-muted-foreground">N/A</span>
+          <span className="text-muted-foreground">Không có</span>
         )
       ),
     },
     {
       key: 'doctor',
-      header: 'Doctor',
+      header: 'Bác sĩ',
       accessor: (appointment) => (
         appointment.doctor ? (
           <div>
@@ -98,13 +99,13 @@ export default function AppointmentList({
             <div className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</div>
           </div>
         ) : (
-          <span className="text-muted-foreground">N/A</span>
+          <span className="text-muted-foreground">Không có</span>
         )
       ),
     },
     {
       key: 'room',
-      header: 'Room',
+      header: 'Phòng',
       accessor: (appointment) => (
         appointment.room ? (
           <div>
@@ -112,13 +113,13 @@ export default function AppointmentList({
             <div className="text-sm text-muted-foreground">{appointment.room.roomName}</div>
           </div>
         ) : (
-          <span className="text-muted-foreground">N/A</span>
+          <span className="text-muted-foreground">Không có</span>
         )
       ),
     },
     {
       key: 'startTime',
-      header: 'Start Time',
+      header: 'Thời gian bắt đầu',
       accessor: (appointment) => (
         <div>
           <div className="font-medium">{formatDateTime(appointment.appointmentStartTime)}</div>
@@ -127,7 +128,7 @@ export default function AppointmentList({
     },
     {
       key: 'endTime',
-      header: 'End Time',
+      header: 'Thời gian kết thúc',
       accessor: (appointment) => (
         <div>
           <div className="text-sm">{formatTime(appointment.appointmentEndTime)}</div>
@@ -136,19 +137,19 @@ export default function AppointmentList({
     },
     {
       key: 'duration',
-      header: 'Duration',
+      header: 'Thời lượng',
       accessor: (appointment) => (
-        <span>{appointment.expectedDurationMinutes} min</span>
+        <span>{appointment.expectedDurationMinutes} phút</span>
       ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (appointment) => getStatusBadge(appointment.status),
     },
     ...(showActions ? [{
       key: 'actions',
-      header: 'Actions',
+      header: 'Thao tác',
       accessor: (appointment) => (
         <div className="flex items-center gap-2">
           <Button
@@ -160,7 +161,7 @@ export default function AppointmentList({
             }}
           >
             <Eye className="h-4 w-4 mr-1" />
-            View
+            Xem
           </Button>
         </div>
       ),
@@ -176,7 +177,7 @@ export default function AppointmentList({
         columns={columns}
         loading={loading}
         onRowClick={onRowClick}
-        emptyMessage="No appointments found"
+        emptyMessage="Không tìm thấy lịch hẹn"
       />
 
       {/* Pagination - Below table, centered */}
@@ -189,10 +190,10 @@ export default function AppointmentList({
             disabled={currentPage === 0 || loading}
           >
             <ChevronLeft className="h-4 w-4" />
-            Previous
+            Trước
           </Button>
           <div className="text-sm font-medium min-w-[100px] text-center">
-            Page {currentPage + 1} of {totalPages}
+            Trang {currentPage + 1} / {totalPages}
           </div>
           <Button
             variant="outline"
@@ -200,7 +201,7 @@ export default function AppointmentList({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages - 1 || loading}
           >
-            Next
+            Sau
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

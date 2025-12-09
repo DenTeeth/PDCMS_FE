@@ -240,24 +240,24 @@ export default function RoleDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
-              Role Information
+              Thông tin vai trò
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Role ID</Label>
+              <Label className="text-gray-600">Mã vai trò</Label>
               <p className="font-medium text-lg">{role.roleId}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Role Name</Label>
+              <Label className="text-gray-600">Tên vai trò</Label>
               <p className="font-medium">{role.roleName}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Description</Label>
+              <Label className="text-gray-600">Mô tả</Label>
               <p className="font-medium text-sm">{role.description}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Status</Label>
+              <Label className="text-gray-600">Trạng thái</Label>
               <Badge
                 variant={role.isActive ? 'default' : 'secondary'}
                 className={

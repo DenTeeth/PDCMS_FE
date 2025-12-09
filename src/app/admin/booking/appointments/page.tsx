@@ -205,16 +205,16 @@ export default function AdminAppointmentsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Appointment Management</h1>
+            <h1 className="text-3xl font-bold">Quản lý lịch hẹn</h1>
             <p className="text-muted-foreground mt-2">
-              Manage patient appointments with calendar and list views
+              Quản lý lịch hẹn bệnh nhân
             </p>
           </div>
           <div className="flex items-center gap-2">
             {canCreate && (
               <Button onClick={handleCreateAppointment}>
                 <Plus className="h-4 w-4 mr-2" />
-                New Appointment
+                Lịch hẹn mới
               </Button>
             )}
           </div>
@@ -225,11 +225,11 @@ export default function AdminAppointmentsPage() {
           <TabsList>
             <TabsTrigger value="list">
               <List className="h-4 w-4 mr-2" />
-              List View
+              Xem danh sách
             </TabsTrigger>
             <TabsTrigger value="calendar">
               <Calendar className="h-4 w-4 mr-2" />
-              Calendar View
+              Xem lịch
             </TabsTrigger>
           </TabsList>
 

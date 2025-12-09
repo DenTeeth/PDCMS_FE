@@ -16,10 +16,10 @@ export default function NewCustomerContactPage() {
   const onSubmit = async (values: any) => {
     try {
       await create.mutateAsync(values);
-      toast.success('Customer contact created');
+      toast.success('Đã tạo liên hệ khách hàng');
       router.push('/employee/customer-contacts');
     } catch (err: any) {
-      toast.error(err.message || 'Create failed');
+      toast.error(err.message || 'Tạo thất bại');
     }
   };
 
@@ -34,12 +34,12 @@ export default function NewCustomerContactPage() {
           className="flex items-center space-x-2"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-          <span>Back</span>
+          <span>Quay lại</span>
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Tạo liên hệ khách hàng mới</h1>
           <p className="text-muted-foreground mt-2">
-            Add a new customer contact record to the system
+            Thêm liên hệ khách hàng mới
           </p>
         </div>
       </div>
@@ -49,10 +49,10 @@ export default function NewCustomerContactPage() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FontAwesomeIcon icon={faUserPlus} className="h-5 w-5" />
-            <span>Contact Information</span>
+            <span>Thông tin liên hệ</span>
           </CardTitle>
           <CardDescription>
-            Fill in the customer contact details below
+            Điền thông tin chi tiết liên hệ khách hàng bên dưới
           </CardDescription>
         </CardHeader>
         <CardContent>

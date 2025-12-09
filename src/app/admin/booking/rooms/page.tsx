@@ -499,19 +499,19 @@ export default function BookingRoomsPage() {
   const columns: OptimizedTableColumn<Room>[] = useMemo(() => [
     {
       key: 'roomCode',
-      header: 'Room Code',
+      header: 'Mã phòng',
       accessor: (room) => (
         <span className="font-medium">{room.roomCode}</span>
       ),
     },
     {
       key: 'roomName',
-      header: 'Room Name',
+      header: 'Tên phòng',
       accessor: (room) => room.roomName,
     },
     {
       key: 'roomType',
-      header: 'Type',
+      header: 'Loại',
       accessor: (room) => (
         <Badge variant="outline">
           {ROOM_TYPE_LABELS[room.roomType] || room.roomType}
@@ -520,16 +520,16 @@ export default function BookingRoomsPage() {
     },
     {
       key: 'isActive',
-      header: 'Status',
+      header: 'Trạng thái',
       accessor: (room) => (
         <Badge variant={room.isActive ? 'default' : 'secondary'}>
-          {room.isActive ? 'Active' : 'Inactive'}
+          {room.isActive ? 'Hoạt động' : 'Không hoạt động'}
         </Badge>
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: 'Thao tác',
       accessor: (room) => (
         <div className="flex items-center gap-1 sm:gap-2">
           <Button
@@ -592,16 +592,16 @@ export default function BookingRoomsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Rooms Management</h1>
+            <h1 className="text-3xl font-bold">Quản lý phòng</h1>
             <p className="text-muted-foreground mt-2">
-              Manage clinic rooms and their configurations
+              Quản lý phòng khám
             </p>
           </div>
           <div className="flex items-center gap-2">
             {canCreate && (
               <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Room
+                Thêm phòng
               </Button>
             )}
           </div>
@@ -794,16 +794,16 @@ export default function BookingRoomsPage() {
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Room</DialogTitle>
+              <DialogTitle>Tạo phòng mới</DialogTitle>
               <DialogDescription>
-                Create a new room in the system
+                Tạo một phòng mới
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               {/* Room Code */}
               <div>
-                <Label htmlFor="create-room-code">Room Code <span className="text-red-500">*</span></Label>
+                <Label htmlFor="create-room-code">Mã phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-code"
                   value={createForm.roomCode}
@@ -815,7 +815,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Name */}
               <div>
-                <Label htmlFor="create-room-name">Room Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="create-room-name">Tên phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-name"
                   value={createForm.roomName}
@@ -827,7 +827,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Type */}
               <div>
-                <Label htmlFor="create-room-type">Room Type <span className="text-red-500">*</span></Label>
+                <Label htmlFor="create-room-type">Loại phòng <span className="text-red-500">*</span></Label>
                 <Select
                   value={createForm.roomType}
                   onValueChange={(value) => setCreateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
@@ -854,19 +854,19 @@ export default function BookingRoomsPage() {
                   onChange={(e) => setCreateForm(prev => ({ ...prev, isActive: e.target.checked }))}
                   className="rounded border-gray-300"
                 />
-                <Label htmlFor="create-is-active">Active</Label>
+                <Label htmlFor="create-is-active">Kích hoạt</Label>
               </div>
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleCreateRoom}
                 disabled={!createForm.roomCode.trim() || !createForm.roomName.trim() || !createForm.roomType}
               >
-                Create
+                Tạo
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -876,16 +876,16 @@ export default function BookingRoomsPage() {
         <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Update Room</DialogTitle>
+              <DialogTitle>Cập nhật</DialogTitle>
               <DialogDescription>
-                Update room information
+                Cập nhật thông tin phòng khám
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               {/* Room Code */}
               <div>
-                <Label htmlFor="update-room-code">Room Code <span className="text-red-500">*</span></Label>
+                <Label htmlFor="update-room-code">Mã phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-code"
                   value={updateForm.roomCode}
@@ -897,7 +897,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Name */}
               <div>
-                <Label htmlFor="update-room-name">Room Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="update-room-name">Tên phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-name"
                   value={updateForm.roomName}
@@ -909,7 +909,7 @@ export default function BookingRoomsPage() {
 
               {/* Room Type */}
               <div>
-                <Label htmlFor="update-room-type">Room Type <span className="text-red-500">*</span></Label>
+                <Label htmlFor="update-room-type">Loại phòng <span className="text-red-500">*</span></Label>
                 <Select
                   value={updateForm.roomType}
                   onValueChange={(value) => setUpdateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
@@ -936,19 +936,19 @@ export default function BookingRoomsPage() {
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, isActive: e.target.checked }))}
                   className="rounded border-gray-300"
                 />
-                <Label htmlFor="update-is-active">Active</Label>
+                <Label htmlFor="update-is-active">Kích hoạt</Label>
               </div>
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleUpdateRoom}
                 disabled={!updateForm.roomCode.trim() || !updateForm.roomName.trim() || !updateForm.roomType}
               >
-                Update
+                Cập nhật
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -958,9 +958,9 @@ export default function BookingRoomsPage() {
         <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Deactivate Room</DialogTitle>
+              <DialogTitle>Vô hiệu hóa </DialogTitle>
               <DialogDescription>
-                Are you sure you want to deactivate this room?
+                Bạn có chắc chắn muốn vô hiệu hóa phòng này?
               </DialogDescription>
             </DialogHeader>
 
@@ -968,13 +968,13 @@ export default function BookingRoomsPage() {
               <div className="space-y-4">
                 <div className="p-3 bg-muted rounded-lg">
                   <div className="text-sm">
-                    <strong>Room Code:</strong> {selectedRoom.roomCode}
+                    <strong>Mã phòng:</strong> {selectedRoom.roomCode}
                   </div>
                   <div className="text-sm">
-                    <strong>Room Name:</strong> {selectedRoom.roomName}
+                    <strong>Tên phòng:</strong> {selectedRoom.roomName}
                   </div>
                   <div className="text-sm">
-                    <strong>Room Type:</strong> {ROOM_TYPE_LABELS[selectedRoom.roomType] || selectedRoom.roomType}
+                    <strong>Loại phòng:</strong> {ROOM_TYPE_LABELS[selectedRoom.roomType] || selectedRoom.roomType}
                   </div>
                 </div>
               </div>
@@ -982,13 +982,13 @@ export default function BookingRoomsPage() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                Cancel
+                Hủy
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleDeleteRoom}
               >
-                Deactivate
+                Vô hiệu hóa
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -998,24 +998,24 @@ export default function BookingRoomsPage() {
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Room Details</DialogTitle>
+              <DialogTitle>Chi tiết</DialogTitle>
               <DialogDescription>
-                Detailed information about the room
+                Chi tiết phòng khám
               </DialogDescription>
             </DialogHeader>
             {selectedRoom && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Room Code</label>
+                    <label className="text-sm font-medium text-muted-foreground">Mã phòng</label>
                     <p className="text-base font-semibold">{selectedRoom.roomCode}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Room Name</label>
+                    <label className="text-sm font-medium text-muted-foreground">Tên phòng</label>
                     <p className="text-base">{selectedRoom.roomName}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Room Type</label>
+                    <label className="text-sm font-medium text-muted-foreground">Loại phòng</label>
                     <div className="text-base">
                       <Badge variant="outline">
                         {ROOM_TYPE_LABELS[selectedRoom.roomType] || selectedRoom.roomType}
@@ -1023,16 +1023,16 @@ export default function BookingRoomsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
                     <div className="text-base">
                       <Badge variant={selectedRoom.isActive ? 'default' : 'secondary'}>
-                        {selectedRoom.isActive ? 'Active' : 'Inactive'}
+                        {selectedRoom.isActive ? 'Hoạt động' : 'Không hoạt động'}
                       </Badge>
                     </div>
                   </div>
                   {selectedRoom.createdAt && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Created At</label>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
                       <p className="text-base">
                         {new Date(selectedRoom.createdAt).toLocaleString('vi-VN')}
                       </p>
@@ -1040,7 +1040,7 @@ export default function BookingRoomsPage() {
                   )}
                   {selectedRoom.updatedAt && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Updated At</label>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày cập nhật</label>
                       <p className="text-base">
                         {new Date(selectedRoom.updatedAt).toLocaleString('vi-VN')}
                       </p>
