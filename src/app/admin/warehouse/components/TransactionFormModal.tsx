@@ -178,7 +178,7 @@ export default function TransactionFormModal({
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Chọn nhà cung cấp" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent align="start">
                     {supplierOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -238,7 +238,7 @@ export default function TransactionFormModal({
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Chọn vật tư" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent align="start">
                             {itemOptions.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}

@@ -33,15 +33,24 @@ export default function TreatmentPlanItem({
   onToggleSelect,
 }: TreatmentPlanItemProps) {
   // Get status info with fallback for unknown statuses
-  // Log warning if status is not recognized
-  const statusInfo = PLAN_ITEM_STATUS_COLORS[item.status];
-  if (!statusInfo) {
-    console.warn(`Unknown PlanItemStatus: "${item.status}" for item ${item.itemId}. Using fallback.`);
+  // Log warning if status is not recognized or missing
+  const itemStatus = item.status;
+  
+  // Check if status exists
+  if (!itemStatus) {
+    console.warn(`Missing PlanItemStatus for item ${item.itemId} (itemName: ${item.itemName}). Status is: ${itemStatus}. Using fallback.`);
   }
-  const finalStatusInfo = statusInfo || {
+  
+  const statusInfo = itemStatus ? PLAN_ITEM_STATUS_COLORS[itemStatus] : null;
+  if (!statusInfo && itemStatus) {
+    console.warn(`Unknown PlanItemStatus: "${itemStatus}" for item ${item.itemId} (itemName: ${item.itemName}). Using fallback.`);
+  }
+  
+  // Fallback: Use PENDING status if status is missing/null/undefined
+  const finalStatusInfo = statusInfo || PLAN_ITEM_STATUS_COLORS[PlanItemStatus.PENDING] || {
     bg: '#6B7280',
     border: '#4B5563',
-    text: item.status || 'Không xác định',
+    text: itemStatus || 'Chưa xác định',
   };
 
   const formatCurrency = (amount: number | null | undefined): string => {
@@ -64,6 +73,10 @@ export default function TreatmentPlanItem({
   };
 
   const canSelect = selectable && item.status === PlanItemStatus.READY_FOR_BOOKING;
+  
+  // Safe status checks with null/undefined handling
+  const isReadyForBooking = item.status === PlanItemStatus.READY_FOR_BOOKING;
+  const isWaitingForPrerequisite = item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -95,14 +108,14 @@ export default function TreatmentPlanItem({
                   color: 'white',
                 }}
                 title={
-                  item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE
+                  isWaitingForPrerequisite
                     ? item.waitingForServiceName
                       ? `Cần hoàn thành dịch vụ: ${item.waitingForServiceName}`
                       : 'Cần hoàn thành dịch vụ tiên quyết trước'
-                    : undefined
+                    : itemStatus ? undefined : 'Trạng thái chưa được xác định'
                 }
               >
-                {item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE && (
+                {isWaitingForPrerequisite && (
                   <Lock className="h-3 w-3 mr-1 inline" />
                 )}
                 {finalStatusInfo.text}
@@ -110,7 +123,7 @@ export default function TreatmentPlanItem({
             </div>
 
             {/* V21: Clinical Rules Messaging - Show prerequisite info */}
-            {item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE && (
+            {isWaitingForPrerequisite && (
               <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm text-amber-800 dark:text-amber-200">
                 <div className="flex items-start gap-2">
                   <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -193,7 +206,7 @@ export default function TreatmentPlanItem({
           {/* Actions */}
           {showActions && (
             <div className="flex flex-col gap-2">
-              {item.status === PlanItemStatus.READY_FOR_BOOKING && onBookAppointment && (
+              {isReadyForBooking && onBookAppointment && (
                 <Button
                   size="sm"
                   onClick={() => onBookAppointment(item.itemId)}
@@ -201,7 +214,7 @@ export default function TreatmentPlanItem({
                   Đặt lịch
                 </Button>
               )}
-              {item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE && (
+              {isWaitingForPrerequisite && (
                 <Button
                   size="sm"
                   disabled

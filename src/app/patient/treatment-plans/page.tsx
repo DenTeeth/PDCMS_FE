@@ -124,10 +124,15 @@ export default function PatientTreatmentPlansPage() {
       // Check if request was cancelled or component unmounted
       if (abortController.signal.aborted || !isMounted) return;
 
-      let filteredData = pageResponse.content;
+      // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
+      // Status is now always accurate from BE - no need for sessionStorage workaround
+      // Use plans directly from API response
+      const plansWithCalculatedStatus = pageResponse.content;
+
+      let filteredData = plansWithCalculatedStatus;
       // Apply status filter if any (client-side for now)
       if (filters.status) {
-        filteredData = pageResponse.content.filter((plan) => plan.status === filters.status);
+        filteredData = plansWithCalculatedStatus.filter((plan) => plan.status === filters.status);
       }
 
       setPlans(filteredData);

@@ -121,20 +121,25 @@ export default function EmployeeTreatmentPlansPage() {
         // Check if request was cancelled or component unmounted
         if (abortController.signal.aborted || !isMounted) return;
 
-      // Debug: Log status for each plan to verify BE response
-      if (process.env.NODE_ENV === 'development') {
-        console.log(' [TREATMENT PLANS LIST] Loaded plans:', {
-          count: pageResponse.content.length,
-          plans: pageResponse.content.map(p => ({
-            planCode: p.planCode,
-            planName: p.planName,
-            status: p.status,
-            patientPlanId: p.patientPlanId,
-          })),
-        });
-      }
+        // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
+        // Status is now always accurate from BE - no need for sessionStorage workaround
+        // Use plans directly from API response
+        const plansWithCalculatedStatus = pageResponse.content;
 
-        setPlans(pageResponse.content);
+        // Debug: Log status for each plan to verify BE response
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[TREATMENT PLANS LIST] Loaded plans:', {
+            count: plansWithCalculatedStatus.length,
+            plans: plansWithCalculatedStatus.map(p => ({
+              planCode: p.planCode,
+              planName: p.planName,
+              status: p.status,
+              patientPlanId: p.patientPlanId,
+            })),
+          });
+        }
+
+        setPlans(plansWithCalculatedStatus);
         // Use pagination metadata from backend
         setTotalPages(pageResponse.totalPages);
       } catch (error: any) {

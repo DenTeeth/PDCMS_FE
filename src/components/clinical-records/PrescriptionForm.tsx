@@ -87,6 +87,7 @@ export default function PrescriptionForm({
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<ItemMasterV1[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [medicineCategoryId, setMedicineCategoryId] = useState<number | null>(null);
 
   const {
     register,
@@ -118,12 +119,19 @@ export default function PrescriptionForm({
     name: 'items',
   });
 
+  // Load medicine category ID
+  useEffect(() => {
+    if (isOpen && !readOnly && !medicineCategoryId) {
+      loadMedicineCategory();
+    }
+  }, [isOpen, readOnly, medicineCategoryId]);
+
   // Load inventory items for search
   useEffect(() => {
-    if (isOpen && !readOnly) {
+    if (isOpen && !readOnly && medicineCategoryId) {
       loadInventoryItems();
     }
-  }, [isOpen, readOnly]);
+  }, [isOpen, readOnly, medicineCategoryId]);
 
   // Reset form when dialog opens in controlled mode
   useEffect(() => {
@@ -159,29 +167,51 @@ export default function PrescriptionForm({
     }
   }, [isOpen, isControlled, existingPrescription, reset]);
 
+  const loadMedicineCategory = async () => {
+    try {
+      const categories = await inventoryService.getCategories();
+      const medicineCategory = categories.find(cat => cat.categoryCode === 'MEDICINE');
+      if (medicineCategory) {
+        setMedicineCategoryId(medicineCategory.categoryId);
+      } else {
+        console.warn('Medicine category not found');
+      }
+    } catch (error: any) {
+      console.error('Error loading medicine category:', error);
+    }
+  };
+
   const loadInventoryItems = async () => {
+    if (!medicineCategoryId) return;
+    
     setLoadingInventory(true);
     try {
-      // Load inventory items (medications) for search
+      // Load inventory items (medications only) for search
       const response = await inventoryService.getSummary({
         page: 0,
         size: 100,
       });
-      // Map InventorySummary to ItemMasterV1
-      const mappedItems: ItemMasterV1[] = (response.content || []).map((item) => ({
-        id: item.itemMasterId,
-        itemCode: item.itemCode,
-        itemName: item.itemName,
-        categoryId: 0,
-        categoryName: item.categoryName,
-        unitOfMeasure: item.unitOfMeasure,
-        warehouseType: item.warehouseType,
-        minStockLevel: item.minStockLevel,
-        maxStockLevel: item.maxStockLevel,
-        currentStock: item.totalQuantityOnHand,
-        stockStatus: item.stockStatus,
-        isTool: false,
-      }));
+      // Map InventorySummary to ItemMasterV1 and filter by MEDICINE category
+      const mappedItems: ItemMasterV1[] = (response.content || [])
+        .filter((item) => {
+          // Filter by categoryName if categoryId is not available in response
+          // We'll match by categoryName "Thuốc men" as fallback
+          return item.categoryName === 'Thuốc men';
+        })
+        .map((item) => ({
+          id: item.itemMasterId,
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          categoryId: medicineCategoryId,
+          categoryName: item.categoryName,
+          unitOfMeasure: item.unitOfMeasure,
+          warehouseType: item.warehouseType,
+          minStockLevel: item.minStockLevel,
+          maxStockLevel: item.maxStockLevel,
+          currentStock: item.totalQuantityOnHand,
+          stockStatus: item.stockStatus,
+          isTool: false,
+        }));
       setInventoryItems(mappedItems);
     } catch (error: any) {
       console.error('Error loading inventory items:', error);

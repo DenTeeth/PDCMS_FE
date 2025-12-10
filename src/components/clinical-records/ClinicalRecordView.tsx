@@ -225,14 +225,14 @@ export default function ClinicalRecordView({
         <div className="pr-6 border-r-2 border-gray-300">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Stethoscope className="h-5 w-5" />
-            Thông Tin Lâm Sàng
+            Thông tin lâm ssàng
           </h3>
           <div className="space-y-6">
             {/* Chief Complaint */}
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Triệu Chứng Chính</Label>
+                <Label className="text-sm font-semibold">Triệu chứng cchính</Label>
               </div>
               <div className="pl-6 p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                 {record.chiefComplaint}
@@ -243,7 +243,7 @@ export default function ClinicalRecordView({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Kết Quả Khám</Label>
+                <Label className="text-sm font-semibold">Kết quả kkhám</Label>
               </div>
               <div className="pl-6 p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                 {record.examinationFindings}
@@ -254,7 +254,7 @@ export default function ClinicalRecordView({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Chẩn Đoán</Label>
+                <Label className="text-sm font-semibold">Chẩn đđoán</Label>
               </div>
               <div className="pl-6 p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
                 {record.diagnosis}
@@ -266,7 +266,7 @@ export default function ClinicalRecordView({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Ghi Chú Điều Trị</Label>
+                  <Label className="text-sm font-semibold">Ghi chú điều trị</Label>
                 </div>
                 <div className="pl-6 p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                   {record.treatmentNotes}
@@ -279,7 +279,7 @@ export default function ClinicalRecordView({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Ngày Tái Khám</Label>
+                  <Label className="text-sm font-semibold">Ngày tái khám</Label>
                 </div>
                 <div className="pl-6 p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
                   {formatDate(record.followUpDate)}
@@ -297,7 +297,7 @@ export default function ClinicalRecordView({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Chỉ Số Sức Khỏe</Label>
+                  <Label className="text-sm font-semibold">Chỉ số sức khỏe</Label>
                 </div>
                 <div className="pl-6">
                   <div className="grid grid-cols-2 gap-3">

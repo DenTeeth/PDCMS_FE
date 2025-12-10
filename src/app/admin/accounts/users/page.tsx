@@ -18,8 +18,6 @@ import {
   Calendar,
   AlertCircle,
   UserCheck,
-  Grid3x3,
-  List,
   Filter,
   X,
   Plus,
@@ -56,7 +54,7 @@ export default function PatientsPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterGender, setFilterGender] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  // Removed viewMode - only using table view now
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -100,6 +98,7 @@ export default function PatientsPage() {
     emergencyContactName: '',
     emergencyContactPhone: '',
     isActive: true,
+    isBookingBlocked: false,
   });
 
   // ==================== DEBOUNCE SEARCH ====================
@@ -337,6 +336,7 @@ export default function PatientsPage() {
       emergencyContactName: patient.emergencyContactName || '',
       emergencyContactPhone: patient.emergencyContactPhone || '',
       isActive: patient.isActive,
+      isBookingBlocked: patient.isBookingBlocked || false,
     });
     setShowEditModal(true);
   };
@@ -387,6 +387,9 @@ export default function PatientsPage() {
       }
       if (editFormData.isActive !== undefined && editFormData.isActive !== editingPatient.isActive) {
         payload.isActive = editFormData.isActive;
+      }
+      if (editFormData.isBookingBlocked !== undefined && editFormData.isBookingBlocked !== editingPatient.isBookingBlocked) {
+        payload.isBookingBlocked = editFormData.isBookingBlocked;
       }
 
       // Only update if there are changes
@@ -561,22 +564,6 @@ export default function PatientsPage() {
                     </Badge>
                   )}
                 </Button>
-                <div className="flex border rounded-md">
-                  <Button
-                    variant={viewMode === 'card' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('card')}
-                  >
-                    <Grid3x3 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'table' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </div>
 
@@ -655,116 +642,6 @@ export default function PatientsPage() {
             </div>
           </CardContent>
         </Card>
-      ) : viewMode === 'card' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPatients.map((patient) => (
-            <Card
-              key={patient.patientId}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{patient.fullName}</CardTitle>
-                    <p className="text-sm text-gray-500">Code: {patient.patientCode}</p>
-                  </div>
-                  <div className="flex flex-col gap-1 items-end">
-                    <Badge
-                      variant={patient.isActive ? 'default' : 'secondary'}
-                      className={
-                        patient.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }
-                    >
-                      {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <User className="h-4 w-4" />
-                      <span>{getGenderLabel(patient.gender)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      <span>{formatDate(patient.dateOfBirth)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="h-4 w-4" />
-                      <span className="truncate">{patient.email || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="h-4 w-4" />
-                      <span>{patient.phone || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span className="truncate">{patient.address || 'N/A'}</span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2 pt-3 border-t">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(patient);
-                        }}
-                        className="flex-1"
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Chỉnh sửa
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/admin/accounts/users/${patient.patientCode}`);
-                        }}
-                        className="flex-1"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Xem
-                      </Button>
-                    </div>
-                    {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleResendPasswordSetupEmail(patient);
-                        }}
-                        disabled={resendingEmail === patient.patientCode}
-                        className="w-full"
-                      >
-                        {resendingEmail === patient.patientCode ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            Đang gửi...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4 mr-1" />
-                            Gửi lại email thiết lập
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       ) : (
         /* Table View */
         <Card>
@@ -795,6 +672,9 @@ export default function PatientsPage() {
                       Trạng thái
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Chặn đặt lịch
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Hành động
                     </th>
                   </tr>
@@ -809,7 +689,18 @@ export default function PatientsPage() {
                         {patient.patientCode}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {patient.fullName}
+                        <div className="flex items-center gap-2">
+                          <span>{patient.fullName}</span>
+                          {patient.isBlacklisted && (
+                            <Badge
+                              variant="destructive"
+                              className="bg-red-600 text-white text-xs px-2 py-0.5"
+                              title={`Bệnh nhân bị blacklist do ${patient.consecutiveNoShows || 0} lần no-show liên tiếp`}
+                            >
+                              ⛔ BLACKLISTED
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {getGenderLabel(patient.gender)}
@@ -834,6 +725,36 @@ export default function PatientsPage() {
                         >
                           {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center">
+                          {patient.isBookingBlocked ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={true}
+                                readOnly
+                                className="w-5 h-5 rounded border-2 border-red-600 cursor-not-allowed"
+                                style={{
+                                  accentColor: '#dc2626',
+                                  backgroundColor: '#dc2626',
+                                }}
+                                title={`Bị chặn đặt lịch - ${patient.consecutiveNoShows || 0} lần no-show liên tiếp`}
+                              />
+                              <Badge variant="destructive" className="text-xs">
+                                Chặn
+                              </Badge>
+                            </div>
+                          ) : (
+                            <input
+                              type="checkbox"
+                              checked={false}
+                              readOnly
+                              className="w-5 h-5 rounded border-2 border-gray-300 cursor-not-allowed"
+                              title="Không bị chặn đặt lịch"
+                            />
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex flex-col gap-1">
@@ -1404,19 +1325,35 @@ export default function PatientsPage() {
                 {/* Status */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Trạng thái</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
-                    <select
-                      id="edit-isActive"
-                      value={editFormData.isActive ? 'true' : 'false'}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
-                      }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="true">Hoạt động</option>
-                      <option value="false">Không hoạt động</option>
-                    </select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
+                      <select
+                        id="edit-isActive"
+                        value={editFormData.isActive ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
+                        }
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Không hoạt động</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-isBookingBlocked">Chặn đặt lịch</Label>
+                      <select
+                        id="edit-isBookingBlocked"
+                        value={editFormData.isBookingBlocked ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, isBookingBlocked: e.target.value === 'true' })
+                        }
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="false">Không chặn</option>
+                        <option value="true">Chặn đặt lịch</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 {/* Form Actions */}

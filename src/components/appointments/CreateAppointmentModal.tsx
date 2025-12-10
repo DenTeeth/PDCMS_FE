@@ -331,7 +331,6 @@ export default function CreateAppointmentModal({
   useEffect(() => {
     if (open) {
       loadInitialData();
-      loadPatientsList();
       resetForm();
     }
   }, [open]);
@@ -504,22 +503,11 @@ export default function CreateAppointmentModal({
     }
   };
 
-  // Load patients list (default list without search)
-  const loadPatientsList = async () => {
-    try {
-      const results = await patientService.getPatients({
-        page: 0,
-        size: 50,
-        isActive: true,
-      });
-      setPatientSearchResults(results.content);
-    } catch (error: any) {
-      console.error('Failed to load patients list:', error);
-    }
-  };
-
   const searchPatients = async () => {
-    if (patientSearch.length < 2) return;
+    if (patientSearch.length < 2) {
+      setPatientSearchResults([]);
+      return;
+    }
 
     setSearchingPatients(true);
     try {
@@ -541,7 +529,7 @@ export default function CreateAppointmentModal({
   const handleSelectPatient = (patient: Patient) => {
     setPatientCode(patient.patientCode);
     setSelectedPatientData(patient);
-    setPatientSearch(patient.fullName);
+    setPatientSearch('');
     setPatientSearchResults([]);
   };
 
@@ -1225,6 +1213,15 @@ export default function CreateAppointmentModal({
       return;
     }
 
+    // Check if patient is blacklisted
+    if (selectedPatientData?.isBlacklisted) {
+      toast.error(
+        `Bệnh nhân ${selectedPatientData.fullName} đang bị blacklist do ${selectedPatientData.consecutiveNoShows || 0} lần no-show liên tiếp. Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.`,
+        { duration: 6000 }
+      );
+      return;
+    }
+
     // Validate: Must have either services or plan items (XOR)
     if (!hasServices && !hasPlanItems) {
       toast.error('Vui lòng chọn dịch vụ hoặc đặt lịch từ kế hoạch điều trị');
@@ -1380,40 +1377,38 @@ export default function CreateAppointmentModal({
         <DialogHeader>
           <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
           <DialogDescription>
-            Step {currentStep} of 5: {getStepTitle(currentStep)}
+            Bước {currentStep}/5: {getStepTitle(currentStep)}
           </DialogDescription>
         </DialogHeader>
 
         {/* Progress Indicator */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4, 5].map((step) => (
+        <div className="mb-6 px-4">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3, 4, 5].map((step, index) => (
               <React.Fragment key={step}>
-                <div className="flex items-center flex-1">
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step === currentStep
-                        ? 'bg-primary text-primary-foreground scale-110'
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm ${
+                      step === currentStep
+                        ? 'bg-[#8b5fbf] text-white scale-110 shadow-lg'
                         : step < currentStep
-                          ? 'bg-primary/20 text-primary'
-                          : 'bg-muted text-muted-foreground'
-                        }`}
-                    >
-                      {step < currentStep ? <CheckCircle className="h-5 w-5" /> : step}
-                    </div>
-                    <div className={`text-xs mt-1 text-center max-w-[80px] ${step === currentStep ? 'font-semibold text-primary' : 'text-muted-foreground'
-                      }`}>
-                      {getStepTitle(step as Step)}
-                    </div>
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {step < currentStep ? <CheckCircle className="h-6 w-6" /> : step}
                   </div>
-                  {/* Hide connecting line between step 1 and 2, show for other steps */}
-                  {step < 5 && step !== 1 && (
-                    <div
-                      className={`h-1 flex-1 mx-2 mt-[-20px] ${step < currentStep ? 'bg-primary' : 'bg-muted'
-                        }`}
-                    />
-                  )}
+                  <div className={`text-xs mt-2 text-center font-medium max-w-[90px] ${
+                    step === currentStep ? 'text-[#8b5fbf]' : step < currentStep ? 'text-emerald-600' : 'text-gray-500'
+                  }`}>
+                    {getStepTitle(step as Step)}
+                  </div>
                 </div>
+                {index < 4 && (
+                  <div className={`flex-1 h-1 mx-3 mb-8 rounded-full transition-all ${
+                    step < currentStep ? 'bg-emerald-500' : 'bg-gray-200'
+                  }`} />
+                )}
               </React.Fragment>
             ))}
           </div>
@@ -1441,44 +1436,86 @@ export default function CreateAppointmentModal({
                 )}
               </div>
 
-              {/* Always show patients list */}
-              <Card className="p-4 max-h-[60vh] overflow-y-auto">
-                <div className="space-y-2">
-                  {patientSearchResults.length > 0 ? (
-                    patientSearchResults.map((patient) => (
+              {/* Show patients list only when there are search results */}
+              {patientSearch.length > 0 && patientSearchResults.length > 0 && (
+                <Card className="p-4 max-h-[60vh] overflow-y-auto">
+                  <div className="space-y-2">
+                    {patientSearchResults.map((patient) => (
                       <div
                         key={patient.patientId}
-                        onClick={() => handleSelectPatient(patient)}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${patientCode === patient.patientCode
-                          ? 'border-primary bg-primary/5'
-                          : 'hover:bg-muted'
-                          }`}
+                        onClick={() => {
+                          if (patient.isBlacklisted) {
+                            toast.error(
+                              `Bệnh nhân ${patient.fullName} đang bị blacklist do ${patient.consecutiveNoShows || 0} lần no-show liên tiếp. Không thể tạo lịch hẹn.`
+                            );
+                            return;
+                          }
+                          handleSelectPatient(patient);
+                        }}
+                        className={`p-3 border rounded-lg transition-colors ${
+                          patient.isBlacklisted
+                            ? 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
+                            : patientCode === patient.patientCode
+                            ? 'border-primary bg-primary/5 cursor-pointer'
+                            : 'hover:bg-muted cursor-pointer'
+                        }`}
                       >
-                        <div className="font-medium">{patient.fullName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {patient.patientCode} {patient.phone && `• ${patient.phone}`}
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium">{patient.fullName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {patient.patientCode} {patient.phone && `• ${patient.phone}`}
+                            </div>
+                          </div>
+                          {patient.isBlacklisted && (
+                            <Badge variant="destructive" className="bg-red-600 text-white text-xs">
+                              ⛔ BLACKLISTED
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No patients found
-                    </p>
-                  )}
-                </div>
-              </Card>
+                    ))}
+                  </div>
+                </Card>
+              )}
+              {patientSearch.length > 0 && patientSearchResults.length === 0 && (
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Không tìm thấy bệnh nhân
+                  </p>
+                </Card>
+              )}
 
               {selectedPatient && (
-                <Card className="p-4 bg-primary/5 border-primary">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">{selectedPatient.fullName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {selectedPatient.patientCode}
+                <Card className={`p-4 border-2 ${
+                  selectedPatient.isBlacklisted
+                    ? 'bg-red-50 border-red-300'
+                    : 'bg-primary/5 border-primary'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User className={`h-5 w-5 ${selectedPatient.isBlacklisted ? 'text-red-600' : 'text-primary'}`} />
+                      <div>
+                        <div className="font-medium">{selectedPatient.fullName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {selectedPatient.patientCode}
+                        </div>
                       </div>
                     </div>
+                    {selectedPatient.isBlacklisted && (
+                      <Badge variant="destructive" className="bg-red-600 text-white">
+                        ⛔ BLACKLISTED
+                      </Badge>
+                    )}
                   </div>
+                  {selectedPatient.isBlacklisted && (
+                    <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+                      <p className="text-sm text-red-800">
+                        <strong>⚠️ Cảnh báo:</strong> Bệnh nhân này đang bị blacklist do {selectedPatient.consecutiveNoShows || 0} lần no-show liên tiếp. 
+                        Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.
+                      </p>
+                    </div>
+                  )}
                 </Card>
               )}
             </div>
@@ -1825,7 +1862,7 @@ export default function CreateAppointmentModal({
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Tất cả bác sĩ" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent align="start">
                       <SelectItem value="all">Tất cả bác sĩ</SelectItem>
                       {employees
                         .filter((employee) => {
@@ -1858,7 +1895,7 @@ export default function CreateAppointmentModal({
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Tất cả chuyên khoa" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start">
                         <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
                         <SelectItem value="none">Không có chuyên khoa</SelectItem>
                         {specializations.map((spec) => (
@@ -1947,6 +1984,7 @@ export default function CreateAppointmentModal({
                                   <TableHead className="w-12">
                                     <Checkbox
                                       checked={group.services.every((s) => serviceCodes.includes(s.serviceCode))}
+                                      className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                       onCheckedChange={(checked) => {
                                         if (checked) {
                                           // Select all services in this group
@@ -1984,6 +2022,7 @@ export default function CreateAppointmentModal({
                                       <TableCell>
                                         <Checkbox
                                           checked={isSelected}
+                                          className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                           onCheckedChange={() => handleToggleService(service.serviceCode)}
                                         />
                                       </TableCell>
@@ -2021,16 +2060,6 @@ export default function CreateAppointmentModal({
                 </Card>
               </div>
 
-              {selectedServices.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-sm font-medium">Đã chọn ({selectedServices.length}):</span>
-                  {selectedServices.map((service) => (
-                    <Badge key={service.serviceId} variant="secondary">
-                      {service.serviceName}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -2055,7 +2084,7 @@ export default function CreateAppointmentModal({
                     <SelectTrigger id="employeeCode" className="mt-1">
                       <SelectValue placeholder={loadingData || loadingShifts ? 'Đang tải...' : 'Chọn bác sĩ'} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent align="start">
                       {(() => {
                         const compatibleDoctors = getCompatibleDoctors();
                         const doctorsWithShifts = compatibleDoctors.filter((employee) => {
@@ -2327,7 +2356,7 @@ export default function CreateAppointmentModal({
                       <SelectTrigger id="roomCode" className="mt-1">
                         <SelectValue placeholder="Select a room" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start">
                         {(() => {
                           const compatibleRoomCodes = selectedSlot?.availableCompatibleRoomCodes || [];
 
@@ -2408,6 +2437,7 @@ export default function CreateAppointmentModal({
                           <Checkbox
                             id={`participant-${employee.employeeId}`}
                             checked={participantCodes.includes(employee.employeeCode)}
+                            className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                             onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
                           />
                           <Label
@@ -2584,15 +2614,15 @@ export default function CreateAppointmentModal({
 } function getStepTitle(step: Step): string {
   switch (step) {
     case 1:
-      return 'Select Patient';
+      return 'Chọn bệnh nhân';
     case 2:
-      return 'Select Date';
+      return 'Chọn ngày';
     case 3:
-      return 'Select Services';
+      return 'Chọn dịch vụ';
     case 4:
-      return 'Select Doctor, Time & Participants';
+      return 'Chọn bác sĩ & thời gian';
     case 5:
-      return 'Review & Confirm';
+      return 'Xác nhận';
     default:
       return '';
   }

@@ -179,7 +179,7 @@ export default function TreatmentPlanFilters({
               <SelectTrigger id="status" className="h-10 w-full sm:w-[200px]">
                 <SelectValue placeholder="Tất cả trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="start">
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value={TreatmentPlanStatus.PENDING}>Chờ xử lý</SelectItem>
                 <SelectItem value={TreatmentPlanStatus.IN_PROGRESS}>Đang thực hiện</SelectItem>

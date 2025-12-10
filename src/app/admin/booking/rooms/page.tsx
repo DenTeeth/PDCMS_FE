@@ -835,7 +835,7 @@ export default function BookingRoomsPage() {
                   <SelectTrigger id="create-room-type" className="mt-1">
                     <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent align="start">
                     {availableRoomTypes.map((type) => (
                       <SelectItem key={type} value={type}>
                         {getRoomTypeLabel(type)}
@@ -917,7 +917,7 @@ export default function BookingRoomsPage() {
                   <SelectTrigger id="update-room-type" className="mt-1">
                     <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent align="start">
                     {availableRoomTypes.map((type) => (
                       <SelectItem key={type} value={type}>
                         {getRoomTypeLabel(type)}

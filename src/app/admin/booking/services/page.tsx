@@ -992,7 +992,7 @@ export default function BookingServicesPage() {
                     <SelectTrigger id="create-specialization">
                       <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent align="start">
                       <SelectItem value="none-selected">Không có</SelectItem>
                       {availableSpecializations.map((spec) => (
                         <SelectItem key={spec.id} value={String(spec.id)}>
@@ -1151,7 +1151,7 @@ export default function BookingServicesPage() {
                     <SelectTrigger id="update-specialization">
                       <SelectValue placeholder="Chọn chuyên khoa (tùy chọn)" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent align="start">
                       <SelectItem value="none-selected">Không có</SelectItem>
                       {availableSpecializations.map((spec) => (
                         <SelectItem key={spec.id} value={String(spec.id)}>

@@ -41,6 +41,8 @@ import {
   Info,
   ShieldCheck,
   RefreshCw,
+  Lock,
+  Circle,
 } from 'lucide-react';
 import React from 'react';
 import { format } from 'date-fns';
@@ -48,7 +50,8 @@ import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { useAuth } from '@/contexts/AuthContext';
-// Issue #47 RESOLVED: No longer need calculatePlanStatus - trust BE status directly
+// calculatePlanStatus removed - Issue #51: BE now auto-completes status on detail load
+// Issue #47: Use calculatePlanStatus utility for accurate fallback calculation (checks items, not just phase.status)
 
 interface TreatmentPlanDetailProps {
   plan: TreatmentPlanDetailResponse;
@@ -98,53 +101,15 @@ export default function TreatmentPlanDetail({
 
   const normalizedApprovalStatus = normalizeApprovalStatus(plan.approvalStatus);
   
-  // Issue #47: BE auto-complete logic only runs on item status update
-  // If plan has all phases completed but no recent action → status may still be null
-  // Fallback: Calculate from phases when status is null
+  // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
+  // Status is now always accurate from BE - no need for fallback calculation or sessionStorage
   const statusKey: TreatmentPlanStatus | 'NULL' = (() => {
     if (plan.status) {
-      // Trust BE status directly
+      // Trust BE status directly (Issue #51: BE auto-completes status on detail load)
       return plan.status;
     }
     
-    // Status is null - check if all phases are completed (fallback calculation)
-    if (plan.phases && plan.phases.length > 0) {
-      const allPhasesCompleted = plan.phases.every(
-        (phase) => phase.status?.toUpperCase() === 'COMPLETED'
-      );
-      
-      if (allPhasesCompleted) {
-        // All phases completed but BE status is null → COMPLETED (fallback)
-        console.warn(
-          `[TreatmentPlanDetail] Plan ${plan.planCode} has all phases completed but status is null. ` +
-          `Using fallback calculation: COMPLETED. This indicates BE auto-complete may not have run.`
-        );
-        
-        // FE Workaround: Save calculated status to sessionStorage for list page
-        // This allows list page to show correct status even when BE status is null
-        try {
-          const calculatedStatuses = JSON.parse(
-            sessionStorage.getItem('treatmentPlanCalculatedStatuses') || '{}'
-          );
-          calculatedStatuses[plan.planCode] = TreatmentPlanStatus.COMPLETED;
-          sessionStorage.setItem(
-            'treatmentPlanCalculatedStatuses',
-            JSON.stringify(calculatedStatuses)
-          );
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              `[TreatmentPlanDetail] Saved calculated status COMPLETED for plan ${plan.planCode} to sessionStorage`
-            );
-          }
-        } catch (error) {
-          console.error('Failed to save calculated status to sessionStorage:', error);
-        }
-        
-        return TreatmentPlanStatus.COMPLETED;
-      }
-    }
-    
-    // Status is null and not all phases completed - determine based on approvalStatus
+    // Status is null - determine based on approvalStatus (for plans not yet started)
     if (normalizedApprovalStatus === ApprovalStatus.APPROVED) {
       // Plan is approved but not started yet → PENDING
       return TreatmentPlanStatus.PENDING;
@@ -389,8 +354,10 @@ export default function TreatmentPlanDetail({
     {
       key: 'approved',
       title: 'Khóa & triển khai',
-      description: 'Sau khi duyệt, lộ trình được khóa và chờ kích hoạt.',
-      state: normalizedApprovalStatus === ApprovalStatus.APPROVED ? 'current' : 'todo',
+      description: normalizedApprovalStatus === ApprovalStatus.APPROVED
+        ? 'Lộ trình đã được duyệt và khóa. Có thể kích hoạt và đặt lịch.'
+        : 'Sau khi duyệt, lộ trình được khóa và chờ kích hoạt.',
+      state: normalizedApprovalStatus === ApprovalStatus.APPROVED ? 'done' : 'todo',
     },
   ] as const;
 
@@ -727,19 +694,27 @@ export default function TreatmentPlanDetail({
                           className={cn(
                             'flex h-12 w-12 items-center justify-center rounded-full border-4 bg-white text-base font-bold transition-all duration-300 cursor-pointer',
                             isDone && 'border-emerald-500 text-emerald-600 shadow-lg shadow-emerald-200',
-                            isCurrent && 'border-primary text-primary shadow-lg shadow-primary/30 scale-110',
+                            isCurrent && 'border-blue-500 text-blue-600 shadow-lg shadow-blue-200 scale-110',
                             isWarning && 'border-red-500 text-red-600 shadow-lg shadow-red-200',
-                            !isDone && !isCurrent && !isWarning && 'border-gray-300 text-gray-400'
+                            !isDone && !isCurrent && !isWarning && 'border-gray-300 text-gray-400 bg-gray-50'
                           )}
                         >
                           {isDone ? (
-                            <CheckCircle2 className="h-6 w-6" />
+                            step.key === 'approved' ? (
+                              <Lock className="h-6 w-6" />
+                            ) : (
+                              <CheckCircle2 className="h-6 w-6" />
+                            )
                           ) : isCurrent ? (
-                            <RefreshCw className="h-5 w-5 animate-spin" />
+                            step.key === 'pending' ? (
+                              <Clock className="h-5 w-5" />
+                            ) : (
+                              <CheckCircle2 className="h-5 w-5" />
+                            )
                           ) : isWarning ? (
                             <AlertTriangle className="h-6 w-6" />
                           ) : (
-                            index + 1
+                            <Circle className="h-4 w-4 fill-current" />
                           )}
                         </div>
 
@@ -753,11 +728,11 @@ export default function TreatmentPlanDetail({
                         </div>
 
                         {/* Step Label */}
-                        <div className="mt-3 text-center">
+                        <div className="mt-3 text-center max-w-[120px]">
                           <p className={cn(
-                            "text-xs font-medium transition-colors whitespace-nowrap",
+                            "text-xs font-medium transition-colors",
                             isDone && "text-emerald-600",
-                            isCurrent && "text-primary font-semibold",
+                            isCurrent && "text-blue-600 font-semibold",
                             isWarning && "text-red-600",
                             !isDone && !isCurrent && !isWarning && "text-gray-500"
                           )}>
@@ -768,11 +743,15 @@ export default function TreatmentPlanDetail({
 
                       {/* Connecting Line (only between steps, not after last) */}
                       {!isLast && (
-                        <div className="flex-1 h-0.5 bg-gray-200 mx-4 relative -mt-12">
+                        <div className="flex-1 h-1 bg-gray-200 mx-4 relative -mt-12 rounded-full overflow-hidden">
                           <div
                             className={cn(
-                              "h-full transition-all duration-500",
-                              isDone ? "bg-emerald-500" : "bg-transparent"
+                              "h-full transition-all duration-500 rounded-full",
+                              isDone || (step.state === 'done' && approvalSteps[index + 1]?.state === 'done') 
+                                ? "bg-emerald-500" 
+                                : step.state === 'done' && approvalSteps[index + 1]?.state === 'current'
+                                ? "bg-gradient-to-r from-emerald-500 to-blue-500"
+                                : "bg-transparent"
                             )}
                           />
                         </div>

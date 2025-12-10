@@ -545,7 +545,7 @@ export default function StorageInOutPage() {
                             <SelectTrigger>
                               <SelectValue placeholder="Tất cả" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent align="start">
                               <SelectItem value="ALL">Tất cả</SelectItem>
                               <SelectItem value="DRAFT">Nháp</SelectItem>
                               <SelectItem value="PENDING_APPROVAL">Chờ duyệt</SelectItem>

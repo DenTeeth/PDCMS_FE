@@ -37,7 +37,12 @@ export default function TreatmentPlanTimeline({
 }: TreatmentPlanTimelineProps) {
   const [openPopoverItemId, setOpenPopoverItemId] = useState<number | null>(null);
 
-  const getItemStatusIcon = (status: PlanItemStatus) => {
+  const getItemStatusIcon = (status: PlanItemStatus | null | undefined) => {
+    if (!status) {
+      console.warn(`[TreatmentPlanTimeline] Missing status for item. Using default icon.`);
+      return <Clock className="h-4 w-4 text-muted-foreground" />;
+    }
+    
     switch (status) {
       case PlanItemStatus.COMPLETED:
         return <CheckCircle2 className="h-4 w-4 text-green-600" />;
@@ -46,12 +51,24 @@ export default function TreatmentPlanTimeline({
         return <Clock className="h-4 w-4 text-blue-600" />;
       case PlanItemStatus.WAITING_FOR_PREREQUISITE:
         return <AlertCircle className="h-4 w-4 text-orange-600" />;
+      case PlanItemStatus.READY_FOR_BOOKING:
+        return <Clock className="h-4 w-4 text-purple-600" />;
+      case PlanItemStatus.PENDING:
+        return <Clock className="h-4 w-4 text-gray-600" />;
+      case PlanItemStatus.SKIPPED:
+        return <AlertCircle className="h-4 w-4 text-gray-500" />;
       default:
+        console.warn(`[TreatmentPlanTimeline] Unknown PlanItemStatus: "${status}". Using default icon.`);
         return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getItemStatusColor = (status: PlanItemStatus): string => {
+  const getItemStatusColor = (status: PlanItemStatus | null | undefined): string => {
+    if (!status) {
+      console.warn(`[TreatmentPlanTimeline] Missing status for item. Using default color.`);
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+    
     switch (status) {
       case PlanItemStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
@@ -62,7 +79,12 @@ export default function TreatmentPlanTimeline({
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case PlanItemStatus.READY_FOR_BOOKING:
         return 'bg-purple-100 text-purple-800 border-purple-200';
+      case PlanItemStatus.PENDING:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case PlanItemStatus.SKIPPED:
+        return 'bg-gray-100 text-gray-600 border-gray-300';
       default:
+        console.warn(`[TreatmentPlanTimeline] Unknown PlanItemStatus: "${status}". Using default color.`);
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -211,11 +233,14 @@ export default function TreatmentPlanTimeline({
                                       variant="outline" 
                                       className={cn("text-xs shrink-0", getItemStatusColor(item.status))}
                                     >
-                                      {item.status === PlanItemStatus.COMPLETED ? 'Hoàn thành' :
+                                      {!item.status ? 'Chưa xác định' :
+                                       item.status === PlanItemStatus.COMPLETED ? 'Hoàn thành' :
                                        item.status === PlanItemStatus.IN_PROGRESS ? 'Đang thực hiện' :
                                        item.status === PlanItemStatus.SCHEDULED ? 'Đã đặt lịch' :
                                        item.status === PlanItemStatus.READY_FOR_BOOKING ? 'Sẵn sàng đặt lịch' :
                                        item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE ? 'Chờ điều kiện' :
+                                       item.status === PlanItemStatus.PENDING ? 'Chờ xử lý' :
+                                       item.status === PlanItemStatus.SKIPPED ? 'Đã bỏ qua' :
                                        'Chưa bắt đầu'}
                                     </Badge>
                                   </div>

@@ -194,6 +194,7 @@ export default function ProcedureForm({
                   <SelectValue placeholder="Chọn dịch vụ" />
                 </SelectTrigger>
                 <SelectContent 
+                  align="start"
                   className="max-h-[400px]" 
                   position="popper"
                   style={{ width: 'var(--radix-select-trigger-width)' }}

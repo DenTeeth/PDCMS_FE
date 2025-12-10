@@ -260,66 +260,89 @@ export default function SuppliersPage() {
             />
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
+                    <tr className="bg-gray-50 border-b">
                       <th
-                        className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                        className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort('supplierCode')}
                       >
                         <div className="flex items-center gap-2">
                           Mã NCC
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                          <FontAwesomeIcon 
+                            icon={faSort} 
+                            className={`h-3 w-3 text-gray-400 ${sortField === 'supplierCode' ? 'text-gray-700' : ''}`} 
+                          />
                         </div>
                       </th>
                       <th
-                        className="text-left p-3 cursor-pointer hover:bg-gray-50"
+                        className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort('supplierName')}
                       >
                         <div className="flex items-center gap-2">
                           Tên nhà cung cấp
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                          <FontAwesomeIcon 
+                            icon={faSort} 
+                            className={`h-3 w-3 text-gray-400 ${sortField === 'supplierName' ? 'text-gray-700' : ''}`} 
+                          />
                         </div>
                       </th>
-                      <th className="text-left p-3">Điện thoại</th>
-                      <th className="text-left p-3">Email</th>
-                      <th className="text-left p-3">Trạng thái</th>
-                      <th className="text-right p-3">Thao tác</th>
+                      <th className="text-left p-4 font-semibold text-gray-700">Điện thoại</th>
+                      <th className="text-left p-4 font-semibold text-gray-700">Email</th>
+                      <th className="text-left p-4 font-semibold text-gray-700">Trạng thái</th>
+                      <th className="text-right p-4 font-semibold text-gray-700">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {suppliers.map((supplier) => (
-                      <tr key={supplier.supplierId} className="border-b hover:bg-gray-50">
-                        <td className="p-3">
-                          <span className="font-mono text-sm">{supplier.supplierCode}</span>
+                      <tr key={supplier.supplierId} className="hover:bg-gray-50 transition-colors">
+                        <td className="p-4">
+                          <span className="font-mono text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                            {supplier.supplierCode}
+                          </span>
                         </td>
-                        <td className="p-3 font-medium">{supplier.supplierName}</td>
-                        <td className="p-3">{supplier.phoneNumber || '-'}</td>
-                        <td className="p-3 text-sm">{supplier.email || '-'}</td>
-                        <td className="p-3">{getStatusBadge(supplier.status)}</td>
-                        <td className="p-3 text-right space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewDetail(supplier)}
+                        <td className="p-4">
+                          <span 
+                            className="font-medium text-gray-900 block truncate max-w-[300px]" 
+                            title={supplier.supplierName}
                           >
-                            <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenFormModal(supplier)}
-                          >
-                            <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(supplier.supplierId, supplier.supplierName)}
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
-                          </Button>
+                            {supplier.supplierName}
+                          </span>
+                        </td>
+                        <td className="p-4 text-gray-700">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
+                        <td className="p-4 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
+                        <td className="p-4">{getStatusBadge(supplier.status)}</td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              onClick={() => handleViewDetail(supplier)}
+                              title="Xem chi tiết"
+                            >
+                              <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                              onClick={() => handleOpenFormModal(supplier)}
+                              title="Chỉnh sửa"
+                            >
+                              <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                              onClick={() => handleDelete(supplier.supplierId, supplier.supplierName)}
+                              title="Xóa"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
