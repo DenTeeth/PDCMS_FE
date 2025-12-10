@@ -12,7 +12,7 @@ export default function DynamicBreadcrumb() {
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
         </BreadcrumbItem>
 
         {segments.map((seg, i) => (

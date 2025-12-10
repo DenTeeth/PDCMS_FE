@@ -35,6 +35,14 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { appointmentService } from '@/services/appointmentService';
 import { ServiceService } from '@/services/serviceService';
 import { EmployeeService } from '@/services/employeeService';
@@ -301,6 +309,8 @@ export default function CreateAppointmentModal({
 
   // Step 3: Selected specialization filter
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
+  // Step 3: Selected doctor for filtering services by specialization (optional)
+  const [selectedDoctorForFilter, setSelectedDoctorForFilter] = useState<string>('all');
 
   // Current user's employee data (if employee)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
@@ -522,7 +532,7 @@ export default function CreateAppointmentModal({
       setPatientSearchResults(results.content);
     } catch (error: any) {
       console.error('Failed to search patients:', error);
-      toast.error('Failed to search patients');
+      toast.error('Không thể tìm kiếm bệnh nhân');
     } finally {
       setSearchingPatients(false);
     }
@@ -969,7 +979,7 @@ export default function CreateAppointmentModal({
         const specialization = specId !== 'none'
           ? specializations.find(s =>
             String(s.specializationId) === String(specId) ||
-            s.specializationId === specId
+            (s.specializationId as any) === specId
           )
           : undefined;
         grouped.set(specId, { specialization, services: [] });
@@ -980,16 +990,40 @@ export default function CreateAppointmentModal({
     return grouped;
   }, [services, specializations]);
 
-  // Step 3: Get filtered services based on selected specialization filter
+  // Step 3: Get filtered services based on selected specialization filter and doctor's specialization
   const getFilteredServices = (): Service[] => {
-    if (selectedSpecializationFilter === 'all') {
-      return services;
+    let filtered = services;
+
+    // Filter by doctor's specialization if doctor is selected
+    if (selectedDoctorForFilter && selectedDoctorForFilter !== 'all') {
+      const selectedDoctor = employees.find((e) => e.employeeCode === selectedDoctorForFilter);
+      if (selectedDoctor && selectedDoctor.specializations && selectedDoctor.specializations.length > 0) {
+        const doctorSpecializationIds = selectedDoctor.specializations.map((spec: any) => {
+          const specId = typeof spec === 'string' ? parseInt(spec, 10) : (typeof spec === 'object' ? parseInt(String(spec.specializationId || spec.id || spec), 10) : spec);
+          return isNaN(specId) ? null : specId;
+        }).filter((id: number | null): id is number => id !== null);
+
+        // Only show services that match doctor's specializations or services without specialization
+        filtered = filtered.filter((service) => {
+          if (!service.specializationId) {
+            return true; // Show services without specialization
+          }
+          return doctorSpecializationIds.includes(service.specializationId);
+        });
+      }
     }
 
-    const specId = parseInt(selectedSpecializationFilter, 10);
-    return services.filter((service) =>
-      service.specializationId === specId || (!service.specializationId && selectedSpecializationFilter === 'none')
-    );
+    // Apply specialization filter if set
+    if (selectedSpecializationFilter !== 'all') {
+      if (selectedSpecializationFilter === 'none') {
+        filtered = filtered.filter((service) => !service.specializationId);
+      } else {
+        const specId = parseInt(selectedSpecializationFilter, 10);
+        filtered = filtered.filter((service) => service.specializationId === specId);
+      }
+    }
+
+    return filtered;
   };
 
   // Step 4: Get compatible doctors (ROLE_DENTIST + specialization match)
@@ -1344,7 +1378,7 @@ export default function CreateAppointmentModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Create New Appointment</DialogTitle>
+          <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
           <DialogDescription>
             Step {currentStep} of 5: {getStepTitle(currentStep)}
           </DialogDescription>
@@ -1391,14 +1425,14 @@ export default function CreateAppointmentModal({
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="patientSearch">Search Patient <span className="text-red-500">*</span></Label>
+                <Label htmlFor="patientSearch">Tìm kiếm bệnh nhân <span className="text-red-500">*</span></Label>
                 <div className="relative mt-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="patientSearch"
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
-                    placeholder="Search by name, phone, or code..."
+                    placeholder="Tìm theo tên, số điện thoại, hoặc mã..."
                     className="pl-10"
                   />
                 </div>
@@ -1457,7 +1491,7 @@ export default function CreateAppointmentModal({
                 {/* Left: Date Input & Calendar */}
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="appointmentDate">Select Preferred Date <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="appointmentDate">Chọn ngày ưu tiên <span className="text-red-500">*</span></Label>
                     <Input
                       id="appointmentDate"
                       type="date"
@@ -1479,7 +1513,7 @@ export default function CreateAppointmentModal({
                   {/* Calendar Grid View - Month View with Navigation */}
                   <Card className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <Label className="block">Calendar View</Label>
+                      <Label className="block">Xem lịch</Label>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -1615,7 +1649,7 @@ export default function CreateAppointmentModal({
                             {loadingShifts ? (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Loading...</span>
+                                <span>Đang tải...</span>
                               </div>
                             ) : (
                               <div className="space-y-2 text-sm">
@@ -1678,7 +1712,7 @@ export default function CreateAppointmentModal({
                               {loadingShifts ? (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <Loader2 className="h-3 w-3 animate-spin" />
-                                  <span>Loading...</span>
+                                  <span>Đang tải...</span>
                                 </div>
                               ) : (
                                 <div className="space-y-2 max-h-[40vh] overflow-y-auto">
@@ -1687,7 +1721,7 @@ export default function CreateAppointmentModal({
                                     if (doctorsWithShifts.length === 0) {
                                       return (
                                         <p className="text-sm text-muted-foreground text-center py-4">
-                                          No doctors available on this date
+                                          Không có bác sĩ trực vào ngày này
                                         </p>
                                       );
                                     }
@@ -1770,25 +1804,63 @@ export default function CreateAppointmentModal({
             </div>
           )}
 
-          {/* Step 3: Select Services (grouped by category) */}
+          {/* Step 3: Select Services (table layout with doctor filter) */}
           {currentStep === 3 && (
             <div className="space-y-4">
               {/* Filter Row */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Specialization Filter - Only show if user has specializations */}
-                {hasUserSpecializations && (
+                {/* Doctor Filter - Filter services by doctor's specialization */}
+                <div>
+                  <Label>Lọc theo bác sĩ (tùy chọn)</Label>
+                  <Select
+                    value={selectedDoctorForFilter}
+                    onValueChange={(value) => {
+                      setSelectedDoctorForFilter(value);
+                      // Clear specialization filter when doctor is selected
+                      if (value) {
+                        setSelectedSpecializationFilter('all');
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Tất cả bác sĩ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả bác sĩ</SelectItem>
+                      {employees
+                        .filter((employee) => {
+                          // Only show doctors (ROLE_DENTIST or ROLE_DOCTOR) with specializations
+                          if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
+                            return false;
+                          }
+                          return employee.specializations && employee.specializations.length > 0;
+                        })
+                        .map((employee) => (
+                          <SelectItem key={employee.employeeId} value={employee.employeeCode}>
+                            {employee.fullName} ({employee.employeeCode})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Chọn bác sĩ để chỉ hiển thị dịch vụ phù hợp với chuyên khoa của bác sĩ
+                  </p>
+                </div>
+
+                {/* Specialization Filter - Only show if no doctor is selected */}
+                {(selectedDoctorForFilter === 'all' || !selectedDoctorForFilter) && hasUserSpecializations && (
                   <div>
-                    <Label>Filter by Specialization</Label>
+                    <Label>Lọc theo chuyên khoa</Label>
                     <Select
                       value={selectedSpecializationFilter}
                       onValueChange={setSelectedSpecializationFilter}
                     >
                       <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="All specializations" />
+                        <SelectValue placeholder="Tất cả chuyên khoa" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Specializations</SelectItem>
-                        <SelectItem value="none">No Specialization</SelectItem>
+                        <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
+                        <SelectItem value="none">Không có chuyên khoa</SelectItem>
                         {specializations.map((spec) => (
                           <SelectItem key={spec.specializationId} value={String(spec.specializationId)}>
                             {spec.specializationName}
@@ -1799,37 +1871,67 @@ export default function CreateAppointmentModal({
                   </div>
                 )}
 
+                {/* Show selected doctor info */}
+                {selectedDoctorForFilter && selectedDoctorForFilter !== 'all' && (
+                  <div>
+                    <Label>Bác sĩ đã chọn</Label>
+                    <Card className="p-3 mt-1 bg-primary/5 border-primary">
+                      <div className="flex items-center gap-2">
+                        <UserCog className="h-4 w-4 text-primary" />
+                        <div>
+                          <div className="font-medium text-sm">
+                            {employees.find((e) => e.employeeCode === selectedDoctorForFilter)?.fullName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {selectedDoctorForFilter}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
               </div>
 
               <div>
-                <Label>Select Services (at least 1) <span className="text-red-500">*</span></Label>
-                <Card className="p-4 mt-1 max-h-96 overflow-y-auto">
+                <Label>Chọn dịch vụ (ít nhất 1) <span className="text-red-500">*</span></Label>
+                <Card className="p-4 mt-1">
                   {loadingData ? (
-                    <p className="text-sm text-muted-foreground">Loading services...</p>
-                  ) : Array.from(getServicesGroupedBySpecialization.entries()).length === 0 ? (
-                    <Card className="p-4 bg-red-50 border-red-200">
-                      <p className="text-sm text-red-800">No services found.</p>
-                    </Card>
-                  ) : (
-                    <div className="space-y-4">
-                      {Array.from(getServicesGroupedBySpecialization.entries())
-                        .filter(([key, group]) => {
-                          // Apply specialization filter
-                          if (hasUserSpecializations && selectedSpecializationFilter !== 'all') {
-                            if (selectedSpecializationFilter === 'none') {
-                              return key === 'none'; // Only show services without specialization
-                            } else {
-                              const specId = parseInt(selectedSpecializationFilter, 10);
-                              return key === specId; // Only show services with matching specialization
-                            }
-                          }
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Đang tải dịch vụ...</span>
+                    </div>
+                  ) : (() => {
+                    const filteredServices = getFilteredServices();
+                    if (filteredServices.length === 0) {
+                      return (
+                        <Card className="p-4 bg-red-50 border-red-200">
+                          <p className="text-sm text-red-800">Không tìm thấy dịch vụ nào.</p>
+                        </Card>
+                      );
+                    }
 
-                          return true;
-                        })
-                        .map(([key, group]) => (
+                    // Group filtered services by specialization for table display
+                    const groupedServices = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
+                    filteredServices.forEach((service) => {
+                      const specId = service.specializationId || 'none';
+                      if (!groupedServices.has(specId)) {
+                        const specialization = specId !== 'none'
+                          ? specializations.find(s =>
+                            String(s.specializationId) === String(specId) ||
+                            (s.specializationId as any) === specId
+                          )
+                          : undefined;
+                        groupedServices.set(specId, { specialization, services: [] });
+                      }
+                      groupedServices.get(specId)!.services.push(service);
+                    });
+
+                    return (
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {Array.from(groupedServices.entries()).map(([key, group]) => (
                           <div key={key} className="space-y-2">
                             {/* Group Header - Specialization Name */}
-                            <div className="flex items-center gap-2 pb-2 border-b">
+                            <div className="flex items-center gap-2 pb-2 border-b sticky top-0 bg-white z-10">
                               <h4 className="font-semibold text-sm text-primary">
                                 {group.specialization?.specializationName || 'Chưa phân loại chuyên khoa'}
                               </h4>
@@ -1837,44 +1939,91 @@ export default function CreateAppointmentModal({
                                 {group.services.length} {group.services.length === 1 ? 'dịch vụ' : 'dịch vụ'}
                               </Badge>
                             </div>
-                            <div className="space-y-2 pl-4">
-                              {group.services.map((service) => {
-                                const isSelected = serviceCodes.includes(service.serviceCode);
-                                return (
-                                  <div key={service.serviceId} className="flex items-center space-x-2">
+
+                            {/* Table Layout */}
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-12">
                                     <Checkbox
-                                      id={`service-${service.serviceId}`}
-                                      checked={isSelected}
-                                      onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                      checked={group.services.every((s) => serviceCodes.includes(s.serviceCode))}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          // Select all services in this group
+                                          group.services.forEach((service) => {
+                                            if (!serviceCodes.includes(service.serviceCode)) {
+                                              handleToggleService(service.serviceCode);
+                                            }
+                                          });
+                                        } else {
+                                          // Deselect all services in this group
+                                          group.services.forEach((service) => {
+                                            if (serviceCodes.includes(service.serviceCode)) {
+                                              handleToggleService(service.serviceCode);
+                                            }
+                                          });
+                                        }
+                                      }}
                                     />
-                                    <Label
-                                      htmlFor={`service-${service.serviceId}`}
-                                      className={`text-sm font-normal cursor-pointer flex-1 ${isSelected ? 'font-semibold' : ''
-                                        }`}
+                                  </TableHead>
+                                  <TableHead>Tên dịch vụ</TableHead>
+                                  <TableHead>Mã dịch vụ</TableHead>
+                                  <TableHead>Chuyên khoa</TableHead>
+                                  <TableHead className="text-right">Thời gian</TableHead>
+                                  <TableHead className="text-right">Giá</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {group.services.map((service) => {
+                                  const isSelected = serviceCodes.includes(service.serviceCode);
+                                  return (
+                                    <TableRow
+                                      key={service.serviceId}
+                                      className={isSelected ? 'bg-primary/5' : ''}
                                     >
-                                      {service.serviceName} ({service.serviceCode})
-                                      <span className="text-muted-foreground ml-2">
-                                        • {service.defaultDurationMinutes} phút • {service.price?.toLocaleString()} VND
-                                      </span>
-                                      {service.specializationName && (
-                                        <Badge variant="outline" className="ml-2 text-xs">
-                                          {service.specializationName}
-                                        </Badge>
-                                      )}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                      <TableCell>
+                                        <Checkbox
+                                          checked={isSelected}
+                                          onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                        />
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {service.serviceName}
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground">
+                                        {service.serviceCode}
+                                      </TableCell>
+                                      <TableCell>
+                                        {service.specializationName ? (
+                                          <Badge variant="outline" className="text-xs">
+                                            {service.specializationName}
+                                          </Badge>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground">-</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {service.defaultDurationMinutes} phút
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium">
+                                        {service.price?.toLocaleString('vi-VN')} VND
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
                           </div>
                         ))}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </Card>
               </div>
 
               {selectedServices.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="text-sm font-medium">Đã chọn ({selectedServices.length}):</span>
                   {selectedServices.map((service) => (
                     <Badge key={service.serviceId} variant="secondary">
                       {service.serviceName}
@@ -1893,7 +2042,7 @@ export default function CreateAppointmentModal({
               <div className="space-y-4">
                 {/* Doctor Selection */}
                 <div>
-                  <Label htmlFor="employeeCode">Select Doctor <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="employeeCode">Chọn bác sĩ <span className="text-red-500">*</span></Label>
                   <Select
                     value={employeeCode}
                     onValueChange={(value) => {
@@ -1904,7 +2053,7 @@ export default function CreateAppointmentModal({
                     disabled={loadingData || loadingShifts}
                   >
                     <SelectTrigger id="employeeCode" className="mt-1">
-                      <SelectValue placeholder={loadingData || loadingShifts ? 'Loading...' : 'Select a doctor'} />
+                      <SelectValue placeholder={loadingData || loadingShifts ? 'Đang tải...' : 'Chọn bác sĩ'} />
                     </SelectTrigger>
                     <SelectContent>
                       {(() => {
@@ -1966,7 +2115,7 @@ export default function CreateAppointmentModal({
                 {/* Available Time Slots (grouped by morning/afternoon/evening) */}
                 {employeeCode && (
                   <div>
-                    <Label>Select Time Slot <span className="text-red-500">*</span></Label>
+                    <Label>Chọn khung giờ <span className="text-red-500">*</span></Label>
                     {loadingAvailableSlots ? (
                       <Card className="p-4 mt-1">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -2218,7 +2367,7 @@ export default function CreateAppointmentModal({
               <div className="space-y-4">
                 {/* Participants Selection */}
                 <div>
-                  <Label>Select Participants (Optional)</Label>
+                  <Label>Chọn người tham gia (Tùy chọn)</Label>
                   <p className="text-xs text-muted-foreground mt-1 mb-2">
                     Only employees with STANDARD specialization (medical staff) can be selected as participants.
                   </p>
@@ -2344,12 +2493,12 @@ export default function CreateAppointmentModal({
           {currentStep === 5 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Label htmlFor="notes">Ghi chú (Tùy chọn)</Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder="Thêm ghi chú bổ sung..."
                   className="mt-1"
                   rows={4}
                 />
@@ -2357,7 +2506,7 @@ export default function CreateAppointmentModal({
 
               {/* Summary */}
               <Card className="p-4 bg-muted">
-                <h3 className="font-semibold mb-2">Appointment Summary</h3>
+                <h3 className="font-semibold mb-2">Tóm tắt lịch hẹn</h3>
                 <div className="space-y-1 text-sm">
                   <div>
                     <span className="font-medium">Patient:</span> {selectedPatient?.fullName}

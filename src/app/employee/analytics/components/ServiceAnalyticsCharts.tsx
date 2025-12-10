@@ -37,7 +37,7 @@ export function MostUsedServicesChart({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Most Used Services</CardTitle>
+                <CardTitle>Dịch vụ được sử dụng nhiều nhất</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -46,7 +46,7 @@ export function MostUsedServicesChart({ data }: ServiceAnalyticsChartsProps) {
                         <XAxis dataKey="serviceName" angle={-45} textAnchor="end" height={100} />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="usageCount" fill="#FF6B6B" name="Usage Count" />
+                        <Bar dataKey="usageCount" fill="#FF6B6B" name="Số lần sử dụng" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -60,7 +60,7 @@ export function ServiceRevenueChart({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Revenue by Service</CardTitle>
+                <CardTitle>Doanh thu theo dịch vụ</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -93,17 +93,17 @@ export function ServiceAnalyticsTable({ data }: ServiceAnalyticsChartsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Service Analytics Details</CardTitle>
+                <CardTitle>Chi tiết phân tích dịch vụ</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
                             <tr className="border-b">
-                                <th className="text-left p-3 font-semibold">Service Name</th>
-                                <th className="text-left p-3 font-semibold">Usage Count</th>
-                                <th className="text-left p-3 font-semibold">Revenue</th>
-                                <th className="text-left p-3 font-semibold">Utilization Rate</th>
+                                <th className="text-left p-3 font-semibold">Tên dịch vụ</th>
+                                <th className="text-left p-3 font-semibold">Số lần sử dụng</th>
+                                <th className="text-left p-3 font-semibold">Doanh thu</th>
+                                <th className="text-left p-3 font-semibold">Tỷ lệ sử dụng</th>
                                 <th className="text-left p-3 font-semibold">Average Price</th>
                             </tr>
                         </thead>

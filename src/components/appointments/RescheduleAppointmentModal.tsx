@@ -442,7 +442,7 @@ export default function RescheduleAppointmentModal({
 
   const handleReschedule = async () => {
     if (!appointment) {
-      toast.error('Appointment not found');
+      toast.error('Không tìm thấy lịch hẹn');
       return;
     }
 

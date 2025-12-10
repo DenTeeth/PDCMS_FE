@@ -21,6 +21,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { Appointment, APPOINTMENT_STATUS_COLORS, AppointmentStatus } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface AppointmentListProps {
     onViewDetails: (appointment: Appointment) => void;
@@ -125,10 +126,10 @@ export default function AppointmentList({
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl font-bold">Appointments</h2>
+                    <h2 className="text-2xl font-bold">Lịch hẹn</h2>
                     <div className="relative w-full sm:w-80">
                         <Input
-                            placeholder="Search by patient, dentist, service..."
+                            placeholder="Tìm theo bệnh nhân, nha sĩ, dịch vụ..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pr-10"
@@ -145,19 +146,19 @@ export default function AppointmentList({
                     <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="today">
                             <FontAwesomeIcon icon={faCalendarDay} className="mr-2" />
-                            Today
+                            Hôm nay
                         </TabsTrigger>
                         <TabsTrigger value="upcoming">
                             <FontAwesomeIcon icon={faCalendarPlus} className="mr-2" />
-                            Upcoming
+                            Sắp tới
                         </TabsTrigger>
                         <TabsTrigger value="past">
                             <FontAwesomeIcon icon={faCalendarCheck} className="mr-2" />
-                            Past
+                            Đã qua
                         </TabsTrigger>
                         <TabsTrigger value="cancelled">
                             <FontAwesomeIcon icon={faCalendarTimes} className="mr-2" />
-                            Cancelled
+                            Đã hủy
                         </TabsTrigger>
                     </TabsList>
 
@@ -181,11 +182,11 @@ export default function AppointmentList({
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b">
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Patient</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Dentist</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                                                <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Ngày & Giờ</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Bệnh nhân</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Nha sĩ</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Trạng thái</th>
+                                                <th className="text-right py-3 px-4 font-semibold text-gray-700">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
@@ -196,7 +197,7 @@ export default function AppointmentList({
                                                             <FontAwesomeIcon icon={faClock} className="text-gray-400" />
                                                             <div>
                                                                 <div className="font-medium">
-                                                                    {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                                                                    {format(new Date(appointment.appointmentDate), 'dd/MM/yyyy', { locale: vi })}
                                                                 </div>
                                                                 <div className="text-sm text-gray-600">
                                                                     {appointment.startTime} - {appointment.endTime}
@@ -224,7 +225,7 @@ export default function AppointmentList({
                                                                 onClick={() => onViewDetails(appointment)}
                                                             >
                                                                 <FontAwesomeIcon icon={faEye} className="mr-2" />
-                                                                View
+                                                                Xem
                                                             </Button>
                                                             {appointment.status === 'SCHEDULED' && (
                                                                 <Button
@@ -233,7 +234,7 @@ export default function AppointmentList({
                                                                     onClick={() => onEdit(appointment)}
                                                                 >
                                                                     <FontAwesomeIcon icon={faEdit} className="mr-2" />
-                                                                    Edit
+                                                                    Chỉnh sửa
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -263,7 +264,7 @@ export default function AppointmentList({
                                                     <div className="flex items-center gap-2">
                                                         <FontAwesomeIcon icon={faClock} className="text-gray-400 w-4" />
                                                         <span>
-                                                            {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')} at{' '}
+                                                            {format(new Date(appointment.appointmentDate), 'dd/MM/yyyy', { locale: vi })} lúc{' '}
                                                             {appointment.startTime}
                                                         </span>
                                                     </div>
@@ -294,7 +295,7 @@ export default function AppointmentList({
                                                             onClick={() => onEdit(appointment)}
                                                         >
                                                             <FontAwesomeIcon icon={faEdit} className="mr-2" />
-                                                            Edit
+                                                            Chỉnh sửa
                                                         </Button>
                                                     )}
                                                 </div>

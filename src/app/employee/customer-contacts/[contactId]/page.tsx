@@ -44,7 +44,7 @@ export default function ViewContactPage() {
     const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
     const canEdit = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.update');
 
-    if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+    if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
     if (error) {
         return (
@@ -57,10 +57,10 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">View Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Xem liên hệ</h1>
                     </div>
                 </div>
                 <Card>
@@ -85,7 +85,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">View Contact</h1>
@@ -136,7 +136,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">{displayName}</h1>
@@ -155,7 +155,7 @@ export default function ViewContactPage() {
                         title={!canEdit ? "Bạn không có quyền chỉnh sửa liên hệ" : ""}
                     >
                         <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                        <span>Edit</span>
+                        <span>Sửa</span>
                     </Button>
                     <Button
                         variant="destructive"
@@ -164,7 +164,7 @@ export default function ViewContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                        <span>Delete</span>
+                        <span>Xóa</span>
                     </Button>
                 </div>
             </div>
@@ -174,10 +174,10 @@ export default function ViewContactPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
-                        <span>Contact Information</span>
+                        <span>Thông tin liên hệ</span>
                     </CardTitle>
                     <CardDescription>
-                        Basic contact details and communication information
+                        Thông tin liên hệ
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -192,7 +192,7 @@ export default function ViewContactPage() {
                         <div className="space-y-1">
                             <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
                                 <FontAwesomeIcon icon={faPhone} className="h-4 w-4" />
-                                <span>Phone</span>
+                                <span>Số điện thoại</span>
                             </div>
                             <p className="text-lg font-medium">{phone}</p>
                         </div>
@@ -206,7 +206,7 @@ export default function ViewContactPage() {
                         <div className="space-y-1">
                             <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
                                 <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
-                                <span>Source</span>
+                                <span>Nguồn</span>
                             </div>
                             <p className="text-lg font-medium">{source}</p>
                         </div>
@@ -219,28 +219,28 @@ export default function ViewContactPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faInfoCircle} className="h-5 w-5" />
-                        <span>Additional Details</span>
+                        <span>Chi tiết bổ sung</span>
                     </CardTitle>
                     <CardDescription>
-                        Status, interests, and other information
+                        Trạng thái, sở thích và thông tin khác
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Status</p>
+                            <p className="text-sm font-medium text-muted-foreground">Trạng thái</p>
                             <div className="mt-1">
                                 {getStatusBadge(status)}
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Service Interested</p>
+                            <p className="text-sm font-medium text-muted-foreground">Dịch vụ quan tâm</p>
                             <p className="text-lg font-medium">{serviceInterested}</p>
                         </div>
                     </div>
                     {message && message !== '-' && (
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Message</p>
+                            <p className="text-sm font-medium text-muted-foreground">Tin nhắn</p>
                             <p className="text-base whitespace-pre-wrap bg-muted p-3 rounded-md">{message}</p>
                         </div>
                     )}

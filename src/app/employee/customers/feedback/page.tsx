@@ -265,14 +265,14 @@ export default function FeedbackPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Feedback & Reviews</h1>
+          <h1 className="text-3xl font-bold">Phản hồi & Đánh giá</h1>
           <p className="text-gray-600 mt-1">
-            Analyze patient feedback and service ratings
+          Phân tích phản hồi và đánh giá chất lượng dịch vụ từ người bệnh
           </p>
         </div>
         <Button onClick={loadData} variant="outline">
           <FontAwesomeIcon icon={faRefresh} className="mr-2" />
-          Refresh Data
+          Làm mới dữ liệu
         </Button>
       </div>
 
@@ -281,23 +281,23 @@ export default function FeedbackPage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">
             <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-            Overview
+            Tổng quan
           </TabsTrigger>
           <TabsTrigger value="dentists">
             <FontAwesomeIcon icon={faUserMd} className="mr-2" />
-            Dentists
+            Bác sĩ
           </TabsTrigger>
           <TabsTrigger value="services">
             <FontAwesomeIcon icon={faTooth} className="mr-2" />
-            Services
+            Dịch vụ
           </TabsTrigger>
           <TabsTrigger value="reviews">
             <FontAwesomeIcon icon={faComments} className="mr-2" />
-            Reviews
+            Đánh giá
           </TabsTrigger>
           <TabsTrigger value="analytics">
             <FontAwesomeIcon icon={faBrain} className="mr-2" />
-            Analytics
+            Phân tích
           </TabsTrigger>
         </TabsList>
 

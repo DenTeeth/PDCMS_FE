@@ -130,7 +130,7 @@ export const createContact = async (payload: ContactInput) => {
     }
 
     // Build a readable error message for UI
-    let message = 'Create contact failed';
+    let message = 'Tạo liên hệ thất bại';
     if (respData) {
       // If backend returns structured { message: '...' }
       if (typeof respData === 'string' && respData.trim()) {
@@ -197,7 +197,7 @@ export const updateContact = async (id: string, payload: Partial<ContactInput>) 
     }
 
     // Build readable error message
-    let message = 'Update contact failed';
+    let message = 'Cập nhật liên hệ thất bại';
     if (respData) {
       if (typeof respData === 'string' && respData.trim()) {
         message = respData;

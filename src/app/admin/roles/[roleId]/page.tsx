@@ -177,7 +177,7 @@ export default function RoleDetailPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Role Details</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Chi tiết vai trò</h1>
             <p className="text-gray-600">View detailed information about role</p>
           </div>
         </div>
@@ -240,24 +240,24 @@ export default function RoleDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
-              Role Information
+              Thông tin vai trò
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Role ID</Label>
+              <Label className="text-gray-600">Mã vai trò</Label>
               <p className="font-medium text-lg">{role.roleId}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Role Name</Label>
+              <Label className="text-gray-600">Tên vai trò</Label>
               <p className="font-medium">{role.roleName}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Description</Label>
+              <Label className="text-gray-600">Mô tả</Label>
               <p className="font-medium text-sm">{role.description}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Status</Label>
+              <Label className="text-gray-600">Trạng thái</Label>
               <Badge
                 variant={role.isActive ? 'default' : 'secondary'}
                 className={
@@ -300,7 +300,7 @@ export default function RoleDetailPage() {
                   <div className="flex items-center gap-3">
                     <Lock className="h-8 w-8 text-purple-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Permissions</p>
+                      <p className="text-sm font-medium text-gray-600">Tổng số quyền</p>
                       <p className="text-2xl font-bold text-purple-600">{permissions.length}</p>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ export default function RoleDetailPage() {
                   </Label>
                   <textarea
                     id="editDescription"
-                    placeholder="Describe the role's purpose and responsibilities..."
+                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
                     value={editFormData.description}
                     onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                     disabled={updating}

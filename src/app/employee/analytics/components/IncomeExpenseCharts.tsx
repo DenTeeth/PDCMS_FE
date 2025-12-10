@@ -65,7 +65,7 @@ export default function IncomeExpenseCharts({
                 </Card>
                 <Card>
                     <CardContent className="pt-6">
-                        <div className="text-sm text-gray-600">Net Profit</div>
+                        <div className="text-sm text-gray-600">Lợi nhuận ròng</div>
                         <div
                             className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'
                                 }`}
@@ -79,7 +79,7 @@ export default function IncomeExpenseCharts({
             {/* Income vs Expenses Chart */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Income vs Expenses Over Time</CardTitle>
+                    <CardTitle>Thu nhập và Chi phí theo thời gian</CardTitle>
                     <Button onClick={onExport} variant="outline" size="sm">
                         <FontAwesomeIcon icon={faDownload} className="mr-2" />
                         Export Report
@@ -117,7 +117,7 @@ export default function IncomeExpenseCharts({
                                 stroke="#FFE66D"
                                 strokeWidth={3}
                                 strokeDasharray="5 5"
-                                name="Net Profit"
+                                name="Lợi nhuận ròng"
                                 dot={{ fill: '#FFE66D', r: 5 }}
                             />
                         </LineChart>
@@ -129,7 +129,7 @@ export default function IncomeExpenseCharts({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Expense Breakdown by Category</CardTitle>
+                        <CardTitle>Phân tích chi phí theo danh mục</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -156,7 +156,7 @@ export default function IncomeExpenseCharts({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Expense Categories Details</CardTitle>
+                        <CardTitle>Chi tiết danh mục chi phí</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">

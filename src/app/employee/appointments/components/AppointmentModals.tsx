@@ -32,6 +32,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { Appointment, APPOINTMENT_STATUS_COLORS, DentistAvailability } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 // ============= View Details Modal =============
 interface AppointmentDetailsModalProps {
@@ -60,7 +61,7 @@ export function AppointmentDetailsModal({
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Appointment Details</DialogTitle>
+                    <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
                     <DialogDescription>
                         <Badge style={{ backgroundColor: statusInfo.bg, color: 'white' }}>
                             {statusInfo.text}
@@ -83,7 +84,7 @@ export function AppointmentDetailsModal({
                         <div className="flex items-start gap-3">
                             <FontAwesomeIcon icon={faClock} className="text-primary mt-1" />
                             <div>
-                                <div className="text-sm text-gray-600">Time</div>
+                                <div className="text-sm text-gray-600">Giờ</div>
                                 <div className="font-medium">
                                     {appointment.startTime} - {appointment.endTime}
                                 </div>
@@ -97,11 +98,11 @@ export function AppointmentDetailsModal({
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <FontAwesomeIcon icon={faUser} className="text-primary" />
-                            <h3 className="font-semibold">Patient Information</h3>
+                            <h3 className="font-semibold">Thông tin bệnh nhân</h3>
                         </div>
                         <div className="space-y-2 pl-6">
                             <div>
-                                <div className="text-sm text-gray-600">Name</div>
+                                <div className="text-sm text-gray-600">Tên</div>
                                 <div className="font-medium">{appointment.patientName}</div>
                             </div>
                             {appointment.patientPhone && (
@@ -120,14 +121,14 @@ export function AppointmentDetailsModal({
                         <div>
                             <div className="flex items-center gap-2 mb-3">
                                 <FontAwesomeIcon icon={faUserMd} className="text-primary" />
-                                <h3 className="font-semibold">Dentist</h3>
+                                <h3 className="font-semibold">Nha sĩ</h3>
                             </div>
                             <div className="pl-6 font-medium">{appointment.dentistName}</div>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-3">
                                 <FontAwesomeIcon icon={faNotesMedical} className="text-primary" />
-                                <h3 className="font-semibold">Service</h3>
+                                <h3 className="font-semibold">Dịch vụ</h3>
                             </div>
                             <div className="pl-6 font-medium">{appointment.serviceName}</div>
                         </div>
@@ -140,13 +141,13 @@ export function AppointmentDetailsModal({
                             <div>
                                 {appointment.reasonForVisit && (
                                     <div className="mb-3">
-                                        <div className="text-sm text-gray-600 mb-1">Reason for Visit</div>
+                                        <div className="text-sm text-gray-600 mb-1">Lý do khám</div>
                                         <div className="text-gray-900">{appointment.reasonForVisit}</div>
                                     </div>
                                 )}
                                 {appointment.notes && (
                                     <div>
-                                        <div className="text-sm text-gray-600 mb-1">Additional Notes</div>
+                                        <div className="text-sm text-gray-600 mb-1">Ghi chú bổ sung</div>
                                         <div className="text-gray-900">{appointment.notes}</div>
                                     </div>
                                 )}
@@ -161,13 +162,13 @@ export function AppointmentDetailsModal({
                             <div>
                                 {appointment.cancelReason && (
                                     <div>
-                                        <div className="text-sm text-gray-600 mb-1">Cancellation Reason</div>
+                                        <div className="text-sm text-gray-600 mb-1">Lý do hủy</div>
                                         <div className="text-red-600">{appointment.cancelReason}</div>
                                     </div>
                                 )}
                                 {appointment.rescheduleReason && (
                                     <div>
-                                        <div className="text-sm text-gray-600 mb-1">Reschedule Reason</div>
+                                        <div className="text-sm text-gray-600 mb-1">Lý do dời lịch</div>
                                         <div className="text-orange-600">{appointment.rescheduleReason}</div>
                                     </div>
                                 )}
@@ -178,15 +179,15 @@ export function AppointmentDetailsModal({
 
                 <DialogFooter className="flex items-center justify-between sm:justify-between">
                     <Button variant="outline" onClick={onClose}>
-                        Close
+                        Đóng
                     </Button>
                     {canModify && (
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={() => onReschedule(appointment)}>
-                                Reschedule
+                                Dời lịch
                             </Button>
                             <Button variant="outline" onClick={() => onCancel(appointment)}>
-                                Cancel
+                                Hủy
                             </Button>
                         </div>
                     )}
@@ -255,15 +256,15 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                 cancelNotes: reason.trim(),
             });
 
-            toast.success('Appointment Rescheduled', {
-                description: 'The appointment has been successfully rescheduled',
+            toast.success('Đã dời lịch hẹn', {
+                description: 'Lịch hẹn đã được dời thành công',
             });
 
             handleClose();
             onSuccess();
         } catch (error: any) {
-            toast.error('Failed to reschedule appointment', {
-                description: error.message || 'Please try again later',
+            toast.error('Không thể dời lịch hẹn', {
+                description: error.message || 'Vui lòng thử lại sau',
             });
         } finally {
             setLoading(false);
@@ -284,16 +285,16 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Reschedule Appointment</DialogTitle>
+                    <DialogTitle>Dời lịch hẹn</DialogTitle>
                     <DialogDescription>
-                        Current: {format(new Date(appointment.appointmentDate), 'PPP')} at{' '}
+                        Hiện tại: {format(new Date(appointment.appointmentDate), 'PPP', { locale: vi })} lúc{' '}
                         {appointment.startTime}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <Label htmlFor="newDate">New Date</Label>
+                        <Label htmlFor="newDate">Ngày mới</Label>
                         <Input
                             id="newDate"
                             type="date"
@@ -310,12 +311,12 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
 
                     {newDate && (
                         <div>
-                            <Label>Available Time Slots</Label>
+                            <Label>Khung giờ khả dụng</Label>
                             {loading ? (
-                                <div className="text-center py-8 text-gray-500">Loading available slots...</div>
+                                <div className="text-center py-8 text-gray-500">Đang tải khung giờ khả dụng...</div>
                             ) : availableSlots.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
-                                    No available slots for this date
+                                    Không có khung giờ khả dụng cho ngày này
                                 </div>
                             ) : (
                                 <div className="space-y-4 mt-2">
@@ -350,10 +351,10 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                     )}
 
                     <div>
-                        <Label htmlFor="reason">Reason for Rescheduling <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="reason">Lý do dời lịch <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="reason"
-                            placeholder="Please provide a reason for rescheduling..."
+                            placeholder="Vui lòng cung cấp lý do để dời lịch..."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             required
@@ -364,10 +365,10 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={handleClose}>
-                            Cancel
+                            Hủy
                         </Button>
                         <Button type="submit" disabled={loading || !selectedSlot}>
-                            {loading ? 'Rescheduling...' : 'Confirm Reschedule'}
+                            {loading ? 'Đang dời lịch...' : 'Xác nhận dời lịch'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -402,17 +403,17 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                 reason: reason.trim(),
             });
 
-            toast.success('Appointment Cancelled', {
+            toast.success('Đã hủy lịch hẹn', {
                 description: notifyPatient
-                    ? 'The appointment has been cancelled and the patient will be notified'
-                    : 'The appointment has been cancelled',
+                    ? 'Lịch hẹn đã được hủy và bệnh nhân sẽ được thông báo'
+                    : 'Lịch hẹn đã được hủy',
             });
 
             handleClose();
             onSuccess();
         } catch (error: any) {
-            toast.error('Failed to cancel appointment', {
-                description: error.message || 'Please try again later',
+            toast.error('Không thể hủy lịch hẹn', {
+                description: error.message || 'Vui lòng thử lại sau',
             });
         } finally {
             setLoading(false);
@@ -431,9 +432,9 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Cancel Appointment</DialogTitle>
+                    <DialogTitle>Hủy lịch hẹn</DialogTitle>
                     <DialogDescription>
-                        {format(new Date(appointment.appointmentDate), 'PPP')} at {appointment.startTime}
+                        {format(new Date(appointment.appointmentDate), 'PPP', { locale: vi })} lúc {appointment.startTime}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -442,7 +443,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                         <div className="flex items-start gap-3">
                             <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 mt-1" />
                             <div>
-                                <div className="font-medium text-yellow-900 mb-1">Warning</div>
+                                <div className="font-medium text-yellow-900 mb-1">Cảnh báo</div>
                                 <div className="text-sm text-yellow-800">
                                     This action cannot be undone. The appointment will be permanently cancelled.
                                 </div>
@@ -451,10 +452,10 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                     </div>
 
                     <div>
-                        <Label htmlFor="cancelReason">Reason for Cancellation <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="cancelReason"
-                            placeholder="Please provide a reason for cancelling this appointment..."
+                            placeholder="Vui lòng cung cấp lý do hủy lịch hẹn..."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             required
@@ -472,18 +473,18 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                             className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                         />
                         <Label htmlFor="notifyPatient" className="cursor-pointer">
-                            Notify patient about cancellation
+                            Thông báo cho bệnh nhân về việc hủy lịch
                         </Label>
                     </div>
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={handleClose}>
                             <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                            No, Keep It
+                            Không, giữ nguyên
                         </Button>
                         <Button type="submit" variant="destructive" disabled={loading}>
                             <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                            {loading ? 'Cancelling...' : 'Yes, Cancel Appointment'}
+                            {loading ? 'Đang hủy...' : 'Có, hủy lịch hẹn'}
                         </Button>
                     </DialogFooter>
                 </form>

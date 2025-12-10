@@ -19,7 +19,7 @@ export default function EditContactPage() {
   const { user } = useAuth();
   const canDelete = user?.roles?.includes('Admin') || user?.permissions?.includes('customer-contacts.delete');
 
-  if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+  if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
   if (error) {
     return (
@@ -32,10 +32,10 @@ export default function EditContactPage() {
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-            <span>Back</span>
+            <span>Quay lại</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
           </div>
         </div>
         <Card>
@@ -60,10 +60,10 @@ export default function EditContactPage() {
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-            <span>Back</span>
+            <span>Quay lại</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
           </div>
         </div>
         <Card>
@@ -93,7 +93,7 @@ export default function EditContactPage() {
       router.push('/employee/customer-contacts');
     } catch (err: any) {
       console.error('Update failed', err);
-      toast.error(err?.message || 'Update failed');
+      toast.error(err?.message || 'Cập nhật thất bại');
     }
   };
 
@@ -105,7 +105,7 @@ export default function EditContactPage() {
       router.push('/employee/customer-contacts');
     } catch (err: any) {
       console.error('Delete failed', err);
-      toast.error(err?.message || 'Delete failed');
+      toast.error(err?.message || 'Xóa thất bại');
     }
   };
 
@@ -121,12 +121,12 @@ export default function EditContactPage() {
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-            <span>Back</span>
+            <span>Quay lại</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
             <p className="text-muted-foreground mt-2">
-              Update contact information for {contact.fullName}
+              Cập nhật thông tin liên hệ cho {contact.fullName}
             </p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function EditContactPage() {
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-            <span>Delete</span>
+            <span>Xóa</span>
           </Button>
         )}
       </div>
@@ -148,10 +148,10 @@ export default function EditContactPage() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
-            <span>Contact Information</span>
+            <span>Thông tin liên hệ</span>
           </CardTitle>
           <CardDescription>
-            Update the customer contact details below
+            Cập nhật thông tin liên hệ khách hàng bên dưới
           </CardDescription>
         </CardHeader>
         <CardContent>

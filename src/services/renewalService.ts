@@ -60,8 +60,8 @@ class RenewalService {
       }
       
       // Case 2: Wrapped response { statusCode, data: [...] }
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        return response.data.data;
+      if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
+        return (response.data as any).data;
       }
       
       // Fallback: return empty array
@@ -93,7 +93,7 @@ class RenewalService {
       } else if (error.message) {
         throw error;
       } else {
-        throw new Error('Failed to fetch pending renewals');
+        throw new Error('Không thể lấy danh sách đăng ký chờ duyệt');
       }
     }
   }
@@ -136,8 +136,8 @@ class RenewalService {
       );
       
       // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
+      if ((response.data as any)?.data) {
+        return (response.data as any).data;
       }
       
       return response.data;
@@ -162,7 +162,7 @@ class RenewalService {
       } else if (error.message) {
         throw error;
       } else {
-        throw new Error('Failed to respond to renewal');
+        throw new Error('Không thể phản hồi đăng ký');
       }
     }
   }
@@ -219,8 +219,8 @@ class RenewalService {
         return response.data;
       }
       
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        return response.data.data;
+      if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
+        return (response.data as any).data;
       }
       
       // Fallback: return empty array
@@ -252,7 +252,7 @@ class RenewalService {
       } else if (error.message) {
         throw error;
       } else {
-        throw new Error('Failed to fetch renewals');
+        throw new Error('Không thể lấy danh sách đăng ký');
       }
     }
   }
@@ -302,8 +302,8 @@ class RenewalService {
       );
       
       // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
+      if ((response.data as any)?.data) {
+        return (response.data as any).data;
       }
       
       return response.data;
@@ -318,7 +318,7 @@ class RenewalService {
           'Invalid request. New effective to date must be after old effective to date.'
         );
       } else if (error.response?.status === 403) {
-        throw new Error('Missing required permission: MANAGE_FIXED_REGISTRATIONS');
+        throw new Error('Thiếu quyền bắt buộc: QUẢN LÝ ĐĂNG KÝ CỐ ĐỊNH');
       } else if (error.response?.status === 409) {
         throw new Error('Renewal request must be CONFIRMED by employee first');
       } else if (error.response?.data?.message) {
@@ -328,7 +328,7 @@ class RenewalService {
       } else if (error.message) {
         throw error;
       } else {
-        throw new Error('Failed to finalize renewal');
+        throw new Error('Không thể hoàn tất đăng ký');
       }
     }
   }

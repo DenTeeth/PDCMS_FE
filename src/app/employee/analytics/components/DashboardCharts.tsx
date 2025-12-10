@@ -42,7 +42,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Revenue Trend (Last 12 Months)</CardTitle>
+                <CardTitle>Xu hướng doanh thu (12 tháng gần nhất)</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -87,7 +87,7 @@ export function AppointmentStatusChart({ data }: AppointmentStatusChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Appointments by Status</CardTitle>
+                <CardTitle>Lịch hẹn theo trạng thái</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -122,7 +122,7 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Top Services</CardTitle>
+                <CardTitle>Dịch vụ hàng đầu</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -132,8 +132,8 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
                         <YAxis dataKey="serviceName" type="category" width={150} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="count" fill="#FF6B6B" name="Usage Count" />
-                        <Bar dataKey="revenue" fill="#4ECDC4" name="Revenue ($)" />
+                        <Bar dataKey="count" fill="#FF6B6B" name="Số lần sử dụng" />
+                        <Bar dataKey="revenue" fill="#4ECDC4" name="Doanh thu ($)" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -149,7 +149,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Patient Acquisition</CardTitle>
+                <CardTitle>Tăng trưởng bệnh nhân</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -164,7 +164,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
                             dataKey="newPatients"
                             stroke="#FFE66D"
                             strokeWidth={3}
-                            name="New Patients"
+                            name="Bệnh nhân mới"
                             dot={{ fill: '#FFE66D', r: 5 }}
                             activeDot={{ r: 7 }}
                         />
@@ -173,7 +173,7 @@ export function PatientAcquisitionChart({ data }: PatientAcquisitionChartProps) 
                             dataKey="returningPatients"
                             stroke="#95E1D3"
                             strokeWidth={3}
-                            name="Returning Patients"
+                            name="Bệnh nhân quay lại"
                             dot={{ fill: '#95E1D3', r: 5 }}
                             activeDot={{ r: 7 }}
                         />

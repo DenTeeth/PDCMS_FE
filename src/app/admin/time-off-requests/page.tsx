@@ -539,7 +539,7 @@ export default function AdminTimeOffRequestsPage() {
               }`}
           >
             <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
-            Time Off Requests
+            Yêu cầu thời gian nghỉ
           </button>
           <button
             onClick={() => setActiveTab('balances')}
@@ -549,8 +549,8 @@ export default function AdminTimeOffRequestsPage() {
               }`}
           >
             <FontAwesomeIcon icon={faWallet} className="h-4 w-4" />
-            Leave Balances
-          </button>
+                Số dư nghỉ phép
+            </button>
         </div>
       </div>
 

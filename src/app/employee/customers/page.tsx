@@ -278,7 +278,7 @@ export default function CustomersPage() {
         {(activeTab.startsWith('feedback-')) && (
           <Button onClick={loadFeedbackData} variant="outline">
             <FontAwesomeIcon icon={faRefresh} className="mr-2" />
-            Refresh Data
+            Làm mới dữ liệu
           </Button>
         )}
       </div>
@@ -296,23 +296,23 @@ export default function CustomersPage() {
           </TabsTrigger>
           <TabsTrigger value="feedback-overview">
             <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-            Overview
+            Tổng quan
           </TabsTrigger>
           <TabsTrigger value="feedback-dentists">
             <FontAwesomeIcon icon={faUserMd} className="mr-2" />
-            Dentists
+            Bác sĩ
           </TabsTrigger>
           <TabsTrigger value="feedback-services">
             <FontAwesomeIcon icon={faTooth} className="mr-2" />
-            Services
+            Dịch vụ
           </TabsTrigger>
           <TabsTrigger value="feedback-reviews">
             <FontAwesomeIcon icon={faComments} className="mr-2" />
-            Reviews
+            Đánh giá
           </TabsTrigger>
           <TabsTrigger value="feedback-analytics">
             <FontAwesomeIcon icon={faBrain} className="mr-2" />
-            Analytics
+            Phân tích
           </TabsTrigger>
         </TabsList>
 

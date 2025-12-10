@@ -78,7 +78,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Service Ratings</CardTitle>
+          <CardTitle>Đánh giá dịch vụ</CardTitle>
           <div className="flex flex-wrap gap-2">
             <div className="relative flex-1 min-w-[200px]">
               <FontAwesomeIcon
@@ -86,7 +86,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <Input
-                placeholder="Search service..."
+                placeholder="Tìm kiếm dịch vụ..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -98,10 +98,10 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Ratings</SelectItem>
-                <SelectItem value="4+">4+ Stars</SelectItem>
-                <SelectItem value="3-4">3-4 Stars</SelectItem>
-                <SelectItem value="<3">&lt;3 Stars</SelectItem>
+                <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                <SelectItem value="4+">4+ Sao</SelectItem>
+                <SelectItem value="3-4">3-4 Sao</SelectItem>
+                <SelectItem value="<3">&lt;3 Sao</SelectItem>
               </SelectContent>
             </Select>
 
@@ -113,8 +113,8 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rating">By Rating</SelectItem>
-                <SelectItem value="reviews">By Reviews</SelectItem>
+                <SelectItem value="rating">Theo xếp hạng</SelectItem>
+                <SelectItem value="reviews">Theo đánh giá</SelectItem>
               </SelectContent>
             </Select>
 
@@ -135,11 +135,11 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Service Name</TableHead>
-                <TableHead>Average Rating</TableHead>
-                <TableHead>Total Reviews</TableHead>
-                <TableHead>Distribution</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Tên dịch vụ</TableHead>
+                <TableHead>Đánh giá trung bình</TableHead>
+                <TableHead>Tổng số đánh giá</TableHead>
+                <TableHead>Phân phối</TableHead>
+                <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -165,7 +165,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                   </TableCell>
                   <TableCell>
                     <Badge variant={getRatingBadge(service.averageRating)}>
-                      {service.totalReviews} reviews
+                      {service.totalReviews} đánh giá
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -193,7 +193,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
                       onClick={() => onViewReviews(service.serviceCode)}
                     >
                       <FontAwesomeIcon icon={faEye} className="mr-2" />
-                      View Reviews
+                      Xem đánh giá
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -204,7 +204,7 @@ export default function ServiceRatings({ data, onViewReviews }: ServiceRatingsPr
 
         {filteredData.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No services found matching your filters
+          Không tìm thấy dịch vụ nào phù hợp với tiêu chí bạn chọn
           </div>
         )}
       </CardContent>

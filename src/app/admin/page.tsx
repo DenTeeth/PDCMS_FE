@@ -5,30 +5,30 @@ import { Users, Calendar, FileText, Settings, Activity } from 'lucide-react';
 export default function AdminDashboard() {
   const stats = [
     {
-      title: 'Total Staff',
+      title: 'Tổng nhân viên',
       value: '24',
-      description: '+2 from last month',
+      description: '+2 trong tháng',
       icon: Users,
       color: 'text-blue-600',
     },
     {
-      title: 'Today\'s Appointments',
+      title: 'Lịch hẹn hôm nay',
       value: '12',
-      description: '8 confirmed',
+      description: '8 đã xác nhận',
       icon: Calendar,
       color: 'text-green-600',
     },
     {
-      title: 'Blog Posts',
+      title: 'Bài viết Blog',
       value: '18',
-      description: '3 new this week',
+      description: '3 bài mới tuần này',
       icon: FileText,
       color: 'text-purple-600',
     },
     {
-      title: 'System Roles',
+      title: 'Vai trò hệ thống',
       value: '5',
-      description: '4 active roles',
+      description: '4 vai trò hoạt động',
       icon: Settings,
       color: 'text-orange-600',
     },
@@ -38,8 +38,8 @@ export default function AdminDashboard() {
     <ProtectedRoute requiredBaseRole="admin">
       <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Dental clinic management system overview</p>
+        <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
+        <p className="text-gray-600">Tổng quan hệ thống quản lý phòng khám</p>
       </div>
 
       {/* Stats Grid */}
@@ -64,30 +64,30 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest changes in the system</CardDescription>
+            <CardTitle>Hoạt động gần đây</CardTitle>
+            <CardDescription>Thay đổi mới nhất trong hệ thống</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Dr. Nguyen Van A logged in</p>
-                  <p className="text-xs text-gray-500">2 minutes ago</p>
+                  <p className="text-sm font-medium">BS. Nguyễn Văn A đã đăng nhập</p>
+                  <p className="text-xs text-gray-500">2 phút trước</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">New appointment created</p>
-                  <p className="text-xs text-gray-500">15 minutes ago</p>
+                  <p className="text-sm font-medium">Tạo lịch hẹn mới</p>
+                  <p className="text-xs text-gray-500">15 phút trước</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">New blog post published</p>
-                  <p className="text-xs text-gray-500">1 hour ago</p>
+                  <p className="text-sm font-medium">Bài viết mới được xuất bản</p>
+                  <p className="text-xs text-gray-500">1 giờ trước</p>
                 </div>
               </div>
             </div>
@@ -96,29 +96,29 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Appointments</CardTitle>
-            <CardDescription>Today's scheduled appointments</CardDescription>
+            <CardTitle>Lịch hẹn sắp tới</CardTitle>
+            <CardDescription>Lịch hẹn đã lên lịch hôm nay</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Nguyen Thi B</p>
-                  <p className="text-xs text-gray-500">Regular dental checkup</p>
+                  <p className="text-xs text-gray-500">Khám răng định kỳ</p>
                 </div>
                 <span className="text-sm text-blue-600">09:00</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Tran Van C</p>
-                  <p className="text-xs text-gray-500">Wisdom tooth extraction</p>
+                  <p className="text-xs text-gray-500">Nhổ răng khôn</p>
                 </div>
                 <span className="text-sm text-blue-600">10:30</span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Le Thi D</p>
-                  <p className="text-xs text-gray-500">Braces treatment</p>
+                  <p className="text-xs text-gray-500">Điều trị niềng răng</p>
                 </div>
                 <span className="text-sm text-blue-600">14:00</span>
               </div>
