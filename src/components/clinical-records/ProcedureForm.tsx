@@ -190,17 +190,32 @@ export default function ProcedureForm({
                 value={selectedServiceId}
                 onValueChange={(value) => setValue('serviceId', value)}
               >
-                <SelectTrigger id="serviceId" className={errors.serviceId ? 'border-destructive' : ''}>
+                <SelectTrigger id="serviceId" className={`w-full ${errors.serviceId ? 'border-destructive' : ''}`}>
                   <SelectValue placeholder="Chọn dịch vụ" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent 
+                  className="max-h-[400px]" 
+                  position="popper"
+                  style={{ width: 'var(--radix-select-trigger-width)' }}
+                >
                   {services.map((service) => (
-                    <SelectItem key={service.serviceId} value={String(service.serviceId)}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{service.serviceName}</span>
-                        {service.serviceCode && (
-                          <span className="text-xs text-muted-foreground">
-                            ({service.serviceCode})
+                    <SelectItem 
+                      key={service.serviceId} 
+                      value={String(service.serviceId)}
+                      className="py-3"
+                    >
+                      <div className="flex flex-col gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{service.serviceName}</span>
+                          {service.serviceCode && (
+                            <span className="text-xs text-muted-foreground font-mono">
+                              ({service.serviceCode})
+                            </span>
+                          )}
+                        </div>
+                        {service.description && (
+                          <span className="text-xs text-muted-foreground line-clamp-2">
+                            {service.description}
                           </span>
                         )}
                       </div>
@@ -231,7 +246,7 @@ export default function ProcedureForm({
               })}
               placeholder="Mô tả chi tiết thủ thuật đã thực hiện..."
               rows={4}
-              className={errors.procedureDescription ? 'border-destructive' : ''}
+              className={`w-full ${errors.procedureDescription ? 'border-destructive' : ''}`}
             />
             {errors.procedureDescription && (
               <p className="text-sm text-destructive">{errors.procedureDescription.message}</p>
@@ -254,7 +269,7 @@ export default function ProcedureForm({
               })}
               placeholder="VD: 11, 18, 36, 46..."
               maxLength={10}
-              className={errors.toothNumber ? 'border-destructive' : ''}
+              className={`w-full ${errors.toothNumber ? 'border-destructive' : ''}`}
             />
             {errors.toothNumber && (
               <p className="text-sm text-destructive">{errors.toothNumber.message}</p>
@@ -276,7 +291,7 @@ export default function ProcedureForm({
               })}
               placeholder="Thêm ghi chú về thủ thuật (nếu có)..."
               rows={3}
-              className={errors.notes ? 'border-destructive' : ''}
+              className={`w-full ${errors.notes ? 'border-destructive' : ''}`}
             />
             {errors.notes && (
               <p className="text-sm text-destructive">{errors.notes.message}</p>

@@ -129,7 +129,7 @@ export default function CustomerGroupsTab() {
                 <div className="lg:col-span-1">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Customer Groups</CardTitle>
+                            <CardTitle>Nhóm khách hàng</CardTitle>
                             <CardDescription>
                                 Manage customer segments and KPIs
                             </CardDescription>
@@ -178,7 +178,7 @@ export default function CustomerGroupsTab() {
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <CardTitle>Customer List</CardTitle>
+                                    <CardTitle>Danh sách khách hàng</CardTitle>
                                     <CardDescription>
                                         {selectedGroup ? `Customers in ${selectedGroup.name}` : 'All customers'}
                                     </CardDescription>
@@ -187,7 +187,7 @@ export default function CustomerGroupsTab() {
                                     <div className="relative">
                                         <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                         <Input
-                                            placeholder="Search customers..."
+                                            placeholder="Tìm kiếm khách hàng..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className="pl-10 w-64"
@@ -264,7 +264,7 @@ export default function CustomerGroupsTab() {
             {/* Group Performance Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Group Performance</CardTitle>
+                    <CardTitle>Hiệu suất nhóm</CardTitle>
                     <CardDescription>
                         Detailed performance metrics for each customer group
                     </CardDescription>
@@ -274,12 +274,12 @@ export default function CustomerGroupsTab() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Group Name</TableHead>
-                                <TableHead>Customers</TableHead>
-                                <TableHead>Total Revenue</TableHead>
-                                <TableHead>Average Value</TableHead>
-                                <TableHead>Last Activity</TableHead>
-                                <TableHead>Performance</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead>Khách hàng</TableHead>
+                                <TableHead>Tổng doanh thu</TableHead>
+                                <TableHead>Giá trị trung bình</TableHead>
+                                <TableHead>Hoạt động gần nhất</TableHead>
+                                <TableHead>Hiệu suất</TableHead>
+                                <TableHead>Thao tác</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

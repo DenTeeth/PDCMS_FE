@@ -91,7 +91,7 @@ export default function ReviewsList({
       <CardHeader>
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <CardTitle>All Reviews</CardTitle>
+            <CardTitle>Tất cả đánh giá</CardTitle>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
@@ -108,7 +108,7 @@ export default function ReviewsList({
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <Input
-              placeholder="Search by patient name or review text..."
+              placeholder="Tìm theo tên bệnh nhân hoặc nội dung đánh giá..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10"
@@ -120,21 +120,21 @@ export default function ReviewsList({
             <div className="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-lg">
               <Select value={ratingFilter} onValueChange={handleRatingChange}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Rating" />
+                  <SelectValue placeholder="Đánh giá" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Ratings</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                  <SelectItem value="4">4 Stars</SelectItem>
-                  <SelectItem value="3">3 Stars</SelectItem>
-                  <SelectItem value="2">2 Stars</SelectItem>
-                  <SelectItem value="1">1 Star</SelectItem>
+                  <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                  <SelectItem value="5">5 sao</SelectItem>
+                  <SelectItem value="4">4 sao</SelectItem>
+                  <SelectItem value="3">3 sao</SelectItem>
+                  <SelectItem value="2">2 sao</SelectItem>
+                  <SelectItem value="1">1 sao</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sentimentFilter} onValueChange={handleSentimentChange}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Sentiment" />
+                  <SelectValue placeholder="Cảm xúc" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Sentiments</SelectItem>

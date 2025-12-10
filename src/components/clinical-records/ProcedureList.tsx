@@ -14,6 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -154,80 +162,85 @@ export default function ProcedureList({
             )}
           </div>
         ) : (
-          <div className="space-y-3">
-            {procedures.map((procedure, index) => (
-              <div key={procedure.procedureId}>
-                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      {/* Badges */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {procedure.serviceName && (
-                          <Badge variant="outline" className="font-medium">
-                            {procedure.serviceName}
-                          </Badge>
-                        )}
-                        {procedure.serviceCode && (
-                          <Badge variant="secondary" className="text-xs">
-                            {procedure.serviceCode}
-                          </Badge>
-                        )}
-                        {procedure.toothNumber && (
-                          <Badge variant="default" className="bg-blue-500">
-                            Răng {procedure.toothNumber}
-                          </Badge>
-                        )}
-                        {procedure.patientPlanItemId && (
-                          <Badge variant="outline" className="text-xs">
-                            Liên kết lộ trình
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      <div className="text-sm font-medium">
-                        {procedure.procedureDescription}
-                      </div>
-
-                      {/* Notes */}
-                      {procedure.notes && (
-                        <div className="text-sm text-muted-foreground">
-                          {procedure.notes}
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">Tên</TableHead>
+                  <TableHead>Mô tả</TableHead>
+                  {canEdit && (
+                    <TableHead className="w-[100px] text-right">Thao tác</TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {procedures.map((procedure) => (
+                  <TableRow key={procedure.procedureId}>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div className="font-medium">
+                          {procedure.serviceName || procedure.serviceCode || 'N/A'}
                         </div>
-                      )}
-
-                      {/* Timestamp */}
-                      <div className="text-xs text-muted-foreground">
-                        {formatDateTime(procedure.createdAt)}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {procedure.serviceCode && (
+                            <Badge variant="secondary" className="text-xs">
+                              {procedure.serviceCode}
+                            </Badge>
+                          )}
+                          {procedure.toothNumber && (
+                            <Badge variant="default" className="bg-blue-500">
+                              Răng {procedure.toothNumber}
+                            </Badge>
+                          )}
+                          {procedure.patientPlanItemId && (
+                            <Badge variant="outline" className="text-xs">
+                              Liên kết lộ trình
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDateTime(procedure.createdAt)}
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Actions */}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm">
+                          {procedure.procedureDescription || '-'}
+                        </div>
+                        {procedure.notes && (
+                          <div className="text-sm text-muted-foreground italic">
+                            Ghi chú: {procedure.notes}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                     {canEdit && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(procedure)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(procedure)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(procedure)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(procedure)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     )}
-                  </div>
-                </div>
-                {index < procedures.length - 1 && <Separator className="my-3" />}
-              </div>
-            ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

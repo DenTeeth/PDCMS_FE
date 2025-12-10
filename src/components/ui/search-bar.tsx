@@ -13,7 +13,7 @@ interface SearchBarProps {
 export default function SearchBar({
     value,
     onChange,
-    placeholder = "Search...",
+    placeholder = "Tìm kiếm...",
     className = ""
 }: SearchBarProps) {
     return (

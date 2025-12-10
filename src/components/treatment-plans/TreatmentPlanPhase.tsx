@@ -6,7 +6,8 @@
  */
 
 import { ApprovalStatus, PhaseDetailDTO, ItemDetailDTO, PlanItemStatus } from '@/types/treatmentPlan';
-import { calculatePhaseStatus, getPhaseProgress } from '@/utils/treatmentPlanStatus';
+// Issue #47 RESOLVED: No longer need calculatePhaseStatus - trust BE status directly
+import { getPhaseProgress } from '@/utils/treatmentPlanStatus';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,10 +83,10 @@ export default function TreatmentPlanPhase({
     return statusMap[status] || { bg: '#9CA3AF', border: '#6B7280', text: status };
   };
 
-  // Calculate phase status using utility function
-  // This handles BE lazy loading bug by calculating from items as fallback
-  // See: src/utils/treatmentPlanStatus.ts
-  const effectivePhaseStatus = calculatePhaseStatus(phase);
+  // Issue #47 RESOLVED: BE has fixed existing data and ensures status is correct
+  // Trust BE phase status directly - no need to calculate from items
+  // BE (Issue #40) queries items directly from DB and auto-completes phases correctly
+  const effectivePhaseStatus = phase.status || 'PENDING';
   const statusInfo = getPhaseStatusColor(effectivePhaseStatus);
 
   const formatDate = (dateStr: string | null) => {

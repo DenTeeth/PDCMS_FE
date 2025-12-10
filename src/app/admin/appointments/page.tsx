@@ -166,8 +166,8 @@ export default function AppointmentsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Appointment Management</h1>
-            <p className="text-gray-600">View and manage patient appointments</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý lịch hẹn</h1>
+            <p className="text-gray-600">Xem và quản lý lịch hẹn bệnh nhân</p>
           </div>
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
@@ -176,19 +176,19 @@ export default function AppointmentsPage() {
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
-                List
+                Danh sách
               </Button>
               <Button
                 variant={viewMode === 'calendar' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('calendar')}
               >
-                Calendar
+                Lịch
               </Button>
             </div>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Appointment
+              Lịch hẹn mới
             </Button>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function AppointmentsPage() {
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-semibold text-gray-700">Total Appointments</p>
+                  <p className="text-sm font-semibold text-gray-700">Tổng số lịch hẹn</p>
                   <p className="text-2xl font-bold text-gray-900">{appointments.length}</p>
                 </div>
               </div>
@@ -251,12 +251,12 @@ export default function AppointmentsPage() {
             {/* Search and Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1">
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative mt-2">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
-                    placeholder="Search by patient name, doctor or service..."
+                    placeholder="Tìm theo tên bệnh nhân, bác sĩ hoặc dịch vụ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -264,18 +264,18 @@ export default function AppointmentsPage() {
                 </div>
               </div>
               <div className="md:w-48">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Trạng thái</Label>
                 <select
                   id="status"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="pending">Đang chờ</option>
+                  <option value="confirmed">Đã xác nhận</option>
+                  <option value="completed">Đã hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
                 </select>
               </div>
               <div className="md:w-48">

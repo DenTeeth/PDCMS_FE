@@ -19,7 +19,7 @@ export default function EditContactPage() {
     const { user } = useAuth();
     const canDelete = user?.roles?.includes('ROLE_ADMIN') || user?.permissions?.includes('DELETE_CONTACT');
 
-    if (isLoading) return <div className="p-6 text-center">Loading...</div>;
+    if (isLoading) return <div className="p-6 text-center">Đang tải...</div>;
 
     if (error) {
         return (
@@ -32,10 +32,10 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
                     </div>
                 </div>
                 <Card>
@@ -60,10 +60,10 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
                     </div>
                 </div>
                 <Card>
@@ -121,12 +121,12 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-                        <span>Back</span>
+                        <span>Quay lại</span>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Edit Contact</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Chỉnh sửa liên hệ</h1>
                         <p className="text-muted-foreground mt-2">
-                            Update contact information for {contact.fullName}
+                            Cập nhật thông tin liên hệ cho {contact.fullName}
                         </p>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ export default function EditContactPage() {
                         className="flex items-center space-x-2"
                     >
                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                        <span>Delete</span>
+                        <span>Xóa</span>
                     </Button>
                 )}
             </div>

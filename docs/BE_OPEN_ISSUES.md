@@ -1,10 +1,10 @@
 # Backend Open Issues
 
-**Last Updated:** 2025-12-05  
-**Total Open Issues:** 3  
-**High Priority Issues:** 3 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System)  
-**Medium Priority Issues:** 0  
-**Resolved Issues:** 4 (Issue #27, #31, #32, #33) - Removed from this document
+**Last Updated:** 2025-12-09  
+**Total Open Issues:** 6  
+**High Priority Issues:** 4 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System, Issue #49 - Price Update Triggers Status Change)  
+**Medium Priority Issues:** 2 (Issue #48 - AppointmentStatusService completion check, Issue #50 - Warehouse Reports Excel Export)  
+**Resolved Issues:** 12 (Issue #27, #31, #32, #33, #36, #37, #38, #39, #40, #42, #47) - Removed from this document
 
 ---
 
@@ -12,15 +12,12 @@
 
 | # | Issue | Status | Priority | Reported Date | Resolved Date |
 |---|-------|--------|----------|---------------|---------------|
-| #36 | API 8.1 - ClinicalRecordResponse thiếu field followUpDate | ✅ **RESOLVED** | **MEDIUM** | 2025-12-03 | 2025-12-02 |
-| #37 | API 8.9 & 8.10 - Tooth Status API endpoints chưa được implement | ✅ **RESOLVED** | **MEDIUM** | 2025-12-03 | 2025-12-02 |
-| #38 | API 5.1 & 5.5 - Treatment Plan status không được update đúng khi auto-complete | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-04 |
-| #39 | API 3.7 - Reschedule appointment không link lại treatment plan items | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-04 |
-| #40 | API 5.4 - Phase và Plan không auto-complete do lazy loading issue (REGRESSION) | ✅ **RESOLVED** | **HIGH** | 2025-12-04 | 2025-12-05 |
 | #41 | API 5.9 - Database constraint thiếu WAITING_FOR_PREREQUISITE và SKIPPED status | ⚠️ **NEEDS VERIFICATION** | **HIGH** | 2025-12-04 | - |
-| #42 | API 3.7 - Reschedule appointment không chuyển plan items từ SCHEDULED về READY_FOR_BOOKING | ✅ **RESOLVED** | **MEDIUM** | 2025-12-04 | 2025-12-05 |
+| #48 | Treatment Plan Status - AppointmentStatusService không check completion nếu plan status = null | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
+| #49 | API 5.13 - Update Prices trigger status change không đúng | 🔴 **OPEN** | **HIGH** | 2025-12-09 | - |
 | #43 | API 5.9 - Xóa prerequisite services khỏi seed data | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
 | #44 | API 7.x - Xóa toàn bộ hệ thống work shifts, employee shifts, registrations và slots | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
+| #50 | Warehouse Reports - Thêm chức năng export Excel cho báo cáo tồn kho | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
 | # | Issue | Status | Priority | Reported Date |
 |---|-------|--------|----------|---------------|
 | #28 | API - Transaction Stats endpoint trả về 400 INVALID_PARAMETER_TYPE | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
@@ -239,15 +236,6 @@ WHERE conname = 'patient_plan_items_status_check';
    - Verify items get correct status
 
 ---
-
-### Issue #40: API 5.4 - Phase và Plan không auto-complete do lazy loading issue (REGRESSION)
-
-**Status:** ✅ **RESOLVED**  
-**Priority:** **HIGH**  
-**Reported Date:** 2025-12-04  
-**Resolved Date:** 2025-12-05  
-**Type:** **REGRESSION** (Từng hoạt động đúng trong các phiên bản cũ)  
-**Endpoint:** `PATCH /api/v1/patient-plan-items/{itemId}/status` (API 5.4)
 
 #### Problem Description
 
@@ -1524,5 +1512,691 @@ Actual: ✅ Should work (FE allows access in this case)
 2. ⏳ **Test BE APIs** với appointment status = COMPLETED
 3. ⏳ **Xác nhận với BE team** về business rules
 4. ⏳ **Fix FE hoặc document BE behavior** dựa trên kết quả test
+
+---
+
+### Issue #48: Treatment Plan Status - AppointmentStatusService không check completion nếu plan status = null
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-09  
+**Related Files:**
+- `docs/TREATMENT_PLAN_STATUS_UPDATE_APIS.md` - Full analysis
+- `files_from_BE/booking_appointment/service/AppointmentStatusService.java` (line 503-543)
+
+#### Problem Description
+
+Khi appointment status được update thành `COMPLETED`, BE có logic để auto-complete treatment plan nếu all phases completed. Tuy nhiên, logic này **chỉ check nếu plan status = IN_PROGRESS**, không check nếu plan status = `null`.
+
+**Expected Behavior:**
+- Khi appointment completed → Check nếu all phases completed
+- Nếu all phases completed → Auto-complete plan (bất kể plan status là null hay IN_PROGRESS)
+- Plan status được update từ `null` hoặc `IN_PROGRESS` → `COMPLETED`
+
+**Actual Behavior:**
+- Khi appointment completed → Check completion
+- **NHƯNG chỉ check nếu plan status = IN_PROGRESS** (line 512)
+- **Skip check nếu plan status = null** → Plan vẫn có status = null mặc dù all phases completed
+
+#### Root Cause Analysis
+
+**File:** `files_from_BE/booking_appointment/service/AppointmentStatusService.java`
+
+**Method:** `checkAndCompletePlan(Long planId)` (line 503-543)
+
+**Current Logic (INCORRECT):**
+```java
+// Line 512-515
+if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+    log.debug("Plan {} not in IN_PROGRESS status (current: {}), skipping completion check", 
+            planId, plan.getStatus());
+    return; // ❌ Skip nếu status = null
+}
+```
+
+**Vấn đề:**
+- Logic này chỉ cho phép auto-complete nếu plan đã ở trạng thái `IN_PROGRESS`
+- Nếu plan status = `null` (chưa được activate) → Skip check
+- Kết quả: Plan với all phases completed nhưng status = null không được auto-complete
+
+**So sánh với TreatmentPlanItemService:**
+- `TreatmentPlanItemService.checkAndCompletePlan()` (line 478-529) check completion **bất kể plan status** (chỉ skip nếu COMPLETED/CANCELLED)
+- Logic này đúng và hoạt động tốt
+
+#### Suggested Fix
+
+**File:** `files_from_BE/booking_appointment/service/AppointmentStatusService.java` (line 512)
+
+**Change:**
+```java
+// BEFORE
+if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+    return; // ❌ Skip nếu null
+}
+
+// AFTER
+if (plan.getStatus() == TreatmentPlanStatus.COMPLETED || 
+    plan.getStatus() == TreatmentPlanStatus.CANCELLED) {
+    return; // ✅ Chỉ skip nếu đã completed/cancelled
+}
+// ✅ Check completion cho cả null và IN_PROGRESS
+```
+
+**Lợi ích:**
+- Khi appointment completed → Auto-complete plan nếu all phases done
+- Hoạt động cho cả plan status = null và IN_PROGRESS
+- Đồng nhất với logic trong `TreatmentPlanItemService`
+
+#### Impact
+
+- **Medium Priority:** Plans với status = null và all phases completed sẽ được auto-complete khi appointment completed
+- **Consistency:** Logic đồng nhất giữa `TreatmentPlanItemService` và `AppointmentStatusService`
+- **User Experience:** Plan status được update đúng cách, không cần manual intervention
+
+#### Related Files
+
+**Backend:**
+- `files_from_BE/booking_appointment/service/AppointmentStatusService.java` - Method: `checkAndCompletePlan()` (line 503-543)
+- `files_from_BE/treatment_plans/service/TreatmentPlanItemService.java` - Method: `checkAndCompletePlan()` (line 478-529) - Reference implementation
+
+**Documentation:**
+- `docs/TREATMENT_PLAN_STATUS_UPDATE_APIS.md` - Full API analysis
+
+#### Next Steps
+
+1. ✅ **Log issue** (this document)
+2. ⏳ **Fix AppointmentStatusService** - Update logic để check cả null status
+3. ⏳ **Test** - Verify plan được auto-complete khi appointment completed
+4. ⏳ **Update documentation** - Document behavior change
+
+---
+
+### Issue #50: Warehouse Reports - Thêm chức năng export Excel cho báo cáo tồn kho
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-09  
+**Type:** **NEW FEATURE** (Export Excel functionality for warehouse reports)  
+**Related Pages:**
+- src/app/admin/warehouse/reports/page.tsx
+- src/app/employee/warehouse/reports/page.tsx
+
+#### Problem Description
+
+Hiện tại trang báo cáo tồn kho (/admin/warehouse/reports và /employee/warehouse/reports) chỉ cho phép xem dữ liệu trên màn hình. Users không thể export dữ liệu ra file Excel để phân tích hoặc lưu trữ offline.
+
+**Expected Behavior:**
+- ✅ Users có thể export báo cáo tồn kho ra file Excel
+- ✅ Users có thể export báo cáo giao dịch ra file Excel
+- ✅ Users có thể export báo cáo sắp hết hạn ra file Excel
+- ✅ File Excel có format đẹp, dễ đọc với headers và data được format đúng
+- ✅ Export giữ nguyên filters đang áp dụng (warehouse type, date range, etc.)
+
+**Current Behavior:**
+- ❌ Không có chức năng export Excel
+- ❌ Users phải copy-paste data từ table (không tiện lợi)
+- ❌ Không thể export toàn bộ dữ liệu (chỉ thấy data trên màn hình)
+
+#### Root Cause Analysis
+
+**1. Frontend Pages Using These APIs:**
+
+**Page:** src/app/admin/warehouse/reports/page.tsx và src/app/employee/warehouse/reports/page.tsx
+
+**Tab 1: "Tồn Kho" (Inventory Report)**
+- **API Used:** inventoryService.getSummary(filter)
+- **Endpoint:** GET /api/v1/warehouse/summary
+- **Query Params:**
+  - warehouseType: 'ALL' | 'COLD' | 'NORMAL'
+  - page: number (default: 0)
+  - size: number (default: 100)
+  - search: string (optional)
+  - stockStatus: string (optional)
+  - categoryId: number (optional)
+- **Response:** InventorySummaryPage với content: InventorySummary[]
+- **Data Fields:**
+  - itemCode, itemName, categoryName, unitOfMeasure
+  - warehouseType, 	otalQuantity, minStockLevel, maxStockLevel
+  - stockStatus (NORMAL, LOW_STOCK, OUT_OF_STOCK, OVERSTOCK)
+
+**Tab 2: "Giao Dịch" (Transactions Report)**
+- **API Used:** storageService.getAll(filter)
+- **Endpoint:** GET /api/v1/warehouse/transactions
+- **Query Params:**
+  - romDate: string (ISO date format)
+  - 	oDate: string (ISO date format)
+  - page: number (default: 0)
+  - size: number (default: 100, max: 100)
+  - sortBy: string (default: 'transactionDate')
+  - sortDirection: 'asc' | 'desc'
+- **Response:** PaginatedResponse<StorageTransaction>
+- **Data Fields:**
+  - 	ransactionCode, 	ransactionType (IMPORT/EXPORT)
+  - 	ransactionDate, itemCode, itemName
+  - quantity, unitPrice, 	otalValue
+  - warehouseType, 
+otes
+
+**Tab 3: "Sắp Hết Hạn" (Expiring Alerts Report)**
+- **API Used:** inventoryService.getExpiringAlerts(filter)
+- **Endpoint:** GET /api/v1/warehouse/expiring-alerts
+- **Query Params:**
+  - days: number (default: 30)
+  - warehouseType: 'ALL' | 'COLD' | 'NORMAL' (optional)
+  - page: number (default: 0)
+  - size: number (default: 50)
+- **Response:** ExpiringAlertsResponse với lerts: ExpiringAlert[]
+- **Data Fields:**
+  - itemCode, itemName, warehouseType
+  - quantity, expiryDate, daysUntilExpiry
+  - atchNumber (optional)
+
+**2. Why Backend Approach is Recommended:**
+
+- **Data Volume:** Reports có thể có hàng trăm/thousands rows, BE xử lý hiệu quả hơn
+- **Security:** Không expose business logic và data processing ở client
+- **Performance:** BE có thể optimize queries, caching, streaming
+- **Consistency:** Format và template thống nhất, dễ maintain
+- **Scalability:** Có thể mở rộng thêm filters, aggregations phức tạp
+
+#### Suggested Implementation
+
+**Option 1: Separate Export Endpoints (Recommended)**
+
+Tạo 3 endpoints riêng cho từng loại báo cáo:
+
+**1. Export Inventory Report:**
+\\\
+GET /api/v1/warehouse/reports/inventory/export
+Query Parameters:
+  - warehouseType: 'ALL' | 'COLD' | 'NORMAL' (optional, default: 'ALL')
+  - search: string (optional)
+  - stockStatus: string (optional)
+  - categoryId: number (optional)
+  - format: 'xlsx' (required)
+Response:
+  - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - Body: Excel file binary
+  - Headers: Content-Disposition: attachment; filename="bao-cao-ton-kho-YYYY-MM-DD.xlsx"
+\\\
+
+**2. Export Transactions Report:**
+\\\
+GET /api/v1/warehouse/reports/transactions/export
+Query Parameters:
+  - fromDate: string (ISO date, required)
+  - toDate: string (ISO date, required)
+  - format: 'xlsx' (required)
+Response:
+  - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - Body: Excel file binary
+  - Headers: Content-Disposition: attachment; filename="bao-cao-giao-dich-YYYY-MM-DD.xlsx"
+\\\
+
+**3. Export Expiring Alerts Report:**
+\\\
+GET /api/v1/warehouse/reports/expiring/export
+Query Parameters:
+  - days: number (optional, default: 30)
+  - warehouseType: 'ALL' | 'COLD' | 'NORMAL' (optional, default: 'ALL')
+  - format: 'xlsx' (required)
+Response:
+  - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - Body: Excel file binary
+  - Headers: Content-Disposition: attachment; filename="bao-cao-sap-het-han-YYYY-MM-DD.xlsx"
+\\\
+
+**Option 2: Unified Export Endpoint (Alternative)**
+
+\\\
+GET /api/v1/warehouse/reports/export
+Query Parameters:
+  - type: 'inventory' | 'transactions' | 'expiring' (required)
+  - [all filter parameters from respective APIs]
+  - format: 'xlsx' (required)
+Response:
+  - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - Body: Excel file binary
+  - Headers: Content-Disposition: attachment; filename="bao-cao-{type}-YYYY-MM-DD.xlsx"
+\\\
+
+**Recommended: Option 1** vì:
+- Rõ ràng hơn, dễ maintain
+- Mỗi endpoint có responsibility riêng
+- Dễ mở rộng thêm report types khác
+
+#### Excel File Format Requirements
+
+**1. Inventory Report Excel Format:**
+
+**Sheet Name:** "Báo Cáo Tồn Kho"
+
+**Columns:**
+| Mã Vật Tư | Tên Vật Tư | Danh Mục | Đơn Vị | Loại Kho | Tồn Kho | Min | Max | Trạng Thái |
+|-----------|------------|----------|--------|----------|---------|-----|-----|------------|
+| CON-GLOVE-01 | Găng tay y tế | Vật tư tiêu hao | Cái | Thường | 2530 | 10 | 1000 | Dư thừa |
+| CON-MASK-01 | Khẩu trang y tế | Vật tư tiêu hao | Cái | Thường | 3000 | 10 | 1000 | Dư thừa |
+
+**Formatting:**
+- Header row: Bold, background color (light gray), freeze panes
+- Number columns: Right-aligned
+- Status column: Text format (Dư thừa, Bình thường, Sắp hết, Hết hàng)
+- Auto-width columns
+
+**2. Transactions Report Excel Format:**
+
+**Sheet Name:** "Báo Cáo Giao Dịch"
+
+**Columns:**
+| Mã Giao Dịch | Loại | Ngày | Mã Vật Tư | Tên Vật Tư | Số Lượng | Đơn Giá | Thành Tiền | Loại Kho | Ghi Chú |
+|--------------|------|------|-----------|------------|----------|---------|------------|----------|---------|
+| TXN-20251209-001 | Nhập | 09/12/2025 | CON-GLOVE-01 | Găng tay y tế | 100 | 5000 | 500000 | Thường | Nhập từ nhà cung cấp A |
+
+**Formatting:**
+- Header row: Bold, background color
+- Date column: Date format (dd/MM/yyyy)
+- Currency columns: Number format with thousand separators
+- Transaction type: Text (Nhập/Xuất)
+- Auto-width columns
+
+**3. Expiring Alerts Report Excel Format:**
+
+**Sheet Name:** "Báo Cáo Sắp Hết Hạn"
+
+**Columns:**
+| Mã Vật Tư | Tên Vật Tư | Loại Kho | Số Lượng | Ngày Hết Hạn | Số Ngày Còn Lại | Số Lô |
+|-----------|------------|----------|----------|--------------|-----------------|-------|
+| MED-001 | Thuốc A | Lạnh | 50 | 15/12/2025 | 6 | LOT-2025-001 |
+
+**Formatting:**
+- Header row: Bold, background color
+- Date column: Date format
+- Days until expiry: Conditional formatting (red if < 7 days, orange if < 30 days)
+- Auto-width columns
+
+#### Backend Implementation Details
+
+**1. Java Library Recommendation:**
+
+**Apache POI** (Most Popular):
+\\\xml
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.5</version>
+</dependency>
+\\\
+
+**EasyExcel** (Lightweight, Fast - Alternative):
+\\\xml
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>easyexcel</artifactId>
+    <version>3.3.2</version>
+</dependency>
+\\\
+
+**Recommended: Apache POI** vì:
+- Phổ biến, nhiều tài liệu
+- Hỗ trợ đầy đủ formatting features
+- Dễ customize
+
+**2. Controller Implementation Example:**
+
+\\\java
+@RestController
+@RequestMapping("/api/v1/warehouse/reports")
+public class WarehouseReportController {
+
+    @GetMapping("/inventory/export")
+    public ResponseEntity<Resource> exportInventoryReport(
+            @RequestParam(required = false) String warehouseType,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String stockStatus,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "xlsx") String format) {
+        
+        // 1. Fetch data using existing service
+        InventoryFilter filter = new InventoryFilter();
+        filter.setWarehouseType(warehouseType);
+        filter.setSearch(search);
+        filter.setStockStatus(stockStatus);
+        filter.setCategoryId(categoryId);
+        filter.setPage(0);
+        filter.setSize(10000); // Export all data
+        
+        InventorySummaryPage data = inventoryService.getSummary(filter);
+        
+        // 2. Generate Excel file
+        byte[] excelBytes = excelGenerator.generateInventoryReport(data.getContent());
+        
+        // 3. Create response
+        ByteArrayResource resource = new ByteArrayResource(excelBytes);
+        String filename = "bao-cao-ton-kho-" + LocalDate.now().toString() + ".xlsx";
+        
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, 
+                        "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+    }
+    
+    // Similar methods for transactions and expiring reports
+}
+\\\
+
+**3. Excel Generator Service:**
+
+\\\java
+@Service
+public class WarehouseReportExcelGenerator {
+    
+    public byte[] generateInventoryReport(List<InventorySummary> items) {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Báo Cáo Tồn Kho");
+            
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                "Mã Vật Tư", "Tên Vật Tư", "Danh Mục", "Đơn Vị",
+                "Loại Kho", "Tồn Kho", "Min", "Max", "Trạng Thái"
+            };
+            
+            CellStyle headerStyle = createHeaderStyle(workbook);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            
+            // Create data rows
+            int rowNum = 1;
+            for (InventorySummary item : items) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(item.getItemCode());
+                row.createCell(1).setCellValue(item.getItemName());
+                row.createCell(2).setCellValue(item.getCategoryName());
+                row.createCell(3).setCellValue(item.getUnitOfMeasure());
+                row.createCell(4).setCellValue(
+                    item.getWarehouseType() == 'COLD' ? "Lạnh" : "Thường");
+                row.createCell(5).setCellValue(item.getTotalQuantity());
+                row.createCell(6).setCellValue(item.getMinStockLevel());
+                row.createCell(7).setCellValue(item.getMaxStockLevel());
+                row.createCell(8).setCellValue(
+                    translateStockStatus(item.getStockStatus()));
+            }
+            
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            
+            // Freeze header row
+            sheet.createFreezePane(0, 1);
+            
+            // Convert to byte array
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate Excel file", e);
+        }
+    }
+    
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
+    
+    private String translateStockStatus(String status) {
+        Map<String, String> statusMap = Map.of(
+            "NORMAL", "Bình thường",
+            "LOW_STOCK", "Sắp hết",
+            "OUT_OF_STOCK", "Hết hàng",
+            "OVERSTOCK", "Dư thừa"
+        );
+        return statusMap.getOrDefault(status, status);
+    }
+}
+\\\
+
+#### Frontend Integration
+
+**1. Service Method (inventoryService.ts or new warehouseReportService.ts):**
+
+\\\	ypescript
+export const warehouseReportService = {
+  exportInventory: async (filters: {
+    warehouseType?: string;
+    search?: string;
+    stockStatus?: string;
+    categoryId?: number;
+  }) => {
+    const response = await api.get('/warehouse/reports/inventory/export', {
+      params: { ...filters, format: 'xlsx' },
+      responseType: 'blob', // Important!
+    });
+    return response.data;
+  },
+  
+  exportTransactions: async (filters: {
+    fromDate: string;
+    toDate: string;
+  }) => {
+    const response = await api.get('/warehouse/reports/transactions/export', {
+      params: { ...filters, format: 'xlsx' },
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+  
+  exportExpiring: async (filters: {
+    days?: number;
+    warehouseType?: string;
+  }) => {
+    const response = await api.get('/warehouse/reports/expiring/export', {
+      params: { ...filters, format: 'xlsx' },
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+};
+\\\
+
+**2. Component Usage (in reports/page.tsx):**
+
+\\\	ypescript
+const handleExportExcel = async () => {
+  try {
+    let blob;
+    let filename;
+    
+    switch (activeReport) {
+      case 'inventory':
+        blob = await warehouseReportService.exportInventory({
+          warehouseType: warehouseFilter,
+        });
+        filename = \ao-cao-ton-kho-\.xlsx\;
+        break;
+        
+      case 'transactions':
+        // Calculate date range from timeRange...
+        const now = new Date();
+        let startDate: Date;
+        switch (timeRange) {
+          case '7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90days':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+        
+        blob = await warehouseReportService.exportTransactions({
+          fromDate: startDate.toISOString().split('T')[0],
+          toDate: now.toISOString().split('T')[0],
+        });
+        filename = \ao-cao-giao-dich-\.xlsx\;
+        break;
+        
+      case 'expiring':
+        blob = await warehouseReportService.exportExpiring({
+          days: 30,
+        });
+        filename = \ao-cao-sap-het-han-\.xlsx\;
+        break;
+    }
+    
+    // Download file
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success('Xuất file Excel thành công');
+  } catch (error: any) {
+    console.error('Export error:', error);
+    toast.error('Xuất file thất bại: ' + (error.message || 'Vui lòng thử lại'));
+  }
+};
+\\\
+
+**3. UI Button (Add to each tab header):**
+
+\\\	sx
+<div className="flex items-center justify-between mb-4">
+  <h3 className="text-lg font-semibold">Báo Cáo Tồn Kho Chi Tiết</h3>
+  <Button onClick={handleExportExcel} variant="outline" size="sm">
+    <FontAwesomeIcon icon={faDownload} className="mr-2" />
+    Xuất Excel
+  </Button>
+</div>
+\\\
+
+#### Impact
+
+- **MEDIUM Priority:** Feature enhancement - cải thiện UX cho warehouse management
+- **User Benefits:**
+  - ✅ Có thể export data để phân tích offline
+  - ✅ Có thể lưu trữ báo cáo lịch sử
+  - ✅ Có thể chia sẻ báo cáo với stakeholders
+  - ✅ Dễ dàng import vào Excel để tính toán thêm
+- **Technical Benefits:**
+  - ✅ Tận dụng existing APIs và services
+  - ✅ Consistent với architecture hiện tại
+  - ✅ Dễ maintain và mở rộng
+
+#### Related Files
+
+**Backend (to be created):**
+- com.dental.clinic.management.warehouse.controller.WarehouseReportController.java
+- com.dental.clinic.management.warehouse.service.WarehouseReportExcelGenerator.java
+- pom.xml - Add Apache POI dependency
+
+**Frontend (existing):**
+- src/app/admin/warehouse/reports/page.tsx
+- src/app/employee/warehouse/reports/page.tsx
+- src/services/inventoryService.ts (or new warehouseReportService.ts)
+- src/services/storageService.ts
+
+**Frontend (to be updated):**
+- Add export button to each report tab
+- Add export handler function
+- Add loading state during export
+
+#### Test Cases
+
+**Test 1: Export Inventory Report**
+\\\
+1. Navigate to /admin/warehouse/reports
+2. Select "Tồn Kho" tab
+3. Set warehouse filter to "Thường"
+4. Click "Xuất Excel" button
+5. Expected:
+   - File downloads with name "bao-cao-ton-kho-YYYY-MM-DD.xlsx"
+   - File contains all inventory items matching filter
+   - Headers are in Vietnamese
+   - Data is correctly formatted
+\\\
+
+**Test 2: Export Transactions Report**
+\\\
+1. Navigate to /admin/warehouse/reports
+2. Select "Giao Dịch" tab
+3. Set time range to "30 ngày qua"
+4. Click "Xuất Excel" button
+5. Expected:
+   - File downloads with name "bao-cao-giao-dich-YYYY-MM-DD.xlsx"
+   - File contains all transactions in date range
+   - Dates are formatted correctly
+   - Currency values are formatted with thousand separators
+\\\
+
+**Test 3: Export Expiring Alerts Report**
+\\\
+1. Navigate to /admin/warehouse/reports
+2. Select "Sắp Hết Hạn" tab
+3. Click "Xuất Excel" button
+4. Expected:
+   - File downloads with name "bao-cao-sap-het-han-YYYY-MM-DD.xlsx"
+   - File contains all expiring items
+   - Days until expiry is calculated correctly
+   - Conditional formatting applied (if implemented)
+\\\
+
+**Test 4: Export with Filters**
+\\\
+1. Apply various filters (warehouse type, search, etc.)
+2. Export report
+3. Expected:
+   - Exported data matches filtered data on screen
+   - All filters are respected in export
+\\\
+
+**Test 5: Large Data Export**
+\\\
+1. Export report with large dataset (> 1000 rows)
+2. Expected:
+   - Export completes successfully
+   - File size is reasonable
+   - All data is included
+   - Performance is acceptable (< 10 seconds)
+\\\
+
+#### Additional Notes
+
+**Why Backend Approach:**
+- Data volume có thể lớn (hàng nghìn rows)
+- Cần format phức tạp (headers, styling, conditional formatting)
+- Security: Không expose business logic
+- Performance: BE có thể optimize queries và streaming
+- Consistency: Format thống nhất cho tất cả users
+
+**Future Enhancements:**
+- Add PDF export option
+- Add email export (send report via email)
+- Add scheduled exports (daily/weekly reports)
+- Add custom date range picker for transactions
+- Add more filters (category, supplier, etc.)
+
+**Dependencies:**
+- Apache POI library (backend)
+- No additional frontend dependencies needed
 
 ---

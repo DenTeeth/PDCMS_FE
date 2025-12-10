@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+                    <h1 className="text-3xl font-bold">Bảng điều khiển phân tích</h1>
                     <p className="text-gray-600 mt-1">
                         Comprehensive business analytics and insights
                     </p>
@@ -327,28 +327,28 @@ export default function AnalyticsPage() {
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <KPICard
-                            title="Total Patients"
+                            title="Tổng bệnh nhân"
                             value={data.kpi.totalPatientsThisMonth}
                             icon={faUsers}
                             change={data.kpi.patientsChange}
                             iconColor="text-blue-600"
                         />
                         <KPICard
-                            title="Total Revenue"
+                            title="Tổng doanh thu"
                             value={`$${data.kpi.totalRevenueThisMonth.toLocaleString()}`}
                             icon={faDollarSign}
                             change={data.kpi.revenueChange}
                             iconColor="text-green-600"
                         />
                         <KPICard
-                            title="Total Appointments"
+                            title="Tổng lịch hẹn"
                             value={data.kpi.totalAppointmentsThisMonth}
                             icon={faCalendarAlt}
                             change={data.kpi.appointmentsChange}
                             iconColor="text-purple-600"
                         />
                         <KPICard
-                            title="Employee Count"
+                            title="Số nhân viên"
                             value={data.kpi.employeeCount}
                             icon={faUsers}
                             change={data.kpi.employeesChange}

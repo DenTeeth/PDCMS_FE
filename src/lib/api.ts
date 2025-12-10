@@ -194,7 +194,7 @@ class ApiClient {
 
       return response.data;
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed';
+      const message = error.response?.data?.message || 'Đăng nhập thất bại';
       throw new Error(message);
     }
   }
@@ -220,7 +220,7 @@ class ApiClient {
 
       return response.data;
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Token refresh failed';
+      const message = error.response?.data?.message || 'Làm mới token thất bại';
       if (process.env.NODE_ENV === 'development') {
         console.error(' Refresh token failed:', message);
       }

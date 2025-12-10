@@ -35,7 +35,7 @@ export default function SpecializationsPage() {
             console.error(' Error data:', error.response?.data);
 
             if (error.response?.status === 401) {
-                toast.error('Please login first to view specializations');
+                toast.error('Vui lòng đăng nhập để xem chuyên khoa');
             } else {
                 toast.error(error.response?.data?.message || 'Failed to fetch specializations');
             }
@@ -50,7 +50,7 @@ export default function SpecializationsPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Loading specializations...</p>
+                    <p className="text-gray-600">Đang tải chuyên khoa...</p>
                 </div>
             </div>
         );
@@ -61,8 +61,8 @@ export default function SpecializationsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Specializations</h1>
-                    <p className="text-gray-600 mt-1">List of medical specializations</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Chuyên khoa</h1>
+                    <p className="text-gray-600 mt-1">Danh sách chuyên khoa y tế</p>
                 </div>
                 {/* <Button onClick={() => toast.info('Create feature coming soon')}>
           <Plus className="h-4 w-4 mr-2" />
@@ -78,19 +78,19 @@ export default function SpecializationsPage() {
                             <thead className="bg-gray-50 border-b">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Specialization Code
+                                        Mã chuyên khoa
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Name
+                                        Tên
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Description
+                                        Mô tả
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Created At
+                                        Ngày tạo
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
+                                        Trạng thái
                                     </th>
                                 </tr>
                             </thead>
@@ -123,7 +123,7 @@ export default function SpecializationsPage() {
                                                         : 'bg-gray-100 text-gray-700'
                                                 }
                                             >
-                                                {spec.isActive ? 'Active' : 'Inactive'}
+                                                {spec.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
                                             </Badge>
                                         </td>
                                     </tr>
@@ -135,8 +135,8 @@ export default function SpecializationsPage() {
                     {/* Empty state */}
                     {(!specializations || specializations.length === 0) && (
                         <div className="text-center py-12 text-gray-500">
-                            <p className="text-lg font-medium">No specializations found</p>
-                            <p className="text-sm mt-1">No data available</p>
+                            <p className="text-lg font-medium">Không tìm thấy chuyên khoa</p>
+                            <p className="text-sm mt-1">Không có dữ liệu</p>
                         </div>
                     )}
                 </CardContent>

@@ -258,21 +258,21 @@ export default function RegistrationRequestsPage() {
         return (
           <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
             <Clock className="h-3 w-3 mr-1" />
-            Pending
+            Chờ duyệt
           </Badge>
         );
       case 'APPROVED':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Approved
+            Đã duyệt
           </Badge>
         );
       case 'REJECTED':
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
             <XCircle className="h-3 w-3 mr-1" />
-            Rejected
+            Đã từ chối
           </Badge>
         );
       default:
@@ -309,12 +309,12 @@ export default function RegistrationRequestsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Registration Requests</h1>
-            <p className="text-gray-600 mt-1">Review and approve employee shift registrations</p>
+            <h1 className="text-3xl font-bold text-gray-900">Yêu cầu đăng ký</h1>
+            <p className="text-gray-600 mt-1">Xem xét và phê duyệt đăng ký ca làm việc của nhân viên</p>
           </div>
           <Button onClick={fetchRegistrations} className="flex items-center gap-2">
             <RotateCcw className="h-4 w-4" />
-            Refresh
+            Làm mới
           </Button>
         </div>
 
@@ -324,7 +324,7 @@ export default function RegistrationRequestsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Requests</p>
+                  <p className="text-sm text-gray-600">Tổng số yêu cầu</p>
                   <p className="text-2xl font-bold">{totalElements}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-500" />
@@ -336,7 +336,7 @@ export default function RegistrationRequestsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-yellow-700">Pending</p>
+                  <p className="text-sm text-yellow-700">Đang chờ</p>
                   <p className="text-2xl font-bold text-yellow-700">{pendingCount}</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-500" />
@@ -348,7 +348,7 @@ export default function RegistrationRequestsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-700">Approved</p>
+                  <p className="text-sm text-green-700">Đã duyệt</p>
                   <p className="text-2xl font-bold text-green-700">{approvedCount}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
@@ -360,7 +360,7 @@ export default function RegistrationRequestsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-red-700">Rejected</p>
+                  <p className="text-sm text-red-700">Đã từ chối</p>
                   <p className="text-2xl font-bold text-red-700">{rejectedCount}</p>
                 </div>
                 <XCircle className="h-8 w-8 text-red-500" />
@@ -374,14 +374,14 @@ export default function RegistrationRequestsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Filters & Search
+            Bộ lọc & Tìm kiếm
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Search */}
               <div>
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -396,17 +396,17 @@ export default function RegistrationRequestsPage() {
 
               {/* Status Filter */}
               <div>
-                <Label htmlFor="filterStatus">Status</Label>
+                <Label htmlFor="filterStatus">Trạng thái</Label>
                 <select
                   id="filterStatus"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
                   className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="ALL">All Status</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="PENDING">Đang chờ</option>
+                  <option value="APPROVED">Đã duyệt</option>
+                  <option value="REJECTED">Đã từ chối</option>
                 </select>
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function RegistrationRequestsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Registration Requests ({filteredRegistrations.length})
+              Yêu cầu đăng ký ({filteredRegistrations.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -429,8 +429,8 @@ export default function RegistrationRequestsPage() {
             ) : filteredRegistrations.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>No registration requests found</p>
-                <p className="text-sm">Try adjusting your filters</p>
+                <p>Không tìm thấy yêu cầu đăng ký</p>
+                <p className="text-sm">Thử điều chỉnh bộ lọc của bạn</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -491,14 +491,14 @@ export default function RegistrationRequestsPage() {
                                     disabled={slotDetails && slotDetails.overallRemaining === 0}
                                     title={slotDetails && slotDetails.overallRemaining === 0 ? 'Slot đã đầy' : ''}
                                   >
-                                    Approve
+                                    Phê duyệt
                                   </Button>
                                   <Button
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => handleReject(registration)}
                                   >
-                                    Reject
+                                    Từ chối
                                   </Button>
                                 </>
                               )}
@@ -548,34 +548,34 @@ export default function RegistrationRequestsPage() {
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  Approve Registration
+                      Phê duyệt đăng ký
                 </h2>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-sm text-green-800">
-                    Are you sure you want to approve this registration request?
+                    Bạn có chắc chắn muốn phê duyệt yêu cầu đăng ký này không?
                   </p>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Employee:</span>
+                    <span className="text-gray-600">Nhân viên:</span>
                     <span className="font-medium">ID {selectedRegistration.employeeId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shift:</span>
+                    <span className="text-gray-600">Ca làm việc:</span>
                     <span className="font-medium">{selectedRegistration.shiftName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Period:</span>
+                    <span className="text-gray-600">Giai đoạn:</span>
                     <span className="font-medium">
                       {formatDate(selectedRegistration.effectiveFrom)} - {formatDate(selectedRegistration.effectiveTo)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Working Days:</span>
-                    <span className="font-medium">{selectedRegistration.dates.length} days</span>
+                    <span className="text-gray-600">Ngày làm việc:</span>
+                    <span className="font-medium">{selectedRegistration.dates.length} ngày</span>
                   </div>
                 </div>
               </div>
@@ -599,12 +599,12 @@ export default function RegistrationRequestsPage() {
                   {processing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Approving...
+                      Đang phê duyệt...
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve
+                      Phê duyệt
                     </>
                   )}
                 </Button>
@@ -620,23 +620,23 @@ export default function RegistrationRequestsPage() {
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-600" />
-                  Reject Registration
+                  Từ chối đăng ký
                 </h2>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-sm text-red-800">
-                    Please provide a reason for rejecting this registration request.
+                  Vui lòng cung cấp lý do từ chối yêu cầu đăng ký này.
                   </p>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Employee:</span>
+                    <span className="text-gray-600">Nhân viên:</span>
                     <span className="font-medium">ID {selectedRegistration.employeeId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shift:</span>
+                    <span className="text-gray-600">Ca làm việc:</span>
                     <span className="font-medium">{selectedRegistration.shiftName}</span>
                   </div>
                 </div>
@@ -650,7 +650,7 @@ export default function RegistrationRequestsPage() {
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
-                    placeholder="Enter reason for rejection..."
+                    placeholder="Nhập lý do từ chối..."
                     required
                   />
                 </div>
@@ -676,12 +676,12 @@ export default function RegistrationRequestsPage() {
                   {processing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Rejecting...
+                      Đang từ chối...
                     </>
                   ) : (
                     <>
                       <XCircle className="h-4 w-4 mr-2" />
-                      Reject
+                      Từ chối
                     </>
                   )}
                 </Button>
@@ -697,7 +697,7 @@ export default function RegistrationRequestsPage() {
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-blue-600" />
-                  Registration Details #{selectedRegistration.registrationId}
+                  Chi tiết đăng ký #{selectedRegistration.registrationId}
                 </h2>
               </div>
               <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -747,7 +747,7 @@ export default function RegistrationRequestsPage() {
 
                 {selectedRegistration.processedBy && (
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium mb-2">Processing Information</p>
+                    <p className="text-sm font-medium mb-2">Thông tin xử lý</p>
                     <div className="space-y-1 text-sm">
                       <p>Processed by: <span className="font-medium">{selectedRegistration.processedBy}</span></p>
                       {selectedRegistration.processedAt && (
@@ -761,7 +761,7 @@ export default function RegistrationRequestsPage() {
                 )}
 
                 <div>
-                  <p className="text-sm text-gray-600">Created At</p>
+                  <p className="text-sm text-gray-600">Ngày tạo</p>
                   <p className="font-medium">{formatDateTime(selectedRegistration.createdAt)}</p>
                 </div>
               </div>
@@ -773,7 +773,7 @@ export default function RegistrationRequestsPage() {
                     setSelectedRegistration(null);
                   }}
                 >
-                  Close
+                  Đóng
                 </Button>
               </div>
             </div>

@@ -39,21 +39,21 @@ export default function Page() {
       // Show success toast with username
       toast.success(
         <div>
-          <div>Login successfully</div>
-          <div>Welcome, {username}</div>
+          <div>Đăng nhập thành công</div>
+          <div>Chào mừng, {username}</div>
         </div>
       );
 
       setType("success");
-      setNotice("Login successful! Redirecting...");
+      setNotice("Đăng nhập thành công! Đang chuyển hướng...");
 
       // The redirect will be handled by AuthRedirect component
     } catch (error) {
       // Show error toast
-      toast.error(error instanceof Error ? error.message : "Login failed. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại. Vui lòng thử lại.");
 
       setType("error");
-      setNotice(error instanceof Error ? error.message : "Login failed. Please try again.");
+      setNotice(error instanceof Error ? error.message : "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -78,11 +78,11 @@ export default function Page() {
               </div>
               <h2 className="mb-3 text-3xl font-bold tracking-tight text-[#1e3a5f]">DenTeeth</h2>
               <p className="mx-auto max-w-sm text-gray-700">
-                A modern solution for scheduling and managing dental clinics. Caring for smiles from the very first login.
+                Giải pháp hiện đại cho việc lập lịch và quản lý các phòng khám nha khoa. Chăm sóc nụ cười từ lần đăng nhập đầu tiên.
               </p>
               <div className="mt-6 inline-flex items-center gap-3 rounded-full bg-white/70 px-4 py-2 text-sm text-[#1e3a5f] shadow-sm backdrop-blur">
                 <span className="inline-flex h-2 w-2 rounded-full bg-[#8b5fbf]" />
-                Patient data security
+                Bảo mật dữ liệu bệnh nhân
               </div>
             </div>
           </section>
@@ -95,7 +95,7 @@ export default function Page() {
                   <svg className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
-                  Back
+                  Quay lại
                 </Link>
                 <div className="flex items-center gap-3">
                   <Image
@@ -109,13 +109,13 @@ export default function Page() {
                 </div>
               </div>
 
-              <h1 className="mb-2 text-2xl font-semibold text-slate-800">Sign in</h1>
-              <p className="mb-8 text-sm text-slate-500">Access the dental clinic management system</p>
+              <h1 className="mb-2 text-2xl font-semibold text-slate-800">Đăng nhập</h1>
+              <p className="mb-8 text-sm text-slate-500">Truy cập hệ thống quản lý phòng khám nha khoa</p>
 
               {/* Form */}
               <form className="space-y-4" onSubmit={onSubmit}>
                 <div>
-                  <label htmlFor="username" className="mb-2 block text-sm font-medium text-slate-700">Username</label>
+                  <label htmlFor="username" className="mb-2 block text-sm font-medium text-slate-700">Tên đăng nhập</label>
                   <div className="group relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center justify-center text-slate-400">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -127,7 +127,7 @@ export default function Page() {
                       id="username"
                       type="text"
                       required
-                      placeholder="Enter your username"
+                      placeholder="Tên tài khoản"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white px-10 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#8b5fbf] focus:ring-2 focus:ring-[#8b5fbf]/20"
@@ -136,7 +136,7 @@ export default function Page() {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">Mật khẩu</label>
                   <div className="group relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center justify-center text-slate-400">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -159,13 +159,13 @@ export default function Page() {
                 <div className="flex items-center justify-between">
                   <label className="inline-flex items-center gap-2 text-sm text-slate-600">
                     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#8b5fbf] focus:ring-[#8b5fbf]/30" />
-                    Remember me
+                    Ghi nhớ đăng nhập
                   </label>
-                  <Link href="/forgot-password" className="text-sm text-[#8b5fbf] hover:text-[#7a4eae] font-medium">Forgot password?</Link>
+                  <Link href="/forgot-password" className="text-sm text-[#8b5fbf] hover:text-[#7a4eae] font-medium">Quên mật khẩu?</Link>
                 </div>
 
                 <button type="submit" disabled={loading} className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#8b5fbf] px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#7a4eae] transition disabled:cursor-not-allowed disabled:opacity-60">
-                  <span>{loading ? "Signing in..." : "Sign in"}</span>
+                  <span>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</span>
                   <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="M12 5l7 7-7 7" />
@@ -179,15 +179,15 @@ export default function Page() {
                 )}
 
                 <p className="text-center text-sm text-slate-500">
-                  Don&apos;t have an account? {""}
+                  Bạn chưa có tài khoản? {""}
                   <br />
-                  Please contact: <span className="text-[#8b5fbf] font-bold">01234568</span>
+                  Vui lòng liên hệ: <span className="text-[#8b5fbf] font-bold">01234568</span>
                 </p>
               </form>
 
               <div className="mt-10 text-center text-xs text-slate-400">
                 {/* TODO (Security): Add reCAPTCHA if needed; verify server-side in your API */}
-                © {new Date().getFullYear()} DenTeeth. Privacy & HIPAA/GDPR compliant.
+                © {new Date().getFullYear()} DenTeeth. Bảo mật & tuân thủ HIPAA/GDPR.
               </div>
             </div>
           </section>
