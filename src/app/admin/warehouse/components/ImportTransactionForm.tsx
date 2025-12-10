@@ -421,7 +421,7 @@ export default function ImportTransactionForm({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn NCC"} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start">
                   {suppliers.length === 0 ? (
                     <div className="p-2 text-sm text-gray-500">
                       {suppliersLoading ? "Đang tải..." : "Không có nhà cung cấp. Vui lòng tạo mới."}

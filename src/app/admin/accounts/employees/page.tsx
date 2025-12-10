@@ -20,8 +20,6 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Grid3x3,
-  List,
   Filter,
   X,
   Plus,
@@ -59,7 +57,7 @@ export default function EmployeesPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table'); // Default to table view to reduce latency
+  // Removed viewMode - only using table view now
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -445,22 +443,6 @@ export default function EmployeesPage() {
                       </Badge>
                     )}
                   </Button>
-                  <div className="flex border rounded-md">
-                    <Button
-                      variant={viewMode === 'card' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('card')}
-                    >
-                      <Grid3x3 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'table' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('table')}
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
               </div>
 
@@ -535,96 +517,6 @@ export default function EmployeesPage() {
               </div>
             </CardContent>
           </Card>
-        ) : viewMode === 'card' ? (
-          /* Card View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {employees.map((employee) => (
-              <Card key={employee.employeeCode} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="h-5 w-5 text-blue-600" />
-                        {employee.fullName}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600 mt-2">{employee.roleName}</p>
-                      <p className="text-xs text-gray-500 mt-1">Code: {employee.employeeCode}</p>
-                      <p className="text-xs text-gray-500">
-                        Type: <span className={`px-2 py-1 rounded-full text-xs ${
-                          employee.employeeType === EmploymentType.FULL_TIME
-                            ? 'bg-blue-100 text-blue-800'
-                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                            ? 'bg-green-100 text-green-800'
-                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-gray-100 text-gray-800'
-                          }`}>
-                          {employee.employeeType === EmploymentType.FULL_TIME 
-                            ? 'Toàn thời gian' 
-                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                            ? 'Bán thời gian - Cố định'
-                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                            ? 'Bán thời gian - Linh hoạt'
-                            : 'Bán thời gian'}
-                        </span>
-                      </p>
-                    </div>
-                    <Badge className={employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                      {employee.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* Contact Info */}
-                    <div className="space-y-2">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate">{employee.account.email}</span>
-                      </div>
-                      {employee.phone && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
-                          <span>{employee.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center text-sm text-gray-600">
-                        <User className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span>@{employee.account.username}</span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-3 border-t">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/admin/accounts/employees/${employee.employeeCode}`)}
-                        disabled={!canView}
-                        title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Xem
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(employee);
-                        }}
-                        disabled={!canUpdate}
-                        title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Chỉnh sửa
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         ) : (
           /* Table View */
           <Card>

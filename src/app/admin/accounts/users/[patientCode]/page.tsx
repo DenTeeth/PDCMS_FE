@@ -23,10 +23,17 @@ import {
   Users,
   Trash2,
   Image as ImageIcon,
+  Hash,
+  UserCircle,
+  Clock,
+  FileText,
+  X,
 } from 'lucide-react';
 import { Patient, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Textarea } from '@/components/ui/textarea';
 
 // Lazy load PatientImageManager để tối ưu performance - chỉ load khi cần
 const PatientImageManager = lazy(() => import('@/components/clinical-records/PatientImageManager'));
@@ -35,11 +42,20 @@ export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
   const patientCode = params.patientCode as string;
+  const { user } = useAuth();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Unban modal states
+  const [showUnbanModal, setShowUnbanModal] = useState(false);
+  const [unbanReason, setUnbanReason] = useState('');
+  const [unbanning, setUnbanning] = useState(false);
+  const [showUnbanHistory, setShowUnbanHistory] = useState(false);
+  const [unbanHistory, setUnbanHistory] = useState<any[]>([]);
+  const [loadingUnbanHistory, setLoadingUnbanHistory] = useState(false);
 
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -76,6 +92,48 @@ export default function PatientDetailPage() {
       router.push('/admin/accounts/users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUnbanHistory = async () => {
+    if (!patient?.patientId) return;
+    try {
+      setLoadingUnbanHistory(true);
+      const response = await patientService.getUnbanHistory(patient.patientId, {
+        page: 0,
+        size: 10,
+        sortBy: 'unbannedAt',
+        sortDir: 'desc',
+      });
+      setUnbanHistory(response.content || []);
+    } catch (error: any) {
+      console.error('Failed to load unban history:', error);
+      toast.error('Không thể tải lịch sử unban');
+    } finally {
+      setLoadingUnbanHistory(false);
+    }
+  };
+
+  const handleUnban = async () => {
+    if (!patient?.patientId) return;
+    if (unbanReason.trim().length < 10) {
+      toast.error('Lý do unban phải có ít nhất 10 ký tự');
+      return;
+    }
+
+    try {
+      setUnbanning(true);
+      await patientService.unbanPatient(patient.patientId, unbanReason.trim());
+      toast.success('Đã unban bệnh nhân thành công');
+      setShowUnbanModal(false);
+      setUnbanReason('');
+      // Refresh patient details
+      await fetchPatientDetails();
+    } catch (error: any) {
+      console.error('Failed to unban patient:', error);
+      toast.error(error.response?.data?.message || 'Không thể unban bệnh nhân');
+    } finally {
+      setUnbanning(false);
     }
   };
 
@@ -275,236 +333,447 @@ export default function PatientDetailPage() {
                 </p>
               </div>
             </div>
-            <Badge
-              variant={patient.isActive ? 'default' : 'secondary'}
-              className={
-                patient.isActive
-                  ? 'bg-green-100 text-green-700 px-4 py-2 text-base'
-                  : 'bg-red-100 text-red-700 px-4 py-2 text-base'
-              }
-            >
-              {patient.isActive ? (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Active
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Inactive
-                </>
+            <div className="flex items-center gap-2">
+              {patient.isBlacklisted && (
+                <Badge
+                  variant="destructive"
+                  className="bg-red-600 text-white px-4 py-2 text-base"
+                >
+                  ⛔ BLACKLISTED
+                </Badge>
               )}
-            </Badge>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-600" />
-              Basic Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-600">Patient Code</Label>
-              <p className="font-medium text-lg">{patient.patientCode}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-600">Tên</Label>
-                <p className="font-medium">{patient.firstName}</p>
-              </div>
-              <div>
-                <Label className="text-gray-600">Họ</Label>
-                <p className="font-medium">{patient.lastName}</p>
-              </div>
-            </div>
-            <div>
-              <Label className="text-gray-600">Họ và tên</Label>
-              <p className="font-medium">{patient.fullName}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-600">Giới tính</Label>
-                <p className="font-medium">{getGenderLabel(patient.gender)}</p>
-              </div>
-              <div className="flex items-center gap-2 text-gray-700">
-                <Calendar className="h-4 w-4" />
-                <div>
-                  <Label className="text-gray-600">Ngày sinh</Label>
-                  <p className="font-medium">{formatDate(patient.dateOfBirth)}</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <Label className="text-gray-600">Trạng thái</Label>
               <Badge
                 variant={patient.isActive ? 'default' : 'secondary'}
                 className={
                   patient.isActive
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-green-100 text-green-700 px-4 py-2 text-base'
+                    : 'bg-red-100 text-red-700 px-4 py-2 text-base'
                 }
               >
-                {patient.isActive ? 'Active' : 'Inactive'}
+                {patient.isActive ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Active
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Inactive
+                  </>
+                )}
               </Badge>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-blue-600" />
-              Thông tin liên hệ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Phone className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Số điện thoại</Label>
-                <p className="font-medium">{patient.phone || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Mail className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Email</Label>
-                <p className="font-medium break-all">{patient.email || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <MapPin className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Địa chỉ</Label>
-                <p className="font-medium">{patient.address || 'N/A'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Medical Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-600" />
-              Thông tin y tế
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-600">Tiền sử bệnh lý</Label>
-              <p className="font-medium text-sm whitespace-pre-wrap">
-                {patient.medicalHistory || 'Không có'}
-              </p>
-            </div>
-            <div>
-              <Label className="text-gray-600">Dị ứng</Label>
-              <p className="font-medium text-sm whitespace-pre-wrap">
-                {patient.allergies || 'Không có'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Emergency Contact */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              Liên hệ khẩn cấp
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Users className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Tên người liên hệ</Label>
-                <p className="font-medium">
-                  {patient.emergencyContactName || 'Chưa cung cấp'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Phone className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Số điện thoại</Label>
-                <p className="font-medium">
-                  {patient.emergencyContactPhone || 'Chưa cung cấp'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* System Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            System Information
-          </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-gray-600">Patient ID</Label>
-              <p className="font-medium text-sm break-all">{patient.patientId}</p>
+      </Card>
+
+      {/* Blacklist Status Section */}
+      {patient.isBlacklisted && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              Trạng thái Blacklist
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-gray-600">Trạng thái</Label>
+                  <p className="font-medium text-red-700">BLACKLISTED</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Số lần no-show liên tiếp</Label>
+                  <p className="font-medium">{patient.consecutiveNoShows || 0}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Bị chặn đặt lịch</Label>
+                  <p className="font-medium">{patient.isBookingBlocked ? 'Có' : 'Không'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowUnbanHistory(true);
+                    loadUnbanHistory();
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Xem lịch sử unban
+                </Button>
+                {user?.permissions?.includes('UNBAN_PATIENT') && (
+                  <Button
+                    variant="default"
+                    onClick={() => setShowUnbanModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Unban Patient
+                  </Button>
+                )}
+              </div>
             </div>
-            <div>
-              <Label className="text-gray-600">Created At</Label>
-              <p className="font-medium">
-                {patient.createdAt
-                  ? new Date(patient.createdAt).toLocaleString('en-US')
-                  : 'N/A'}
-              </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Consolidated Information Section */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            {/* Row 1: Basic Information (Left) + Contact Information (Right) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Information - Left */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Hash className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Patient Code</Label>
+                      <p className="font-medium text-lg">{patient.patientCode}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Trạng thái</Label>
+                      <Badge
+                        variant={patient.isActive ? 'default' : 'secondary'}
+                        className={
+                          patient.isActive
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }
+                      >
+                        {patient.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <UserCircle className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Tên</Label>
+                      <p className="font-medium">{patient.firstName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <UserCircle className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Họ</Label>
+                      <p className="font-medium">{patient.lastName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <UserCircle className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Giới tính</Label>
+                      <p className="font-medium">{getGenderLabel(patient.gender)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Ngày sinh</Label>
+                      <p className="font-medium">{formatDate(patient.dateOfBirth)}</p>
+                    </div>
+                  </div>
+                  {patient.isBlacklisted && (
+                    <div className="flex items-center gap-2 text-gray-700 md:col-span-2">
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Trạng thái Blacklist</Label>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="destructive" className="bg-red-600 text-white">
+                            ⛔ BLACKLISTED
+                          </Badge>
+                          <span className="text-sm text-gray-600">
+                            ({patient.consecutiveNoShows || 0} lần no-show liên tiếp)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information - Right */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Phone className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Thông tin liên hệ</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Số điện thoại</Label>
+                      <p className="font-medium">{patient.phone || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Email</Label>
+                      <p className="font-medium break-all">{patient.email || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700 md:col-span-2">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Địa chỉ</Label>
+                      <p className="font-medium">{patient.address || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <Label className="text-gray-600">Last Updated</Label>
-              <p className="font-medium">
-                {patient.updatedAt
-                  ? new Date(patient.updatedAt).toLocaleString('en-US')
-                  : 'N/A'}
-              </p>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200"></div>
+
+            {/* Row 2: Medical Information (Left) + Emergency Contact (Right) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Medical Information - Left */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  <h3 className="text-lg font-semibold">Thông tin y tế</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2 text-gray-700">
+                    <FileText className="h-4 w-4 text-gray-400 mt-1" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Tiền sử bệnh lý</Label>
+                      <p className="font-medium text-sm whitespace-pre-wrap">
+                        {patient.medicalHistory || 'Không có'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 text-gray-700">
+                    <AlertCircle className="h-4 w-4 text-gray-400 mt-1" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Dị ứng</Label>
+                      <p className="font-medium text-sm whitespace-pre-wrap">
+                        {patient.allergies || 'Không có'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact - Right */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                  <h3 className="text-lg font-semibold">Liên hệ khẩn cấp</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Users className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Tên người liên hệ</Label>
+                      <p className="font-medium">
+                        {patient.emergencyContactName || 'Chưa cung cấp'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Số điện thoại</Label>
+                      <p className="font-medium">
+                        {patient.emergencyContactPhone || 'Chưa cung cấp'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Patient Images - Lazy loaded để tối ưu performance */}
-      {patient.patientId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-blue-600" />
-              Hình Ảnh Bệnh Nhân
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <Suspense
-              fallback={
+      {patient.patientId && (() => {
+        const patientIdNum = typeof patient.patientId === 'string' ? parseInt(patient.patientId, 10) : Number(patient.patientId);
+        if (isNaN(patientIdNum)) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-blue-600" />
+                Hình Ảnh Bệnh Nhân
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-500">
+                      Đang tải quản lý hình ảnh...
+                    </span>
+                  </div>
+                }
+              >
+                <PatientImageManager
+                  patientId={patientIdNum}
+                  showFilters={true}
+                />
+              </Suspense>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Unban Patient Modal */}
+      {showUnbanModal && patient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                Unban Patient: {patient.fullName}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Patient Code:</strong> {patient.patientCode}</p>
+                    <p><strong>Current Status:</strong> <span className="text-red-700 font-semibold">BLACKLISTED</span></p>
+                    <p><strong>Consecutive No-Shows:</strong> {patient.consecutiveNoShows || 0}</p>
+                  </div>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ <strong>Warning:</strong> Unbanning will allow this patient to book appointments again.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unban-reason">
+                    Lý do unban <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="unban-reason"
+                    value={unbanReason}
+                    onChange={(e) => setUnbanReason(e.target.value)}
+                    placeholder="Nhập lý do unban (tối thiểu 10 ký tự)..."
+                    rows={4}
+                    className="min-h-[100px]"
+                  />
+                  <p className="text-sm text-gray-500">
+                    Số ký tự: {unbanReason.length} / 10 (tối thiểu)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+            <CardContent className="flex justify-end gap-3 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowUnbanModal(false);
+                  setUnbanReason('');
+                }}
+                disabled={unbanning}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleUnban}
+                disabled={unbanning || unbanReason.trim().length < 10}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {unbanning ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Xác nhận Unban
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Unban History Modal */}
+      {showUnbanHistory && patient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[85vh] flex flex-col">
+            <CardHeader className="border-b flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Lịch sử Unban - {patient.fullName}
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowUnbanHistory(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="overflow-y-auto flex-1 pt-6">
+              {loadingUnbanHistory ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  <span className="ml-2 text-sm text-gray-500">
-                    Đang tải quản lý hình ảnh...
-                  </span>
+                  <span className="ml-2 text-sm text-gray-500">Đang tải...</span>
                 </div>
-              }
-            >
-              <PatientImageManager
-                patientId={patient.patientId}
-                showFilters={true}
-              />
-            </Suspense>
-          </CardContent>
-        </Card>
+              ) : unbanHistory.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>Chưa có lịch sử unban</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {unbanHistory.map((record) => (
+                    <Card key={record.id} className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-gray-600">Ngày giờ</Label>
+                            <p className="font-medium">
+                              {new Date(record.unbannedAt).toLocaleString('vi-VN')}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-gray-600">Unbanned By</Label>
+                            <p className="font-medium">
+                              {record.unbannedBy?.fullName} ({record.unbannedBy?.employeeCode})
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-gray-600">Số lần no-show trước đó</Label>
+                            <p className="font-medium">{record.previousNoShowCount}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label className="text-gray-600">Lý do</Label>
+                            <p className="font-medium text-sm whitespace-pre-wrap mt-1">
+                              {record.reason}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Delete Confirmation Modal */}

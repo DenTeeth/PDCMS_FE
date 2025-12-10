@@ -307,7 +307,7 @@ export default function AppointmentFilters({
               <SelectTrigger id="datePreset" className="mt-1">
                 <SelectValue placeholder="Chọn khoảng thời gian" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="start">
                 <SelectItem value="none">Tất cả</SelectItem>
                 {Object.entries(datePresetLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>

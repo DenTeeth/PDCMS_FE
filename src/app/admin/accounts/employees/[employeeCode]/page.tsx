@@ -28,6 +28,10 @@ import {
   Edit,
   Trash2,
   X,
+  Hash,
+  UserCircle,
+  Clock,
+  Briefcase,
 } from 'lucide-react';
 import { Employee, UpdateEmployeeRequest, EmploymentType } from '@/types/employee';
 import { Role } from '@/types/employee';
@@ -309,213 +313,225 @@ export default function EmployeeDetailPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-600" />
-              Thông tin cá nhân
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-600">Mã nhân viên</Label>
-              <p className="font-medium text-lg">{employee.employeeCode}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-600">Tên</Label>
-                <p className="font-medium">{employee.firstName}</p>
-              </div>
-              <div>
-                <Label className="text-gray-600">Họ</Label>
-                <p className="font-medium">{employee.lastName}</p>
-              </div>
-            </div>
-            <div>
-              <Label className="text-gray-600">Họ và tên</Label>
-              <p className="font-medium">{employee.fullName}</p>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Calendar className="h-4 w-4" />
-              <div>
-                <Label className="text-gray-600">Ngày sinh</Label>
-                <p className="font-medium">{formatDate(employee.dateOfBirth)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-blue-600" />
-              Thông tin liên hệ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Phone className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Số điện thoại</Label>
-                <p className="font-medium">{employee.phone || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Mail className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Email</Label>
-                <p className="font-medium break-all">
-                  {employee.account?.email || 'N/A'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <MapPin className="h-4 w-4" />
-              <div className="flex-1">
-                <Label className="text-gray-600">Address</Label>
-                <p className="font-medium">{employee.address || 'N/A'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Account Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-600" />
-              Thông tin tài khoản
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {employee.account ? (
-              <>
-                <div>
-                  <Label className="text-gray-600">ID tài khoản</Label>
-                  <p className="font-medium text-sm break-all">{employee.account.accountId}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Tên đăng nhập</Label>
-                  <p className="font-medium">{employee.account.username}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Email</Label>
-                  <p className="font-medium break-all">{employee.account.email}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Trạng thái tài khoản</Label>
-                  <Badge
-                    variant={employee.account.status === 'ACTIVE' ? 'default' : 'secondary'}
-                    className={
-                      employee.account.status === 'ACTIVE'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }
-                  >
-                    {employee.account.status}
-                  </Badge>
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-500">Không có thông tin tài khoản</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Role & Specializations */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-600" />
-              Vai trò & Chuyên khoa
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-600">ID vai trò</Label>
-              <p className="font-medium">{employee.roleId}</p>
-            </div>
-            <div>
-              <Label className="text-gray-600">Tên vai trò</Label>
-              <Badge variant="outline" className="text-base px-3 py-1">
-                {employee.roleName}
-              </Badge>
-            </div>
-            <div>
-              <Label className="text-gray-600">Loại hình lao động</Label>
-              <Badge
-                variant="outline"
-                className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
-                  ? 'border-blue-200 text-blue-800'
-                  : 'border-orange-200 text-orange-800'
-                  }`}
-              >
-                {employee.employeeType === EmploymentType.FULL_TIME ? 'Toàn thời gian' : 'Bán thời gian'}
-              </Badge>
-            </div>
-            <div>
-              <Label className="text-gray-600">Chuyên khoa</Label>
-              {employee.specializations && employee.specializations.length > 0 ? (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {employee.specializations.map((spec: any) => (
-                    <Badge key={spec.specializationId} variant="default">
-                      {spec.name || spec.specializationName}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm mt-1">Không có chuyên khoa</p>
-              )}
-            </div>
-            <div>
-              <Label className="text-gray-600">Trạng thái</Label>
-              <Badge
-                variant={employee.isActive ? 'default' : 'secondary'}
-                className={
-                  employee.isActive
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                }
-              >
-                {employee.isActive ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* System Information */}
+      {/* Consolidated Information Section */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            System Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-gray-600">Employee ID</Label>
-              <p className="font-medium text-sm break-all">{employee.employeeId}</p>
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            {/* Row 1: Basic Information (Left) + Contact Information (Right) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Information - Left */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Hash className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Mã nhân viên</Label>
+                      <p className="font-medium text-lg">{employee.employeeCode}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <UserCircle className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Tên</Label>
+                        <p className="font-medium">{employee.firstName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <UserCircle className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Họ</Label>
+                        <p className="font-medium">{employee.lastName}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Ngày sinh</Label>
+                      <p className="font-medium">{formatDate(employee.dateOfBirth)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information - Right */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Phone className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Thông tin liên hệ</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Số điện thoại</Label>
+                      <p className="font-medium">{employee.phone || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Email</Label>
+                      <p className="font-medium break-all">
+                        {employee.account?.email || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Địa chỉ</Label>
+                      <p className="font-medium">{employee.address || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <Label className="text-gray-600">Created At</Label>
-              <p className="font-medium">
-                {employee.createdAt
-                  ? new Date(employee.createdAt).toLocaleString('en-US')
-                  : 'N/A'}
-              </p>
-            </div>
-            <div>
-              <Label className="text-gray-600">Last Updated</Label>
-              <p className="font-medium">
-                {employee.updatedAt
-                  ? new Date(employee.updatedAt).toLocaleString('en-US')
-                  : 'N/A'}
-              </p>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200"></div>
+
+            {/* Row 2: Account Information (Left) + Role & Specializations (Right) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Account Information - Left */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Thông tin tài khoản</h3>
+                </div>
+                {employee.account ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Hash className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">ID tài khoản</Label>
+                        <p className="font-medium text-sm break-all">{employee.account.accountId}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Tên đăng nhập</Label>
+                        <p className="font-medium">{employee.account.username}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Email</Label>
+                        <p className="font-medium break-all">{employee.account.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <CheckCircle className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1">
+                        <Label className="text-gray-600">Trạng thái tài khoản</Label>
+                        <Badge
+                          variant={employee.account.status === 'ACTIVE' ? 'default' : 'secondary'}
+                          className={
+                            employee.account.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }
+                        >
+                          {employee.account.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Không có thông tin tài khoản</p>
+                )}
+              </div>
+
+              {/* Role & Specializations - Right */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Briefcase className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Vai trò & Chuyên khoa</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Shield className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">ID vai trò</Label>
+                      <p className="font-medium">{employee.roleId}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Shield className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Tên vai trò</Label>
+                      <Badge variant="outline" className="text-base px-3 py-1">
+                        {employee.roleName}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Briefcase className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Loại hình lao động</Label>
+                      <Badge
+                        variant="outline"
+                        className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
+                          ? 'border-blue-200 text-blue-800'
+                          : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                          ? 'border-green-200 text-green-800'
+                          : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                          ? 'border-orange-200 text-orange-800'
+                          : 'border-gray-200 text-gray-800'
+                          }`}
+                      >
+                        {employee.employeeType === EmploymentType.FULL_TIME 
+                          ? 'Toàn thời gian' 
+                          : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                          ? 'Bán thời gian - Cố định'
+                          : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                          ? 'Bán thời gian - Linh hoạt'
+                          : 'Bán thời gian'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-gray-400" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Trạng thái</Label>
+                      <Badge
+                        variant={employee.isActive ? 'default' : 'secondary'}
+                        className={
+                          employee.isActive
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }
+                      >
+                        {employee.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 text-gray-700 md:col-span-2">
+                    <Shield className="h-4 w-4 text-gray-400 mt-1" />
+                    <div className="flex-1">
+                      <Label className="text-gray-600">Chuyên khoa</Label>
+                      {employee.specializations && employee.specializations.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {employee.specializations.map((spec: any) => (
+                            <Badge key={spec.specializationId} variant="default">
+                              {spec.name || spec.specializationName}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm mt-1">Không có chuyên khoa</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>

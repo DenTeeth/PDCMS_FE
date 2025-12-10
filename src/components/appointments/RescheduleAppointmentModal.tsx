@@ -650,7 +650,7 @@ export default function RescheduleAppointmentModal({
                         <SelectTrigger>
                           <SelectValue placeholder="Chọn bác sĩ" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent align="start">
                           {employees.map((employee) => (
                             <SelectItem key={employee.employeeCode} value={employee.employeeCode}>
                               <div className="flex items-center gap-2">

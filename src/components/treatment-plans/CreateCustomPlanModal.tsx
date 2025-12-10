@@ -1343,7 +1343,7 @@ export default function CreateCustomPlanModal({
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn gói mẫu..." />
                   </SelectTrigger>
-                 <SelectContent>
+                 <SelectContent align="start">
                    {loadingTemplates ? (
                      <div className="flex items-center justify-center p-4">
                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -1445,7 +1445,7 @@ export default function CreateCustomPlanModal({
                         <SelectTrigger className={errors.doctorEmployeeCode ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Chọn bác sĩ" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent align="start">
                           {loadingDoctors ? (
                             <div className="flex items-center justify-center p-4">
                               <Loader2 className="w-4 h-4 animate-spin mr-2" />

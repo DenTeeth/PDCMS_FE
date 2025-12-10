@@ -1,12 +1,13 @@
 /**
  * Treatment Plan Status Utilities
  * 
- * Purpose: Centralized logic for calculating phase and plan statuses
+ * Purpose: Centralized logic for calculating phase statuses
  * 
  * Strategy:
  * - Trust BE status if available and valid
- * - Calculate from items/phases as fallback (workaround for BE lazy loading bug)
- * - See: docs/troubleshooting/ISSUE_PHASE_AUTO_COMPLETE_FIX.md
+ * - Calculate phase status from items as fallback (for phase-level display)
+ * - Note: Plan status is now auto-completed by BE (Issue #51 RESOLVED)
+ * - See: docs/ISSUE_51.md for plan status auto-completion details
  */
 
 import { PhaseDetailDTO, ItemDetailDTO, TreatmentPlanStatus } from '@/types/treatmentPlan';
@@ -43,10 +44,16 @@ export function calculatePhaseStatus(phase: PhaseDetailDTO): string {
 /**
  * Calculate plan status from phases
  * 
+ * NOTE: This function is kept for backward compatibility but is no longer needed for plan status.
+ * Issue #51 RESOLVED: BE now auto-completes plan status when loading detail (API 5.2).
+ * This function may still be useful for phase-level calculations or legacy code.
+ * 
  * Logic:
  * - If BE status is COMPLETED or CANCELLED → trust BE
  * - If all phases are COMPLETED → return COMPLETED
  * - Otherwise → return BE status or NULL
+ * 
+ * @deprecated Plan status is now auto-completed by BE. Use plan.status directly.
  */
 export function calculatePlanStatus(
   planStatus: TreatmentPlanStatus | null,

@@ -28,6 +28,14 @@ export interface Patient {
   isActive: boolean;
   hasAccount: boolean;
   accountStatus?: 'ACTIVE' | 'PENDING_VERIFICATION' | 'LOCKED' | 'INACTIVE'; // Account verification status (BE: 2025-01-25)
+  // Blacklist fields (BE: 2025-12-10)
+  // Booking Block Status (Updated: Dec 10, 2025 - BE refactored)
+  isBookingBlocked?: boolean;
+  bookingBlockReason?: string | null; // Enum: BookingBlockReason
+  bookingBlockNotes?: string | null;
+  blockedBy?: string | null;
+  blockedAt?: string | null;
+  consecutiveNoShows?: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -99,6 +107,9 @@ export interface UpdatePatientRequest {
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   isActive?: boolean;
+  isBookingBlocked?: boolean;
+  bookingBlockReason?: string;
+  bookingBlockNotes?: string;
 }
 
 /**

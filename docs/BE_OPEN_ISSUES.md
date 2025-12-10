@@ -1,9 +1,9 @@
 # Backend Open Issues
 
 **Last Updated:** 2025-12-09  
-**Total Open Issues:** 6  
+**Total Open Issues:** 7  
 **High Priority Issues:** 4 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System, Issue #49 - Price Update Triggers Status Change)  
-**Medium Priority Issues:** 2 (Issue #48 - AppointmentStatusService completion check, Issue #50 - Warehouse Reports Excel Export)  
+**Medium Priority Issues:** 3 (Issue #48 - AppointmentStatusService completion check, Issue #50 - Warehouse Reports Excel Export, Issue #51 - Auto-complete plan status when loading detail)  
 **Resolved Issues:** 12 (Issue #27, #31, #32, #33, #36, #37, #38, #39, #40, #42, #47) - Removed from this document
 
 ---
@@ -18,6 +18,7 @@
 | #43 | API 5.9 - Xóa prerequisite services khỏi seed data | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
 | #44 | API 7.x - Xóa toàn bộ hệ thống work shifts, employee shifts, registrations và slots | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
 | #50 | Warehouse Reports - Thêm chức năng export Excel cho báo cáo tồn kho | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
+| #51 | API 5.2 - Auto-complete plan status khi load detail nếu tất cả phases đã completed | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
 | # | Issue | Status | Priority | Reported Date |
 |---|-------|--------|----------|---------------|
 | #28 | API - Transaction Stats endpoint trả về 400 INVALID_PARAMETER_TYPE | 🔴 **OPEN** | **MEDIUM** | 2025-01-30 |
@@ -2198,5 +2199,158 @@ const handleExportExcel = async () => {
 **Dependencies:**
 - Apache POI library (backend)
 - No additional frontend dependencies needed
+
+---
+
+### Issue #51: API 5.2 - Auto-complete plan status khi load detail nếu tất cả phases đã completed
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **MEDIUM**  
+**Reported Date:** 2025-12-09  
+**Endpoint:** `GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}` (API 5.2)
+
+#### Problem Description
+
+Hiện tại, BE chỉ auto-complete plan status khi có **item status update** (trong `TreatmentPlanItemService.updateItemStatus()`). Nếu plan đã có tất cả phases completed nhưng không có action mới (không có item status update) → plan status vẫn là `null`.
+
+**Vấn đề:**
+- Plan có tất cả phases completed nhưng status = `null`
+- FE phải tính toán fallback và lưu vào `sessionStorage`
+- Khi tắt browser/mở lại hoặc chạy trên thiết bị khác → calculated status bị mất
+- User experience không nhất quán giữa các sessions
+
+**Root Cause:**
+
+File: `treatment_plans/service/TreatmentPlanItemService.java` (line 478-529)
+
+Method `checkAndCompletePlan()` chỉ được gọi trong:
+- `updateItemStatus()` (line 225) - khi có item status update
+
+Method này **KHÔNG** được gọi trong:
+- `TreatmentPlanDetailService.getTreatmentPlanDetail()` - khi load plan detail
+- `TreatmentPlanListService.listAllPlans()` - khi load plan list
+
+**Suggested Implementation:**
+
+**Option 1: Auto-complete trong Detail Service (Recommended)**
+
+File: `treatment_plans/service/TreatmentPlanDetailService.java`
+
+Thêm logic check và auto-complete sau khi build nested response:
+
+```java
+@Transactional // Change to @Transactional (not readOnly) to allow status update
+public TreatmentPlanDetailResponse getTreatmentPlanDetail(String patientCode, String planCode) {
+    // ... existing code ...
+    
+    // STEP 3: Transform flat DTOs to nested response structure
+    TreatmentPlanDetailResponse response = buildNestedResponse(flatDTOs);
+    
+    // STEP 4: NEW - Check and auto-complete plan if all phases completed
+    PatientTreatmentPlan plan = treatmentPlanRepository.findByPlanCode(planCode)
+        .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planCode));
+    
+    if (plan.getStatus() == null || plan.getStatus() != TreatmentPlanStatus.COMPLETED) {
+        // Check if all phases are completed
+        List<PatientPlanPhase> phases = phaseRepository.findByTreatmentPlan_PlanId(plan.getPlanId());
+        
+        if (!phases.isEmpty()) {
+            boolean allPhasesCompleted = phases.stream()
+                .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
+            
+            if (allPhasesCompleted && plan.getStatus() != TreatmentPlanStatus.COMPLETED) {
+                plan.setStatus(TreatmentPlanStatus.COMPLETED);
+                treatmentPlanRepository.save(plan);
+                entityManager.flush();
+                
+                // Update response status
+                response.setStatus(TreatmentPlanStatus.COMPLETED.name());
+                
+                log.info("Auto-completed plan {} when loading detail - All {} phases completed",
+                    planCode, phases.size());
+            }
+        }
+    }
+    
+    return response;
+}
+```
+
+**Option 2: Background Job (Alternative)**
+
+Tạo scheduled job để check và auto-complete plans định kỳ:
+
+```java
+@Scheduled(cron = "0 0 * * * ?") // Run daily at midnight
+@Transactional
+public void autoCompletePlans() {
+    List<PatientTreatmentPlan> plans = planRepository.findByStatusIsNullAndApprovalStatus(ApprovalStatus.APPROVED);
+    
+    for (PatientTreatmentPlan plan : plans) {
+        List<PatientPlanPhase> phases = phaseRepository.findByTreatmentPlan_PlanId(plan.getPlanId());
+        
+        if (!phases.isEmpty()) {
+            boolean allPhasesCompleted = phases.stream()
+                .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
+            
+            if (allPhasesCompleted) {
+                plan.setStatus(TreatmentPlanStatus.COMPLETED);
+                planRepository.save(plan);
+                log.info("Auto-completed plan {} via scheduled job", plan.getPlanCode());
+            }
+        }
+    }
+}
+```
+
+**Impact:**
+
+**Positive:**
+- ✅ Plan status sẽ được auto-complete khi load detail
+- ✅ FE không cần tính toán fallback và lưu sessionStorage
+- ✅ User experience nhất quán giữa các sessions
+- ✅ Data consistency giữa list và detail views
+
+**Negative:**
+- ⚠️ Option 1: Cần thay đổi `@Transactional(readOnly = true)` → `@Transactional` (có thể ảnh hưởng performance)
+- ⚠️ Option 2: Cần thêm scheduled job (phức tạp hơn)
+
+**Related Files:**
+
+- `treatment_plans/service/TreatmentPlanDetailService.java` - Main implementation
+- `treatment_plans/service/TreatmentPlanItemService.java` - Reference implementation (checkAndCompletePlan method)
+- `treatment_plans/repository/PatientTreatmentPlanRepository.java` - Repository methods
+- `treatment_plans/repository/PatientPlanPhaseRepository.java` - Phase repository
+
+**Test Cases:**
+
+**Test 1: Auto-complete khi load detail**
+1. Tạo plan với tất cả phases completed nhưng status = null
+2. Gọi API 5.2 GET detail
+3. Expected:
+   - Response có `status: "COMPLETED"`
+   - Database được update `status = COMPLETED`
+   - Log có message "Auto-completed plan..."
+
+**Test 2: Không auto-complete nếu chưa completed**
+1. Tạo plan với một số phases chưa completed
+2. Gọi API 5.2 GET detail
+3. Expected:
+   - Response giữ nguyên status (null hoặc IN_PROGRESS)
+   - Database không thay đổi
+
+**Test 3: Idempotent - không update nếu đã COMPLETED**
+1. Plan đã có status = COMPLETED
+2. Gọi API 5.2 GET detail
+3. Expected:
+   - Response giữ nguyên status = COMPLETED
+   - Không có log "Auto-completed"
+
+**Test 4: Performance - không ảnh hưởng load time**
+1. Load detail cho plan lớn (nhiều phases/items)
+2. Measure response time
+3. Expected:
+   - Response time tương đương trước khi thêm logic
+   - Không có N+1 query issues
 
 ---

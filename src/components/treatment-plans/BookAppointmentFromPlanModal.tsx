@@ -1035,7 +1035,7 @@ export default function BookAppointmentFromPlanModal({
                       <SelectTrigger id="participantCode" className="mt-1">
                         <SelectValue placeholder="Chọn phụ tá (tùy chọn)" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent align="start">
                         {/*  FIX: Cannot use empty string as value, use special value instead */}
                         <SelectItem value="__NONE__">Không chọn phụ tá</SelectItem>
                         {eligibleParticipants.map((participant) => (
@@ -1076,7 +1076,7 @@ export default function BookAppointmentFromPlanModal({
                     <SelectTrigger id="roomCode" className="mt-1">
                       <SelectValue placeholder={loadingData ? 'Đang tải...' : 'Chọn phòng'} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent align="start">
                       {selectedSlot?.availableCompatibleRoomCodes.map((code) => {
                         const room = rooms.find((r) => r.roomCode === code);
                         return (

@@ -13,6 +13,7 @@ import {
   PatientQueryParams,
   PaginatedPatientResponse
 } from '@/types/patient';
+import { PaginatedResponse } from '@/types/employee';
 
 /**
  * Patient Service Class
@@ -122,6 +123,83 @@ class PatientService {
   async deletePatient(patientCode: string): Promise<{ message: string }> {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.delete(`${this.endpoint}/${patientCode}`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
+  }
+
+  /**
+   * Unban a blacklisted patient
+   * @param patientId Patient ID to unban (can be string or number, will be converted to number)
+   * @param reason Reason for unbanning (minimum 10 characters)
+   * @returns Unban result with unban record
+   */
+  async unbanPatient(patientId: string | number, reason: string): Promise<{
+    message: string;
+    patientId: string;
+    patientCode: string;
+    unbanRecord: {
+      id: number;
+      unbannedBy: {
+        employeeId: number;
+        fullName: string;
+        employeeCode: string;
+      };
+      unbannedAt: string;
+      reason: string;
+      previousNoShowCount: number;
+    };
+  }> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    // Convert to number if string (API expects number)
+    const patientIdNum = typeof patientId === 'string' ? parseInt(patientId, 10) : patientId;
+    const response = await axiosInstance.post(`${this.endpoint}/${patientIdNum}/unban`, { reason });
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
+  }
+
+  /**
+   * Get unban history for a patient
+   * @param patientId Patient ID (can be string or number, will be converted to number)
+   * @param params Query parameters (page, size, sortBy, sortDir)
+   * @returns Paginated list of unban records
+   */
+  async getUnbanHistory(
+    patientId: string | number,
+    params: {
+      page?: number;
+      size?: number;
+      sortBy?: string;
+      sortDir?: 'asc' | 'desc';
+    } = {}
+  ): Promise<PaginatedResponse<{
+    id: number;
+    patientId: number;
+    unbannedBy: {
+      employeeId: number;
+      fullName: string;
+      employeeCode: string;
+    };
+    unbannedAt: string;
+    reason: string;
+    previousNoShowCount: number;
+  }>> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    // Convert to number if string (API expects number)
+    const patientIdNum = typeof patientId === 'string' ? parseInt(patientId, 10) : patientId;
+    const response = await axiosInstance.get(`${this.endpoint}/${patientIdNum}/unban-history`, {
+      params: {
+        page: params.page ?? 0,
+        size: params.size ?? 10,
+        sortBy: params.sortBy ?? 'unbannedAt',
+        sortDir: params.sortDir ?? 'desc',
+      },
+    });
     
     if (response.data?.data) {
       return response.data.data;

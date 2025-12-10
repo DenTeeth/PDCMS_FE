@@ -508,7 +508,7 @@ export default function AddItemsToPhaseModal({
                         <SelectTrigger id={`service-${index}`} className="h-9 text-sm">
                           <SelectValue placeholder="Chọn dịch vụ" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent align="start">
                           {loadingServices ? (
                             <SelectItem value="loading" disabled>
                               Đang tải...

@@ -307,7 +307,7 @@ export default function DelayAppointmentModal({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn giờ" />
               </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
+              <SelectContent align="start" className="max-h-[200px]">
                 {timeSlots.map((time) => (
                   <SelectItem key={time} value={time}>
                     {time}
