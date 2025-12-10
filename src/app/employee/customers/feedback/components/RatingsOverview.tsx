@@ -87,7 +87,7 @@ export default function RatingsOverview({ data }: RatingsOverviewProps) {
                       <div className="bg-white p-3 border rounded shadow-lg">
                         <p className="font-medium">{payload[0].payload.rating}</p>
                         <p className="text-sm text-gray-600">
-                          {payload[0].value} reviews ({payload[0].payload.percentage}%)
+                          {payload[0].value} đánh giá ({payload[0].payload.percentage}%)
                         </p>
                       </div>
                     );

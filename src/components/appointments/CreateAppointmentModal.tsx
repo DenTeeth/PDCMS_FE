@@ -1403,7 +1403,7 @@ export default function CreateAppointmentModal({
                   />
                 </div>
                 {searchingPatients && (
-                  <p className="text-sm text-muted-foreground mt-1">Searching...</p>
+                  <p className="text-sm text-muted-foreground mt-1">Đang tìm kiếm...</p>
                 )}
               </div>
 
@@ -1428,7 +1428,7 @@ export default function CreateAppointmentModal({
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No patients found
+                      Không tìm thấy bệnh nhân
                     </p>
                   )}
                 </div>
@@ -1472,7 +1472,7 @@ export default function CreateAppointmentModal({
                       className="mt-1"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Select the date you prefer for the appointment
+                      Chọn ngày bạn ưu tiên cho cuộc hẹn
                     </p>
                   </div>
 
@@ -1507,7 +1507,7 @@ export default function CreateAppointmentModal({
                     {loadingShifts ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
-                        <span className="text-sm text-muted-foreground">Loading availability...</span>
+                        <span className="text-sm text-muted-foreground">Đang tải lịch trống...</span>
                       </div>
                     ) : (
                       <>
@@ -1585,7 +1585,7 @@ export default function CreateAppointmentModal({
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-3 rounded bg-muted/50 border border-border"></div>
-                            <span>No availability</span>
+                            <span>Không có lịch trống</span>
                           </div>
                         </div>
                       </>
@@ -1601,7 +1601,7 @@ export default function CreateAppointmentModal({
                         <Card className="p-4">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Checking availability...</span>
+                            <span>Đang kiểm tra lịch trống...</span>
                           </div>
                         </Card>
                       ) : (
@@ -1610,7 +1610,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-4 bg-blue-50 border-blue-200">
                             <div className="flex items-center gap-2 mb-3">
                               <Calendar className="h-5 w-5 text-blue-600" />
-                              <h4 className="font-semibold text-sm">Availability Summary</h4>
+                              <h4 className="font-semibold text-sm">Tóm tắt lịch trống</h4>
                             </div>
                             {loadingShifts ? (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1620,13 +1620,13 @@ export default function CreateAppointmentModal({
                             ) : (
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">Total Doctors:</span>
+                                  <span className="text-muted-foreground">Tổng số bác sĩ:</span>
                                   <span className="font-semibold">{getAllDoctors().length}</span>
                                 </div>
                                 {appointmentDate ? (
                                   <>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-muted-foreground">Doctors with Shifts:</span>
+                                      <span className="text-muted-foreground">Bác sĩ có ca làm việc:</span>
                                       <span className="font-semibold">
                                         {getAllDoctors().filter((doctor) => {
                                           const shifts = getShiftsForDoctorAndDate(doctor.employeeCode, appointmentDate);
@@ -1638,13 +1638,13 @@ export default function CreateAppointmentModal({
                                       <>
                                         <div className="pt-2 border-t">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Compatible Doctors:</span>
+                                            <span className="text-muted-foreground">Bác sĩ phù hợp:</span>
                                             <span className="font-semibold">{getCompatibleDoctors().length}</span>
                                           </div>
                                         </div>
                                         {selectedServices.length > 0 && (
                                           <div className="pt-2 border-t">
-                                            <div className="text-xs text-muted-foreground mb-1">Selected Services:</div>
+                                            <div className="text-xs text-muted-foreground mb-1">Dịch vụ đã chọn:</div>
                                             <div className="flex flex-wrap gap-1">
                                               {selectedServices.map((service) => (
                                                 <Badge key={service.serviceId} variant="outline" className="text-xs">
@@ -1659,7 +1659,7 @@ export default function CreateAppointmentModal({
                                   </>
                                 ) : (
                                   <p className="text-xs text-muted-foreground">
-                                    Select a date to see availability for that date
+                                    Chọn ngày để xem lịch trống cho ngày đó
                                   </p>
                                 )}
                               </div>
@@ -1672,7 +1672,7 @@ export default function CreateAppointmentModal({
                               <div className="flex items-center gap-2 mb-3">
                                 <UserCog className="h-4 w-4 text-primary" />
                                 <h4 className="font-semibold text-sm">
-                                  Doctors Available on {format(new Date(appointmentDate), 'MMM dd, yyyy')}
+                                  Bác sĩ trực vào ngày {format(new Date(appointmentDate), 'MMM dd, yyyy')}
                                 </h4>
                               </div>
                               {loadingShifts ? (
@@ -1728,10 +1728,10 @@ export default function CreateAppointmentModal({
                                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-sm text-yellow-800 mb-1">
-                                    Limited availability on selected date
+                                    Giới hạn lịch trống vào ngày đã chọn
                                   </h4>
                                   <p className="text-xs text-yellow-700 mb-3">
-                                    The selected date may have limited doctors or time slots. Consider these alternative dates:
+                                    Ngày đã chọn có thể có số lượng bác sĩ hoặc khung giờ hạn chế. Hãy xem xét các ngày thay thế sau:
                                   </p>
                                   <div className="flex flex-wrap gap-2">
                                     {suggestedDates.slice(0, 5).map((date) => (
@@ -1761,7 +1761,7 @@ export default function CreateAppointmentModal({
                     <Card className="p-8 bg-muted/50 border-dashed">
                       <div className="text-center text-muted-foreground">
                         <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Select a date to see availability information</p>
+                        <p className="text-sm">Chọn ngày để xem thông tin lịch trống</p>
                       </div>
                     </Card>
                   )}
@@ -1805,10 +1805,10 @@ export default function CreateAppointmentModal({
                 <Label>Chọn dịch vụ (ít nhất 1) <span className="text-red-500">*</span></Label>
                 <Card className="p-4 mt-1 max-h-96 overflow-y-auto">
                   {loadingData ? (
-                    <p className="text-sm text-muted-foreground">Loading services...</p>
+                    <p className="text-sm text-muted-foreground">Đang tải dịch vụ...</p>
                   ) : Array.from(getServicesGroupedBySpecialization.entries()).length === 0 ? (
                     <Card className="p-4 bg-red-50 border-red-200">
-                      <p className="text-sm text-red-800">No services found.</p>
+                      <p className="text-sm text-red-800">Không tìm thấy dịch vụ nào.</p>
                     </Card>
                   ) : (
                     <div className="space-y-4">
@@ -1921,7 +1921,7 @@ export default function CreateAppointmentModal({
                         if (doctorsToShow.length === 0) {
                           return (
                             <SelectItem value="no-doctors" disabled>
-                              No compatible doctors available
+                              Không có bác sĩ phù hợp
                             </SelectItem>
                           );
                         }
@@ -1936,7 +1936,7 @@ export default function CreateAppointmentModal({
                             >
                               {employee.fullName} ({employee.employeeCode})
                               {!hasShifts && (
-                                <span className="text-xs text-muted-foreground ml-2">(No shifts on this date)</span>
+                                <span className="text-xs text-muted-foreground ml-2">(Không có ca làm việc trong ngày này)</span>
                               )}
                             </SelectItem>
                           );
@@ -1945,7 +1945,7 @@ export default function CreateAppointmentModal({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Only doctors with matching specializations and shifts on the selected date are shown.
+                    Chỉ hiển thị bác sĩ có chuyên môn phù hợp và ca làm việc trong ngày đã chọn.
                   </p>
                 </div>
 
@@ -1971,7 +1971,7 @@ export default function CreateAppointmentModal({
                       <Card className="p-4 mt-1">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Loading available slots...</span>
+                          <span>Đang tải các khung giờ trống...</span>
                         </div>
                       </Card>
                     ) : availableSlots.length > 0 ? (
@@ -1981,7 +1981,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Sun className="h-4 w-4 text-yellow-600" />
-                              <h4 className="font-semibold text-xs">Morning (6:00 - 12:00)</h4>
+                              <h4 className="font-semibold text-xs">Buổi sáng (6:00 - 12:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.morning.map((slot) => {
@@ -2025,7 +2025,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Sunset className="h-4 w-4 text-orange-600" />
-                              <h4 className="font-semibold text-xs">Afternoon (12:00 - 18:00)</h4>
+                              <h4 className="font-semibold text-xs">Buổi chiều (12:00 - 18:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.afternoon.map((slot) => {
@@ -2069,7 +2069,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Moon className="h-4 w-4 text-blue-600" />
-                              <h4 className="font-semibold text-xs">Evening (18:00 - 22:00)</h4>
+                              <h4 className="font-semibold text-xs">Buổi tối (18:00 - 22:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.evening.map((slot) => {
@@ -2173,10 +2173,10 @@ export default function CreateAppointmentModal({
                 {/* Room Selection */}
                 {appointmentStartTime && (
                   <div>
-                    <Label htmlFor="roomCode">Select Room <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="roomCode">Chọn phòng <span className="text-red-500">*</span></Label>
                     <Select value={roomCode} onValueChange={setRoomCode}>
                       <SelectTrigger id="roomCode" className="mt-1">
-                        <SelectValue placeholder="Select a room" />
+                        <SelectValue placeholder="Chọn phòng" />
                       </SelectTrigger>
                       <SelectContent>
                         {(() => {
@@ -2186,7 +2186,7 @@ export default function CreateAppointmentModal({
                           if (compatibleRoomCodes.length === 0) {
                             return (
                               <SelectItem value="" disabled>
-                                No compatible rooms available for this time slot
+                                Không có phòng phù hợp cho khung giờ này
                               </SelectItem>
                             );
                           }
@@ -2207,7 +2207,7 @@ export default function CreateAppointmentModal({
                     </Select>
                     {selectedSlot && selectedSlot.availableCompatibleRoomCodes.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Only compatible rooms are shown for the selected time slot
+                        Chỉ hiển thị các phòng phù hợp cho khung giờ đã chọn
                       </p>
                     )}
                   </div>
@@ -2220,7 +2220,7 @@ export default function CreateAppointmentModal({
                 <div>
                   <Label>Chọn người tham gia (Tùy chọn)</Label>
                   <p className="text-xs text-muted-foreground mt-1 mb-2">
-                    Only employees with STANDARD specialization (medical staff) can be selected as participants.
+                    Chỉ nhân viên có chuyên môn STANDARD (nhân viên y tế) mới có thể được chọn làm người tham gia.
                   </p>
                   <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto">
                     {(() => {
@@ -2283,12 +2283,12 @@ export default function CreateAppointmentModal({
                   <Card className="p-4 bg-blue-50 border-blue-200">
                     <div className="flex items-center gap-2 mb-3">
                       <UserCog className="h-4 w-4 text-blue-600" />
-                      <h4 className="font-semibold text-sm">Participant Shift Availability</h4>
+                      <h4 className="font-semibold text-sm">Tình trạng ca làm việc của người tham gia</h4>
                     </div>
                     {loadingParticipantShifts ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Loading shifts...</span>
+                        <span>Đang tải ca làm việc...</span>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -2325,7 +2325,7 @@ export default function CreateAppointmentModal({
                                 <div className="flex items-center gap-2 text-xs text-red-600">
                                   <AlertCircle className="h-3 w-3" />
                                   <span>
-                                     No shifts scheduled for this date
+                                     Không có ca làm việc nào được lên lịch cho ngày này
                                   </span>
                                 </div>
                               )}
@@ -2360,32 +2360,32 @@ export default function CreateAppointmentModal({
                 <h3 className="font-semibold mb-2">Tóm tắt lịch hẹn</h3>
                 <div className="space-y-1 text-sm">
                   <div>
-                    <span className="font-medium">Patient:</span> {selectedPatient?.fullName}
+                    <span className="font-medium">Bệnh nhân:</span> {selectedPatient?.fullName}
                   </div>
                   <div>
-                    <span className="font-medium">Date:</span>{' '}
+                    <span className="font-medium">Ngày:</span>{' '}
                     {appointmentDate &&
                       format(new Date(appointmentDate), 'PPP')}
                   </div>
                   <div>
-                    <span className="font-medium">Doctor:</span> {selectedEmployee?.fullName}
+                    <span className="font-medium">Bác sĩ:</span> {selectedEmployee?.fullName}
                   </div>
                   <div>
-                    <span className="font-medium">Services:</span>{' '}
+                    <span className="font-medium">Dịch vụ:</span>{' '}
                     {selectedServices.map((s) => s.serviceName).join(', ')}
                   </div>
                   <div>
-                    <span className="font-medium">Time:</span>{' '}
+                    <span className="font-medium">Thời gian:</span>{' '}
                     {appointmentStartTime &&
                       format(new Date(appointmentStartTime), 'HH:mm')}
                   </div>
                   <div>
-                    <span className="font-medium">Room:</span>{' '}
+                    <span className="font-medium">Phòng:</span>{' '}
                     {rooms.find((r) => r.roomCode === roomCode)?.roomName || roomCode}
                   </div>
                   {participantCodes.length > 0 && (
                     <div>
-                      <span className="font-medium">Participants:</span>{' '}
+                      <span className="font-medium">Người tham gia:</span>{' '}
                       {participantCodes.map((code) => {
                         const participant = employees.find((e) => e.employeeCode === code);
                         return participant ? `${participant.fullName} (${getRoleLabel(participant.roleName)})` : code;
@@ -2400,17 +2400,17 @@ export default function CreateAppointmentModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={loading}>
-            Cancel
+            Hủy
           </Button>
           {currentStep > 1 && (
             <Button variant="outline" onClick={handleBack} disabled={loading}>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
+              Quay lại
             </Button>
           )}
           {currentStep < 5 ? (
             <Button onClick={handleNext} disabled={loading}>
-              Next
+              Tiếp theo
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
@@ -2418,12 +2418,12 @@ export default function CreateAppointmentModal({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  Đang tạo...
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Create Appointment
+                  Tạo lịch hẹn
                 </>
               )}
             </Button>

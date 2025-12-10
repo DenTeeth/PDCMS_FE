@@ -855,14 +855,7 @@ export default function EmployeeRegistrationsPage() {
         console.log('[fetchAvailableSlots] Successfully loaded', slotsArray.length, 'available slots');
       }
     } catch (error: any) {
-      console.error('[fetchAvailableSlots] Error fetching available slots:', {
-        error,
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
+      // Handle error silently or with user-friendly message
 
       // Extract detailed error message from 500 response
       let errorMessage = 'Failed to load available slots';

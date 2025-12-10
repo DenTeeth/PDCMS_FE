@@ -20,53 +20,53 @@ import {
 const notifications = [
   {
     id: '1',
-    title: 'Appointment Reminder',
-    message: 'Your appointment with Dr. Nguyen Van A is tomorrow at 10:00 AM',
+    title: 'Nhắc nhở cuộc hẹn',
+    message: 'Cuộc hẹn của bạn với Dr. Nguyen Van A là vào ngày mai lúc 10:00 AM',
     type: 'reminder',
     date: '2024-01-24',
-    time: '2 hours ago',
+    time: '2 tiếng trước',
     isRead: false,
-    priority: 'high'
+    priority: 'cao'
   },
   {
     id: '2',
-    title: 'Test Results Available',
-    message: 'Your recent blood test results are now available in your medical records',
+    title: 'Kết quả xét nghiệm có sẵn',
+    message: 'Kết quả xét nghiệm máu gần đây của bạn hiện đã có trong hồ sơ y tế của bạn',
     type: 'results',
     date: '2024-01-23',
-    time: '1 day ago',
+    time: '1 ngày trước',
     isRead: false,
-    priority: 'medium'
+    priority: 'trung bình'
   },
   {
     id: '3',
-    title: 'Payment Confirmation',
-    message: 'Your payment of $150.00 has been processed successfully',
+    title: 'Xác nhận thanh toán',
+    message: 'Thanh toán $150.00 của bạn đã được xử lý thành công',
     type: 'payment',
     date: '2024-01-22',
-    time: '2 days ago',
+    time: '2 ngày trước',
     isRead: true,
-    priority: 'low'
+    priority: 'thấp'
   },
   {
     id: '4',
-    title: 'Appointment Cancelled',
-    message: 'Your appointment scheduled for Jan 25 has been cancelled due to doctor unavailability',
+    title: 'Hủy cuộc hẹn',
+    message: 'Cuộc hẹn của bạn dự kiến vào ngày 25 tháng 1 đã bị hủy do bác sĩ không có mặt',
     type: 'cancellation',
     date: '2024-01-21',
-    time: '3 days ago',
+    time: '3 ngày trước',
     isRead: true,
-    priority: 'high'
+    priority: 'cao'
   },
   {
     id: '5',
-    title: 'New Prescription',
-    message: 'Dr. Le Thi B has prescribed new medication. Please check your prescriptions.',
-    type: 'prescription',
+    title: 'Đơn thuốc mới',
+    message: 'Dr. Le Thi B đã kê đơn thuốc mới. Vui lòng kiểm tra đơn thuốc của bạn.',
+    type: 'prescripion',
     date: '2024-01-20',
-    time: '4 days ago',
+    time: '4 ngày trước',
     isRead: true,
-    priority: 'medium'
+    priority: 'trung bình'
   }
 ];
 

@@ -26,79 +26,79 @@ import {
 const medicalRecords = [
   {
     id: '1',
-    title: 'Blood Test Results',
-    type: 'Lab Results',
+    title: 'Kết quả xét nghiệm máu',
+    type: 'Kết quả xét nghiệm',
     date: '2024-01-15',
-    doctor: 'Dr. Nguyen Van A',
-    department: 'Laboratory',
-    status: 'available',
+    doctor: 'Bác Sĩ Nguyen Van A',
+    department: 'Phòng thí nghiệm',
+    status: 'có sẵn',
     fileType: 'pdf',
-    description: 'Complete blood count and metabolic panel results',
+    description: 'Kết quả công thức máu và bảng chuyển hóa đầy đủ',
     size: '2.3 MB'
   },
   {
     id: '2',
-    title: 'X-Ray - Chest',
-    type: 'Imaging',
+    title: 'X Quang - Ngực',
+    type: 'Chẩn đoán hình ảnh',
     date: '2024-01-10',
-    doctor: 'Dr. Le Thi B',
-    department: 'Radiology',
-    status: 'available',
+    doctor: 'Bác Sĩ Le Thi B',
+    department: 'Chẩn đoán hình ảnh',
+    status: 'có sẵn',
     fileType: 'image',
-    description: 'Chest X-ray showing clear lungs and normal heart size',
+    description: 'X Quang ngực cho thấy phổi trong và kích thước tim bình thường',
     size: '5.7 MB'
   },
   {
     id: '3',
-    title: 'Prescription - Lisinopril',
-    type: 'Prescription',
+    title: 'Đơn thuốc - Lisinopril',
+    type: 'Đơn thuốc',
     date: '2024-01-08',
-    doctor: 'Dr. Tran Van C',
-    department: 'Cardiology',
-    status: 'available',
+    doctor: 'Bác Sĩ Tran Van C',
+    department: 'Tim mạch',
+    status: 'có sẵn',
     fileType: 'pdf',
-    description: 'Prescription for blood pressure medication',
+    description: 'Đơn thuốc cho thuốc huyết áp',
     size: '0.8 MB'
   },
   {
     id: '4',
-    title: 'Dental Cleaning Report',
-    type: 'Treatment Report',
+    title: 'Báo cáo làm sạch răng',
+    type: 'Báo cáo điều trị',
     date: '2024-01-05',
-    doctor: 'Dr. Pham Thi D',
-    department: 'Dentistry',
-    status: 'processing',
+    doctor: 'Bác Sĩ Pham Thi D',
+    department: 'Nha khoa',
+    status: 'đang xử lý',
     fileType: 'pdf',
-    description: 'Comprehensive dental cleaning and examination report',
+    description: 'Báo cáo làm sạch răng và kiểm tra toàn diện',
     size: '1.2 MB'
   },
   {
     id: '5',
-    title: 'MRI - Brain',
-    type: 'Imaging',
+    title: 'MRI - Não',
+    type: 'Chẩn đoán hình ảnh',
     date: '2024-01-03',
-    doctor: 'Dr. Hoang Van E',
-    department: 'Neurology',
-    status: 'available',
+    doctor: 'Bác Sĩ Hoang Van E',
+    department: 'Thần kinh',
+    status: 'có sẵn',
     fileType: 'image',
-    description: 'Brain MRI showing normal structure and no abnormalities',
+    description: 'MRI não cho thấy cấu trúc bình thường và không có bất thường',
     size: '15.2 MB'
   },
   {
     id: '6',
-    title: 'Vaccination Record',
-    type: 'Immunization',
+    title: 'Hồ sơ tiêm chủng',
+    type: 'Tiêm chủng',
     date: '2023-12-20',
-    doctor: 'Dr. Nguyen Thi F',
-    department: 'General Medicine',
-    status: 'available',
+    doctor: 'Bác Sĩ Nguyen Thi F',
+    department: 'Y học tổng quát',
+    status: 'có sẵn',
     fileType: 'pdf',
-    description: 'Updated vaccination record including COVID-19 booster',
+    description: 'Hồ sơ tiêm chủng cập nhật bao gồm mũi tăng cường COVID-19',
     size: '1.5 MB'
   }
 ];
 
-const recordTypes = ['All', 'Lab Results', 'Imaging', 'Prescription', 'Treatment Report', 'Immunization'];
+const recordTypes = ['All', 'Kết quả xét nghiệm', 'Chẩn đoán hình ảnh', 'Đơn thuốc', 'Báo cáo điều trị', 'Tiêm chủng'];
 const fileTypeIcons = {
   pdf: faFilePdf,
   image: faFileImage,
@@ -118,12 +118,12 @@ export default function UserRecords() {
     return matchesSearch && matchesType;
   });
 
-  const getFileTypeIcon = (fileType) => {
-    const IconComponent = fileTypeIcons[fileType] || faFileAlt;
+  const getFileTypeIcon = (fileType: string) => {
+    const IconComponent = fileTypeIcons[fileType as keyof typeof fileTypeIcons] || faFileAlt;
     return <FontAwesomeIcon icon={IconComponent} className="h-5 w-5" />;
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'available':
         return <Badge variant="default" className="flex items-center"><FontAwesomeIcon icon={faCheckCircle} className="mr-1 h-3 w-3" />Available</Badge>;
@@ -146,7 +146,7 @@ export default function UserRecords() {
         </div>
         <Button variant="outline">
           <FontAwesomeIcon icon={faDownload} className="mr-2 h-4 w-4" />
-          Download All
+           Tải xuống tất cả
         </Button>
       </div>
 

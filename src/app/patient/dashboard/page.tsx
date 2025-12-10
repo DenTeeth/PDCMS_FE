@@ -25,17 +25,17 @@ const upcomingAppointments = [
     id: '1',
     date: '2024-01-25',
     time: '10:00 AM',
-    doctor: 'Dr. Nguyen Van A',
-    type: 'General Checkup',
-    status: 'confirmed'
+    doctor: 'Bác Sĩ Nguyen Van A',
+    type: 'Kiểm tra tổng quát',
+    status: 'xác nhận'
   },
   {
     id: '2',
     date: '2024-01-30',
     time: '2:00 PM',
-    doctor: 'Dr. Le Thi B',
-    type: 'Dental Cleaning',
-    status: 'pending'
+    doctor: 'Bác Sĩ Le Thi B',
+    type: 'Làm sạch răng',
+    status: 'đang chờ'
   }
 ];
 
@@ -43,33 +43,33 @@ const recentRecords = [
   {
     id: '1',
     date: '2024-01-15',
-    type: 'X-Ray',
-    doctor: 'Dr. Nguyen Van A',
-    status: 'completed'
+    type: 'X Quang',
+    doctor: 'Bác Sĩ Nguyen Van A',
+    status: 'hoàn thành'
   },
   {
     id: '2',
     date: '2024-01-10',
-    type: 'Blood Test',
-    doctor: 'Dr. Le Thi B',
-    status: 'completed'
+    type: 'Xét nghiệm máu',
+    doctor: 'Bác Sĩ Le Thi B',
+    status: 'hoàn thành'
   }
 ];
 
 const notifications = [
   {
     id: '1',
-    title: 'Appointment Reminder',
-    message: 'Your appointment with Dr. Nguyen Van A is tomorrow at 10:00 AM',
-    type: 'reminder',
-    time: '2 hours ago'
+    title: 'Nhắc nhở cuộc hẹn',
+    message: 'Cuộc hẹn của bạn với Bác Sĩ Nguyen Van A là vào ngày mai lúc 10:00 AM',
+    type: 'nhắc nhở',
+    time: '2 giờ trước'
   },
   {
     id: '2',
-    title: 'Test Results Available',
-    message: 'Your recent blood test results are now available',
-    type: 'results',
-    time: '1 day ago'
+    title: 'Kết quả xét nghiệm có sẵn',
+    message: 'Kết quả xét nghiệm máu gần đây của bạn hiện đã có',
+    type: 'kết quả',
+    time: '1 ngày trước'
   }
 ];
 
@@ -139,7 +139,7 @@ export default function PatientDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Notifications</p>
+                <p className="text-sm font-medium text-muted-foreground">Thông báo</p>
                 <p className="text-2xl font-bold">3</p>
               </div>
               <FontAwesomeIcon icon={faBell} className="h-8 w-8 text-primary" />
@@ -172,21 +172,21 @@ export default function PatientDashboard() {
                     <div>
                       <p className="font-medium">{appointment.type}</p>
                       <p className="text-sm text-muted-foreground">
-                        {appointment.date} at {appointment.time}
+                        {appointment.date} lúc {appointment.time}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        with {appointment.doctor}
+                        với {appointment.doctor}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
+                  <Badge variant={appointment.status === 'xác nhận' ? 'default' : 'outline'}>
                     {appointment.status}
                   </Badge>
                 </div>
               ))}
             </div>
             <Button className="w-full mt-4" variant="outline">
-              View All Appointments
+              Xem tất cả lịch hẹn
             </Button>
           </CardContent>
         </Card>
@@ -217,12 +217,12 @@ export default function PatientDashboard() {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline">Completed</Badge>
+                  <Badge variant="outline">Hoàn thành</Badge>
                 </div>
               ))}
             </div>
             <Button className="w-full mt-4" variant="outline">
-              View All Records
+              Xem tất cả hồ sơ
             </Button>
           </CardContent>
         </Card>
@@ -262,7 +262,7 @@ export default function PatientDashboard() {
             ))}
           </div>
           <Button className="w-full mt-4" variant="outline">
-            View All Notifications
+            Xem tất cả thông báo
           </Button>
         </CardContent>
       </Card>

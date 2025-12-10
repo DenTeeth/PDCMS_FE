@@ -901,15 +901,15 @@ export default function AdminAppointmentDetailPage() {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Appointment Information
+                  Thông tin cuộc hẹn
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Appointment Code</label>
+                    <label className="text-sm font-medium text-muted-foreground"> Code</label>
                     <p className="text-base font-semibold">{appointment.appointmentCode}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
                     {/* FIX: Add key to force re-render when status changes */}
                     <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1">
                       {getStatusBadge(appointment.status)}
@@ -918,39 +918,39 @@ export default function AdminAppointmentDetailPage() {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      Start Time
+                      Thời gian bắt đầu
                     </label>
                     <p className="text-base">{formatDateTime(appointment.appointmentStartTime)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">End Time</label>
+                    <label className="text-sm font-medium text-muted-foreground">Thời gian kết thúc</label>
                     <p className="text-base">{formatDateTime(appointment.appointmentEndTime)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Expected Duration</label>
-                    <p className="text-base">{appointment.expectedDurationMinutes} minutes</p>
+                    <label className="text-sm font-medium text-muted-foreground">Thời gian dự kiến</label>
+                    <p className="text-base">{appointment.expectedDurationMinutes} phút</p>
                   </div>
                   {appointment.actualStartTime && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Actual Start Time</label>
+                      <label className="text-sm font-medium text-muted-foreground">Thời gian bắt đầu thực tế</label>
                       <p className="text-base">{formatDateTime(appointment.actualStartTime)}</p>
                     </div>
                   )}
                   {appointment.actualEndTime && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Actual End Time</label>
+                      <label className="text-sm font-medium text-muted-foreground">Thời gian kết thúc thực tế</label>
                       <p className="text-base">{formatDateTime(appointment.actualEndTime)}</p>
                     </div>
                   )}
                   {appointment.notes && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                      <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
                       <p className="text-base">{appointment.notes}</p>
                     </div>
                   )}
                   {appointment.createdAt && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Created At</label>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
                       <p className="text-sm text-muted-foreground">{formatDateTime(appointment.createdAt)}</p>
                     </div>
                   )}
@@ -961,12 +961,12 @@ export default function AdminAppointmentDetailPage() {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <UserCog className="h-5 w-5" />
-                  Doctor & Room
+                  Thông tin bác sĩ & phòng
                 </h3>
                 <div className="space-y-4">
                   {appointment.doctor ? (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Doctor</label>
+                      <label className="text-sm font-medium text-muted-foreground">Bác sĩ</label>
                       <div className="mt-1">
                         <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
                         <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
@@ -974,7 +974,7 @@ export default function AdminAppointmentDetailPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Doctor</label>
+                      <label className="text-sm font-medium text-muted-foreground">Bác sĩ</label>
                       <p className="text-base text-muted-foreground">N/A</p>
                     </div>
                   )}
@@ -982,7 +982,7 @@ export default function AdminAppointmentDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <Building2 className="h-4 w-4" />
-                        Room
+                        Phòng
                       </label>
                       <div className="mt-1">
                         <p className="text-base font-semibold">{appointment.room.roomName}</p>
@@ -991,7 +991,7 @@ export default function AdminAppointmentDetailPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Room</label>
+                      <label className="text-sm font-medium text-muted-foreground">Phòng</label>
                       <p className="text-base text-muted-foreground">N/A</p>
                     </div>
                   )}
@@ -1005,7 +1005,7 @@ export default function AdminAppointmentDetailPage() {
                   appointment.services.length === 0 && 'border-dashed bg-muted/30',
                 )}
               >
-                <h3 className="text-lg font-semibold mb-4">Services</h3>
+                <h3 className="text-lg font-semibold mb-4">Dịch vụ</h3>
                 {appointment.services.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {appointment.services.map((service) => (
@@ -1016,9 +1016,9 @@ export default function AdminAppointmentDetailPage() {
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p>No services assigned</p>
+                    <p>Chưa có dịch vụ được chỉ định</p>
                     <p className="text-xs">
-                      Services from treatment plan items will appear here once linked.
+                      Các dịch vụ từ các mục kế hoạch điều trị sẽ xuất hiện ở đây khi được liên kết.
                     </p>
                   </div>
                 )}
@@ -1027,7 +1027,7 @@ export default function AdminAppointmentDetailPage() {
               {/* Participants */}
               {appointment.participants && appointment.participants.length > 0 && (
                 <Card className="p-6 md:col-span-2">
-                  <h3 className="text-lg font-semibold mb-4">Participants</h3>
+                  <h3 className="text-lg font-semibold mb-4">Người tham gia</h3>
                   <div className="space-y-2">
                     {appointment.participants.map((participant, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
@@ -1050,7 +1050,7 @@ export default function AdminAppointmentDetailPage() {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Patient Information
+                  Thông tin bệnh nhân
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -1058,18 +1058,18 @@ export default function AdminAppointmentDetailPage() {
                     <p className="text-base font-semibold">{appointment.patient.patientCode}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                    <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
                     <p className="text-base">{appointment.patient.fullName}</p>
                   </div>
                   {appointment.patient.phone && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                      <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
                       <p className="text-base">{appointment.patient.phone}</p>
                     </div>
                   )}
                   {appointment.patient.dateOfBirth && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày sinh</label>
                       <p className="text-base">{format(new Date(appointment.patient.dateOfBirth), 'dd MMM yyyy')}</p>
                     </div>
                   )}
@@ -1077,7 +1077,7 @@ export default function AdminAppointmentDetailPage() {
               </Card>
             ) : (
               <Card className="p-6">
-                <p className="text-muted-foreground">Patient information not available</p>
+                <p className="text-muted-foreground">Thông tin bệnh nhân không có sẵn</p>
               </Card>
             )}
           </TabsContent>
@@ -1243,15 +1243,15 @@ export default function AdminAppointmentDetailPage() {
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Update Appointment Status</DialogTitle>
+              <DialogTitle>Cập nhật trạng thái lịch hẹn</DialogTitle>
               <DialogDescription>
-                Current status: <span className="font-semibold">{APPOINTMENT_STATUS_COLORS[appointment.status].text}</span>
+                Trạng thái hiện tại: <span className="font-semibold">{APPOINTMENT_STATUS_COLORS[appointment.status].text}</span>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               {/* Status Selection - Only show valid next statuses */}
               <div>
-                <Label>New Status <span className="text-red-500">*</span></Label>
+                <Label>Trạng thái mới <span className="text-red-500">*</span></Label>
                 <div className="mt-2 space-y-2">
                   {appointment && getValidNextStatuses(appointment.status).map((status) => {
                     const color = APPOINTMENT_STATUS_COLORS[status];
@@ -1272,7 +1272,7 @@ export default function AdminAppointmentDetailPage() {
                   })}
                   {appointment && getValidNextStatuses(appointment.status).length === 0 && (
                     <p className="text-sm text-muted-foreground py-2">
-                      No valid status transitions available. This appointment is in a terminal state.
+                      Không có chuyển trạng thái hợp lệ nào. Lịch hẹn này đang ở trạng thái cuối cùng.
                     </p>
                   )}
                 </div>
@@ -1302,12 +1302,12 @@ export default function AdminAppointmentDetailPage() {
 
               {/* Notes */}
               <div>
-                <Label htmlFor="statusNotes">Notes (Optional)</Label>
+                <Label htmlFor="statusNotes">Ghi chú (Tùy chọn)</Label>
                 <Textarea
                   id="statusNotes"
                   value={statusUpdateNotes}
                   onChange={(e) => setStatusUpdateNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder="Thêm bất kỳ ghi chú bổ sung nào..."
                   className="mt-1"
                   rows={3}
                 />
@@ -1338,12 +1338,12 @@ export default function AdminAppointmentDetailPage() {
                 {updating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Updating...
+                    Đang cập nhật...
                   </>
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Update Status
+                    Cập nhật trạng thái
                   </>
                 )}
               </Button>
@@ -1368,9 +1368,9 @@ export default function AdminAppointmentDetailPage() {
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Delay Appointment</DialogTitle>
+              <DialogTitle>Hoãn lịch hẹn</DialogTitle>
               <DialogDescription>
-                Move this appointment to a later time. Current start time: <span className="font-semibold">{formatDateTime(appointment.appointmentStartTime)}</span>
+                Di chuyển lịch hẹn này sang thời gian muộn hơn. Thời gian bắt đầu hiện tại: <span className="font-semibold">{formatDateTime(appointment.appointmentStartTime)}</span>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1378,7 +1378,7 @@ export default function AdminAppointmentDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="delayDate">
-                    New Date <span className="text-red-500">*</span>
+                    Ngày mới <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="delayDate"
@@ -1391,18 +1391,18 @@ export default function AdminAppointmentDetailPage() {
                 </div>
                 <div>
                   <Label htmlFor="delayTime">
-                    New Time <span className="text-red-500">*</span>
+                    Thời gian mới <span className="text-red-500">*</span>
                   </Label>
                   <TimePicker value={delayTime} onChange={setDelayTime} />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be after the current start time. Time slots are in 15-minute intervals.
+                Phải sau thời gian bắt đầu hiện tại. Các khung giờ cách nhau 15 phút.
               </p>
 
               {/* Reason Code */}
               <div>
-                <Label htmlFor="delayReason">Reason Code (Optional)</Label>
+                <Label htmlFor="delayReason">Mã lý do (Tùy chọn)</Label>
                 <Select
                   value={delayReason || '__NONE__'}
                   onValueChange={(value) => setDelayReason(value === '__NONE__' ? '' : (value as AppointmentReasonCode || ''))}
@@ -1411,7 +1411,7 @@ export default function AdminAppointmentDetailPage() {
                     <SelectValue placeholder="Chọn lý do (tùy chọn)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__NONE__">None</SelectItem>
+                    <SelectItem value="__NONE__">Không có</SelectItem>
                     {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
                       <SelectItem key={code} value={code}>
                         {label}
@@ -1423,12 +1423,12 @@ export default function AdminAppointmentDetailPage() {
 
               {/* Notes */}
               <div>
-                <Label htmlFor="delayNotes">Notes (Optional)</Label>
+                <Label htmlFor="delayNotes">Ghi chú (Tùy chọn)</Label>
                 <Textarea
                   id="delayNotes"
                   value={delayNotes}
                   onChange={(e) => setDelayNotes(e.target.value)}
-                  placeholder="Add any additional notes..."
+                  placeholder="Thêm bất kỳ ghi chú bổ sung nào..."
                   className="mt-1"
                   rows={3}
                 />
@@ -1442,7 +1442,7 @@ export default function AdminAppointmentDetailPage() {
                 }}
                 disabled={delaying}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleDelay}
@@ -1460,12 +1460,12 @@ export default function AdminAppointmentDetailPage() {
                 {delaying ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Delaying...
+                    Đang hoãn...
                   </>
                 ) : (
                   <>
                     <Clock className="h-4 w-4 mr-2" />
-                    Delay Appointment
+                    Hoãn lịch hẹn
                   </>
                 )}
               </Button>

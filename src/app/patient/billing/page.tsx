@@ -31,7 +31,7 @@ const bills = [
     dueDate: '2024-02-15',
     amount: 150.00,
     status: 'paid',
-    description: 'General consultation and examination',
+    description: 'General constion and check-up',
     doctor: 'Dr. Nguyen Van A',
     department: 'General Medicine',
     paymentMethod: 'Credit Card',
@@ -44,7 +44,7 @@ const bills = [
     dueDate: '2024-02-20',
     amount: 75.50,
     status: 'pending',
-    description: 'Dental cleaning and checkup',
+    description: 'Dental cleaning and up',
     doctor: 'Dr. Le Thi B',
     department: 'Dentistry',
     paymentMethod: null,
@@ -57,7 +57,7 @@ const bills = [
     dueDate: '2024-02-25',
     amount: 300.00,
     status: 'overdue',
-    description: 'Blood tests and laboratory work',
+    description: 'Blood tets and laboratory work',
     doctor: 'Dr. Tran Van C',
     department: 'Laboratory',
     paymentMethod: null,
@@ -96,10 +96,10 @@ const paymentMethods = [
 ];
 
 const statusColors = {
-  paid: 'default',
-  pending: 'secondary',
-  overdue: 'destructive',
-  cancelled: 'outline'
+  paid: 'default' as const,
+  pending: 'secondary' as const,
+  overdue: 'destructive' as const,
+  cancelled: 'outline' as  const
 };
 
 export default function UserBilling() {
@@ -116,7 +116,7 @@ export default function UserBilling() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
         return <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-green-600" />;
@@ -142,12 +142,12 @@ export default function UserBilling() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Billing & Payments</h1>
-          <p className="text-muted-foreground">Manage your medical bills and payments</p>
+          <h1 className="text-3xl font-bold">Hóa đơn & Thanh toán</h1>
+          <p className="text-muted-foreground">Quản lý hóa đơn y tế và thanh toán của bạn</p>
         </div>
         <Button onClick={() => setShowPaymentModal(true)}>
           <FontAwesomeIcon icon={faPlus} className="mr-2 h-4 w-4" />
-          Make Payment
+          Thanh toán
         </Button>
       </div>
 
@@ -157,7 +157,7 @@ export default function UserBilling() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Outstanding Balance</p>
+                <p className="text-sm font-medium text-muted-foreground">Số dư chưa thanh toán</p>
                 <p className="text-2xl font-bold text-red-600">${totalOutstanding.toFixed(2)}</p>
               </div>
               <FontAwesomeIcon icon={faExclamationTriangle} className="h-8 w-8 text-red-600" />
@@ -169,7 +169,7 @@ export default function UserBilling() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
+                <p className="text-sm font-medium text-muted-foreground">Tổng đã thanh toán</p>
                 <p className="text-2xl font-bold text-green-600">${totalPaid.toFixed(2)}</p>
               </div>
               <FontAwesomeIcon icon={faCheckCircle} className="h-8 w-8 text-green-600" />
@@ -181,7 +181,7 @@ export default function UserBilling() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Payment Methods</p>
+                <p className="text-sm font-medium text-muted-foreground">Phương thức thanh toán</p>
                 <p className="text-2xl font-bold">{paymentMethods.length}</p>
               </div>
               <FontAwesomeIcon icon={faCreditCard} className="h-8 w-8 text-primary" />
@@ -211,28 +211,28 @@ export default function UserBilling() {
                 onClick={() => setStatusFilter('all')}
                 size="sm"
               >
-                All
+                Tất cả
               </Button>
               <Button
                 variant={statusFilter === 'pending' ? 'default' : 'outline'}
                 onClick={() => setStatusFilter('pending')}
                 size="sm"
               >
-                Pending
+                Đang chờ xử lý
               </Button>
               <Button
                 variant={statusFilter === 'overdue' ? 'default' : 'outline'}
                 onClick={() => setStatusFilter('overdue')}
                 size="sm"
               >
-                Overdue
+                Quá hạn
               </Button>
               <Button
                 variant={statusFilter === 'paid' ? 'default' : 'outline'}
                 onClick={() => setStatusFilter('paid')}
                 size="sm"
               >
-                Paid
+                Đã thanh toán
               </Button>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function UserBilling() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(bill.status)}
-                    <Badge variant={statusColors[bill.status]}>
+                    <Badge variant={statusColors[bill.status as keyof typeof statusColors]}>
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </Badge>
                   </div>
@@ -275,7 +275,7 @@ export default function UserBilling() {
                     </Button>
                     {bill.status !== 'paid' && (
                       <Button size="sm">
-                        Pay Now
+                        Thanh toán ngay
                       </Button>
                     )}
                   </div>
@@ -285,15 +285,15 @@ export default function UserBilling() {
               <div className="mt-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Doctor</p>
+                    <p className="text-muted-foreground">Bác sĩ</p>
                     <p>{bill.doctor}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Department</p>
+                    <p className="text-muted-foreground">Phòng ban</p>
                     <p>{bill.department}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Date</p>
+                    <p className="text-muted-foreground">Ngày</p>
                     <p>{bill.date}</p>
                   </div>
                 </div>
@@ -344,11 +344,11 @@ export default function UserBilling() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Amount</label>
+                  <label className="text-sm font-medium">Số tiền</label>
                   <Input placeholder="$0.00" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Payment Method</label>
+                  <label className="text-sm font-medium">Phương thức thanh toán</label>
                   <select className="w-full p-2 border rounded-md">
                     {paymentMethods.map((method) => (
                       <option key={method.id} value={method.id}>
@@ -358,7 +358,7 @@ export default function UserBilling() {
                   </select>
                 </div>
                 <Button className="w-full">
-                  Process Payment
+                  Xử lý thanh toán
                 </Button>
               </div>
             </CardContent>

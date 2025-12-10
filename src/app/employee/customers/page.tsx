@@ -111,7 +111,7 @@ const generateMockData = () => {
       serviceName: 'Teeth Cleaning',
       serviceCode: 'S001',
       rating: 5,
-      reviewText: 'Excellent service! Very professional and gentle.',
+      reviewText: 'Excellent sevice! Very professional and gentle.',
       createdAt: '2025-10-20T10:30:00Z',
       sentiment: 'POSITIVE',
     },

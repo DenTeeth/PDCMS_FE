@@ -404,7 +404,7 @@ export default function PatientAppointmentDetailPage() {
             </TabsTrigger>
             <TabsTrigger value="clinical-record">
               <Stethoscope className="h-4 w-4 mr-2" />
-              Clinical Record
+              Hồ Sơ Lâm Sàng
             </TabsTrigger>
             <TabsTrigger value="treatment-plan">
               <ClipboardList className="h-4 w-4 mr-2" />

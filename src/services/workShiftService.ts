@@ -44,9 +44,7 @@ export const workShiftService = {
       // @ts-ignore - Type assertion for wrapped response
       return response.data.data || [];
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error fetching work shifts:', error);
-      }
+      // Silently return empty array on error (e.g., 403)
       return [];
     }
   },

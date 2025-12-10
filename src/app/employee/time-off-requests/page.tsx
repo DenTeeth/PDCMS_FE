@@ -104,13 +104,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
     const employeeIdNum = Number(user.employeeId);
     if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(' Invalid employeeId:');
-        console.error('  Raw value:', user.employeeId);
-        console.error('  Parsed value:', employeeIdNum);
-        console.error('  Type:', typeof user.employeeId);
-        console.error('Full user object:', user);
-      }
+      // Skip loading balances if employeeId is not a valid number
       return;
     }
 

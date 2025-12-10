@@ -276,13 +276,7 @@ class ShiftRegistrationService {
 
       return slots;
     } catch (error: any) {
-      console.error(' [shiftRegistrationService.getAvailableSlots] API Error:', {
-        error,
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      // Silently handle API errors
       throw error;
     }
   }
