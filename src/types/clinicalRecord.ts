@@ -154,7 +154,6 @@ export type ToothCondition =
   | 'FILLED'
   | 'CROWN'
   | 'ROOT_CANAL'
-  | 'EXTRACTED'
   | 'MISSING'
   | 'IMPLANT'
   | 'FRACTURED'

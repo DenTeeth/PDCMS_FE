@@ -73,6 +73,21 @@ class PatientService {
   }
 
   /**
+   * Get current patient profile (for logged-in patient)
+   * GET /api/v1/patients/me/profile
+   * @returns Patient details for current user
+   */
+  async getCurrentPatientProfile(): Promise<Patient> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get(`${this.endpoint}/me/profile`);
+    
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return response.data;
+  }
+
+  /**
    * Create a new patient (with or without account)
    * If email provided → BE automatically creates account with PENDING_VERIFICATION status
    * If not → simple patient record (cannot login)

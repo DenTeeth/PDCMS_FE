@@ -24,6 +24,8 @@ import {
     AppointmentDetailDTO,
     UpdateAppointmentStatusRequest,
     DelayAppointmentRequest,
+    ValidateConstraintsRequest,
+    ValidateConstraintsResponse,
 } from '@/types/appointment';
 
 const APPOINTMENT_BASE_URL = '/appointments';
@@ -382,5 +384,52 @@ export const appointmentService = {
             serviceCode: criteria.serviceCode,
             searchCode: criteria.searchCode, // NEW: Combined search
         };
+    },
+
+    // ============================================================================
+    // BE_4: Appointment Constraint Validation
+    // ============================================================================
+
+    /**
+     * Validate appointment constraints before booking
+     * POST /api/appointments/validate-constraints
+     * 
+     * Checks:
+     * - Service minimum preparation days
+     * - Recovery days from previous services
+     * - Spacing days between same services
+     * - Max appointments per day
+     * - Holiday conflicts
+     * - Past date validation
+     * - Patient booking block status
+     * 
+     * @param request - Patient code, service code, and proposed date
+     * @returns Validation result with detailed error/warning messages
+     */
+    validateConstraints: async (request: ValidateConstraintsRequest): Promise<ValidateConstraintsResponse> => {
+        try {
+            const response = await api.post<ValidateConstraintsResponse>(
+                `${APPOINTMENT_BASE_URL}/validate-constraints`,
+                request
+            );
+            return response.data;
+        } catch (error: any) {
+            // Handle validation errors from BE
+            if (error.response?.data) {
+                return error.response.data;
+            }
+            
+            // Fallback error response
+            return {
+                isValid: false,
+                errors: [{
+                    constraintType: 'UNKNOWN' as any,
+                    field: 'general',
+                    message: 'Failed to validate constraints',
+                    messageVi: 'Không thể kiểm tra ràng buộc. Vui lòng thử lại.',
+                }],
+                warnings: [],
+            };
+        }
     },
 };

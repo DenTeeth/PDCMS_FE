@@ -273,7 +273,7 @@ export default function PatientTreatmentPlansPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Lộ trình Điều trị Của Tôi</h1>
+            <h1 className="text-3xl font-bold">Lộ trình điều trị của tôi</h1>
             <p className="text-muted-foreground mt-1">
               Xem và theo dõi tiến độ các lộ trình điều trị của bạn
             </p>

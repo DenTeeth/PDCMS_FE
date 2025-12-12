@@ -29,7 +29,7 @@ export default function ProgressSummary({ progress }: ProgressSummaryProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <FileCheck className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Tiến độ Giai đoạn</h3>
+          <h3 className="font-semibold">Tiến độ giai đoạn</h3>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -49,7 +49,7 @@ export default function ProgressSummary({ progress }: ProgressSummaryProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Tiến độ Hạng mục</h3>
+          <h3 className="font-semibold">Tiến độ hạng mục</h3>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">

@@ -2,83 +2,62 @@
  * Patient Booking Block Reason Types & Utilities
  * 
  * Updated: Dec 10, 2025
- * BE refactored booking block system - removed isBlacklisted, unified into isBookingBlocked
+ * BE consolidated from 10 to 5 reasons based on FE feedback
+ * Matches BE enum: BookingBlockReason.java exactly
  */
 
 /**
- * Booking Block Reason Enum (Simplified)
- * Maps to BE enum: BookingBlockReason
+ * Booking Block Reason Enum (Consolidated - 5 values)
+ * Matches BE enum: BookingBlockReason
  * 
- * Note: BE has 10 values, but we only show 5 most common reasons in UI
+ * BR-005: Automatic temporary block after 3 consecutive no-shows
+ * BR-043: Automatic blacklist after 3 appointment cancellations within 30 days
+ * BR-044: Manual blacklist by staff for serious violations
  */
 export enum BookingBlockReason {
-  // Temporary Block (Can be auto-unblocked)
+  // ===== TEMPORARY BLOCKS (BR-005) =====
+  /** 🟠 BR-005: Patient has 3 consecutive no-shows - Can be auto-unblocked */
   EXCESSIVE_NO_SHOWS = 'EXCESSIVE_NO_SHOWS',
   
-  // Permanent Blacklist (Requires manager approval to unblock)
-  PAYMENT_ISSUES = 'DEBT_DEFAULT', // Maps to DEBT_DEFAULT
-  STAFF_ABUSE = 'STAFF_ABUSE', // Includes DISRUPTIVE_BEHAVIOR
-  POLICY_VIOLATION = 'POLICY_VIOLATION', // Includes EXCESSIVE_CANCELLATIONS
-  OTHER_SERIOUS = 'OTHER_SERIOUS' // Catch-all for rare cases
+  // ===== PERMANENT BLACKLIST =====
+  /** 🔴 Payment issues: debt default, refuses to pay, payment disputes */
+  PAYMENT_ISSUES = 'PAYMENT_ISSUES',
+  
+  /** 🔴 Staff abuse: verbal/physical abuse, harassment, disruptive behavior */
+  STAFF_ABUSE = 'STAFF_ABUSE',
+  
+  /** 🔴 Policy violations: excessive cancellations, repeated rule violations (BR-043) */
+  POLICY_VIOLATION = 'POLICY_VIOLATION',
+  
+  /** 🔴 Other serious reasons: property damage, intoxication, frivolous lawsuits, etc. */
+  OTHER_SERIOUS = 'OTHER_SERIOUS'
 }
 
-// Full BE enum mapping (for backward compatibility)
-export const BE_BOOKING_BLOCK_REASONS = {
-  EXCESSIVE_NO_SHOWS: 'EXCESSIVE_NO_SHOWS',
-  EXCESSIVE_CANCELLATIONS: 'EXCESSIVE_CANCELLATIONS',
-  STAFF_ABUSE: 'STAFF_ABUSE',
-  DEBT_DEFAULT: 'DEBT_DEFAULT',
-  FRIVOLOUS_LAWSUIT: 'FRIVOLOUS_LAWSUIT',
-  PROPERTY_DAMAGE: 'PROPERTY_DAMAGE',
-  INTOXICATION: 'INTOXICATION',
-  DISRUPTIVE_BEHAVIOR: 'DISRUPTIVE_BEHAVIOR',
-  POLICY_VIOLATION: 'POLICY_VIOLATION',
-  OTHER_SERIOUS: 'OTHER_SERIOUS'
-} as const;
+/**
+ * All BE enum values match FE enum values now (consolidated to 5)
+ * Old BE values (10 reasons) have been consolidated into these 5 categories
+ */
 
 /**
- * Vietnamese labels for booking block reasons (Simplified - 5 reasons)
+ * Vietnamese labels for booking block reasons (Matches BE exactly)
  */
 export const BOOKING_BLOCK_REASON_LABELS: Record<string, string> = {
-  // Frontend enum (5 values)
   [BookingBlockReason.EXCESSIVE_NO_SHOWS]: 'Bỏ hẹn quá nhiều',
   [BookingBlockReason.PAYMENT_ISSUES]: 'Vấn đề thanh toán',
   [BookingBlockReason.STAFF_ABUSE]: 'Bạo lực/Quấy rối nhân viên',
   [BookingBlockReason.POLICY_VIOLATION]: 'Vi phạm quy định',
-  [BookingBlockReason.OTHER_SERIOUS]: 'Vi phạm nghiêm trọng khác',
-  
-  // BE enum mapping (for received data)
-  'EXCESSIVE_NO_SHOWS': 'Bỏ hẹn quá nhiều',
-  'EXCESSIVE_CANCELLATIONS': 'Hủy hẹn quá nhiều',
-  'STAFF_ABUSE': 'Bạo lực với nhân viên',
-  'DEBT_DEFAULT': 'Nợ chi phí điều trị',
-  'FRIVOLOUS_LAWSUIT': 'Kiện tụng vô căn cứ',
-  'PROPERTY_DAMAGE': 'Phá hoại tài sản',
-  'INTOXICATION': 'Say xỉn',
-  'DISRUPTIVE_BEHAVIOR': 'Gây rối',
-  'POLICY_VIOLATION': 'Vi phạm quy định',
-  'OTHER_SERIOUS': 'Vi phạm nghiêm trọng khác'
+  [BookingBlockReason.OTHER_SERIOUS]: 'Lý do nghiêm trọng khác',
 };
 
 /**
  * Permanent blacklist reasons (requires manager to unblock)
- * Includes all BE reasons except EXCESSIVE_NO_SHOWS
+ * All reasons except EXCESSIVE_NO_SHOWS
  */
 export const PERMANENT_BLACKLIST_REASONS = [
   BookingBlockReason.PAYMENT_ISSUES,
   BookingBlockReason.STAFF_ABUSE,
   BookingBlockReason.POLICY_VIOLATION,
   BookingBlockReason.OTHER_SERIOUS,
-  // BE values
-  'EXCESSIVE_CANCELLATIONS',
-  'STAFF_ABUSE',
-  'DEBT_DEFAULT',
-  'FRIVOLOUS_LAWSUIT',
-  'PROPERTY_DAMAGE',
-  'INTOXICATION',
-  'DISRUPTIVE_BEHAVIOR',
-  'POLICY_VIOLATION',
-  'OTHER_SERIOUS'
 ];
 
 /**
@@ -153,38 +132,38 @@ export function getBlockStatusDisplay(patient: {
 }
 
 /**
- * Dropdown options for booking block reason selector (SIMPLIFIED - 5 options)
+ * Dropdown options for booking block reason selector (5 options - matches BE)
  */
 export const BOOKING_BLOCK_REASON_OPTIONS = [
   { 
-    value: 'EXCESSIVE_NO_SHOWS', 
+    value: BookingBlockReason.EXCESSIVE_NO_SHOWS, 
     label: '🟠 Bỏ hẹn quá nhiều', 
     temporary: true,
     description: 'Tạm chặn - Tự động mở khóa khi bệnh nhân đến khám'
   },
   { 
-    value: 'DEBT_DEFAULT', 
+    value: BookingBlockReason.PAYMENT_ISSUES, 
     label: '🔴 Vấn đề thanh toán', 
     temporary: false,
-    description: 'Nợ chi phí điều trị'
+    description: 'Nợ chi phí, từ chối thanh toán, tranh chấp thanh toán'
   },
   { 
-    value: 'STAFF_ABUSE', 
+    value: BookingBlockReason.STAFF_ABUSE, 
     label: '🔴 Bạo lực/Quấy rối nhân viên', 
     temporary: false,
-    description: 'Có hành vi bạo lực, quấy rối hoặc gây rối'
+    description: 'Bạo lực, quấy rối, gây rối với nhân viên'
   },
   { 
-    value: 'POLICY_VIOLATION', 
+    value: BookingBlockReason.POLICY_VIOLATION, 
     label: '🔴 Vi phạm quy định', 
     temporary: false,
-    description: 'Hủy hẹn liên tục, vi phạm quy định phòng khám'
+    description: 'Hủy hẹn quá nhiều, vi phạm quy định phòng khám lặp lại'
   },
   { 
-    value: 'OTHER_SERIOUS', 
-    label: '🔴 Vi phạm nghiêm trọng khác', 
+    value: BookingBlockReason.OTHER_SERIOUS, 
+    label: '🔴 Lý do nghiêm trọng khác', 
     temporary: false,
-    description: 'Các vi phạm nghiêm trọng khác'
+    description: 'Phá hoại tài sản, say xỉn, kiện tụng vô căn cứ, v.v.'
   }
 ];
 

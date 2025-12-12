@@ -27,6 +27,7 @@ import {
 import { inventoryService } from '@/services/inventoryService';
 import { storageService, StorageTransaction } from '@/services/storageService';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { toast } from 'sonner';
 
 type ReportType = 'inventory' | 'transactions' | 'expiring';
 type TimeRange = '7days' | '30days' | '90days' | 'custom';
@@ -35,6 +36,7 @@ export default function WarehouseReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>('inventory');
   const [timeRange, setTimeRange] = useState<TimeRange>('30days');
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | 'COLD' | 'NORMAL'>('ALL');
+  const [exportingReport, setExportingReport] = useState(false);
 
   // Fetch inventory summary for reports
   const { data: inventorySummary, isLoading: inventoryLoading, error: inventoryError } = useQuery({
@@ -130,6 +132,82 @@ export default function WarehouseReportsPage() {
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
   };
 
+  // Export Excel handler (Issue #50)
+  const handleExportExcel = async () => {
+    setExportingReport(true);
+    try {
+      let blob: Blob;
+      let filename: string;
+      const today = new Date().toISOString().split('T')[0];
+
+      switch (activeReport) {
+        case 'inventory':
+          blob = await inventoryService.exportInventorySummary({
+            warehouseType: warehouseFilter !== 'ALL' ? warehouseFilter : undefined,
+          });
+          filename = `bao-cao-ton-kho-${today}.xlsx`;
+          break;
+
+        case 'transactions':
+          // Calculate date range from timeRange
+          const now = new Date();
+          let startDate: Date;
+          switch (timeRange) {
+            case '7days':
+              startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              break;
+            case '30days':
+              startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              break;
+            case '90days':
+              startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+              break;
+            default:
+              startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          }
+
+          blob = await storageService.exportTransactionHistory({
+            fromDate: startDate.toISOString().split('T')[0],
+            toDate: now.toISOString().split('T')[0],
+          });
+          filename = `bao-cao-giao-dich-${today}.xlsx`;
+          break;
+
+        case 'expiring':
+          blob = await inventoryService.exportExpiringAlerts({
+            days: 30,
+            warehouseType: warehouseFilter !== 'ALL' ? warehouseFilter : undefined,
+          });
+          filename = `bao-cao-sap-het-han-${today}.xlsx`;
+          break;
+
+        default:
+          throw new Error('Unknown report type');
+      }
+
+      // Download the file
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      toast.success('Xuất file Excel thành công!', {
+        description: `File ${filename} đã được tải xuống.`,
+      });
+    } catch (error: any) {
+      console.error('❌ Export error:', error);
+      toast.error('Xuất file thất bài', {
+        description: error.message || 'Vui lòng thử lại sau.',
+      });
+    } finally {
+      setExportingReport(false);
+    }
+  };
+
   const inventoryItems = Array.isArray(inventorySummary) 
     ? inventorySummary 
     : (inventorySummary as any)?.content || [];
@@ -140,7 +218,7 @@ export default function WarehouseReportsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Báo Cáo & Thống Kê Kho</h1>
+            <h1 className="text-3xl font-bold">Báo cáo & thốngff kê kho</h1>
             <p className="text-slate-600 mt-1">Phân tích chi tiết về tồn kho, giao dịch và cảnh báo</p>
           </div>
           <div className="flex gap-2">
@@ -185,20 +263,30 @@ export default function WarehouseReportsPage() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Báo Cáo Tồn Kho Chi Tiết</CardTitle>
-                  <Select value={warehouseFilter} onValueChange={(v) => setWarehouseFilter(v as any)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Tất cả kho</SelectItem>
-                      <SelectItem value="COLD">
-                        <FontAwesomeIcon icon={faSnowflake} className="mr-2" />
-                        Kho lạnh
-                      </SelectItem>
-                      <SelectItem value="NORMAL">Kho thường</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <CardTitle>Báo cáo tồn kho chi tiết</CardTitle>
+                  <div className="flex gap-2">
+                    <Select value={warehouseFilter} onValueChange={(v) => setWarehouseFilter(v as any)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Tất cả kho</SelectItem>
+                        <SelectItem value="COLD">
+                          <FontAwesomeIcon icon={faSnowflake} className="mr-2" />
+                          Kho lạnh
+                        </SelectItem>
+                        <SelectItem value="NORMAL">Kho thường</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleExportExcel} 
+                      variant="outline"
+                      disabled={exportingReport || inventoryLoading}
+                    >
+                      <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+                      {exportingReport ? 'Đang xuất...' : 'Xuất Excel'}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -216,12 +304,12 @@ export default function WarehouseReportsPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4">Mã Vật Tư</th>
-                          <th className="text-left py-3 px-4">Tên Vật Tư</th>
-                          <th className="text-center py-3 px-4">Loại Kho</th>
-                          <th className="text-right py-3 px-4">Tồn Kho</th>
+                          <th className="text-left py-3 px-4">Mã vật tư</th>
+                          <th className="text-left py-3 px-4">Tên vật tư</th>
+                          <th className="text-center py-3 px-4">Loại kho</th>
+                          <th className="text-right py-3 px-4">Tồn kho</th>
                           <th className="text-right py-3 px-4">Min/Max</th>
-                          <th className="text-center py-3 px-4">Trạng Thái</th>
+                          <th className="text-center py-3 px-4">Trạng thái</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -263,13 +351,23 @@ export default function WarehouseReportsPage() {
 
           {/* Transactions Report */}
           <TabsContent value="transactions" className="space-y-4">
+            <div className="flex justify-end mb-4">
+              <Button 
+                onClick={handleExportExcel} 
+                variant="outline"
+                disabled={exportingReport || transactionsLoading}
+              >
+                <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+                {exportingReport ? 'Đang xuất...' : 'Xuất Excel'}
+              </Button>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Import Transactions */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faClipboard} className="h-5 w-5 text-blue-500" />
-                    Phiếu Nhập Kho
+                    Phiếu nhập kho
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -336,7 +434,7 @@ export default function WarehouseReportsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faClipboard} className="h-5 w-5 text-orange-500" />
-                    Phiếu Xuất Kho
+                    Phiếu xuất kho
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -404,10 +502,20 @@ export default function WarehouseReportsPage() {
           <TabsContent value="expiring" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-red-500" />
-                  Danh Sách Vật Tư Sắp Hết Hạn
-                </CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-red-500" />
+                    Danh sách vật tư sắp hết hạn
+                  </CardTitle>
+                  <Button 
+                    onClick={handleExportExcel} 
+                    variant="outline"
+                    disabled={exportingReport || expiringLoading}
+                  >
+                    <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
+                    {exportingReport ? 'Đang xuất...' : 'Xuất Excel'}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {expiringLoading ? (
@@ -454,13 +562,13 @@ export default function WarehouseReportsPage() {
                       <table className="w-full">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left py-3 px-4">Mã Vật Tư</th>
-                            <th className="text-left py-3 px-4">Tên Vật Tư</th>
+                            <th className="text-left py-3 px-4">Mã vật tư</th>
+                            <th className="text-left py-3 px-4">Tên vật tư</th>
                             <th className="text-left py-3 px-4">Lô</th>
-                            <th className="text-right py-3 px-4">Số Lượng</th>
-                            <th className="text-center py-3 px-4">Hạn Sử Dụng</th>
-                            <th className="text-center py-3 px-4">Còn Lại</th>
-                            <th className="text-center py-3 px-4">Trạng Thái</th>
+                            <th className="text-right py-3 px-4">Số lượng</th>
+                            <th className="text-center py-3 px-4">Hạn sử dụng</th>
+                            <th className="text-center py-3 px-4">Còn lại</th>
+                            <th className="text-center py-3 px-4">Trạng thái</th>
                           </tr>
                         </thead>
                         <tbody>

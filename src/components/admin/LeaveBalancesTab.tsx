@@ -298,7 +298,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Công Cụ Admin
+            Công cụ admin
           </Button>
         )}
       </div>
@@ -308,14 +308,14 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5 text-purple-600" />
-            Xem Số Dư Ngày Nghỉ
+            Xem số dư ngày nghỉ
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <Label>Chọn Nhân Viên</Label>
+              <Label>Chọn nhân viên</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -524,7 +524,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Điều Chỉnh Số Dư Ngày Nghỉ
+                Điều chỉnh số dư ngày nghỉ
               </Button>
             </div>
           )}
@@ -540,7 +540,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                Điều Chỉnh Phép Thủ Công
+                Điều chỉnh phép thủ công
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -552,7 +552,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="adjust-type">Loại Phép *</Label>
+                  <Label htmlFor="adjust-type">Loại phép *</Label>
                   <select
                     id="adjust-type"
                     value={adjustFormData.timeOffTypeId}
@@ -598,7 +598,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="change-amount">Số Lượng Điều Chỉnh *</Label>
+                <Label htmlFor="change-amount">Số lượng điều chỉnh *</Label>
                 <Input
                   id="change-amount"
                   type="number"
@@ -619,7 +619,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="notes">Ghi Chú *</Label>
+                <Label htmlFor="notes">Ghi chú *</Label>
                 <textarea
                   id="notes"
                   placeholder="VD: Thưởng phép năm 2025, Sửa lỗi nhập liệu..."
@@ -652,7 +652,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                   disabled={submittingAdjust}
                   className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
                 >
-                  {submittingAdjust ? 'Đang lưu...' : 'Lưu Điều Chỉnh'}
+                  {submittingAdjust ? 'Đang lưu...' : 'Lưu điều chỉnh'}
                 </Button>
               </div>
             </CardContent>
@@ -667,7 +667,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
-                Kích Hoạt Job Cộng Phép Năm Mới
+                Kích hoạt job cộng phép năm mới
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -683,7 +683,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="reset-year">Năm Áp Dụng *</Label>
+                  <Label htmlFor="reset-year">Năm áp dụng *</Label>
                   <Input
                     id="reset-year"
                     type="number"
@@ -703,7 +703,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 </div>
 
                 <div>
-                  <Label htmlFor="reset-allowance">Số Ngày Cộng Mặc Định *</Label>
+                  <Label htmlFor="reset-allowance">Số ngày cộng mặc định *</Label>
                   <Input
                     id="reset-allowance"
                     type="number"
@@ -726,7 +726,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="reset-type">Loại Phép *</Label>
+                <Label htmlFor="reset-type">Loại phép *</Label>
                 <select
                   id="reset-type"
                   value={annualResetFormData.applyToTypeId}
@@ -770,7 +770,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                       Đang xử lý...
                     </>
                   ) : (
-                    'Xác Nhận Chạy Job'
+                    'Xác nhận chạy job'
                   )}
                 </Button>
               </div>

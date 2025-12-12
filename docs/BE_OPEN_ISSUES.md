@@ -1,8 +1,8 @@
 # Backend Open Issues
 
-**Last Updated:** 2025-12-09  
-**Total Open Issues:** 7  
-**High Priority Issues:** 4 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System, Issue #49 - Price Update Triggers Status Change)  
+**Last Updated:** 2025-12-11  
+**Total Open Issues:** 9  
+**High Priority Issues:** 6 (Issue #41 - Needs Verification, Issue #43 - Remove Prerequisites, Issue #44 - Remove Work Shifts System, Issue #49 - Price Update Triggers Status Change, Issue #52 - PatientInfoResponse thiếu blocking fields, Issue #53 - Holiday Validation Missing)  
 **Medium Priority Issues:** 3 (Issue #48 - AppointmentStatusService completion check, Issue #50 - Warehouse Reports Excel Export, Issue #51 - Auto-complete plan status when loading detail)  
 **Resolved Issues:** 12 (Issue #27, #31, #32, #33, #36, #37, #38, #39, #40, #42, #47) - Removed from this document
 
@@ -13,6 +13,8 @@
 | # | Issue | Status | Priority | Reported Date | Resolved Date |
 |---|-------|--------|----------|---------------|---------------|
 | #41 | API 5.9 - Database constraint thiếu WAITING_FOR_PREREQUISITE và SKIPPED status | ⚠️ **NEEDS VERIFICATION** | **HIGH** | 2025-12-04 | - |
+| #52 | API Patient List - PatientInfoResponse thiếu blocking fields | 🔴 **OPEN** | **HIGH** | 2025-12-10 | - |
+| #53 | API 3.1 - Create Appointment không validate ngày lễ (Holiday) | 🔴 **OPEN** | **HIGH** | 2025-12-11 | - |
 | #48 | Treatment Plan Status - AppointmentStatusService không check completion nếu plan status = null | 🔴 **OPEN** | **MEDIUM** | 2025-12-09 | - |
 | #49 | API 5.13 - Update Prices trigger status change không đúng | 🔴 **OPEN** | **HIGH** | 2025-12-09 | - |
 | #43 | API 5.9 - Xóa prerequisite services khỏi seed data | 🔴 **OPEN** | **HIGH** | 2025-12-05 | - |
@@ -2352,5 +2354,1495 @@ public void autoCompletePlans() {
 3. Expected:
    - Response time tương đương trước khi thêm logic
    - Không có N+1 query issues
+
+---
+
+### Issue #52: API Patient List - PatientInfoResponse thiếu blocking fields
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **HIGH**  
+**Reported Date:** 2025-12-10  
+**Endpoint:** `GET /api/v1/patients` (Patient List API)  
+**Related Files:**
+- `docs/files_from_BE/patient/dto/response/PatientInfoResponse.java`
+- `docs/files_from_BE/patient/dto/response/PatientDetailResponse.java`
+- `docs/files_from_BE/patient/mapper/PatientMapper.java`
+
+#### Problem Description
+
+Backend đã refactor patient blacklist fields từ `isBlacklisted` sang unified system với `isBookingBlocked`, `bookingBlockReason`, `bookingBlockNotes`, `blockedBy`, `blockedAt`, `consecutiveNoShows` (theo docs/files_from_BE/BE_message.md).
+
+Tuy nhiên, **`PatientInfoResponse` DTO** **KHÔNG** có các fields này. Vấn đề nghiêm trọng là:
+1. **Patient Detail API** (`GET /api/v1/patients/{patientCode}`) trả về `PatientInfoResponse` - không có blocking fields
+2. **Patient List API** (`GET /api/v1/patients`) trả về `PatientInfoResponse[]` - không có blocking fields
+
+**Expected Behavior:**
+- ✅ Patient Detail API trả về `isBookingBlocked`, `bookingBlockReason`, và các blocking fields khác
+- ✅ Patient List API trả về `isBookingBlocked`, `bookingBlockReason`, và các blocking fields khác
+- ✅ FE có thể hiển thị block status trong detail page và list page
+- ✅ Checkbox và badge hiển thị đúng trạng thái chặn đặt lịch
+
+**Actual Behavior:**
+- ❌ `PatientInfoResponse` DTO **KHÔNG có** các blocking fields
+- ❌ `PatientMapper.toPatientInfoResponse()` **KHÔNG map** các blocking fields
+- ❌ Patient Detail API **KHÔNG trả về** `isBookingBlocked`, `bookingBlockReason`, etc.
+- ❌ Patient List API **KHÔNG trả về** `isBookingBlocked`, `bookingBlockReason`, etc.
+- ❌ FE nhận được `undefined` cho `isBookingBlocked` ở cả detail page và list page
+- ❌ UI không thể hiển thị block status
+
+**Note:**
+- `PatientDetailResponse` DTO có đầy đủ blocking fields ✅
+- `mapToPatientDetailResponse()` mapper có đầy đủ logic ✅
+- **NHƯNG:** Chỉ API `/patients/me/profile` (mobile app) dùng `PatientDetailResponse`
+- Tất cả APIs khác (detail, list, create, update) đều dùng `PatientInfoResponse` ❌
+
+#### Root Cause Analysis
+
+**1. PatientInfoResponse DTO (THIẾU FIELDS):**
+
+**File:** `patient/dto/response/PatientInfoResponse.java` (line 10-38)
+
+```java
+public class PatientInfoResponse {
+    private Integer patientId;
+    private String patientCode;
+    private String firstName;
+    private String lastName;
+    private String fullName;
+    private String email;
+    private String phone;
+    private LocalDate dateOfBirth;
+    private String address;
+    private String gender;
+    private String medicalHistory;
+    private String allergies;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+    private String guardianName;
+    private String guardianPhone;
+    private String guardianRelationship;
+    private String guardianCitizenId;
+    private Boolean isActive;  // ✅ Có field này
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    // Account-related fields
+    private Boolean hasAccount;
+    private Integer accountId;
+    private String accountStatus;
+    private Boolean isEmailVerified;
+    
+    // ❌ THIẾU: isBookingBlocked
+    // ❌ THIẾU: bookingBlockReason
+    // ❌ THIẾU: bookingBlockNotes
+    // ❌ THIẾU: blockedBy
+    // ❌ THIẾU: blockedAt
+    // ❌ THIẾU: consecutiveNoShows
+}
+```
+
+**2. PatientDetailResponse DTO (CÓ ĐẦY ĐỦ FIELDS - CORRECT):**
+
+**File:** `docs/files_from_BE/patient/dto/response/PatientDetailResponse.java`
+
+```java
+public class PatientDetailResponse {
+    // ... basic fields ...
+    
+    // ✅ HAS: Blocking fields
+    private Boolean isBookingBlocked;
+    private String bookingBlockReason;  // ENUM: BookingBlockReason
+    private String bookingBlockNotes;
+    private String blockedBy;           // Employee name
+    private LocalDateTime blockedAt;
+    private Integer consecutiveNoShows;
+}
+```
+
+**3. PatientMapper (KHÔNG MAP BLOCKING FIELDS CHO INFO RESPONSE):**
+
+**File:** `patient/mapper/PatientMapper.java`
+
+```java
+// ❌ Method: toPatientInfoResponse() - KHÔNG map blocking fields (line 21-62)
+public PatientInfoResponse toPatientInfoResponse(Patient patient) {
+    if (patient == null) {
+        return null;
+    }
+    
+    PatientInfoResponse response = new PatientInfoResponse();
+    
+    response.setPatientId(patient.getPatientId());
+    response.setPatientCode(patient.getPatientCode());
+    response.setFirstName(patient.getFirstName());
+    response.setLastName(patient.getLastName());
+    response.setFullName(patient.getFirstName() + " " + patient.getLastName());
+    response.setEmail(patient.getEmail());
+    response.setPhone(patient.getPhone());
+    response.setDateOfBirth(patient.getDateOfBirth());
+    response.setAddress(patient.getAddress());
+    response.setGender(patient.getGender() != null ? patient.getGender().name() : null);
+    response.setMedicalHistory(patient.getMedicalHistory());
+    response.setAllergies(patient.getAllergies());
+    response.setEmergencyContactName(patient.getEmergencyContactName());
+    response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
+    response.setGuardianName(patient.getGuardianName());
+    response.setGuardianPhone(patient.getGuardianPhone());
+    response.setGuardianRelationship(patient.getGuardianRelationship());
+    response.setGuardianCitizenId(patient.getGuardianCitizenId());
+    response.setIsActive(patient.getIsActive());  // ✅ Line 46: Có map isActive
+    response.setCreatedAt(patient.getCreatedAt());
+    response.setUpdatedAt(patient.getUpdatedAt());
+    
+    // ❌ KHÔNG map: isBookingBlocked
+    // ❌ KHÔNG map: bookingBlockReason
+    // ❌ KHÔNG map: bookingBlockNotes
+    // ❌ KHÔNG map: blockedBy
+    // ❌ KHÔNG map: blockedAt
+    // ❌ KHÔNG map: consecutiveNoShows
+    
+    // Map account-related fields
+    if (patient.getAccount() != null) {
+        response.setHasAccount(true);
+        response.setAccountId(patient.getAccount().getAccountId());
+        response.setAccountStatus(
+            patient.getAccount().getStatus() != null 
+                ? patient.getAccount().getStatus().name() 
+                : null);
+        response.setIsEmailVerified(patient.getAccount().getIsEmailVerified());
+    } else {
+        response.setHasAccount(false);
+    }
+    
+    return response;
+}
+```
+
+**Note:** Không có method `toPatientDetailResponse()` trong `PatientMapper` class. Method `mapToPatientDetailResponse()` nằm trong `PatientService` (line 602-646) và **CHỈ** được dùng cho API `/patients/me/profile` (mobile app).
+
+#### Suggested Fix
+
+**Step 1: Update PatientInfoResponse DTO**
+
+**File:** `patient/dto/response/PatientInfoResponse.java`
+
+```java
+public class PatientInfoResponse {
+    private String patientCode;
+    private String fullName;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private String phoneNumber;
+    private String email;
+    private String address;
+    private String profileImageUrl;
+    
+    // ✅ ADD: Blocking fields
+    private Boolean isBookingBlocked;
+    private String bookingBlockReason;  // ENUM value as String
+    private String bookingBlockNotes;
+    private String blockedBy;           // Employee name
+    private LocalDateTime blockedAt;
+    private Integer consecutiveNoShows;
+}
+```
+
+**Step 2: Update PatientMapper.toPatientInfoResponse()**
+
+**File:** `patient/mapper/PatientMapper.java` (line 21-62)
+
+```java
+public PatientInfoResponse toPatientInfoResponse(Patient patient) {
+    if (patient == null) {
+        return null;
+    }
+    
+    PatientInfoResponse response = new PatientInfoResponse();
+    
+    // ... existing mappings (line 28-48) ...
+    response.setPatientId(patient.getPatientId());
+    response.setPatientCode(patient.getPatientCode());
+    response.setFirstName(patient.getFirstName());
+    response.setLastName(patient.getLastName());
+    response.setFullName(patient.getFirstName() + " " + patient.getLastName());
+    response.setEmail(patient.getEmail());
+    response.setPhone(patient.getPhone());
+    response.setDateOfBirth(patient.getDateOfBirth());
+    response.setAddress(patient.getAddress());
+    response.setGender(patient.getGender() != null ? patient.getGender().name() : null);
+    response.setMedicalHistory(patient.getMedicalHistory());
+    response.setAllergies(patient.getAllergies());
+    response.setEmergencyContactName(patient.getEmergencyContactName());
+    response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
+    response.setGuardianName(patient.getGuardianName());
+    response.setGuardianPhone(patient.getGuardianPhone());
+    response.setGuardianRelationship(patient.getGuardianRelationship());
+    response.setGuardianCitizenId(patient.getGuardianCitizenId());
+    response.setIsActive(patient.getIsActive());
+    response.setCreatedAt(patient.getCreatedAt());
+    response.setUpdatedAt(patient.getUpdatedAt());
+    
+    // ✅ ADD: Map blocking fields (INSERT AFTER line 48)
+    response.setIsBookingBlocked(patient.getIsBookingBlocked());
+    response.setBookingBlockReason(patient.getBookingBlockReason() != null 
+        ? patient.getBookingBlockReason().name() 
+        : null);
+    response.setBookingBlockNotes(patient.getBookingBlockNotes());
+    response.setBlockedBy(patient.getBlockedBy());  // Already a String in Patient entity
+    response.setBlockedAt(patient.getBlockedAt());
+    response.setConsecutiveNoShows(patient.getConsecutiveNoShows());
+    
+    // Map account-related fields (existing code - line 51-59)
+    if (patient.getAccount() != null) {
+        response.setHasAccount(true);
+        response.setAccountId(patient.getAccount().getAccountId());
+        response.setAccountStatus(
+            patient.getAccount().getStatus() != null 
+                ? patient.getAccount().getStatus().name() 
+                : null);
+        response.setIsEmailVerified(patient.getAccount().getIsEmailVerified());
+    } else {
+        response.setHasAccount(false);
+    }
+    
+    return response;
+}
+```
+
+**Important Notes:**
+- ✅ **CHỈ CẦN** thêm fields vào DTO và mapper
+- ✅ **KHÔNG CẦN** thay đổi database schema (fields đã tồn tại trong `Patient` entity)
+- ✅ **KHÔNG CẦN** thay đổi Patient List API controller (chỉ cần DTO và mapper)
+- ✅ Giữ nguyên tất cả logic khác
+
+#### Impact
+
+- **HIGH Priority:** Block status không hiển thị trong Patient List, ảnh hưởng UX nghiêm trọng
+- Receptionist/Admin không thể nhận biết bệnh nhân bị chặn trong danh sách
+- Phải vào detail page mới thấy được block status (không tiện lợi)
+- FE đã implement UI nhưng không hoạt động vì BE không trả về data
+
+**User Impact:**
+- ❌ Không thể xem block status trong table danh sách bệnh nhân
+- ❌ Checkbox "Chặn đặt lịch" không hiển thị đúng
+- ❌ Badge "Tạm chặn" / "Chặn" không hiển thị
+- ❌ Tooltip không hiển thị lý do chặn
+
+**Business Impact:**
+- ⚠️ Risk: Receptionist có thể vô tình tạo appointment cho bệnh nhân bị chặn vì không thấy warning trong list view
+- ⚠️ Inefficiency: Phải click vào từng patient detail để check block status
+
+#### Frontend Evidence
+
+**Frontend đã implement đầy đủ UI:**
+
+**File:** `src/app/admin/accounts/users/page.tsx` (line ~600-620)
+
+```typescript
+// ✅ FE đã có logic hiển thị block status
+<div className="flex items-center gap-2">
+  <Checkbox
+    checked={patient.isBookingBlocked || false}  // ❌ Nhận được undefined từ BE
+    disabled
+    className={cn(
+      "h-5 w-5 border-2 cursor-default",
+      patient.isBookingBlocked && isTemporaryBlock(patient.bookingBlockReason)
+        ? "border-orange-500 data-[state=checked]:bg-orange-500"
+        : patient.isBookingBlocked
+        ? "border-red-500 data-[state=checked]:bg-red-500"
+        : ""
+    )}
+  />
+  {patient.isBookingBlocked && (  // ❌ Luôn false vì BE không trả về
+    <Badge variant={isTemporaryBlock(patient.bookingBlockReason) ? "warning" : "destructive"}>
+      {isTemporaryBlock(patient.bookingBlockReason) ? 'Tạm chặn' : 'Chặn'}
+    </Badge>
+  )}
+</div>
+```
+
+**Console Log Evidence:**
+
+```javascript
+// File: src/app/admin/accounts/users/page.tsx (line 130-133)
+console.log('🔍 [Patient List] First patient blocking status:', {
+  isBookingBlocked: patients[0]?.isBookingBlocked,
+  bookingBlockReason: patients[0]?.bookingBlockReason,
+  consecutiveNoShows: patients[0]?.consecutiveNoShows
+});
+
+// ❌ Output: All undefined
+// 🔍 [Patient List] First patient blocking status: {
+//   isBookingBlocked: undefined,
+//   bookingBlockReason: undefined,
+//   consecutiveNoShows: undefined
+// }
+```
+
+#### Related Files
+
+**Backend (cần sửa):**
+- `patient/dto/response/PatientInfoResponse.java` - ❌ Thiếu blocking fields
+- `patient/mapper/PatientMapper.java` - ❌ Method `toPatientInfoResponse()` không map blocking fields
+
+**Backend (reference - đã đúng):**
+- `patient/dto/response/PatientDetailResponse.java` - ✅ Có đầy đủ blocking fields
+- `patient/entity/Patient.java` - ✅ Entity có đầy đủ blocking fields
+- `patient/enums/BookingBlockReason.java` - ✅ Enum đã được định nghĩa
+
+**Frontend (đã implement, chờ BE fix):**
+- `src/app/admin/accounts/users/page.tsx` - ✅ UI đã sẵn sàng
+- `src/types/patient.ts` - ✅ Type đã có blocking fields
+- `src/types/patientBlockReason.ts` - ✅ Enum và utility functions đã có
+
+**Documentation:**
+- `docs/files_from_BE/BE_message.md` - Backend refactoring specification
+- `docs/TESTING_BLOCK_STATUS.md` - Testing guide (FE perspective)
+
+#### Test Cases
+
+**Test 1: Verify PatientInfoResponse có blocking fields**
+
+```java
+@Test
+public void testPatientInfoResponse_shouldIncludeBlockingFields() {
+    // Given: Patient bị chặn
+    Patient patient = createPatient();
+    patient.setIsBookingBlocked(true);
+    patient.setBookingBlockReason(BookingBlockReason.EXCESSIVE_NO_SHOWS);
+    patient.setBookingBlockNotes("Bỏ hẹn 3 lần liên tiếp");
+    patient.setConsecutiveNoShows(3);
+    
+    // When: Map to PatientInfoResponse
+    PatientInfoResponse response = patientMapper.toPatientInfoResponse(patient);
+    
+    // Then: Response phải có blocking fields
+    assertNotNull(response.getIsBookingBlocked());
+    assertTrue(response.getIsBookingBlocked());
+    assertEquals("EXCESSIVE_NO_SHOWS", response.getBookingBlockReason());
+    assertEquals("Bỏ hẹn 3 lần liên tiếp", response.getBookingBlockNotes());
+    assertEquals(3, response.getConsecutiveNoShows());
+}
+```
+
+**Test 2: Verify Patient List API trả về blocking fields**
+
+```bash
+# Call Patient List API
+GET /api/v1/patients?page=0&size=10
+
+# Expected Response:
+{
+  "content": [
+    {
+      "patientCode": "BN-000004",
+      "fullName": "Nguyễn Văn A",
+      "dateOfBirth": "1990-05-15",
+      "gender": "MALE",
+      "phoneNumber": "0901234567",
+      "email": "nguyenvana@example.com",
+      "address": "123 Đường ABC, Quận 1, TP.HCM",
+      "profileImageUrl": null,
+      
+      // ✅ Expected: Blocking fields
+      "isBookingBlocked": true,
+      "bookingBlockReason": "EXCESSIVE_NO_SHOWS",
+      "bookingBlockNotes": "Bỏ hẹn 3 lần liên tiếp",
+      "blockedBy": "Nguyễn Thị B",
+      "blockedAt": "2025-12-09T10:30:00",
+      "consecutiveNoShows": 3
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+
+**Test 3: Frontend Display Test**
+
+```
+1. Backend fix và deploy
+2. Open /admin/accounts/users page
+3. Expected:
+   - Checkbox "Chặn đặt lịch" hiển thị checked cho bệnh nhân bị chặn
+   - Badge "Tạm chặn" (orange) hoặc "Chặn" (red) hiển thị đúng
+   - Tooltip hiển thị lý do chặn khi hover
+   - Console log không còn undefined
+4. Verify console output:
+   🔍 [Patient List] First patient blocking status: {
+     isBookingBlocked: true,
+     bookingBlockReason: "EXCESSIVE_NO_SHOWS",
+     consecutiveNoShows: 3
+   }
+```
+
+**Test 4: Performance Test**
+
+```
+1. Load patient list với 100+ bệnh nhân
+2. Expected:
+   - Response time không tăng đáng kể (< 10% increase)
+   - Không có N+1 query issues
+   - Blocking fields được load cùng query chính
+```
+
+#### Migration Notes
+
+**Database:**
+- ✅ **KHÔNG CẦN migration** - Fields đã tồn tại trong `patients` table
+
+**Code Changes:**
+- ✅ Chỉ cần update DTO và mapper
+- ✅ Không ảnh hưởng existing APIs khác
+- ✅ Backward compatible (fields mới có thể null)
+
+**Deployment:**
+- ✅ Safe to deploy - thêm fields mới, không break existing clients
+- ✅ Frontend đã sẵn sàng handle các fields mới
+- ✅ Mobile app (nếu có) sẽ ignore fields mới (backward compatible)
+
+#### Additional Notes
+
+**Why This Happened:**
+- Backend refactor blacklist fields nhưng chỉ update `PatientDetailResponse`
+- Quên update `PatientInfoResponse` cho Patient List API
+- Mapper method `toPatientInfoResponse()` không được update
+
+**Comparison:**
+
+| Field | PatientDetailResponse | PatientInfoResponse | Status |
+|-------|----------------------|---------------------|---------|
+| `isBookingBlocked` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+| `bookingBlockReason` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+| `bookingBlockNotes` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+| `blockedBy` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+| `blockedAt` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+| `consecutiveNoShows` | ✅ Có | ❌ Thiếu | **NEED FIX** |
+
+**Related Backend Refactor:**
+- ✅ `isBlacklisted` đã được remove (deprecated)
+- ✅ `isBookingBlocked` là unified flag mới
+- ✅ `BookingBlockReason` enum đã được define với 5 values
+- ✅ `PatientDetailResponse` đã được update đầy đủ
+- ❌ `PatientInfoResponse` chưa được update (THIS ISSUE)
+
+**See Also:**
+- `docs/files_from_BE/BE_message.md` - Complete backend refactoring specification
+- Issue #49 - Related to backend status updates
+
+---
+
+### Issue #53: Holiday Validation Missing Across All Modules - Appointments, Employee Shifts, Time-Off, OT Requests
+
+**Status:** 🔴 **OPEN**  
+**Priority:** **CRITICAL**  
+**Reported Date:** 2025-12-11  
+**Updated:** 2025-12-11 (Expanded scope to all date-based modules)  
+**Affected APIs:** Multiple (Appointments, Employee Shifts, Registrations, Time-Off, OT, Leave Requests)  
+**Type:** **SYSTEM-WIDE VALIDATION BUG** (Holiday validation missing in all modules)
+
+#### Problem Description
+
+**CRITICAL ISSUE:** Hiện tại Holiday system đã được implement (API, database, frontend integration) **NHƯNG KHÔNG ĐƯỢC SỬ DỤNG** trong bất kỳ module nào của hệ thống. Holiday chỉ tồn tại như một module độc lập mà không có validation nào liên kết với nó.
+
+**Các module bị ảnh hưởng:**
+
+1. **Appointments (API 3.1, 3.7)** ❌
+   - Có thể tạo appointment vào ngày lễ
+   - Có thể reschedule appointment sang ngày lễ
+   
+2. **Employee Shifts & Registrations** ❌
+   - Part-time employees (FIXED, FLEX) có thể đăng ký ca làm việc vào ngày lễ
+   - Full-time employees có thể được assign shift vào ngày lễ
+   - Batch job tạo shifts có thể tạo shifts vào ngày lễ
+   
+3. **Time-Off Requests** ❌
+   - Có thể request time-off vào ngày lễ (không cần thiết vì đã nghỉ)
+   - Waste request approval workflow
+   
+4. **Overtime (OT) Requests** ❌
+   - Có thể request OT vào ngày lễ (phòng khám đóng cửa)
+   - Logic conflict: Không thể làm OT khi không có ca làm việc regular
+   
+5. **Leave Requests** ❌
+   - Có thể request leave vào ngày lễ
+   - Waste leave quota
+
+**Expected Behavior:**
+- ✅ Holiday system được integrate vào TẤT CẢ modules liên quan đến date
+- ✅ Backend validate tất cả date-based operations
+- ✅ Reject requests vào ngày lễ với error message rõ ràng
+- ✅ UI hiển thị holidays và block selection (FE đã có cho appointments)
+- ✅ Business logic consistency: "Phòng khám đóng cửa vào ngày lễ"
+
+**Actual Behavior:**
+- ✅ Holiday system exists (API, DB, FE integration) ✅
+- ✅ Frontend đã block holiday selection trong appointment calendar ✅
+- ❌ Backend **KHÔNG validate** holiday trong BẤT KỲ module nào ❌
+- ❌ Employee shifts có thể được tạo vào ngày lễ ❌
+- ❌ Time-off/OT/Leave requests có thể được tạo vào ngày lễ ❌
+- ❌ Holiday system isolated, không được sử dụng ❌
+
+#### Root Cause Analysis
+
+**1. Frontend Implementation (CORRECT - Already blocking):**
+
+**File:** `src/components/appointments/CreateAppointmentModal.tsx`
+
+**Frontend Logic (Lines 309-312, 1665-1705):**
+```typescript
+// ✅ Hook fetches holidays
+const { holidays, isHoliday, getHolidayName } = useHolidays({
+  year: new Date(appointmentDate || new Date()).getFullYear(),
+  enabled: open && currentStep === 2,
+});
+
+// ✅ Check if date is holiday
+const isHolidayDate = isHoliday(dateStr);
+const holidayName = getHolidayName(dateStr);
+
+// ✅ Prevent selection
+<button
+  onClick={() => {
+    if (!isPast && isCurrentMonth && !isHolidayDate) {
+      setAppointmentDate(dateStr);
+    }
+  }}
+  disabled={isPast || !isCurrentMonth || isHolidayDate}
+  title={isHolidayDate ? `Ngày lễ: ${holidayName}` : undefined}
+  className={isHolidayDate 
+    ? 'bg-red-50 text-red-600 border border-red-300 cursor-not-allowed opacity-70'
+    : '...'}
+>
+  {/* Holiday icon */}
+  {isHolidayDate && isCurrentMonth && (
+    <div className="text-[8px] mt-0.5 text-red-600">🎊</div>
+  )}
+</button>
+```
+
+**Frontend works correctly:**
+- ✅ Holiday dates shown with red background
+- ✅ Holiday dates have 🎊 icon
+- ✅ Holiday dates are disabled (cannot click)
+- ✅ Tooltip shows holiday name on hover
+
+**2. Backend Implementation (MISSING - No validation):**
+
+**File:** `files_from_BE/booking_appointment/service/AppointmentCreationService.java` (estimated)
+
+**Current Validation (NO holiday check):**
+```java
+@Transactional
+public Appointment createAppointment(CreateAppointmentRequest request) {
+    // STEP 1: Validate basic fields
+    validateBasicFields(request); // ✅ Exists
+    
+    // STEP 2: Validate patient exists
+    Patient patient = validatePatient(request.getPatientCode()); // ✅ Exists
+    
+    // STEP 3: Validate employee availability
+    validateEmployeeAvailability(request.getEmployeeCode(), request.getAppointmentDate()); // ✅ Exists
+    
+    // STEP 4: Validate services
+    List<Service> services = validateServices(request.getServiceCodes()); // ✅ Exists
+    
+    // STEP 5: Validate room availability
+    validateRoomAvailability(request.getRoomId(), request.getAppointmentDate()); // ✅ Exists
+    
+    // ❌ MISSING: Validate appointment date is NOT a holiday
+    // validateNotHoliday(request.getAppointmentDate());
+    
+    // STEP 6: Create appointment
+    Appointment appointment = buildAppointment(request);
+    return appointmentRepository.save(appointment);
+}
+```
+
+**Vấn đề:**
+- Backend có các validation khác (employee availability, room availability)
+- **NHƯNG không có validation cho holiday**
+- API sẽ accept appointment vào ngày lễ nếu các validation khác pass
+
+**3. Holiday Service (EXISTS - Can be used for validation):**
+
+**File:** `files_from_BE/holiday/service/HolidayService.java` (từ BE_4)
+
+```java
+// ✅ Service đã tồn tại
+public class HolidayService {
+    /**
+     * Check if a date is a holiday
+     * GET /api/holidays/check?date=YYYY-MM-DD
+     */
+    public HolidayCheckResponse checkHoliday(LocalDate date) {
+        // ... implementation exists
+        return new HolidayCheckResponse(date, isHoliday, holidayName);
+    }
+}
+```
+
+**Holiday service đã có:**
+- ✅ Method `checkHoliday(LocalDate date)` exists
+- ✅ Returns `HolidayCheckResponse` with `isHoliday` boolean
+- ✅ Can be injected into ALL services that handle dates
+
+**4. Employee Shifts System (MISSING - No holiday validation):**
+
+**Affected Components:**
+- Employee shift creation (manual, batch job)
+- Employee shift registration (part-time employees)
+- Fixed shift registration (recurring shifts)
+- Flex shift slot booking
+
+**Current Behavior:**
+```java
+// ❌ NO holiday check in any of these:
+- POST /api/v1/employee-shifts (Create shift manually)
+- POST /api/v1/registrations (Register for shift - part-time)
+- POST /api/v1/fixed-registrations (Register fixed recurring shifts)
+- POST /api/v1/part-time-slots/register (Book flex slot)
+- Batch jobs tạo shifts tự động
+```
+
+**Vấn đề:**
+- Part-time employees (FIXED, FLEX) có thể đăng ký làm việc vào ngày lễ
+- Full-time employees có thể được assign shift vào ngày lễ
+- Batch job tạo shifts cho tháng mới có thể tạo shifts vào ngày lễ
+- Không consistent với business rule "phòng khám đóng cửa vào ngày lễ"
+
+**5. Time-Off/OT/Leave Requests (MISSING - No holiday validation):**
+
+**Affected APIs:**
+- Time-off requests: `POST /api/v1/time-off-requests`
+- OT requests: `POST /api/v1/overtime-requests`
+- Leave requests: `POST /api/v1/leave-requests`
+- Annual leave: `POST /api/v1/annual-leave-requests`
+
+**Current Behavior:**
+```java
+// ❌ NO holiday check in any request types
+@Transactional
+public TimeOffRequest createTimeOffRequest(CreateTimeOffRequest request) {
+    // Validate employee exists ✅
+    // Validate date range valid ✅
+    // Validate no conflict with existing requests ✅
+    
+    // ❌ MISSING: Validate dates are NOT holidays
+    // → Employee có thể request time-off vào ngày lễ (waste request)
+}
+```
+
+**Vấn đề:**
+- Employees waste requests vào ngày đã nghỉ lễ
+- Approval workflow unnecessary cho ngày lễ
+- OT không thể exist vào ngày lễ (logic conflict)
+- Leave quota bị waste cho ngày lễ
+
+#### Suggested Fix
+
+**APPROACH: Create Reusable Holiday Validation Component**
+
+**Step 1: Create Shared Holiday Validator**
+
+**File:** `common/validation/HolidayValidator.java` (NEW)
+
+```java
+package com.dental.clinic.management.common.validation;
+
+import com.dental.clinic.management.holiday.service.HolidayService;
+import com.dental.clinic.management.holiday.dto.HolidayCheckResponse;
+import com.dental.clinic.management.common.exception.BadRequestAlertException;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * Reusable validator for holiday validation across all modules
+ * Prevents operations on holidays (appointments, shifts, requests, etc.)
+ */
+@Component
+public class HolidayValidator {
+    
+    @Autowired
+    private HolidayService holidayService;
+    
+    private static final DateTimeFormatter DATE_FORMATTER = 
+        DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    
+    /**
+     * Validate single date is NOT a holiday
+     * @param date Date to validate
+     * @param entityName Entity name for error message (e.g., "Appointment", "Employee Shift")
+     * @throws BadRequestAlertException if date is a holiday
+     */
+    public void validateNotHoliday(LocalDate date, String entityName) {
+        HolidayCheckResponse check = holidayService.checkHoliday(date);
+        
+        if (check.isHoliday()) {
+            String formattedDate = date.format(DATE_FORMATTER);
+            String errorMessage = String.format(
+                "Không thể tạo %s vào ngày lễ: %s (%s)",
+                entityName,
+                check.getHolidayName(),
+                formattedDate
+            );
+            
+            throw new BadRequestAlertException(
+                errorMessage,
+                entityName,
+                "DATE_IS_HOLIDAY"
+            );
+        }
+    }
+    
+    /**
+     * Validate date range does NOT contain any holidays
+     * @param startDate Start date of range
+     * @param endDate End date of range
+     * @param entityName Entity name for error message
+     * @throws BadRequestAlertException if any date in range is a holiday
+     */
+    public void validateRangeNotIncludeHolidays(
+        LocalDate startDate, 
+        LocalDate endDate, 
+        String entityName) {
+        
+        List<HolidayCheckResponse> holidays = 
+            holidayService.getHolidaysInRange(startDate, endDate);
+        
+        if (!holidays.isEmpty()) {
+            String holidayList = holidays.stream()
+                .map(h -> h.getHolidayName() + " (" + 
+                    h.getDate().format(DATE_FORMATTER) + ")")
+                .collect(Collectors.joining(", "));
+            
+            String errorMessage = String.format(
+                "Không thể tạo %s trong khoảng thời gian có ngày lễ: %s",
+                entityName,
+                holidayList
+            );
+            
+            throw new BadRequestAlertException(
+                errorMessage,
+                entityName,
+                "RANGE_INCLUDES_HOLIDAYS"
+            );
+        }
+    }
+    
+    /**
+     * Check if date is holiday (non-throwing version)
+     * @param date Date to check
+     * @return true if date is a holiday
+     */
+    public boolean isHoliday(LocalDate date) {
+        return holidayService.checkHoliday(date).isHoliday();
+    }
+    
+    /**
+     * Filter out holidays from a list of dates
+     * @param dates List of dates to filter
+     * @return List of dates excluding holidays
+     */
+    public List<LocalDate> filterOutHolidays(List<LocalDate> dates) {
+        return dates.stream()
+            .filter(date -> !isHoliday(date))
+            .collect(Collectors.toList());
+    }
+}
+```
+
+**Step 2: Integrate into Appointment Service**
+
+**File:** `booking_appointment/service/AppointmentCreationService.java`
+
+```java
+@Service
+public class AppointmentCreationService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator; // ✅ Inject shared validator
+    
+    @Transactional
+    public Appointment createAppointment(CreateAppointmentRequest request) {
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate appointment date is NOT a holiday
+        holidayValidator.validateNotHoliday(request.getAppointmentDate(), "lịch hẹn");
+        
+        // ... rest of creation logic ...
+    }
+}
+```
+
+**Step 3: Integrate into Appointment Reschedule Service**
+
+**File:** `booking_appointment/service/AppointmentRescheduleService.java`
+
+```java
+@Service
+public class AppointmentRescheduleService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    @Transactional
+    public RescheduleAppointmentResponse rescheduleAppointment(
+        String oldAppointmentCode,
+        RescheduleAppointmentRequest request) {
+        
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate new appointment date is NOT a holiday
+        holidayValidator.validateNotHoliday(request.getNewAppointmentDate(), "lịch hẹn");
+        
+        // ... rest of reschedule logic ...
+    }
+}
+```
+
+**Step 4: Integrate into Employee Shift Services**
+
+**File:** `working_schedule/service/EmployeeShiftService.java`
+
+```java
+@Service
+public class EmployeeShiftService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    /**
+     * Create employee shift (manual)
+     */
+    @Transactional
+    public EmployeeShift createEmployeeShift(CreateEmployeeShiftRequest request) {
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate work date is NOT a holiday
+        holidayValidator.validateNotHoliday(request.getWorkDate(), "ca làm việc");
+        
+        // ... rest of creation logic ...
+    }
+    
+    /**
+     * Batch create shifts for month
+     * Called by scheduled job
+     */
+    @Transactional
+    public List<EmployeeShift> createShiftsForMonth(int year, int month) {
+        // Generate all dates for month
+        List<LocalDate> allDates = generateDatesForMonth(year, month);
+        
+        // ✅ NEW: Filter out holidays
+        List<LocalDate> workingDates = holidayValidator.filterOutHolidays(allDates);
+        
+        log.info("Creating shifts for {}/{}: {} working days (excluded {} holidays)",
+            month, year, workingDates.size(), allDates.size() - workingDates.size());
+        
+        // Create shifts only for working days
+        return createShiftsForDates(workingDates);
+    }
+}
+```
+
+**File:** `working_schedule/service/EmployeeShiftRegistrationService.java`
+
+```java
+@Service
+public class EmployeeShiftRegistrationService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    /**
+     * Register for shift (part-time employees)
+     */
+    @Transactional
+    public EmployeeShiftRegistration registerForShift(
+        RegisterForShiftRequest request) {
+        
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate work date is NOT a holiday
+        holidayValidator.validateNotHoliday(request.getWorkDate(), "đăng ký ca làm việc");
+        
+        // ... rest of registration logic ...
+    }
+}
+```
+
+**File:** `working_schedule/service/FixedShiftRegistrationService.java`
+
+```java
+@Service
+public class FixedShiftRegistrationService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    /**
+     * Create fixed recurring shift registration
+     */
+    @Transactional
+    public FixedShiftRegistration createFixedRegistration(
+        CreateFixedRegistrationRequest request) {
+        
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate start/end dates don't include holidays
+        // Note: This is for information only, actual shift instances
+        // will be filtered when generated
+        List<LocalDate> registrationDates = generateDatesFromFixedRegistration(request);
+        List<LocalDate> holidays = registrationDates.stream()
+            .filter(holidayValidator::isHoliday)
+            .collect(Collectors.toList());
+        
+        if (!holidays.isEmpty()) {
+            log.warn("Fixed registration includes {} holidays, these dates will be skipped: {}",
+                holidays.size(), holidays);
+        }
+        
+        // ... rest of creation logic ...
+    }
+    
+    /**
+     * Generate actual shift instances from fixed registration
+     */
+    public List<EmployeeShift> generateShiftInstances(
+        FixedShiftRegistration registration) {
+        
+        List<LocalDate> allDates = generateDatesFromFixedRegistration(registration);
+        
+        // ✅ Filter out holidays
+        List<LocalDate> workingDates = holidayValidator.filterOutHolidays(allDates);
+        
+        return createShiftsForDates(workingDates, registration);
+    }
+}
+```
+
+**Step 5: Integrate into Time-Off/OT/Leave Request Services**
+
+**File:** `requests/service/TimeOffRequestService.java`
+
+```java
+@Service
+public class TimeOffRequestService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    @Transactional
+    public TimeOffRequest createTimeOffRequest(CreateTimeOffRequest request) {
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate dates are NOT holidays (waste of request)
+        holidayValidator.validateRangeNotIncludeHolidays(
+            request.getStartDate(), 
+            request.getEndDate(), 
+            "nghỉ phép"
+        );
+        
+        // ... rest of creation logic ...
+    }
+}
+```
+
+**File:** `requests/service/OvertimeRequestService.java`
+
+```java
+@Service
+public class OvertimeRequestService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    @Transactional
+    public OvertimeRequest createOvertimeRequest(CreateOvertimeRequest request) {
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate OT date is NOT a holiday
+        // Logic: Cannot work OT when clinic is closed
+        holidayValidator.validateNotHoliday(request.getOvertimeDate(), "làm thêm giờ");
+        
+        // ... rest of creation logic ...
+    }
+}
+```
+
+**File:** `requests/service/LeaveRequestService.java`
+
+```java
+@Service
+public class LeaveRequestService {
+    
+    @Autowired
+    private HolidayValidator holidayValidator;
+    
+    @Transactional
+    public LeaveRequest createLeaveRequest(CreateLeaveRequest request) {
+        // ... existing validations ...
+        
+        // ✅ NEW: Validate leave dates don't include holidays
+        holidayValidator.validateRangeNotIncludeHolidays(
+            request.getStartDate(), 
+            request.getEndDate(), 
+            "đơn nghỉ phép"
+        );
+        
+        // ... rest of creation logic ...
+    }
+}
+```
+
+**Step 6: Update HolidayService to support range queries**
+
+**File:** `holiday/service/HolidayService.java`
+
+**Expected Error Response:**
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Không thể tạo lịch hẹn vào ngày lễ: Tết Nguyên Đán (01/01/2025)",
+  "instance": "/api/v1/appointments",
+  "errorKey": "APPOINTMENT_DATE_IS_HOLIDAY",
+  "params": {
+    "appointmentDate": "2025-01-01",
+    "holidayName": "Tết Nguyên Đán"
+  }
+}
+```
+
+#### Impact
+
+**Security Risk:**
+- **CRITICAL Priority:** Backend không validate → có thể bypass frontend ở NHIỀU modules
+- Attacker có thể dùng API trực tiếp để:
+  - Tạo appointment vào ngày lễ
+  - Đăng ký ca làm việc vào ngày lễ
+  - Tạo OT request vào ngày lễ (logic conflict)
+  - Tạo time-off/leave requests vào ngày lễ (waste quota)
+- Frontend validation chỉ là UI convenience, không phải security control
+
+**Data Integrity:**
+- ❌ Appointments vào ngày lễ có thể tồn tại trong database
+- ❌ Employee shifts vào ngày lễ có thể được tạo (manual, batch job, registration)
+- ❌ OT requests vào ngày lễ có thể được approve (logic conflict: không có ca regular)
+- ❌ Time-off/Leave requests waste quota cho ngày đã nghỉ lễ
+- ❌ Fixed shift registrations tạo recurring shifts bao gồm cả ngày lễ
+- ⚠️ Phòng khám đóng cửa vào ngày lễ → tất cả operations không thể hoàn thành
+- ⚠️ Gây confusion cho staff và patients
+
+**User Experience:**
+- ❌ Frontend block (chỉ có appointments) nhưng backend accept tất cả → inconsistency
+- ❌ Employees có thể đăng ký làm việc vào ngày lễ (không có UI blocking)
+- ❌ Batch jobs tạo shifts vào ngày lễ → phải manually delete
+- ❌ Time-off/OT requests vào ngày lễ → waste approval workflow
+- ❌ Không có server-side protection ở bất kỳ module nào
+
+**Business Impact:**
+- ⚠️ **Appointments:** Staff phải manually cancel appointments vào ngày lễ
+- ⚠️ **Employee Shifts:** HR phải manually delete shifts vào ngày lễ
+- ⚠️ **OT Requests:** Managers waste time approving OT không thể thực hiện
+- ⚠️ **Leave Requests:** Employees waste leave quota cho ngày đã nghỉ lễ
+- ⚠️ **Payroll:** Complexity tính lương khi có shifts vào ngày lễ
+- ⚠️ Patients confusion khi appointment bị cancel
+- ⚠️ Waste resources (time, communication, approval workflow)
+
+**System-Wide Issue:**
+- 🔴 Holiday system exists nhưng **KHÔNG ĐƯỢC SỬ DỤNG** ở bất kỳ đâu
+- 🔴 Tất cả date-based operations lack holiday validation
+- 🔴 Inconsistent business logic: "Phòng khám đóng cửa vào ngày lễ" không được enforce
+
+#### Frontend Evidence
+
+**Frontend đã implement correctly:**
+
+**File:** `docs/HOLIDAY_FEATURE_SUMMARY.md` (Full documentation)
+
+**Features:**
+- ✅ `useHolidays` hook fetches holidays from BE
+- ✅ Calendar shows holidays with red background + 🎊 icon
+- ✅ Holiday dates are disabled (cannot select)
+- ✅ Tooltip shows holiday name on hover
+- ✅ Legend explains holiday indicator
+
+**But:**
+- ❌ Frontend validation có thể bypass (API call trực tiếp)
+- ❌ Cần backend validation để đảm bảo data integrity
+
+#### Test Cases
+
+**Test 1: Appointment Creation on Holiday**
+
+```bash
+POST /api/v1/appointments
+{
+  "appointmentDate": "2025-01-01",  # Tết Dương lịch
+  "patientCode": "P-000001",
+  "employeeCode": "EMP-DOC-001",
+  ...
+}
+
+Expected (After Fix): 400 Bad Request
+{
+  "status": 400,
+  "detail": "Không thể tạo lịch hẹn vào ngày lễ: Tết Dương lịch (01/01/2025)",
+  "errorKey": "DATE_IS_HOLIDAY"
+}
+
+Actual (Before Fix): 201 Created ❌
+```
+
+**Test 2: Employee Shift Creation on Holiday**
+
+```bash
+POST /api/v1/employee-shifts
+{
+  "employeeId": 1,
+  "workDate": "2025-01-01",  # Tết Dương lịch
+  "workShiftId": "MORNING",
+  ...
+}
+
+Expected (After Fix): 400 Bad Request
+{
+  "status": 400,
+  "detail": "Không thể tạo ca làm việc vào ngày lễ: Tết Dương lịch (01/01/2025)",
+  "errorKey": "DATE_IS_HOLIDAY"
+}
+
+Actual (Before Fix): 201 Created ❌
+```
+
+**Test 3: Employee Shift Registration on Holiday (Part-time)**
+
+```bash
+POST /api/v1/registrations
+{
+  "employeeId": 5,  # Part-time employee
+  "workDate": "2025-01-01",
+  "workShiftId": "MORNING",
+  ...
+}
+
+Expected (After Fix): 400 Bad Request
+Actual (Before Fix): 201 Created ❌
+```
+
+**Test 4: OT Request on Holiday**
+
+```bash
+POST /api/v1/overtime-requests
+{
+  "employeeId": 1,
+  "overtimeDate": "2025-01-01",  # Tết Dương lịch
+  "hours": 4,
+  ...
+}
+
+Expected (After Fix): 400 Bad Request
+{
+  "status": 400,
+  "detail": "Không thể tạo làm thêm giờ vào ngày lễ: Tết Dương lịch (01/01/2025)",
+  "errorKey": "DATE_IS_HOLIDAY"
+}
+
+Actual (Before Fix): 201 Created ❌
+```
+
+**Test 5: Time-Off Request Including Holidays**
+
+```bash
+POST /api/v1/time-off-requests
+{
+  "employeeId": 1,
+  "startDate": "2024-12-30",
+  "endDate": "2025-01-03",  # Includes 01/01 (Tết Dương lịch)
+  ...
+}
+
+Expected (After Fix): 400 Bad Request
+{
+  "status": 400,
+  "detail": "Không thể tạo nghỉ phép trong khoảng thời gian có ngày lễ: Tết Dương lịch (01/01/2025)",
+  "errorKey": "RANGE_INCLUDES_HOLIDAYS"
+}
+
+Actual (Before Fix): 201 Created ❌
+```
+
+**Test 6: Batch Job Creating Shifts for Month**
+
+```bash
+# Scheduled job runs: Create shifts for January 2025
+Expected (After Fix):
+- Shifts created for all non-holiday dates
+- Holidays (01/01) skipped
+- Log: "Creating shifts for 1/2025: 30 working days (excluded 1 holidays)"
+
+Actual (Before Fix):
+- Shifts created for ALL dates including 01/01 ❌
+- Staff phải manually delete shifts vào ngày lễ ❌
+```
+
+**Test 7: Fixed Shift Registration (Recurring)**
+
+```bash
+POST /api/v1/fixed-registrations
+{
+  "employeeId": 5,  # Part-time
+  "workShiftId": "MORNING",
+  "daysOfWeek": ["MONDAY", "WEDNESDAY", "FRIDAY"],
+  "startDate": "2024-12-01",
+  "endDate": "2025-03-31"
+}
+
+Expected (After Fix):
+- Registration created
+- When generating actual shift instances:
+  - Filter out holidays
+  - Log warning about holidays
+  - Only create shifts for non-holiday dates
+
+Actual (Before Fix):
+- Shift instances created for ALL dates including holidays ❌
+```
+
+**Test 8: Frontend Still Works (Appointments)**
+
+```
+1. Open CreateAppointmentModal
+2. Try to click on holiday date (01/01/2025)
+3. Expected:
+   - Date is disabled (cannot click) ✅
+   - Shows red background ✅
+   - Shows 🎊 icon ✅
+   - Tooltip shows "Ngày lễ: Tết Dương lịch" ✅
+4. If user bypasses UI:
+   - Backend rejects with 400 ✅ (after fix)
+   - Frontend shows error toast ✅
+```
+
+**Test 9: Performance Test**
+
+```
+1. Create 100 appointments/shifts (various dates, some holidays)
+2. Expected:
+   - Holiday validation adds < 10ms per request
+   - No N+1 query issues
+   - Holiday cache works correctly (1 query per year)
+   - Batch operations use filterOutHolidays (efficient)
+```
+
+**Test 10: Multiple Modules Integration**
+
+```
+1. Create appointment on 2025-01-02 ✅ (working day)
+2. Try appointment on 2025-01-01 → 400 ❌ (holiday)
+3. Create shift on 2025-01-02 ✅
+4. Try shift on 2025-01-01 → 400 ❌
+5. Create OT on 2025-01-02 ✅
+6. Try OT on 2025-01-01 → 400 ❌
+7. Verify all validations consistent ✅
+```
+
+#### Related Files
+
+**Backend (cần tạo mới):**
+- `common/validation/HolidayValidator.java` - ✅ **NEW** - Shared validator component
+
+**Backend (cần sửa - Appointments):**
+- `booking_appointment/service/AppointmentCreationService.java` - Inject HolidayValidator
+- `booking_appointment/service/AppointmentRescheduleService.java` - Inject HolidayValidator
+
+**Backend (cần sửa - Employee Shifts):**
+- `working_schedule/service/EmployeeShiftService.java` - Add validation + filter holidays in batch
+- `working_schedule/service/EmployeeShiftRegistrationService.java` - Add validation
+- `working_schedule/service/FixedShiftRegistrationService.java` - Filter holidays when generating instances
+- `working_schedule/service/PartTimeSlotService.java` - Add validation (if applicable)
+
+**Backend (cần sửa - Requests):**
+- `requests/service/TimeOffRequestService.java` - Validate range
+- `requests/service/OvertimeRequestService.java` - Validate single date
+- `requests/service/LeaveRequestService.java` - Validate range
+- `requests/service/AnnualLeaveRequestService.java` - Validate range (if separate)
+
+**Backend (cần sửa - Batch Jobs):**
+- `scheduled/ShiftGenerationJob.java` - Filter holidays when generating monthly shifts
+- Any other batch jobs creating date-based entities
+
+**Backend (reference - đã có):**
+- `holiday/service/HolidayService.java` - ✅ Service exists
+- `holiday/controller/HolidayController.java` - ✅ API exists
+- `holiday/repository/HolidayRepository.java` - ✅ Repository exists
+- `holiday/domain/Holiday.java` - ✅ Entity exists
+
+**Frontend (đã implement cho appointments):**
+- `src/components/appointments/CreateAppointmentModal.tsx` - ✅ UI blocking works
+- `src/hooks/useHolidays.ts` - ✅ Hook works correctly
+- `src/services/holidayService.ts` - ✅ Service exists
+- `src/types/holiday.ts` - ✅ Types defined
+- `docs/HOLIDAY_FEATURE_SUMMARY.md` - ✅ Full documentation
+
+**Frontend (cần implement cho các module khác):**
+- Employee shift registration UI - ❌ Cần thêm holiday blocking
+- OT request UI - ❌ Cần thêm holiday blocking
+- Time-off request UI - ❌ Cần thêm holiday blocking
+- Leave request UI - ❌ Cần thêm holiday blocking
+
+**Documentation:**
+- `docs/files_from_BE/1.BE_4_FE_INTEGRATION_GUIDE.md` - Holiday API specification
+- `docs/BE_4_HOLIDAY_HIGHLIGHTING_SUMMARY.md` - Frontend implementation for appointments
+- `docs/BE_4_IMPLEMENTATION_SUMMARY.md` - Overall BE_4 summary
+
+#### Performance Considerations
+
+**Holiday Check Overhead:**
+- Holiday service should cache holidays in memory
+- Check is just a Map lookup → O(1) complexity
+- Minimal overhead (< 5ms per request)
+
+**Optimization (if needed):**
+```java
+@Service
+public class HolidayService {
+    
+    // ✅ Cache holidays in memory
+    @Cacheable("holidays-year")
+    public List<Holiday> getHolidaysForYear(int year) {
+        // ... fetch from database
+    }
+    
+    // ✅ Fast check using cached data
+    public boolean isHoliday(LocalDate date) {
+        int year = date.getYear();
+        List<Holiday> yearHolidays = getHolidaysForYear(year);
+        return yearHolidays.stream()
+            .anyMatch(h -> h.getDate().equals(date));
+    }
+}
+```
+
+#### Additional Notes
+
+**Why This is CRITICAL:**
+
+1. **Security:** Frontend validation là UI convenience, không phải security control
+   - Attackers có thể bypass frontend và gọi API trực tiếp
+   - Tất cả date-based operations phải validate ở backend
+
+2. **Defense in Depth:** Backend MUST validate tất cả business rules
+   - Holiday validation missing ở TẤT CẢ modules
+   - Tạo ra system-wide vulnerability
+
+3. **Data Integrity:** Prevent invalid data vào database
+   - Appointments, shifts, requests vào ngày lễ = invalid data
+   - Ảnh hưởng đến payroll, scheduling, reporting
+
+4. **Business Logic Consistency:** "Phòng khám đóng cửa vào ngày lễ"
+   - Rule này phải enforce ở backend
+   - Hiện tại: Holiday system exists nhưng KHÔNG được sử dụng
+
+5. **Resource Waste:**
+   - Staff/HR waste time deleting invalid shifts
+   - Managers waste time approving invalid OT requests
+   - Employees waste leave quota cho ngày đã nghỉ lễ
+
+**Affected Modules Summary:**
+
+| Module | APIs Affected | Current Status | Impact |
+|--------|---------------|----------------|--------|
+| **Appointments** | Create, Reschedule | ❌ No validation | HIGH - Can book on holidays |
+| **Employee Shifts** | Create, Batch job | ❌ No validation | HIGH - Shifts on holidays |
+| **Shift Registration** | Register, Fixed | ❌ No validation | HIGH - Part-time can register |
+| **OT Requests** | Create | ❌ No validation | MEDIUM - Logic conflict |
+| **Time-Off Requests** | Create | ❌ No validation | LOW - Waste request |
+| **Leave Requests** | Create | ❌ No validation | LOW - Waste quota |
+
+**Implementation Priority:**
+
+1. **Phase 1 (CRITICAL):**
+   - ✅ Create `HolidayValidator` component
+   - ✅ Integrate into `AppointmentCreationService`
+   - ✅ Integrate into `AppointmentRescheduleService`
+   - ✅ Integrate into `EmployeeShiftService`
+
+2. **Phase 2 (HIGH):**
+   - ✅ Integrate into `EmployeeShiftRegistrationService`
+   - ✅ Integrate into `FixedShiftRegistrationService`
+   - ✅ Update batch jobs to filter holidays
+
+3. **Phase 3 (MEDIUM):**
+   - ✅ Integrate into `OvertimeRequestService`
+   - ✅ Integrate into `TimeOffRequestService`
+   - ✅ Integrate into `LeaveRequestService`
+
+4. **Phase 4 (Frontend):**
+   - Add holiday blocking UI to shift registration
+   - Add holiday blocking UI to OT/time-off/leave requests
+   - Extend `useHolidays` hook usage to other modules
+
+**Best Practice:**
+
+```
+Layer 1: UI Validation (Frontend)
+  → User convenience, immediate feedback
+  → Holiday blocking in calendars/date pickers
+  → Status: ✅ Implemented for appointments only
+
+Layer 2: API Validation (Backend) ✅ MUST HAVE
+  → Security, data integrity, business rules
+  → Status: ❌ NOT IMPLEMENTED (THIS ISSUE)
+
+Layer 3: Database Constraints
+  → Last line of defense
+  → Status: ❓ Not applicable for holiday validation
+```
+
+**Migration Notes:**
+
+- ✅ **Safe to add:** Không break existing data
+- ✅ **Backward compatible:** Only affects NEW creations
+- ✅ Existing entities vào ngày lễ (nếu có) không bị ảnh hưởng
+- ⚠️ **Batch jobs:** Cần update để filter holidays
+- ⚠️ **Frontend:** Cần extend holiday UI to other modules
+
+**Rollout Strategy:**
+
+1. **Week 1:** Implement `HolidayValidator` + Appointments
+2. **Week 2:** Employee Shifts + Batch jobs
+3. **Week 3:** Requests (OT, Time-off, Leave)
+4. **Week 4:** Frontend UI for other modules
+5. **Week 5:** Testing + Documentation
+
+**Future Enhancements:**
+
+1. **Admin Override:**
+   - Add permission `OVERRIDE_HOLIDAY_VALIDATION`
+   - Allow special cases (emergency appointments, on-call shifts)
+   - Log all overrides for audit
+
+2. **Smart Suggestions:**
+   - API suggests next available working day when holiday selected
+   - Batch jobs log holidays skipped with counts
+
+3. **Bulk Validation:**
+   - Add endpoint `/api/holidays/validate-range`
+   - Frontend can check multiple dates efficiently
+
+4. **Security Monitoring:**
+   - Log all holiday validation failures
+   - Alert if too many bypass attempts (security concern)
+
+5. **Holiday Calendar View:**
+   - Admin UI to view all holidays for year
+   - Show impact (how many operations would be blocked)
 
 ---

@@ -138,7 +138,7 @@ export default function PatientTreatmentPlanTrackingPage() {
               Quay lại
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Theo dõi Lộ trình Điều trị</h1>
+              <h1 className="text-3xl font-bold">Theo dõi lộ trình điều trị</h1>
               <p className="text-muted-foreground mt-1">
                 Xem tiến độ và chi tiết các lộ trình điều trị của bạn
               </p>

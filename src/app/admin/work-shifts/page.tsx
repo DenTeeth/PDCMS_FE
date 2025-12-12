@@ -412,14 +412,14 @@ export default function WorkShiftsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý Ca Làm</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý ca làm</h1>
           <p className="text-sm text-gray-600 mt-1">Xem và quản lý ca làm việc của nhân viên</p>
         </div>
 
         {/* Create Button */}
         <Button onClick={openCreateModal} className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white">
           <Plus className="h-4 w-4 mr-2" />
-          Tạo Ca Làm
+          Tạo ca làm
         </Button>
       </div>
 

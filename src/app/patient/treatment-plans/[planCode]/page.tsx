@@ -242,7 +242,7 @@ export default function PatientTreatmentPlanDetailPage() {
               Quay lại
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Chi tiết Lộ trình Điều trị</h1>
+              <h1 className="text-3xl font-bold">Chi tiết lộ trình điều trị</h1>
               <p className="text-muted-foreground mt-1">
                 Xem thông tin chi tiết và tiến độ điều trị
               </p>

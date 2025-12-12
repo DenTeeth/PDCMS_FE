@@ -141,7 +141,7 @@ export default function TreatmentPlanList({
   const columns: OptimizedTableColumn<TreatmentPlanSummaryDTO>[] = useMemo(() => [
     {
       key: 'planName',
-      header: 'Tên Lộ trình',
+      header: 'Tên lộ trình',
       accessor: (plan) => (
         <div>
           <div className="font-medium">{plan.planName}</div>

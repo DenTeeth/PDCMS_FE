@@ -60,6 +60,11 @@ interface ServiceFormData {
   price: number;
   specializationId?: number;
   displayOrder?: number; // Display order
+  // BE_4: Appointment Constraints
+  minimumPreparationDays?: number;
+  recoveryDays?: number;
+  spacingDays?: number;
+  maxAppointmentsPerDay?: number;
   isActive: boolean;
 }
 
@@ -102,6 +107,11 @@ export default function BookingServicesPage() {
     price: 0,
     specializationId: undefined,
     displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
+    // BE_4: Appointment Constraints
+    minimumPreparationDays: undefined,
+    recoveryDays: undefined,
+    spacingDays: undefined,
+    maxAppointmentsPerDay: undefined,
     isActive: true,
   });
 
@@ -114,6 +124,11 @@ export default function BookingServicesPage() {
     price: 0,
     specializationId: undefined,
     displayOrder: 1, // Default to 1 (required by backend NOT NULL constraint)
+    // BE_4: Appointment Constraints
+    minimumPreparationDays: undefined,
+    recoveryDays: undefined,
+    spacingDays: undefined,
+    maxAppointmentsPerDay: undefined,
     isActive: true,
   });
 
@@ -347,6 +362,11 @@ export default function BookingServicesPage() {
         price: createForm.price,
         specializationId: createForm.specializationId || undefined,
         displayOrder: finalDisplayOrder, // Always send a number (required by backend)
+        // BE_4: Appointment Constraints
+        minimumPreparationDays: createForm.minimumPreparationDays || undefined,
+        recoveryDays: createForm.recoveryDays || undefined,
+        spacingDays: createForm.spacingDays || undefined,
+        maxAppointmentsPerDay: createForm.maxAppointmentsPerDay || undefined,
         isActive: createForm.isActive,
       };
 
@@ -364,6 +384,11 @@ export default function BookingServicesPage() {
         price: 0,
         specializationId: undefined,
         displayOrder: 1, // Reset to default 1
+        // BE_4: Appointment Constraints
+        minimumPreparationDays: undefined,
+        recoveryDays: undefined,
+        spacingDays: undefined,
+        maxAppointmentsPerDay: undefined,
         isActive: true,
       });
 
@@ -457,6 +482,11 @@ export default function BookingServicesPage() {
         price: updateForm.price,
         specializationId: updateForm.specializationId || undefined,
         displayOrder: finalDisplayOrder, // Always send a number (required by backend)
+        // BE_4: Appointment Constraints
+        minimumPreparationDays: updateForm.minimumPreparationDays || undefined,
+        recoveryDays: updateForm.recoveryDays || undefined,
+        spacingDays: updateForm.spacingDays || undefined,
+        maxAppointmentsPerDay: updateForm.maxAppointmentsPerDay || undefined,
         isActive: updateForm.isActive,
       };
 
@@ -550,6 +580,11 @@ export default function BookingServicesPage() {
       price: service.price,
       specializationId: service.specializationId,
       displayOrder: service.displayOrder,
+      // BE_4: Appointment Constraints
+      minimumPreparationDays: service.minimumPreparationDays,
+      recoveryDays: service.recoveryDays,
+      spacingDays: service.spacingDays,
+      maxAppointmentsPerDay: service.maxAppointmentsPerDay,
       isActive: service.isActive,
     });
     setShowUpdateModal(true);
@@ -1019,6 +1054,62 @@ export default function BookingServicesPage() {
                   </p>
                 </div>
               </div>
+
+              {/* BE_4: Appointment Constraints */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="create-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
+                    <Input
+                      id="create-minimumPreparationDays"
+                      type="number"
+                      min="0"
+                      value={createForm.minimumPreparationDays || ''}
+                      onChange={(e) => setCreateForm({ ...createForm, minimumPreparationDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 7"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số ngày tối thiểu trước khi dịch vụ có thể thực hiện</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="create-recoveryDays">Thời gian hồi phục (ngày)</Label>
+                    <Input
+                      id="create-recoveryDays"
+                      type="number"
+                      min="0"
+                      value={createForm.recoveryDays || ''}
+                      onChange={(e) => setCreateForm({ ...createForm, recoveryDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 3"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số ngày cần nghỉ sau khi hoàn thành dịch vụ</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="create-spacingDays">Khoảng cách tối thiểu (ngày)</Label>
+                    <Input
+                      id="create-spacingDays"
+                      type="number"
+                      min="0"
+                      value={createForm.spacingDays || ''}
+                      onChange={(e) => setCreateForm({ ...createForm, spacingDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 14"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Khoảng cách tối thiểu giữa các lần thực hiện cùng dịch vụ</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="create-maxAppointmentsPerDay">Giới hạn lịch/ngày</Label>
+                    <Input
+                      id="create-maxAppointmentsPerDay"
+                      type="number"
+                      min="1"
+                      value={createForm.maxAppointmentsPerDay || ''}
+                      onChange={(e) => setCreateForm({ ...createForm, maxAppointmentsPerDay: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số lượng lịch hẹn tối đa cho dịch vụ này mỗi ngày</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -1178,6 +1269,62 @@ export default function BookingServicesPage() {
                   </p>
                 </div>
               </div>
+
+              {/* BE_4: Appointment Constraints */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="update-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
+                    <Input
+                      id="update-minimumPreparationDays"
+                      type="number"
+                      min="0"
+                      value={updateForm.minimumPreparationDays || ''}
+                      onChange={(e) => setUpdateForm({ ...updateForm, minimumPreparationDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 7"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số ngày tối thiểu trước khi dịch vụ có thể thực hiện</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="update-recoveryDays">Thời gian hồi phục (ngày)</Label>
+                    <Input
+                      id="update-recoveryDays"
+                      type="number"
+                      min="0"
+                      value={updateForm.recoveryDays || ''}
+                      onChange={(e) => setUpdateForm({ ...updateForm, recoveryDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 3"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số ngày cần nghỉ sau khi hoàn thành dịch vụ</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="update-spacingDays">Khoảng cách tối thiểu (ngày)</Label>
+                    <Input
+                      id="update-spacingDays"
+                      type="number"
+                      min="0"
+                      value={updateForm.spacingDays || ''}
+                      onChange={(e) => setUpdateForm({ ...updateForm, spacingDays: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 14"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Khoảng cách tối thiểu giữa các lần thực hiện cùng dịch vụ</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="update-maxAppointmentsPerDay">Giới hạn lịch/ngày</Label>
+                    <Input
+                      id="update-maxAppointmentsPerDay"
+                      type="number"
+                      min="1"
+                      value={updateForm.maxAppointmentsPerDay || ''}
+                      onChange={(e) => setUpdateForm({ ...updateForm, maxAppointmentsPerDay: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Ví dụ: 5"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Số lượng lịch hẹn tối đa cho dịch vụ này mỗi ngày</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -1279,6 +1426,39 @@ export default function BookingServicesPage() {
                     </p>
                   </div>
                 </div>
+                {/* BE_4: Appointment Constraints */}
+                {(selectedService.minimumPreparationDays || selectedService.recoveryDays || selectedService.spacingDays || selectedService.maxAppointmentsPerDay) && (
+                  <div className="border-t pt-4">
+                    <Label className="text-base font-semibold mb-3 block">Ràng buộc lịch hẹn (BE_4)</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedService.minimumPreparationDays && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Thời gian chuẩn bị tối thiểu</Label>
+                          <p className="text-sm font-medium">{selectedService.minimumPreparationDays} ngày</p>
+                        </div>
+                      )}
+                      {selectedService.recoveryDays && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Thời gian hồi phục</Label>
+                          <p className="text-sm font-medium">{selectedService.recoveryDays} ngày</p>
+                        </div>
+                      )}
+                      {selectedService.spacingDays && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Khoảng cách tối thiểu</Label>
+                          <p className="text-sm font-medium">{selectedService.spacingDays} ngày</p>
+                        </div>
+                      )}
+                      {selectedService.maxAppointmentsPerDay && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Giới hạn lịch/ngày</Label>
+                          <p className="text-sm font-medium">{selectedService.maxAppointmentsPerDay} lịch hẹn</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Trạng thái</Label>

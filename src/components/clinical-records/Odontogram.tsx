@@ -71,33 +71,55 @@ const ALL_TEETH = [
   ...LOWER_RIGHT,
 ];
 
-// Color mapping for tooth conditions
+// Color mapping for tooth conditions (matching BE enum)
 const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
   HEALTHY: '#10b981',      // Green
   CARIES: '#ef4444',       // Red
   FILLED: '#3b82f6',       // Blue
   CROWN: '#f59e0b',       // Yellow/Orange
   ROOT_CANAL: '#ec4899',  // Pink
-  EXTRACTED: '#6b7280',   // Gray
   MISSING: '#6b7280',     // Gray
   IMPLANT: '#8b5cf6',     // Purple
   FRACTURED: '#f97316',   // Orange
   IMPACTED: '#6366f1',    // Indigo
 };
 
-// Status labels in Vietnamese
+// Status labels in Vietnamese (matching BE enum)
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
   CARIES: 'Sâu răng',
   FILLED: 'Đã trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
-  EXTRACTED: 'Đã nhổ',
   MISSING: 'Mất răng',
   IMPLANT: 'Cấy ghép',
   FRACTURED: 'Gãy răng',
   IMPACTED: 'Mọc ngầm',
 };
+
+// Chữ viết tắt cho trạng thái răng (hiển thị trên/dưới răng)
+const TOOTH_STATUS_ABBR: Record<ToothCondition, string> = {
+  HEALTHY: '', // Không hiển thị chữ viết tắt
+  CARIES: 'SR',    // Sâu Răng
+  FILLED: 'ĐT',    // Đã Trám
+  CROWN: 'BS',     // Bọc Sứ
+  ROOT_CANAL: 'ĐTT', // Điều Trị Tủy
+  MISSING: 'MR',     // Mất Răng
+  IMPLANT: 'CG',     // Cấy Ghép
+  FRACTURED: 'GR',   // Gãy Răng
+  IMPACTED: 'MN',    // Mọc Ngầm
+};
+
+// Các trạng thái cần hiển thị trong legend (bỏ HEALTHY, EXTRACTED, MISSING)
+const LEGEND_STATUSES: ToothCondition[] = [
+  'CARIES',
+  'FILLED',
+  'CROWN',
+  'ROOT_CANAL',
+  'IMPLANT',
+  'FRACTURED',
+  'IMPACTED',
+];
 
 // Default color for teeth without status
 const DEFAULT_COLOR = '#e5e7eb'; // Light gray
@@ -263,7 +285,7 @@ export default function Odontogram({
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Sơ Đồ Răng (Odontogram)</CardTitle>
+        <CardTitle className="text-xl font-semibold">Sơ đồ răng (Odontogram)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* SVG Chart */}
@@ -276,17 +298,6 @@ export default function Odontogram({
             {/* Background */}
             <rect width="800" height="320" fill="#fafafa" />
             
-            {/* Center vertical line */}
-            <line
-              x1="400"
-              y1="0"
-              x2="400"
-              y2="320"
-              stroke="#d1d5db"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-            />
-            
             {/* Quadrant labels with FDI notation explanation */}
             <text
               x="200"
@@ -295,7 +306,7 @@ export default function Odontogram({
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
             >
-              Cung 2: Hàm Trên - Trái
+              Cung 2: Hàm trên - trái
             </text>
             <text
               x="600"
@@ -304,7 +315,7 @@ export default function Odontogram({
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
             >
-              Cung 1: Hàm Trên - Phải 
+              Cung 1: Hàm trên - phải 
             </text>
             <text
               x="200"
@@ -313,7 +324,7 @@ export default function Odontogram({
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
             >
-              Cung 3: Hàm Dưới - Trái
+              Cung 3: Hàm dưới - trái
             </text>
             <text
               x="600"
@@ -322,7 +333,7 @@ export default function Odontogram({
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
             >
-              Cung 4: Hàm Dưới - Phải
+              Cung 4: Hàm dưới - phải
             </text>
             
             {/* Render teeth */}
@@ -357,7 +368,7 @@ export default function Odontogram({
                     onMouseLeave={() => handleToothHover(null)}
                   />
                   
-                  {/* Tooth number */}
+                  {/* Tooth number - always in center of tooth */}
                   <text
                     x={tooth.x + 18}
                     y={tooth.y + 30}
@@ -369,17 +380,19 @@ export default function Odontogram({
                     {tooth.number}
                   </text>
                   
-                  {/* Status indicator (small dot in top-right corner) */}
-                  {tooth.status && (
-                    <circle
-                      cx={tooth.x + 30}
-                      cy={tooth.y + 6}
-                      r="4"
+                  {/* Status abbreviation - above tooth (upper jaw) or below tooth (lower jaw) */}
+                  {tooth.status && TOOTH_STATUS_ABBR[tooth.status] && (
+                    <text
+                      x={tooth.x + 18}
+                      y={tooth.y < 120 ? tooth.y - 5 : tooth.y + 65}
+                      textAnchor="middle"
+                      className="text-xs font-semibold"
                       fill={TOOTH_STATUS_COLORS[tooth.status]}
-                      stroke="white"
-                      strokeWidth="1.5"
+                      fontSize="9"
                       pointerEvents="none"
-                    />
+                    >
+                      {TOOTH_STATUS_ABBR[tooth.status]}
+                    </text>
                   )}
                 </g>
               );
@@ -389,40 +402,22 @@ export default function Odontogram({
 
         {/* Legend */}
         <div className="border-t pt-4 mt-4">
-          <h4 className="text-sm font-semibold mb-3 text-foreground">Chú Giải Trạng Thái Răng</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
-            {Object.entries(TOOTH_STATUS_COLORS).map(([status, color]) => (
+          <h4 className="text-sm font-semibold mb-3 text-foreground">Chú giải trạng thái răng</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {LEGEND_STATUSES.map((status) => (
               <div key={status} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 transition-colors">
                 <div
                   className="w-4 h-4 rounded border border-gray-200 flex-shrink-0"
-                  style={{ backgroundColor: color }}
+                  style={{ backgroundColor: TOOTH_STATUS_COLORS[status] }}
                 />
                 <span className="text-xs text-foreground font-medium">
-                  {TOOTH_STATUS_LABELS[status as ToothCondition]}
+                  {TOOTH_STATUS_LABELS[status]} ({TOOTH_STATUS_ABBR[status]})
                 </span>
               </div>
             ))}
-            <div className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 transition-colors">
-              <div
-                className="w-4 h-4 rounded border-2 border-gray-300 flex-shrink-0"
-                style={{ backgroundColor: DEFAULT_COLOR }}
-              />
-              <span className="text-xs text-foreground font-medium">Chưa ghi nhận</span>
-            </div>
           </div>
         </div>
 
-        {/* Tooltip (if hovered) */}
-        {hoveredTooth && !readOnly && (
-          <div className="absolute bg-gray-900 text-white text-xs rounded px-2 py-1 pointer-events-none z-10">
-            Răng {hoveredTooth}
-            {teethData.find((t) => t.number === hoveredTooth)?.status && (
-              <span className="ml-2">
-                - {TOOTH_STATUS_LABELS[teethData.find((t) => t.number === hoveredTooth)!.status!]}
-              </span>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

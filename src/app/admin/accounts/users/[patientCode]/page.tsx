@@ -34,6 +34,14 @@ import { patientService } from '@/services/patientService';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Textarea } from '@/components/ui/textarea';
+import { 
+  BookingBlockReason,
+  getBlockStatusDisplay,
+  getBookingBlockReasonLabel,
+  isTemporaryBlock,
+  BOOKING_BLOCK_REASON_OPTIONS 
+} from '@/types/patientBlockReason';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Lazy load PatientImageManager để tối ưu performance - chỉ load khi cần
 const PatientImageManager = lazy(() => import('@/components/clinical-records/PatientImageManager'));
@@ -73,6 +81,9 @@ export default function PatientDetailPage() {
     emergencyContactName: '',
     emergencyContactPhone: '',
     isActive: true,
+    isBookingBlocked: false,
+    bookingBlockReason: undefined,
+    bookingBlockNotes: '',
   });
 
   useEffect(() => {
@@ -85,6 +96,15 @@ export default function PatientDetailPage() {
     try {
       setLoading(true);
       const data = await patientService.getPatientByCode(patientCode);
+      console.log('🔍 Patient Data:', {
+        patientCode: data.patientCode,
+        isBookingBlocked: data.isBookingBlocked,
+        bookingBlockReason: data.bookingBlockReason,
+        bookingBlockNotes: data.bookingBlockNotes,
+        blockedBy: data.blockedBy,
+        blockedAt: data.blockedAt,
+        consecutiveNoShows: data.consecutiveNoShows
+      });
       setPatient(data);
     } catch (error: any) {
       console.error('Failed to fetch patient details:', error);
@@ -169,6 +189,9 @@ export default function PatientDetailPage() {
       emergencyContactName: patient.emergencyContactName || '',
       emergencyContactPhone: patient.emergencyContactPhone || '',
       isActive: patient.isActive,
+      isBookingBlocked: patient.isBookingBlocked || false,
+      bookingBlockReason: patient.bookingBlockReason || undefined,
+      bookingBlockNotes: patient.bookingBlockNotes || '',
     });
     setShowEditModal(true);
   };
@@ -219,6 +242,15 @@ export default function PatientDetailPage() {
       }
       if (editFormData.isActive !== undefined && editFormData.isActive !== patient.isActive) {
         payload.isActive = editFormData.isActive;
+      }
+      if (editFormData.isBookingBlocked !== undefined && editFormData.isBookingBlocked !== patient.isBookingBlocked) {
+        payload.isBookingBlocked = editFormData.isBookingBlocked;
+      }
+      if (editFormData.bookingBlockReason && editFormData.bookingBlockReason !== patient.bookingBlockReason) {
+        payload.bookingBlockReason = editFormData.bookingBlockReason;
+      }
+      if (editFormData.bookingBlockNotes && editFormData.bookingBlockNotes !== patient.bookingBlockNotes) {
+        payload.bookingBlockNotes = editFormData.bookingBlockNotes;
       }
 
       // Only update if there are changes
@@ -334,12 +366,16 @@ export default function PatientDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {patient.isBlacklisted && (
+              {patient.isBookingBlocked && (
                 <Badge
                   variant="destructive"
-                  className="bg-red-600 text-white px-4 py-2 text-base"
+                  className={
+                    isTemporaryBlock(patient.bookingBlockReason)
+                      ? 'bg-orange-600 text-white px-4 py-2 text-base'
+                      : 'bg-red-600 text-white px-4 py-2 text-base'
+                  }
                 >
-                  ⛔ BLACKLISTED
+                  {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
                 </Badge>
               )}
               <Badge
@@ -367,31 +403,53 @@ export default function PatientDetailPage() {
         </CardHeader>
       </Card>
 
-      {/* Blacklist Status Section */}
-      {patient.isBlacklisted && (
-        <Card className="border-red-200 bg-red-50">
+      {/* Booking Block Status Section */}
+      {patient.isBookingBlocked && (
+        <Card className={
+          isTemporaryBlock(patient.bookingBlockReason)
+            ? 'border-orange-200 bg-orange-50'
+            : 'border-red-200 bg-red-50'
+        }>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700">
+            <CardTitle className={`flex items-center gap-2 ${
+              isTemporaryBlock(patient.bookingBlockReason) ? 'text-orange-700' : 'text-red-700'
+            }`}>
               <AlertCircle className="h-5 w-5" />
-              Trạng thái Blacklist
+              Trạng thái chặn đặt lịch
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-gray-600">Trạng thái</Label>
-                  <p className="font-medium text-red-700">BLACKLISTED</p>
+                  <Label className="text-gray-600">Lý do</Label>
+                  <p className="font-medium">
+                    {getBookingBlockReasonLabel(patient.bookingBlockReason)}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-gray-600">Số lần no-show liên tiếp</Label>
-                  <p className="font-medium">{patient.consecutiveNoShows || 0}</p>
+                  <Label className="text-gray-600">Bị chặn bởi</Label>
+                  <p className="font-medium">{patient.blockedBy || 'N/A'}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-600">Bị chặn đặt lịch</Label>
-                  <p className="font-medium">{patient.isBookingBlocked ? 'Có' : 'Không'}</p>
+                  <Label className="text-gray-600">Thời gian</Label>
+                  <p className="font-medium">{patient.blockedAt ? formatDate(patient.blockedAt) : 'N/A'}</p>
                 </div>
               </div>
+              {patient.bookingBlockNotes && (
+                <div>
+                  <Label className="text-gray-600">Chi tiết</Label>
+                  <p className="text-sm text-gray-700 bg-white p-3 rounded border">
+                    {patient.bookingBlockNotes}
+                  </p>
+                </div>
+              )}
+              {patient.consecutiveNoShows !== undefined && patient.consecutiveNoShows > 0 && (
+                <div>
+                  <Label className="text-gray-600">Số lần no-show liên tiếp</Label>
+                  <p className="font-medium text-orange-600">{patient.consecutiveNoShows}</p>
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-2 border-t">
                 <Button
                   variant="outline"
@@ -483,17 +541,24 @@ export default function PatientDetailPage() {
                       <p className="font-medium">{formatDate(patient.dateOfBirth)}</p>
                     </div>
                   </div>
-                  {patient.isBlacklisted && (
+                  {patient.isBookingBlocked && (
                     <div className="flex items-center gap-2 text-gray-700 md:col-span-2">
                       <AlertCircle className="h-4 w-4 text-red-500" />
                       <div className="flex-1">
-                        <Label className="text-gray-600">Trạng thái Blacklist</Label>
+                        <Label className="text-gray-600">Trạng thái chặn đặt lịch</Label>
                         <div className="flex items-center gap-2">
-                          <Badge variant="destructive" className="bg-red-600 text-white">
-                            ⛔ BLACKLISTED
+                          <Badge 
+                            variant="destructive" 
+                            className={
+                              isTemporaryBlock(patient.bookingBlockReason)
+                                ? 'bg-orange-600 text-white'
+                                : 'bg-red-600 text-white'
+                            }
+                          >
+                            {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
                           </Badge>
                           <span className="text-sm text-gray-600">
-                            ({patient.consecutiveNoShows || 0} lần no-show liên tiếp)
+                            {patient.consecutiveNoShows ? `(${patient.consecutiveNoShows} lần no-show)` : ''}
                           </span>
                         </div>
                       </div>
@@ -608,7 +673,7 @@ export default function PatientDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-blue-600" />
-                Hình Ảnh Bệnh Nhân
+                Hình ảnh bệnh nhân
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -1020,6 +1085,74 @@ export default function PatientDetailPage() {
                   </div>
                 </div>
 
+                {/* Booking Block Status */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Trạng thái chặn đặt lịch</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-isBookingBlocked">Trạng thái chặn đặt lịch</Label>
+                      <select
+                        id="edit-isBookingBlocked"
+                        value={editFormData.isBookingBlocked ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, isBookingBlocked: e.target.value === 'true' })
+                        }
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="false">Không chặn</option>
+                        <option value="true">Bị chặn</option>
+                      </select>
+                    </div>
+                    
+                    {editFormData.isBookingBlocked && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-bookingBlockReason">
+                            Lý do chặn <span className="text-red-500">*</span>
+                          </Label>
+                          <Select
+                            value={editFormData.bookingBlockReason || ''}
+                            onValueChange={(value) =>
+                              setEditFormData({ ...editFormData, bookingBlockReason: value })
+                            }
+                          >
+                            <SelectTrigger id="edit-bookingBlockReason">
+                              <SelectValue placeholder="Chọn lý do chặn" />
+                            </SelectTrigger>
+                            <SelectContent align="start">
+                              {BOOKING_BLOCK_REASON_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div className="flex flex-col">
+                                    <span>{option.label}</span>
+                                    <span className="text-xs text-gray-500">{option.description}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-bookingBlockNotes">Chi tiết</Label>
+                          <Textarea
+                            id="edit-bookingBlockNotes"
+                            value={editFormData.bookingBlockNotes || ''}
+                            onChange={(e) =>
+                              setEditFormData({ ...editFormData, bookingBlockNotes: e.target.value })
+                            }
+                            placeholder="Nhập chi tiết lý do chặn (tùy chọn)"
+                            rows={3}
+                            maxLength={5000}
+                          />
+                          <p className="text-sm text-gray-500">
+                            {(editFormData.bookingBlockNotes || '').length} / 5000 ký tự
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 {/* Form Actions */}
                 <div className="flex gap-3 justify-end pt-3 border-t">
                   <Button
@@ -1052,3 +1185,4 @@ export default function PatientDetailPage() {
     </div>
   );
 }
+

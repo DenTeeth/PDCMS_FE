@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus } from '@/types/treatmentPlan';
+import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus, CalculateScheduleResponse } from '@/types/treatmentPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -26,6 +26,7 @@ import ProgressSummary from './ProgressSummary';
 import TreatmentPlanPhase from './TreatmentPlanPhase';
 import ApproveRejectSection from './ApproveRejectSection';
 import UpdatePricesModal from './UpdatePricesModal';
+import TreatmentPlanScheduleTimeline from './TreatmentPlanScheduleTimeline';
 import type { LucideIcon } from 'lucide-react';
 import {
   User,
@@ -43,9 +44,10 @@ import {
   RefreshCw,
   Lock,
   Circle,
+  AlertCircle,
 } from 'lucide-react';
 import React from 'react';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { TREATMENT_PLAN_STATUS_COLORS } from '@/types/treatmentPlan';
 import { cn } from '@/lib/utils';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
@@ -74,6 +76,12 @@ export default function TreatmentPlanDetail({
   
   // Phase 5: Bulk selection for booking
   const [selectedPlanItemIds, setSelectedPlanItemIds] = useState<number[]>([]);
+
+  // BE_4: Auto-calculated schedule
+  const [calculatedSchedule, setCalculatedSchedule] = useState<CalculateScheduleResponse | null>(null);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [showScheduleTimeline, setShowScheduleTimeline] = useState(true);
 
   const allPlanItems = useMemo(
     () => plan.phases.flatMap((phase) => phase.items),
@@ -152,6 +160,83 @@ export default function TreatmentPlanDetail({
       )
     );
   }, [allPlanItems]);
+
+  // BE_4: Manual schedule calculation (preview feature)
+  // DISABLED: BE API not yet implemented
+  // This is a PREVIEW feature - allows viewing suggested schedule before booking
+  // NOTE: BE auto-calculates when creating plan from template
+  const handleCalculateSchedule = async () => {
+    toast.error('Tính năng tính toán lịch trình tạm thời không khả dụng - BE chưa implement API');
+    return;
+    
+    /* DISABLED UNTIL BE IMPLEMENTS API
+    // Only calculate for plans with unscheduled items
+    if (!plan?.planCode || plan.status === TreatmentPlanStatus.COMPLETED || plan.status === TreatmentPlanStatus.CANCELLED) {
+      toast.error('Không thể tính toán lịch trình cho kế hoạch này');
+      return;
+    }
+
+    // Check if plan has items that need scheduling
+    const hasUnscheduledItems = plan.phases.some(phase => 
+      phase.items.some(item => 
+        item.status === PlanItemStatus.READY_FOR_BOOKING || item.status === PlanItemStatus.PENDING
+      )
+    );
+
+    if (!hasUnscheduledItems) {
+      toast.info('Không có dịch vụ nào cần đặt lịch');
+      return;
+    }
+
+    setLoadingSchedule(true);
+    setScheduleError(null);
+
+    try {
+      // Calculate schedule starting from tomorrow
+      const startDate = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
+      // Extract services from plan items
+      const services = plan.phases.flatMap(phase => 
+        phase.items
+          .filter(item => item.status === PlanItemStatus.READY_FOR_BOOKING || item.status === PlanItemStatus.PENDING)
+          .map(item => ({
+            serviceId: item.serviceId,
+            serviceCode: item.serviceCode,
+            serviceName: item.serviceName
+          }))
+      );
+
+      // Calculate estimated duration (30 days per service as default, or use existing)
+      const estimatedDurationDays = plan.expectedEndDate && plan.startDate
+        ? Math.ceil((new Date(plan.expectedEndDate).getTime() - new Date(plan.startDate).getTime()) / (1000 * 60 * 60 * 24))
+        : services.length * 30; // Default: 30 days per service
+
+      const schedule = await TreatmentPlanService.calculateSchedule({
+        startDate,
+        estimatedDurationDays,
+        services
+      });
+
+      setCalculatedSchedule(schedule);
+      setShowScheduleTimeline(true);
+
+      // Show warnings if any (non-blocking)
+      if (schedule.warnings && schedule.warnings.length > 0) {
+        console.info(`BE_4 Schedule Warnings (${schedule.warnings.length}):`, schedule.warnings);
+        toast.info(`Lịch trình có ${schedule.warnings.length} cảnh báo`);
+      }
+
+      toast.success('Đã tính toán lịch trình thành công');
+    } catch (error: any) {
+      console.error('BE_4 Error calculating schedule:', error);
+      const errorMessage = error.response?.data?.message || 'Không thể tính toán lịch trình tự động';
+      setScheduleError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoadingSchedule(false);
+    }
+    */
+  };
 
   const readyForBookingItems = useMemo(
     () => allPlanItems.filter((item) => item.status === PlanItemStatus.READY_FOR_BOOKING),
@@ -669,6 +754,136 @@ export default function TreatmentPlanDetail({
             <ProgressSummary progress={plan.progressSummary} />
           </div>
 
+          {/* BE_4: Calculate Schedule Preview Button - DISABLED (BE not implemented) */}
+          {false && !calculatedSchedule && !loadingSchedule && readyForBookingCount > 0 && (
+            <div className="mt-8">
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-semibold text-blue-900">Tính toán lịch trình tự động</p>
+                        <p className="text-sm text-muted-foreground">
+                          Xem lịch trình đề xuất cho {readyForBookingCount} dịch vụ chưa đặt lịch
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleCalculateSchedule}
+                      variant="default"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Tính toán lịch trình
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* BE_4: Calculated Schedule Timeline - DISABLED (BE not implemented) */}
+          {false && showScheduleTimeline && calculatedSchedule && (
+            <div className="mt-8">
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <CardTitle className="text-lg">Lịch trình điều trị đề xuất</CardTitle>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCalculateSchedule}
+                        disabled={loadingSchedule}
+                      >
+                        <RefreshCw className={`mr-2 h-4 w-4 ${loadingSchedule ? 'animate-spin' : ''}`} />
+                        Tính lại
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowScheduleTimeline(false)}
+                      >
+                        Ẩn
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Thời gian điều trị: <strong>{calculatedSchedule.estimatedDurationDays} ngày</strong> 
+                    {' '}(từ {format(new Date(calculatedSchedule.startDate), 'dd/MM/yyyy')} 
+                    {' '}đến {format(new Date(calculatedSchedule.endDate), 'dd/MM/yyyy')})
+                    {' '}• Ngày làm việc: <strong>{calculatedSchedule.actualWorkingDays}</strong>
+                    {' '}• Ngày lễ bỏ qua: <strong>{calculatedSchedule.holidaysSkipped}</strong>
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <TreatmentPlanScheduleTimeline 
+                    schedule={calculatedSchedule}
+                    onBookService={(serviceId, serviceCode, scheduledDate) => {
+                      toast.info(`Đặt lịch cho ${serviceCode} vào ngày ${format(new Date(scheduledDate), 'dd/MM/yyyy')}`);
+                      // TODO: Integrate with appointment booking
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {false && !showScheduleTimeline && calculatedSchedule && (
+            <div className="mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowScheduleTimeline(true)}
+                className="w-full"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Hiển thị lịch trình đề xuất ({calculatedSchedule.metadata.totalServices} dịch vụ, {calculatedSchedule.estimatedDurationDays} ngày)
+              </Button>
+            </div>
+          )}
+
+          {false && loadingSchedule && (
+            <div className="mt-8">
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardContent className="py-8">
+                  <div className="flex items-center justify-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <span className="text-sm text-muted-foreground">Đang tính toán lịch trình tự động...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {false && scheduleError && (
+            <div className="mt-8">
+              <Card className="border-red-200 bg-red-50">
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-red-900">Không thể tính toán lịch trình</p>
+                      <p className="text-sm text-red-800 mt-1">{scheduleError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCalculateSchedule}
+                        className="mt-2"
+                      >
+                        Thử lại
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <div className="mt-8">
             <div className="mb-6 flex items-center gap-2 text-sm font-semibold">
               <RefreshCw className="h-4 w-4 text-primary" />
@@ -832,7 +1047,7 @@ export default function TreatmentPlanDetail({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Các Giai Đoạn Điều Trị
+              Các giai đoạn điều trị
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               {plan.progressSummary.completedPhases} / {plan.progressSummary.totalPhases} giai đoạn hoàn thành

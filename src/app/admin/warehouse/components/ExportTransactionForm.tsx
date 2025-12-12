@@ -275,15 +275,15 @@ export default function ExportTransactionForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <TruckIcon className="h-6 w-6 text-blue-600" />
-            Phiếu Xuất Kho (FEFO) {warehouseType === 'COLD' ? (
+            Phiếu xuất kho (FEFO) {warehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                (Kho Lạnh)
+                (Kho lạnh)
               </>
-            ) : '(Kho Thường)'}
+            ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Tạo phiếu xuất kho với FEFO (First Expired, First Out) và Auto-Unpacking
+            Tạo phiếu xuất kho với FEFO (First Expired, First Out) và auto-unpacking
           </DialogDescription>
         </DialogHeader>
 
@@ -292,7 +292,7 @@ export default function ExportTransactionForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border">
             <div>
               <Label className="text-sm font-medium">
-                Ngày Xuất <span className="text-red-500">*</span>
+                Ngày xuất <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
@@ -306,7 +306,7 @@ export default function ExportTransactionForm({
 
             <div>
               <Label className="text-sm font-medium">
-                Loại Phiếu <span className="text-red-500">*</span>
+                Loại phiếu <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={exportType}
@@ -318,7 +318,7 @@ export default function ExportTransactionForm({
                 <SelectContent>
                   <SelectItem value="USAGE">Xuất dùng (USAGE)</SelectItem>
                   <SelectItem value="DISPOSAL">Xuất hủy (DISPOSAL)</SelectItem>
-                  <SelectItem value="RETURN">Trả NCC (RETURN)</SelectItem>
+                  <SelectItem value="RETURN">Trả nhà cung cấp (RETURN)</SelectItem>
                 </SelectContent>
               </Select>
               {errors.exportType && (
@@ -327,7 +327,7 @@ export default function ExportTransactionForm({
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Bộ Phận / Khoa Yêu Cầu</Label>
+              <Label className="text-sm font-medium">Bộ phận / khoa yêu cầu</Label>
               <Input
                 {...register('departmentName')}
                 placeholder="VD: Khoa Nội, Phòng khám tổng quát"
@@ -339,7 +339,7 @@ export default function ExportTransactionForm({
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Người Yêu Cầu</Label>
+              <Label className="text-sm font-medium">Người yêu cầu</Label>
               <Input
                 {...register('requestedBy')}
                 placeholder="VD: BS. Nguyễn Văn A"
@@ -351,7 +351,7 @@ export default function ExportTransactionForm({
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Mã Tham Chiếu / Ca Điều Trị</Label>
+              <Label className="text-sm font-medium">Mã tham chiếu / ca điều trị</Label>
               <Input
                 {...register('referenceCode')}
                 placeholder="VD: CASE-2025-001"
@@ -371,7 +371,7 @@ export default function ExportTransactionForm({
                   className="h-4 w-4"
                 />
                 <Label htmlFor="allowExpired" className="text-sm font-medium cursor-pointer">
-                  Cho phép xuất hàng hết hạn (yêu cầu phê duyệt)
+                  Cho phép xuất hàng hết hạn (yêu cầu phê duyệt!)
                 </Label>
               </div>
             )}
@@ -393,11 +393,11 @@ export default function ExportTransactionForm({
           <div>
             <div className="flex items-center justify-between mb-3">
               <Label className="text-sm font-medium">
-                Danh Sách Vật Tư Xuất <span className="text-red-500">*</span>
+                Danh sách vật tư xuất <span className="text-red-500">*</span>
               </Label>
               <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Thêm Dòng
+                Thêm dòng
               </Button>
             </div>
 
@@ -407,10 +407,10 @@ export default function ExportTransactionForm({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[40%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[25%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[20%]">Ghi Chú</th>
-                      <th className="p-3 text-center w-[10%]">Hành Động</th>
+                      <th className="p-3 text-left w-[40%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[25%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[20%]">Ghi chú</th>
+                      <th className="p-3 text-center w-[10%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -576,7 +576,7 @@ export default function ExportTransactionForm({
 
           {/* Notes */}
           <div>
-            <Label className="text-sm font-medium">Ghi Chú</Label>
+            <Label className="text-sm font-medium">Ghi chú</Label>
             <Textarea
               {...register('notes')}
               placeholder="Nhập ghi chú (nếu có)"
@@ -592,7 +592,7 @@ export default function ExportTransactionForm({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
             <div className="text-sm space-y-1">
-              <p className="font-semibold text-blue-900">Lưu ý quan trọng</p>
+              <p className="font-semibold text-blue-900">Lưu ý quan trọng!</p>
               <ul className="text-blue-700 list-disc list-inside space-y-1">
                 <li>Hệ thống tự động chọn lô hàng theo FEFO (lô hết hạn trước được xuất trước)</li>
                 <li>Nếu thiếu hàng lẻ, hệ thống sẽ tự động xé lẻ từ đơn vị lớn hơn</li>
@@ -606,7 +606,7 @@ export default function ExportTransactionForm({
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Button type="submit" className="flex-1" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Đang lưu...' : 'Lưu Phiếu Xuất'}
+              {mutation.isPending ? 'Đang lưu...' : 'Lưu phiếu xuất'}
             </Button>
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Hủy

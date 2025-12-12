@@ -44,12 +44,12 @@ export default function PrescriptionList({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Pill className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Đơn Thuốc</h3>
+            <h3 className="text-lg font-semibold">Đơn thuốc</h3>
           </div>
           {canEdit && onCreate && (
             <Button onClick={onCreate} variant="outline" size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              Kê Đơn Thuốc
+              Kê đơn thuốc
             </Button>
           )}
         </div>
@@ -64,7 +64,7 @@ export default function PrescriptionList({
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Kê Đơn Thuốc
+              Kê đơn thuốc
             </Button>
           )}
         </div>
@@ -83,7 +83,7 @@ export default function PrescriptionList({
         {canEdit && onCreate && (
           <Button onClick={onCreate} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Kê Đơn Thuốc
+            Kê đơn thuốc
           </Button>
         )}
       </div>

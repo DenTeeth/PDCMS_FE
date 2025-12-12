@@ -30,7 +30,6 @@ const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
   FILLED: '#3b82f6',
   CROWN: '#f59e0b',
   ROOT_CANAL: '#ec4899',
-  EXTRACTED: '#6b7280',
   MISSING: '#6b7280',
   IMPLANT: '#8b5cf6',
   FRACTURED: '#f97316',
@@ -43,11 +42,22 @@ const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   FILLED: 'Đã trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
-  EXTRACTED: 'Đã nhổ',
   MISSING: 'Mất răng',
   IMPLANT: 'Cấy ghép',
   FRACTURED: 'Gãy răng',
   IMPACTED: 'Mọc ngầm',
+};
+
+const TOOTH_STATUS_ABBR: Record<ToothCondition, string> = {
+  HEALTHY: '',
+  CARIES: 'SR',
+  FILLED: 'ĐT',
+  CROWN: 'BS',
+  ROOT_CANAL: 'ĐTT',
+  MISSING: 'MR',
+  IMPLANT: 'CG',
+  FRACTURED: 'GR',
+  IMPACTED: 'MN',
 };
 
 // Mock data for testing

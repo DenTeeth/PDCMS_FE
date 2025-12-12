@@ -33,6 +33,13 @@ import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '
 import { patientService } from '@/services/patientService';
 import { authenticationService } from '@/services/authenticationService';
 import { toast } from 'sonner';
+import { 
+  getBookingBlockReasonLabel,
+  isTemporaryBlock,
+  BOOKING_BLOCK_REASON_OPTIONS 
+} from '@/types/patientBlockReason';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 // ==================== TYPES ====================
 
@@ -99,6 +106,8 @@ export default function PatientsPage() {
     emergencyContactPhone: '',
     isActive: true,
     isBookingBlocked: false,
+    bookingBlockReason: undefined,
+    bookingBlockNotes: '',
   });
 
   // ==================== DEBOUNCE SEARCH ====================
@@ -138,6 +147,11 @@ export default function PatientsPage() {
       console.log('Fetching patients with params:', params);
       const response = await patientService.getPatients(params);
       console.log('Received patients:', response.content.length, 'items, totalPages:', response.totalPages);
+      console.log('🔍 First patient block status:', response.content[0] && {
+        patientCode: response.content[0].patientCode,
+        isBookingBlocked: response.content[0].isBookingBlocked,
+        bookingBlockReason: response.content[0].bookingBlockReason,
+      });
 
       setPatients(response.content);
       setTotalPages(response.totalPages);
@@ -236,7 +250,7 @@ export default function PatientsPage() {
       });
       fetchPatients(); // Refresh list
     } catch (error: any) {
-      console.error('Failed to create patient:', error);
+      console.error('� Failed to create patient:', error);
       
       // Enhanced error handling
       let errorMessage = 'Failed to create patient';
@@ -337,6 +351,8 @@ export default function PatientsPage() {
       emergencyContactPhone: patient.emergencyContactPhone || '',
       isActive: patient.isActive,
       isBookingBlocked: patient.isBookingBlocked || false,
+      bookingBlockReason: patient.bookingBlockReason || undefined,
+      bookingBlockNotes: patient.bookingBlockNotes || '',
     });
     setShowEditModal(true);
   };
@@ -390,6 +406,12 @@ export default function PatientsPage() {
       }
       if (editFormData.isBookingBlocked !== undefined && editFormData.isBookingBlocked !== editingPatient.isBookingBlocked) {
         payload.isBookingBlocked = editFormData.isBookingBlocked;
+      }
+      if (editFormData.bookingBlockReason && editFormData.bookingBlockReason !== editingPatient.bookingBlockReason) {
+        payload.bookingBlockReason = editFormData.bookingBlockReason;
+      }
+      if (editFormData.bookingBlockNotes && editFormData.bookingBlockNotes !== editingPatient.bookingBlockNotes) {
+        payload.bookingBlockNotes = editFormData.bookingBlockNotes;
       }
 
       // Only update if there are changes
@@ -691,13 +713,17 @@ export default function PatientsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           <span>{patient.fullName}</span>
-                          {patient.isBlacklisted && (
+                          {patient.isBookingBlocked && (
                             <Badge
                               variant="destructive"
-                              className="bg-red-600 text-white text-xs px-2 py-0.5"
-                              title={`Bệnh nhân bị blacklist do ${patient.consecutiveNoShows || 0} lần no-show liên tiếp`}
+                              className={
+                                isTemporaryBlock(patient.bookingBlockReason)
+                                  ? 'bg-orange-600 text-white text-xs px-2 py-0.5'
+                                  : 'bg-red-600 text-white text-xs px-2 py-0.5'
+                              }
+                              title={`${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
                             >
-                              ⛔ BLACKLISTED
+                              {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
                             </Badge>
                           )}
                         </div>
@@ -734,15 +760,23 @@ export default function PatientsPage() {
                                 type="checkbox"
                                 checked={true}
                                 readOnly
-                                className="w-5 h-5 rounded border-2 border-red-600 cursor-not-allowed"
+                                className="w-5 h-5 rounded border-2 cursor-not-allowed"
                                 style={{
-                                  accentColor: '#dc2626',
-                                  backgroundColor: '#dc2626',
+                                  accentColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
+                                  backgroundColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
+                                  borderColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
                                 }}
-                                title={`Bị chặn đặt lịch - ${patient.consecutiveNoShows || 0} lần no-show liên tiếp`}
+                                title={`${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
                               />
-                              <Badge variant="destructive" className="text-xs">
-                                Chặn
+                              <Badge 
+                                variant="destructive" 
+                                className={
+                                  isTemporaryBlock(patient.bookingBlockReason)
+                                    ? 'text-xs bg-orange-600'
+                                    : 'text-xs'
+                                }
+                              >
+                                {isTemporaryBlock(patient.bookingBlockReason) ? 'Tạm chặn' : 'Chặn'}
                               </Badge>
                             </div>
                           ) : (
@@ -1325,23 +1359,28 @@ export default function PatientsPage() {
                 {/* Status */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Trạng thái</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
+                    <select
+                      id="edit-isActive"
+                      value={editFormData.isActive ? 'true' : 'false'}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
+                      }
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="true">Hoạt động</option>
+                      <option value="false">Không hoạt động</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Booking Block Status */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Trạng thái chặn đặt lịch</h3>
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
-                      <select
-                        id="edit-isActive"
-                        value={editFormData.isActive ? 'true' : 'false'}
-                        onChange={(e) =>
-                          setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
-                        }
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="true">Hoạt động</option>
-                        <option value="false">Không hoạt động</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-isBookingBlocked">Chặn đặt lịch</Label>
+                      <Label htmlFor="edit-isBookingBlocked">Trạng thái chặn đặt lịch</Label>
                       <select
                         id="edit-isBookingBlocked"
                         value={editFormData.isBookingBlocked ? 'true' : 'false'}
@@ -1351,11 +1390,59 @@ export default function PatientsPage() {
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="false">Không chặn</option>
-                        <option value="true">Chặn đặt lịch</option>
+                        <option value="true">Bị chặn</option>
                       </select>
                     </div>
+                    
+                    {editFormData.isBookingBlocked && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-bookingBlockReason">
+                            Lý do chặn <span className="text-red-500">*</span>
+                          </Label>
+                          <Select
+                            value={editFormData.bookingBlockReason || ''}
+                            onValueChange={(value) =>
+                              setEditFormData({ ...editFormData, bookingBlockReason: value })
+                            }
+                          >
+                            <SelectTrigger id="edit-bookingBlockReason">
+                              <SelectValue placeholder="Chọn lý do chặn" />
+                            </SelectTrigger>
+                            <SelectContent align="start">
+                              {BOOKING_BLOCK_REASON_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div className="flex flex-col">
+                                    <span>{option.label}</span>
+                                    <span className="text-xs text-gray-500">{option.description}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-bookingBlockNotes">Chi tiết</Label>
+                          <Textarea
+                            id="edit-bookingBlockNotes"
+                            value={editFormData.bookingBlockNotes || ''}
+                            onChange={(e) =>
+                              setEditFormData({ ...editFormData, bookingBlockNotes: e.target.value })
+                            }
+                            placeholder="Nhập chi tiết lý do chặn (tùy chọn)"
+                            rows={3}
+                            maxLength={5000}
+                          />
+                          <p className="text-sm text-gray-500">
+                            {(editFormData.bookingBlockNotes || '').length} / 5000 ký tự
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
+
                 {/* Form Actions */}
                 <div className="flex gap-3 justify-end pt-3 border-t">
                   <Button

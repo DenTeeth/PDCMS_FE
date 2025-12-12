@@ -23,6 +23,9 @@ import {
   UpdatePricesResponse,
   ReorderItemsRequest,
   ReorderItemsResponse,
+  // BE_4: Auto-Scheduling
+  CalculateScheduleRequest,
+  CalculateScheduleResponse,
 } from '@/types/treatmentPlan';
 
 const BASE_URL = '/patients';
@@ -589,6 +592,56 @@ export class TreatmentPlanService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<ReorderItemsResponse>(
       `/patient-plan-phases/${phaseId}/items/reorder`,
+      request
+    );
+    return response.data;
+  }
+
+  // ============================================================================
+  // BE_4: Treatment Plan Auto-Scheduling
+  // ============================================================================
+
+  /**
+   * BE_4: Calculate Treatment Plan Schedule (STANDALONE CALCULATOR)
+   * POST /api/treatment-plans/calculate-schedule
+   * Source: BE Guide 3, lines 386-470
+   * 
+   * IMPORTANT: This is a STANDALONE calculator, NOT tied to any existing plan.
+   * Use this to PREVIEW schedule before creating a treatment plan.
+   * 
+   * Calculates suggested schedule considering:
+   * - Service constraints (minimum prep days, recovery days, spacing days)
+   * - Holidays (automatically skipped)
+   * - Max appointments per day
+   * 
+   * NOTE: When creating treatment plan from template, BE auto-calculates schedule.
+   * You typically DON'T need to call this API manually.
+   * 
+   * Use case: Show preview to user before they commit to creating the plan.
+   * 
+   * @param request Calculate schedule request (start date, duration, services list)
+   * @returns Calculated schedule with dates adjusted for constraints and holidays
+   * 
+   * @example
+   * const schedule = await TreatmentPlanService.calculateSchedule({
+   *   startDate: '2025-12-15',
+   *   estimatedDurationDays: 180,
+   *   services: [
+   *     { serviceId: 101, serviceCode: 'EXAM', serviceName: 'Examination' },
+   *     { serviceId: 123, serviceCode: 'IMPLANT', serviceName: 'Implant Surgery' }
+   *   ]
+   * });
+   * 
+   * console.log(`Schedule: ${schedule.startDate} → ${schedule.endDate}`);
+   * console.log(`Working days: ${schedule.actualWorkingDays}`);
+   * console.log(`Holidays skipped: ${schedule.holidaysSkipped}`);
+   */
+  static async calculateSchedule(
+    request: CalculateScheduleRequest
+  ): Promise<CalculateScheduleResponse> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.post<CalculateScheduleResponse>(
+      '/treatment-plans/calculate-schedule', // No /v1/, no {planCode}
       request
     );
     return response.data;

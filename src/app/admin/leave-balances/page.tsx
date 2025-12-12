@@ -368,7 +368,7 @@ export default function AdminLeaveBalancesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Số Dư Ngày Nghỉ</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý số dư ngày nghỉ</h1>
           <p className="text-gray-600 mt-2">Xem và điều chỉnh số dư ngày nghỉ của nhân viên</p>
         </div>
 
@@ -378,7 +378,7 @@ export default function AdminLeaveBalancesPage() {
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Công Cụ Admin
+            Công cụ admin
           </Button>
         )}
       </div>
@@ -389,14 +389,14 @@ export default function AdminLeaveBalancesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5 text-purple-600" />
-            Xem Số Dư Ngày Nghỉ
+            Xem số dư ngày nghỉ
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <Label>Chọn Nhân Viên</Label>
+              <Label>Chọn nhân viên</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -608,7 +608,7 @@ export default function AdminLeaveBalancesPage() {
                 className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Điều Chỉnh Số Dư Ngày Nghỉ
+                Điều chỉnh số dư ngày nghỉ
               </Button>
             </div>
           )}
@@ -621,7 +621,7 @@ export default function AdminLeaveBalancesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
-              <CardTitle>Điều Chỉnh Số Dư Ngày Nghỉ Thủ Công</CardTitle>
+              <CardTitle>Điều chỉnh số dư ngày nghỉ thủ công</CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-4 space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
@@ -675,7 +675,7 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div>
-                <Label htmlFor="change-amount">Số Lượng Điều Chỉnh *</Label>
+                <Label htmlFor="change-amount">Số lượng điều chỉnh *</Label>
                 <Input
                   id="change-amount"
                   type="number"
@@ -696,7 +696,7 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div>
-                <Label htmlFor="notes">Ghi Chú *</Label>
+                <Label htmlFor="notes">Ghi chú *</Label>
                 <Textarea
                   id="notes"
                   placeholder="VD: Thưởng phép năm 2025, Sửa lỗi nhập liệu..."
@@ -728,7 +728,7 @@ export default function AdminLeaveBalancesPage() {
                   disabled={submittingAdjust}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  {submittingAdjust ? 'Đang lưu...' : 'Lưu Điều Chỉnh'}
+                  {submittingAdjust ? 'Đang lưu...' : 'Lưu điều chỉnh'}
                 </Button>
               </div>
             </CardContent>
@@ -744,7 +744,7 @@ export default function AdminLeaveBalancesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
-                Kích Hoạt Job Cộng Phép Năm Mới
+                Kích hoạt job cộng phép năm mới
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -760,7 +760,7 @@ export default function AdminLeaveBalancesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="reset-year">Năm Áp Dụng *</Label>
+                  <Label htmlFor="reset-year">Năm áp dụng *</Label>
                   <Input
                     id="reset-year"
                     type="number"
@@ -780,7 +780,7 @@ export default function AdminLeaveBalancesPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reset-allowance">Số Ngày Cộng Mặc Định *</Label>
+                  <Label htmlFor="reset-allowance">Số ngày cộng mặc định *</Label>
                   <Input
                     id="reset-allowance"
                     type="number"
@@ -803,7 +803,7 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div>
-                <Label htmlFor="reset-type">Loại Phép <span className="text-red-500">*</span></Label>
+                <Label htmlFor="reset-type">Loại phép <span className="text-red-500">*</span></Label>
                 <CustomSelect
                   value={annualResetFormData.applyToTypeId}
                   onChange={(value: string) => {
@@ -844,7 +844,7 @@ export default function AdminLeaveBalancesPage() {
                       Đang xử lý...
                     </>
                   ) : (
-                    'Xác Nhận Chạy Job'
+                    'Xác nhận chạy job'
                   )}
                 </Button>
               </div>

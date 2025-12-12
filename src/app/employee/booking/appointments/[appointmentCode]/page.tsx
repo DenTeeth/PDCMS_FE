@@ -282,32 +282,23 @@ export default function EmployeeAppointmentDetailPage() {
       onSelect: () => void;
     }[] = [];
 
-    const canShowUpdateStatus =
-      canUpdateStatus && getValidNextStatuses(appointment.status).length > 0;
+    // Remove update status from action menu - it's now integrated in the status badge
     const canShowDelay =
       canDelay &&
       (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN');
 
-    if (canShowUpdateStatus) {
-      items.push({
-        key: 'update-status',
-        label: 'Update Status',
-        icon: Edit,
-        onSelect: () => setShowStatusModal(true),
-      });
-    }
-
+    // Employee only has Delay (no Reschedule)
     if (canShowDelay) {
       items.push({
         key: 'delay',
-        label: 'Dời lịch hẹn',
+        label: 'Hoãn lịch',
         icon: Clock,
         onSelect: () => setShowDelayModal(true),
       });
     }
 
     return items;
-  }, [appointment, canDelay, canUpdateStatus]);
+  }, [appointment, canDelay]);
 
   const renderActionMenu = () => {
     if (!actionItems.length) {
@@ -317,15 +308,13 @@ export default function EmployeeAppointmentDetailPage() {
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <Menu className="h-4 w-4" />
-            Actions
-            <ChevronDown className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Menu className="h-5 w-5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-60 p-2 space-y-1">
           <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Appointment Actions
+            Hành động
           </p>
           {actionItems.map((item) => (
             <Button
@@ -948,7 +937,7 @@ export default function EmployeeAppointmentDetailPage() {
               onClick={() => router.push('/employee/appointments')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Quay lại
             </Button>
             <div>
               <h1 className="text-3xl font-bold">Chi tiết lịch hẹn</h1>
@@ -956,9 +945,6 @@ export default function EmployeeAppointmentDetailPage() {
                 Code: {appointment.appointmentCode}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Actions menu removed - status change is now integrated in the Appointment Information card */}
           </div>
         </div>
 
@@ -977,7 +963,7 @@ export default function EmployeeAppointmentDetailPage() {
               className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <User className="h-4 w-4 mr-2" />
-              Patient Information
+              Thông tin bệnh nhân
             </TabsTrigger>
             <TabsTrigger
               value="clinical-record"
@@ -1003,10 +989,13 @@ export default function EmployeeAppointmentDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b">
                 {/* Appointment Info */}
                 <div className="pr-6 border-r border-gray-200">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Thông tin lịch hẹn
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Thông tin lịch hẹn
+                  </h3>
+                  {renderActionMenu()}
+                </div>
                 <div className="space-y-4">
                   {/* Appointment Code và Status cùng dòng */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

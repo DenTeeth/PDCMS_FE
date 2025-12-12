@@ -224,7 +224,7 @@ export default function SuppliersPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Quản lý Nhà cung cấp</h1>
+          <h1 className="text-3xl font-bold">Quản lý nhà cung cấp</h1>
           <p className="text-slate-600 mt-1">Quản lý danh sách nhà cung cấp vật tư</p>
         </div>
         <Button onClick={() => handleOpenFormModal()}>
@@ -238,7 +238,7 @@ export default function SuppliersPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Tổng số NCC
+              Tổng số nhà cung cấp
             </CardTitle>
           </CardHeader>
           <CardContent>

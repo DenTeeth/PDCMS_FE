@@ -514,7 +514,7 @@ export default function AdminTimeOffRequestsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Yêu Cầu Nghỉ Phép</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý yêu cầu nghỉ phép</h1>
           <p className="text-gray-600 mt-2">Duyệt và quản lý yêu cầu nghỉ phép của nhân viên</p>
         </div>
         {activeTab === 'requests' && canCreate && (
@@ -523,7 +523,7 @@ export default function AdminTimeOffRequestsPage() {
             className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
           >
             <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-            Tạo Yêu Cầu
+            Tạo yêu cầu
           </Button>
         )}
       </div>
@@ -539,7 +539,7 @@ export default function AdminTimeOffRequestsPage() {
               }`}
           >
             <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
-            Yêu cầu thời gian nghỉ
+            Yêu cầu nghỉ phép
           </button>
           <button
             onClick={() => setActiveTab('balances')}
@@ -593,7 +593,7 @@ export default function AdminTimeOffRequestsPage() {
 
             {/* Từ chối/Hủy */}
             <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
-              <p className="text-sm font-semibold text-red-800 mb-2">Từ chối/Hủy</p>
+              <p className="text-sm font-semibold text-red-800 mb-2">Từ chối/hủy</p>
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <FontAwesomeIcon icon={faTimes} className="text-red-700 text-xl" />

@@ -85,6 +85,9 @@ export default function CreateCustomPlanModal({
   const { user } = useAuth();
   const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || false;
   const canViewServices = user?.permissions?.includes('VIEW_SERVICE') || false;
+  
+  // Check if user is employee (hide discount and price for employee role)
+  const isEmployee = user?.baseRole === 'employee';
 
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>(0);
@@ -935,7 +938,8 @@ export default function CreateCustomPlanModal({
         doctorEmployeeCode,
         paymentType,
         //  FIX: BE requires @NotNull, so send 0 instead of undefined
-        discountAmount: discountAmount === '' ? 0 : Number(discountAmount),
+        // For employee role, always send 0 (discount field is hidden)
+        discountAmount: isEmployee ? 0 : (discountAmount === '' ? 0 : Number(discountAmount)),
         // BE expects LocalDate (yyyy-MM-dd format) or null
         // Send null if empty string, otherwise send the date string
         startDate: startDate && startDate.trim() ? startDate.trim() : null,
@@ -1128,7 +1132,7 @@ export default function CreateCustomPlanModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tạo Lộ Trình Điều Trị Tùy Chỉnh</DialogTitle>
+          <DialogTitle>Tạo lộ trình điều trị</DialogTitle>
           <DialogDescription>
             Tạo lộ trình điều trị mới từ đầu. Lộ trình sẽ ở trạng thái DRAFT và cần được quản lý duyệt.
           </DialogDescription>
@@ -1493,24 +1497,27 @@ export default function CreateCustomPlanModal({
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="discountAmount">Giảm giá (VND)</Label>
-                <Input
-                  id="discountAmount"
-                  type="number"
-                  min="0"
-                  value={discountAmount}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setDiscountAmount(value === '' ? '' : Number(value));
-                  }}
-                  placeholder="0"
-                  className={errors.discountAmount ? 'border-red-500' : ''}
-                />
-                {errors.discountAmount && (
-                  <p className="text-sm text-red-500 mt-1">{errors.discountAmount}</p>
-                )}
-              </div>
+              {/* Hide discount field for employee role */}
+              {!isEmployee && (
+                <div>
+                  <Label htmlFor="discountAmount">Giảm giá (VND)</Label>
+                  <Input
+                    id="discountAmount"
+                    type="number"
+                    min="0"
+                    value={discountAmount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDiscountAmount(value === '' ? '' : Number(value));
+                    }}
+                    placeholder="0"
+                    className={errors.discountAmount ? 'border-red-500' : ''}
+                  />
+                  {errors.discountAmount && (
+                    <p className="text-sm text-red-500 mt-1">{errors.discountAmount}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1710,7 +1717,7 @@ export default function CreateCustomPlanModal({
                                   ) : (
                                     services.map((svc) => (
                                       <SelectItem key={svc.serviceCode} value={svc.serviceCode}>
-                                        {svc.serviceName} ({svc.price.toLocaleString('vi-VN')} VND)
+                                        {svc.serviceName}{!isEmployee && ` (${svc.price.toLocaleString('vi-VN')} VND)`}
                                       </SelectItem>
                                     ))
                                   )}
@@ -1719,7 +1726,7 @@ export default function CreateCustomPlanModal({
                               {itemError.serviceCode && (
                                 <p className="text-sm text-red-500 mt-1">{itemError.serviceCode}</p>
                               )}
-                              {service && (
+                              {service && !isEmployee && (
                                 <p className="text-xs text-gray-500 mt-1">
                                   Giá mặc định: {service.price.toLocaleString('vi-VN')} VND
                                 </p>
@@ -1727,22 +1734,25 @@ export default function CreateCustomPlanModal({
                             </div>
 
                             {/* V21.4: Price field read-only, auto-filled from service */}
-                            <div>
-                              <Label>
-                                Giá (VND)
-                              </Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                value={service?.price || 0}
-                                readOnly
-                                disabled
-                                className="bg-gray-100"
-                              />
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Giá mặc định từ dịch vụ. Kế toán sẽ điều chỉnh nếu cần.
-                              </p>
-                            </div>
+                            {/* Hide price field for employee role */}
+                            {!isEmployee && (
+                              <div>
+                                <Label>
+                                  Giá (VND)
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={service?.price || 0}
+                                  readOnly
+                                  disabled
+                                  className="bg-gray-100"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Giá mặc định từ dịch vụ. Kế toán sẽ điều chỉnh nếu cần.
+                                </p>
+                              </div>
+                            )}
 
                             <div>
                               <Label>
@@ -1780,10 +1790,10 @@ export default function CreateCustomPlanModal({
         {/* Step 4: Review & Confirm */}
         {currentStep === 4 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Xem lại và Xác nhận</h3>
+            <h3 className="text-lg font-semibold">Xem lại và xác nhận</h3>
 
             <Card className="p-4">
-              <h4 className="font-semibold mb-3">Thông tin Lộ trình</h4>
+              <h4 className="font-semibold mb-3">Thông tin lộ trình</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Bệnh nhân:</span>
@@ -1811,7 +1821,7 @@ export default function CreateCustomPlanModal({
                       : 'Trả góp'}
                   </span>
                 </div>
-                {discountAmount !== '' && discountAmount > 0 && (
+                {!isEmployee && discountAmount !== '' && discountAmount > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Giảm giá:</span>
                     <span className="font-medium text-green-600">
@@ -1837,9 +1847,12 @@ export default function CreateCustomPlanModal({
                         return (
                           <div key={idx} className="text-sm text-gray-700">
                             • {service?.serviceName || item.serviceCode}
-                            {item.price != null && item.price > 0 && (
+                            {!isEmployee && item.price != null && item.price > 0 && (
                               <> - {item.price.toLocaleString('vi-VN')} VND × {item.quantity} ={' '}
                               {(item.price * item.quantity).toLocaleString('vi-VN')} VND</>
+                            )}
+                            {isEmployee && item.quantity > 1 && (
+                              <> × {item.quantity}</>
                             )}
                           </div>
                         );
@@ -1850,26 +1863,29 @@ export default function CreateCustomPlanModal({
               </div>
             </Card>
 
-            <Card className="p-4 bg-blue-50">
-              <div className="space-y-2">
-                <div className="flex justify-between text-lg">
-                  <span className="font-semibold">Tổng chi phí:</span>
-                  <span className="font-bold">{totalCost.toLocaleString('vi-VN')} VND</span>
-                </div>
-                {discountAmount !== '' && discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Giảm giá:</span>
-                    <span>-{Number(discountAmount).toLocaleString('vi-VN')} VND</span>
+            {/* Hide price summary for employee role */}
+            {!isEmployee && (
+              <Card className="p-4 bg-blue-50">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-lg">
+                    <span className="font-semibold">Tổng chi phí:</span>
+                    <span className="font-bold">{totalCost.toLocaleString('vi-VN')} VND</span>
                   </div>
-                )}
-                <div className="flex justify-between text-lg border-t pt-2">
-                  <span className="font-semibold">Thành tiền:</span>
-                  <span className="font-bold text-primary">
-                    {finalCost.toLocaleString('vi-VN')} VND
-                  </span>
+                  {discountAmount !== '' && discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Giảm giá:</span>
+                      <span>-{Number(discountAmount).toLocaleString('vi-VN')} VND</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg border-t pt-2">
+                    <span className="font-semibold">Thành tiền:</span>
+                    <span className="font-bold text-primary">
+                      {finalCost.toLocaleString('vi-VN')} VND
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
 
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <div className="flex items-start gap-2">

@@ -663,7 +663,7 @@ export default function CreateItemMasterModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="itemCode" className="text-sm font-medium">
-                Mã Vật Tư <span className="text-red-500">*</span>
+                Mã vật tư <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="itemCode"
@@ -677,7 +677,7 @@ export default function CreateItemMasterModal({
 
             <div>
               <Label htmlFor="itemName" className="text-sm font-medium">
-                Tên Vật Tư <span className="text-red-500">*</span>
+                Tên vật tư <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="itemName"
@@ -692,7 +692,7 @@ export default function CreateItemMasterModal({
           {/* Category */}
           <div>
             <Label htmlFor="category_id" className="text-sm font-medium">
-              Nhóm Vật Tư <span className="text-red-500">*</span>
+              Nhóm vật tư <span className="text-red-500">*</span>
             </Label>
             <Select
               value={formData.categoryId ? String(formData.categoryId) : undefined}
@@ -738,7 +738,7 @@ export default function CreateItemMasterModal({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">
-                Đơn Vị Tính <span className="text-red-500">*</span>
+                Đơn vị tính <span className="text-red-500">*</span>
               </Label>
               <Button
                 type="button"
@@ -748,7 +748,7 @@ export default function CreateItemMasterModal({
                 className="flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Thêm Đơn Vị
+                Thêm đơn vị
               </Button>
             </div>
 
@@ -769,7 +769,7 @@ export default function CreateItemMasterModal({
                     className="grid grid-cols-12 gap-3 items-start p-3 bg-white rounded border"
                   >
                     <div className="col-span-4">
-                      <Label className="text-xs text-gray-600">Tên Đơn Vị</Label>
+                      <Label className="text-xs text-gray-600">Tên đơn vị</Label>
                       <Input
                         value={unit.unitName}
                         onChange={(e) => updateUnit(index, 'unitName', e.target.value)}
@@ -780,7 +780,7 @@ export default function CreateItemMasterModal({
                     </div>
 
                     <div className="col-span-3">
-                      <Label className="text-xs text-gray-600">Tỷ Lệ Quy Đổi</Label>
+                      <Label className="text-xs text-gray-600">Tỷ lệ quy đổi</Label>
                       <Input
                         type="number"
                         min="1"
@@ -796,7 +796,7 @@ export default function CreateItemMasterModal({
                     </div>
 
                     <div className="col-span-3">
-                      <Label className="text-xs text-gray-600">Thứ Tự Hiển Thị</Label>
+                      <Label className="text-xs text-gray-600">Thứ tự hiển thị</Label>
                       <Input
                         type="number"
                         min="1"
@@ -864,7 +864,7 @@ export default function CreateItemMasterModal({
           {/* Warehouse Type (Radio) */}
           <div>
             <Label className="text-sm font-medium mb-2 block">
-              Loại Kho <span className="text-red-500">*</span>
+              Loại kho <span className="text-red-500">*</span>
             </Label>
             <RadioGroup
               value={formData.warehouseType}
@@ -877,14 +877,14 @@ export default function CreateItemMasterModal({
                 <RadioGroupItem value="NORMAL" id="normal" />
                 <Label htmlFor="normal" className="cursor-pointer flex items-center gap-2">
                   <Box className="h-4 w-4 text-slate-600" />
-                  Kho Thường
+                  Kho thường
                 </Label>
               </div>
               <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-blue-50 cursor-pointer">
                 <RadioGroupItem value="COLD" id="cold" />
                 <Label htmlFor="cold" className="cursor-pointer flex items-center gap-2">
                   <Snowflake className="h-4 w-4 text-blue-600" />
-                  Kho Lạnh
+                  Kho lạnh
                 </Label>
               </div>
             </RadioGroup>
@@ -894,7 +894,7 @@ export default function CreateItemMasterModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="min_stock_level" className="text-sm font-medium">
-                Tồn Kho Tối Thiểu
+                Tồn kho tối thiểu
               </Label>
               <Input
                 id="minStockLevel"
@@ -910,7 +910,7 @@ export default function CreateItemMasterModal({
 
             <div>
               <Label htmlFor="max_stock_level" className="text-sm font-medium">
-                Tồn Kho Tối Đa
+                Tồn kho tối đa
               </Label>
               <Input
                 id="maxStockLevel"
@@ -935,14 +935,14 @@ export default function CreateItemMasterModal({
               className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
             />
             <Label htmlFor="is_tool" className="cursor-pointer text-sm text-amber-900">
-              ✓ Đây là <strong>Dụng cụ</strong> (không cần HSD khi nhập kho lạnh)
+              ✓ Đây là <strong>dụng cụ</strong> (không cần HSD khi nhập kho lạnh)
             </Label>
           </div>
 
           {/* Notes */}
           <div>
             <Label htmlFor="notes" className="text-sm font-medium">
-              Ghi Chú
+              Ghi chú
             </Label>
             <Textarea
               id="notes"

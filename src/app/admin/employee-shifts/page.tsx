@@ -204,7 +204,7 @@ export default function AdminEmployeeShiftsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quản Lý Ca Làm Việc</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý ca làm việc</h1>
             <p className="text-gray-600 mt-1">
               Xem và quản lý ca làm việc của tất cả nhân viên
             </p>

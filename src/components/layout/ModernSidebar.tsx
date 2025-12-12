@@ -223,10 +223,10 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header - minimalist clean white */}
           <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100">
-            <div className={`flex items-center gap-2.5 ${isCollapsed ? 'justify-center w-full' : ''}`}>
+            <div className={`flex items-center gap-2.5 ${isCollapsed ? 'justify-center w-full' : 'flex-1 justify-center'}`}>
               {/* Logo */}
               <div className="w-9 h-9 bg-gradient-to-br from-[#8b5fbf] to-[#7a4fb0] rounded-xl flex items-center justify-center shadow-lg shadow-purple-200/50">
-                <span className="text-white text-base font-bold">P</span>
+                <span className="text-white text-base font-bold">D</span>
               </div>
               {!isCollapsed && (
                 <h1 className="text-lg font-bold text-gray-900 tracking-tight">

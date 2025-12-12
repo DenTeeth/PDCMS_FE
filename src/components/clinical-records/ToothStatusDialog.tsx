@@ -30,19 +30,29 @@ import { toothStatusService } from '@/services/toothStatusService';
 import { toast } from 'sonner';
 import { Loader2, Save, X } from 'lucide-react';
 
-// Status labels in Vietnamese
+// Status labels in Vietnamese (matching legend - excluding HEALTHY and MISSING)
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
   CARIES: 'Sâu răng',
   FILLED: 'Đã trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
-  EXTRACTED: 'Đã nhổ',
   MISSING: 'Mất răng',
   IMPLANT: 'Cấy ghép',
   FRACTURED: 'Gãy răng',
   IMPACTED: 'Mọc ngầm',
 };
+
+// Status options for dropdown (only show in legend)
+const DROPDOWN_STATUS_OPTIONS: ToothCondition[] = [
+  'CARIES',
+  'FILLED',
+  'CROWN',
+  'ROOT_CANAL',
+  'IMPLANT',
+  'FRACTURED',
+  'IMPACTED',
+];
 
 interface ToothStatusDialogProps {
   open: boolean;
@@ -70,7 +80,7 @@ export default function ToothStatusDialog({
   // Reset form when dialog opens or props change
   useEffect(() => {
     if (open) {
-      setStatus(currentStatus || 'HEALTHY');
+      setStatus(currentStatus || 'CARIES'); // Default to CARIES instead of HEALTHY
       setNotes(currentNotes || '');
     }
   }, [open, currentStatus, currentNotes]);
@@ -122,10 +132,10 @@ export default function ToothStatusDialog({
               <SelectTrigger id="status">
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
-              <SelectContent>
-                {Object.entries(TOOTH_STATUS_LABELS).map(([value, label]) => (
+              <SelectContent align="start">
+                {DROPDOWN_STATUS_OPTIONS.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {TOOTH_STATUS_LABELS[value]}
                   </SelectItem>
                 ))}
               </SelectContent>

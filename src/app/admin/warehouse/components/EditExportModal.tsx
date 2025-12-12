@@ -165,7 +165,7 @@ export default function EditExportModal({
         <DialogHeader>
           <DialogTitle>Chỉnh sửa phiếu xuất #{transaction?.transactionCode}</DialogTitle>
           <DialogDescription>
-            Cập nhật thông tin phiếu xuất kho. Lưu ý: Không thể sửa phiếu quá 30 ngày.
+            Cập nhật thông tin phiếu xuất kho. Lưu ý: Không thể sửa phiếu quá 30 ngày!
           </DialogDescription>
         </DialogHeader>
 

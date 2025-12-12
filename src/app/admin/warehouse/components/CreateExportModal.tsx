@@ -253,7 +253,7 @@ export default function CreateExportModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <TruckIcon className="h-5 w-5 text-blue-600" />
-              Phiếu Xuất Kho (FEFO) {warehouseType === 'COLD' ? (
+              Phiếu xuất kho (FEFO) {warehouseType === 'COLD' ? (
                 <>
                   <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
                   (Kho Lạnh)
@@ -270,7 +270,7 @@ export default function CreateExportModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
               <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">
-                  Ngày Xuất <span className="text-red-500">*</span>
+                  Ngày xuất <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="date"
@@ -282,7 +282,7 @@ export default function CreateExportModal({
 
               <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">
-                  Loại Phiếu <span className="text-red-500">*</span>
+                  Loại phiếu <span className="text-red-500">*</span>
                 </Label>
                 <Select value={exportType} onValueChange={(value) => setExportType(value as ExportType)}>
                   <SelectTrigger>
@@ -291,13 +291,13 @@ export default function CreateExportModal({
                   <SelectContent>
                     <SelectItem value="USAGE">Xuất dùng (USAGE)</SelectItem>
                     <SelectItem value="DISPOSAL">Xuất hủy (DISPOSAL)</SelectItem>
-                    <SelectItem value="RETURN">Trả NCC (RETURN)</SelectItem>
+                    <SelectItem value="RETURN">Trả nhà cung cấp (RETURN)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-sm font-medium">Bộ Phận / Khoa Yêu Cầu</Label>
+                <Label className="text-sm font-medium">Bộ phận / khoa yêu cầu</Label>
                 <Input
                   value={departmentName}
                   onChange={(e) => setDepartmentName(e.target.value)}
@@ -306,7 +306,7 @@ export default function CreateExportModal({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-sm font-medium">Người Yêu Cầu</Label>
+                <Label className="text-sm font-medium">Người yêu cầu</Label>
                 <Input
                   value={requestedBy}
                   onChange={(e) => setRequestedBy(e.target.value)}
@@ -315,7 +315,7 @@ export default function CreateExportModal({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-sm font-medium">Mã Tham Chiếu / Ca Điều Trị</Label>
+                <Label className="text-sm font-medium">Mã tham chiếu / ca điều trị</Label>
                 <Input
                   value={referenceCode}
                   onChange={(e) => setReferenceCode(e.target.value)}
@@ -324,7 +324,7 @@ export default function CreateExportModal({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-sm font-medium">Ghi Chú</Label>
+                <Label className="text-sm font-medium">Ghi chú</Label>
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -349,11 +349,11 @@ export default function CreateExportModal({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <Label className="text-sm font-medium">
-                  Danh Sách Lô Hàng Xuất <span className="text-red-500">*</span>
+                  Danh sách lô hàng xuất <span className="text-red-500">*</span>
                 </Label>
                 <Button type="button" size="sm" onClick={handleAddBatch} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Chọn Lô Hàng
+                  Chọn lô hàng
                 </Button>
               </div>
 
@@ -361,7 +361,7 @@ export default function CreateExportModal({
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center text-slate-500">
                   <TruckIcon className="h-12 w-12 mx-auto mb-3 text-slate-400" />
                   <p className="font-medium">Chưa có lô hàng nào được chọn</p>
-                  <p className="text-sm mt-1">Bấm "Chọn Lô Hàng" để thêm vật tư cần xuất</p>
+                  <p className="text-sm mt-1">Bấm "Chọn lô hàng" để thêm vật tư cần xuất</p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
@@ -369,11 +369,11 @@ export default function CreateExportModal({
                     <thead className="bg-slate-100">
                       <tr className="text-xs font-semibold text-slate-700">
                         <th className="p-3 text-left w-[5%]">STT</th>
-                        <th className="p-3 text-left w-[30%]">Vật Tư</th>
-                        <th className="p-3 text-left w-[20%]">Số Lô</th>
-                        <th className="p-3 text-left w-[15%]">Số Lượng</th>
-                        <th className="p-3 text-left w-[20%]">Hạn Sử Dụng</th>
-                        <th className="p-3 text-center w-[10%]">Hành Động</th>
+                        <th className="p-3 text-left w-[30%]">Vật tư</th>
+                        <th className="p-3 text-left w-[20%]">Số lô</th>
+                        <th className="p-3 text-left w-[15%]">Số lượng</th>
+                        <th className="p-3 text-left w-[20%]">Hạn sử dụng</th>
+                        <th className="p-3 text-center w-[10%]">Hành động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -429,7 +429,7 @@ export default function CreateExportModal({
                 className="flex-1"
                 disabled={mutation.isPending || items.length === 0}
               >
-                {mutation.isPending ? 'Đang lưu...' : 'Lưu Phiếu Xuất'}
+                {mutation.isPending ? 'Đang lưu...' : 'Lưu phiếu xuất'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                 Hủy
