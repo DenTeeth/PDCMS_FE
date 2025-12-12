@@ -430,7 +430,7 @@ export default function AdminTimeOffTypesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Quản Lý Loại Nghỉ Phép</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Quản lý loại nghỉ phép</h1>
             <p className="text-sm text-gray-600 mt-1">Quản lý các loại nghỉ phép trong hệ thống</p>
           </div>
 
@@ -441,7 +441,7 @@ export default function AdminTimeOffTypesPage() {
               className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Tạo Loại
+              Tạo loại
             </Button>
           )}
         </div>
@@ -579,7 +579,7 @@ export default function AdminTimeOffTypesPage() {
                 size="sm"
                 className={statusFilter === 'ALL' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
               >
-                Tất Cả ({stats.total})
+                Tất cả ({stats.total})
               </Button>
               <Button
                 variant={statusFilter === 'ACTIVE' ? 'default' : 'outline'}
@@ -588,7 +588,7 @@ export default function AdminTimeOffTypesPage() {
                 className={statusFilter === 'ACTIVE' ? 'bg-green-600 hover:bg-green-700' : ''}
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Hoạt Động ({stats.active})
+                Hoạt động ({stats.active})
               </Button>
               <Button
                 variant={statusFilter === 'INACTIVE' ? 'default' : 'outline'}
@@ -597,7 +597,7 @@ export default function AdminTimeOffTypesPage() {
                 className={statusFilter === 'INACTIVE' ? 'bg-red-600 hover:bg-red-700' : ''}
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Vô Hiệu ({stats.inactive})
+                Vô hiệu ({stats.inactive})
               </Button>
             </div>
           </div>
@@ -613,22 +613,22 @@ export default function AdminTimeOffTypesPage() {
                     Mã
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên Loại
+                    Tên loại
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mô Tả
+                    Mô tả
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Ngày/Năm
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Có Lương
+                    Có lương
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng Thái
+                    Trạng thái
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thao Tác
+                    Thao tác
                   </th>
                 </tr>
               </thead>
@@ -713,13 +713,13 @@ export default function AdminTimeOffTypesPage() {
             <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5 text-purple-600" />
-                Tạo Loại Nghỉ Phép Mới
+                Tạo loại nghỉ phép mới
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="typeCode">Mã Loại <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="typeCode">Mã loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="typeCode"
                     placeholder="VD: ANNUAL_LEAVE"
@@ -737,7 +737,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="typeName">Tên Loại <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="typeName">Tên loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="typeName"
                     placeholder="VD: Nghỉ phép năm"
@@ -755,7 +755,7 @@ export default function AdminTimeOffTypesPage() {
               </div>
 
               <div>
-                <Label htmlFor="description">Mô Tả <span className="text-red-500">*</span></Label>
+                <Label htmlFor="description">Mô tả <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="description"
                   placeholder="Mô tả chi tiết về loại nghỉ phép..."
@@ -775,7 +775,7 @@ export default function AdminTimeOffTypesPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="defaultDays">
-                    Ngày Mặc Định/Năm
+                    Ngày mặc định/năm
                     {!formData.requiresBalance && (
                       <span className="text-xs text-gray-500 ml-2">(Chỉ khi yêu cầu số dư)</span>
                     )}
@@ -805,7 +805,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Yêu Cầu Số Dư Ngày Nghỉ</Label>
+                  <Label className="mb-2">Yêu cầu số dư ngày nghỉ</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -829,7 +829,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Được Trả Lương</Label>
+                  <Label className="mb-2">Được trả lương</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -859,7 +859,7 @@ export default function AdminTimeOffTypesPage() {
                   disabled={submitting}
                   className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
                 >
-                  {submitting ? 'Đang tạo...' : 'Tạo Loại Nghỉ Phép'}
+                  {submitting ? 'Đang tạo...' : 'Tạo loại nghỉ phép'}
                 </Button>
                 <Button
                   variant="outline"
@@ -884,13 +884,13 @@ export default function AdminTimeOffTypesPage() {
             <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <Pencil className="h-5 w-5 text-purple-600" />
-                Chỉnh Sửa Loại Nghỉ Phép
+                Chỉnh sửa loại nghỉ phép
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-typeCode">Mã Loại <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="edit-typeCode">Mã loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-typeCode"
                     placeholder="VD: ANNUAL_LEAVE"
@@ -907,7 +907,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-typeName">Tên Loại <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="edit-typeName">Tên loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-typeName"
                     placeholder="VD: Nghỉ phép năm"
@@ -925,7 +925,7 @@ export default function AdminTimeOffTypesPage() {
               </div>
 
               <div>
-                <Label htmlFor="edit-description">Mô Tả <span className="text-red-500">*</span></Label>
+                <Label htmlFor="edit-description">Mô tả <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="edit-description"
                   placeholder="Mô tả chi tiết về loại nghỉ phép..."
@@ -945,7 +945,7 @@ export default function AdminTimeOffTypesPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="edit-defaultDays">
-                    Ngày Mặc Định/Năm
+                    Ngày mặc định/năm
                     {!formData.requiresBalance && (
                       <span className="text-xs text-gray-500 ml-2">(Chỉ khi có yêu cầu số dư ngày nghỉ)</span>
                     )}
@@ -975,7 +975,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Yêu Cầu Số Dư Ngày Nghỉ</Label>
+                  <Label className="mb-2">Yêu cầu số dư ngày nghỉ</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -999,7 +999,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="mb-2">Được Trả Lương</Label>
+                  <Label className="mb-2">Được trả lương</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center">
                       <input
@@ -1082,7 +1082,7 @@ export default function AdminTimeOffTypesPage() {
                   disabled={submitting}
                   className={selectedType.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                 >
-                  {submitting ? 'Đang xử lý...' : (selectedType.isActive ? 'Vô Hiệu Hóa' : 'Kích Hoạt')}
+                  {submitting ? 'Đang xử lý...' : (selectedType.isActive ? 'Vô hiệu hóa' : 'Kích hoạt')}
                 </Button>
                 <Button
                   variant="outline"

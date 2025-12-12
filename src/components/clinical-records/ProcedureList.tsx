@@ -125,7 +125,7 @@ export default function ProcedureList({
           <div className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5" />
             <h3 className="text-lg font-semibold">
-              Thủ Thuật Đã Thực Hiện ({procedures.length})
+              Thủ thuật đã thực hiện ({procedures.length})
             </h3>
           </div>
           {canEdit && (
@@ -135,7 +135,7 @@ export default function ProcedureList({
               className="gap-2"
             >
               <Plus className="h-4 w-4" />
-              Thêm Thủ Thuật
+              Thêm thủ thuật
             </Button>
           )}
         </div>
@@ -157,7 +157,7 @@ export default function ProcedureList({
                 onClick={() => setShowAddForm(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Thêm thủ thuật đầu tiên
+                  Thêm thủ thuật
               </Button>
             )}
           </div>

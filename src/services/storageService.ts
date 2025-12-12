@@ -542,6 +542,38 @@ export const storageService = {
     // TransactionHistoryController chỉ có GET /transactions và GET /transactions/{id}
     throw new Error('Delete transaction endpoint chưa được implement bởi BE. Vui lòng liên hệ Backend team.');
   },
+
+  /**
+   * GET /api/v1/warehouse/transactions/export - Xuất Excel lịch sử giao dịch (Issue #50)
+   * Returns Excel file (.xlsx) with transaction history
+   */
+  exportTransactionHistory: async (filter?: StorageFilter): Promise<Blob> => {
+    try {
+      const response = await api.get(`${TRANSACTION_BASE}/export`, {
+        params: buildTransactionParams(filter),
+        responseType: 'blob', // Important for binary data
+      });
+
+      console.log(' Export transaction history - File downloaded');
+      return response.data;
+    } catch (error: any) {
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/export`,
+        method: 'GET',
+        params: buildTransactionParams(filter),
+      });
+      
+      console.error(' Export transaction history error:', {
+        message: enhancedError.message,
+        status: enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        params: enhancedError.params,
+        originalError: error,
+      });
+      
+      throw enhancedError;
+    }
+  },
 };
 
 export default storageService;

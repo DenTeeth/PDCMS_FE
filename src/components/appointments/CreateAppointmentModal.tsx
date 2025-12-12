@@ -54,18 +54,27 @@ import { ServiceCategoryService } from '@/services/serviceCategoryService';
 import { ServiceCategory } from '@/types/serviceCategory';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
+import { useHolidays } from '@/hooks/useHolidays';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   CreateAppointmentRequest,
   AvailableTimesRequest,
   AvailableTimesResponse,
   TimeSlot,
+  ValidateConstraintsRequest,
+  ValidateConstraintsResponse,
+  ConstraintViolation,
+  CONSTRAINT_TYPE_LABELS,
 } from '@/types/appointment';
 import { Service } from '@/types/service';
 import { Employee } from '@/types/employee';
 import { Patient } from '@/types/patient';
 import { Room } from '@/types/room';
 import { Specialization } from '@/types/specialization';
+import { 
+  getBookingBlockReasonLabel,
+  isTemporaryBlock 
+} from '@/types/patientBlockReason';
 import {
   User,
   UserCog,
@@ -295,6 +304,12 @@ export default function CreateAppointmentModal({
   // Employee shifts for selected date
   const [allEmployeeShifts, setAllEmployeeShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
   const [loadingShifts, setLoadingShifts] = useState(false);
+
+  // BE_4: Holiday highlighting
+  const { holidays, isHoliday, getHolidayName } = useHolidays({
+    year: new Date(appointmentDate || new Date()).getFullYear(),
+    enabled: open && currentStep === 2, // Only fetch when calendar is visible
+  });
 
   // Participant shifts
   const [participantShifts, setParticipantShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
@@ -1213,10 +1228,12 @@ export default function CreateAppointmentModal({
       return;
     }
 
-    // Check if patient is blacklisted
-    if (selectedPatientData?.isBlacklisted) {
+    // Check if patient is booking blocked
+    if (selectedPatientData?.isBookingBlocked) {
+      const blockReason = getBookingBlockReasonLabel(selectedPatientData.bookingBlockReason);
+      const isTemp = isTemporaryBlock(selectedPatientData.bookingBlockReason);
       toast.error(
-        `Bệnh nhân ${selectedPatientData.fullName} đang bị blacklist do ${selectedPatientData.consecutiveNoShows || 0} lần no-show liên tiếp. Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.`,
+        `Bệnh nhân ${selectedPatientData.fullName} đang bị ${isTemp ? 'tạm chặn' : 'blacklist'}: ${blockReason}. Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.`,
         { duration: 6000 }
       );
       return;
@@ -1444,17 +1461,21 @@ export default function CreateAppointmentModal({
                       <div
                         key={patient.patientId}
                         onClick={() => {
-                          if (patient.isBlacklisted) {
+                          if (patient.isBookingBlocked) {
+                            const blockReason = getBookingBlockReasonLabel(patient.bookingBlockReason);
+                            const isTemp = isTemporaryBlock(patient.bookingBlockReason);
                             toast.error(
-                              `Bệnh nhân ${patient.fullName} đang bị blacklist do ${patient.consecutiveNoShows || 0} lần no-show liên tiếp. Không thể tạo lịch hẹn.`
+                              `Bệnh nhân ${patient.fullName} đang bị ${isTemp ? 'tạm chặn' : 'blacklist'}: ${blockReason}. Không thể tạo lịch hẹn.`
                             );
                             return;
                           }
                           handleSelectPatient(patient);
                         }}
                         className={`p-3 border rounded-lg transition-colors ${
-                          patient.isBlacklisted
-                            ? 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
+                          patient.isBookingBlocked
+                            ? isTemporaryBlock(patient.bookingBlockReason)
+                              ? 'border-orange-300 bg-orange-50 cursor-not-allowed opacity-60'
+                              : 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
                             : patientCode === patient.patientCode
                             ? 'border-primary bg-primary/5 cursor-pointer'
                             : 'hover:bg-muted cursor-pointer'
@@ -1467,9 +1488,16 @@ export default function CreateAppointmentModal({
                               {patient.patientCode} {patient.phone && `• ${patient.phone}`}
                             </div>
                           </div>
-                          {patient.isBlacklisted && (
-                            <Badge variant="destructive" className="bg-red-600 text-white text-xs">
-                              ⛔ BLACKLISTED
+                          {patient.isBookingBlocked && (
+                            <Badge 
+                              variant="destructive" 
+                              className={
+                                isTemporaryBlock(patient.bookingBlockReason)
+                                  ? 'bg-orange-600 text-white text-xs'
+                                  : 'bg-red-600 text-white text-xs'
+                              }
+                            >
+                              {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
                             </Badge>
                           )}
                         </div>
@@ -1488,13 +1516,21 @@ export default function CreateAppointmentModal({
 
               {selectedPatient && (
                 <Card className={`p-4 border-2 ${
-                  selectedPatient.isBlacklisted
-                    ? 'bg-red-50 border-red-300'
+                  selectedPatient.isBookingBlocked
+                    ? isTemporaryBlock(selectedPatient.bookingBlockReason)
+                      ? 'bg-orange-50 border-orange-300'
+                      : 'bg-red-50 border-red-300'
                     : 'bg-primary/5 border-primary'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <User className={`h-5 w-5 ${selectedPatient.isBlacklisted ? 'text-red-600' : 'text-primary'}`} />
+                      <User className={`h-5 w-5 ${
+                        selectedPatient.isBookingBlocked
+                          ? isTemporaryBlock(selectedPatient.bookingBlockReason)
+                            ? 'text-orange-600'
+                            : 'text-red-600'
+                          : 'text-primary'
+                      }`} />
                       <div>
                         <div className="font-medium">{selectedPatient.fullName}</div>
                         <div className="text-sm text-muted-foreground">
@@ -1502,16 +1538,32 @@ export default function CreateAppointmentModal({
                         </div>
                       </div>
                     </div>
-                    {selectedPatient.isBlacklisted && (
-                      <Badge variant="destructive" className="bg-red-600 text-white">
-                        ⛔ BLACKLISTED
+                    {selectedPatient.isBookingBlocked && (
+                      <Badge 
+                        variant="destructive" 
+                        className={
+                          isTemporaryBlock(selectedPatient.bookingBlockReason)
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-red-600 text-white'
+                        }
+                      >
+                        {isTemporaryBlock(selectedPatient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
                       </Badge>
                     )}
                   </div>
-                  {selectedPatient.isBlacklisted && (
-                    <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
-                      <p className="text-sm text-red-800">
-                        <strong>⚠️ Cảnh báo:</strong> Bệnh nhân này đang bị blacklist do {selectedPatient.consecutiveNoShows || 0} lần no-show liên tiếp. 
+                  {selectedPatient.isBookingBlocked && (
+                    <div className={`mt-3 p-3 border rounded-lg ${
+                      isTemporaryBlock(selectedPatient.bookingBlockReason)
+                        ? 'bg-orange-100 border-orange-300'
+                        : 'bg-red-100 border-red-300'
+                    }`}>
+                      <p className={`text-sm ${
+                        isTemporaryBlock(selectedPatient.bookingBlockReason)
+                          ? 'text-orange-800'
+                          : 'text-red-800'
+                      }`}>
+                        <strong>⚠️ Cảnh báo:</strong> Bệnh nhân này đang bị {isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'tạm chặn' : 'blacklist'}: {getBookingBlockReasonLabel(selectedPatient.bookingBlockReason)}
+                        {selectedPatient.consecutiveNoShows ? ` (${selectedPatient.consecutiveNoShows} lần no-show)` : ''}. 
                         Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.
                       </p>
                     </div>
@@ -1609,6 +1661,10 @@ export default function CreateAppointmentModal({
                               const isToday = isSameDay(currentDate, today);
                               const isCurrentMonth = isSameMonth(currentDate, selectedMonth);
 
+                              // BE_4: Check if date is holiday
+                              const isHolidayDate = isHoliday(dateStr);
+                              const holidayName = getHolidayName(dateStr);
+
                               // Check if this date has any doctors with shifts (for Step 2 - all doctors)
                               const hasDoctors = hasDoctorsWithShifts(dateStr);
 
@@ -1617,28 +1673,34 @@ export default function CreateAppointmentModal({
                                   key={dateStr}
                                   type="button"
                                   onClick={() => {
-                                    if (!isPast && isCurrentMonth) {
+                                    if (!isPast && isCurrentMonth && !isHolidayDate) {
                                       setAppointmentDate(dateStr);
                                       setEmployeeCode('');
                                       setAppointmentStartTime('');
                                       setRoomCode('');
                                     }
                                   }}
-                                  disabled={isPast || !isCurrentMonth}
-                                  className={`p-2 rounded text-center transition-all ${!isCurrentMonth
+                                  disabled={isPast || !isCurrentMonth || isHolidayDate}
+                                  title={isHolidayDate ? `Ngày lễ: ${holidayName}` : undefined}
+                                  className={`p-2 rounded text-center transition-all relative ${!isCurrentMonth
                                     ? 'bg-muted/20 opacity-30 cursor-not-allowed'
                                     : isPast
                                       ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                                      : isSelected
-                                        ? 'bg-primary text-primary-foreground font-semibold scale-105'
-                                        : hasDoctors
-                                          ? 'bg-green-50 hover:bg-green-100 border border-green-200'
-                                          : 'bg-muted/50 hover:bg-muted border border-border'
-                                    } ${isToday && !isPast && isCurrentMonth ? 'ring-2 ring-primary/30' : ''}`}
+                                      : isHolidayDate
+                                        ? 'bg-red-50 text-red-600 border border-red-300 cursor-not-allowed opacity-70'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground font-semibold scale-105'
+                                          : hasDoctors
+                                            ? 'bg-green-50 hover:bg-green-100 border border-green-200'
+                                            : 'bg-muted/50 hover:bg-muted border border-border'
+                                    } ${isToday && !isPast && isCurrentMonth && !isHolidayDate ? 'ring-2 ring-primary/30' : ''}`}
                                 >
                                   <div className="text-xs font-medium">{currentDate.getDate()}</div>
-                                  {hasDoctors && !isPast && isCurrentMonth && (
+                                  {hasDoctors && !isPast && isCurrentMonth && !isHolidayDate && (
                                     <div className="text-[8px] mt-0.5 text-green-600">●</div>
+                                  )}
+                                  {isHolidayDate && isCurrentMonth && (
+                                    <div className="text-[8px] mt-0.5 text-red-600">🎊</div>
                                   )}
                                 </button>
                               );
@@ -1649,14 +1711,18 @@ export default function CreateAppointmentModal({
                             return dates;
                           })()}
                         </div>
-                        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-3 rounded bg-green-50 border border-green-200"></div>
-                            <span>Available</span>
+                            <span>Có sẵn</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-3 rounded bg-muted/50 border border-border"></div>
-                            <span>No availability</span>
+                            <span>Không sẵn</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded bg-red-50 border border-red-300"></div>
+                            <span>Ngày lễ 🎊</span>
                           </div>
                         </div>
                       </>

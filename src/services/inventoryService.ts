@@ -834,6 +834,60 @@ export const inventoryService = {
       throw enhancedError;
     }
   },
+
+  /**
+   * GET /api/v1/warehouse/summary/export - Xuất Excel báo cáo tồn kho (Issue #50)
+   * Returns Excel file (.xlsx) with inventory summary
+   */
+  exportInventorySummary: async (filter?: InventoryFilter): Promise<Blob> => {
+    try {
+      const params: Record<string, any> = {};
+
+      // Apply filters
+      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+      if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
+      if (filter?.search) params.search = filter.search;
+      if (filter?.categoryId) params.categoryId = filter.categoryId;
+
+      const response = await api.get('/warehouse/summary/export', {
+        params,
+        responseType: 'blob', // Important for binary data
+      });
+
+      console.log(' Export inventory summary - File downloaded');
+      return response.data;
+    } catch (error: any) {
+      console.error(' Export inventory summary error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * GET /api/v1/warehouse/alerts/expiring/export - Xuất Excel cảnh báo hết hạn (Issue #50)
+   * Returns Excel file (.xlsx) with expiring alerts
+   */
+  exportExpiringAlerts: async (filter?: ExpiringAlertsFilter): Promise<Blob> => {
+    try {
+      const params: Record<string, any> = {
+        days: filter?.days ?? 30, // Default 30 days
+      };
+
+      if (filter?.categoryId) params.categoryId = filter.categoryId;
+      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+      if (filter?.statusFilter) params.statusFilter = filter.statusFilter;
+
+      const response = await api.get('/warehouse/alerts/expiring/export', {
+        params,
+        responseType: 'blob', // Important for binary data
+      });
+
+      console.log(' Export expiring alerts - File downloaded');
+      return response.data;
+    } catch (error: any) {
+      console.error(' Export expiring alerts error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
 
 export default inventoryService;

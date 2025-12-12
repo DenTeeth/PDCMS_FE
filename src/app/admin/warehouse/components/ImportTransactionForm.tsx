@@ -381,12 +381,12 @@ export default function ImportTransactionForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Package className="h-6 w-6 text-emerald-600" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+            Phiếu nhập kho {warehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                (Kho Lạnh)
+                (Kho lạnh)
               </>
-            ) : '(Kho Thường)'}
+            ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với tracking hóa đơn, giá nhập, xử lý lô hàng
@@ -411,7 +411,7 @@ export default function ImportTransactionForm({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border">
             <div>
               <Label className="text-sm font-medium">
-                Nhà Cung Cấp <span className="text-red-500">*</span>
+                Nhà cung cấp <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={String(watch('supplierId'))}
@@ -419,7 +419,7 @@ export default function ImportTransactionForm({
                 disabled={suppliersLoading}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn NCC"} />
+                  <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn nhà cung cấp"} />
                 </SelectTrigger>
                 <SelectContent align="start">
                   {suppliers.length === 0 ? (
@@ -442,7 +442,7 @@ export default function ImportTransactionForm({
 
             <div>
               <Label className="text-sm font-medium">
-                Ngày Nhập <span className="text-red-500">*</span>
+                Ngày nhập <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
@@ -456,7 +456,7 @@ export default function ImportTransactionForm({
 
             <div>
               <Label className="text-sm font-medium">
-                Số Hóa Đơn <span className="text-red-500">*</span>
+                Số hóa đơn <span className="text-red-500">*</span>
               </Label>
               <Input
                 {...register('invoiceNumber')}
@@ -469,7 +469,7 @@ export default function ImportTransactionForm({
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Ngày Dự Kiến Giao</Label>
+              <Label className="text-sm font-medium">Ngày dự kiến giao</Label>
               <Input
                 type="date"
                 {...register('expectedDeliveryDate')}
@@ -481,11 +481,11 @@ export default function ImportTransactionForm({
           <div>
             <div className="flex items-center justify-between mb-3">
               <Label className="text-sm font-medium">
-                Danh Sách Vật Tư <span className="text-red-500">*</span>
+                Danh sách vật tư <span className="text-red-500">*</span>
               </Label>
               <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Thêm Dòng
+                Thêm dòng
               </Button>
             </div>
 
@@ -495,12 +495,12 @@ export default function ImportTransactionForm({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[25%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[15%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[12%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[15%]">Đơn Giá (VNĐ) *</th>
-                      <th className="p-3 text-left w-[15%]">Hạn Sử Dụng *</th>
-                      <th className="p-3 text-left w-[13%]">Hành Động</th>
+                      <th className="p-3 text-left w-[25%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[15%]">Số lô *</th>
+                      <th className="p-3 text-left w-[12%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[15%]">Đơn giá (VNĐ) *</th>
+                      <th className="p-3 text-left w-[15%]">Hạn sử dụng *</th>
+                      <th className="p-3 text-left w-[13%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>

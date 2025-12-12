@@ -435,3 +435,78 @@ export interface CalendarEvent {
         appointment: Appointment | AppointmentSummaryDTO; // Support both old and new types
     };
 }
+
+// ============================================================================
+// BE_4: Appointment Constraint Validation
+// ============================================================================
+
+/**
+ * Request to validate appointment constraints
+ * POST /api/appointments/validate-constraints
+ */
+export interface ValidateConstraintsRequest {
+    patientCode: string;
+    serviceCode: string;
+    proposedDate: string; // YYYY-MM-DD
+}
+
+/**
+ * Response from constraint validation
+ * Contains validation result and detailed error messages
+ */
+export interface ValidateConstraintsResponse {
+    isValid: boolean;
+    errors: ConstraintViolation[];
+    warnings: ConstraintViolation[];
+    earliestAllowedDate?: string; // YYYY-MM-DD (if constraint violated)
+    nextAvailableDate?: string; // YYYY-MM-DD (considering holidays)
+}
+
+/**
+ * Individual constraint violation details
+ */
+export interface ConstraintViolation {
+    constraintType: ConstraintType;
+    field: string;
+    message: string;
+    messageVi: string; // Vietnamese message
+    rejectedValue?: string | number;
+    context?: Record<string, any>; // Additional context (e.g., lastAppointmentDate)
+}
+
+/**
+ * Types of appointment constraints
+ */
+export enum ConstraintType {
+    // Service constraints
+    MINIMUM_PREPARATION_DAYS = 'MINIMUM_PREPARATION_DAYS',
+    RECOVERY_DAYS = 'RECOVERY_DAYS',
+    SPACING_DAYS = 'SPACING_DAYS',
+    MAX_APPOINTMENTS_PER_DAY = 'MAX_APPOINTMENTS_PER_DAY',
+    
+    // Holiday constraints
+    HOLIDAY_CONFLICT = 'HOLIDAY_CONFLICT',
+    WEEKEND_CONFLICT = 'WEEKEND_CONFLICT',
+    
+    // Business rules
+    PAST_DATE = 'PAST_DATE',
+    BOOKING_BLOCKED = 'BOOKING_BLOCKED',
+    
+    // Other
+    UNKNOWN = 'UNKNOWN',
+}
+
+/**
+ * Constraint Type Labels (Vietnamese)
+ */
+export const CONSTRAINT_TYPE_LABELS: Record<ConstraintType, string> = {
+    [ConstraintType.MINIMUM_PREPARATION_DAYS]: 'Thời gian chuẩn bị tối thiểu',
+    [ConstraintType.RECOVERY_DAYS]: 'Thời gian hồi phục',
+    [ConstraintType.SPACING_DAYS]: 'Khoảng cách giữa các dịch vụ',
+    [ConstraintType.MAX_APPOINTMENTS_PER_DAY]: 'Giới hạn số lịch hẹn mỗi ngày',
+    [ConstraintType.HOLIDAY_CONFLICT]: 'Xung đột ngày lễ',
+    [ConstraintType.WEEKEND_CONFLICT]: 'Xung đột cuối tuần',
+    [ConstraintType.PAST_DATE]: 'Ngày đã qua',
+    [ConstraintType.BOOKING_BLOCKED]: 'Bệnh nhân bị chặn đặt lịch',
+    [ConstraintType.UNKNOWN]: 'Lỗi không xác định',
+};

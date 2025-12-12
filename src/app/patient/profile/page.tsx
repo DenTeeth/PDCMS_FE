@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,36 +17,40 @@ import {
   faSave,
   faTimes,
   faShieldAlt,
-  faHeart
+  faHeart,
+  faBan,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
+import { 
+  getBookingBlockReasonLabel,
+  isTemporaryBlock 
+} from '@/types/patientBlockReason';
+import { patientService } from '@/services/patientService';
+import { Patient } from '@/types/patient';
+import { toast } from 'sonner';
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    dateOfBirth: '1990-05-15',
-    address: '123 Main Street, City, State 12345',
-    emergencyContact: {
-      name: 'Jane Doe',
-      relationship: 'Spouse',
-      phone: '+1 (555) 987-6543'
-    },
-    insuranceInfo: {
-      provider: 'Blue Cross Blue Shield',
-      policyNumber: 'BC123456789',
-      groupNumber: 'GRP001',
-      expiryDate: '2024-12-31'
-    },
-    medicalHistory: {
-      allergies: ['Penicillin', 'Shellfish'],
-      medications: ['Lisinopril 10mg', 'Metformin 500mg'],
-      conditions: ['Hypertension', 'Type 2 Diabetes'],
-      previousSurgeries: ['Appendectomy (2015)']
-    }
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<Patient | null>(null);
+
+  // Fetch patient profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const data = await patientService.getCurrentPatientProfile();
+        setProfile(data);
+      } catch (error: any) {
+        console.error('Error fetching profile:', error);
+        toast.error('Không thể tải thông tin hồ sơ');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleSave = () => {
     // Handle save logic here
@@ -56,6 +60,22 @@ export default function UserProfile() {
   const handleCancel = () => {
     setIsEditing(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <FontAwesomeIcon icon={faSpinner} className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Không tìm thấy thông tin hồ sơ</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -102,64 +122,80 @@ export default function UserProfile() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="firstName">Họ</Label>
+                  <Label htmlFor="fullName" className="font-semibold">Họ và tên</Label>
                   <Input
-                    id="firstName"
-                    value={profile.firstName}
-                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-                    disabled={!isEditing}
+                    id="fullName"
+                    value={profile.fullName || ''}
+                    disabled={true}
+                    className="font-semibold text-black"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Tên</Label>
+                  <Label htmlFor="patientCode" className="font-semibold">Mã bệnh nhân</Label>
                   <Input
-                    id="lastName"
-                    value={profile.lastName}
-                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                    id="patientCode"
+                    value={profile.patientCode || ''}
+                    disabled={true}
+                    className="font-semibold text-black"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email" className="font-semibold">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile.email || ''}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                     disabled={!isEditing}
+                    className="font-semibold text-black"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone" className="font-semibold">Số điện thoại</Label>
+                  <Input
+                    id="phone"
+                    value={profile.phone || ''}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    disabled={!isEditing}
+                    className="font-semibold text-black"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dateOfBirth" className="font-semibold">Ngày sinh</Label>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={profile.dateOfBirth || ''}
+                    onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
+                    disabled={!isEditing}
+                    className="font-semibold text-black"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender" className="font-semibold">Giới tính</Label>
+                  <Input
+                    id="gender"
+                    value={profile.gender === 'MALE' ? 'Nam' : profile.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                    disabled={true}
+                    className="font-semibold text-black"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Số điện thoại</Label>
-                <Input
-                  id="phone"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="dateOfBirth">Ngày sinh</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={profile.dateOfBirth}
-                  onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="address">Địa chỉ</Label>
+                <Label htmlFor="address" className="font-semibold">Địa chỉ</Label>
                 <Input
                   id="address"
-                  value={profile.address}
+                  value={profile.address || ''}
                   onChange={(e) => setProfile({ ...profile, address: e.target.value })}
                   disabled={!isEditing}
+                  className="font-semibold text-black"
                 />
               </div>
             </CardContent>
@@ -177,111 +213,27 @@ export default function UserProfile() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="emergencyName">Tên người liên hệ</Label>
-                <Input
-                  id="emergencyName"
-                  value={profile.emergencyContact.name}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    emergencyContact: { ...profile.emergencyContact, name: e.target.value }
-                  })}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="emergencyRelationship">Mối quan hệ</Label>
-                <Input
-                  id="emergencyRelationship"
-                  value={profile.emergencyContact.relationship}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    emergencyContact: { ...profile.emergencyContact, relationship: e.target.value }
-                  })}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="emergencyPhone">Số điện thoại</Label>
-                <Input
-                  id="emergencyPhone"
-                  value={profile.emergencyContact.phone}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    emergencyContact: { ...profile.emergencyContact, phone: e.target.value }
-                  })}
-                  disabled={!isEditing}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Insurance Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FontAwesomeIcon icon={faShieldAlt} className="mr-2 h-5 w-5" />
-                Thông tin bảo hiểm
-              </CardTitle>
-              <CardDescription>
-                Chi tiết bảo hiểm y tế của bạn
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="insuranceProvider">Nhà cung cấp bảo hiểm</Label>
-                <Input
-                  id="insuranceProvider"
-                  value={profile.insuranceInfo.provider}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    insuranceInfo: { ...profile.insuranceInfo, provider: e.target.value }
-                  })}
-                  disabled={!isEditing}
-                />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="policyNumber">Số hợp đồng</Label>
+                  <Label htmlFor="emergencyName" className="font-semibold">Tên người liên hệ</Label>
                   <Input
-                    id="policyNumber"
-                    value={profile.insuranceInfo.policyNumber}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      insuranceInfo: { ...profile.insuranceInfo, policyNumber: e.target.value }
-                    })}
+                    id="emergencyName"
+                    value={profile.emergencyContactName || ''}
+                    onChange={(e) => setProfile({ ...profile, emergencyContactName: e.target.value })}
                     disabled={!isEditing}
+                    className="font-semibold text-black"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="groupNumber">Số nhóm</Label>
+                  <Label htmlFor="emergencyPhone" className="font-semibold">Số điện thoại</Label>
                   <Input
-                    id="groupNumber"
-                    value={profile.insuranceInfo.groupNumber}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      insuranceInfo: { ...profile.insuranceInfo, groupNumber: e.target.value }
-                    })}
+                    id="emergencyPhone"
+                    value={profile.emergencyContactPhone || ''}
+                    onChange={(e) => setProfile({ ...profile, emergencyContactPhone: e.target.value })}
                     disabled={!isEditing}
+                    className="font-semibold text-black"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="expiryDate">Ngày hết hạn</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  value={profile.insuranceInfo.expiryDate}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    insuranceInfo: { ...profile.insuranceInfo, expiryDate: e.target.value }
-                  })}
-                  disabled={!isEditing}
-                />
               </div>
             </CardContent>
           </Card>
@@ -301,38 +253,24 @@ export default function UserProfile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">Dị ứng</h4>
+                <h4 className="font-semibold mb-2">Dị ứng</h4>
                 <div className="flex flex-wrap gap-2">
-                  {profile.medicalHistory.allergies.map((allergy, index) => (
-                    <Badge key={index} variant="destructive">{allergy}</Badge>
-                  ))}
+                  {profile.allergies ? (
+                    profile.allergies.split(',').map((allergy, index) => (
+                      <Badge key={index} variant="destructive" className="font-semibold">{allergy.trim()}</Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm font-semibold text-black">Không có</p>
+                  )}
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Thuốc đang dùng</h4>
+                <h4 className="font-semibold mb-2">Lịch sử bệnh</h4>
                 <div className="space-y-1">
-                  {profile.medicalHistory.medications.map((medication, index) => (
-                    <p key={index} className="text-sm text-muted-foreground">{medication}</p>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Bệnh lý</h4>
-                <div className="flex flex-wrap gap-2">
-                  {profile.medicalHistory.conditions.map((condition, index) => (
-                    <Badge key={index} variant="secondary">{condition}</Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Phẫu thuật trước đây</h4>
-                <div className="space-y-1">
-                  {profile.medicalHistory.previousSurgeries.map((surgery, index) => (
-                    <p key={index} className="text-sm text-muted-foreground">{surgery}</p>
-                  ))}
+                  <p className="text-sm font-semibold text-black whitespace-pre-wrap">
+                    {profile.medicalHistory || 'Không có lịch sử bệnh'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -346,20 +284,109 @@ export default function UserProfile() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Trạng thái tài khoản</span>
-                  <Badge variant="default">Hoạt động</Badge>
+                  <span className="text-sm font-semibold">Trạng thái tài khoản</span>
+                  <Badge variant="default" className="font-semibold">Hoạt động</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Thành viên từ</span>
-                  <span className="text-sm text-muted-foreground">Tháng 1/2020</span>
+                  <span className="text-sm font-semibold">Trạng thái đặt lịch</span>
+                  {profile.isBookingBlocked ? (
+                    <Badge 
+                      variant="destructive" 
+                      className={`font-semibold ${
+                        isTemporaryBlock(profile.bookingBlockReason)
+                          ? 'bg-orange-600'
+                          : 'bg-red-600'
+                      }`}
+                    >
+                      <FontAwesomeIcon icon={faBan} className="mr-1 h-3 w-3" />
+                      {isTemporaryBlock(profile.bookingBlockReason) ? 'Tạm chặn' : 'Bị chặn'}
+                    </Badge>
+                  ) : (
+                    <Badge variant="default" className="bg-green-600 font-semibold">Có thể đặt lịch</Badge>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Đăng nhập lần cuối</span>
-                  <span className="text-sm text-muted-foreground">Hôm nay</span>
+                  <span className="text-sm font-semibold">Ngày tạo tài khoản</span>
+                  <span className="text-sm font-semibold text-black">
+                    {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Cập nhật lần cuối</span>
+                  <span className="text-sm font-semibold text-black">
+                    {profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Booking Block Details (if blocked) */}
+          {profile.isBookingBlocked && (
+            <Card className={
+              isTemporaryBlock(profile.bookingBlockReason)
+                ? 'border-orange-300 bg-orange-50'
+                : 'border-red-300 bg-red-50'
+            }>
+              <CardHeader>
+                <CardTitle className={`flex items-center text-base ${
+                  isTemporaryBlock(profile.bookingBlockReason)
+                    ? 'text-orange-700'
+                    : 'text-red-700'
+                }`}>
+                  <FontAwesomeIcon icon={faBan} className="mr-2 h-4 w-4" />
+                  {isTemporaryBlock(profile.bookingBlockReason) 
+                    ? 'Tạm thời bị chặn đặt lịch' 
+                    : 'Bị chặn đặt lịch'}
+                </CardTitle>
+                <CardDescription>
+                  {profile.bookingBlockReason && getBookingBlockReasonLabel(profile.bookingBlockReason)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {profile.bookingBlockNotes && (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Chi tiết:</h4>
+                    <p className="text-sm font-semibold text-black whitespace-pre-wrap">
+                      {profile.bookingBlockNotes}
+                    </p>
+                  </div>
+                )}
+                {profile.consecutiveNoShows !== undefined && profile.consecutiveNoShows > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">Số lần no-show:</span>
+                    <Badge variant="outline" className="border-orange-600 text-orange-700 font-semibold">
+                      {profile.consecutiveNoShows} lần
+                    </Badge>
+                  </div>
+                )}
+                {profile.blockedAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">Thời gian chặn:</span>
+                    <span className="text-sm font-semibold text-black">
+                      {new Date(profile.blockedAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                )}
+                <div className={`p-3 border rounded-lg ${
+                  isTemporaryBlock(profile.bookingBlockReason)
+                    ? 'bg-orange-100 border-orange-300'
+                    : 'bg-red-100 border-red-300'
+                }`}>
+                  <p className={`text-sm ${
+                    isTemporaryBlock(profile.bookingBlockReason)
+                      ? 'text-orange-800'
+                      : 'text-red-800'
+                  }`}>
+                    <strong>⚠️ Lưu ý:</strong> Bạn hiện không thể đặt lịch hẹn. 
+                    {isTemporaryBlock(profile.bookingBlockReason)
+                      ? ' Trạng thái này sẽ được tự động gỡ bỏ khi bạn đến khám theo đúng lịch hẹn.'
+                      : ' Vui lòng liên hệ quản trị viên để biết thêm chi tiết.'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

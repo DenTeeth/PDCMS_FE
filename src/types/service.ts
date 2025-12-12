@@ -1,6 +1,7 @@
 // Service Management Types
 //  Match Booking API (ServiceResponse from booking_appointment/dto/response/ServiceResponse.java)
 //  Updated 2025-01-26: Added categoryId, categoryCode, categoryName from BE
+//  Updated 2025-12-11: Added BE_4 appointment constraints
 export interface Service {
   serviceId: number;
   serviceCode: string;
@@ -15,6 +16,13 @@ export interface Service {
   categoryCode?: string; //  NEW: Category code (e.g., "GEN", "COS")
   categoryName?: string; //  NEW: Category name (e.g., "A. General Dentistry")
   displayOrder?: number; // Display order within category
+  
+  // BE_4: Appointment Constraints
+  minimumPreparationDays?: number; // Min days before service can be done
+  recoveryDays?: number; // Recovery time after service
+  spacingDays?: number; // Min days between same service
+  maxAppointmentsPerDay?: number; // Daily limit (null = no limit)
+  
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -41,6 +49,13 @@ export interface CreateServiceRequest {
   specializationId?: number;
   categoryId?: number;
   displayOrder?: number; // Display order within category
+  
+  // BE_4: Appointment Constraints
+  minimumPreparationDays?: number;
+  recoveryDays?: number;
+  spacingDays?: number;
+  maxAppointmentsPerDay?: number;
+  
   isActive: boolean;
 }
 
@@ -53,6 +68,13 @@ export interface UpdateServiceRequest {
   specializationId?: number;
   categoryId?: number;
   displayOrder?: number; // Display order within category
+  
+  // BE_4: Appointment Constraints
+  minimumPreparationDays?: number;
+  recoveryDays?: number;
+  spacingDays?: number;
+  maxAppointmentsPerDay?: number;
+  
   isActive?: boolean;
 }
 

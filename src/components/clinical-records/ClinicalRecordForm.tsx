@@ -496,7 +496,7 @@ export default function ClinicalRecordForm({
       {effectivePatientId && (
         <>
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Sơ Đồ Răng (Odontogram)</Label>
+            <Label className="text-sm font-semibold">Sơ đồ răng (Odontogram)</Label>
             <Odontogram
               patientId={effectivePatientId}
               toothStatuses={toothStatuses}

@@ -521,12 +521,12 @@ export default function ExportTransactionFormNew({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Box className="h-5 w-5" />
-            Phiếu Xuất Kho {warehouseType === 'COLD' ? (
+            Phiếu xuất kho {warehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                (Kho Lạnh)
+                (Kho lạnh)
               </>
-            ) : '(Kho Thường)'}
+            ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu xuất kho mới với FEFO, auto-unpacking, và tracking tài chính
@@ -538,7 +538,7 @@ export default function ExportTransactionFormNew({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="transactionDate" className="text-sm font-medium">
-                Ngày Xuất Kho <span className="text-red-500">*</span>
+                Ngày xuất kho <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -556,7 +556,7 @@ export default function ExportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="exportType" className="text-sm font-medium">
-                Loại Xuất Kho <span className="text-red-500">*</span>
+                Loại xuất kho <span className="text-red-500">*</span>
               </Label>
               <Select value={exportType} onValueChange={(value: ExportType) => setExportType(value)}>
                 <SelectTrigger id="exportType">
@@ -565,14 +565,14 @@ export default function ExportTransactionFormNew({
                 <SelectContent>
                   <SelectItem value="USAGE"> Xuất Dùng (USAGE)</SelectItem>
                   <SelectItem value="DISPOSAL"> Xuất Hủy (DISPOSAL)</SelectItem>
-                  <SelectItem value="RETURN">↩ Trả NCC (RETURN)</SelectItem>
+                  <SelectItem value="RETURN">↩ Trả nhà cung cấp (RETURN)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="referenceCode" className="text-sm font-medium">
-                Mã Tham Chiếu
+                Mã tham chiếu
               </Label>
               <Input
                 id="referenceCode"
@@ -584,7 +584,7 @@ export default function ExportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="departmentName" className="text-sm font-medium">
-                Phòng Ban
+                Phòng ban
               </Label>
               <Input
                 id="departmentName"
@@ -596,7 +596,7 @@ export default function ExportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="requestedBy" className="text-sm font-medium">
-                Người Yêu Cầu
+                Người yêu cầu
               </Label>
               <Input
                 id="requestedBy"
@@ -627,7 +627,7 @@ export default function ExportTransactionFormNew({
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-sm font-medium">
-              Ghi Chú
+              Ghi chú
             </Label>
             <Textarea
               id="notes"
@@ -642,11 +642,11 @@ export default function ExportTransactionFormNew({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">
-                Danh Sách Vật Tư <span className="text-red-500">*</span>
+                Danh sách vật tư <span className="text-red-500">*</span>
               </Label>
               <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4" />
-                Thêm Dòng
+                Thêm dòng
               </Button>
             </div>
 
@@ -656,11 +656,11 @@ export default function ExportTransactionFormNew({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[30%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[15%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[15%]">Đơn Vị</th>
-                      <th className="p-3 text-left w-[25%]">Ghi Chú</th>
-                      <th className="p-3 text-left w-[10%]">Hành Động</th>
+                      <th className="p-3 text-left w-[30%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[15%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[15%]">Đơn vị</th>
+                      <th className="p-3 text-left w-[25%]">Ghi chú</th>
+                      <th className="p-3 text-center w-[10%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -817,7 +817,7 @@ export default function ExportTransactionFormNew({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
             <div className="flex-1 text-sm text-blue-800">
-              <div className="font-medium mb-1">Lưu ý:</div>
+              <div className="font-medium mb-1">Lưu ý!</div>
               <ul className="list-disc list-inside space-y-1 text-xs">
                 <li>Hệ thống tự động áp dụng FEFO (xuất hàng gần hết hạn trước)</li>
                 <li>Tự động xé lẻ từ đơn vị lớn khi thiếu hàng lẻ</li>
@@ -838,7 +838,7 @@ export default function ExportTransactionFormNew({
               Hủy
             </Button>
             <Button type="submit" disabled={mutation.isPending} className="bg-purple-600 hover:bg-purple-700">
-              {mutation.isPending ? 'Đang xử lý...' : 'Tạo Phiếu Xuất'}
+              {mutation.isPending ? 'Đang xử lý...' : 'Tạo phiếu xuất'}
             </Button>
           </div>
         </form>

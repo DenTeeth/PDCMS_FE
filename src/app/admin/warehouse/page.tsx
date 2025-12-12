@@ -149,20 +149,20 @@ export default function WarehouseDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Tổng Quan Kho</h1>
+            <h1 className="text-3xl font-bold">Tổng quan kho</h1>
             <p className="text-slate-600 mt-1">Dashboard quản lý tồn kho và giao dịch</p>
           </div>
           <div className="flex gap-2">
             <Link href="/admin/warehouse/inventory">
               <Button variant="outline">
                 <FontAwesomeIcon icon={faBoxes} className="h-4 w-4 mr-2" />
-                Vật Tư
+                Vật tư
               </Button>
             </Link>
             <Link href="/admin/warehouse/storage">
               <Button>
                 <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-                Nhập/Xuất Kho
+                Nhập/Xuất kho
               </Button>
             </Link>
           </div>
@@ -174,7 +174,7 @@ export default function WarehouseDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Tổng Vật Tư</p>
+                  <p className="text-sm font-medium text-gray-600">Tổng vật tư</p>
                   <p className="text-2xl font-bold mt-1">{stats?.totalItems || 0}</p>
                 </div>
                 <FontAwesomeIcon icon={faBoxes} className="h-8 w-8 text-gray-400" />
@@ -185,7 +185,7 @@ export default function WarehouseDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Danh Mục</p>
+                  <p className="text-sm font-medium text-gray-600">Danh mục</p>
                   <p className="text-2xl font-bold mt-1">{categories?.length || 0}</p>
                 </div>
                 <FontAwesomeIcon icon={faTags} className="h-8 w-8 text-gray-400" />
@@ -196,7 +196,7 @@ export default function WarehouseDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Sắp Hết Hàng</p>
+                  <p className="text-sm font-medium text-gray-600">Sắp hết hàng</p>
                   <p className="text-2xl font-bold text-orange-600 mt-1">{stats?.lowStockCount || 0}</p>
                 </div>
                 <FontAwesomeIcon icon={faExclamationTriangle} className="h-8 w-8 text-orange-400" />
@@ -207,7 +207,7 @@ export default function WarehouseDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Sắp Hết Hạn</p>
+                  <p className="text-sm font-medium text-gray-600">Sắp hết hạn</p>
                   <p className="text-2xl font-bold text-red-600 mt-1">{stats?.expiringWithin30Days || 0}</p>
                 </div>
                 <FontAwesomeIcon icon={faClock} className="h-8 w-8 text-red-400" />
@@ -224,7 +224,7 @@ export default function WarehouseDashboard() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faExclamationTriangle} className="h-5 w-5 text-orange-500" />
-                  Cảnh Báo Tồn Kho Thấp
+                  Cảnh báo tồn kho thấp
                 </span>
                 <Link href="/admin/warehouse/inventory?filter=LOW_STOCK">
                   <Button variant="ghost" size="sm">
@@ -278,7 +278,7 @@ export default function WarehouseDashboard() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-red-500" />
-                  Cảnh Báo Hết Hạn
+                  Cảnh báo hết hạn
                 </span>
                 <Link href="/admin/warehouse/inventory?filter=EXPIRING_SOON">
                   <Button variant="ghost" size="sm">
@@ -347,7 +347,7 @@ export default function WarehouseDashboard() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faHistory} className="h-5 w-5 text-blue-500" />
-                  Giao Dịch Gần Đây
+                  Giao dịch gần đây
                 </span>
                 <Link href="/admin/warehouse/storage">
                   <Button variant="ghost" size="sm">
@@ -399,7 +399,7 @@ export default function WarehouseDashboard() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faBoxes} className="h-5 w-5 text-purple-500" />
-                  Vật Tư Mới Nhất
+                  Vật tư mới nhất
                 </span>
                 <Link href="/admin/warehouse/inventory">
                   <Button variant="ghost" size="sm">
@@ -441,30 +441,30 @@ export default function WarehouseDashboard() {
 
         {/* Quick Actions - No Card wrapper */}
         <div className="border rounded-lg p-6 bg-white">
-          <h3 className="text-lg font-semibold mb-4">Thao Tác Nhanh</h3>
+          <h3 className="text-lg font-semibold mb-4">Thao tác nhanh</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link href="/admin/warehouse/inventory">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FontAwesomeIcon icon={faBoxes} className="h-6 w-6" />
-                <span className="text-sm">Danh Sách Vật Tư</span>
+                <span className="text-sm">Danh sách vật tư</span>
               </Button>
             </Link>
             <Link href="/admin/warehouse/storage">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FontAwesomeIcon icon={faClipboard} className="h-6 w-6" />
-                <span className="text-sm">Nhập/Xuất Kho</span>
+                <span className="text-sm">Nhập/Xuất kho</span>
               </Button>
             </Link>
             <Link href="/admin/warehouse/suppliers">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FontAwesomeIcon icon={faUsers} className="h-6 w-6" />
-                <span className="text-sm">Nhà Cung Cấp</span>
+                <span className="text-sm">Nhà cung cấp</span>
               </Button>
             </Link>
             <Link href="/admin/warehouse/reports">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FontAwesomeIcon icon={faChartLine} className="h-6 w-6" />
-                <span className="text-sm">Báo Cáo</span>
+                <span className="text-sm">Báo cáo</span>
               </Button>
             </Link>
           </div>

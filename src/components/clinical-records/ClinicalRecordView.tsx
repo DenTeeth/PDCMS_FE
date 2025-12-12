@@ -187,7 +187,7 @@ export default function ClinicalRecordView({
       {/* Header */}
       <div className="flex items-start justify-between pb-4 border-b">
         <div>
-          <h2 className="text-2xl font-semibold mb-2">Bệnh Án</h2>
+          <h2 className="text-2xl font-semibold mb-2">Bệnh án</h2>
           <div className="text-sm text-muted-foreground">
             Mã bệnh án: <span className="font-mono font-semibold">#{record.clinicalRecordId}</span>
           </div>
@@ -225,14 +225,14 @@ export default function ClinicalRecordView({
         <div className="pr-6 border-r-2 border-gray-300">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Stethoscope className="h-5 w-5" />
-            Thông tin lâm ssàng
+            Thông tin lâm sàng
           </h3>
           <div className="space-y-6">
             {/* Chief Complaint */}
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Triệu chứng cchính</Label>
+                <Label className="text-sm font-semibold">Triệu chứng chính</Label>
               </div>
               <div className="pl-6 p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                 {record.chiefComplaint}
@@ -243,7 +243,7 @@ export default function ClinicalRecordView({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Kết quả kkhám</Label>
+                <Label className="text-sm font-semibold">Kết quả khám</Label>
               </div>
               <div className="pl-6 p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                 {record.examinationFindings}
@@ -254,7 +254,7 @@ export default function ClinicalRecordView({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-semibold">Chẩn đđoán</Label>
+                <Label className="text-sm font-semibold">Chẩn đoán</Label>
               </div>
               <div className="pl-6 p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
                 {record.diagnosis}
@@ -334,7 +334,7 @@ export default function ClinicalRecordView({
           <div className="pl-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Hình Ảnh Bệnh Nhân
+              Hình ảnh bệnh nhân
             </h3>
             <Suspense
               fallback={

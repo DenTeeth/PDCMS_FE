@@ -541,3 +541,143 @@ export interface ReorderItemsResponse {
   items: ReorderedItem[];
 }
 
+// ============================================================================
+// BE_4: Treatment Plan Auto-Scheduling
+// ============================================================================
+
+/**
+ * BE_4: Calculate Schedule Request
+ * Endpoint: POST /api/treatment-plans/calculate-schedule
+ * Source: BE Guide 3, lines 390-412
+ * 
+ * This is a STANDALONE calculator - not tied to any existing treatment plan.
+ * Used to PREVIEW schedule before creating a plan.
+ */
+export interface CalculateScheduleRequest {
+  startDate: string; // YYYY-MM-DD - treatment start date
+  estimatedDurationDays: number; // Total estimated treatment duration
+  services: Array<{
+    serviceId: number;
+    serviceCode: string;
+    serviceName: string;
+  }>;
+}
+
+/**
+ * BE_4: Calculate Schedule Response
+ * Source: BE Guide 3, lines 415-470
+ * 
+ * Contains calculated schedule with dates adjusted for:
+ * - Service constraints (prep, recovery, spacing)
+ * - Holidays (skipped automatically)
+ * - Max appointments per day
+ */
+export interface CalculateScheduleResponse {
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD (calculated end date)
+  estimatedDurationDays: number;
+  actualWorkingDays: number; // Working days (excluding holidays)
+  holidaysSkipped: number; // Number of holidays that were skipped
+  appointmentSchedule: AppointmentScheduleItem[];
+  warnings: any[]; // Schedule warnings (holiday conflicts, etc.)
+  metadata: ScheduleMetadata;
+}
+
+/**
+ * BE_4: Appointment Schedule Item
+ * Individual service with calculated date
+ * Source: BE Guide 3, lines 424-451
+ */
+export interface AppointmentScheduleItem {
+  sequenceNumber: number;
+  serviceId: number;
+  serviceCode: string;
+  serviceName: string;
+  scheduledDate: string; // YYYY-MM-DD (calculated, guaranteed working day)
+  isWorkingDay: boolean; // Always true (BE skips holidays)
+  notes: string; // Explanation (e.g., "7 days preparation time applied, skipped Tết holidays")
+}
+
+/**
+ * BE_4: Schedule Metadata
+ * Additional scheduling information
+ * Source: BE Guide 3, lines 453-468
+ */
+export interface ScheduleMetadata {
+  totalServices: number;
+  averageIntervalDays: number;
+  constraintsApplied: Array<{
+    serviceId: number;
+    constraintType: string; // e.g., "MINIMUM_PREPARATION_DAYS", "RECOVERY_DAYS"
+    constraintValue: number;
+  }>;
+}
+
+/**
+ * DEPRECATED: Old scheduled item structure
+ * Kept for backward compatibility with existing components
+ * Use AppointmentScheduleItem for new code
+ */
+export interface ScheduledItemDTO {
+  itemId: number;
+  itemName: string;
+  serviceCode: string;
+  serviceName: string;
+  sequenceNumber: number;
+  
+  // Calculated schedule
+  suggestedDate: string; // YYYY-MM-DD
+  earliestDate: string; // YYYY-MM-DD (considering constraints)
+  latestDate?: string; // YYYY-MM-DD (if deadline exists)
+  
+  // Service constraints
+  minimumPreparationDays?: number;
+  recoveryDays?: number;
+  spacingDays?: number;
+  
+  // Dependencies
+  prerequisiteItemId?: number;
+  prerequisiteItemName?: string;
+  dependsOn?: number[]; // Item IDs this item depends on
+  
+  // Status
+  isScheduleable: boolean; // Can be scheduled now
+  blockingReason?: string; // Why it cannot be scheduled (if isScheduleable = false)
+}
+
+/**
+ * Schedule calculation warnings
+ */
+export interface ScheduleWarning {
+  warningType: ScheduleWarningType;
+  itemId?: number;
+  itemName?: string;
+  message: string;
+  messageVi: string;
+  suggestedAction?: string;
+}
+
+/**
+ * Types of schedule warnings
+ */
+export enum ScheduleWarningType {
+  HOLIDAY_CONFLICT = 'HOLIDAY_CONFLICT',
+  WEEKEND_ADJUSTED = 'WEEKEND_ADJUSTED',
+  CONSTRAINT_DELAY = 'CONSTRAINT_DELAY',
+  LONG_DURATION = 'LONG_DURATION',
+  PREREQUISITE_MISSING = 'PREREQUISITE_MISSING',
+  OTHER = 'OTHER',
+}
+
+/**
+ * Schedule Warning Type Labels (Vietnamese)
+ */
+export const SCHEDULE_WARNING_TYPE_LABELS: Record<ScheduleWarningType, string> = {
+  [ScheduleWarningType.HOLIDAY_CONFLICT]: 'Xung đột ngày lễ',
+  [ScheduleWarningType.WEEKEND_ADJUSTED]: 'Điều chỉnh cuối tuần',
+  [ScheduleWarningType.CONSTRAINT_DELAY]: 'Trì hoãn do ràng buộc',
+  [ScheduleWarningType.LONG_DURATION]: 'Thời gian điều trị dài',
+  [ScheduleWarningType.PREREQUISITE_MISSING]: 'Thiếu dịch vụ tiên quyết',
+  [ScheduleWarningType.OTHER]: 'Cảnh báo khác',
+};
+

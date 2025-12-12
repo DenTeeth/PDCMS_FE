@@ -349,7 +349,7 @@ export default function EmployeeTreatmentPlansPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Lộ trình Điều trị</h1>
+            <h1 className="text-3xl font-bold">Lộ trình điều trị</h1>
             <p className="text-muted-foreground mt-1">
               Quản lý và theo dõi lộ trình điều trị của bệnh nhân
             </p>
@@ -357,7 +357,7 @@ export default function EmployeeTreatmentPlansPage() {
           {canCreate && (
             <Button onClick={handleCreatePlan}>
               <Plus className="h-4 w-4 mr-2" />
-              Tạo Lộ trình Mới
+              Tạo lộ trình mới
             </Button>
           )}
         </div>

@@ -279,12 +279,12 @@ export default function CreateImportModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-emerald-600" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+            Phiếu nhập kho {warehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                (Kho Lạnh)
+                (Kho lạnh)
               </>
-            ) : '(Kho Thường)'}
+            ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với thông tin nhà cung cấp và danh sách vật tư
@@ -296,7 +296,7 @@ export default function CreateImportModal({
           <div className="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg">
             <div>
               <Label className="text-sm font-medium">
-                Nhà Cung Cấp <span className="text-red-500">*</span>
+                Nhà cung cấp <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={String(watch('supplierId'))}
@@ -304,7 +304,7 @@ export default function CreateImportModal({
                 disabled={suppliersLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn NCC"} />
+                  <SelectValue placeholder={suppliersLoading ? "Đang tải..." : suppliers.length === 0 ? "Không có dữ liệu" : "Chọn nhà cung cấp"} />
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers.length === 0 ? (
@@ -322,21 +322,21 @@ export default function CreateImportModal({
               </Select>
               {suppliers.length === 0 && !suppliersLoading && (
                 <p className="text-xs text-red-500 mt-1">
-                  Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có seed data, (3) API endpoint không tồn tại
+                  Không có dữ liệu. Có thể do: (1) Thiếu quyền truy cập, (2) Database chưa có dữ liệu, (3) API endpoint không tồn tại
                 </p>
               )}
             </div>
 
             <div>
               <Label className="text-sm font-medium">
-                Ngày Nhập <span className="text-red-500">*</span>
+                Ngày nhập <span className="text-red-500">*</span>
               </Label>
               <Input type="date" {...register('transactionDate')} required />
             </div>
 
             <div>
               <Label className="text-sm font-medium">
-                Số Hóa Đơn <span className="text-red-500">*</span>
+                Số hóa đơn <span className="text-red-500">*</span>
               </Label>
               <Input
                 {...register('invoiceNumber', { required: true })}
@@ -347,7 +347,7 @@ export default function CreateImportModal({
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-sm font-medium">Ngày Dự Kiến Giao</Label>
+              <Label className="text-sm font-medium">Ngày dự kiến giao</Label>
               <Input
                 type="date"
                 {...register('expectedDeliveryDate')}
@@ -359,11 +359,11 @@ export default function CreateImportModal({
           <div>
             <div className="flex items-center justify-between mb-3">
               <Label className="text-sm font-medium">
-                Danh Sách Vật Tư <span className="text-red-500">*</span>
+                Danh sách vật tư <span className="text-red-500">*</span>
               </Label>
               <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Thêm Dòng
+                Thêm dòng
               </Button>
             </div>
 
@@ -373,12 +373,12 @@ export default function CreateImportModal({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[30%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[20%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[15%]">Số Lượng *</th>
-                      <th className="p-3 text-left w-[15%]">Đơn Giá (VNĐ) *</th>
-                      <th className="p-3 text-left w-[15%]">Hạn Sử Dụng *</th>
-                      <th className="p-3 text-left w-[10%]">Hành Động</th>
+                      <th className="p-3 text-left w-[30%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[20%]">Số lô *</th>
+                      <th className="p-3 text-left w-[15%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[15%]">Đơn giá (VNĐ) *</th>
+                      <th className="p-3 text-left w-[15%]">Hạn sử dụng *</th>
+                      <th className="p-3 text-center w-[10%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,7 +565,7 @@ export default function CreateImportModal({
 
           {/* Notes */}
           <div>
-            <Label className="text-sm font-medium">Ghi Chú</Label>
+            <Label className="text-sm font-medium">Ghi chú</Label>
             <Textarea
               {...register('notes')}
               placeholder="Nhập ghi chú (nếu có)"

@@ -580,12 +580,12 @@ export default function ImportTransactionFormNew({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Box className="h-5 w-5" />
-            Phiếu Nhập Kho {warehouseType === 'COLD' ? (
+            Phiếu nhập kho {warehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                (Kho Lạnh)
+                (Kho lạnh)
               </>
-            ) : '(Kho Thường)'}
+            ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Tạo phiếu nhập kho mới với tracking hóa đơn, giá nhập, xử lý lô hàng
@@ -597,7 +597,7 @@ export default function ImportTransactionFormNew({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="supplierId" className="text-sm font-medium">
-                Nhà Cung Cấp <span className="text-red-500">*</span>
+                Nhà cung cấp <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={supplierId > 0 ? supplierId.toString() : ''}
@@ -605,7 +605,7 @@ export default function ImportTransactionFormNew({
                 required
               >
                 <SelectTrigger id="supplierId">
-                  <SelectValue placeholder="-- Chọn nhà cung cấp --" />
+                  <SelectValue placeholder="Chọn nhà cung cấp" />
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers.map((sup) => (
@@ -619,7 +619,7 @@ export default function ImportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="transactionDate" className="text-sm font-medium">
-                Ngày Nhập <span className="text-red-500">*</span>
+                Ngày nhập <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -636,7 +636,7 @@ export default function ImportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="invoiceNumber" className="text-sm font-medium">
-                Số Hóa Đơn <span className="text-red-500">*</span>
+                Số hóa đơn <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="invoiceNumber"
@@ -649,7 +649,7 @@ export default function ImportTransactionFormNew({
 
             <div className="space-y-2">
               <Label htmlFor="expectedDeliveryDate" className="text-sm font-medium">
-                Ngày Dự Kiến Giao
+                Ngày dự kiến giao
               </Label>
               <div className="relative">
                 <Input
@@ -668,11 +668,11 @@ export default function ImportTransactionFormNew({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">
-                Danh Sách Vật Tư <span className="text-red-500">*</span>
+                Danh sách vật tư <span className="text-red-500">*</span>
               </Label>
               <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4" />
-                Thêm Dòng
+                Thêm dòng
               </Button>
             </div>
 
@@ -682,13 +682,13 @@ export default function ImportTransactionFormNew({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[18%]">Vật Tư *</th>
-                      <th className="p-3 text-left w-[8%]">Đơn Vị *</th>
+                      <th className="p-3 text-left w-[18%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[8%]">Đơn vị *</th>
                       <th className="p-3 text-left w-[14%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[10%]">Số Lượng *</th>
+                      <th className="p-3 text-left w-[10%]">Số lượng *</th>
                       <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) *</th>
-                      <th className="p-3 text-left w-[12%]">Hạn Sử Dụng *</th>
-                      <th className="p-3 text-left w-[15%]">Hành Động</th>
+                      <th className="p-3 text-left w-[12%]">Hạn sử dụng *</th>
+                      <th className="p-3 text-left w-[15%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -869,7 +869,7 @@ export default function ImportTransactionFormNew({
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-emerald-600" />
                 <Label className="text-base font-semibold text-emerald-900">
-                  Tổng Giá Trị Phiếu Nhập
+                  Tổng giá trị phiếu nhập
                 </Label>
               </div>
               <div className="text-2xl font-bold text-emerald-700">
@@ -880,7 +880,7 @@ export default function ImportTransactionFormNew({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Ghi Chú</Label>
+            <Label className="text-sm font-medium">Ghi chú</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

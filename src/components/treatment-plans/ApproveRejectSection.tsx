@@ -246,7 +246,7 @@ export default function ApproveRejectSection({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            Duyệt Lộ Trình Điều Trị
+            Duyệt lộ trình điều trị
           </CardTitle>
           {getApprovalStatusBadge()}
         </div>

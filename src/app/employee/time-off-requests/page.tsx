@@ -436,15 +436,15 @@ export default function EmployeeTimeOffRequestsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Nghỉ Phép Của Tôi</h1>
-          <p className="text-gray-600 mt-2">Quản lý yêu cầu nghỉ phép của bạn</p>
+          <h1 className="text-3xl font-bold text-gray-900">Yêu cầu nghỉ phép của tôi</h1>
+          <p className="text-gray-600 mt-2">Quản lý yêu cầu nghỉ phép</p>
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
           className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
         >
           <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-          Tạo Yêu Cầu Nghỉ Phép
+          Tạo yêu cầu
         </Button>
       </div>
 
@@ -454,7 +454,7 @@ export default function EmployeeTimeOffRequestsPage() {
           <CardHeader>
             <CardTitle className="flex items-center text-blue-900">
               <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2" />
-              Số Dư Ngày Nghỉ Năm {leaveBalances.cycle_year}
+              Số dư ngày nghỉ năm {leaveBalances.cycle_year}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -775,7 +775,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   disabled={processing}
                   className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
                 >
-                  {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
+                  {processing ? 'Đang tạo...' : 'Tạo yêu cầu'}
                 </Button>
               </div>
             </div>
