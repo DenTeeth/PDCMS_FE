@@ -23,7 +23,6 @@ import {
   faClipboard,
   faBell,
   faReceipt,
-  faFolderOpen,
   faUserCircle,
   faClockRotateLeft,
   faMoneyBillWave,
@@ -614,11 +613,6 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
     //   ],
     // },
     {
-      name: 'Hồ sơ bệnh án',
-      href: '/patient/records',
-      icon: faFolderOpen,
-    },
-    {
       name: 'Xem cbct',
       href: '/patient/nii-viewer',
       icon: faImage,
@@ -637,11 +631,6 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Hồ sơ cá nhân',
       href: '/patient/profile',
       icon: faUserCircle,
-    },
-    {
-      name: 'Cài đặt',
-      href: '/patient/settings',
-      icon: faCog,
     },
   ],
 };

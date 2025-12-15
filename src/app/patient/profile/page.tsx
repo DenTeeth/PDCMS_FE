@@ -83,7 +83,7 @@ export default function UserProfile() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Hồ sơ của tôi</h1>
-          <p className="text-muted-foreground">Quản lý thông tin cá nhân và tùy chọn của bạn</p>
+          <p className="text-muted-foreground">Quản lý thông tin cá nhân</p>
         </div>
         <div className="flex space-x-2">
           {isEditing ? (
@@ -245,11 +245,8 @@ export default function UserProfile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FontAwesomeIcon icon={faHeart} className="mr-2 h-5 w-5" />
-                Lịch sử y tế
+                Thông tin sức khỏe của tôi
               </CardTitle>
-              <CardDescription>
-                Thông tin sức khỏe của bạn
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

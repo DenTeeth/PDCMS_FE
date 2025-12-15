@@ -1365,7 +1365,7 @@ export default function EmployeeRegistrationsPage() {
         {/* Header with Refresh Button */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Đăng Ký Ca Làm Việc</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Đăng ký ca làm việc</h1>
             <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm việc của bạn</p>
           </div>
           <Button
@@ -1409,7 +1409,7 @@ export default function EmployeeRegistrationsPage() {
                         <div className="flex items-center gap-2">
                           <Clock className="w-5 h-5 text-purple-600" />
                           <CardTitle className="text-lg">
-                            Các Suất Làm Việc Có Sẵn
+                            Các suất làm việc có sẵn
                           </CardTitle>
                         </div>
                         <Button
@@ -1827,7 +1827,7 @@ export default function EmployeeRegistrationsPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar className="w-5 h-5 text-purple-600" />
                     <CardTitle className="text-lg">
-                      Đăng Ký Của Tôi
+                      Đăng ký của tôi
                     </CardTitle>
                   </div>
 
@@ -2041,7 +2041,7 @@ export default function EmployeeRegistrationsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
+                    Lịch làm việc của tôi ({fixedRegistrations.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -2106,7 +2106,7 @@ export default function EmployeeRegistrationsPage() {
             <div className="bg-white rounded-lg w-full max-w-2xl my-4">
               {/* Fixed Header */}
               <div className="px-4 py-2.5 border-b border-gray-200">
-                <h2 className="text-base font-bold text-gray-900">Đăng Ký Ca Làm Việc</h2>
+                <h2 className="text-base font-bold text-gray-900">Đăng ký ca làm việc</h2>
               </div>
 
               {/* Content - NO SCROLL */}
@@ -2124,7 +2124,7 @@ export default function EmployeeRegistrationsPage() {
                     <>
                       {/* PART_TIME_FLEX: Use available slots */}
                       <div>
-                        <Label htmlFor="createSlot" className="text-sm">Chọn Suất Làm Việc <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="createSlot" className="text-sm">Chọn suất làm việc <span className="text-red-500">*</span></Label>
                         {loadingAvailableSlots ? (
                           <div className="flex items-center justify-center py-2">
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />

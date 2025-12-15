@@ -100,7 +100,7 @@ export default function BookAppointmentFromPlanModal({
   const [roomCode, setRoomCode] = useState<string>('');
   const [appointmentDate, setAppointmentDate] = useState<string>('');
   const [appointmentStartTime, setAppointmentStartTime] = useState<string>('');
-  const [participantCode, setParticipantCode] = useState<string>(''); //  Changed: Only 1 participant allowed
+  const [participantCodes, setParticipantCodes] = useState<string[]>([]); // Multiple participants allowed
   const [notes, setNotes] = useState<string>('');
 
   // Data states
@@ -212,7 +212,7 @@ export default function BookAppointmentFromPlanModal({
       setRoomCode('');
       setAppointmentDate('');
       setAppointmentStartTime('');
-      setParticipantCode('');
+      setParticipantCodes([]);
       setNotes('');
       setCurrentStep(1);
       setSelectedMonth(startOfMonth(new Date()));
@@ -368,24 +368,33 @@ export default function BookAppointmentFromPlanModal({
     return shifts.length > 0;
   };
 
-  // Check if selected participant has shifts on a date
-  const hasParticipantShift = (dateString: string): boolean => {
-    if (!participantCode) return true; // No participant selected, so it's "all available"
-    const shifts = getShiftsForEmployeeAndDate(participantCode, dateString);
-    return shifts.length > 0;
+  // Check if ALL selected participants have shifts on a date
+  const hasAllParticipantsShift = (dateString: string): boolean => {
+    if (participantCodes.length === 0) return true; // No participants selected
+    
+    return participantCodes.every(code => {
+      const shifts = getShiftsForEmployeeAndDate(code, dateString);
+      return shifts.length > 0;
+    });
   };
 
-  // Check if date has both doctor and participant available
-  // If no participant selected, only check doctor availability
+  // Check if date has doctor and all participants available
   const isDateAvailable = (dateString: string): boolean => {
     if (!hasDoctorShift(dateString)) return false;
-    // If participant is selected, must have shifts
-    if (participantCode) {
-      return hasParticipantShift(dateString);
-    }
-    // No participant selected, only doctor needs to have shift
-    return true;
+    // If participants selected, ALL must have shifts
+    return hasAllParticipantsShift(dateString);
   };
+
+  // Clear selected date if it becomes unavailable after participant selection changes
+  useEffect(() => {
+    if (appointmentDate && !isDateAvailable(appointmentDate)) {
+      // Selected date is no longer available (participants don't have shifts)
+      setAppointmentDate('');
+      setAppointmentStartTime('');
+      setRoomCode('');
+      toast.info('Ngày đã chọn không còn khả dụng với các bác sĩ hỗ trợ đã chọn. Vui lòng chọn ngày khác.');
+    }
+  }, [participantCodes, appointmentDate, allEmployeeShifts]);
 
   // Load available time slots
   useEffect(() => {
@@ -394,7 +403,7 @@ export default function BookAppointmentFromPlanModal({
     } else {
       setAvailableSlots([]);
     }
-  }, [appointmentDate, plan?.doctor.employeeCode, serviceCodes, participantCode]);
+  }, [appointmentDate, plan?.doctor.employeeCode, serviceCodes, participantCodes]);
 
   const loadAvailableSlots = async () => {
     if (!plan?.doctor.employeeCode) return;
@@ -405,7 +414,7 @@ export default function BookAppointmentFromPlanModal({
         date: appointmentDate,
         employeeCode: plan.doctor.employeeCode, // Use plan doctor (fixed)
         serviceCodes,
-        participantCodes: participantCode ? [participantCode] : undefined,
+        participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
       };
 
       const response = await appointmentService.findAvailableTimes(request);
@@ -524,7 +533,7 @@ export default function BookAppointmentFromPlanModal({
         roomCode,
         appointmentStartTime: formattedStartTime,
         patientPlanItemIds: planItemIds, // Send plan item IDs, BE extracts serviceCodes
-        participantCodes: participantCode ? [participantCode] : undefined,
+        participantCodes: participantCodes.length > 0 ? participantCodes : undefined,
         notes: notes.trim() || undefined,
       };
 
@@ -556,21 +565,34 @@ export default function BookAppointmentFromPlanModal({
   // 1. Role is ASSISTANT or NURSE (or DOCTOR/DENTIST - doctors can also be assistants)
   // 2. NOT the plan's primary doctor (they're already the main doctor)
   // 3. Has shift on selected date (same as doctor)
+  // 4. For DOCTOR/DENTIST participants: Must have required specializations for services
   const eligibleParticipants = useMemo(() => {
-    if (!plan?.doctor.employeeCode || !appointmentDate) {
-      return []; // Only show after date selected
+    if (!plan?.doctor.employeeCode) {
+      return [];
     }
 
-    // Check if doctor has shift on selected date
-    const doctorShifts = getShiftsForEmployeeAndDate(plan.doctor.employeeCode, appointmentDate);
-    if (doctorShifts.length === 0) {
-      return []; // Doctor has no shift, so no participants needed
-    }
+    // NOTE: We show all eligible participants first (by role and specialization)
+    // Shift validation happens in calendar (isDateAvailable) when checking date availability
 
-    //  FIX: Filter employees:
+    // Get required specialization IDs from services
+    const requiredSpecializationIds = new Set<number>();
+    serviceCodes.forEach((code) => {
+      const service = servicesMap.get(code);
+      if (service?.specializationId) {
+        requiredSpecializationIds.add(service.specializationId);
+      }
+    });
+
+    console.log('📋 Required specializations for participants:', {
+      serviceCodes,
+      requiredSpecializationIds: Array.from(requiredSpecializationIds),
+    });
+
+    //  Filter employees:
     // 1. Exclude the plan's primary doctor
     // 2. Role is ASSISTANT or NURSE (or DOCTOR/DENTIST - doctors can also be assistants)
-    // 3. Has shift on selected date (same as doctor)
+    // 3. For DOCTOR/DENTIST: Must have required specializations
+    // NOTE: Shift validation is done in calendar when checking date availability
     const filtered = employees.filter((emp) => {
       //  FIX: Exclude the plan's primary doctor
       if (emp.employeeCode === plan.doctor.employeeCode) {
@@ -582,14 +604,29 @@ export default function BookAppointmentFromPlanModal({
       const isDoctor = emp.roleName?.includes('DOCTOR') || emp.roleName?.includes('DENTIST');
       if (!isAssistant && !isDoctor) return false;
 
-      // Must have shift on selected date (same as doctor)
-      const shifts = getShiftsForEmployeeAndDate(emp.employeeCode, appointmentDate);
-      return shifts.length > 0;
+      // For DOCTOR/DENTIST participants: Validate specializations
+      if (isDoctor && !isAssistant) {
+        // This is a doctor (not assistant/nurse), so must check specializations
+        if (requiredSpecializationIds.size > 0) {
+          const employeeSpecIds = emp.specializations?.map(s => s.specializationId) || [];
+          
+          // Must have at least one of the required specializations
+          const hasRequiredSpec = Array.from(requiredSpecializationIds).some(
+            requiredId => employeeSpecIds.includes(requiredId)
+          );
+          
+          if (!hasRequiredSpec) {
+            console.log(`⚠️ Doctor ${emp.fullName} excluded - missing required specialization`);
+            return false;
+          }
+        }
+      }
+
+      return true;
     });
 
     //  DEBUG: Log eligible participants
     console.log('� Eligible participants:', {
-      date: appointmentDate,
       totalEmployees: employees.length,
       filtered: filtered.length,
       planDoctor: plan.doctor.employeeCode,
@@ -597,12 +634,11 @@ export default function BookAppointmentFromPlanModal({
         code: e.employeeCode,
         name: e.fullName,
         role: e.roleName,
-        shifts: getShiftsForEmployeeAndDate(e.employeeCode, appointmentDate).length,
       })),
     });
 
     return filtered;
-  }, [employees, plan?.doctor.employeeCode, appointmentDate, allEmployeeShifts]);
+  }, [employees, plan?.doctor.employeeCode, serviceCodes, servicesMap]);
 
   if (!open) return null;
 
@@ -699,12 +735,11 @@ export default function BookAppointmentFromPlanModal({
                             <div className="text-sm text-muted-foreground mt-1">
                               <span>Mã dịch vụ: {item.serviceCode || 'N/A'}</span>
                               <span className="ml-4">
-                                <Clock className="inline h-3 w-3 mr-1" />
                                 Thời gian: {item.estimatedTimeMinutes || 0} phút
                               </span>
                               {item.price != null && item.price > 0 && (
                                 <span className="ml-4">
-                                  Giá: {item.price.toLocaleString('vi-VN')} VND
+                                  Giá: {item.price.toLocaleString('vi-VN')} đ
                                 </span>
                               )}
                             </div>
@@ -716,7 +751,6 @@ export default function BookAppointmentFromPlanModal({
                   </div>
                 </Card>
                 <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
                   Tổng thời gian dự kiến:
                   <span className="font-medium">
                     {loadingServices ? (
@@ -752,6 +786,81 @@ export default function BookAppointmentFromPlanModal({
                   </p>
                 </div>
               </Card>
+
+              {/* Participants (Optional) - Multiple selection with table - MOVED UP */}
+              <div>
+                <Label>
+                  Chọn bác sĩ hỗ trợ (Tùy chọn) 
+                  <span className="text-xs text-muted-foreground font-normal ml-2">
+                    - Có thể chọn nhiều người
+                  </span>
+                </Label>
+                {eligibleParticipants.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    {/* Available Participants Table - No Card wrapper */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="max-h-[300px] overflow-y-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50 sticky top-0">
+                            <tr>
+                              <th className="text-left p-2 font-medium">Chọn</th>
+                              <th className="text-left p-2 font-medium">Họ tên</th>
+                              <th className="text-left p-2 font-medium">Vai trò</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {eligibleParticipants.map((participant) => {
+                              const isSelected = participantCodes.includes(participant.employeeCode);
+                              const isAssistantOrNurse = participant.roleName?.includes('ASSISTANT') || participant.roleName?.includes('NURSE');
+                              
+                              return (
+                                <tr 
+                                  key={participant.employeeId}
+                                  className={`border-t hover:bg-muted/30 cursor-pointer transition-colors ${
+                                    isSelected ? 'bg-primary/5' : ''
+                                  }`}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setParticipantCodes(participantCodes.filter(code => code !== participant.employeeCode));
+                                    } else {
+                                      setParticipantCodes([...participantCodes, participant.employeeCode]);
+                                    }
+                                  }}
+                                >
+                                  <td className="p-2">
+                                    <Checkbox 
+                                      checked={isSelected}
+                                      onCheckedChange={() => {}}
+                                      aria-label={`Chọn ${participant.fullName}`}
+                                    />
+                                  </td>
+                                  <td className="p-2 font-medium">{participant.fullName}</td>
+                                  <td className="p-2">
+                                    <Badge variant={isAssistantOrNurse ? "secondary" : "default"} className="text-xs">
+                                      {participant.roleName?.replace('ROLE_', '')}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    
+                    {/* Selected Count */}
+                    <div className="text-xs text-muted-foreground">
+                      Đã chọn: <strong>{participantCodes.length}</strong> / {eligibleParticipants.length} người
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 p-4 border rounded-lg border-muted bg-muted/30">
+                    <p className="text-sm text-muted-foreground">
+                      Không có bác sĩ hỗ trợ khả dụng. Bạn có thể đặt lịch mà không cần thêm người hỗ trợ.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* Date Selection with Calendar View */}
               <div>
@@ -815,8 +924,6 @@ export default function BookAppointmentFromPlanModal({
                             const isToday = isSameDay(currentDate, today);
                             const isCurrentMonth = isSameMonth(currentDate, selectedMonth);
 
-                            const hasDoctor = hasDoctorShift(dateStr);
-                            const hasParticipant = hasParticipantShift(dateStr);
                             const isAvailable = isDateAvailable(dateStr);
 
                             dates.push(
@@ -859,25 +966,20 @@ export default function BookAppointmentFromPlanModal({
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 rounded bg-green-50 border border-green-200"></div>
                           <span>
-                            {participantCode
-                              ? 'Bác sĩ và phụ tá đều có ca'
+                            {participantCodes.length > 0
+                              ? 'Bác sĩ và tất cả hỗ trợ có ca'
                               : 'Bác sĩ có ca'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 rounded bg-red-50 border border-red-200"></div>
                           <span>
-                            {participantCode
-                              ? 'Không đủ ca làm'
+                            {participantCodes.length > 0
+                              ? 'Thiếu ca làm'
                               : 'Bác sĩ không có ca'}
                           </span>
                         </div>
                       </div>
-                      {!participantCode && (
-                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                           <strong>Gợi ý:</strong> Chọn phụ tá sau khi chọn ngày và giờ để xem ngày cả bác sĩ và phụ tá đều có ca làm
-                        </div>
-                      )}
                     </>
                   )}
                 </Card>
@@ -1017,51 +1119,6 @@ export default function BookAppointmentFromPlanModal({
                 </div>
               )}
 
-              {/* Participants (Optional) - Only show after date selected (similar to CreateAppointmentModal) */}
-              {appointmentDate && (
-                <div>
-                  <Label htmlFor="participantCode">
-                    Chọn phụ tá (Tùy chọn) <span className="text-xs text-muted-foreground font-normal">- Chỉ chọn 1 phụ tá</span>
-                  </Label>
-                  {eligibleParticipants.length > 0 ? (
-                    <Select
-                      value={participantCode || '__NONE__'}
-                      onValueChange={(value) => {
-                        //  FIX: Convert __NONE__ back to empty string
-                        setParticipantCode(value === '__NONE__' ? '' : value);
-                      }}
-                      disabled={loadingData}
-                    >
-                      <SelectTrigger id="participantCode" className="mt-1">
-                        <SelectValue placeholder="Chọn phụ tá (tùy chọn)" />
-                      </SelectTrigger>
-                      <SelectContent align="start">
-                        {/*  FIX: Cannot use empty string as value, use special value instead */}
-                        <SelectItem value="__NONE__">Không chọn phụ tá</SelectItem>
-                        {eligibleParticipants.map((participant) => (
-                          <SelectItem key={participant.employeeId} value={participant.employeeCode}>
-                            {participant.fullName} ({participant.employeeCode})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Card className="p-4 mt-2 border-muted bg-muted/30">
-                      <p className="text-sm text-muted-foreground">
-                        Không có phụ tá khả dụng cho ngày đã chọn. Bạn có thể đặt lịch mà không cần phụ tá.
-                      </p>
-                    </Card>
-                  )}
-                  {participantCode && (
-                    <Card className="p-3 mt-2 bg-blue-50 border-blue-200">
-                      <p className="text-xs text-blue-700">
-                        ✓ Đã chọn phụ tá. Calendar sẽ hiển thị ngày cả bác sĩ và phụ tá đều có ca làm.
-                      </p>
-                    </Card>
-                  )}
-                </div>
-              )}
-
               {/* Room Selection */}
               {appointmentStartTime && (
                 <div>
@@ -1165,18 +1222,18 @@ export default function BookAppointmentFromPlanModal({
                       </span>
                     </div>
                   </div>
-                  {participantCode && (
+                  {participantCodes.length > 0 && (
                     <div>
-                      <span className="text-muted-foreground">Phụ tá:</span>
-                      <div className="mt-1">
-                        {(() => {
-                          const participant = employees.find((e) => e.employeeCode === participantCode);
+                      <span className="text-muted-foreground">Bác sĩ hỗ trợ:</span>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {participantCodes.map((code) => {
+                          const participant = employees.find((e) => e.employeeCode === code);
                           return (
-                            <Badge variant="secondary">
-                              {participant?.fullName || participantCode}
+                            <Badge key={code} variant="secondary">
+                              {participant?.fullName || code}
                             </Badge>
                           );
-                        })()}
+                        })}
                       </div>
                     </div>
                   )}
