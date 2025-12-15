@@ -761,9 +761,7 @@ export default function ImportTransactionForm({
             <div className="text-sm space-y-1">
               <p className="font-semibold text-blue-900">Lưu ý quan trọng</p>
               <ul className="text-blue-700 list-disc list-inside space-y-1">
-                <li>Số hóa đơn phải là duy nhất (không trùng với phiếu nhập khác)</li>
                 <li>Cùng số lô phải có cùng hạn sử dụng</li>
-                <li>Hệ thống tự động tạo lô mới hoặc cập nhật lô cũ dựa trên số lô</li>
                 <li>Đơn giá được dùng để tính COGS (Cost of Goods Sold)</li>
               </ul>
             </div>

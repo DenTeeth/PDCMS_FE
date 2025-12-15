@@ -42,7 +42,6 @@ interface FormData {
   bloodPressure?: string;
   heartRate?: string;
   temperature?: string;
-  respiratoryRate?: string;
   oxygenSaturation?: string;
 }
 
@@ -84,7 +83,6 @@ export default function ClinicalRecordForm({
       bloodPressure: existingRecord?.vitalSigns?.bloodPressure || existingRecord?.vitalSigns?.blood_pressure || '',
       heartRate: existingRecord?.vitalSigns?.heartRate || existingRecord?.vitalSigns?.heart_rate || '',
       temperature: existingRecord?.vitalSigns?.temperature || '',
-      respiratoryRate: existingRecord?.vitalSigns?.respiratoryRate || existingRecord?.vitalSigns?.respiratory_rate || '',
       oxygenSaturation: existingRecord?.vitalSigns?.oxygenSaturation || existingRecord?.vitalSigns?.oxygen_saturation || '',
     },
   });
@@ -101,7 +99,6 @@ export default function ClinicalRecordForm({
         bloodPressure: existingRecord.vitalSigns?.bloodPressure || existingRecord.vitalSigns?.blood_pressure || '',
         heartRate: existingRecord.vitalSigns?.heartRate || existingRecord.vitalSigns?.heart_rate || '',
         temperature: existingRecord.vitalSigns?.temperature || '',
-        respiratoryRate: existingRecord.vitalSigns?.respiratoryRate || existingRecord.vitalSigns?.respiratory_rate || '',
         oxygenSaturation: existingRecord.vitalSigns?.oxygenSaturation || existingRecord.vitalSigns?.oxygen_saturation || '',
       });
     }
@@ -191,7 +188,6 @@ export default function ClinicalRecordForm({
       if (data.bloodPressure) vitalSigns.bloodPressure = data.bloodPressure;
       if (data.heartRate) vitalSigns.heartRate = data.heartRate;
       if (data.temperature) vitalSigns.temperature = data.temperature;
-      if (data.respiratoryRate) vitalSigns.respiratoryRate = data.respiratoryRate;
       if (data.oxygenSaturation) vitalSigns.oxygenSaturation = data.oxygenSaturation;
 
       if (existingRecord) {
@@ -209,35 +205,37 @@ export default function ClinicalRecordForm({
         // Refetch the updated record
         const updatedRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
         
-        //  Reload tooth statuses after updating clinical record
-        // Odontogram may have been updated separately, so refresh to show latest state
-        if (effectivePatientId) {
-          try {
-            const statuses = await toothStatusService.getToothStatus(effectivePatientId);
-            setToothStatuses(statuses);
-          } catch (error: any) {
-            console.error('Error refreshing tooth statuses after update:', error);
-            // Don't show error toast - odontogram refresh is optional
-          }
-        }
-
-        //  Reload prescription after updating clinical record
-        if (updatedRecord.clinicalRecordId) {
-          try {
-            const prescriptionData = await clinicalRecordService.getPrescription(
-              updatedRecord.clinicalRecordId
-            );
-            setPrescription(prescriptionData);
-          } catch (error: any) {
-            // 404 means no prescription yet - this is OK
-            if (error.status !== 404) {
-              console.error('Error refreshing prescription after update:', error);
+        if (updatedRecord) {
+          //  Reload tooth statuses after updating clinical record
+          // Odontogram may have been updated separately, so refresh to show latest state
+          if (effectivePatientId) {
+            try {
+              const statuses = await toothStatusService.getToothStatus(effectivePatientId);
+              setToothStatuses(statuses);
+            } catch (error: any) {
+              console.error('Error refreshing tooth statuses after update:', error);
+              // Don't show error toast - odontogram refresh is optional
             }
-            setPrescription(null);
           }
+
+          //  Reload prescription after updating clinical record
+          if (updatedRecord.clinicalRecordId) {
+            try {
+              const prescriptionData = await clinicalRecordService.getPrescription(
+                updatedRecord.clinicalRecordId
+              );
+              setPrescription(prescriptionData);
+            } catch (error: any) {
+              // 404 means no prescription yet - this is OK
+              if (error.status !== 404) {
+                console.error('Error refreshing prescription after update:', error);
+              }
+              setPrescription(null);
+            }
+          }
+          
+          onSuccess?.(updatedRecord);
         }
-        
-        onSuccess?.(updatedRecord);
       } else {
         // Create new record
         const createRequest: CreateClinicalRecordRequest = {
@@ -255,7 +253,9 @@ export default function ClinicalRecordForm({
 
         // Refetch the created record
         const newRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
-        onSuccess?.(newRecord);
+        if (newRecord) {
+          onSuccess?.(newRecord);
+        }
       }
     } catch (error: any) {
       console.error('Error saving clinical record:', error);
@@ -426,19 +426,6 @@ export default function ClinicalRecordForm({
                   placeholder="36.5"
                   type="number"
                   step="0.1"
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="respiratoryRate" className="text-xs text-muted-foreground">
-                  Nhịp Thở (lần/phút)
-                </Label>
-                <Input
-                  id="respiratoryRate"
-                  {...register('respiratoryRate')}
-                  placeholder="16"
-                  type="number"
                   disabled={!canEdit}
                 />
               </div>

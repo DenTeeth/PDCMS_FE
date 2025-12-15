@@ -81,13 +81,13 @@ export default function ApproveRejectSection({
     const status = normalizedApprovalStatus;
     switch (status) {
       case ApprovalStatus.DRAFT:
-        return <Badge variant="outline">Bản nháp</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border border-slate-300 rounded-full px-3 py-1 font-medium">Bản nháp</Badge>;
       case ApprovalStatus.PENDING_REVIEW:
-        return <Badge className="bg-yellow-500 text-white">Chờ duyệt</Badge>;
+        return <Badge className="bg-amber-400 text-amber-900 border border-amber-500 rounded-full px-3 py-1 font-medium shadow-sm">Chờ duyệt</Badge>;
       case ApprovalStatus.APPROVED:
-        return <Badge className="bg-green-500 text-white">Đã duyệt</Badge>;
+        return <Badge className="bg-emerald-400 text-emerald-900 border border-emerald-500 rounded-full px-3 py-1 font-medium shadow-sm">Đã duyệt</Badge>;
       case ApprovalStatus.REJECTED:
-        return <Badge className="bg-red-500 text-white">Đã từ chối</Badge>;
+        return <Badge className="bg-red-400 text-red-900 border border-red-500 rounded-full px-3 py-1 font-medium shadow-sm">Đã từ chối</Badge>;
       default:
         return null;
     }
@@ -241,11 +241,11 @@ export default function ApproveRejectSection({
   }
 
   return (
-    <Card className="border-2 border-yellow-200 bg-yellow-50/50">
-      <CardHeader>
+    <Card className="border-2 border-amber-300 bg-amber-50 shadow-sm">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <CardTitle className="flex items-center gap-2.5 text-lg text-amber-900">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
             Duyệt lộ trình điều trị
           </CardTitle>
           {getApprovalStatusBadge()}
@@ -253,10 +253,10 @@ export default function ApproveRejectSection({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Approval Status Info */}
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm">
           {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && (
-            <div className="space-y-2">
-              <p className="text-yellow-700 font-medium">
+            <div className="space-y-3">
+              <p className="text-amber-900 font-medium">
                 Lộ trình đang chờ được duyệt. Quản lý cần duyệt trước khi có thể kích hoạt.
               </p>
               {/*  Display submit notes from doctor */}
@@ -274,10 +274,10 @@ export default function ApproveRejectSection({
 
                 if (submitNotes && typeof submitNotes === 'string' && submitNotes.trim()) {
                   return (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <FileText className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
-                        <div className="flex-1 space-y-1">
+                    <div className="p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <FileText className="h-5 w-5 mt-0.5 flex-shrink-0 text-blue-700" />
+                        <div className="flex-1 space-y-1.5">
                           <p className="font-semibold text-blue-900 text-sm">Ghi chú từ bác sĩ:</p>
                           <p className="text-blue-800 text-sm leading-relaxed whitespace-pre-wrap">
                             {submitNotes}
@@ -292,7 +292,7 @@ export default function ApproveRejectSection({
             </div>
           )}
           {normalizedApprovalStatus === ApprovalStatus.APPROVED && (
-            <p className="text-green-700 font-medium">
+            <p className="text-emerald-700 font-medium">
               Lộ trình đã được duyệt và có thể kích hoạt.
             </p>
           )}
@@ -357,9 +357,9 @@ export default function ApproveRejectSection({
 
         {/* Action Buttons */}
         {canApprovePlan && (
-          <div className="space-y-3">
+          <div className="space-y-3 pt-2">
             {!showApproveForm && !showRejectForm ? (
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button
                   onClick={() => {
                     setShowApproveForm(true);
@@ -368,7 +368,7 @@ export default function ApproveRejectSection({
                     setNotesError('');
                   }}
                   disabled={isProcessing}
-                  className="flex-1"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg shadow-sm"
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   Duyệt
@@ -382,7 +382,7 @@ export default function ApproveRejectSection({
                     setNotesError('');
                   }}
                   disabled={isProcessing}
-                  className="flex-1"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg shadow-sm"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Từ chối
@@ -438,7 +438,7 @@ export default function ApproveRejectSection({
                       <Button
                         onClick={handleApprove}
                         disabled={isProcessing || !!notesError}
-                        className="flex-1"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
                         {isProcessing ? (
                           <>

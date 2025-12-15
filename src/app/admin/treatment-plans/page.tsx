@@ -319,9 +319,8 @@ export default function AdminTreatmentPlansPage() {
 
   const handleCreatePlanSuccess = () => {
     setShowCreateModal(false);
-    // Refresh plan list by resetting to page 0
-    // This will trigger useEffect to reload plans
-    setCurrentPage(0);
+    // Auto reload page to show newly created treatment plan
+    window.location.reload();
   };
 
   if (is403Error) {

@@ -383,11 +383,7 @@ export default function TreatmentPlanDetail({
       };
     }
     if (normalizedApprovalStatus === ApprovalStatus.APPROVED) {
-      return {
-        variant: 'success' as BannerVariant,
-        title: 'Lộ trình đã được duyệt',
-        message: 'Bạn có thể theo dõi tiến độ điều trị.',
-      };
+      return null; // Hide banner when approved
     }
     return null;
   })();
@@ -634,74 +630,68 @@ export default function TreatmentPlanDetail({
 
       {/* Plan Header Card */}
       <Card className="border-2">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-3 flex-1">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-4 flex-1">
+              {/* Title */}
+              <div>
+                <CardTitle className="text-2xl font-bold">{plan.planName}</CardTitle>
+              </div>
+              
+              {/* Status Badges - Separate Row */}
               <div className="flex items-center gap-3 flex-wrap">
-                <CardTitle className="text-2xl">{plan.planName}</CardTitle>
+                {/* Treatment Plan Status Badge */}
                 <Badge
                   style={{
                     backgroundColor: statusInfo.bg,
                     borderColor: statusInfo.border,
-                    color: 'white',
+                    color: statusKey === 'NULL' ? '#6B7280' : 'white',
                   }}
-                  className="text-sm px-3 py-1 whitespace-nowrap"
+                  className="text-sm px-4 py-1.5 whitespace-nowrap border rounded-full font-medium shadow-sm"
                 >
                   {statusInfo.text}
                 </Badge>
+                {/* Approval Status Badge - Hide when APPROVED */}
+                {normalizedApprovalStatus !== ApprovalStatus.APPROVED && (
+                  <Badge
+                    className={`text-sm px-4 py-1.5 whitespace-nowrap border rounded-full font-medium shadow-sm ${approvalBadge.bg} ${approvalBadge.text}`}
+                  >
+                    {approvalBadge.label}
+                  </Badge>
+                )}
               </div>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <div>
-                  Mã lộ trình: <span className="font-mono font-semibold">{plan.planCode}</span>
-                </div>
-                {/* Approval Status Helper Text */}
-                <div className="text-xs space-y-0.5">
-                  {normalizedApprovalStatus === ApprovalStatus.APPROVED && (
-                    <div className="text-green-600 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Đã được duyệt
-                    </div>
-                  )}
-                  {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW && (
-                    <div className="text-yellow-700 font-medium flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Đang chờ quản lý duyệt
-                    </div>
-                  )}
-                  {isRejectedState && (
-                    <div className="text-red-600 font-medium">
-                      {isRejected ? 'Lộ trình đã bị từ chối' : 'Lộ trình bị trả về bản nháp'}
-                    </div>
-                  )}
-                  {normalizedApprovalStatus === ApprovalStatus.DRAFT && !isRejectedState && (
-                    <div className="text-gray-600">
-                      Lộ trình đang ở trạng thái bản nháp
-                    </div>
-                  )}
-                </div>
+              
+              {/* Plan Code */}
+              <div className="text-sm">
+                <span className="text-muted-foreground">Mã lộ trình: </span>
+                <span className="font-mono font-semibold text-foreground">{plan.planCode}</span>
               </div>
             </div>
-            {/* V21: API 5.12 - Submit for Review Button */}
-            {canSubmitForReview && (
-              <Button
-                onClick={() => setShowSubmitDialog(true)}
-                className="flex items-center gap-2"
-              >
-                <Send className="h-4 w-4" />
-                Gửi duyệt
-              </Button>
-            )}
-            {/* V21.4: API 5.13 - Update Prices Button (Finance/Manager only) */}
-            {hasManagePricingPermission && (
-              <Button
-                onClick={() => setShowUpdatePricesModal(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <DollarSign className="h-4 w-4" />
-                Điều chỉnh giá
-              </Button>
-            )}
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 shrink-0">
+              {/* V21: API 5.12 - Submit for Review Button */}
+              {canSubmitForReview && (
+                <Button
+                  onClick={() => setShowSubmitDialog(true)}
+                  className="flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Send className="h-4 w-4" />
+                  Gửi duyệt
+                </Button>
+              )}
+              {/* V21.4: API 5.13 - Update Prices Button (Finance/Manager only) */}
+              {hasManagePricingPermission && (
+                <Button
+                  onClick={() => setShowUpdatePricesModal(true)}
+                  variant="outline"
+                  className="flex items-center gap-2 whitespace-nowrap"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Điều chỉnh giá
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -746,13 +736,6 @@ export default function TreatmentPlanDetail({
             );
           })()}
 
-          <div className="mt-8 space-y-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-              <RefreshCw className="h-4 w-4" />
-              Thống kê tiến độ điều trị
-            </div>
-            <ProgressSummary progress={plan.progressSummary} />
-          </div>
 
           {/* BE_4: Calculate Schedule Preview Button - DISABLED (BE not implemented) */}
           {false && !calculatedSchedule && !loadingSchedule && readyForBookingCount > 0 && (

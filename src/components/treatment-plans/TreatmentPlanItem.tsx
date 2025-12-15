@@ -79,47 +79,56 @@ export default function TreatmentPlanItem({
   const isWaitingForPrerequisite = item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
+    <Card className="hover:shadow-lg transition-all border">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-3">
             {/* Item Header */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {canSelect && (
-                <Checkbox
-                  checked={selected}
-                  onCheckedChange={() => onToggleSelect?.(item)}
-                  aria-label={`Chọn hạng mục ${item.itemName}`}
-                />
-              )}
-              <span className="text-sm font-medium text-muted-foreground">
-                #{item.sequenceNumber}
-              </span>
-              <h4 className="font-semibold">{item.itemName}</h4>
-              {item.serviceCode && (
-                <Badge variant="outline" className="text-xs font-mono uppercase">
-                  {item.serviceCode}
-                </Badge>
-              )}
-              <Badge
-                style={{
-                  backgroundColor: finalStatusInfo.bg,
-                  borderColor: finalStatusInfo.border,
-                  color: 'white',
-                }}
-                title={
-                  isWaitingForPrerequisite
-                    ? item.waitingForServiceName
-                      ? `Cần hoàn thành dịch vụ: ${item.waitingForServiceName}`
-                      : 'Cần hoàn thành dịch vụ tiên quyết trước'
-                    : itemStatus ? undefined : 'Trạng thái chưa được xác định'
-                }
-              >
-                {isWaitingForPrerequisite && (
-                  <Lock className="h-3 w-3 mr-1 inline" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {canSelect && (
+                  <Checkbox
+                    checked={selected}
+                    onCheckedChange={() => onToggleSelect?.(item)}
+                    aria-label={`Chọn hạng mục ${item.itemName} để đặt lịch cùng các hạng mục khác`}
+                    title="Chọn để đặt lịch nhiều hạng mục cùng lúc"
+                    className="shadow-sm"
+                  />
                 )}
-                {finalStatusInfo.text}
-              </Badge>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  #{item.sequenceNumber}
+                </span>
+                <h4 className="font-bold text-lg">{item.itemName}</h4>
+              </div>
+              
+              {/* Badges Row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {item.serviceCode && (
+                  <Badge variant="outline" className="text-xs font-mono uppercase bg-slate-50 border-slate-300 px-2.5 py-1">
+                    {item.serviceCode}
+                  </Badge>
+                )}
+                <Badge
+                  style={{
+                    backgroundColor: finalStatusInfo.bg,
+                    borderColor: finalStatusInfo.border,
+                    color: 'white',
+                  }}
+                  className="rounded-full px-3 py-1 text-xs font-medium border shadow-sm"
+                  title={
+                    isWaitingForPrerequisite
+                      ? item.waitingForServiceName
+                        ? `Cần hoàn thành dịch vụ: ${item.waitingForServiceName}`
+                        : 'Cần hoàn thành dịch vụ tiên quyết trước'
+                      : itemStatus ? undefined : 'Trạng thái chưa được xác định'
+                  }
+                >
+                  {isWaitingForPrerequisite && (
+                    <Lock className="h-3 w-3 mr-1 inline" />
+                  )}
+                  {finalStatusInfo.text}
+                </Badge>
+              </div>
             </div>
 
             {/* V21: Clinical Rules Messaging - Show prerequisite info */}
@@ -144,24 +153,24 @@ export default function TreatmentPlanItem({
             )}
 
             {/* Item Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+            <div className="flex items-center gap-4 text-sm pt-2 border-t">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="h-4 w-4" />
                 <span>
-                  Thời gian: {item.estimatedTimeMinutes != null && item.estimatedTimeMinutes > 0 
+                  {item.estimatedTimeMinutes != null && item.estimatedTimeMinutes > 0 
                     ? `${item.estimatedTimeMinutes} phút` 
                     : 'Chưa có'}
                 </span>
               </div>
               {item.price != null && item.price > 0 && (
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
-                  <span>Giá: {formatCurrency(item.price)}</span>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="font-semibold text-foreground">{formatCurrency(item.price)}</span>
                 </div>
               )}
               {item.completedAt && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
                   <span>Hoàn thành: {formatDate(item.completedAt)}</span>
                 </div>
               )}
@@ -205,12 +214,14 @@ export default function TreatmentPlanItem({
 
           {/* Actions */}
           {showActions && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 shrink-0">
               {isReadyForBooking && onBookAppointment && (
                 <Button
                   size="sm"
                   onClick={() => onBookAppointment(item.itemId)}
+                  className="bg-primary hover:bg-primary/90 text-white font-medium shadow-sm"
                 >
+                  <Calendar className="h-4 w-4 mr-2" />
                   Đặt lịch
                 </Button>
               )}

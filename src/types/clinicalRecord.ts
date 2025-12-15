@@ -150,7 +150,9 @@ export interface ToothStatusResponse {
 
 export type ToothCondition =
   | 'HEALTHY'
-  | 'CARIES'
+  | 'CARIES_MILD'
+  | 'CARIES_MODERATE'
+  | 'CARIES_SEVERE'
   | 'FILLED'
   | 'CROWN'
   | 'ROOT_CANAL'

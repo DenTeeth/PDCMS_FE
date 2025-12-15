@@ -35,67 +35,14 @@ export default function TreatmentPlanList({
   patientCode,
 }: TreatmentPlanListProps) {
   const getStatusBadge = (plan: TreatmentPlanSummaryDTO) => {
+    // Only use plan.status, not approvalStatus
+    // BE returns TreatmentPlanStatus: PENDING, IN_PROGRESS, COMPLETED, CANCELLED
     const status = plan.status;
-    const approvalStatus = plan.approvalStatus;
     
-    // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
-    // Status is now always accurate from BE - trust BE status directly
-    // If status is null, determine based on approvalStatus for UI display (for plans not yet started)
-    // Note: TreatmentPlanSummaryDTO doesn't have phases/progressSummary, so we can't calculate from items here
-    // If BE status is null, it should be a valid state (DRAFT or not activated yet)
-    
-    // If status is null, determine based on approvalStatus
-    if (status === null) {
-      if (approvalStatus === 'APPROVED') {
-        // Plan is approved but status is null (plan not started yet → PENDING)
-        // Issue #51 RESOLVED: BE auto-completes status on detail load, so null here means plan not started
-        // Show PENDING as default (plan approved but not activated yet)
-        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['PENDING'];
-        return (
-          <Badge
-            style={{
-              backgroundColor: statusInfo.bg,
-              borderColor: statusInfo.border,
-              color: 'white',
-            }}
-          >
-            {statusInfo.text}
-          </Badge>
-        );
-      } else if (approvalStatus === 'DRAFT') {
-        // Plan is still in draft → Show NULL/DRAFT
-        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['NULL'];
-        return (
-          <Badge
-            style={{
-              backgroundColor: statusInfo.bg,
-              borderColor: statusInfo.border,
-              color: '#6B7280',
-            }}
-          >
-            {statusInfo.text}
-          </Badge>
-        );
-      } else if (approvalStatus === 'PENDING_REVIEW' || approvalStatus === 'PENDING_APPROVAL') {
-        // Plan is pending review → Show PENDING
-        const statusInfo = TREATMENT_PLAN_STATUS_COLORS['PENDING'];
-        return (
-          <Badge
-            style={{
-              backgroundColor: statusInfo.bg,
-              borderColor: statusInfo.border,
-              color: 'white',
-            }}
-          >
-            Chờ duyệt
-          </Badge>
-        );
-      }
-    }
-    
-    // Use actual status if available
+    // If status is null or undefined, show NULL status (for plans not yet activated)
     const statusKey = status || 'NULL';
     const statusInfo = TREATMENT_PLAN_STATUS_COLORS[statusKey];
+    
     return (
       <Badge
         className="whitespace-nowrap"
