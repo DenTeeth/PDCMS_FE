@@ -39,7 +39,7 @@ const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
   CARIES: 'Sâu răng',
-  FILLED: 'Đã trám',
+  FILLED: 'Trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
   MISSING: 'Mất răng',

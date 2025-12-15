@@ -26,6 +26,8 @@ import {
   // BE_4: Auto-Scheduling
   CalculateScheduleRequest,
   CalculateScheduleResponse,
+  ApprovalStatus,
+  TreatmentPlanStatus,
 } from '@/types/treatmentPlan';
 
 const BASE_URL = '/patients';
@@ -100,6 +102,77 @@ export class TreatmentPlanService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<TreatmentPlanDetailResponse>(
       `${BASE_URL}/${patientCode}/treatment-plans/${planCode}`
+    );
+    return response.data;
+  }
+
+  /**
+   * API 5.0: List all treatment plans across all patients (Manager view)
+   * GET /api/v1/treatment-plans
+   * 
+   * Manager Dashboard Endpoint - List ALL treatment plans with advanced filters:
+   * - approvalStatus: DRAFT, PENDING_REVIEW, APPROVED, REJECTED
+   * - status: PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+   * - doctorEmployeeCode: Filter by doctor who created the plan
+   * - templateId: Filter by template used (e.g., "Niềng răng kim loại")
+   * - specializationId: Filter by specialization (e.g., Chỉnh nha)
+   * 
+   * Use Cases:
+   * - Manager dashboard: View all plans across patients
+   * - Reports: Filter by template or specialization
+   * - Audit: Track plans by doctor
+   * 
+   * Required Permission:
+   * - VIEW_ALL_TREATMENT_PLANS (typically assigned to managers)
+   * 
+   * @param filters Filter parameters (page, size, approvalStatus, status, doctorCode, templateId, specializationId)
+   * @returns Paginated response with treatment plan summaries
+   */
+  static async listAllTreatmentPlansManager(
+    filters: {
+      page?: number;
+      size?: number;
+      sort?: string;
+      approvalStatus?: ApprovalStatus;
+      status?: TreatmentPlanStatus;
+      doctorEmployeeCode?: string;
+      templateId?: number;
+      specializationId?: number;
+    } = {}
+  ): Promise<PageResponse<TreatmentPlanSummaryDTO>> {
+    const axios = apiClient.getAxiosInstance();
+    const params = new URLSearchParams();
+    
+    // Pagination
+    if (filters.page !== undefined) {
+      params.append('page', filters.page.toString());
+    }
+    if (filters.size !== undefined) {
+      params.append('size', filters.size.toString());
+    }
+    if (filters.sort) {
+      params.append('sort', filters.sort);
+    }
+    
+    // Filters
+    if (filters.approvalStatus) {
+      params.append('approvalStatus', filters.approvalStatus);
+    }
+    if (filters.status) {
+      params.append('status', filters.status);
+    }
+    if (filters.doctorEmployeeCode) {
+      params.append('doctorEmployeeCode', filters.doctorEmployeeCode);
+    }
+    if (filters.templateId !== undefined) {
+      params.append('templateId', filters.templateId.toString());
+    }
+    if (filters.specializationId !== undefined) {
+      params.append('specializationId', filters.specializationId.toString());
+    }
+    
+    const response = await axios.get<PageResponse<TreatmentPlanSummaryDTO>>(
+      `/treatment-plans?${params.toString()}`
     );
     return response.data;
   }
@@ -600,6 +673,46 @@ export class TreatmentPlanService {
   // ============================================================================
   // BE_4: Treatment Plan Auto-Scheduling
   // ============================================================================
+
+  /**
+   * API 5.X: Assign Doctor to Treatment Plan Item (V32)
+   * PUT /api/v1/patient-plan-items/{itemId}/assign-doctor
+   * 
+   * Allows assigning or reassigning a doctor to a specific treatment item.
+   * 
+   * Use Cases:
+   * - Pre-assign doctors during treatment planning
+   * - Organize items by doctor specialization
+   * - Prepare for appointment scheduling
+   * 
+   * Business Rules:
+   * - Doctor must exist and be active
+   * - Doctor must have required specialization for item's service
+   * - Item must exist and belong to a valid treatment plan
+   * 
+   * Required Permission:
+   * - ASSIGN_DOCTOR_TO_ITEM (assigned to ROLE_DENTIST, ROLE_MANAGER)
+   * 
+   * @param itemId Plan item ID
+   * @param doctorCode Doctor employee code
+   * @param notes Optional notes about the assignment
+   * @returns Updated item details with assigned doctor info
+   */
+  static async assignDoctorToItem(
+    itemId: number,
+    doctorCode: string,
+    notes?: string
+  ): Promise<any> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.put(
+      `/patient-plan-items/${itemId}/assign-doctor`,
+      {
+        doctorCode,
+        notes,
+      }
+    );
+    return response.data;
+  }
 
   /**
    * BE_4: Calculate Treatment Plan Schedule (STANDALONE CALCULATOR)

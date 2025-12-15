@@ -175,8 +175,8 @@ export default function PatientAppointmentsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lịch Hẹn Của Tôi</h1>
-          <p className="text-gray-600 mt-1">Xem và quản lý lịch hẹn của bạn</p>
+          <h1 className="text-3xl font-bold text-gray-900">Lịch hẹn của tôi</h1>
+          <p className="text-gray-600 mt-1">Xem và quản lý lịch hẹn của tôi</p>
         </div>
       </div>
 

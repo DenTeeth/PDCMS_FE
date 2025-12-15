@@ -88,7 +88,7 @@ const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
   CARIES: 'Sâu răng',
-  FILLED: 'Đã trám',
+  FILLED: 'Trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
   MISSING: 'Mất răng',
@@ -101,7 +101,7 @@ const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
 const TOOTH_STATUS_ABBR: Record<ToothCondition, string> = {
   HEALTHY: '', // Không hiển thị chữ viết tắt
   CARIES: 'SR',    // Sâu Răng
-  FILLED: 'ĐT',    // Đã Trám
+  FILLED: 'TR',    // Đã Trám
   CROWN: 'BS',     // Bọc Sứ
   ROOT_CANAL: 'ĐTT', // Điều Trị Tủy
   MISSING: 'MR',     // Mất Răng
@@ -172,16 +172,16 @@ export default function Odontogram({
   const teethData = useMemo(() => {
     const teeth: ToothData[] = [];
     
-    // SVG dimensions - Compact size for better fit
+    // SVG dimensions - Better spacing
     const svgWidth = 800;
-    const svgHeight = 320; // Reduced height to minimize bottom space
+    const svgHeight = 360; // Increased height for better spacing
     const toothWidth = 36;
     const toothHeight = 52;
     const spacing = 5;
     const centerGap = 50; // Gap between left and right quadrants
-    const verticalGap = 15; // Small gap between upper and lower jaw
+    const verticalGap = 30; // Increased gap between upper and lower jaw
     const topMargin = 40; // Top margin for labels
-    const bottomMargin = 20; // Reduced bottom margin
+    const bottomMargin = 30; // Bottom margin for better spacing
     
     // Calculate quadrant width (8 teeth per quadrant)
     const quadrantWidth = (toothWidth + spacing) * 8 - spacing;
@@ -291,12 +291,25 @@ export default function Odontogram({
         {/* SVG Chart */}
         <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <svg
-            viewBox="0 0 800 320"
-            className="w-full h-auto min-h-[256px] sm:min-h-[320px] max-w-full"
+            viewBox="0 0 800 360"
+            className="w-full h-auto min-h-[288px] sm:min-h-[360px] max-w-full"
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Background */}
-            <rect width="800" height="320" fill="#fafafa" />
+            <rect width="800" height="360" fill="#fafafa" />
+            
+            {/* Horizontal line separating upper and lower jaw */}
+            {/* Position: upperY (40) + toothHeight (52) + verticalGap/2 (15) = 107 */}
+            <line
+              x1="50"
+              y1="107"
+              x2="750"
+              y2="107"
+              stroke="#9ca3af"
+              strokeWidth="1.5"
+              strokeDasharray="4,4"
+              opacity="0.6"
+            />
             
             {/* Quadrant labels with FDI notation explanation */}
             <text
@@ -319,7 +332,7 @@ export default function Odontogram({
             </text>
             <text
               x="200"
-              y="180"
+              y="220"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
@@ -328,7 +341,7 @@ export default function Odontogram({
             </text>
             <text
               x="600"
-              y="180"
+              y="220"
               textAnchor="middle"
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
