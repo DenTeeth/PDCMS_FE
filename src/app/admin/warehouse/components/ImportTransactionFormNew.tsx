@@ -576,8 +576,8 @@ export default function ImportTransactionFormNew({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Box className="h-5 w-5" />
             Phiếu nhập kho {warehouseType === 'COLD' ? (
@@ -592,7 +592,8 @@ export default function ImportTransactionFormNew({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto px-6 space-y-6">
           {/* General Information */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -864,16 +865,25 @@ export default function ImportTransactionFormNew({
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-emerald-50 border-2 border-emerald-300 rounded-lg p-4">
+          <div className="rounded-lg p-6 border-2 bg-gray-50 border-gray-300 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
-                <Label className="text-base font-semibold text-emerald-900">
-                  Tổng giá trị phiếu nhập
-                </Label>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-800 shadow-md">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                    Tổng giá trị phiếu nhập
+                  </Label>
+                </div>
               </div>
-              <div className="text-2xl font-bold text-emerald-700">
-                {totalValue.toLocaleString('vi-VN')} VNĐ
+              <div className="text-right">
+                <div className="text-4xl font-bold text-gray-900 tracking-tight">
+                  {totalValue.toLocaleString('vi-VN')}
+                </div>
+                <div className="text-lg font-semibold text-gray-600 mt-1">
+                  VNĐ
+                </div>
               </div>
             </div>
           </div>
@@ -896,17 +906,17 @@ export default function ImportTransactionFormNew({
               <div className="flex-1 text-sm text-blue-900">
                 <p className="font-semibold mb-2">Lưu ý quan trọng:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Số hóa đơn phải là duy nhất (không trùng với phiếu nhập khác)</li>
                   <li>Cùng số lô phải có cùng hạn sử dụng</li>
-                  <li>Hệ thống tự động tạo lô mới hoặc cập nhật lô cũ dựa trên số lô</li>
                   <li>Đơn giá được dùng để tính COGS (Cost of Goods Sold)</li>
                 </ul>
               </div>
             </div>
           </div>
 
+          </div>
+          
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 pb-6 px-6 border-t flex-shrink-0 bg-white">
             <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>
               Hủy
             </Button>

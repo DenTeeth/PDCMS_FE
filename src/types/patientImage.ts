@@ -121,3 +121,35 @@ export interface PatientImageCloudinaryMetadata {
   uploadedBy: number;
   uploadedAt: string;
 }
+
+// ============================================================================
+// Patient Image Comments Types
+// ============================================================================
+
+/**
+ * Response từ BE khi lấy comment của hình ảnh
+ */
+export interface PatientImageComment {
+  commentId: number;
+  imageId: number;
+  content: string; // 1-1000 chars
+  createdBy: number; // Employee ID
+  createdByName?: string; // Tên người tạo comment
+  createdAt: string; // ISO 8601 format
+  updatedAt?: string; // ISO 8601 format (nếu đã chỉnh sửa)
+  deletedAt?: string; // ISO 8601 format (soft delete)
+}
+
+/**
+ * Request để tạo comment mới
+ */
+export interface CreateImageCommentRequest {
+  content: string; // 1-1000 chars, required
+}
+
+/**
+ * Request để cập nhật comment
+ */
+export interface UpdateImageCommentRequest {
+  content: string; // 1-1000 chars, required
+}

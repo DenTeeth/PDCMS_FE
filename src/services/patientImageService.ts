@@ -16,6 +16,9 @@ import {
   PatientImageFilterOptions,
   PatientImagePageResponse,
   PatientImageType,
+  PatientImageComment,
+  CreateImageCommentRequest,
+  UpdateImageCommentRequest,
 } from "@/types/patientImage";
 
 // Get axios instance for API calls
@@ -260,6 +263,95 @@ class PatientImageService {
         error.response?.data?.message ||
           error.message ||
           "Failed to fetch images"
+      );
+    }
+  }
+
+  // ============================================================================
+  // Patient Image Comments Methods
+  // ============================================================================
+
+  /**
+   * Lấy danh sách comments của một hình ảnh
+   * BE Endpoint: GET /api/v1/patient-images/{imageId}/comments
+   */
+  async getImageComments(imageId: number): Promise<PatientImageComment[]> {
+    try {
+      const response = await api.get<PatientImageComment[]>(
+        `${this.BASE_URL}/${imageId}/comments`
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching image comments:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch comments"
+      );
+    }
+  }
+
+  /**
+   * Tạo comment mới cho hình ảnh
+   * BE Endpoint: POST /api/v1/patient-images/{imageId}/comments
+   */
+  async createComment(
+    imageId: number,
+    request: CreateImageCommentRequest
+  ): Promise<PatientImageComment> {
+    try {
+      const response = await api.post<PatientImageComment>(
+        `${this.BASE_URL}/${imageId}/comments`,
+        request
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error creating comment:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create comment"
+      );
+    }
+  }
+
+  /**
+   * Cập nhật comment (chỉ creator mới có thể update)
+   * BE Endpoint: PUT /api/v1/patient-images/comments/{commentId}
+   */
+  async updateComment(
+    commentId: number,
+    request: UpdateImageCommentRequest
+  ): Promise<PatientImageComment> {
+    try {
+      const response = await api.put<PatientImageComment>(
+        `${this.BASE_URL}/comments/${commentId}`,
+        request
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error updating comment:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update comment"
+      );
+    }
+  }
+
+  /**
+   * Xóa comment (soft delete, chỉ creator mới có thể delete)
+   * BE Endpoint: DELETE /api/v1/patient-images/comments/{commentId}
+   */
+  async deleteComment(commentId: number): Promise<void> {
+    try {
+      await api.delete(`${this.BASE_URL}/comments/${commentId}`);
+    } catch (error: any) {
+      console.error("Error deleting comment:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete comment"
       );
     }
   }

@@ -33,8 +33,10 @@ import { Loader2, Save, X } from 'lucide-react';
 // Status labels in Vietnamese (matching legend - excluding HEALTHY and MISSING)
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
-  CARIES: 'Sâu răng',
-  FILLED: 'Trám',
+  CARIES_MILD: 'Sâu răng nhẹ',
+  CARIES_MODERATE: 'Sâu răng vừa',
+  CARIES_SEVERE: 'Sâu răng nặng',
+  FILLED: 'Răng trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
   MISSING: 'Mất răng',
@@ -45,7 +47,9 @@ const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
 
 // Status options for dropdown (only show in legend)
 const DROPDOWN_STATUS_OPTIONS: ToothCondition[] = [
-  'CARIES',
+  'CARIES_MILD',
+  'CARIES_MODERATE',
+  'CARIES_SEVERE',
   'FILLED',
   'CROWN',
   'ROOT_CANAL',
@@ -80,7 +84,7 @@ export default function ToothStatusDialog({
   // Reset form when dialog opens or props change
   useEffect(() => {
     if (open) {
-      setStatus(currentStatus || 'CARIES'); // Default to CARIES instead of HEALTHY
+      setStatus(currentStatus || 'CARIES_MILD'); // Default to CARIES_MILD instead of HEALTHY
       setNotes(currentNotes || '');
     }
   }, [open, currentStatus, currentNotes]);

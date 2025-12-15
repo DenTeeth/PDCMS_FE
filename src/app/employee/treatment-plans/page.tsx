@@ -327,9 +327,8 @@ export default function EmployeeTreatmentPlansPage() {
 
   const handleCreatePlanSuccess = () => {
     setShowCreateModal(false);
-    // Refresh plan list by updating currentPage to trigger useEffect
-    // This will reload plans automatically
-    setCurrentPage(0);
+    // Auto reload page to show newly created treatment plan
+    window.location.reload();
   };
 
   if (is403Error) {

@@ -309,8 +309,6 @@ export default function ClinicalRecordView({
                         heart_rate: 'Nhịp tim',
                         heartRate: 'Nhịp tim',
                         temperature: 'Nhiệt độ',
-                        respiratory_rate: 'Nhịp thở',
-                        respiratoryRate: 'Nhịp thở',
                         oxygen_saturation: 'SpO2',
                         oxygenSaturation: 'SpO2',
                       };

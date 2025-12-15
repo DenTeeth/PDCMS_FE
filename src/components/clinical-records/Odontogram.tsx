@@ -73,22 +73,26 @@ const ALL_TEETH = [
 
 // Color mapping for tooth conditions (matching BE enum)
 const TOOTH_STATUS_COLORS: Record<ToothCondition, string> = {
-  HEALTHY: '#10b981',      // Green
-  CARIES: '#ef4444',       // Red
-  FILLED: '#3b82f6',       // Blue
-  CROWN: '#f59e0b',       // Yellow/Orange
-  ROOT_CANAL: '#ec4899',  // Pink
-  MISSING: '#6b7280',     // Gray
-  IMPLANT: '#8b5cf6',     // Purple
-  FRACTURED: '#f97316',   // Orange
-  IMPACTED: '#6366f1',    // Indigo
+  HEALTHY: '#10b981',           // Green
+  CARIES_MILD: '#fbbf24',       // Yellow - Sâu răng nhẹ
+  CARIES_MODERATE: '#f97316',   // Orange - Sâu răng vừa
+  CARIES_SEVERE: '#ef4444',     // Red - Sâu răng nặng
+  FILLED: '#3b82f6',            // Blue
+  CROWN: '#f59e0b',            // Yellow/Orange
+  ROOT_CANAL: '#ec4899',        // Pink
+  MISSING: '#6b7280',          // Gray
+  IMPLANT: '#8b5cf6',          // Purple
+  FRACTURED: '#f97316',        // Orange
+  IMPACTED: '#6366f1',         // Indigo
 };
 
 // Status labels in Vietnamese (matching BE enum)
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
-  CARIES: 'Sâu răng',
-  FILLED: 'Trám',
+  CARIES_MILD: 'Sâu răng nhẹ',
+  CARIES_MODERATE: 'Sâu răng vừa',
+  CARIES_SEVERE: 'Sâu răng nặng',
+  FILLED: 'Răng trám',
   CROWN: 'Bọc sứ',
   ROOT_CANAL: 'Điều trị tủy',
   MISSING: 'Mất răng',
@@ -99,20 +103,24 @@ const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
 
 // Chữ viết tắt cho trạng thái răng (hiển thị trên/dưới răng)
 const TOOTH_STATUS_ABBR: Record<ToothCondition, string> = {
-  HEALTHY: '', // Không hiển thị chữ viết tắt
-  CARIES: 'SR',    // Sâu Răng
-  FILLED: 'TR',    // Đã Trám
-  CROWN: 'BS',     // Bọc Sứ
-  ROOT_CANAL: 'ĐTT', // Điều Trị Tủy
-  MISSING: 'MR',     // Mất Răng
-  IMPLANT: 'CG',     // Cấy Ghép
-  FRACTURED: 'GR',   // Gãy Răng
-  IMPACTED: 'MN',    // Mọc Ngầm
+  HEALTHY: '',           // Không hiển thị chữ viết tắt
+  CARIES_MILD: 'SR1',    // Sâu Răng Nhẹ (mức 1)
+  CARIES_MODERATE: 'SR2', // Sâu Răng Vừa (mức 2)
+  CARIES_SEVERE: 'SR3',   // Sâu Răng Nặng (mức 3)
+  FILLED: 'TR',          // Răng Trám
+  CROWN: 'BS',           // Bọc Sứ
+  ROOT_CANAL: 'ĐTT',     // Điều Trị Tủy
+  MISSING: 'MR',         // Mất Răng
+  IMPLANT: 'CG',         // Cấy Ghép
+  FRACTURED: 'GR',       // Gãy Răng
+  IMPACTED: 'MN',        // Mọc Ngầm
 };
 
 // Các trạng thái cần hiển thị trong legend (bỏ HEALTHY, EXTRACTED, MISSING)
 const LEGEND_STATUSES: ToothCondition[] = [
-  'CARIES',
+  'CARIES_MILD',
+  'CARIES_MODERATE',
+  'CARIES_SEVERE',
   'FILLED',
   'CROWN',
   'ROOT_CANAL',
