@@ -4,10 +4,8 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
-  // Ignore ESLint and TypeScript errors during build for deployment
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Ignore TypeScript errors during build for deployment
+  // Note: ESLint config is now handled via .eslintrc or eslint.config.js
   typescript: {
     ignoreBuildErrors: true,
   },
