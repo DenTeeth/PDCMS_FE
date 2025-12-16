@@ -20,14 +20,6 @@ const nextConfig: NextConfig = {
       'lucide-react',
       'framer-motion'
     ],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
 
   // Compiler optimizations
