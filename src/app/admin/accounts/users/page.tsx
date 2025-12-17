@@ -33,10 +33,10 @@ import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '
 import { patientService } from '@/services/patientService';
 import { authenticationService } from '@/services/authenticationService';
 import { toast } from 'sonner';
-import { 
+import {
   getBookingBlockReasonLabel,
   isTemporaryBlock,
-  BOOKING_BLOCK_REASON_OPTIONS 
+  BOOKING_BLOCK_REASON_OPTIONS
 } from '@/types/patientBlockReason';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,8 +46,7 @@ import { Textarea } from '@/components/ui/textarea';
 interface PatientStats {
   total: number;
   active: number;
-  male: number;
-  female: number;
+  inactive: number;
 }
 
 // ==================== MAIN COMPONENT ====================
@@ -89,7 +88,7 @@ export default function PatientsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [updating, setUpdating] = useState(false);
-  
+
   // Resend email states
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<UpdatePatientRequest>({
@@ -205,7 +204,7 @@ export default function PatientsPage() {
       console.log('⏰ Timestamp:', new Date().toISOString());
 
       const result = await patientService.createPatient(payload);
-      
+
       //  Note: BE may fail to send email but patient still created (graceful degradation)
       // Account status will be PENDING_VERIFICATION until password is set via email
       console.log(' Patient created:', result);
@@ -216,11 +215,11 @@ export default function PatientsPage() {
         note: result.hasAccount === undefined ? ' BE không trả về hasAccount - cần fix BE' : ' OK',
         accountStatusNote: result.accountStatus === undefined ? ' BE không trả về accountStatus - cần fix BE' : ' OK',
       });
-      
+
       // Show success message with account status info
       if (result.hasAccount) {
         toast.success('Patient created successfully!', {
-          description: result.accountStatus === 'PENDING_VERIFICATION' 
+          description: result.accountStatus === 'PENDING_VERIFICATION'
             ? 'Account created. Patient will receive a password setup email shortly.'
             : 'Account created and activated.',
           duration: 5000,
@@ -231,7 +230,7 @@ export default function PatientsPage() {
           duration: 5000,
         });
       }
-      
+
       setShowCreateModal(false);
       // Reset form
       setFormData({
@@ -251,21 +250,21 @@ export default function PatientsPage() {
       fetchPatients(); // Refresh list
     } catch (error: any) {
       console.error('� Failed to create patient:', error);
-      
+
       // Enhanced error handling
       let errorMessage = 'Failed to create patient';
       let errorDescription = '';
-      
+
       if (error.response) {
         const status = error.response.status;
         const data = error.response.data;
-        
+
         console.error('Error Response:', {
           status,
           data,
           headers: error.response.headers,
         });
-        
+
         if (status === 500) {
           errorMessage = 'Server Error (500)';
           errorDescription = data?.message || 'Internal server error occurred. This might be due to:\n' +
@@ -293,7 +292,7 @@ export default function PatientsPage() {
         errorMessage = 'Request Error';
         errorDescription = error.message;
       }
-      
+
       toast.error(errorMessage, {
         description: errorDescription,
         duration: 7000,
@@ -456,10 +455,9 @@ export default function PatientsPage() {
 
   // ==================== STATS ====================
   const stats: PatientStats = {
-    total: totalElements, // Total from BE (all pages)
-    active: patients.filter((p) => p.isActive).length, // Current page only
-    male: patients.filter((p) => p.gender === 'MALE').length, // Current page only
-    female: patients.filter((p) => p.gender === 'FEMALE').length, // Current page only
+    total: patients.length, // Total patients from current data
+    active: patients.filter((p) => p.isActive).length, // Active accounts
+    inactive: patients.filter((p) => !p.isActive).length, // Inactive accounts
   };
 
   // ==================== HANDLERS ====================
@@ -510,9 +508,12 @@ export default function PatientsPage() {
       </div>
 
       {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Patients */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div
+          className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => setFilterStatus('all')}
+        >
           <p className="text-sm font-semibold text-gray-700 mb-2">Tổng bệnh nhân</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -523,7 +524,10 @@ export default function PatientsPage() {
         </div>
 
         {/* Active */}
-        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+        <div
+          className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => setFilterStatus('active')}
+        >
           <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -533,25 +537,17 @@ export default function PatientsPage() {
           </div>
         </div>
 
-        {/* Male */}
-        <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-blue-800 mb-2">Nam</p>
+        {/* Inactive */}
+        <div
+          className="bg-gray-50 rounded-xl border border-gray-300 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => setFilterStatus('inactive')}
+        >
+          <p className="text-sm font-semibold text-gray-800 mb-2">Không hoạt động</p>
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <User className="h-6 w-6 text-blue-700" />
+            <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-6 w-6 text-gray-700" />
             </div>
-            <p className="text-3xl font-bold text-blue-800">{stats.male}</p>
-          </div>
-        </div>
-
-        {/* Female */}
-        <div className="bg-pink-50 rounded-xl border border-pink-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-pink-800 mb-2">Nữ</p>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <User className="h-6 w-6 text-pink-700" />
-            </div>
-            <p className="text-3xl font-bold text-pink-800">{stats.female}</p>
+            <p className="text-3xl font-bold text-gray-800">{stats.inactive}</p>
           </div>
         </div>
       </div>
@@ -679,7 +675,7 @@ export default function PatientsPage() {
                       Họ và tên
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Giới tính     
+                      Giới tính
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ngày sinh
@@ -768,8 +764,8 @@ export default function PatientsPage() {
                                 }}
                                 title={`${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
                               />
-                              <Badge 
-                                variant="destructive" 
+                              <Badge
+                                variant="destructive"
                                 className={
                                   isTemporaryBlock(patient.bookingBlockReason)
                                     ? 'text-xs bg-orange-600'
@@ -799,7 +795,6 @@ export default function PatientsPage() {
                               onClick={() => openEditModal(patient)}
                             >
                               <Edit className="h-4 w-4 mr-1" />
-                              Chỉnh sửa
                             </Button>
                             <Button
                               variant="ghost"
@@ -807,7 +802,6 @@ export default function PatientsPage() {
                               onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              Xem
                             </Button>
                           </div>
                           {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
@@ -1393,7 +1387,7 @@ export default function PatientsPage() {
                         <option value="true">Bị chặn</option>
                       </select>
                     </div>
-                    
+
                     {editFormData.isBookingBlocked && (
                       <>
                         <div className="space-y-2">
@@ -1421,7 +1415,7 @@ export default function PatientsPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label htmlFor="edit-bookingBlockNotes">Chi tiết</Label>
                           <Textarea
