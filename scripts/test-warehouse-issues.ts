@@ -11,7 +11,7 @@
 
 import axios from 'axios';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://pdcms.duckdns.org/api/v1';
 let authToken: string = '';
 
 async function login(username: string = 'admin', password: string = '123456'): Promise<string> {

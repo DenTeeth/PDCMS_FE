@@ -206,35 +206,35 @@ export default function ClinicalRecordForm({
         const updatedRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
         
         if (updatedRecord) {
-          //  Reload tooth statuses after updating clinical record
-          // Odontogram may have been updated separately, so refresh to show latest state
-          if (effectivePatientId) {
-            try {
-              const statuses = await toothStatusService.getToothStatus(effectivePatientId);
-              setToothStatuses(statuses);
-            } catch (error: any) {
-              console.error('Error refreshing tooth statuses after update:', error);
-              // Don't show error toast - odontogram refresh is optional
-            }
+        //  Reload tooth statuses after updating clinical record
+        // Odontogram may have been updated separately, so refresh to show latest state
+        if (effectivePatientId) {
+          try {
+            const statuses = await toothStatusService.getToothStatus(effectivePatientId);
+            setToothStatuses(statuses);
+          } catch (error: any) {
+            console.error('Error refreshing tooth statuses after update:', error);
+            // Don't show error toast - odontogram refresh is optional
           }
+        }
 
-          //  Reload prescription after updating clinical record
-          if (updatedRecord.clinicalRecordId) {
-            try {
-              const prescriptionData = await clinicalRecordService.getPrescription(
-                updatedRecord.clinicalRecordId
-              );
-              setPrescription(prescriptionData);
-            } catch (error: any) {
-              // 404 means no prescription yet - this is OK
-              if (error.status !== 404) {
-                console.error('Error refreshing prescription after update:', error);
-              }
-              setPrescription(null);
+        //  Reload prescription after updating clinical record
+        if (updatedRecord.clinicalRecordId) {
+          try {
+            const prescriptionData = await clinicalRecordService.getPrescription(
+              updatedRecord.clinicalRecordId
+            );
+            setPrescription(prescriptionData);
+          } catch (error: any) {
+            // 404 means no prescription yet - this is OK
+            if (error.status !== 404) {
+              console.error('Error refreshing prescription after update:', error);
             }
+            setPrescription(null);
           }
-          
-          onSuccess?.(updatedRecord);
+        }
+        
+        onSuccess?.(updatedRecord);
         }
       } else {
         // Create new record
@@ -254,7 +254,7 @@ export default function ClinicalRecordForm({
         // Refetch the created record
         const newRecord = await clinicalRecordService.getByAppointmentId(appointmentId);
         if (newRecord) {
-          onSuccess?.(newRecord);
+        onSuccess?.(newRecord);
         }
       }
     } catch (error: any) {
