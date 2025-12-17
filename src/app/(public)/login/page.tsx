@@ -66,24 +66,20 @@ export default function Page() {
           {/* Visual / Brand Panel (static, no effects) */}
           <section className="relative hidden items-center justify-center p-10 md:flex bg-gradient-to-br from-[#8b5fbf]/10 to-[#1e3a5f]/10">
             <div className="relative z-10 max-w-md text-center">
-              <div className="mx-auto mb-3 flex items-center justify-center">
+              <div className="mx-auto flex items-center justify-center">
                 <Image
                   src="/denteeth-logo.png"
                   alt="DenTeeth Logo"
                   width={400}
-                  height={160}
+                  height={100}
                   className="w-auto h-40"
                   priority
                 />
               </div>
-              <h2 className="mb-3 text-3xl font-bold tracking-tight text-[#1e3a5f]">DenTeeth</h2>
+
               <p className="mx-auto max-w-sm text-gray-700">
                 Giải pháp hiện đại cho việc lập lịch và quản lý các phòng khám nha khoa. Chăm sóc nụ cười từ lần đăng nhập đầu tiên.
               </p>
-              <div className="mt-6 inline-flex items-center gap-3 rounded-full bg-white/70 px-4 py-2 text-sm text-[#1e3a5f] shadow-sm backdrop-blur">
-                <span className="inline-flex h-2 w-2 rounded-full bg-[#8b5fbf]" />
-                Bảo mật dữ liệu bệnh nhân
-              </div>
             </div>
           </section>
 
@@ -97,16 +93,6 @@ export default function Page() {
                   </svg>
                   Quay lại
                 </Link>
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/denteeth-logo.png"
-                    alt="DenTeeth Logo"
-                    width={240}
-                    height={90}
-                    className="h-20 w-auto"
-                    priority
-                  />
-                </div>
               </div>
 
               <h1 className="mb-2 text-2xl font-semibold text-slate-800">Đăng nhập</h1>
@@ -181,13 +167,13 @@ export default function Page() {
                 <p className="text-center text-sm text-slate-500">
                   Bạn chưa có tài khoản? {""}
                   <br />
-                  Vui lòng liên hệ: <span className="text-[#8b5fbf] font-bold">01234568</span>
+                  Vui lòng liên hệ: <span className="text-[#8b5fbf]">076 400 9726</span>
                 </p>
               </form>
 
               <div className="mt-10 text-center text-xs text-slate-400">
                 {/* TODO (Security): Add reCAPTCHA if needed; verify server-side in your API */}
-                © {new Date().getFullYear()} DenTeeth. Bảo mật & tuân thủ HIPAA/GDPR.
+                © {new Date().getFullYear()} Denteeth
               </div>
             </div>
           </section>

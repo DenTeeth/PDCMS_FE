@@ -17,8 +17,8 @@ import {
   User,
   Phone,
   Mail,
-  CheckCircle,
-  XCircle,
+  UserCheck,
+  AlertCircle,
   Loader2,
   Filter,
   X,
@@ -378,39 +378,47 @@ export default function EmployeesPage() {
 
         {/* ==================== STATS ==================== */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Tổng nhân viên</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                </div>
+          {/* Total Employees */}
+          <div
+            className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFilterStatus('all')}
+          >
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng nhân viên</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Hoạt động</p>
-                  <p className="text-2xl font-bold">{stats.active}</p>
-                </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+          </div>
+
+          {/* Active */}
+          <div
+            className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFilterStatus('active')}
+          >
+            <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <UserCheck className="h-6 w-6 text-green-700" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <XCircle className="h-8 w-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Không hoạt động</p>
-                  <p className="text-2xl font-bold">{stats.inactive}</p>
-                </div>
+              <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+            </div>
+          </div>
+
+          {/* Inactive */}
+          <div
+            className="bg-gray-50 rounded-xl border border-gray-300 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFilterStatus('inactive')}
+          >
+            <p className="text-sm font-semibold text-gray-800 mb-2">Không hoạt động</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="h-6 w-6 text-gray-700" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-3xl font-bold text-gray-800">{stats.inactive}</p>
+            </div>
+          </div>
         </div>
 
         {/* ==================== SEARCH & FILTERS ==================== */}
@@ -496,8 +504,8 @@ export default function EmployeesPage() {
                         className="gap-2"
                       >
                         <X className="h-4 w-4" />
-                          Xóa bộ lọc         
-             </Button>
+                        Xóa bộ lọc
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -569,22 +577,21 @@ export default function EmployeesPage() {
                           <div className="text-sm text-gray-900">{employee.roleName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            employee.employeeType === EmploymentType.FULL_TIME
+                          <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
                               ? 'bg-blue-100 text-blue-800'
                               : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                              ? 'bg-green-100 text-green-800'
-                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                              ? 'bg-orange-100 text-orange-800'
-                              : 'bg-gray-100 text-gray-800'
+                                ? 'bg-green-100 text-green-800'
+                                : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-gray-100 text-gray-800'
                             }`}>
-                            {employee.employeeType === EmploymentType.FULL_TIME 
-                              ? 'Toàn thời gian' 
+                            {employee.employeeType === EmploymentType.FULL_TIME
+                              ? 'Toàn thời gian'
                               : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                              ? 'Bán thời gian - Cố định'
-                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                              ? 'Bán thời gian - Linh hoạt'
-                              : 'Bán thời gian'}
+                                ? 'Bán thời gian - Cố định'
+                                : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                                  ? 'Bán thời gian - Linh hoạt'
+                                  : 'Bán thời gian'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -686,8 +693,8 @@ export default function EmployeesPage() {
                             onClick={() => setPage(i)}
                             disabled={loading}
                             className={`h-9 w-9 p-0 ${i === page
-                                ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
-                                : 'hover:bg-gray-100'
+                              ? 'bg-[#8b5fbf] text-white hover:bg-[#7a4fa8]'
+                              : 'hover:bg-gray-100'
                               }`}
                           >
                             {i + 1}
@@ -921,7 +928,7 @@ export default function EmployeesPage() {
                           ) : specializations.length === 0 ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                               <p className="text-sm text-yellow-800">
-                                 <strong>Lưu ý:</strong> Không có chuyên khoa đang hoạt động.
+                                <strong>Lưu ý:</strong> Không có chuyên khoa đang hoạt động.
                               </p>
                             </div>
                           ) : (
@@ -1050,7 +1057,7 @@ export default function EmployeesPage() {
                       {creating ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                         Đang tạo...
+                          Đang tạo...
                         </>
                       ) : (
                         <>
@@ -1192,104 +1199,104 @@ export default function EmployeesPage() {
                       const editingRole = roles.find(role => role.roleId === editingEmployee.roleId);
                       return editingRole?.requiresSpecialization === true;
                     })() && (
-                      <div className="lg:border-l lg:pl-6">
-                        <h3 className="text-lg font-semibold mb-4">Chuyên khoa</h3>
-                        {loadingSpecializations ? (
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Đang tải chuyên khoa...</span>
-                          </div>
-                        ) : specializations.length === 0 ? (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <p className="text-sm text-yellow-800">
-                               Không có chuyên khoa đang hoạt động.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div>
-                              <Label>Cập nhật chuyên khoa</Label>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Thay đổi chuyên khoa của nhân viên
+                        <div className="lg:border-l lg:pl-6">
+                          <h3 className="text-lg font-semibold mb-4">Chuyên khoa</h3>
+                          {loadingSpecializations ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">Đang tải chuyên khoa...</span>
+                            </div>
+                          ) : specializations.length === 0 ? (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                              <p className="text-sm text-yellow-800">
+                                Không có chuyên khoa đang hoạt động.
                               </p>
                             </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div>
+                                <Label>Cập nhật chuyên khoa</Label>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Thay đổi chuyên khoa của nhân viên
+                                </p>
+                              </div>
 
-                            {/* Selected Specializations Badges */}
-                            {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
-                              <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                {editFormData.specializationIds.map((specId) => {
-                                  const spec = specializations.find(s => s.specializationId === specId);
-                                  return spec ? (
-                                    <Badge
-                                      key={specId}
-                                      className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
-                                    >
-                                      <span>{spec.specializationCode}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
+                              {/* Selected Specializations Badges */}
+                              {editFormData.specializationIds && editFormData.specializationIds.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  {editFormData.specializationIds.map((specId) => {
+                                    const spec = specializations.find(s => s.specializationId === specId);
+                                    return spec ? (
+                                      <Badge
+                                        key={specId}
+                                        className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
+                                      >
+                                        <span>{spec.specializationCode}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditFormData({
+                                              ...editFormData,
+                                              specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
+                                            });
+                                          }}
+                                          className="hover:bg-blue-700 rounded-full p-0.5"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </Badge>
+                                    ) : null;
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Checkbox List */}
+                              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                                {specializations.map((spec) => (
+                                  <label
+                                    key={spec.specializationId}
+                                    className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
+                                      onChange={(e) => {
+                                        const currentIds = editFormData.specializationIds || [];
+                                        if (e.target.checked) {
                                           setEditFormData({
                                             ...editFormData,
-                                            specializationIds: editFormData.specializationIds?.filter(id => id !== specId)
+                                            specializationIds: [...currentIds, spec.specializationId]
                                           });
-                                        }}
-                                        className="hover:bg-blue-700 rounded-full p-0.5"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </Badge>
-                                  ) : null;
-                                })}
-                              </div>
-                            )}
-
-                            {/* Checkbox List */}
-                            <div className="border rounded-lg max-h-96 overflow-y-auto">
-                              {specializations.map((spec) => (
-                                <label
-                                  key={spec.specializationId}
-                                  className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={editFormData.specializationIds?.includes(spec.specializationId) || false}
-                                    onChange={(e) => {
-                                      const currentIds = editFormData.specializationIds || [];
-                                      if (e.target.checked) {
-                                        setEditFormData({
-                                          ...editFormData,
-                                          specializationIds: [...currentIds, spec.specializationId]
-                                        });
-                                      } else {
-                                        setEditFormData({
-                                          ...editFormData,
-                                          specializationIds: currentIds.filter(id => id !== spec.specializationId)
-                                        });
-                                      }
-                                    }}
-                                    disabled={updating}
-                                    className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="font-medium text-sm text-gray-900">
-                                      {spec.specializationCode}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                      {spec.specializationName}
-                                    </div>
-                                    {spec.description && (
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        {spec.description}
+                                        } else {
+                                          setEditFormData({
+                                            ...editFormData,
+                                            specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                          });
+                                        }
+                                      }}
+                                      disabled={updating}
+                                      className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-sm text-gray-900">
+                                        {spec.specializationCode}
                                       </div>
-                                    )}
-                                  </div>
-                                </label>
-                              ))}
+                                      <div className="text-sm text-gray-600">
+                                        {spec.specializationName}
+                                      </div>
+                                      {spec.description && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          {spec.description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {/* Actions */}
