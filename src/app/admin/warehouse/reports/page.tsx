@@ -122,14 +122,14 @@ export default function WarehouseReportsPage() {
   };
 
   const getStockStatusBadge = (status: string) => {
-    const config: Record<string, { variant: any; label: string }> = {
-      OUT_OF_STOCK: { variant: 'destructive', label: 'Hết hàng' },
-      LOW_STOCK: { variant: 'destructive', label: 'Sắp hết' },
-      NORMAL: { variant: 'default', label: 'Bình thường' },
-      OVERSTOCK: { variant: 'outline', label: 'Dư thừa' },
+    const config: Record<string, { className: string; label: string }> = {
+      OUT_OF_STOCK: { className: 'bg-red-100 text-red-700 border-red-200', label: 'Hết hàng' },
+      LOW_STOCK: { className: 'bg-orange-100 text-orange-700 border-orange-200', label: 'Sắp hết' },
+      NORMAL: { className: 'bg-green-100 text-green-700 border-green-200', label: 'Bình thường' },
+      OVERSTOCK: { className: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Dư thừa' },
     };
     const cfg = config[status] || config.NORMAL;
-    return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+    return <Badge className={cfg.className}>{cfg.label}</Badge>;
   };
 
   // Export Excel handler (Issue #50)
@@ -272,10 +272,7 @@ export default function WarehouseReportsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">Tất cả kho</SelectItem>
-                        <SelectItem value="COLD">
-                          <FontAwesomeIcon icon={faSnowflake} className="mr-2" />
-                          Kho lạnh
-                        </SelectItem>
+                        <SelectItem value="COLD">Kho lạnh</SelectItem>
                         <SelectItem value="NORMAL">Kho thường</SelectItem>
                       </SelectContent>
                     </Select>
@@ -319,12 +316,7 @@ export default function WarehouseReportsPage() {
                             <td className="py-3 px-4 font-mono text-sm">{item.itemCode}</td>
                             <td className="py-3 px-4">{item.itemName}</td>
                             <td className="py-3 px-4 text-center">
-                              {item.warehouseType === 'COLD' ? (
-                                <>
-                                  <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                                  Lạnh
-                                </>
-                              ) : 'Thường'}
+                              {item.warehouseType === 'COLD' ? 'Lạnh' : 'Thường'}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold">
                               {item.currentStock || item.totalQuantity || 0}
