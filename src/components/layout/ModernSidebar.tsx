@@ -56,11 +56,10 @@ const NavItem = memo(({
     }
   }, [hasSubmenu, item.name, toggleItem, setIsOpen]);
 
-  // Clean minimalist styling - giống Financial Dashboard
+
   const baseClasses = `
-    group relative flex items-center gap-3.5 rounded-xl transition-all duration-200
-    ${isCollapsed ? 'px-2 py-3 justify-center' : 'px-4 py-3'}
-    ${level > 0 ? 'ml-12 py-2.5' : ''}
+    group relative flex items-center gap-2 rounded-lg transition-all duration-200
+    ${isCollapsed ? 'px-2 py-2.5 justify-center' : level > 0 ? 'pl-[72px] pr-4 py-2' : 'px-4 py-2.5'}
     ${isActive
       ? 'bg-[#8b5fbf]/10 text-[#8b5fbf]'
       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -223,16 +222,13 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header - minimalist clean white */}
           <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100">
-            <div className={`flex items-center gap-2.5 ${isCollapsed ? 'justify-center w-full' : 'flex-1 justify-center'}`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'flex-1 justify-center'}`}>
               {/* Logo */}
-              <div className="w-9 h-9 bg-gradient-to-br from-[#8b5fbf] to-[#7a4fb0] rounded-xl flex items-center justify-center shadow-lg shadow-purple-200/50">
-                <span className="text-white text-base font-bold">D</span>
-              </div>
-              {!isCollapsed && (
-                <h1 className="text-lg font-bold text-gray-900 tracking-tight">
-                  {navigationConfig.title}
-                </h1>
-              )}
+              <img
+                src="/denteeth-logo.png"
+                alt="Denteeth Logo"
+                className="w-12 h-12 object-contain"
+              />
             </div>
 
             {/* Collapse toggle button - desktop only */}
