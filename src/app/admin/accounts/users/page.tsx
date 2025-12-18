@@ -28,6 +28,9 @@ import {
   ChevronsRight,
   Edit,
   Send,
+  CheckCircle2,
+  XCircle,
+  Ban,
 } from 'lucide-react';
 import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
@@ -82,7 +85,10 @@ export default function PatientsPage() {
     allergies: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
+    emergencyContactRelationship: '', // Mối quan hệ với bệnh nhân
   });
+
+  const [showOtherRelationship, setShowOtherRelationship] = useState(false);
 
   // Edit patient modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -662,178 +668,131 @@ export default function PatientsPage() {
         </Card>
       ) : (
         /* Table View */
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Họ và tên
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Giới tính
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ngày sinh
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Số điện thoại
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Chặn đặt lịch
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hành động
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPatients.map((patient) => (
-                    <tr
-                      key={patient.patientId}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {patient.patientCode}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center gap-2">
-                          <span>{patient.fullName}</span>
-                          {patient.isBookingBlocked && (
-                            <Badge
-                              variant="destructive"
-                              className={
-                                isTemporaryBlock(patient.bookingBlockReason)
-                                  ? 'bg-orange-600 text-white text-xs px-2 py-0.5'
-                                  : 'bg-red-600 text-white text-xs px-2 py-0.5'
-                              }
-                              title={`${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
-                            >
-                              {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
-                            </Badge>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {getGenderLabel(patient.gender)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {formatDate(patient.dateOfBirth)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {patient.phone || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {patient.email || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge
-                          variant={patient.isActive ? 'default' : 'secondary'}
-                          className={
-                            patient.isActive
-                              ? 'bg-green-100 text-green-700 w-fit'
-                              : 'bg-gray-100 text-gray-700 w-fit'
-                          }
+        <div className="overflow-x-auto bg-white rounded-xl border border-gray-100 shadow-sm">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Code
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Họ và tên
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Giới tính
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ngày sinh
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Số điện thoại
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredPatients.map((patient) => (
+                <tr
+                  key={patient.patientId}
+                  className="hover:bg-gray-50"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {patient.patientCode}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {patient.fullName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {getGenderLabel(patient.gender)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatDate(patient.dateOfBirth)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {patient.phone || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {patient.email || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {patient.isBookingBlocked ? (
+                      isTemporaryBlock(patient.bookingBlockReason) ? (
+                        <AlertCircle
+                          className="h-6 w-6 text-orange-600"
+                          title={`Tạm chặn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
+                        />
+                      ) : (
+                        <Ban
+                          className="h-6 w-6 text-red-600"
+                          title={`Chặn vĩnh viễn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}`}
+                        />
+                      )
+                    ) : patient.isActive ? (
+                      <CheckCircle2
+                        className="h-6 w-6 text-green-600"
+                        title="Hoạt động"
+                      />
+                    ) : (
+                      <XCircle
+                        className="h-6 w-6 text-gray-400"
+                        title="Không hoạt động"
+                      />
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditModal(patient)}
                         >
-                          {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center">
-                          {patient.isBookingBlocked ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={true}
-                                readOnly
-                                className="w-5 h-5 rounded border-2 cursor-not-allowed"
-                                style={{
-                                  accentColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
-                                  backgroundColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
-                                  borderColor: isTemporaryBlock(patient.bookingBlockReason) ? '#ea580c' : '#dc2626',
-                                }}
-                                title={`${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
-                              />
-                              <Badge
-                                variant="destructive"
-                                className={
-                                  isTemporaryBlock(patient.bookingBlockReason)
-                                    ? 'text-xs bg-orange-600'
-                                    : 'text-xs'
-                                }
-                              >
-                                {isTemporaryBlock(patient.bookingBlockReason) ? 'Tạm chặn' : 'Chặn'}
-                              </Badge>
-                            </div>
+                          <Edit className="h-4 w-4 mr-1" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                        </Button>
+                      </div>
+                      {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResendPasswordSetupEmail(patient)}
+                          disabled={resendingEmail === patient.patientCode}
+                          className="w-full text-xs"
+                        >
+                          {resendingEmail === patient.patientCode ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Đang gửi...
+                            </>
                           ) : (
-                            <input
-                              type="checkbox"
-                              checked={false}
-                              readOnly
-                              className="w-5 h-5 rounded border-2 border-gray-300 cursor-not-allowed"
-                              title="Không bị chặn đặt lịch"
-                            />
+                            <>
+                              <Send className="h-3 w-3 mr-1" />
+                              Gửi lại email thiết lập
+                            </>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditModal(patient)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                            </Button>
-                          </div>
-                          {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleResendPasswordSetupEmail(patient)}
-                              disabled={resendingEmail === patient.patientCode}
-                              className="w-full text-xs"
-                            >
-                              {resendingEmail === patient.patientCode ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  Đang gửi...
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="h-3 w-3 mr-1" />
-                                  Gửi lại email thiết lập
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Pagination */}
@@ -1097,18 +1056,18 @@ export default function PatientsPage() {
                   </div>
                 </div>
 
-                {/* Emergency Contact */}
+                {/* Liên hệ khẩn cấp */}
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
                     <Phone className="h-4 w-4 text-blue-600" />
-                    Emergency Contact
+                    Liên hệ khẩn cấp
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="emergencyContactName">Tên người liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactName"
-                        placeholder="e.g., Tran Thi Hoa"
+                        placeholder="VD: Trần Thị Hoa"
                         value={formData.emergencyContactName}
                         onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
                         disabled={creating}
@@ -1118,12 +1077,47 @@ export default function PatientsPage() {
                       <Label htmlFor="emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactPhone"
-                        placeholder="e.g., 0987654321"
+                        placeholder="VD: 0987654321"
                         value={formData.emergencyContactPhone}
                         onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
                         disabled={creating}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="emergencyContactRelationship">Mối quan hệ với bệnh nhân</Label>
+                      <select
+                        id="emergencyContactRelationship"
+                        value={formData.emergencyContactRelationship}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, emergencyContactRelationship: value });
+                          setShowOtherRelationship(value === 'OTHER');
+                        }}
+                        disabled={creating}
+                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      >
+                        <option value="">Chọn mối quan hệ</option>
+                        <option value="PARENT">Bố/Mẹ</option>
+                        <option value="SPOUSE">Vợ/Chồng</option>
+                        <option value="CHILD">Con</option>
+                        <option value="SIBLING">Anh/Chị/Em</option>
+                        <option value="RELATIVE">Họ hàng</option>
+                        <option value="FRIEND">Bạn bè</option>
+                        <option value="OTHER">Khác</option>
+                      </select>
+                    </div>
+                    {showOtherRelationship && (
+                      <div>
+                        <Label htmlFor="emergencyContactRelationshipOther">Ghi rõ mối quan hệ</Label>
+                        <Input
+                          id="emergencyContactRelationshipOther"
+                          placeholder="Nhập mối quan hệ cụ thể"
+                          value={formData.emergencyContactRelationship === 'OTHER' ? '' : formData.emergencyContactRelationship}
+                          onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
+                          disabled={creating}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1147,7 +1141,9 @@ export default function PatientsPage() {
                         allergies: '',
                         emergencyContactName: '',
                         emergencyContactPhone: '',
+                        emergencyContactRelationship: '',
                       });
+                      setShowOtherRelationship(false);
                     }}
                     disabled={creating}
                   >
@@ -1350,46 +1346,28 @@ export default function PatientsPage() {
                   </div>
                 </div>
 
-                {/* Status */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Trạng thái</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-isActive">Trạng thái hoạt động</Label>
-                    <select
-                      id="edit-isActive"
-                      value={editFormData.isActive ? 'true' : 'false'}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })
-                      }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="true">Hoạt động</option>
-                      <option value="false">Không hoạt động</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Booking Block Status */}
+                {/* Trạng thái chặn đặt lịch */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Trạng thái chặn đặt lịch</h3>
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-isBookingBlocked">Trạng thái chặn đặt lịch</Label>
-                      <select
-                        id="edit-isBookingBlocked"
-                        value={editFormData.isBookingBlocked ? 'true' : 'false'}
-                        onChange={(e) =>
-                          setEditFormData({ ...editFormData, isBookingBlocked: e.target.value === 'true' })
-                        }
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="false">Không chặn</option>
-                        <option value="true">Bị chặn</option>
-                      </select>
-                    </div>
+                    {/* Trạng thái và Lý do chặn trên 1 hàng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-isBookingBlocked">Trạng thái chặn đặt lịch</Label>
+                        <select
+                          id="edit-isBookingBlocked"
+                          value={editFormData.isBookingBlocked ? 'true' : 'false'}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, isBookingBlocked: e.target.value === 'true' })
+                          }
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                        >
+                          <option value="false">Không chặn</option>
+                          <option value="true">Bị chặn</option>
+                        </select>
+                      </div>
 
-                    {editFormData.isBookingBlocked && (
-                      <>
+                      {editFormData.isBookingBlocked && (
                         <div className="space-y-2">
                           <Label htmlFor="edit-bookingBlockReason">
                             Lý do chặn <span className="text-red-500">*</span>
@@ -1401,20 +1379,49 @@ export default function PatientsPage() {
                             }
                           >
                             <SelectTrigger id="edit-bookingBlockReason">
-                              <SelectValue placeholder="Chọn lý do chặn" />
+                              <SelectValue placeholder="Chọn lý do chặn">
+                                {editFormData.bookingBlockReason ? getBookingBlockReasonLabel(editFormData.bookingBlockReason) : 'Chọn lý do chặn'}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent align="start">
-                              {BOOKING_BLOCK_REASON_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  <div className="flex flex-col">
-                                    <span>{option.label}</span>
-                                    <span className="text-xs text-gray-500">{option.description}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="EXCESSIVE_NO_SHOWS">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-semibold">Bỏ hẹn quá nhiều</span>
+                                  <span className="text-xs text-gray-500">Tạm chặn - Tự động mở khóa khi bệnh nhân đến khám</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="PAYMENT_ISSUES">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-semibold">Vấn đề thanh toán</span>
+                                  <span className="text-xs text-gray-500">Nợ chi phí, từ chối thanh toán, tranh chấp thanh toán</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="STAFF_ABUSE">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-semibold">Bạo lực/Quấy rối nhân viên</span>
+                                  <span className="text-xs text-gray-500">Bạo lực, quấy rối, gây rối với nhân viên</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="POLICY_VIOLATION">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-semibold">Vi phạm quy định</span>
+                                  <span className="text-xs text-gray-500">Hủy hẹn quá nhiều, vi phạm quy định phòng khám lặp lại</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="OTHER_SERIOUS">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-semibold">Lý do nghiêm trọng khác</span>
+                                  <span className="text-xs text-gray-500">Phá hoại tài sản, say xỉn, kiện tụng vô căn cứ, v.v.</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
+                      )}
+                    </div>
+
+                    {editFormData.isBookingBlocked && (
+                      <>
 
                         <div className="space-y-2">
                           <Label htmlFor="edit-bookingBlockNotes">Chi tiết</Label>
@@ -1448,18 +1455,18 @@ export default function PatientsPage() {
                     }}
                     disabled={updating}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={updating}>
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>
                         <Edit className="h-4 w-4 mr-2" />
-                        Update Patient
+                        Cập nhật bệnh nhân
                       </>
                     )}
                   </Button>
