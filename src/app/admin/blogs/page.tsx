@@ -71,51 +71,48 @@ export default function BlogsPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Total */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <BookOpen className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-semibold text-gray-700">Tổng bài viết</p>
-                  <p className="text-2xl font-bold text-gray-900">{blogs.length}</p>
-                </div>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng bài viết</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-3xl font-bold text-gray-900">{blogs.length}</p>
+            </div>
+          </div>
+
           {/* Published */}
-          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-700 font-bold">P</span>
+          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFilterStatus('published')}>
+            <p className="text-sm font-semibold text-green-800 mb-2">Đã xuất bản</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FileText className="h-6 w-6 text-green-700" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-green-800">Đã xuất bản</p>
-                <p className="text-2xl font-bold text-green-800">{blogs.filter(b => b.status === 'published').length}</p>
-              </div>
+              <p className="text-3xl font-bold text-green-800">{blogs.filter(b => b.status === 'published').length}</p>
             </div>
           </div>
+
           {/* Drafts */}
-          <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <span className="text-yellow-700 font-bold">D</span>
+          <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFilterStatus('draft')}>
+            <p className="text-sm font-semibold text-yellow-800 mb-2">Bản nháp</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Edit className="h-6 w-6 text-yellow-700" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-yellow-800">Bản nháp</p>
-                <p className="text-2xl font-bold text-yellow-800">{blogs.filter(b => b.status === 'draft').length}</p>
-              </div>
+              <p className="text-3xl font-bold text-yellow-800">{blogs.filter(b => b.status === 'draft').length}</p>
             </div>
           </div>
+
           {/* Authors */}
-          <div className="bg-purple-50 rounded-xl border border-purple-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-700 font-bold">A</span>
+          <div className="bg-purple-50 rounded-xl border border-purple-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all">
+            <p className="text-sm font-semibold text-purple-800 mb-2">Tác giả</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <User className="h-6 w-6 text-purple-700" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-purple-800">Tác giả</p>
-                <p className="text-2xl font-bold text-purple-800">{new Set(blogs.map(b => b.authorId)).size}</p>
-              </div>
+              <p className="text-3xl font-bold text-purple-800">{new Set(blogs.map(b => b.authorId)).size}</p>
             </div>
           </div>
         </div>
