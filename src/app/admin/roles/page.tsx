@@ -19,6 +19,8 @@ import {
   Edit,
   Key,
   Trash2,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -31,12 +33,12 @@ import { permissionService } from '@/services/permissionService';
 // ==================== MAIN COMPONENT ====================
 export default function RolesPage() {
   const router = useRouter();
-  
+
   // State management
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -64,6 +66,7 @@ export default function RolesPage() {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -91,7 +94,7 @@ export default function RolesPage() {
   // ==================== CREATE ROLE ====================
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.roleId || !formData.roleName || !formData.description || !formData.baseRoleId) {
       toast.error('Please fill in all required fields');
       return;
@@ -143,7 +146,7 @@ export default function RolesPage() {
 
   const handleUpdateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingRole || !editFormData.roleName || !editFormData.description) {
       toast.error('Please fill in all fields');
       return;
@@ -240,8 +243,8 @@ export default function RolesPage() {
   // ==================== FILTER ROLES ====================
   const filteredRoles = (roles || []).filter(role => {
     const matchesSearch = role.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         role.roleId.toLowerCase().includes(searchTerm.toLowerCase());
+      role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.roleId.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -280,50 +283,45 @@ export default function RolesPage() {
 
       {/* ==================== STATS ==================== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng số vai trò</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
+        {/* Total */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số vai trò</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Shield className="h-6 w-6 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+          </div>
+        </div>
+
+        {/* Active */}
+        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="h-6 w-6 text-green-700" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <XCircle className="h-4 w-4 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold">{stats.inactive}</p>
-              </div>
+            <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+          </div>
+        </div>
+
+        {/* Inactive */}
+        <div className="bg-gray-50 rounded-xl border border-gray-300 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-800 mb-2">Không hoạt động</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <XCircle className="h-6 w-6 text-gray-700" />
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-3xl font-bold text-gray-800">{stats.inactive}</p>
+          </div>
+        </div>
       </div>
 
       {/* ==================== SEARCH ==================== */}
       <Card>
         <CardContent className="p-6">
           <div className="flex-1">
-            <Label htmlFor="search" className="mb-2">Tìm kiếm</Label>
+            <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2">Tìm kiếm</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -342,24 +340,21 @@ export default function RolesPage() {
       {filteredRoles.length > 0 ? (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
+                    <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vai trò
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
+                    <th className="w-1/3 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Mô tả
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                    <th className="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trạng thái
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created At
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hành động
                     </th>
                   </tr>
                 </thead>
@@ -384,17 +379,14 @@ export default function RolesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                        <div className="text-sm text-gray-900 truncate">
                           {role.description}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                          {role.isActive ? 'Active' : 'Inactive'}
+                          {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {role.createdAt ? new Date(role.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-2">
@@ -402,9 +394,9 @@ export default function RolesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => router.push(`/admin/roles/${role.roleId}`)}
+                            title="View"
                           >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
+                            <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -413,9 +405,9 @@ export default function RolesPage() {
                               e.stopPropagation();
                               openEditModal(role);
                             }}
+                            title="Edit"
                           >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -424,9 +416,9 @@ export default function RolesPage() {
                               e.stopPropagation();
                               openAssignModal(role);
                             }}
+                            title="Permissions"
                           >
-                            <Key className="h-4 w-4 mr-1" />
-                            Permissions
+                            <Key className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -436,9 +428,9 @@ export default function RolesPage() {
                               openDeleteModal(role);
                             }}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete"
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
@@ -472,35 +464,35 @@ export default function RolesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-blue-600" />
-                Create New Role
+                Tạo vai trò mới
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateRole} className="space-y-4">
                 <div>
                   <Label htmlFor="roleId">
-                    Role ID <span className="text-red-500">*</span>
+                    Mã vai trò <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="roleId"
-                    placeholder="e.g., ROLE_CUSTOM"
+                    placeholder="VD: ROLE_CUSTOM"
                     value={formData.roleId}
                     onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                     disabled={creating}
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Use uppercase letters, underscores, and numbers only
+                    Chỉ sử dụng chữ hoa, gạch dưới và số
                   </p>
                 </div>
 
                 <div>
                   <Label htmlFor="roleName">
-                    Role Name <span className="text-red-500">*</span>
+                    Tên vai trò <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="roleName"
-                    placeholder="e.g., Custom Role"
+                    placeholder="VD: Vai trò tùy chỉnh"
                     value={formData.roleName}
                     onChange={(e) => setFormData({ ...formData, roleName: e.target.value })}
                     disabled={creating}
@@ -510,7 +502,7 @@ export default function RolesPage() {
 
                 <div>
                   <Label htmlFor="description">
-                    Description <span className="text-red-500">*</span>
+                    Mô tả <span className="text-red-500">*</span>
                   </Label>
                   <textarea
                     id="description"
@@ -520,13 +512,13 @@ export default function RolesPage() {
                     disabled={creating}
                     required
                     rows={4}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="baseRoleId">
-                    Base Role <span className="text-red-500">*</span>
+                    Vai trò cơ sở <span className="text-red-500">*</span>
                   </Label>
                   <select
                     id="baseRoleId"
@@ -534,15 +526,15 @@ export default function RolesPage() {
                     onChange={(e) => setFormData({ ...formData, baseRoleId: e.target.value })}
                     disabled={creating}
                     required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                   >
-                    <option value="">Select a base role</option>
-                    <option value="ROLE_ADMIN">Admin (ROLE_ADMIN)</option>
-                    <option value="ROLE_EMPLOYEE">Employee (ROLE_EMPLOYEE)</option>
-                    <option value="ROLE_PATIENT">Patient (ROLE_PATIENT)</option>
+                    <option value="">Chọn vai trò cơ sở</option>
+                    <option value="ROLE_ADMIN">Quản trị viên (ROLE_ADMIN)</option>
+                    <option value="ROLE_EMPLOYEE">Nhân viên (ROLE_EMPLOYEE)</option>
+                    <option value="ROLE_PATIENT">Bệnh nhân (ROLE_PATIENT)</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Select a base role to inherit permissions from
+                    Chọn vai trò cơ sở để kế thừa quyền hạn
                   </p>
                 </div>
 
@@ -557,11 +549,11 @@ export default function RolesPage() {
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <Label htmlFor="requiresSpecialization" className="cursor-pointer">
-                      Requires Specialization
+                      Yêu cầu chuyên môn
                     </Label>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 ml-6">
-                    Check if this role requires specialization (e.g., for doctors)
+                    Đánh dấu nếu vai trò này yêu cầu chuyên môn (VD: bác sĩ)
                   </p>
                 </div>
 
@@ -575,18 +567,18 @@ export default function RolesPage() {
                     }}
                     disabled={creating}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={creating}>
                     {creating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
+                        Đang tạo...
                       </>
                     ) : (
                       <>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Role
+                        Tạo vai trò
                       </>
                     )}
                   </Button>
@@ -688,20 +680,20 @@ export default function RolesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Key className="h-5 w-5 text-blue-600" />
-                Assign Permissions to {assigningRole.roleName}
+                Phân quyền cho {assigningRole.roleName}
               </CardTitle>
             </CardHeader>
-            <CardContent className="overflow-y-auto flex-1">
+            <div className="flex-1 overflow-y-auto relative">
               {loadingPermissions ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-3 text-gray-600">Loading permissions...</span>
+                  <span className="ml-3 text-gray-600">Đang tải quyền hạn...</span>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b sticky top-0 bg-white z-10">
                     <p className="text-sm text-gray-600">
-                      Select permissions for this role ({selectedPermissions.length} selected)
+                      Chọn quyền hạn cho vai trò này ({selectedPermissions.length} đã chọn)
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -710,7 +702,7 @@ export default function RolesPage() {
                         size="sm"
                         onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
                       >
-                        Select All
+                        Chọn tất cả
                       </Button>
                       <Button
                         type="button"
@@ -718,12 +710,12 @@ export default function RolesPage() {
                         size="sm"
                         onClick={() => setSelectedPermissions([])}
                       >
-                        Clear All
+                        Bỏ chọn tất cả
                       </Button>
                     </div>
                   </div>
 
-                  {/* Group permissions by module */}
+                  {/* Group permissions by module - Dropdown Accordion */}
                   {Object.entries(
                     allPermissions.reduce((acc, permission) => {
                       if (!acc[permission.module]) {
@@ -732,74 +724,107 @@ export default function RolesPage() {
                       acc[permission.module].push(permission);
                       return acc;
                     }, {} as Record<string, Permission[]>)
-                  ).map(([module, permissions]) => (
-                    <div key={module} className="border rounded-lg p-4">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-blue-600" />
-                        {module}
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {permissions.map((permission) => (
-                          <label
-                            key={permission.permissionId}
-                            className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${
-                              selectedPermissions.includes(permission.permissionId)
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedPermissions.includes(permission.permissionId)}
-                              onChange={() => handlePermissionToggle(permission.permissionId)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm">{permission.permissionName}</div>
-                              <div className="text-xs text-gray-500 mt-1">{permission.description}</div>
-                              <div className="text-xs text-gray-400 mt-1 font-mono">
-                                {permission.permissionId}
-                              </div>
+                  ).map(([module, permissions]) => {
+                    const isExpanded = expandedModules.includes(module);
+                    const modulePermissionsSelected = permissions.filter(p => selectedPermissions.includes(p.permissionId)).length;
+
+                    return (
+                      <div key={module} className="border rounded-lg overflow-hidden">
+                        {/* Module Header - Clickable */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedModules(prev =>
+                              prev.includes(module)
+                                ? prev.filter(m => m !== module)
+                                : [...prev, module]
+                            );
+                          }}
+                          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isExpanded ? (
+                              <ChevronDown className="h-5 w-5 text-blue-600" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-gray-600" />
+                            )}
+                            <Shield className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-semibold text-lg">{module}</h3>
+                          </div>
+                          <Badge variant="outline">
+                            {modulePermissionsSelected}/{permissions.length}
+                          </Badge>
+                        </button>
+
+                        {/* Module Content - Collapsible */}
+                        {isExpanded && (
+                          <div className="p-4 bg-white">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {permissions.map((permission) => (
+                                <label
+                                  key={permission.permissionId}
+                                  className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${selectedPermissions.includes(permission.permissionId)
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200'
+                                    }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPermissions.includes(permission.permissionId)}
+                                    onChange={() => handlePermissionToggle(permission.permissionId)}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm">{permission.permissionName}</div>
+                                    <div className="text-xs text-gray-500 mt-1">{permission.description}</div>
+                                    <div className="text-xs text-gray-400 mt-1 font-mono">
+                                      {permission.permissionId}
+                                    </div>
+                                  </div>
+                                </label>
+                              ))}
                             </div>
-                          </label>
-                        ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
+            </div>
 
-              <div className="flex gap-3 justify-end pt-6 mt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAssignModal(false);
-                    setAssigningRole(null);
-                    setSelectedPermissions([]);
-                  }}
-                  disabled={assigning}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAssignPermissions}
-                  disabled={assigning || loadingPermissions}
-                >
-                  {assigning ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Assigning...
-                    </>
-                  ) : (
-                    <>
-                      <Key className="h-4 w-4 mr-2" />
-                      Assign Permissions
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
+            {/* Sticky Action Buttons - Inside Modal */}
+            <div className="sticky bottom-0 bg-white border-t shadow-lg p-4 flex gap-3 justify-end z-10">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setAssigningRole(null);
+                  setSelectedPermissions([]);
+                  setExpandedModules([]);
+                }}
+                disabled={assigning}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleAssignPermissions}
+                disabled={assigning || loadingPermissions}
+              >
+                {assigning ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4 mr-2" />
+                    Lưu quyền hạn
+                  </>
+                )}
+              </Button>
+            </div>
           </Card>
         </div>
       )}
@@ -817,7 +842,7 @@ export default function RolesPage() {
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}". 
+                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}".
                   The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
                 </p>
               </div>

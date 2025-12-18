@@ -49,9 +49,9 @@ export default function Navigation() {
               <Image
                 src="/denteeth-logo.png"
                 alt="DenTeeth Logo"
-                width={48}
-                height={48}
-                className="h-12 w-12 object-contain"
+                width={64}
+                height={64}
+                className="h-20 w-20 object-contain"
                 priority
               />
             </Link>
