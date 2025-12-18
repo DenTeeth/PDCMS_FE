@@ -8,7 +8,7 @@ import { useTranslations, useLocale } from 'next-intl';
 
 export default function Navigation() {
   const pathname = usePathname();
-  
+
   // Always call hooks unconditionally
   const t = useTranslations('Navigation');
   const locale = useLocale();
@@ -49,9 +49,9 @@ export default function Navigation() {
               <Image
                 src="/denteeth-logo.png"
                 alt="DenTeeth Logo"
-                width={240}
-                height={90}
-                className="h-20 w-auto"
+                width={48}
+                height={48}
+                className="h-12 w-12 object-contain"
                 priority
               />
             </Link>

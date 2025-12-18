@@ -103,7 +103,7 @@ export default function DoctorsSection() {
                       {/* Medical cross badge */}
                       <div className="absolute top-4 right-4 w-16 h-16 flex items-center justify-center">
                         <Image
-                          src="/denteeth-logo.png"
+                          src="denteeth-logo.png"
                           alt="DenTeeth Logo"
                           width={64}
                           height={64}
