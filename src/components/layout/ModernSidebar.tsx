@@ -16,6 +16,7 @@ import {
   filterNavigationItems,
   NavigationItem
 } from '@/constants/navigationConfig';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface ModernSidebarProps {
   title?: string;
@@ -222,7 +223,7 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header - minimalist clean white */}
           <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100">
-            <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'flex-1 justify-center'}`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'flex-1'}`}>
               {/* Logo */}
               <img
                 src="/denteeth-logo.png"
@@ -230,6 +231,7 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
                 className="w-12 h-12 object-contain"
               />
             </div>
+
 
             {/* Collapse toggle button - desktop only */}
             <button
@@ -322,10 +324,7 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
                     </p>
                   </div>
 
-                  <FontAwesomeIcon
-                    icon={faChevronRight}
-                    className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors duration-200"
-                  />
+                  <NotificationBell />
                 </div>
 
                 <div className="mt-2">

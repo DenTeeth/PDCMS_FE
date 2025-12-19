@@ -1,0 +1,13 @@
+package com.dental.clinic.management.notification.enums;
+
+public enum NotificationType {
+    APPOINTMENT_CREATED,
+    APPOINTMENT_UPDATED,
+    APPOINTMENT_CANCELLED,
+    APPOINTMENT_REMINDER,
+    APPOINTMENT_COMPLETED,
+    TREATMENT_PLAN_APPROVED,
+    TREATMENT_PLAN_UPDATED,
+    PAYMENT_RECEIVED,
+    SYSTEM_ANNOUNCEMENT
+}
