@@ -156,6 +156,51 @@ export function getEmployeeCodeFromToken(token: string): string | null {
 }
 
 /**
+ * Extract userId (thực chất là account_id) from JWT token
+ * BE (NotificationController) dùng claim `account_id` làm userId cho notifications:
+ *   - REST: lấy từ JWT -> getUserIdFromToken(authentication)
+ *   - WebSocket: push tới /topic/notifications/{userId}
+ */
+export function getUserIdFromToken(token: string): number | null {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload) {
+      console.warn(' [getUserIdFromToken] Failed to decode token payload');
+      return null;
+    }
+
+    // Ưu tiên account_id (chuẩn mới từ BE cho notification), sau đó đến các field dự phòng
+    const rawUserId =
+      (payload as any).account_id ??
+      (payload as any).user_id ??
+      (payload as any).userId ??
+      (payload as any).sub;
+
+    if (rawUserId != null) {
+      const userIdNum = Number.parseInt(String(rawUserId), 10);
+      if (!Number.isNaN(userIdNum)) {
+        console.log(' [getUserIdFromToken] Found userId for notifications:', userIdNum, '(from claim)', {
+          has_account_id: 'account_id' in payload,
+          has_user_id: 'user_id' in payload,
+          has_userId: 'userId' in payload,
+          has_sub: 'sub' in payload,
+        });
+        return userIdNum;
+      }
+    }
+
+    console.warn(
+      ' [getUserIdFromToken] No numeric userId found in token payload. Available fields:',
+      Object.keys(payload),
+    );
+    return null;
+  } catch (error) {
+    console.error(' [getUserIdFromToken] Failed to extract userId:', error);
+    return null;
+  }
+}
+
+/**
  * Format time string to HH:mm (remove seconds)
  * @param time Time string in HH:mm:ss or HH:mm format
  * @returns Formatted time string HH:mm

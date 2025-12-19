@@ -1323,7 +1323,31 @@ export default function CreateAppointmentModal({
         };
       }
 
-      await appointmentService.createAppointment(request);
+      console.groupCollapsed(
+        '%c[CreateAppointment] Submitting booking request',
+        'color:#2563eb;font-weight:600;',
+      );
+      console.log('📦 Request payload gửi lên BE:', request);
+      console.groupEnd();
+
+      const response = await appointmentService.createAppointment(request);
+
+      console.groupCollapsed(
+        '%c[CreateAppointment] Appointment created successfully',
+        'color:#16a34a;font-weight:600;',
+      );
+      console.log('🆔 Mã cuộc hẹn (appointmentCode):', response.appointmentCode);
+      console.log('👤 Bệnh nhân:', response.patientFullName, '- code:', response.patientCode);
+      console.log('👨‍⚕️ Bác sĩ chính:', response.employeeFullName, '- code:', response.employeeCode);
+      console.log('📅 Thời gian:', response.appointmentStartTime, '->', response.appointmentEndTime);
+      console.log('🔔 Lưu ý:', 'Ngay sau log này, hãy quan sát console:');
+      console.log(
+        '- Nếu BE đã gửi notification, bạn sẽ thấy log [Notifications] New notification received',
+      );
+      console.log(
+        '- Và nếu là luồng tạo lịch, sẽ có group log [Appointment → Notification] với thông tin chi tiết.',
+      );
+      console.groupEnd();
 
       toast.success(' Đặt lịch hẹn thành công!');
       onSuccess();
@@ -2189,7 +2213,7 @@ export default function CreateAppointmentModal({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Only doctors with matching specializations and shifts on the selected date are shown.
+                    Chỉ hiển thị bác sĩ có chuyên khoa phù hợp và có lịch làm việc vào ngày đã chọn.
                   </p>
                 </div>
 
@@ -2215,7 +2239,7 @@ export default function CreateAppointmentModal({
                       <Card className="p-4 mt-1">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Loading available slots...</span>
+                          <span>Đang tải khung giờ...</span>
                         </div>
                       </Card>
                     ) : availableSlots.length > 0 ? (
@@ -2225,7 +2249,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Sun className="h-4 w-4 text-yellow-600" />
-                              <h4 className="font-semibold text-xs">Morning (6:00 - 12:00)</h4>
+                              <h4 className="font-semibold text-xs">Sáng (6:00 - 12:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.morning.map((slot) => {
@@ -2251,7 +2275,7 @@ export default function CreateAppointmentModal({
                                         ? 'bg-primary text-primary-foreground border-primary font-semibold'
                                         : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
-                                    title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
+                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
                                   >
                                     {slotTime}
                                     {!isAvailable && (
@@ -2269,7 +2293,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Sunset className="h-4 w-4 text-orange-600" />
-                              <h4 className="font-semibold text-xs">Afternoon (12:00 - 18:00)</h4>
+                              <h4 className="font-semibold text-xs">Chiều (12:00 - 18:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.afternoon.map((slot) => {
@@ -2295,7 +2319,7 @@ export default function CreateAppointmentModal({
                                         ? 'bg-primary text-primary-foreground border-primary font-semibold'
                                         : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
-                                    title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
+                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
                                   >
                                     {slotTime}
                                     {!isAvailable && (
@@ -2313,7 +2337,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <Moon className="h-4 w-4 text-blue-600" />
-                              <h4 className="font-semibold text-xs">Evening (18:00 - 22:00)</h4>
+                              <h4 className="font-semibold text-xs">Tối (18:00 - 22:00)</h4>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
                               {groupedSlots.evening.map((slot) => {
@@ -2339,7 +2363,7 @@ export default function CreateAppointmentModal({
                                         ? 'bg-primary text-primary-foreground border-primary font-semibold'
                                         : 'bg-background hover:bg-primary/10 border-border'
                                       }`}
-                                    title={!isAvailable ? 'Doctor or participant not available in this slot' : ''}
+                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
                                   >
                                     {slotTime}
                                     {!isAvailable && (
@@ -2417,10 +2441,10 @@ export default function CreateAppointmentModal({
                 {/* Room Selection */}
                 {appointmentStartTime && (
                   <div>
-                    <Label htmlFor="roomCode">Select Room <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="roomCode">Chọn phòng <span className="text-red-500">*</span></Label>
                     <Select value={roomCode} onValueChange={setRoomCode}>
                       <SelectTrigger id="roomCode" className="mt-1">
-                        <SelectValue placeholder="Select a room" />
+                        <SelectValue placeholder="Chọn phòng" />
                       </SelectTrigger>
                       <SelectContent align="start">
                         {(() => {
@@ -2430,7 +2454,7 @@ export default function CreateAppointmentModal({
                           if (compatibleRoomCodes.length === 0) {
                             return (
                               <SelectItem value="" disabled>
-                                No compatible rooms available for this time slot
+                                Không có phòng phù hợp cho khung giờ này
                               </SelectItem>
                             );
                           }
@@ -2451,7 +2475,7 @@ export default function CreateAppointmentModal({
                     </Select>
                     {selectedSlot && selectedSlot.availableCompatibleRoomCodes.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Only compatible rooms are shown for the selected time slot
+                        Chỉ hiển thị các phòng phù hợp cho khung giờ đã chọn
                       </p>
                     )}
                   </div>
@@ -2464,7 +2488,7 @@ export default function CreateAppointmentModal({
                 <div>
                   <Label>Chọn người tham gia (Tùy chọn)</Label>
                   <p className="text-xs text-muted-foreground mt-1 mb-2">
-                    Only employees with STANDARD specialization (medical staff) can be selected as participants.
+                    Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn làm người tham gia.
                   </p>
                   <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto">
                     {(() => {
@@ -2492,8 +2516,8 @@ export default function CreateAppointmentModal({
                         return (
                           <div className="text-center py-4 text-sm text-muted-foreground">
                             {appointmentDate
-                              ? 'No eligible participants with shifts found for the selected date. Only employees with STANDARD specialization (medical staff) who have shifts on this date can be selected.'
-                              : 'No eligible participants found. Only employees with STANDARD specialization (medical staff) can be selected.'}
+                              ? 'Không tìm thấy người tham gia phù hợp có lịch làm việc vào ngày đã chọn. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) có ca làm việc vào ngày này mới có thể được chọn.'
+                              : 'Không tìm thấy người tham gia phù hợp. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn.'}
                           </div>
                         );
                       }
