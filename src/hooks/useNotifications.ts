@@ -62,10 +62,17 @@ export const useNotifications = (): UseNotificationsReturn => {
       setCurrentPage(response.pageable.pageNumber);
       setTotalPages(response.totalPages);
       setHasMore(!response.last);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Lỗi khi tải thông báo';
-      setError(errorMessage);
-      console.error('[Notifications] Load error:', err);
+    } catch (err: any) {
+      // Handle 403 Forbidden - Missing VIEW_NOTIFICATION permission
+      if (err?.response?.status === 403) {
+        const errorMessage = 'Bạn chưa có quyền xem thông báo. Vui lòng liên hệ admin để được cấp quyền VIEW_NOTIFICATION.';
+        setError(errorMessage);
+        console.error('[Notifications] 403 Forbidden - Missing VIEW_NOTIFICATION permission:', err.response?.data);
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Lỗi khi tải thông báo';
+        setError(errorMessage);
+        console.error('[Notifications] Load error:', err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +94,14 @@ export const useNotifications = (): UseNotificationsReturn => {
     try {
       const count = await notificationService.getUnreadCount();
       setUnreadCount(count);
-    } catch (err) {
-      console.error('[Notifications] Unread count error:', err);
+    } catch (err: any) {
+      // Silently handle 403 - user doesn't have permission, just set count to 0
+      if (err?.response?.status === 403) {
+        console.warn('[Notifications] 403 Forbidden - Missing VIEW_NOTIFICATION permission for unread count');
+        setUnreadCount(0);
+      } else {
+        console.error('[Notifications] Unread count error:', err);
+      }
     }
   }, []);
 
