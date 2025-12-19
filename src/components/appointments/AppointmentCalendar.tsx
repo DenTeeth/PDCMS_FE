@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faCalendarDay, faCalendarWeek, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import { appointmentService } from '@/services/appointmentService';
-import { AppointmentSummaryDTO, CalendarEvent, APPOINTMENT_STATUS_COLORS, AppointmentFilterCriteria } from '@/types/appointment';
+import { AppointmentSummaryDTO, CalendarEvent, APPOINTMENT_STATUS_COLORS, AppointmentFilterCriteria, resolveAppointmentStatus } from '@/types/appointment';
 import { toast } from 'sonner';
 
 interface AppointmentCalendarProps {
@@ -98,7 +98,9 @@ export default function AppointmentCalendar({
     // Convert appointments to calendar events
     const events: CalendarEvent[] = useMemo(() => {
         return appointments.map((appointment) => {
-            const statusColor = APPOINTMENT_STATUS_COLORS[appointment.status];
+            // Use computedStatus if available, otherwise fall back to status
+            const displayStatus = resolveAppointmentStatus(appointment.status, appointment.computedStatus);
+            const statusColor = APPOINTMENT_STATUS_COLORS[displayStatus];
             const startDateTime = new Date(appointment.appointmentStartTime);
             const endDateTime = new Date(appointment.appointmentEndTime);
             
@@ -330,10 +332,11 @@ export default function AppointmentCalendar({
                         };
                         const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
                         
+                        const displayStatus = resolveAppointmentStatus(appointment.status, appointment.computedStatus);
                         return (
                             <div 
                                 className="p-1 overflow-hidden cursor-pointer"
-                                title={`Doctor: ${doctorName}\nPatient: ${patientName}\nServices: ${serviceNames}\nStatus: ${appointment.status}`}
+                                title={`Doctor: ${doctorName}\nPatient: ${patientName}\nServices: ${serviceNames}\nStatus: ${displayStatus}`}
                             >
                                 <div className="font-medium text-xs truncate">{timeRange}</div>
                                 <div className="text-xs font-semibold truncate" title={doctorName}>

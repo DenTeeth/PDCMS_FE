@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { OptimizedTable, OptimizedTableColumn } from '@/components/ui/optimized-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AppointmentSummaryDTO, AppointmentStatus, APPOINTMENT_STATUS_COLORS } from '@/types/appointment';
+import { AppointmentSummaryDTO, AppointmentStatus, APPOINTMENT_STATUS_COLORS, resolveAppointmentStatus } from '@/types/appointment';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -145,7 +145,11 @@ export default function AppointmentList({
     {
       key: 'status',
       header: 'Trạng thái',
-      accessor: (appointment) => getStatusBadge(appointment.status),
+      accessor: (appointment) => {
+        // Use computedStatus if available, otherwise fall back to status
+        const displayStatus = resolveAppointmentStatus(appointment.status, appointment.computedStatus);
+        return getStatusBadge(displayStatus);
+      },
     },
     ...(showActions ? [{
       key: 'actions',

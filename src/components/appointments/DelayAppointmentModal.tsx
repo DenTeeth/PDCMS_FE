@@ -22,7 +22,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { appointmentService } from '@/services/appointmentService';
-import { AppointmentDetailDTO, DelayAppointmentRequest } from '@/types/appointment';
+import { AppointmentDetailDTO, DelayAppointmentRequest, AppointmentReasonCode } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -33,12 +33,13 @@ interface DelayAppointmentModalProps {
   onSuccess?: () => void;
 }
 
-// Reason codes for delaying appointment
+// Reason codes for delaying appointment (matches BE AppointmentReasonCode enum)
 const DELAY_REASON_CODES = [
-  { value: 'PATIENT_REQUEST', label: 'Bệnh nhân yêu cầu hoãn' },
-  { value: 'DOCTOR_EMERGENCY', label: 'Bác sĩ có việc đột xuất' },
-  { value: 'EQUIPMENT_ISSUE', label: 'Vấn đề thiết bị' },
-  { value: 'CLINIC_EMERGENCY', label: 'Phòng khám có tình huống khẩn cấp' },
+  { value: 'PREVIOUS_CASE_OVERRUN', label: 'Ca trước bị kéo dài' },
+  { value: 'DOCTOR_UNAVAILABLE', label: 'Bác sĩ đột ngột không có mặt' },
+  { value: 'EQUIPMENT_FAILURE', label: 'Thiết bị hỏng hoặc đang bảo trì' },
+  { value: 'PATIENT_REQUEST', label: 'Bệnh nhân yêu cầu thay đổi' },
+  { value: 'OPERATIONAL_REDIRECT', label: 'Điều phối vận hành' },
   { value: 'OTHER', label: 'Lý do khác' },
 ];
 
@@ -59,8 +60,9 @@ export default function DelayAppointmentModal({
     if (open && appointment) {
       // Set default date to original appointment date
       try {
-        const originalDate = appointment.appointmentDate
-          ? new Date(appointment.appointmentDate)
+        // Use appointmentStartTime (ISO 8601 format) from AppointmentDetailDTO
+        const originalDate = appointment.appointmentStartTime
+          ? new Date(appointment.appointmentStartTime)
           : new Date();
         // Validate date is valid
         if (!isNaN(originalDate.getTime())) {
@@ -72,7 +74,20 @@ export default function DelayAppointmentModal({
         console.error('Failed to parse appointment date:', error);
         setSelectedDate(new Date());
       }
-      setSelectedTime(appointment.startTime || '');
+      // Extract time from appointmentStartTime (ISO 8601 format: YYYY-MM-DDTHH:mm:ss)
+      if (appointment.appointmentStartTime) {
+        try {
+          const date = new Date(appointment.appointmentStartTime);
+          const hours = date.getHours().toString().padStart(2, '0');
+          const minutes = date.getMinutes().toString().padStart(2, '0');
+          setSelectedTime(`${hours}:${minutes}`);
+        } catch (error) {
+          console.error('Failed to parse appointment time:', error);
+          setSelectedTime('');
+        }
+      } else {
+        setSelectedTime('');
+      }
       setReasonCode('');
       setNotes('');
     } else {
@@ -84,9 +99,11 @@ export default function DelayAppointmentModal({
   }, [open, appointment]);
 
   // Generate time slots (15-minute intervals)
+  // Hours from 8 to 22 (8:00 AM to 10:00 PM - giờ làm việc)
+  // 22h = 10:00 PM là kết thúc giờ làm
   const generateTimeSlots = () => {
     const slots: string[] = [];
-    for (let hour = 7; hour <= 20; hour++) {
+    for (let hour = 8; hour <= 22; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         slots.push(timeString);
@@ -140,8 +157,8 @@ export default function DelayAppointmentModal({
 
       const request: DelayAppointmentRequest = {
         newStartTime,
-        reasonCode,
-        notes: notes.trim() || undefined,
+        reasonCode: reasonCode as AppointmentReasonCode, // BE requires reasonCode (NOT NULL)
+        notes: notes.trim() || null, // Optional but can be null
       };
 
       console.log(' Delaying appointment:', {
@@ -172,11 +189,11 @@ export default function DelayAppointmentModal({
           const statusMatch = errorMessage.match(/in status (\w+)/);
           const currentStatus = statusMatch ? statusMatch[1] : 'unknown';
 
+          // BE Update 2025-12-18: NO_SHOW can now be delayed
           const statusMessages: Record<string, string> = {
             'CANCELLED': 'Không thể hoãn lịch hẹn đã bị huỷ',
             'COMPLETED': 'Không thể hoãn lịch hẹn đã hoàn thành',
             'IN_PROGRESS': 'Không thể hoãn lịch hẹn đang thực hiện',
-            'NO_SHOW': 'Không thể hoãn lịch hẹn bệnh nhân không đến',
           };
 
           const vietnameseMessage = statusMessages[currentStatus] ||
@@ -238,9 +255,9 @@ export default function DelayAppointmentModal({
               <div className="flex gap-2">
                 <span className="text-gray-600">Ngày:</span>
                 <span className="font-medium">
-                  {appointment.appointmentDate ? (() => {
+                  {appointment.appointmentStartTime ? (() => {
                     try {
-                      const date = new Date(appointment.appointmentDate);
+                      const date = new Date(appointment.appointmentStartTime);
                       return !isNaN(date.getTime()) ? format(date, 'dd/MM/yyyy') : 'N/A';
                     } catch {
                       return 'N/A';
@@ -250,11 +267,23 @@ export default function DelayAppointmentModal({
               </div>
               <div className="flex gap-2">
                 <span className="text-gray-600">Giờ:</span>
-                <span className="font-medium">{appointment.startTime} - {appointment.endTime}</span>
+                <span className="font-medium">
+                  {appointment.appointmentStartTime && appointment.appointmentEndTime ? (() => {
+                    try {
+                      const startDate = new Date(appointment.appointmentStartTime);
+                      const endDate = new Date(appointment.appointmentEndTime);
+                      const startTime = format(startDate, 'HH:mm');
+                      const endTime = format(endDate, 'HH:mm');
+                      return `${startTime} - ${endTime}`;
+                    } catch {
+                      return 'N/A';
+                    }
+                  })() : 'N/A'}
+                </span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gray-600">Bác sĩ:</span>
-                <span className="font-medium">{appointment.employee?.fullName || 'N/A'}</span>
+                <span className="font-medium">{appointment.doctor?.fullName || 'N/A'}</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gray-600">Phòng:</span>

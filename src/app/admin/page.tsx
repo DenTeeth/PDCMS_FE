@@ -1,133 +1,106 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+'use client';
+
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Users, Calendar, FileText, Settings, Activity } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Sparkles, ArrowRight, Calendar, Users, ClipboardList } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const stats = [
+  const { user } = useAuth();
+  
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Chào buổi sáng' : currentHour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+
+  // Lấy tên hiển thị - ưu tiên fullName, rồi đến username
+  const displayName = user?.fullName || user?.username || 'Admin';
+
+  const quickLinks = [
     {
-      title: 'Tổng nhân viên',
-      value: '24',
-      description: '+2 trong tháng',
-      icon: Users,
-      color: 'text-blue-600',
-    },
-    {
-      title: 'Lịch hẹn hôm nay',
-      value: '12',
-      description: '8 đã xác nhận',
+      title: 'Quản lý lịch hẹn',
+      description: 'Xem và quản lý tất cả lịch hẹn',
+      href: '/admin/booking/appointments',
       icon: Calendar,
-      color: 'text-green-600',
+      gradient: 'from-cyan-500 to-blue-600',
     },
     {
-      title: 'Bài viết Blog',
-      value: '18',
-      description: '3 bài mới tuần này',
-      icon: FileText,
-      color: 'text-purple-600',
+      title: 'Quản lý nhân viên',
+      description: 'Thêm, sửa thông tin nhân viên',
+      href: '/admin/accounts/employees',
+      icon: Users,
+      gradient: 'from-violet-500 to-purple-600',
     },
     {
-      title: 'Vai trò hệ thống',
-      value: '5',
-      description: '4 vai trò hoạt động',
-      icon: Settings,
-      color: 'text-orange-600',
+      title: 'Kế hoạch điều trị',
+      description: 'Quản lý các kế hoạch điều trị',
+      href: '/admin/booking/treatment-plans',
+      icon: ClipboardList,
+      gradient: 'from-rose-500 to-pink-600',
     },
   ];
 
   return (
     <ProtectedRoute requiredBaseRole="admin">
-      <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
-        <p className="text-gray-600">Tổng quan hệ thống quản lý phòng khám</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-gray-500">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-            <CardDescription>Thay đổi mới nhất trong hệ thống</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">BS. Nguyễn Văn A đã đăng nhập</p>
-                  <p className="text-xs text-gray-500">2 phút trước</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Tạo lịch hẹn mới</p>
-                  <p className="text-xs text-gray-500">15 phút trước</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Bài viết mới được xuất bản</p>
-                  <p className="text-xs text-gray-500">1 giờ trước</p>
-                </div>
-              </div>
+      <div className="min-h-[80vh] flex flex-col">
+        {/* Welcome Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 md:p-12 mb-8">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-violet-500/20 to-purple-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-amber-400 animate-pulse" />
+              <span className="text-amber-400 font-medium text-sm tracking-wide uppercase">
+                Hệ thống quản lý phòng khám nha khoa
+              </span>
             </div>
-          </CardContent>
-        </Card>
+            
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              {greeting}, <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{displayName}</span>
+            </h1>
+            
+            <p className="text-slate-400 text-lg max-w-2xl">
+              Chúc bạn một ngày làm việc hiệu quả! Hãy chọn một chức năng bên dưới để bắt đầu.
+            </p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lịch hẹn sắp tới</CardTitle>
-            <CardDescription>Lịch hẹn đã lên lịch hôm nay</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Nguyen Thi B</p>
-                  <p className="text-xs text-gray-500">Khám răng định kỳ</p>
+        {/* Quick Links Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickLinks.map((link, index) => (
+            <Link
+              key={index}
+              href={link.href}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${link.gradient} mb-4`}>
+                    <link.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-500 group-hover:to-blue-500 group-hover:bg-clip-text transition-all">
+                    {link.title}
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {link.description}
+                  </p>
                 </div>
-                <span className="text-sm text-blue-600">09:00</span>
+                <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Tran Van C</p>
-                  <p className="text-xs text-gray-500">Nhổ răng khôn</p>
-                </div>
-                <span className="text-sm text-blue-600">10:30</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Le Thi D</p>
-                  <p className="text-xs text-gray-500">Điều trị niềng răng</p>
-                </div>
-                <span className="text-sm text-blue-600">14:00</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              
+              {/* Hover gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${link.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
+            </Link>
+          ))}
+        </div>
+
+        {/* Footer note */}
+        <div className="mt-auto pt-8 text-center">
+          <p className="text-sm text-slate-400">
+            © {new Date().getFullYear()} Dental Clinic Management System
+          </p>
+        </div>
       </div>
     </ProtectedRoute>
   );
 }
-

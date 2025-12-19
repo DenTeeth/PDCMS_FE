@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResp
 import { LoginRequest, LoginResponse, RefreshTokenResponse } from '@/types/auth';
 import { getToken, setToken, clearAuthData } from '@/lib/cookies';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://pdcms.duckdns.org/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 class ApiClient {
   private axiosInstance: AxiosInstance;

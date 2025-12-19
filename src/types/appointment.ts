@@ -261,6 +261,31 @@ export interface CreateAppointmentResponse {
     }>;
 }
 
+/**
+ * Resolve display status from computedStatus and status
+ * BE returns computedStatus (UPCOMING, LATE, etc.) which should be used for display
+ * If computedStatus is not available, fall back to status
+ */
+export function resolveAppointmentStatus(
+    status: AppointmentStatus,
+    computedStatus?: string | null
+): AppointmentStatus {
+    // If computedStatus is provided, map it to AppointmentStatus
+    if (computedStatus) {
+        // Map computedStatus to AppointmentStatus
+        // LATE and UPCOMING both map to SCHEDULED (they are computed states of SCHEDULED)
+        if (computedStatus === 'LATE' || computedStatus === 'UPCOMING') {
+            return 'SCHEDULED';
+        }
+        // Other computedStatus values map directly to AppointmentStatus
+        if (['CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(computedStatus)) {
+            return computedStatus as AppointmentStatus;
+        }
+    }
+    // Fall back to status if computedStatus is not available or not recognized
+    return status;
+}
+
 // P3.3 - Appointment Summary DTO (matches BE AppointmentSummaryDTO)
 export interface AppointmentSummaryDTO {
     appointmentCode: string;
@@ -389,7 +414,7 @@ export interface UpdateAppointmentStatusRequest {
 // P3.6 - Delay Appointment Request
 export interface DelayAppointmentRequest {
     newStartTime: string; // Required: ISO 8601 format (new start time)
-    reasonCode?: AppointmentReasonCode; // Optional: Reason for delay
+    reasonCode: AppointmentReasonCode; // Required: Reason for delay (BE requires NOT NULL)
     notes?: string | null; // Optional: Additional notes
 }
 

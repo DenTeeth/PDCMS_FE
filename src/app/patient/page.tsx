@@ -1,302 +1,96 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faCalendarAlt,
-  faFileAlt,
-  faCreditCard,
-  faBell,
-  faClock,
-  faCheckCircle,
-  faExclamationTriangle,
-  faHeart,
-  faUser,
-  faPhone,
-  faEnvelope
-} from '@fortawesome/free-solid-svg-icons';
-
-// Sample data for user dashboard
-const upcomingAppointments = [
-  {
-    id: '1',
-    date: '2024-01-25',
-    time: '10:00 AM',
-    doctor: 'Dr. Nguyen Van A',
-    type: 'General Checkup',
-    status: 'confirmed'
-  },
-  {
-    id: '2',
-    date: '2024-01-30',
-    time: '2:00 PM',
-    doctor: 'Dr. Le Thi B',
-    type: 'Dental Cleaning',
-    status: 'pending'
-  }
-];
-
-const recentRecords = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    type: 'X-Ray',
-    doctor: 'Dr. Nguyen Van A',
-    status: 'completed'
-  },
-  {
-    id: '2',
-    date: '2024-01-10',
-    type: 'Blood Test',
-    doctor: 'Dr. Le Thi B',
-    status: 'completed'
-  }
-];
-
-const notifications = [
-  {
-    id: '1',
-    title: 'Appointment Reminder',
-    message: 'Your appointment with Dr. Nguyen Van A is tomorrow at 10:00 AM',
-    type: 'reminder',
-    time: '2 hours ago'
-  },
-  {
-    id: '2',
-    title: 'Test Results Available',
-    message: 'Your recent blood test results are now available',
-    type: 'results',
-    time: '1 day ago'
-  }
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { Sparkles, ArrowRight, Calendar, Heart } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PatientDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const { user } = useAuth();
+  
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Chào buổi sáng' : currentHour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+
+  // Lấy tên hiển thị - ưu tiên fullName, rồi đến username
+  const displayName = user?.fullName || user?.username || 'Quý khách';
+
+  const quickLinks = [
+    {
+      title: 'Lịch hẹn của tôi',
+      description: 'Xem và quản lý các lịch hẹn',
+      href: '/patient/appointments',
+      icon: Calendar,
+      gradient: 'from-emerald-500 to-teal-600',
+    },
+    {
+      title: 'Kế hoạch điều trị',
+      description: 'Theo dõi tiến trình điều trị',
+      href: '/patient/treatment-plans',
+      icon: Heart,
+      gradient: 'from-rose-500 to-pink-600',
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-primary-foreground">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Chào mừng trở lại!</h1>
-            <p className="text-primary-foreground/80 mt-2">
-              Đây là những gì đang xảy ra với sức khỏe của bạn hôm nay
-            </p>
+    <div className="min-h-[80vh] flex flex-col">
+      {/* Welcome Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-900 via-emerald-800 to-teal-900 p-8 md:p-12 mb-8">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-rose-400/20 to-pink-400/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-emerald-300 animate-pulse" />
+            <span className="text-emerald-300 font-medium text-sm tracking-wide uppercase">
+              Cổng thông tin bệnh nhân
+            </span>
           </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm opacity-80">Lịch hẹn tiếp theo</p>
-              <p className="font-semibold">Jan 25, 2024 at 10:00 AM</p>
-            </div>
-            <FontAwesomeIcon icon={faCalendarAlt} className="h-8 w-8 opacity-80" />
-          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            {greeting}, <span className="bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent">{displayName}</span>
+          </h1>
+          
+          <p className="text-teal-200/80 text-lg max-w-2xl">
+            Chúc bạn một ngày tốt lành! Hãy chọn chức năng bên dưới để xem thông tin sức khỏe của bạn.
+          </p>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Lịch hẹn sắp tới</p>
-                <p className="text-2xl font-bold">2</p>
+      {/* Quick Links Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {quickLinks.map((link, index) => (
+          <Link
+            key={index}
+            href={link.href}
+            className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:-translate-y-1"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${link.gradient} mb-4`}>
+                  <link.icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-emerald-500 group-hover:to-teal-500 group-hover:bg-clip-text transition-all">
+                  {link.title}
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400">
+                  {link.description}
+                </p>
               </div>
-              <FontAwesomeIcon icon={faCalendarAlt} className="h-8 w-8 text-primary" />
+              <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Hồ sơ y tế</p>
-                <p className="text-2xl font-bold">12</p>
-              </div>
-              <FontAwesomeIcon icon={faFileAlt} className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Thanh toán chờ xử lý</p>
-                <p className="text-2xl font-bold">1</p>
-              </div>
-              <FontAwesomeIcon icon={faCreditCard} className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Thông báo</p>
-                <p className="text-2xl font-bold">3</p>
-              </div>
-              <FontAwesomeIcon icon={faBell} className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            
+            {/* Hover gradient overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${link.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
+          </Link>
+        ))}
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Appointments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 h-5 w-5" />
-              Lịch hẹn sắp tới
-            </CardTitle>
-            <CardDescription>
-              Lịch hẹn đã lên lịch của bạn
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{appointment.type}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {appointment.date} at {appointment.time}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        with {appointment.doctor}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
-                    {appointment.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-            <Button className="w-full mt-4" variant="outline">
-              Xem tất cả lịch hẹn
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent Medical Records */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FontAwesomeIcon icon={faFileAlt} className="mr-2 h-5 w-5" />
-              Hồ sơ y tế gần đây
-            </CardTitle>
-            <CardDescription>
-              Tài liệu y tế mới nhất của bạn
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentRecords.map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <FontAwesomeIcon icon={faCheckCircle} className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{record.type}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {record.date} - {record.doctor}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">Hoàn thành</Badge>
-                </div>
-              ))}
-            </div>
-            <Button className="w-full mt-4" variant="outline">
-              Xem tất cả hồ sơ
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Footer note */}
+      <div className="mt-auto pt-8 text-center">
+        <p className="text-sm text-slate-400">
+          © {new Date().getFullYear()} Dental Clinic Management System
+        </p>
       </div>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <FontAwesomeIcon icon={faBell} className="mr-2 h-5 w-5" />
-            Thông báo gần đây
-          </CardTitle>
-          <CardDescription>
-            Cập nhật và lời nhắc quan trọng
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div key={notification.id} className="flex items-start space-x-3 p-4 border rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <FontAwesomeIcon
-                    icon={notification.type === 'reminder' ? faClock : faExclamationTriangle}
-                    className="h-4 w-4 text-blue-600"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">{notification.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {notification.time}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button className="w-full mt-4" variant="outline">
-            Xem tất cả thông báo
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Thao tác nhanh</CardTitle>
-          <CardDescription>
-            Các tác vụ và phím tắt thường dùng
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <FontAwesomeIcon icon={faCalendarAlt} className="h-6 w-6" />
-              <span>Đặt lịch hẹn</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <FontAwesomeIcon icon={faFileAlt} className="h-6 w-6" />
-              <span>Xem hồ sơ</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <FontAwesomeIcon icon={faCreditCard} className="h-6 w-6" />
-              <span>Thanh toán</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <FontAwesomeIcon icon={faUser} className="h-6 w-6" />
-              <span>Cập nhật hồ sơ</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
-

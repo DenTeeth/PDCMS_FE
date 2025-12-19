@@ -29,7 +29,7 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { appointmentService } from '@/services/appointmentService';
-import { Appointment, APPOINTMENT_STATUS_COLORS, DentistAvailability } from '@/types/appointment';
+import { Appointment, APPOINTMENT_STATUS_COLORS, DentistAvailability, AppointmentReasonCode, APPOINTMENT_REASON_CODE_LABELS } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -387,20 +387,50 @@ interface CancelModalProps {
 
 export function CancelModal({ open, onClose, appointment, onSuccess }: CancelModalProps) {
     const [loading, setLoading] = useState(false);
-    const [reason, setReason] = useState('');
+    const [reasonCode, setReasonCode] = useState<AppointmentReasonCode | ''>('');
+    const [notes, setNotes] = useState('');
     const [notifyPatient, setNotifyPatient] = useState(true);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!appointment || !reason.trim()) {
-            toast.error('Please provide a reason for cancellation');
+        if (!appointment) {
+            toast.error('Không tìm thấy thông tin lịch hẹn');
+            return;
+        }
+
+        // Validate: reasonCode is required (BE requires NOT NULL)
+        if (!reasonCode) {
+            toast.error('Lý do hủy bắt buộc', {
+                description: 'Vui lòng chọn lý do hủy lịch hẹn',
+            });
+            return;
+        }
+
+        // Validate: notes is required for CANCELLED status
+        if (!notes.trim()) {
+            toast.error('Ghi chú bắt buộc', {
+                description: 'Vui lòng nhập ghi chú về lý do hủy',
+            });
+            return;
+        }
+
+        // Get appointmentCode - try different possible fields
+        const appointmentCode = (appointment as any).appointmentCode || (appointment as any).code;
+        if (!appointmentCode) {
+            toast.error('Không tìm thấy mã lịch hẹn', {
+                description: 'Vui lòng thử lại sau',
+            });
             return;
         }
 
         try {
             setLoading(true);
-            await appointmentService.cancelAppointment(appointment.id, {
-                reason: reason.trim(),
+            
+            // Use updateAppointmentStatus with status = CANCELLED (BE API)
+            await appointmentService.updateAppointmentStatus(appointmentCode, {
+                status: 'CANCELLED',
+                reasonCode: reasonCode as AppointmentReasonCode,
+                notes: notes.trim() || null,
             });
 
             toast.success('Đã hủy lịch hẹn', {
@@ -412,8 +442,9 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
             handleClose();
             onSuccess();
         } catch (error: any) {
+            console.error('Error cancelling appointment:', error);
             toast.error('Không thể hủy lịch hẹn', {
-                description: error.message || 'Vui lòng thử lại sau',
+                description: error.response?.data?.message || error.message || 'Vui lòng thử lại sau',
             });
         } finally {
             setLoading(false);
@@ -421,7 +452,8 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
     };
 
     const handleClose = () => {
-        setReason('');
+        setReasonCode('');
+        setNotes('');
         setNotifyPatient(true);
         onClose();
     };
@@ -434,7 +466,23 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                 <DialogHeader>
                     <DialogTitle>Hủy lịch hẹn</DialogTitle>
                     <DialogDescription>
-                        {format(new Date(appointment.appointmentDate), 'PPP', { locale: vi })} lúc {appointment.startTime}
+                        {(() => {
+                            // Try to get date/time from appointment - support both old and new formats
+                            const appointmentDate = (appointment as any).appointmentDate || (appointment as any).appointmentStartTime;
+                            const startTime = (appointment as any).startTime || (appointment as any).appointmentStartTime;
+                            if (appointmentDate) {
+                                try {
+                                    const date = new Date(appointmentDate);
+                                    if (!isNaN(date.getTime())) {
+                                        return format(date, 'PPP', { locale: vi });
+                                    }
+                                } catch {}
+                            }
+                            if (startTime) {
+                                return `Lịch hẹn lúc ${startTime}`;
+                            }
+                            return 'Xác nhận hủy lịch hẹn';
+                        })()}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -445,19 +493,39 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                             <div>
                                 <div className="font-medium text-yellow-900 mb-1">Cảnh báo</div>
                                 <div className="text-sm text-yellow-800">
-                                    This action cannot be undone. The appointment will be permanently cancelled.
+                                    Hành động này không thể hoàn tác. Lịch hẹn sẽ bị hủy vĩnh viễn.
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Reason Code - Required */}
                     <div>
-                        <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="cancelReasonCode">Mã lý do hủy <span className="text-red-500">*</span></Label>
+                        <select
+                            id="cancelReasonCode"
+                            value={reasonCode}
+                            onChange={(e) => setReasonCode(e.target.value as AppointmentReasonCode || '')}
+                            required
+                            className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">Chọn lý do hủy (bắt buộc)</option>
+                            {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
+                                <option key={code} value={code}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Notes - Required */}
+                    <div>
+                        <Label htmlFor="cancelNotes">Ghi chú <span className="text-red-500">*</span></Label>
                         <Textarea
-                            id="cancelReason"
-                            placeholder="Vui lòng cung cấp lý do hủy lịch hẹn..."
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
+                            id="cancelNotes"
+                            placeholder="Vui lòng nhập ghi chú về lý do hủy lịch hẹn..."
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
                             required
                             rows={4}
                             className="mt-1"
