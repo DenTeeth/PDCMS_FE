@@ -153,6 +153,17 @@ interface ToothData {
   notes?: string;
 }
 
+// SVG layout constants (shared between geometry & rendering)
+const SVG_WIDTH = 800;
+const SVG_HEIGHT = 400;
+const TOOTH_WIDTH = 36;
+const TOOTH_HEIGHT = 52;
+const TOOTH_SPACING = 5;
+const CENTER_GAP = 50;    // Khoảng cách giữa cung trái/phải
+const VERTICAL_GAP = 60;  // Khoảng cách giữa hàm trên & hàm dưới
+const TOP_MARGIN = 40;    // Lề trên cho label + hàng răng trên
+const BOTTOM_MARGIN = 40; // Lề dưới
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -179,35 +190,24 @@ export default function Odontogram({
   // Generate teeth data with positions
   const teethData = useMemo(() => {
     const teeth: ToothData[] = [];
-    
-    // SVG dimensions - Better spacing
-    const svgWidth = 800;
-    const svgHeight = 360; // Increased height for better spacing
-    const toothWidth = 36;
-    const toothHeight = 52;
-    const spacing = 5;
-    const centerGap = 50; // Gap between left and right quadrants
-    const verticalGap = 30; // Increased gap between upper and lower jaw
-    const topMargin = 40; // Top margin for labels
-    const bottomMargin = 30; // Bottom margin for better spacing
-    
+
     // Calculate quadrant width (8 teeth per quadrant)
-    const quadrantWidth = (toothWidth + spacing) * 8 - spacing;
+    const quadrantWidth = (TOOTH_WIDTH + TOOTH_SPACING) * 8 - TOOTH_SPACING;
     
     // Calculate starting X positions for left and right quadrants
     // Center the entire layout
-    const totalWidth = quadrantWidth * 2 + centerGap;
-    const leftQuadrantStart = (svgWidth - totalWidth) / 2;
-    const rightQuadrantStart = leftQuadrantStart + quadrantWidth + centerGap;
+    const totalWidth = quadrantWidth * 2 + CENTER_GAP;
+    const leftQuadrantStart = (SVG_WIDTH - totalWidth) / 2;
+    const rightQuadrantStart = leftQuadrantStart + quadrantWidth + CENTER_GAP;
     
     // Upper jaw Y position
-    const upperY = topMargin;
+    const upperY = TOP_MARGIN;
     
     // Upper right quadrant (18-11): Display right to left
     // 18 is on the far right, 11 is near center
     UPPER_RIGHT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
-      const x = rightQuadrantStart + (7 - index) * (toothWidth + spacing);
+      const x = rightQuadrantStart + (7 - index) * (TOOTH_WIDTH + TOOTH_SPACING);
       teeth.push({
         number: toothNum,
         x,
@@ -224,7 +224,7 @@ export default function Odontogram({
     // index 7 (21) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
     UPPER_LEFT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
-      const x = leftQuadrantStart + index * (toothWidth + spacing);
+      const x = leftQuadrantStart + index * (TOOTH_WIDTH + TOOTH_SPACING);
       teeth.push({
         number: toothNum,
         x,
@@ -234,8 +234,8 @@ export default function Odontogram({
       });
     });
     
-    // Lower jaw Y position - closer to upper jaw
-    const lowerY = upperY + toothHeight + verticalGap;
+    // Lower jaw Y position - phía dưới hàm trên, với khoảng cách rõ ràng (VERTICAL_GAP)
+    const lowerY = upperY + TOOTH_HEIGHT + VERTICAL_GAP;
     
     // Cung dưới - phải (Lower Right Quadrant 4): [48,47,46,45,44,43,42,41]
     // Hiển thị từ phải sang trái: 48 ngoài cùng phải → 41 gần center
@@ -245,7 +245,7 @@ export default function Odontogram({
       // Array đã được sắp xếp [48,47,46,45,44,43,42,41]
       // 48 (index 0) is at rightQuadrantStart + 7*(toothWidth+spacing)
       // 41 (index 7) is at rightQuadrantStart
-      const x = rightQuadrantStart + (7 - index) * (toothWidth + spacing);
+      const x = rightQuadrantStart + (7 - index) * (TOOTH_WIDTH + TOOTH_SPACING);
       teeth.push({
         number: toothNum,
         x,
@@ -262,7 +262,7 @@ export default function Odontogram({
     // index 7 (31) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
     LOWER_LEFT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
-      const x = leftQuadrantStart + index * (toothWidth + spacing);
+      const x = leftQuadrantStart + index * (TOOTH_WIDTH + TOOTH_SPACING);
       teeth.push({
         number: toothNum,
         x,
@@ -299,20 +299,20 @@ export default function Odontogram({
         {/* SVG Chart */}
         <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <svg
-            viewBox="0 0 800 360"
-            className="w-full h-auto min-h-[288px] sm:min-h-[360px] max-w-full"
+            viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+            className="w-full h-auto min-h-[320px] sm:min-h-[400px] max-w-full"
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Background */}
-            <rect width="800" height="360" fill="#fafafa" />
+            <rect width={SVG_WIDTH} height={SVG_HEIGHT} fill="#fafafa" />
             
             {/* Horizontal line separating upper and lower jaw */}
-            {/* Position: upperY (40) + toothHeight (52) + verticalGap/2 (15) = 107 */}
+            {/* Position: TOP_MARGIN + TOOTH_HEIGHT + VERTICAL_GAP/2 */}
             <line
               x1="50"
-              y1="107"
+              y1={TOP_MARGIN + TOOTH_HEIGHT + VERTICAL_GAP / 2}
               x2="750"
-              y2="107"
+              y2={TOP_MARGIN + TOOTH_HEIGHT + VERTICAL_GAP / 2}
               stroke="#9ca3af"
               strokeWidth="1.5"
               strokeDasharray="4,4"
