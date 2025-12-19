@@ -11,12 +11,51 @@ import { Notification } from '@/types/notification';
  * WebSocket URL
  * - BE docs (NOTIFICATION_SYSTEM_FE_INTEGRATION_GUIDE.md & FE_READY):
  *   Local: ws://localhost:8081/ws  (SockJS factory should use http://localhost:8081/ws)
+ *   Production: Must use HTTPS/WSS (e.g., https://pdcms.duckdns.org/ws or wss://pdcms.duckdns.org/ws)
  * - FE uses env for flexibility; if env is missing, follow BE guide as default.
  *
  * Dev example:
- *   NEXT_PUBLIC_WS_URL=http://localhost:8081/ws
+ *   NEXT_PUBLIC_WS_URL=http://localhost:8080/ws
+ * Production example:
+ *   NEXT_PUBLIC_WS_URL=https://pdcms.duckdns.org/ws
+ * 
+ * Security: Browser blocks insecure WebSocket (HTTP/WS) from HTTPS pages.
+ * In production, must use secure WebSocket (HTTPS/WSS).
  */
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8081/ws';
+const getWebSocketUrl = (): string | null => {
+  // Check if WebSocket URL is explicitly set
+  const envUrl = process.env.NEXT_PUBLIC_WS_URL;
+  
+  // If no env URL, use default based on environment
+  if (!envUrl) {
+    // In production (Vercel), disable WebSocket if no secure URL configured
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      console.warn('[WS] Production environment detected but NEXT_PUBLIC_WS_URL not set. WebSocket disabled.');
+      return null;
+    }
+    // Development: use localhost
+    return 'http://localhost:8080/ws';
+  }
+  
+  // If env URL is set, validate it matches current page protocol
+  if (typeof window !== 'undefined') {
+    const isHttps = window.location.protocol === 'https:';
+    const isSecureUrl = envUrl.startsWith('https://') || envUrl.startsWith('wss://');
+    
+    // Block insecure WebSocket from HTTPS page
+    if (isHttps && !isSecureUrl) {
+      console.error(
+        '[WS] SecurityError: Cannot use insecure WebSocket (HTTP/WS) from HTTPS page.',
+        'Please set NEXT_PUBLIC_WS_URL to HTTPS/WSS URL in production.'
+      );
+      return null;
+    }
+  }
+  
+  return envUrl;
+};
+
+const WS_URL = getWebSocketUrl();
 
 type NotificationCallback = (notification: Notification) => void;
 
@@ -36,6 +75,12 @@ class NotificationWebSocketService {
   connect(token: string, userId: number): void {
     if (this.isConnected && this.client?.connected) {
       console.log('[WS] Already connected');
+      return;
+    }
+
+    // Check if WebSocket URL is available (null means disabled in production)
+    if (!WS_URL) {
+      console.warn('[WS] WebSocket connection disabled. Notifications will only work via REST API polling.');
       return;
     }
 
