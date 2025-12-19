@@ -1,191 +1,98 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faUsers,
-  faCalendarAlt,
-  faChartLine,
-  faTasks,
-  faCheckCircle,
-  faClockRotateLeft
-} from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '@/contexts/AuthContext';
+import { Sparkles, ArrowRight, Calendar, ClipboardList } from 'lucide-react';
+import Link from 'next/link';
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
+  
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Chào buổi sáng' : currentHour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
-  const stats = [
+  // Lấy tên hiển thị - ưu tiên fullName, rồi đến username
+  const displayName = user?.fullName || user?.username || 'Nhân viên';
+
+  const quickLinks = [
     {
-      title: 'Lịch hẹn hôm nay',
-      value: '12',
-      change: '+2 so với hôm qua',
-      icon: faCalendarAlt,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      title: 'Lịch hẹn',
+      description: 'Xem và quản lý lịch hẹn bệnh nhân',
+      href: '/employee/appointments',
+      icon: Calendar,
+      gradient: 'from-sky-500 to-blue-600',
     },
     {
-      title: 'Bệnh nhân đang điều trị',
-      value: '48',
-      change: '+5 tuần này',
-      icon: faUsers,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
-      title: 'Công việc hoàn thành',
-      value: '24',
-      change: 'Tỷ lệ hoàn thành 85%',
-      icon: faCheckCircle,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
-      title: 'Cần theo dõi',
-      value: '8',
-      change: '3 khẩn cấp',
-      icon: faClockRotateLeft,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      title: 'Kế hoạch điều trị',
+      description: 'Quản lý kế hoạch điều trị',
+      href: '/employee/treatment-plans',
+      icon: ClipboardList,
+      gradient: 'from-violet-500 to-purple-600',
     },
   ];
 
   return (
     <ProtectedRoute requiredBaseRole="employee">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg">
-          <h1 className="text-3xl font-bold text-primary-foreground mb-2">
-            Chào mừng trở lại, {user?.username}!
-          </h1>
-          <p className="text-primary-foreground/80">
-            Đây là những gì đang diễn ra với công việc của bạn hôm nay.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {user?.permissions.slice(0, 5).map((permission) => (
-              <span
-                key={permission}
-                className="px-3 py-1 bg-white/20 text-primary-foreground text-xs rounded-full"
-              >
-                {permission}
+      <div className="min-h-[80vh] flex flex-col">
+        {/* Welcome Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-blue-800 to-indigo-900 p-8 md:p-12 mb-8">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-sky-400/20 to-blue-400/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-violet-400/20 to-purple-400/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-sky-300 animate-pulse" />
+              <span className="text-sky-300 font-medium text-sm tracking-wide uppercase">
+                Hệ thống quản lý phòng khám nha khoa
               </span>
-            ))}
-            {user?.permissions && user.permissions.length > 5 && (
-              <span className="px-3 py-1 bg-white/20 text-primary-foreground text-xs rounded-full">
-                +{user.permissions.length - 5} more
-              </span>
-            )}
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              {greeting}, <span className="bg-gradient-to-r from-sky-300 to-blue-300 bg-clip-text text-transparent">{displayName}</span>
+            </h1>
+            
+            <p className="text-blue-200/80 text-lg max-w-2xl">
+              Chúc bạn một ngày làm việc hiệu quả! Hãy chọn chức năng bên dưới để bắt đầu.
+            </p>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                  <FontAwesomeIcon
-                    icon={stat.icon}
-                    className={`h-5 w-5 ${stat.color}`}
-                  />
+        {/* Quick Links Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {quickLinks.map((link, index) => (
+            <Link
+              key={index}
+              href={link.href}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${link.gradient} mb-4`}>
+                    <link.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-sky-500 group-hover:to-blue-500 group-hover:bg-clip-text transition-all">
+                    {link.title}
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {link.description}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stat.change}
-                </p>
-              </CardContent>
-            </Card>
+                <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-sky-500 group-hover:translate-x-1 transition-all" />
+              </div>
+              
+              {/* Hover gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${link.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
+            </Link>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faTasks} className="h-5 w-5 text-primary" />
-                Thao tác nhanh
-              </CardTitle>
-              <CardDescription>
-                Các tác vụ thường dùng dựa trên quyền của bạn
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {user?.permissions.includes('CREATE_APPOINTMENT') && (
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                    � Create New Appointment
-                  </button>
-                )}
-                {user?.permissions.includes('CREATE_PATIENT') && (
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                    � Register New Patient
-                  </button>
-                )}
-                {user?.permissions.includes('VIEW_TREATMENT') && (
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                    🦷 View Treatments
-                  </button>
-                )}
-                {user?.permissions.includes('VIEW_ACCOUNT') && (
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-accent transition-colors">
-                    � Check Financial Reports
-                  </button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faChartLine} className="h-5 w-5 text-primary" />
-                Quyền của bạn
-              </CardTitle>
-              <CardDescription>
-                Những gì bạn có thể làm trong hệ thống
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {user?.permissions.map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center gap-2 px-3 py-2 bg-accent rounded-lg text-sm"
-                  >
-                    <FontAwesomeIcon
-                      icon={faCheckCircle}
-                      className="h-4 w-4 text-green-600"
-                    />
-                    <span className="font-mono text-xs">{permission}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Footer note */}
+        <div className="mt-auto pt-8 text-center">
+          <p className="text-sm text-slate-400">
+            © {new Date().getFullYear()} Dental Clinic Management System
+          </p>
         </div>
-
-        {/* Recent Activity (Placeholder) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-            <CardDescription>
-              Các hành động gần đây của bạn trong hệ thống
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <FontAwesomeIcon icon={faClockRotateLeft} className="h-12 w-12 mb-4" />
-              <p>Tính năng theo dõi hoạt động sẽ sớm được triển khai</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ProtectedRoute>
   );

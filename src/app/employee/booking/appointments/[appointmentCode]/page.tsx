@@ -133,8 +133,9 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Hours from 0 to 23
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  // Hours from 8 to 22 (8:00 AM to 10:00 PM - giờ làm việc)
+  // 22h = 10:00 PM là kết thúc giờ làm
+  const hours = Array.from({ length: 15 }, (_, i) => (i + 8).toString().padStart(2, '0')); // 8-22
   // Minutes: 00, 15, 30, 45
   const minutes = ['00', '15', '30', '45'];
 
@@ -230,7 +231,6 @@ export default function EmployeeAppointmentDetailPage() {
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | null>(null);
   const [statusUpdateReason, setStatusUpdateReason] = useState<AppointmentReasonCode | ''>('');
   const [statusUpdateNotes, setStatusUpdateNotes] = useState<string>('');
-  const [delayNewStartTime, setDelayNewStartTime] = useState<string>('');
   const [delayDate, setDelayDate] = useState<string>('');
   const [delayTime, setDelayTime] = useState<string>(''); // Format: "HH:mm"
   const [delayReason, setDelayReason] = useState<AppointmentReasonCode | ''>('');
@@ -283,9 +283,10 @@ export default function EmployeeAppointmentDetailPage() {
     }[] = [];
 
     // Remove update status from action menu - it's now integrated in the status badge
+    // BE Update 2025-12-18: NO_SHOW appointments can now be delayed
     const canShowDelay =
       canDelay &&
-      (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN');
+      (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN' || appointment.status === 'NO_SHOW');
 
     // Employee only has Delay (no Reschedule)
     if (canShowDelay) {
@@ -817,7 +818,17 @@ export default function EmployeeAppointmentDetailPage() {
 
   // Handle delay appointment
   const handleDelay = async () => {
-    if (!delayNewStartTime || !appointment) return;
+    // Validate: delayDate and delayTime are required
+    if (!delayDate || !delayTime || !appointment) {
+      toast.error('Vui lòng chọn ngày và giờ mới', {
+        description: 'Ngày và giờ mới là bắt buộc',
+      });
+      return;
+    }
+
+    // Build delayNewStartTime from delayDate and delayTime (ISO 8601 format: YYYY-MM-DDTHH:mm:ss)
+    const [hours, minutes] = delayTime.split(':');
+    const delayNewStartTime = `${delayDate}T${hours}:${minutes}:00`;
 
     // Validate: Only SCHEDULED or CHECKED_IN can be delayed
     if (appointment.status !== 'SCHEDULED' && appointment.status !== 'CHECKED_IN') {
@@ -829,12 +840,19 @@ export default function EmployeeAppointmentDetailPage() {
 
     // Validate: New start time must be after original
     const originalStart = new Date(appointment.appointmentStartTime);
-    const [hours, minutes] = delayTime.split(':');
-    const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);
+    const newStart = new Date(delayNewStartTime);
 
     if (newStart <= originalStart) {
       toast.error('Thời gian không hợp lệ', {
         description: 'Giờ bắt đầu mới phải sau giờ bắt đầu ban đầu',
+      });
+      return;
+    }
+
+    // Validate: reasonCode is required (BE requires NOT NULL)
+    if (!delayReason) {
+      toast.error('Lý do dời lịch bắt buộc', {
+        description: 'Vui lòng chọn lý do dời lịch hẹn',
       });
       return;
     }
@@ -844,7 +862,7 @@ export default function EmployeeAppointmentDetailPage() {
 
       const request: DelayAppointmentRequest = {
         newStartTime: delayNewStartTime, // ISO 8601 format
-        reasonCode: delayReason ? (delayReason as AppointmentReasonCode) : undefined,
+        reasonCode: delayReason as AppointmentReasonCode, // Required (BE requires NOT NULL)
         notes: delayNotes || null,
       };
 
@@ -859,7 +877,6 @@ export default function EmployeeAppointmentDetailPage() {
 
       // Reset form
       setShowDelayModal(false);
-      setDelayNewStartTime('');
       setDelayDate('');
       setDelayTime('');
       setDelayReason('');
@@ -1572,7 +1589,6 @@ export default function EmployeeAppointmentDetailPage() {
             setShowDelayModal(open);
             if (!open) {
               // Reset form when closing
-              setDelayNewStartTime('');
               setDelayDate('');
               setDelayTime('');
               setDelayReason('');
@@ -1614,18 +1630,17 @@ export default function EmployeeAppointmentDetailPage() {
                 Phải sau giờ bắt đầu hiện tại. Khung giờ được chia theo khoảng 15 phút.
               </p>
 
-              {/* Reason Code */}
+              {/* Reason Code - Required */}
               <div>
-                <Label htmlFor="delayReason">Mã lý do (Tùy chọn)</Label>
+                <Label htmlFor="delayReason">Mã lý do <span className="text-red-500">*</span></Label>
                 <Select
-                  value={delayReason || '__NONE__'}
-                  onValueChange={(value) => setDelayReason(value === '__NONE__' ? '' : (value as AppointmentReasonCode || ''))}
+                  value={delayReason || ''}
+                  onValueChange={(value) => setDelayReason(value as AppointmentReasonCode || '')}
                 >
                   <SelectTrigger id="delayReason" className="mt-1">
-                    <SelectValue placeholder="Chọn lý do (không bắt buộc)" />
+                    <SelectValue placeholder="Chọn lý do (bắt buộc)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__NONE__">Không có</SelectItem>
                     {Object.entries(APPOINTMENT_REASON_CODE_LABELS).map(([code, label]) => (
                       <SelectItem key={code} value={code}>
                         {label}
@@ -1664,6 +1679,7 @@ export default function EmployeeAppointmentDetailPage() {
                   delaying ||
                   !delayDate ||
                   !delayTime ||
+                  !delayReason || // reasonCode is required
                   (appointment && delayDate && delayTime ? (() => {
                     const [hours, minutes] = delayTime.split(':');
                     const newStart = new Date(`${delayDate}T${hours}:${minutes}:00`);

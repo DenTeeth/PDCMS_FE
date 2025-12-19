@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Clock, DollarSign, Eye, Lock } from 'lucide-react';
 import { format } from 'date-fns';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface TreatmentPlanItemProps {
   item: ItemDetailDTO;
@@ -72,8 +71,6 @@ export default function TreatmentPlanItem({
     }
   };
 
-  const canSelect = selectable && item.status === PlanItemStatus.READY_FOR_BOOKING;
-  
   // Safe status checks with null/undefined handling
   const isReadyForBooking = item.status === PlanItemStatus.READY_FOR_BOOKING;
   const isWaitingForPrerequisite = item.status === PlanItemStatus.WAITING_FOR_PREREQUISITE;
@@ -86,15 +83,6 @@ export default function TreatmentPlanItem({
             {/* Item Header */}
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 flex-wrap">
-                {canSelect && (
-                  <Checkbox
-                    checked={selected}
-                    onCheckedChange={() => onToggleSelect?.(item)}
-                    aria-label={`Chọn hạng mục ${item.itemName} để đặt lịch cùng các hạng mục khác`}
-                    title="Chọn để đặt lịch nhiều hạng mục cùng lúc"
-                    className="shadow-sm"
-                  />
-                )}
                 <span className="text-sm font-semibold text-muted-foreground">
                   #{item.sequenceNumber}
                 </span>
