@@ -964,7 +964,7 @@ export default function EmployeesPage() {
                                 <Label className="text-sm mb-1.5 block">
                                   Chọn chuyên khoa <span className="text-red-500">*</span>
                                 </Label>
-                                
+
                                 {/* Selected badges at top */}
                                 {formData.specializationIds && formData.specializationIds.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
@@ -1035,7 +1035,7 @@ export default function EmployeesPage() {
                                     </label>
                                   ))}
                                 </div>
-                                
+
                                 <p className="text-xs text-gray-500 mt-1">
                                   Đã chọn: {formData.specializationIds?.length || 0} chuyên khoa
                                 </p>
