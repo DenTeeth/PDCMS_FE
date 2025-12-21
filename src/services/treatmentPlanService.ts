@@ -26,6 +26,8 @@ import {
   // BE_4: Auto-Scheduling
   CalculateScheduleRequest,
   CalculateScheduleResponse,
+  AutoScheduleRequest,
+  AutoScheduleResponse,
   ApprovalStatus,
   TreatmentPlanStatus,
 } from '@/types/treatmentPlan';
@@ -755,6 +757,54 @@ export class TreatmentPlanService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.post<CalculateScheduleResponse>(
       '/treatment-plans/calculate-schedule', // No /v1/, no {planCode}
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Auto-Schedule Treatment Plan Appointments
+   * POST /api/v1/treatment-plans/{planId}/auto-schedule
+   * 
+   * Issue: ISSUE_BE_AUTO_SCHEDULE_TREATMENT_PLANS_WITH_HOLIDAYS
+   * Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION
+   * 
+   * Tự động tạo gợi ý lịch hẹn từ treatment plan với xử lý:
+   * - Ngày lễ (tự động dời sang ngày làm việc)
+   * - Spacing rules (preparation, recovery, spacing days)
+   * - Daily limit (tối đa 2 lịch/ngày/bệnh nhân)
+   * - Employee contract validation (nếu employeeCode được chỉ định)
+   * 
+   * IMPORTANT: API chỉ trả về SUGGESTIONS, không tự động tạo appointments.
+   * FE phải cho user xem và xác nhận trước khi gọi API create appointment.
+   * 
+   * @param planId ID của treatment plan
+   * @param request Auto-schedule request với preferences
+   * @returns Response với danh sách appointment suggestions
+   * 
+   * @example
+   * const suggestions = await TreatmentPlanService.autoSchedule(123, {
+   *   employeeCode: 'EMP-2001',
+   *   roomCode: 'ROOM-01',
+   *   preferredTimeSlots: ['MORNING', 'AFTERNOON'],
+   *   lookAheadDays: 90,
+   *   forceSchedule: false
+   * });
+   * 
+   * suggestions.suggestions.forEach(s => {
+   *   console.log(`${s.serviceName}: ${s.suggestedDate}`);
+   *   if (s.warning) {
+   *     console.warn(`⚠️ ${s.warning}`);
+   *   }
+   * });
+   */
+  static async autoSchedule(
+    planId: number,
+    request: AutoScheduleRequest
+  ): Promise<AutoScheduleResponse> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.post<AutoScheduleResponse>(
+      `/treatment-plans/${planId}/auto-schedule`,
       request
     );
     return response.data;

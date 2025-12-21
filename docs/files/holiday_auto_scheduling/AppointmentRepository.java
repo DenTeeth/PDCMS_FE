@@ -543,4 +543,45 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                 @Param("patientId") Integer patientId,
                 @Param("serviceId") Long serviceId,
                 @Param("limit") int limit);
+
+        /**
+         * AUTO_SCHEDULE_HOLIDAYS_AND_SPACING: Find recent appointments by patient and service
+         * Supports multiple statuses (COMPLETED, IN_PROGRESS) for spacing validation
+         * 
+         * @param patientId The patient ID
+         * @param serviceId The service ID
+         * @param statuses List of appointment statuses to filter
+         * @return List of recent appointments ordered by date DESC (most recent first)
+         */
+        @Query("SELECT a FROM Appointment a " +
+                "JOIN AppointmentService aps ON aps.id.appointmentId = a.appointmentId " +
+                "WHERE a.patientId = :patientId " +
+                "AND aps.id.serviceId = :serviceId " +
+                "AND a.status IN :statuses " +
+                "ORDER BY a.appointmentStartTime DESC")
+        List<Appointment> findRecentAppointmentsByPatientAndService(
+                @Param("patientId") Integer patientId,
+                @Param("serviceId") Integer serviceId,
+                @Param("statuses") List<AppointmentStatus> statuses);
+
+        /**
+         * AUTO_SCHEDULE_HOLIDAYS_AND_SPACING: Count appointments by patient in date range
+         * Used for daily appointment limit validation
+         * 
+         * @param patientId The patient ID
+         * @param startTime Start of date range
+         * @param endTime End of date range
+         * @param statuses List of appointment statuses to count
+         * @return Count of appointments
+         */
+        @Query("SELECT COUNT(a) FROM Appointment a " +
+                "WHERE a.patientId = :patientId " +
+                "AND a.appointmentStartTime >= :startTime " +
+                "AND a.appointmentStartTime <= :endTime " +
+                "AND a.status IN :statuses")
+        long countAppointmentsByPatientAndDateRange(
+                @Param("patientId") Integer patientId,
+                @Param("startTime") LocalDateTime startTime,
+                @Param("endTime") LocalDateTime endTime,
+                @Param("statuses") List<AppointmentStatus> statuses);
 }

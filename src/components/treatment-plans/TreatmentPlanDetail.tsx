@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus, CalculateScheduleResponse } from '@/types/treatmentPlan';
+import { TreatmentPlanDetailResponse, ApprovalStatus, ItemDetailDTO, PlanItemStatus, TreatmentPlanStatus, CalculateScheduleResponse, AutoScheduleRequest, AppointmentSuggestion, TimeSlot } from '@/types/treatmentPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +27,9 @@ import TreatmentPlanPhase from './TreatmentPlanPhase';
 import ApproveRejectSection from './ApproveRejectSection';
 import UpdatePricesModal from './UpdatePricesModal';
 import TreatmentPlanScheduleTimeline from './TreatmentPlanScheduleTimeline';
+import AutoScheduleConfigModal from './AutoScheduleConfigModal';
+import AutoScheduleSuggestions from './AutoScheduleSuggestions';
+import { useAutoSchedule } from '@/hooks/useAutoSchedule';
 import type { LucideIcon } from 'lucide-react';
 import {
   User,
@@ -45,6 +48,7 @@ import {
   Lock,
   Circle,
   AlertCircle,
+  CalendarCheck,
 } from 'lucide-react';
 import React from 'react';
 import { format, addDays } from 'date-fns';
@@ -137,6 +141,18 @@ export default function TreatmentPlanDetail({
 
   // V21.4: API 5.13 - Update Prices (Finance)
   const [showUpdatePricesModal, setShowUpdatePricesModal] = useState(false);
+
+  // Auto-Schedule Feature
+  const [showAutoScheduleModal, setShowAutoScheduleModal] = useState(false);
+  const {
+    suggestions,
+    summary,
+    isLoading: isAutoScheduling,
+    generateSchedule,
+    clearSuggestions,
+    hasWarnings,
+    hasReassignRequired,
+  } = useAutoSchedule();
 
   const selectedPlanItems = useMemo(
     () => allPlanItems.filter((item) => selectedPlanItemIds.includes(item.itemId)),
@@ -244,6 +260,14 @@ export default function TreatmentPlanDetail({
   );
 
   const readyForBookingCount = readyForBookingItems.length;
+  
+  // Check if can use auto-schedule
+  // Only for approved plans with items ready for booking
+  const canAutoSchedule =
+    canCreateAppointment &&
+    normalizedApprovalStatus === ApprovalStatus.APPROVED &&
+    readyForBookingCount > 0;
+  
   const canBulkBook =
     showActions &&
     canCreateAppointment &&
@@ -285,6 +309,31 @@ export default function TreatmentPlanDetail({
     }
     onBookPlanItems(selectedPlanItems);
     setSelectedPlanItemIds([]);
+  };
+
+  // Handle auto-schedule
+  const handleAutoSchedule = async (config: AutoScheduleRequest) => {
+    try {
+      await generateSchedule(plan.planId, config);
+      setShowAutoScheduleModal(false);
+    } catch (error) {
+      // Error is already handled in useAutoSchedule hook
+      console.error('[TreatmentPlanDetail] Auto-schedule error:', error);
+    }
+  };
+
+  const handleSelectSlot = (suggestion: AppointmentSuggestion, slot: TimeSlot) => {
+    // TODO: Integrate with appointment booking
+    toast.info(
+      `Đặt lịch cho ${suggestion.serviceName} vào ${slot.startTime} - ${slot.endTime}`
+    );
+    console.log('Select slot:', { suggestion, slot });
+  };
+
+  const handleReassignDoctor = (suggestion: AppointmentSuggestion) => {
+    // TODO: Open doctor selection modal
+    toast.info('Chức năng chọn bác sĩ khác đang được phát triển');
+    console.log('Reassign doctor for suggestion:', suggestion);
   };
 
   const hasApprovePermission = Boolean(user?.permissions?.includes('APPROVE_TREATMENT_PLAN'));
@@ -689,6 +738,17 @@ export default function TreatmentPlanDetail({
                 >
                   <DollarSign className="h-4 w-4" />
                   Điều chỉnh giá
+                </Button>
+              )}
+              {/* Auto-Schedule Button */}
+              {canAutoSchedule && (
+                <Button
+                  onClick={() => setShowAutoScheduleModal(true)}
+                  variant="default"
+                  className="flex items-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-700"
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  Tự động xếp lịch
                 </Button>
               )}
             </div>
@@ -1118,6 +1178,59 @@ export default function TreatmentPlanDetail({
             }}
           />
         )}
+
+      {/* Auto-Schedule Suggestions */}
+      {suggestions.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <CalendarCheck className="h-5 w-5 text-blue-600" />
+                Gợi ý lịch hẹn tự động
+              </CardTitle>
+              <div className="flex gap-2">
+                {hasWarnings && (
+                  <Badge variant="outline" className="bg-yellow-100 text-yellow-700">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Có cảnh báo
+                  </Badge>
+                )}
+                {hasReassignRequired && (
+                  <Badge variant="destructive">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Cần đổi bác sĩ
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSuggestions}
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <AutoScheduleSuggestions
+              suggestions={suggestions}
+              summary={summary}
+              isLoading={isAutoScheduling}
+              onSelectSlot={handleSelectSlot}
+              onReassignDoctor={handleReassignDoctor}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Auto-Schedule Config Modal */}
+      <AutoScheduleConfigModal
+        open={showAutoScheduleModal}
+        onClose={() => setShowAutoScheduleModal(false)}
+        onConfirm={handleAutoSchedule}
+        defaultDoctorCode={plan.doctor.employeeCode}
+        isLoading={isAutoScheduling}
+      />
 
       {/* V21.4: API 5.13 - Update Prices Modal */}
       <UpdatePricesModal
