@@ -1099,7 +1099,7 @@ export default function ShiftCalendarPage() {
               </div>
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="notes" className="text-sm font-medium text-gray-700">
                   Ghi chú
                 </Label>
@@ -1108,7 +1108,7 @@ export default function ShiftCalendarPage() {
                   value={createForm.notes}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                   placeholder="Nhập ghi chú (không bắt buộc)"
                 />
               </div>
@@ -1159,7 +1159,7 @@ export default function ShiftCalendarPage() {
               </div>
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-notes" className="text-sm font-medium text-gray-700">
                   Ghi chú
                 </Label>
@@ -1168,7 +1168,7 @@ export default function ShiftCalendarPage() {
                   value={updateForm.notes}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                   placeholder="Nhập ghi chú cập nhật"
                 />
               </div>

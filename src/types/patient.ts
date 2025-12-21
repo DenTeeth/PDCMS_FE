@@ -25,6 +25,7 @@ export interface Patient {
   allergies?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
   isActive: boolean;
   hasAccount: boolean;
   accountStatus?: 'ACTIVE' | 'PENDING_VERIFICATION' | 'LOCKED' | 'INACTIVE'; // Account verification status (BE: 2025-01-25)
@@ -80,6 +81,7 @@ export interface CreatePatientWithoutAccountRequest {
   allergies?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
 }
 
 /**
@@ -106,6 +108,7 @@ export interface UpdatePatientRequest {
   allergies?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
   isActive?: boolean;
   isBookingBlocked?: boolean;
   bookingBlockReason?: string;

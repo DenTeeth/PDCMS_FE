@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
+import {
   Settings,
   Save,
   Bell,
@@ -56,22 +56,22 @@ export default function SettingsPage() {
       {/* General Settings */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Thông tin phòng khám
-            </CardTitle>
-            <CardDescription>
-              Cấu hình thông tin cơ bản của phòng khám
-            </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Thông tin phòng khám
+          </CardTitle>
+          <CardDescription>
+            Cấu hình thông tin cơ bản của phòng khám
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="clinicName">Tên phòng khám</Label>
               <Input
                 id="clinicName"
                 value={settings.clinicName}
-                onChange={(e) => setSettings({...settings, clinicName: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, clinicName: e.target.value })}
               />
             </div>
             <div>
@@ -81,19 +81,19 @@ export default function SettingsPage() {
                 <Input
                   id="clinicPhone"
                   value={settings.clinicPhone}
-                  onChange={(e) => setSettings({...settings, clinicPhone: e.target.value})}
+                  onChange={(e) => setSettings({ ...settings, clinicPhone: e.target.value })}
                 />
               </div>
             </div>
           </div>
           <div>
-              <Label htmlFor="clinicAddress">Địa chỉ</Label>
+            <Label htmlFor="clinicAddress">Địa chỉ</Label>
             <div className="flex">
               <MapPin className="h-4 w-4 m-3 text-gray-400" />
               <Input
                 id="clinicAddress"
                 value={settings.clinicAddress}
-                onChange={(e) => setSettings({...settings, clinicAddress: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, clinicAddress: e.target.value })}
               />
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                 id="clinicEmail"
                 type="email"
                 value={settings.clinicEmail}
-                onChange={(e) => setSettings({...settings, clinicEmail: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, clinicEmail: e.target.value })}
               />
             </div>
           </div>
@@ -115,46 +115,46 @@ export default function SettingsPage() {
       {/* System Settings */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Cài đặt hệ thống
-            </CardTitle>
-            <CardDescription>
-              Cấu hình ngôn ngữ, múi giờ và giao diện
-            </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Cài đặt hệ thống
+          </CardTitle>
+          <CardDescription>
+            Cấu hình ngôn ngữ, múi giờ và giao diện
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="language">Ngôn ngữ</Label>
               <select
                 id="language"
                 value={settings.language}
-                onChange={(e) => setSettings({...settings, language: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, language: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="vi">Tiếng Việt</option>
                 <option value="en">Tiếng Anh</option>
               </select>
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="timezone">Múi giờ</Label>
               <select
                 id="timezone"
                 value={settings.timezone}
-                onChange={(e) => setSettings({...settings, timezone: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</option>
                 <option value="UTC">UTC</option>
               </select>
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="theme">Giao diện</Label>
               <select
                 id="theme"
                 value={settings.theme}
-                onChange={(e) => setSettings({...settings, theme: e.target.value})}
+                onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="light">Sáng</option>
@@ -169,13 +169,13 @@ export default function SettingsPage() {
       {/* Notifications */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Thông báo
-            </CardTitle>
-            <CardDescription>
-              Cấu hình các loại thông báo
-            </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Thông báo
+          </CardTitle>
+          <CardDescription>
+            Cấu hình các loại thông báo
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
@@ -189,8 +189,8 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={settings.notifications.email}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  notifications: {...settings.notifications, email: e.target.checked}
+                  ...settings,
+                  notifications: { ...settings.notifications, email: e.target.checked }
                 })}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -205,8 +205,8 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={settings.notifications.sms}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  notifications: {...settings.notifications, sms: e.target.checked}
+                  ...settings,
+                  notifications: { ...settings.notifications, sms: e.target.checked }
                 })}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -221,8 +221,8 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={settings.notifications.push}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  notifications: {...settings.notifications, push: e.target.checked}
+                  ...settings,
+                  notifications: { ...settings.notifications, push: e.target.checked }
                 })}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -234,13 +234,13 @@ export default function SettingsPage() {
       {/* Security */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Security
-            </CardTitle>
-            <CardDescription>
-              Configure security options
-            </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security
+          </CardTitle>
+          <CardDescription>
+            Configure security options
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
@@ -254,33 +254,33 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={settings.security.twoFactor}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  security: {...settings.security, twoFactor: e.target.checked}
+                  ...settings,
+                  security: { ...settings.security, twoFactor: e.target.checked }
                 })}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
               <Input
                 id="session-timeout"
                 type="number"
                 value={settings.security.sessionTimeout}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  security: {...settings.security, sessionTimeout: parseInt(e.target.value)}
+                  ...settings,
+                  security: { ...settings.security, sessionTimeout: parseInt(e.target.value) }
                 })}
                 className="w-32"
               />
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="password-policy">Password Policy</Label>
               <select
                 id="password-policy"
                 value={settings.security.passwordPolicy}
                 onChange={(e) => setSettings({
-                  ...settings, 
-                  security: {...settings.security, passwordPolicy: e.target.value}
+                  ...settings,
+                  security: { ...settings.security, passwordPolicy: e.target.value }
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >

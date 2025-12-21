@@ -136,7 +136,7 @@ export default function SupplierFormModal({
             <div className="overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Row 1: Name */}
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="supplierName">Tên nhà cung cấp <span className="text-red-500">*</span></Label>
                   <Input
                     id="supplierName"
@@ -154,7 +154,7 @@ export default function SupplierFormModal({
 
                 {/* Row 1.5: Contact Person (only for update) */}
                 {supplier && (
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="contactPerson">Người liên hệ</Label>
                     <Input
                       id="contactPerson"
@@ -166,20 +166,21 @@ export default function SupplierFormModal({
                 )}
 
                 {/* Row 2: Address */}
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="address">Địa chỉ</Label>
                   <Textarea
                     id="address"
                     value={formData.address || ''}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="VD: 123 Nguyễn Huệ, Q1, TP.HCM"
+                    className="resize-none"
                     rows={2}
                   />
                 </div>
 
                 {/* Row 3: Phone & Email */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="phone">Điện thoại <span className="text-red-500">*</span></Label>
                     <Input
                       id="phone"
@@ -197,7 +198,7 @@ export default function SupplierFormModal({
                     />
                     <p className="text-xs text-muted-foreground mt-1">10-11 chữ số</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
@@ -240,13 +241,14 @@ export default function SupplierFormModal({
                 )}
 
                 {/* Row 4: Notes */}
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="notes">Ghi chú</Label>
                   <Textarea
                     id="notes"
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Nhập ghi chú về nhà cung cấp (nếu có)"
+                    className="resize-none"
                     rows={3}
                   />
                 </div>

@@ -92,28 +92,28 @@ export default function EditImportModal({
       // Map transaction data to form
       const formData: EditImportFormData = {
         supplierId: transaction.supplierId || transaction.supplier_id || 0,
-        transactionDate: transaction.transactionDate?.split('T')[0] || 
-                         transaction.transaction_date?.split('T')[0] || 
-                         new Date().toISOString().split('T')[0],
+        transactionDate: transaction.transactionDate?.split('T')[0] ||
+          transaction.transaction_date?.split('T')[0] ||
+          new Date().toISOString().split('T')[0],
         notes: transaction.notes || '',
         items: (transaction.items || []).map(item => ({
           itemMasterId: item.itemMasterId || item.item_master_id || 0,
           lotNumber: item.lotNumber || item.lot_number || '',
           quantity: item.quantityChange || item.quantity_change || 0,
           importPrice: item.unitPrice || item.unit_price || 0,
-          expiryDate: item.expiryDate?.split('T')[0] || 
-                      item.expiry_date?.split('T')[0] || 
-                      '',
+          expiryDate: item.expiryDate?.split('T')[0] ||
+            item.expiry_date?.split('T')[0] ||
+            '',
         })),
       };
-      
+
       console.log(' Populating form with transaction data:', {
         transactionId,
         supplierId: formData.supplierId,
         itemsCount: formData.items.length,
         transaction,
       });
-      
+
       reset(formData);
     } else if (isOpen && !transaction && !loadingTransaction) {
       // Reset form if modal opened but no transaction (shouldn't happen, but handle gracefully)
@@ -144,7 +144,7 @@ export default function EditImportModal({
     const transactionDate = new Date(transaction!.transactionDate);
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - transactionDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysDiff > 30) {
       toast.error('Không thể sửa phiếu nhập quá 30 ngày!');
       return;
@@ -165,14 +165,14 @@ export default function EditImportModal({
       // Currently backend only supports updateNotes
       // For now, just update notes as workaround
       await storageService.updateNotes(transactionId, data.notes);
-      
+
       toast.success('Cập nhật phiếu nhập thành công!');
       toast.warning('Lưu ý: Hiện tại chỉ cập nhật được ghi chú. Vui lòng liên hệ IT để cập nhật items.');
-      
+
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      
+
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật phiếu nhập!');
@@ -226,7 +226,7 @@ export default function EditImportModal({
             {/* Header Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="supplierId">Nhà cung cấp *</Label>
+                <Label htmlFor="supplierId" className="mb-2 block">Nhà cung cấp *</Label>
                 <select
                   id="supplierId"
                   {...register('supplierId', { required: true, valueAsNumber: true })}
@@ -245,7 +245,7 @@ export default function EditImportModal({
               </div>
 
               <div>
-                <Label htmlFor="transactionDate">Ngày nhập *</Label>
+                <Label htmlFor="transactionDate" className="mb-2 block">Ngày nhập *</Label>
                 <div className="relative">
                   <Input
                     id="transactionDate"
@@ -342,7 +342,7 @@ export default function EditImportModal({
 
             {/* Notes */}
             <div>
-              <Label htmlFor="notes">Ghi chú</Label>
+              <Label htmlFor="notes" className="mb-2 block">Ghi chú</Label>
               <Textarea
                 id="notes"
                 {...register('notes')}

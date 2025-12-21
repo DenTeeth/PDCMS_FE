@@ -44,6 +44,18 @@ export default function RoleDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showEditModal || showDeleteModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showEditModal, showDeleteModal]);
+
   useEffect(() => {
     if (roleId) {
       fetchRoleDetails();
@@ -91,7 +103,7 @@ export default function RoleDetailPage() {
 
   const handleUpdateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!role || !editFormData.roleName || !editFormData.description) {
       toast.error('Please fill in all fields');
       return;
@@ -186,8 +198,8 @@ export default function RoleDetailPage() {
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setShowDeleteModal(true)}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
           >
@@ -292,7 +304,7 @@ export default function RoleDetailPage() {
             {loadingPermissions ? (
               <div className="text-center py-4">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Loading permissions...</p>
+                <p className="text-sm text-gray-600">Đang tải quyền hạn...</p>
               </div>
             ) : (
               <>
@@ -337,7 +349,7 @@ export default function RoleDetailPage() {
           {loadingPermissions ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-              <p className="text-gray-600">Loading permissions...</p>
+              <p className="text-gray-600">Đang tải quyền hạn...</p>
             </div>
           ) : permissions.length > 0 ? (
             <div className="space-y-6">
@@ -449,7 +461,7 @@ export default function RoleDetailPage() {
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>
@@ -478,7 +490,7 @@ export default function RoleDetailPage() {
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> This will soft delete the role "{role.roleName}". 
+                  <strong>Note:</strong> This will soft delete the role "{role.roleName}".
                   The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
                 </p>
               </div>

@@ -84,12 +84,12 @@ export default function CreateItemMasterModal({
       queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       queryClient.invalidateQueries({ queryKey: ['itemUnits', item?.id] });
-      
+
       // Show Safety Lock warning if applicable
       if (item && response?.safetyLockApplied) {
         toast.warning('Một số thay đổi đã bị chặn do Safety Lock (vật tư đã có tồn kho)');
       }
-      
+
       toast.success(item ? 'Cập nhật vật tư thành công!' : 'Thêm vật tư mới thành công!');
       onClose();
     },
@@ -100,7 +100,7 @@ export default function CreateItemMasterModal({
       console.error(' Item Code:', item?.itemCode || 'N/A');
       console.error('[WAREHOUSE] Request Variables:', JSON.stringify(variables, null, 2));
       console.error('⏰ Timestamp:', new Date().toISOString());
-      
+
       // Handle Safety Lock errors (409 CONFLICT)
       if (error.response?.status === 409) {
         const conflictData = error.response.data || {};
@@ -115,10 +115,10 @@ export default function CreateItemMasterModal({
           fullResponse: JSON.stringify(error.response, null, 2),
           timestamp: new Date().toISOString()
         });
-        
+
         // Handle different error formats from BE
         let errorMessage = 'Không thể thực hiện thay đổi này vì vật tư đã có tồn kho.';
-        
+
         if (conflictData.message) {
           errorMessage = conflictData.message;
         } else if (conflictData.error) {
@@ -132,14 +132,14 @@ export default function CreateItemMasterModal({
         } else if (conflictData.details) {
           errorMessage = conflictData.details;
         }
-        
+
         console.groupEnd();
         toast.error(errorMessage);
       } else if (error.response?.status === 400) {
         // Handle validation errors (400 Bad Request) with specific messages
         const errorData = error.response.data || {};
         const message = errorData.message || error.message || 'Lỗi validation';
-        
+
         console.error(' [WAREHOUSE MODAL] Validation Error (400):', {
           status: 400,
           message: message,
@@ -147,7 +147,7 @@ export default function CreateItemMasterModal({
           fullErrorData: JSON.stringify(errorData, null, 2),
           timestamp: new Date().toISOString()
         });
-        
+
         // Map BE error messages to user-friendly Vietnamese messages
         let userMessage = message;
         if (message.includes('Unit name cannot be null') || message.includes('Unit name cannot be empty')) {
@@ -167,7 +167,7 @@ export default function CreateItemMasterModal({
         } else if (message.includes('Min stock level must be less than max stock level')) {
           userMessage = 'Tồn kho tối thiểu phải nhỏ hơn tồn kho tối đa';
         }
-        
+
         console.groupEnd();
         toast.error(userMessage);
       } else {
@@ -179,7 +179,7 @@ export default function CreateItemMasterModal({
           responseData: error.response?.data ? JSON.stringify(error.response.data, null, 2) : 'NO_RESPONSE_DATA',
           timestamp: new Date().toISOString()
         });
-        
+
         console.groupEnd();
         toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra!');
       }
@@ -208,7 +208,7 @@ export default function CreateItemMasterModal({
         notes: item.notes || '',
         units: [], // Will be loaded from API
       });
-      
+
       // Load existing units
       if (existingUnitsData?.units) {
         const loadedUnits: ItemUnitRequest[] = existingUnitsData.units.map((unit, index) => ({
@@ -221,7 +221,7 @@ export default function CreateItemMasterModal({
           isDefaultExportUnit: false,
         }));
         setUnits(loadedUnits);
-        
+
         // Store original units with their IDs for Safety Lock detection
         const originalMap = new Map<number, any>();
         existingUnitsData.units.forEach((unit) => {
@@ -328,10 +328,10 @@ export default function CreateItemMasterModal({
       toast.error('Không thể xóa đơn vị cơ sở! Hãy đặt đơn vị khác làm cơ sở trước.');
       return;
     }
-    
+
     // Check if item has stock (Safety Lock)
     const hasStock = item && (item.currentStock !== undefined && item.currentStock > 0);
-    
+
     if (hasStock) {
       // Safety Lock: Use soft delete instead of hard delete
       const unitToRemove = units[index];
@@ -339,7 +339,7 @@ export default function CreateItemMasterModal({
       const originalUnit = Array.from(originalUnits.values()).find(
         (u) => u.unitName === unitToRemove.unitName
       );
-      
+
       if (originalUnit && originalUnit.unitId) {
         // Soft delete: Set isActive = false instead of removing
         const newUnits = units.map((unit, i) => {
@@ -371,16 +371,16 @@ export default function CreateItemMasterModal({
   const updateUnit = (index: number, field: keyof ItemUnitRequest, value: any) => {
     const newUnits = [...units];
     const unitToUpdate = newUnits[index];
-    
+
     // Safety Lock: Check if item has stock
     const hasStock = item && (item.currentStock !== undefined && item.currentStock > 0);
-    
+
     if (hasStock && item) {
       // Find original unit to check if it's an existing unit
       const originalUnit = Array.from(originalUnits.values()).find(
         (u) => u.unitName === unitToUpdate.unitName
       );
-      
+
       if (originalUnit) {
         // Existing unit: Block dangerous changes
         if (field === 'conversionRate') {
@@ -404,7 +404,7 @@ export default function CreateItemMasterModal({
         }
       }
     }
-    
+
     if (field === 'isBaseUnit' && value === true) {
       // Unset other base units
       newUnits.forEach((unit, i) => {
@@ -425,7 +425,7 @@ export default function CreateItemMasterModal({
         return;
       }
     }
-    
+
     newUnits[index] = { ...newUnits[index], [field]: value };
     setUnits(newUnits);
   };
@@ -474,7 +474,7 @@ export default function CreateItemMasterModal({
 
     // Check unique unit names (case-insensitive)
     const unitNames = unitsToValidate.map(u => u.unitName.trim().toLowerCase());
-    const duplicates = unitNames.filter((name, index) => 
+    const duplicates = unitNames.filter((name, index) =>
       unitNames.indexOf(name) !== index
     );
     if (duplicates.length > 0) {
@@ -525,7 +525,7 @@ export default function CreateItemMasterModal({
         const originalUnit = Array.from(originalUnits.values()).find(
           (u) => u.unitName === unit.unitName
         );
-        
+
         if (originalUnit) {
           // Existing unit: Check for blocked changes
           if (originalUnit.conversionRate !== unit.conversionRate) {
@@ -543,11 +543,11 @@ export default function CreateItemMasterModal({
           }
         }
       }
-      
+
       // Check for hard-deleted units (should be soft-deleted instead)
       const currentUnitNames = new Set(units.filter(u => u.isActive !== false).map(u => u.unitName.trim()));
       const originalUnitNames = new Set(Array.from(originalUnits.values()).map(u => u.unitName));
-      
+
       for (const originalName of originalUnitNames) {
         if (!currentUnitNames.has(originalName)) {
           // Unit was removed but should be soft-deleted
@@ -595,7 +595,7 @@ export default function CreateItemMasterModal({
           let originalUnit = Array.from(originalUnits.values()).find(
             (u) => u.unitName?.toLowerCase().trim() === unit.unitName?.toLowerCase().trim()
           );
-          
+
           // If not found by name, try to find by index or other means
           if (!originalUnit && existingUnitsData?.units) {
             // Try to match by position/index if names don't match
@@ -622,7 +622,7 @@ export default function CreateItemMasterModal({
 
           return unitData;
         });
-      
+
       // Log units mapping for debugging
       console.log('[WAREHOUSE] Units mapping for update:', {
         originalUnitsCount: originalUnits.size,
@@ -662,7 +662,7 @@ export default function CreateItemMasterModal({
           {/* Mã & Tên */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="itemCode" className="text-sm font-medium">
+              <Label htmlFor="itemCode" className="text-sm font-medium mb-2 block">
                 Mã vật tư <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -676,7 +676,7 @@ export default function CreateItemMasterModal({
             </div>
 
             <div>
-              <Label htmlFor="itemName" className="text-sm font-medium">
+              <Label htmlFor="itemName" className="text-sm font-medium mb-2 block">
                 Tên vật tư <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -691,7 +691,7 @@ export default function CreateItemMasterModal({
 
           {/* Category */}
           <div>
-            <Label htmlFor="category_id" className="text-sm font-medium">
+            <Label htmlFor="category_id" className="text-sm font-medium mb-2 block">
               Nhóm vật tư <span className="text-red-500">*</span>
             </Label>
             <Select
@@ -762,7 +762,7 @@ export default function CreateItemMasterModal({
                     <option key={unitName} value={unitName} />
                   ))}
                 </datalist>
-                
+
                 {units.map((unit, index) => (
                   <div
                     key={index}
@@ -893,7 +893,7 @@ export default function CreateItemMasterModal({
           {/* Min & Max Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="min_stock_level" className="text-sm font-medium">
+              <Label htmlFor="min_stock_level" className="text-sm font-medium mb-2 block">
                 Tồn kho tối thiểu
               </Label>
               <Input
@@ -909,7 +909,7 @@ export default function CreateItemMasterModal({
             </div>
 
             <div>
-              <Label htmlFor="max_stock_level" className="text-sm font-medium">
+              <Label htmlFor="max_stock_level" className="text-sm font-medium mb-2 block">
                 Tồn kho tối đa
               </Label>
               <Input
@@ -941,7 +941,7 @@ export default function CreateItemMasterModal({
 
           {/* Notes */}
           <div>
-            <Label htmlFor="notes" className="text-sm font-medium">
+            <Label htmlFor="notes" className="text-sm font-medium mb-2 block">
               Ghi chú
             </Label>
             <Textarea

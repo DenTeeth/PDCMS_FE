@@ -73,6 +73,18 @@ export default function RolesPage() {
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showEditModal || showAssignModal || showDeleteModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal, showAssignModal, showDeleteModal]);
+
   // ==================== FETCH ROLES ====================
   useEffect(() => {
     fetchRoles();
@@ -261,7 +273,7 @@ export default function RolesPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading roles...</p>
+          <p className="text-gray-600">Đang tải vai trò...</p>
         </div>
       </div>
     );
@@ -384,7 +396,7 @@ export default function RolesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        <Badge className={role.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
                           {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
                       </td>
@@ -427,7 +439,6 @@ export default function RolesPage() {
                               e.stopPropagation();
                               openDeleteModal(role);
                             }}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -657,7 +668,7 @@ export default function RolesPage() {
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>

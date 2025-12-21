@@ -53,17 +53,29 @@ export default function SuppliersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState<'supplierName' | 'totalOrders' | 'lastOrderDate' | 'createdAt'>('supplierName');
   const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('ASC');
-  
+
   // Advanced filters (API 6.13)
   const [isBlacklistedFilter, setIsBlacklistedFilter] = useState<boolean | null>(null);
   const [isActiveFilter, setIsActiveFilter] = useState<boolean | null>(null);
-  
+
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierDetailResponse | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<SupplierSummaryResponse | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; supplierId: number | null; supplierName: string }>({ isOpen: false, supplierId: null, supplierName: '' });
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (isFormModalOpen || isViewModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFormModalOpen, isViewModalOpen]);
 
   // Debounce search
   useEffect(() => {
@@ -297,14 +309,14 @@ export default function SuppliersPage() {
               onChange={(e) => setSearchKeyword(e.target.value)}
             />
           </div>
-          
+
           {/* Advanced Filters */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faFilter} className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-600">Lọc:</span>
             </div>
-            
+
             <Select
               value={isBlacklistedFilter === null ? 'all' : isBlacklistedFilter ? 'true' : 'false'}
               onValueChange={(value) => {
@@ -367,9 +379,9 @@ export default function SuppliersPage() {
                       >
                         <div className="flex items-center gap-2">
                           Tên nhà cung cấp
-                          <FontAwesomeIcon 
-                            icon={faSort} 
-                            className={`h-3 w-3 text-gray-400 ${sortBy === 'supplierName' ? 'text-gray-700' : ''}`} 
+                          <FontAwesomeIcon
+                            icon={faSort}
+                            className={`h-3 w-3 text-gray-400 ${sortBy === 'supplierName' ? 'text-gray-700' : ''}`}
                           />
                         </div>
                       </th>
@@ -383,9 +395,9 @@ export default function SuppliersPage() {
                         <div className="flex items-center justify-end gap-2">
                           <FontAwesomeIcon icon={faShoppingCart} className="h-3 w-3 text-gray-500" />
                           Tổng đơn
-                          <FontAwesomeIcon 
-                            icon={faSort} 
-                            className={`h-3 w-3 text-gray-400 ${sortBy === 'totalOrders' ? 'text-gray-700' : ''}`} 
+                          <FontAwesomeIcon
+                            icon={faSort}
+                            className={`h-3 w-3 text-gray-400 ${sortBy === 'totalOrders' ? 'text-gray-700' : ''}`}
                           />
                         </div>
                       </th>
@@ -396,9 +408,9 @@ export default function SuppliersPage() {
                         <div className="flex items-center justify-center gap-2">
                           <FontAwesomeIcon icon={faCalendarAlt} className="h-3 w-3 text-gray-500" />
                           Đơn gần nhất
-                          <FontAwesomeIcon 
-                            icon={faSort} 
-                            className={`h-3 w-3 text-gray-400 ${sortBy === 'lastOrderDate' ? 'text-gray-700' : ''}`} 
+                          <FontAwesomeIcon
+                            icon={faSort}
+                            className={`h-3 w-3 text-gray-400 ${sortBy === 'lastOrderDate' ? 'text-gray-700' : ''}`}
                           />
                         </div>
                       </th>
@@ -409,13 +421,13 @@ export default function SuppliersPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {suppliers.map((supplier) => {
                       return (
-                        <tr 
-                          key={supplier.supplierId} 
+                        <tr
+                          key={supplier.supplierId}
                           className="hover:bg-gray-50 transition-colors"
                         >
                           <td className="p-4">
-                            <span 
-                              className="font-medium text-gray-900 block truncate max-w-[300px]" 
+                            <span
+                              className="font-medium text-gray-900 block truncate max-w-[300px]"
                               title={supplier.supplierName}
                             >
                               {supplier.supplierName}

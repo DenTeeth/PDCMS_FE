@@ -18,16 +18,14 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import {
   faPlus,
   faSearch,
-  faEdit,
-  faTrash,
   faBoxes,
   faExclamationTriangle,
   faClock,
-  faEye,
   faSort,
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryService, type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import CreateItemMasterModal from '../components/CreateItemMasterModal';
@@ -95,9 +93,9 @@ export default function InventoryPage() {
 
   // Client-side filtering by search query and EXPIRING_SOON filter
   const allInventory = Array.isArray(inventoryPage) ? inventoryPage : ((inventoryPage as any)?.content || []);
-  
+
   let filteredInventory = allInventory;
-  
+
   // Apply search filter
   if (tabState.searchQuery) {
     filteredInventory = filteredInventory.filter((item: InventorySummary) => {
@@ -109,12 +107,12 @@ export default function InventoryPage() {
       );
     });
   }
-  
+
   // Apply EXPIRING_SOON filter (client-side, BE doesn't support this filter)
   if (tabState.activeFilter === 'EXPIRING_SOON') {
     const today = new Date();
     const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
+
     filteredInventory = filteredInventory.filter((item: InventorySummary) => {
       if (!item.nearestExpiryDate) return false;
       const expiryDate = new Date(item.nearestExpiryDate);
@@ -238,13 +236,13 @@ export default function InventoryPage() {
     if (item.warehouseType !== 'COLD') {
       return <span className="text-sm text-gray-500">-</span>;
     }
-    
+
     // Show nearest expiry date if available
     if (item.nearestExpiryDate) {
       const expiryDate = new Date(item.nearestExpiryDate);
       const today = new Date();
       const daysUntilExpiry = Math.floor((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Show warning if expiring soon
       if (daysUntilExpiry <= 30 && daysUntilExpiry > 0) {
         return (
@@ -259,10 +257,10 @@ export default function InventoryPage() {
           </span>
         );
       }
-      
+
       return <span className="text-sm text-gray-700">{expiryDate.toLocaleDateString('vi-VN')}</span>;
     }
-    
+
     return <span className="text-sm text-gray-500">-</span>;
   };
 
@@ -353,177 +351,177 @@ export default function InventoryPage() {
       {/* Inventory Table */}
       <Card>
         <CardContent className="pt-6">
-              {inventoryError ? (
-                <div className="text-center py-8">
-                  <div className="text-red-600 font-semibold mb-2">Lỗi tải dữ liệu tồn kho</div>
-                  <div className="text-sm text-gray-600">
-                    {(inventoryError as any)?.message || 'Không thể tải danh sách vật tư. Vui lòng thử lại sau.'}
-                  </div>
-                </div>
-              ) : isLoading ? (
-                <div className="text-center py-8">Đang tải...</div>
-              ) : inventory.length === 0 ? (
-                <EmptyState
-                  icon={faBoxes}
-                  title={tabState.searchQuery ? "Không tìm thấy vật tư" : "Chưa có vật tư nào"}
-                  description={tabState.searchQuery ? "Thử thay đổi từ khóa tìm kiếm" : "Bắt đầu thêm vật tư mới vào kho"}
-                  actionLabel={!tabState.searchQuery ? "Thêm vật tư" : undefined}
-                  onAction={!tabState.searchQuery ? () => setIsCreateModalOpen(true) : undefined}
-                />
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-max">
-                      <thead>
-                        <tr className="border-b bg-gray-50">
-                          <th 
-                            className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
-                            onClick={() => handleSort('itemCode')}
-                          >
-                            <div className="flex items-center gap-2 font-semibold text-sm">
-                              Mã vật tư
-                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                            </div>
-                          </th>
-                          <th 
-                            className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
-                            onClick={() => handleSort('itemName')}
-                          >
-                            <div className="flex items-center gap-2 font-semibold text-sm">
-                              Tên vật tư
-                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                            </div>
-                          </th>
-                          <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
-                          <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
-                          <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
-                          <th 
-                            className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
-                            onClick={() => handleSort('totalQuantity')}
-                          >
-                            <div className="flex items-center justify-end gap-2 font-semibold text-sm">
-                              Số lượng
-                              <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                            </div>
-                          </th>
-                          <th className="text-left p-3 font-semibold text-sm">HSD</th>
-                          <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
-                          <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {inventory.map((item: InventorySummary) => (
-                          <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
-                          <td className="p-3">
-                            <span className="font-mono text-sm font-medium">{item.itemCode}</span>
-                          </td>
-                          <td className="p-3 font-medium">{item.itemName}</td>
-                          <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
-                          <td className="p-3 text-sm">{item.categoryName || '-'}</td>
-                          <td className="p-3">
-                            <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
-                          </td>
-                          <td className="p-3 text-right">
-                            <div className="flex flex-col items-end">
-                              <span className={`font-bold ${getQuantityColor(item)}`}>
-                                {item.totalQuantity}
-                              </span>
-                              <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            {getExpiryDateDisplay(item)}
-                          </td>
-                          <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
-                          <td className="p-3">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleViewDetail(item.itemMasterId)}
-                                title="Xem chi tiết"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-500" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(item)}
-                                title="Chỉnh sửa"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-500" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(item.itemMasterId, item.itemName)}
-                                title="Xóa"
-                                className="h-8 w-8 p-0"
-                              >
-                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          {inventoryError ? (
+            <div className="text-center py-8">
+              <div className="text-red-600 font-semibold mb-2">Lỗi tải dữ liệu tồn kho</div>
+              <div className="text-sm text-gray-600">
+                {(inventoryError as any)?.message || 'Không thể tải danh sách vật tư. Vui lòng thử lại sau.'}
+              </div>
+            </div>
+          ) : isLoading ? (
+            <div className="text-center py-8">Đang tải...</div>
+          ) : inventory.length === 0 ? (
+            <EmptyState
+              icon={faBoxes}
+              title={tabState.searchQuery ? "Không tìm thấy vật tư" : "Chưa có vật tư nào"}
+              description={tabState.searchQuery ? "Thử thay đổi từ khóa tìm kiếm" : "Bắt đầu thêm vật tư mới vào kho"}
+              actionLabel={!tabState.searchQuery ? "Thêm vật tư" : undefined}
+              onAction={!tabState.searchQuery ? () => setIsCreateModalOpen(true) : undefined}
+            />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max">
+                  <thead>
+                    <tr className="border-b bg-gray-50">
+                      <th
+                        className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                        onClick={() => handleSort('itemCode')}
+                      >
+                        <div className="flex items-center gap-2 font-semibold text-sm">
+                          Mã vật tư
+                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                        </div>
+                      </th>
+                      <th
+                        className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                        onClick={() => handleSort('itemName')}
+                      >
+                        <div className="flex items-center gap-2 font-semibold text-sm">
+                          Tên vật tư
+                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                        </div>
+                      </th>
+                      <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
+                      <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
+                      <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
+                      <th
+                        className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
+                        onClick={() => handleSort('totalQuantity')}
+                      >
+                        <div className="flex items-center justify-end gap-2 font-semibold text-sm">
+                          Số lượng
+                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                        </div>
+                      </th>
+                      <th className="text-left p-3 font-semibold text-sm">HSD</th>
+                      <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
+                      <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.map((item: InventorySummary) => (
+                      <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
+                        <td className="p-3">
+                          <span className="font-mono text-sm font-medium">{item.itemCode}</span>
+                        </td>
+                        <td className="p-3 font-medium">{item.itemName}</td>
+                        <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
+                        <td className="p-3 text-sm">{item.categoryName || '-'}</td>
+                        <td className="p-3">
+                          <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex flex-col items-end">
+                            <span className={`font-bold ${getQuantityColor(item)}`}>
+                              {item.totalQuantity}
+                            </span>
+                            <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          {getExpiryDateDisplay(item)}
+                        </td>
+                        <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewDetail(item.itemMasterId)}
+                              title="Xem chi tiết"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item)}
+                              title="Chỉnh sửa"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item.itemMasterId, item.itemName)}
+                              title="Xóa"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-gray-600">
-                    Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
-                    {tabState.searchQuery && (
-                      <span className="text-muted-foreground ml-2">
-                        (đã lọc theo: "{tabState.searchQuery}")
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(0)}
-                      disabled={page === 0}
-                    >
-                      Đầu
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(page - 1)}
-                      disabled={page === 0}
-                    >
-                      <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
-                    </Button>
-                    <span className="text-sm px-3">
-                      Trang {page + 1} / {totalPages || 1}
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
+                  {tabState.searchQuery && (
+                    <span className="text-muted-foreground ml-2">
+                      (đã lọc theo: "{tabState.searchQuery}")
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(page + 1)}
-                      disabled={page >= totalPages - 1}
-                    >
-                      <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(totalPages - 1)}
-                      disabled={page >= totalPages - 1}
-                    >
-                      Cuối
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              </>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(0)}
+                    disabled={page === 0}
+                  >
+                    Đầu
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 0}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
+                  </Button>
+                  <span className="text-sm px-3">
+                    Trang {page + 1} / {totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages - 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    Cuối
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Create/Edit Modal */}
       <CreateItemMasterModal

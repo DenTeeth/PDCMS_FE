@@ -220,10 +220,10 @@ export default function ImportTransactionFormNew({
 
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
-      
+
       // Try to get units using API 6.11
       const unitsResponse = await itemUnitService.getItemUnits(itemMasterId, 'active');
-      
+
       if (!unitsResponse || !unitsResponse.units || unitsResponse.units.length === 0) {
         // Fallback: Try getBaseUnit
         try {
@@ -246,7 +246,7 @@ export default function ImportTransactionFormNew({
         } catch (baseUnitError) {
           console.warn(' Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
         }
-        
+
         // If both fail, BE will auto-create base unit from unitOfMeasure
         const fallbackUnitName = item?.unitOfMeasure || 'Cái';
         const fallbackUnit: ItemUnitResponse = {
@@ -256,7 +256,7 @@ export default function ImportTransactionFormNew({
           isBaseUnit: true,
           displayOrder: 1,
         };
-        
+
         setItems((prev) => {
           const updated = [...prev];
           updated[rowIndex] = {
@@ -267,7 +267,7 @@ export default function ImportTransactionFormNew({
           };
           return updated;
         });
-        
+
         toast.warning('Chưa có đơn vị cho vật tư này', {
           description: `Hệ thống sẽ tự động tạo đơn vị cơ sở "${fallbackUnitName}" khi bạn nhập kho.`,
           duration: 5000,
@@ -289,7 +289,7 @@ export default function ImportTransactionFormNew({
 
       // Set default to base unit (or first unit if no base unit found)
       const baseUnit = units.find(u => u.isBaseUnit) || units[0];
-      
+
       // Update item with base unit and available units
       setItems((prev) => {
         const updated = [...prev];
@@ -303,7 +303,7 @@ export default function ImportTransactionFormNew({
       });
     } catch (error: any) {
       console.error(' Failed to fetch units:', error);
-      
+
       // Fallback: Try getBaseUnit
       try {
         const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
@@ -325,14 +325,14 @@ export default function ImportTransactionFormNew({
       } catch (baseUnitError) {
         console.warn(' getBaseUnit also failed');
       }
-      
+
       // Final fallback: BE will auto-create
       const fallbackUnitName = item?.unitOfMeasure || 'Cái';
       toast.warning('Không thể tải đơn vị', {
         description: `Hệ thống sẽ tự động tạo đơn vị "${fallbackUnitName}" khi nhập kho.`,
         duration: 5000,
       });
-      
+
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
@@ -446,7 +446,7 @@ export default function ImportTransactionFormNew({
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      
+
       toast.success('Nhập kho thành công!', {
         description: `Mã phiếu: ${response.transactionCode} | Tổng giá trị: ${response.totalValue.toLocaleString('vi-VN')} VNĐ`,
         duration: 5000,
@@ -465,7 +465,7 @@ export default function ImportTransactionFormNew({
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi nhập kho!';
       const errorCode = error.response?.data?.error || error.response?.data?.errorCode;
-      
+
       if (errorCode === 'DUPLICATE_INVOICE') {
         toast.error('Số hóa đơn đã tồn tại', {
           description: 'Vui lòng sử dụng số hóa đơn khác',
@@ -519,7 +519,7 @@ export default function ImportTransactionFormNew({
         toast.error(`Vật tư "${item.itemName}" chưa có đơn vị. Vui lòng chọn đơn vị hoặc đợi hệ thống tạo tự động.`);
         return false;
       }
-      
+
       return (
         item.itemMasterId > 0 &&
         item.unitId > 0 && // Must be positive (BE validation @Positive)
@@ -543,7 +543,7 @@ export default function ImportTransactionFormNew({
     // Validate expiry dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     for (const item of validItems) {
       const expiryDate = new Date(item.expiryDate);
       if (expiryDate <= today) {
@@ -594,327 +594,327 @@ export default function ImportTransactionFormNew({
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 space-y-6">
-          {/* General Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="supplierId" className="text-sm font-medium">
-                Nhà cung cấp <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={supplierId > 0 ? supplierId.toString() : ''}
-                onValueChange={(value) => setSupplierId(Number(value))}
-                required
-              >
-                <SelectTrigger id="supplierId">
-                  <SelectValue placeholder="Chọn nhà cung cấp" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((sup) => (
-                    <SelectItem key={sup.supplierId} value={sup.supplierId.toString()}>
-                      {sup.supplierName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* General Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="supplierId" className="text-sm font-medium mb-2 block">
+                  Nhà cung cấp <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={supplierId > 0 ? supplierId.toString() : ''}
+                  onValueChange={(value) => setSupplierId(Number(value))}
+                  required
+                >
+                  <SelectTrigger id="supplierId">
+                    <SelectValue placeholder="Chọn nhà cung cấp" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((sup) => (
+                      <SelectItem key={sup.supplierId} value={sup.supplierId.toString()}>
+                        {sup.supplierName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="transactionDate" className="text-sm font-medium">
-                Ngày nhập <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
+              <div className="space-y-2">
+                <Label htmlFor="transactionDate" className="text-sm font-medium mb-2 block">
+                  Ngày nhập <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="transactionDate"
+                    type="date"
+                    value={transactionDate}
+                    onChange={(e) => setTransactionDate(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="invoiceNumber" className="text-sm font-medium mb-2 block">
+                  Số hóa đơn <span className="text-red-500">*</span>
+                </Label>
                 <Input
-                  id="transactionDate"
-                  type="date"
-                  value={transactionDate}
-                  onChange={(e) => setTransactionDate(e.target.value)}
-                  className="pl-10"
+                  id="invoiceNumber"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  placeholder="INV-2025-001"
                   required
                 />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="expectedDeliveryDate" className="text-sm font-medium mb-2 block">
+                  Ngày dự kiến giao
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="expectedDeliveryDate"
+                    type="date"
+                    value={expectedDeliveryDate}
+                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                    className="pl-10"
+                  />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
+            {/* Items Table */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">
+                  Danh sách vật tư <span className="text-red-500">*</span>
+                </Label>
+                <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
+                  <Plus className="h-4 w-4" />
+                  Thêm dòng
+                </Button>
+              </div>
+
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-100">
+                      <tr className="text-xs font-semibold text-slate-700">
+                        <th className="p-3 text-left w-[5%]">STT</th>
+                        <th className="p-3 text-left w-[18%]">Vật tư *</th>
+                        <th className="p-3 text-left w-[8%]">Đơn vị *</th>
+                        <th className="p-3 text-left w-[14%]">Số Lô *</th>
+                        <th className="p-3 text-left w-[10%]">Số lượng *</th>
+                        <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) *</th>
+                        <th className="p-3 text-left w-[12%]">Hạn sử dụng *</th>
+                        <th className="p-3 text-left w-[15%]">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, index) => {
+                        const searchQuery = (searchQueries[index] || '').toLowerCase();
+                        const filteredItems = itemMasters.filter(
+                          (im) =>
+                            im.itemCode?.toLowerCase().includes(searchQuery) ||
+                            im.itemName?.toLowerCase().includes(searchQuery)
+                        );
+
+                        return (
+                          <tr key={index} className="border-t hover:bg-slate-50">
+                            <td className="p-3 text-center font-medium text-slate-600">
+                              {index + 1}
+                            </td>
+                            <td className="p-3">
+                              <Popover
+                                open={openPopovers[index] || false}
+                                onOpenChange={(open) => {
+                                  setOpenPopovers((prev) => ({ ...prev, [index]: open }));
+                                  if (!open) {
+                                    setSearchQueries((prev) => ({ ...prev, [index]: '' }));
+                                  }
+                                }}
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className="w-full justify-between"
+                                    disabled={itemsLoading}
+                                    type="button"
+                                  >
+                                    {item.itemMasterId > 0
+                                      ? `${item.itemCode} - ${item.itemName}`
+                                      : itemsLoading
+                                        ? 'Đang tải...'
+                                        : itemMasters.length === 0
+                                          ? 'Không có dữ liệu'
+                                          : 'Chọn vật tư'}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[400px] p-0" align="start">
+                                  <div className="flex items-center border-b px-3">
+                                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                    <Input
+                                      placeholder="Tìm kiếm vật tư..."
+                                      value={searchQueries[index] || ''}
+                                      onChange={(e) => {
+                                        setSearchQueries((prev) => ({ ...prev, [index]: e.target.value }));
+                                      }}
+                                      className="h-9 border-0 focus-visible:ring-0"
+                                    />
+                                  </div>
+                                  <div className="max-h-[300px] overflow-auto">
+                                    {itemsLoading ? (
+                                      <div className="p-4 text-center text-sm text-gray-500">
+                                        Đang tải...
+                                      </div>
+                                    ) : filteredItems.length === 0 ? (
+                                      <div className="p-4 text-center text-sm text-gray-500">
+                                        Không tìm thấy vật tư
+                                      </div>
+                                    ) : (
+                                      filteredItems
+                                        .filter((im) => im && im.id !== undefined && im.id !== null)
+                                        .map((im, itemIndex) => {
+                                          const itemId = Number(im.id);
+                                          if (!itemId || isNaN(itemId)) {
+                                            return null;
+                                          }
+                                          return (
+                                            <div
+                                              key={`item-${index}-${itemId}-${itemIndex}`}
+                                              className="flex items-center px-4 py-2 hover:bg-slate-100 cursor-pointer"
+                                              onClick={() => handleItemSelect(im, index)}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  'mr-2 h-4 w-4',
+                                                  item.itemMasterId === itemId ? 'opacity-100' : 'opacity-0'
+                                                )}
+                                              />
+                                              <div className="flex-1">
+                                                <div className="font-medium">
+                                                  {im.itemCode || 'N/A'} - {im.itemName || 'N/A'}
+                                                </div>
+                                                {im.unitOfMeasure && (
+                                                  <div className="text-xs text-gray-500">
+                                                    Đơn vị: {im.unitOfMeasure}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </td>
+                            <td className="p-3">
+                              {unitLoading[index] ? (
+                                <div className="text-sm text-gray-500">Đang tải...</div>
+                              ) : item.unitId > 0 && item.unitName ? (
+                                <div className="text-sm font-medium text-slate-700">
+                                  {item.unitName}
+                                </div>
+                              ) : item.itemMasterId > 0 ? (
+                                <div className="text-sm text-gray-400">Chưa có đơn vị</div>
+                              ) : (
+                                <div className="text-sm text-gray-400">-</div>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                value={item.lotNumber}
+                                onChange={(e) => updateItemField(index, 'lotNumber', e.target.value)}
+                                placeholder="LOT-2024-001"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                type="number"
+                                min="1"
+                                max="1000000"
+                                value={item.quantity}
+                                onChange={(e) => updateItemField(index, 'quantity', Number(e.target.value))}
+                                placeholder="1"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                value={item.purchasePrice}
+                                onChange={(e) => updateItemField(index, 'purchasePrice', Number(e.target.value))}
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="relative">
+                                <Input
+                                  type="date"
+                                  value={item.expiryDate}
+                                  onChange={(e) => updateItemField(index, 'expiryDate', e.target.value)}
+                                  className="pl-10"
+                                />
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="rounded-lg p-6 border-2 bg-gray-50 border-gray-300 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-800 shadow-md">
+                    <DollarSign className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Tổng giá trị phiếu nhập
+                    </Label>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-gray-900 tracking-tight">
+                    {totalValue.toLocaleString('vi-VN')}
+                  </div>
+                  <div className="text-lg font-semibold text-gray-600 mt-1">
+                    VNĐ
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="invoiceNumber" className="text-sm font-medium">
-                Số hóa đơn <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="invoiceNumber"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="INV-2025-001"
-                required
+              <Label className="text-sm font-medium">Ghi chú</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Nhập ghi chú (nếu có)"
+                rows={3}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="expectedDeliveryDate" className="text-sm font-medium">
-                Ngày dự kiến giao
-              </Label>
-              <div className="relative">
-                <Input
-                  id="expectedDeliveryDate"
-                  type="date"
-                  value={expectedDeliveryDate}
-                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                  className="pl-10"
-                />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Items Table */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">
-                Danh sách vật tư <span className="text-red-500">*</span>
-              </Label>
-              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
-                <Plus className="h-4 w-4" />
-                Thêm dòng
-              </Button>
-            </div>
-
-            <div className="border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-100">
-                    <tr className="text-xs font-semibold text-slate-700">
-                      <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[18%]">Vật tư *</th>
-                      <th className="p-3 text-left w-[8%]">Đơn vị *</th>
-                      <th className="p-3 text-left w-[14%]">Số Lô *</th>
-                      <th className="p-3 text-left w-[10%]">Số lượng *</th>
-                      <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) *</th>
-                      <th className="p-3 text-left w-[12%]">Hạn sử dụng *</th>
-                      <th className="p-3 text-left w-[15%]">Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, index) => {
-                      const searchQuery = (searchQueries[index] || '').toLowerCase();
-                      const filteredItems = itemMasters.filter(
-                        (im) =>
-                          im.itemCode?.toLowerCase().includes(searchQuery) ||
-                          im.itemName?.toLowerCase().includes(searchQuery)
-                      );
-
-                      return (
-                        <tr key={index} className="border-t hover:bg-slate-50">
-                          <td className="p-3 text-center font-medium text-slate-600">
-                            {index + 1}
-                          </td>
-                          <td className="p-3">
-                            <Popover
-                              open={openPopovers[index] || false}
-                              onOpenChange={(open) => {
-                                setOpenPopovers((prev) => ({ ...prev, [index]: open }));
-                                if (!open) {
-                                  setSearchQueries((prev) => ({ ...prev, [index]: '' }));
-                                }
-                              }}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className="w-full justify-between"
-                                  disabled={itemsLoading}
-                                  type="button"
-                                >
-                                  {item.itemMasterId > 0
-                                    ? `${item.itemCode} - ${item.itemName}`
-                                    : itemsLoading
-                                    ? 'Đang tải...'
-                                    : itemMasters.length === 0
-                                    ? 'Không có dữ liệu'
-                                    : 'Chọn vật tư'}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[400px] p-0" align="start">
-                                <div className="flex items-center border-b px-3">
-                                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                                  <Input
-                                    placeholder="Tìm kiếm vật tư..."
-                                    value={searchQueries[index] || ''}
-                                    onChange={(e) => {
-                                      setSearchQueries((prev) => ({ ...prev, [index]: e.target.value }));
-                                    }}
-                                    className="h-9 border-0 focus-visible:ring-0"
-                                  />
-                                </div>
-                                <div className="max-h-[300px] overflow-auto">
-                                  {itemsLoading ? (
-                                    <div className="p-4 text-center text-sm text-gray-500">
-                                      Đang tải...
-                                    </div>
-                                  ) : filteredItems.length === 0 ? (
-                                    <div className="p-4 text-center text-sm text-gray-500">
-                                      Không tìm thấy vật tư
-                                    </div>
-                                  ) : (
-                                    filteredItems
-                                      .filter((im) => im && im.id !== undefined && im.id !== null)
-                                      .map((im, itemIndex) => {
-                                        const itemId = Number(im.id);
-                                        if (!itemId || isNaN(itemId)) {
-                                          return null;
-                                        }
-                                        return (
-                                          <div
-                                            key={`item-${index}-${itemId}-${itemIndex}`}
-                                            className="flex items-center px-4 py-2 hover:bg-slate-100 cursor-pointer"
-                                            onClick={() => handleItemSelect(im, index)}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                'mr-2 h-4 w-4',
-                                                item.itemMasterId === itemId ? 'opacity-100' : 'opacity-0'
-                                              )}
-                                            />
-                                            <div className="flex-1">
-                                              <div className="font-medium">
-                                                {im.itemCode || 'N/A'} - {im.itemName || 'N/A'}
-                                              </div>
-                                              {im.unitOfMeasure && (
-                                                <div className="text-xs text-gray-500">
-                                                  Đơn vị: {im.unitOfMeasure}
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        );
-                                      })
-                                  )}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          </td>
-                          <td className="p-3">
-                            {unitLoading[index] ? (
-                              <div className="text-sm text-gray-500">Đang tải...</div>
-                            ) : item.unitId > 0 && item.unitName ? (
-                              <div className="text-sm font-medium text-slate-700">
-                                {item.unitName}
-                              </div>
-                            ) : item.itemMasterId > 0 ? (
-                              <div className="text-sm text-gray-400">Chưa có đơn vị</div>
-                            ) : (
-                              <div className="text-sm text-gray-400">-</div>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <Input
-                              value={item.lotNumber}
-                              onChange={(e) => updateItemField(index, 'lotNumber', e.target.value)}
-                              placeholder="LOT-2024-001"
-                            />
-                          </td>
-                          <td className="p-3">
-                            <Input
-                              type="number"
-                              min="1"
-                              max="1000000"
-                              value={item.quantity}
-                              onChange={(e) => updateItemField(index, 'quantity', Number(e.target.value))}
-                              placeholder="1"
-                            />
-                          </td>
-                          <td className="p-3">
-                            <Input
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              value={item.purchasePrice}
-                              onChange={(e) => updateItemField(index, 'purchasePrice', Number(e.target.value))}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td className="p-3">
-                            <div className="relative">
-                              <Input
-                                type="date"
-                                value={item.expiryDate}
-                                onChange={(e) => updateItemField(index, 'expiryDate', e.target.value)}
-                                className="pl-10"
-                              />
-                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem(index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Financial Summary */}
-          <div className="rounded-lg p-6 border-2 bg-gray-50 border-gray-300 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-800 shadow-md">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-                    Tổng giá trị phiếu nhập
-                  </Label>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold text-gray-900 tracking-tight">
-                  {totalValue.toLocaleString('vi-VN')}
-                </div>
-                <div className="text-lg font-semibold text-gray-600 mt-1">
-                  VNĐ
+            {/* Important Notes */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="flex-1 text-sm text-blue-900">
+                  <p className="font-semibold mb-2">Lưu ý quan trọng:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Cùng số lô phải có cùng hạn sử dụng</li>
+                    <li>Đơn giá được dùng để tính COGS (Cost of Goods Sold)</li>
+                  </ul>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Ghi chú</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Nhập ghi chú (nếu có)"
-              rows={3}
-            />
-          </div>
-
-          {/* Important Notes */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div className="flex-1 text-sm text-blue-900">
-                <p className="font-semibold mb-2">Lưu ý quan trọng:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Cùng số lô phải có cùng hạn sử dụng</li>
-                  <li>Đơn giá được dùng để tính COGS (Cost of Goods Sold)</li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 pb-6 px-6 border-t flex-shrink-0 bg-white">
             <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>

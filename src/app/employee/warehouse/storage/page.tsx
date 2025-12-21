@@ -12,16 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Eye, Edit, Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
   faDownload,
   faUpload,
   faSearch,
-  faEdit,
-  faTrash,
-  faEye,
   faChevronLeft,
   faChevronRight,
   faSort,
@@ -796,7 +793,7 @@ export default function StorageInOutPage() {
                                       title="Xem chi tiết"
                                       className="h-8 w-8 p-0"
                                     >
-                                      <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                                      <Eye className="h-4 w-4" />
                                     </Button>
                                     <Button
                                       size="sm"
@@ -805,7 +802,7 @@ export default function StorageInOutPage() {
                                       title="Sửa ghi chú"
                                       className="h-8 w-8 p-0"
                                     >
-                                      <FontAwesomeIcon icon={faEdit} className="h-4 w-4 text-orange-600" />
+                                      <Edit className="h-4 w-4" />
                                     </Button>
                                     {/* 
                                 DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
@@ -820,7 +817,7 @@ export default function StorageInOutPage() {
                                 className="h-8 w-8 p-0"
                                 disabled
                               >
-                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-400" />
+                                <Trash2 className="h-4 w-4" />
                               </Button> */}
                                   </div>
                                 </td>

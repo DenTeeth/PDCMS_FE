@@ -61,6 +61,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { clinicalRecordService } from '@/services/clinicalRecordService';
 import { patientService } from '@/services/patientService';
+import { getRoleDisplayName } from '@/utils/roleFormatter';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
@@ -1006,192 +1007,192 @@ export default function EmployeeAppointmentDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b">
                 {/* Appointment Info */}
                 <div className="pr-6 border-r border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Thông tin lịch hẹn
-                  </h3>
-                  {renderActionMenu()}
-                </div>
-                <div className="space-y-4">
-                  {/* Appointment Code và Status cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Mã lịch hẹn</label>
-                      <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Thông tin lịch hẹn
+                    </h3>
+                    {renderActionMenu()}
+                  </div>
+                  <div className="space-y-4">
+                    {/* Appointment Code và Status cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Mã lịch hẹn</label>
+                        <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
+                        <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1 flex items-center">
+                          {canUpdateStatus && getValidNextStatuses(appointment.status).length > 0 ? (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="cursor-pointer hover:opacity-80 transition-opacity">
+                                  {getStatusBadge(appointment.status)}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="start" className="w-56 p-2">
+                                <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                  Thay đổi trạng thái
+                                </p>
+                                <div className="space-y-1">
+                                  {getValidNextStatuses(appointment.status).map((status) => {
+                                    const color = APPOINTMENT_STATUS_COLORS[status];
+                                    return (
+                                      <Button
+                                        key={status}
+                                        variant="ghost"
+                                        className="w-full justify-start gap-2 text-sm h-auto py-2"
+                                        onClick={() => {
+                                          setSelectedStatus(status);
+                                          // Reset form fields
+                                          setStatusUpdateReason('');
+                                          setStatusUpdateNotes('');
+                                          // Show modal
+                                          setShowStatusModal(true);
+                                        }}
+                                      >
+                                        <div
+                                          className="w-3 h-3 rounded-sm shrink-0"
+                                          style={{ backgroundColor: color.bg, borderColor: color.border, borderWidth: 1 }}
+                                        />
+                                        <span>{color.text}</span>
+                                      </Button>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          ) : (
+                            getStatusBadge(appointment.status)
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
-                      <div key={`status-badge-${appointment.status}-${appointment.appointmentCode}`} className="mt-1 flex items-center">
-                        {canUpdateStatus && getValidNextStatuses(appointment.status).length > 0 ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className="cursor-pointer hover:opacity-80 transition-opacity">
-                                {getStatusBadge(appointment.status)}
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent align="start" className="w-56 p-2">
-                              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                                Thay đổi trạng thái
-                              </p>
-                              <div className="space-y-1">
-                                {getValidNextStatuses(appointment.status).map((status) => {
-                                  const color = APPOINTMENT_STATUS_COLORS[status];
-                                  return (
-                                    <Button
-                                      key={status}
-                                      variant="ghost"
-                                      className="w-full justify-start gap-2 text-sm h-auto py-2"
-                                      onClick={() => {
-                                        setSelectedStatus(status);
-                                        // Reset form fields
-                                        setStatusUpdateReason('');
-                                        setStatusUpdateNotes('');
-                                        // Show modal
-                                        setShowStatusModal(true);
-                                      }}
-                                    >
-                                      <div
-                                        className="w-3 h-3 rounded-sm shrink-0"
-                                        style={{ backgroundColor: color.bg, borderColor: color.border, borderWidth: 1 }}
-                                      />
-                                      <span>{color.text}</span>
-                                    </Button>
-                                  );
-                                })}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          getStatusBadge(appointment.status)
+
+                    {/* Expected Duration và Created At cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Thời lượng dự kiến</label>
+                        <p className="text-base mt-1">{appointment.expectedDurationMinutes} phút</p>
+                      </div>
+                      {appointment.createdAt && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
+                          <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Start Time và End Time cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Giờ bắt đầu
+                        </label>
+                        <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
+                        {appointment.actualStartTime && (
+                          <>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ bắt đầu thực tế</label>
+                            <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
+                          </>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Giờ kết thúc
+                        </label>
+                        <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
+                        {appointment.actualEndTime && (
+                          <>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ kết thúc thực tế</label>
+                            <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
+                          </>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Expected Duration và Created At cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Thời lượng dự kiến</label>
-                      <p className="text-base mt-1">{appointment.expectedDurationMinutes} phút</p>
-                    </div>
-                    {appointment.createdAt && (
+                    {/* Notes để riêng vì có thể dài */}
+                    {appointment.notes && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
-                        <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
+                        <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
+                        <p className="text-base mt-1">{appointment.notes}</p>
                       </div>
                     )}
                   </div>
-
-                  {/* Start Time và End Time cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Giờ bắt đầu
-                      </label>
-                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
-                      {appointment.actualStartTime && (
-                        <>
-                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ bắt đầu thực tế</label>
-                          <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Giờ kết thúc
-                      </label>
-                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
-                      {appointment.actualEndTime && (
-                        <>
-                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ kết thúc thực tế</label>
-                          <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Notes để riêng vì có thể dài */}
-                  {appointment.notes && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
-                      <p className="text-base mt-1">{appointment.notes}</p>
-                    </div>
-                  )}
-                </div>
                 </div>
 
                 {/* Doctor & Room Info */}
                 <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <UserCog className="h-5 w-5" />
-                  Bác sĩ & Phòng
-                </h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {appointment.doctor ? (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <UserCog className="h-4 w-4" />
-                          Bác sĩ
-                        </label>
-                        <div className="mt-1">
-                          <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <UserCog className="h-4 w-4" />
-                          Bác sĩ
-                        </label>
-                        <p className="text-base text-muted-foreground mt-1">N/A</p>
-                      </div>
-                    )}
-                    {appointment.room ? (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Building2 className="h-4 w-4" />
-                          Phòng
-                        </label>
-                        <div className="mt-1">
-                          <p className="text-base font-semibold">{appointment.room.roomName}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Building2 className="h-4 w-4" />
-                          Phòng
-                        </label>
-                        <p className="text-base text-muted-foreground mt-1">N/A</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Participants */}
-                  {appointment.participants && appointment.participants.length > 0 && (
-                    <div className="pt-4 border-t">
-                      <label className="text-sm font-medium text-muted-foreground mb-3 block">Người tham gia</label>
-                      <div className="space-y-1.5">
-                        {appointment.participants.map((participant, index) => (
-                          <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{participant.fullName}</p>
-                                <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
-                              </div>
-                              <Badge variant="secondary" className="text-xs shrink-0">{participant.role}</Badge>
-                            </div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <UserCog className="h-5 w-5" />
+                    Bác sĩ & Phòng
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {appointment.doctor ? (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <UserCog className="h-4 w-4" />
+                            Bác sĩ
+                          </label>
+                          <div className="mt-1">
+                            <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
+                            <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <UserCog className="h-4 w-4" />
+                            Bác sĩ
+                          </label>
+                          <p className="text-base text-muted-foreground mt-1">N/A</p>
+                        </div>
+                      )}
+                      {appointment.room ? (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            Phòng
+                          </label>
+                          <div className="mt-1">
+                            <p className="text-base font-semibold">{appointment.room.roomName}</p>
+                            <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            Phòng
+                          </label>
+                          <p className="text-base text-muted-foreground mt-1">N/A</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Participants */}
+                    {appointment.participants && appointment.participants.length > 0 && (
+                      <div className="pt-4 border-t">
+                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Người tham gia</label>
+                        <div className="space-y-1.5">
+                          {appointment.participants.map((participant, index) => (
+                            <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{participant.fullName}</p>
+                                  <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
+                                </div>
+                                <Badge variant="secondary" className="text-xs shrink-0">{getRoleDisplayName(participant.role)}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1287,6 +1288,9 @@ export default function EmployeeAppointmentDetailPage() {
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Người liên hệ khẩn cấp</label>
                         <p className="text-base">{patientDetail.emergencyContactName}</p>
+                        {patientDetail.emergencyContactRelationship && (
+                          <p className="text-sm text-muted-foreground">Mối quan hệ: {patientDetail.emergencyContactRelationship}</p>
+                        )}
                         {patientDetail.emergencyContactPhone && (
                           <p className="text-sm text-muted-foreground mt-1">{patientDetail.emergencyContactPhone}</p>
                         )}
@@ -1497,7 +1501,7 @@ export default function EmployeeAppointmentDetailPage() {
             <div className="space-y-4">
               {/* Reason Code - Required for CANCELLED */}
               {selectedStatus === 'CANCELLED' && (
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="reasonCode">
                     Lý do hủy <span className="text-red-500">*</span>
                   </Label>
@@ -1505,7 +1509,7 @@ export default function EmployeeAppointmentDetailPage() {
                     value={statusUpdateReason || ''}
                     onValueChange={(value) => setStatusUpdateReason(value as AppointmentReasonCode)}
                   >
-                    <SelectTrigger id="reasonCode" className="mt-1">
+                    <SelectTrigger id="reasonCode">
                       <SelectValue placeholder="Chọn lý do hủy" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1523,7 +1527,7 @@ export default function EmployeeAppointmentDetailPage() {
               )}
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="statusNotes">
                   Ghi chú {selectedStatus === 'CANCELLED' ? '(Bắt buộc)' : '(Tùy chọn)'}
                 </Label>
@@ -1532,7 +1536,7 @@ export default function EmployeeAppointmentDetailPage() {
                   value={statusUpdateNotes}
                   onChange={(e) => setStatusUpdateNotes(e.target.value)}
                   placeholder={selectedStatus === 'CANCELLED' ? 'Nhập ghi chú về lý do hủy...' : 'Thêm ghi chú (nếu có)...'}
-                  className="mt-1"
+                  className="resize-none"
                   rows={selectedStatus === 'CANCELLED' ? 4 : 3}
                 />
                 {selectedStatus === 'CANCELLED' && (
@@ -1631,13 +1635,13 @@ export default function EmployeeAppointmentDetailPage() {
               </p>
 
               {/* Reason Code - Required */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="delayReason">Mã lý do <span className="text-red-500">*</span></Label>
                 <Select
                   value={delayReason || ''}
                   onValueChange={(value) => setDelayReason(value as AppointmentReasonCode || '')}
                 >
-                  <SelectTrigger id="delayReason" className="mt-1">
+                  <SelectTrigger id="delayReason">
                     <SelectValue placeholder="Chọn lý do (bắt buộc)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1651,14 +1655,14 @@ export default function EmployeeAppointmentDetailPage() {
               </div>
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="delayNotes">Ghi chú (Tùy chọn)</Label>
                 <Textarea
                   id="delayNotes"
                   value={delayNotes}
                   onChange={(e) => setDelayNotes(e.target.value)}
                   placeholder="Thêm ghi chú bổ sung..."
-                  className="mt-1"
+                  className="resize-none"
                   rows={3}
                 />
               </div>

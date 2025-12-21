@@ -635,17 +635,19 @@ export default function StorageDetailModal({
             {transaction?.status === 'PENDING_APPROVAL' && hasApprovePermission && (
               <>
                 <Button
+                  variant="outline"
                   onClick={handleApprove}
                   disabled={approveMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="text-green-800 hover:bg-green-50 border-green-200"
                 >
                   <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4 mr-2" />
                   {approveMutation.isPending ? 'Đang duyệt...' : 'Duyệt'}
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   onClick={() => setShowRejectDialog(true)}
                   disabled={rejectMutation.isPending}
+                  className="text-red-800 hover:bg-red-50 border-red-200"
                 >
                   <FontAwesomeIcon icon={faTimesCircle} className="w-4 h-4 mr-2" />
                   Từ chối
@@ -659,6 +661,7 @@ export default function StorageDetailModal({
                 variant="outline"
                 onClick={() => setShowCancelDialog(true)}
                 disabled={cancelMutation.isPending}
+                className="text-orange-800 hover:bg-orange-50 border-orange-200"
               >
                 <FontAwesomeIcon icon={faBan} className="w-4 h-4 mr-2" />
                 {cancelMutation.isPending ? 'Đang hủy...' : 'Hủy phiếu'}
@@ -690,7 +693,7 @@ export default function StorageDetailModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="rejectionReason">Lý do từ chối *</Label>
                 <Input
                   id="rejectionReason"
@@ -724,7 +727,7 @@ export default function StorageDetailModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="cancellationReason">Lý do hủy (tùy chọn)</Label>
                 <Input
                   id="cancellationReason"

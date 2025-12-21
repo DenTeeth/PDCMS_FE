@@ -110,28 +110,28 @@ export default function AdminTreatmentPlansPage() {
         searchTerm: filters.searchTerm,
       });
 
-        if (!abortController.signal.aborted && isMounted) {
-          // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
-          // Status is now always accurate from BE - no need for sessionStorage workaround
-          // Use plans directly from API response
-          const plansWithCalculatedStatus = pageResponse.content;
+      if (!abortController.signal.aborted && isMounted) {
+        // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
+        // Status is now always accurate from BE - no need for sessionStorage workaround
+        // Use plans directly from API response
+        const plansWithCalculatedStatus = pageResponse.content;
 
-          // Debug: Log status for each plan to verify BE response
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[TREATMENT PLANS LIST] Loaded plans:', {
-              count: plansWithCalculatedStatus.length,
-              plans: plansWithCalculatedStatus.map(p => ({
-                planCode: p.planCode,
-                planName: p.planName,
-                status: p.status,
-                patientPlanId: p.patientPlanId,
-              })),
-            });
-          }
-
-          setPlans(plansWithCalculatedStatus);
-          setTotalPages(pageResponse.totalPages);
+        // Debug: Log status for each plan to verify BE response
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[TREATMENT PLANS LIST] Loaded plans:', {
+            count: plansWithCalculatedStatus.length,
+            plans: plansWithCalculatedStatus.map(p => ({
+              planCode: p.planCode,
+              planName: p.planName,
+              status: p.status,
+              patientPlanId: p.patientPlanId,
+            })),
+          });
         }
+
+        setPlans(plansWithCalculatedStatus);
+        setTotalPages(pageResponse.totalPages);
+      }
     } catch (error: any) {
       if (error.name === 'AbortError' || abortController.signal.aborted || !isMounted) {
         return;
@@ -171,7 +171,7 @@ export default function AdminTreatmentPlansPage() {
       }
       sessionStorage.removeItem('treatmentPlanDetailViewTime');
     }
-    
+
     loadPlans();
 
     return () => {
@@ -194,7 +194,7 @@ export default function AdminTreatmentPlansPage() {
         const now = Date.now();
         if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
         lastRefetchTime = now;
-        
+
         // Increased delay to ensure BE auto-complete transaction is fully committed
         // BE may need time to update phase/plan status after item completion
         setTimeout(() => {
@@ -211,7 +211,7 @@ export default function AdminTreatmentPlansPage() {
         const now = Date.now();
         if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
         lastRefetchTime = now;
-        
+
         // Delay to ensure navigation is complete and BE status is updated
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
@@ -228,7 +228,7 @@ export default function AdminTreatmentPlansPage() {
         const now = Date.now();
         if (now - lastRefetchTime < REFETCH_COOLDOWN) return;
         lastRefetchTime = now;
-        
+
         setTimeout(() => {
           if (process.env.NODE_ENV === 'development') {
             console.log(' [TREATMENT PLANS LIST] Refetching due to popstate (back/forward) (delay:', REFETCH_DELAY, 'ms)');
@@ -253,7 +253,7 @@ export default function AdminTreatmentPlansPage() {
   const handleFiltersChange = useCallback((newFilters: FiltersType) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
     setCurrentPage(0);
-    
+
     if (newFilters.patientCode !== undefined) {
       const params = new URLSearchParams(searchParams.toString());
       if (newFilters.patientCode) {
@@ -312,6 +312,19 @@ export default function AdminTreatmentPlansPage() {
 
   // Handle create treatment plan
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal]);
+
   const handleCreatePlan = () => {
     // No need to check patientCode - can be selected in modal
     setShowCreateModal(true);

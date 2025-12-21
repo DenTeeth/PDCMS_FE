@@ -102,7 +102,7 @@ export default function ItemFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="categoryId">Danh mục *</Label>
+            <Label htmlFor="categoryId" className="mb-2 block">Danh mục *</Label>
             <Select
               value={formData.categoryId}
               onValueChange={(value: string) => setFormData({ ...formData, categoryId: value })}
@@ -122,7 +122,7 @@ export default function ItemFormModal({
           </div>
 
           <div>
-            <Label htmlFor="name">Tên vật tư *</Label>
+            <Label htmlFor="name" className="mb-2 block">Tên vật tư *</Label>
             <Input
               id="name"
               value={formData.name}
@@ -134,7 +134,7 @@ export default function ItemFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="unitPrice">Đơn giá *</Label>
+              <Label htmlFor="unitPrice" className="mb-2 block">Đơn giá *</Label>
               <Input
                 id="unitPrice"
                 type="number"
@@ -148,7 +148,7 @@ export default function ItemFormModal({
             </div>
 
             <div>
-              <Label htmlFor="unit">Đơn vị tính *</Label>
+              <Label htmlFor="unit" className="mb-2 block">Đơn vị tính *</Label>
               <Select
                 value={formData.unit}
                 onValueChange={(value: string) => setFormData({ ...formData, unit: value as UnitType })}
@@ -169,7 +169,7 @@ export default function ItemFormModal({
           </div>
 
           <div>
-            <Label htmlFor="minStock">Tồn kho tối thiểu</Label>
+            <Label htmlFor="minStock" className="mb-2 block">Tồn kho tối thiểu</Label>
             <Input
               id="minStock"
               type="number"
@@ -183,7 +183,7 @@ export default function ItemFormModal({
 
           {warehouseType === WarehouseType.COLD && (
             <div>
-              <Label htmlFor="expiryDate">Hạn sử dụng *</Label>
+              <Label htmlFor="expiryDate" className="mb-2 block">Hạn sử dụng *</Label>
               <Input
                 id="expiryDate"
                 type="date"

@@ -61,7 +61,7 @@ const CustomSelect = forwardRef<HTMLSelectElement, CustomSelectProps>(
     return (
       <div className="relative" data-select-wrapper>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700">
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -70,7 +70,7 @@ const CustomSelect = forwardRef<HTMLSelectElement, CustomSelectProps>(
           <button
             type="button"
             disabled={props.disabled}
-            className={`relative w-full cursor-default rounded-lg bg-white py-3 pl-3 pr-10 text-left border shadow-sm transition-all duration-200 ease-in-out
+            className={`relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left border shadow-sm transition-all duration-200 ease-in-out
               ${error ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'}
               ${isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''}
               ${props.disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400'}

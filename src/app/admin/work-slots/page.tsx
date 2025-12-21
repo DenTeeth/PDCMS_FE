@@ -68,6 +68,18 @@ export default function WorkSlotsManagementPage() {
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal]);
+
   // ==================== FETCH DATA ====================
   useEffect(() => {
     fetchWorkSlots();
@@ -340,13 +352,13 @@ export default function WorkSlotsManagementPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quản lý slot làm việc</h1>
-            <p className="text-gray-600 mt-1">Quản lý các slot và hạn mức cho nhân viên bán thời gian</p>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý suất làm việc</h1>
+            <p className="text-gray-600 mt-1">Quản lý các suất và hạn mức cho nhân viên bán thời gian</p>
           </div>
           {hasPermission(Permission.MANAGE_WORK_SLOTS) && (
             <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Tạo Suất mới
+              Tạo suất mới
             </Button>
           )}
         </div>
@@ -359,7 +371,7 @@ export default function WorkSlotsManagementPage() {
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5" />
-                Danh sách Suất ({workSlots.length})
+                Danh sách suất ({workSlots.length})
               </CardTitle>
             </div>
           </CardHeader>
@@ -446,10 +458,10 @@ export default function WorkSlotsManagementPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
               <div className="flex-shrink-0 border-b px-6 py-4">
-                <h2 className="text-xl font-bold">Tạo Suất mới</h2>
+                <h2 className="text-xl font-bold">Tạo suất mới</h2>
               </div>
               <form onSubmit={handleCreateWorkSlot} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createWorkShift">Mẫu ca <span className="text-red-500">*</span></Label>
                   <select
                     id="createWorkShift"
@@ -493,7 +505,7 @@ export default function WorkSlotsManagementPage() {
                   <p className="text-muted text-sm mt-2">Chọn một hoặc nhiều thứ trong tuần cho suất làm việc này.</p>
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createQuota">Số lượng cần <span className="text-red-500">*</span></Label>
                   <Input
                     id="createQuota"
@@ -508,7 +520,7 @@ export default function WorkSlotsManagementPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createEffectiveFrom">Ngày bắt đầu <span className="text-red-500">*</span></Label>
                   <Input
                     id="createEffectiveFrom"
@@ -523,7 +535,7 @@ export default function WorkSlotsManagementPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createEffectiveTo">Ngày kết thúc <span className="text-red-500">*</span></Label>
                   <Input
                     id="createEffectiveTo"
@@ -550,13 +562,13 @@ export default function WorkSlotsManagementPage() {
                       resetCreateForm();
                     }}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={creating}>
                     {creating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
+                        Đang tạo...
                       </>
                     ) : (
                       'Lưu'
@@ -571,79 +583,81 @@ export default function WorkSlotsManagementPage() {
         {/* Edit Modal */}
         {showEditModal && editingSlot && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex-shrink-0 border-b px-6 py-4">
-                <h2 className="text-xl font-bold">Chỉnh sửa Suất</h2>
+                <h2 className="text-xl font-bold">Chỉnh sửa suất</h2>
               </div>
-              <form onSubmit={handleUpdateWorkSlot} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-                <div>
-                  <Label>Mẫu ca</Label>
-                  <Input value={editingSlot.workShiftName || getWorkShiftName(editingSlot.workShiftId)} disabled />
-                </div>
+              <div className="overflow-y-auto flex-1 px-6 py-4">
+                <form onSubmit={handleUpdateWorkSlot} className="space-y-4">
+                  <div>
+                    <Label>Mẫu ca</Label>
+                    <Input value={editingSlot.workShiftName || getWorkShiftName(editingSlot.workShiftId)} disabled />
+                  </div>
 
-                <div>
-                  <Label>Thứ trong tuần</Label>
-                  <Input value={getDayOfWeekLabel(editingSlot.dayOfWeek)} disabled />
-                </div>
+                  <div>
+                    <Label>Thứ trong tuần</Label>
+                    <Input value={getDayOfWeekLabel(editingSlot.dayOfWeek)} disabled />
+                  </div>
 
-                <div>
-                  <Label htmlFor="editQuota">Số lượng cần</Label>
-                  <Input
-                    id="editQuota"
-                    type="number"
-                    min={editingSlot.registered}
-                    placeholder="Để trống để giữ nguyên số lượng hiện tại"
-                    value={editFormData.quota || ''}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      quota: e.target.value ? parseInt(e.target.value) : undefined
-                    }))}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Đã đăng ký: {editingSlot.registered} người
-                  </p>
-                </div>
+                  <div>
+                    <Label htmlFor="editQuota">Số lượng cần</Label>
+                    <Input
+                      id="editQuota"
+                      type="number"
+                      min={editingSlot.registered}
+                      placeholder="Để trống để giữ nguyên số lượng hiện tại"
+                      value={editFormData.quota || ''}
+                      onChange={(e) => setEditFormData(prev => ({
+                        ...prev,
+                        quota: e.target.value ? parseInt(e.target.value) : undefined
+                      }))}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Đã đăng ký: {editingSlot.registered} người
+                    </p>
+                  </div>
 
-                <div>
-                  <Label htmlFor="editIsActive">Trạng thái</Label>
-                  <select
-                    id="editIsActive"
-                    value={editFormData.isActive !== undefined ? (editFormData.isActive ? 'true' : 'false') : ''}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      isActive: e.target.value === '' ? undefined : e.target.value === 'true'
-                    }))}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Giữ nguyên trạng thái hiện tại</option>
-                    <option value="true">Đang hoạt động</option>
-                    <option value="false">Không hoạt động</option>
-                  </select>
-                </div>
+                  <div className="pb-20">
+                    <Label htmlFor="editIsActive">Trạng thái</Label>
+                    <select
+                      id="editIsActive"
+                      value={editFormData.isActive !== undefined ? (editFormData.isActive ? 'true' : 'false') : ''}
+                      onChange={(e) => setEditFormData(prev => ({
+                        ...prev,
+                        isActive: e.target.value === '' ? undefined : e.target.value === 'true'
+                      }))}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Giữ nguyên trạng thái hiện tại</option>
+                      <option value="true">Đang hoạt động</option>
+                      <option value="false">Không hoạt động</option>
+                    </select>
+                  </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditingSlot(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={updating}>
-                    {updating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      'Lưu'
-                    )}
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex justify-end gap-2 pt-4 pb-4 sticky bottom-0 bg-white border-t -mx-6 px-6 -mb-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingSlot(null);
+                      }}
+                    >
+                      Hủy
+                    </Button>
+                    <Button type="submit" disabled={updating}>
+                      {updating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        'Lưu'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

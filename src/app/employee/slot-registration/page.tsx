@@ -58,6 +58,7 @@ export default function SlotRegistrationPage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
+  const [selectedWeekDuration, setSelectedWeekDuration] = useState<number>(1);
   const [registerFormData, setRegisterFormData] = useState<{
     effectiveFrom: string;
     effectiveTo?: string;
@@ -79,7 +80,7 @@ export default function SlotRegistrationPage() {
     try {
       setLoading(true);
       const slots = await shiftRegistrationService.getAvailableSlots();
-      console.log(' Available slots:', slots);
+      console.log('📋 Available slots:', slots);
 
       // Fetch details for each slot to get remaining quota
       const detailsMap = new Map<number, SlotDetailsResponse>();
@@ -100,7 +101,7 @@ export default function SlotRegistrationPage() {
         return details && details.overallRemaining > 0;
       });
 
-      console.log(' Filtered available slots:', availableSlotsWithQuota);
+      console.log('✅ Filtered available slots:', availableSlotsWithQuota);
       setAvailableSlots(availableSlotsWithQuota);
       setSlotDetails(detailsMap);
     } catch (error: any) {
@@ -122,7 +123,7 @@ export default function SlotRegistrationPage() {
       };
 
       const response = await shiftRegistrationService.getMyRegistrations(params);
-      console.log(' My registrations:', response);
+      console.log('📋 My registrations:', response);
       // Handle both array and paginated responses
       if (Array.isArray(response)) {
         setMyRegistrations(response);
@@ -140,6 +141,7 @@ export default function SlotRegistrationPage() {
   // ==================== REGISTER SLOT ====================
   const handleRegisterSlot = (slot: AvailableSlot) => {
     setSelectedSlot(slot);
+    setSelectedWeekDuration(1);
     setRegisterFormData({
       effectiveFrom: slot.effectiveFrom, // Use slot's effective from date
       effectiveTo: undefined,
@@ -185,7 +187,7 @@ export default function SlotRegistrationPage() {
         dayOfWeek: registerFormData.dayOfWeek
       };
 
-      console.log('� Registering for slot:', payload);
+      console.log('📤 Registering for slot:', payload);
 
       await shiftRegistrationService.createRegistration(payload);
       toast.success('Successfully registered for the slot!');
@@ -198,7 +200,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error(' Failed to register for slot:', error);
+      console.error('❌ Failed to register for slot:', error);
 
       let errorMessage = 'Failed to register for slot';
       if (error.response?.data?.message) {
@@ -223,7 +225,7 @@ export default function SlotRegistrationPage() {
 
     try {
       setDeleting(true);
-      console.log(' Cancelling registration:', registration.registrationId);
+      console.log('🗑️ Cancelling registration:', registration.registrationId);
 
       await shiftRegistrationService.deleteRegistration(registration.registrationId.toString());
       toast.success('Registration cancelled successfully');
@@ -234,7 +236,7 @@ export default function SlotRegistrationPage() {
         fetchMyRegistrations()
       ]);
     } catch (error: any) {
-      console.error(' Failed to cancel registration:', error);
+      console.error('❌ Failed to cancel registration:', error);
 
       let errorMessage = 'Failed to cancel registration';
       if (error.response?.data?.message) {
@@ -277,6 +279,42 @@ export default function SlotRegistrationPage() {
     return myRegistrations.some(reg => reg.partTimeSlotId === slotId && reg.isActive);
   };
 
+  const calculateWeeksRemaining = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+    return diffWeeks;
+  };
+
+  const generateWeekOptions = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const totalWeeks = calculateWeeksRemaining(startDate, endDate);
+
+    const options = [];
+    for (let i = 1; i <= totalWeeks; i++) {
+      const weekStartDate = new Date(start);
+      weekStartDate.setDate(start.getDate() + (i - 1) * 7);
+
+      const weekEndDate = new Date(weekStartDate);
+      weekEndDate.setDate(weekStartDate.getDate() + 6);
+
+      // Ensure we don't go beyond the slot end date
+      if (weekEndDate > end) {
+        weekEndDate.setTime(end.getTime());
+      }
+
+      options.push({
+        value: format(weekStartDate, 'yyyy-MM-dd'),
+        label: `Tuần ${i} (${format(weekStartDate, 'dd/MM')} - ${format(weekEndDate, 'dd/MM')})`,
+        weeksRemaining: totalWeeks - i + 1
+      });
+    }
+
+    return options;
+  };
+
   const filteredAvailableSlots = availableSlots.filter(slot => {
     if (filterDayOfWeek && slot.dayOfWeek !== filterDayOfWeek) {
       return false;
@@ -291,7 +329,7 @@ export default function SlotRegistrationPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Đăng ký slot làm việc</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Slot Registration</h1>
             <p className="text-gray-600 mt-1">Register for available part-time work slots</p>
           </div>
           <Button onClick={() => {
@@ -337,8 +375,11 @@ export default function SlotRegistrationPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-lg">{slot.shiftName}</h3>
-                          <Badge variant={remaining > 0 ? "default" : "secondary"}>
-                            {remaining} left
+                          <Badge
+                            variant={remaining > 0 ? "default" : "secondary"}
+                            className={remaining > 0 ? "bg-green-600" : ""}
+                          >
+                            {remaining}/{details?.quota || 0} còn lại
                           </Badge>
                         </div>
 
@@ -412,12 +453,12 @@ export default function SlotRegistrationPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-3 font-medium">Mã đăng ký</th>
-                      <th className="text-left p-3 font-medium">Ca làm việc</th>
-                      <th className="text-left p-3 font-medium">Thứ</th>
-                      <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
-                      <th className="text-left p-3 font-medium">Trạng thái</th>
-                      <th className="text-left p-3 font-medium">Thao tác</th>
+                      <th className="text-left p-3 font-medium">Registration ID</th>
+                      <th className="text-left p-3 font-medium">Work Shift</th>
+                      <th className="text-left p-3 font-medium">Day</th>
+                      <th className="text-left p-3 font-medium">Effective Period</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -446,7 +487,7 @@ export default function SlotRegistrationPage() {
                             ) : (
                               <>
                                 <XCircle className="h-3 w-3 mr-1" />
-                                Đã hủy
+                                Cancelled
                               </>
                             )}
                           </Badge>
@@ -481,17 +522,17 @@ export default function SlotRegistrationPage() {
               </div>
               <form onSubmit={handleSubmitRegistration} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <div>
-                  <Label>Ca làm việc</Label>
+                  <Label>Work Shift</Label>
                   <Input value={selectedSlot.shiftName} disabled />
                 </div>
 
                 <div>
-                  <Label>Thứ trong tuần (Slot)</Label>
+                  <Label>Day of Week (Slot)</Label>
                   <Input value={selectedSlot.dayOfWeek} disabled />
                 </div>
 
                 <div>
-                  <Label>Số chỗ còn lại</Label>
+                  <Label>Remaining Spots</Label>
                   <Input value={slotDetails.get(selectedSlot.slotId)?.overallRemaining || 0} disabled />
                 </div>
 
@@ -501,42 +542,87 @@ export default function SlotRegistrationPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="effectiveFrom">
-                    Effective From <span className="text-red-500">*</span>
+                  <Label htmlFor="startWeek">
+                    Chọn tuần bắt đầu <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    id="effectiveFrom"
-                    type="date"
+                  <select
+                    id="startWeek"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={registerFormData.effectiveFrom}
-                    onChange={(e) => setRegisterFormData(prev => ({
-                      ...prev,
-                      effectiveFrom: e.target.value
-                    }))}
-                    min={selectedSlot.effectiveFrom}
-                    max={selectedSlot.effectiveTo}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value;
+                      setRegisterFormData(prev => ({
+                        ...prev,
+                        effectiveFrom: selectedValue
+                      }));
+                    }}
                     required
-                  />
+                  >
+                    <option value="">-- Chọn tuần --</option>
+                    {generateWeekOptions(selectedSlot.effectiveFrom, selectedSlot.effectiveTo).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label} • {option.weeksRemaining} tuần còn lại
+                      </option>
+                    ))}
+                  </select>
                   <p className="text-sm text-gray-500 mt-1">
-                    Valid period: {formatDate(selectedSlot.effectiveFrom)} - {formatDate(selectedSlot.effectiveTo)}
+                    💡 Chọn tuần bắt đầu đăng ký (hệ thống sẽ tự tính tuần kết thúc)
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="effectiveTo">Hiệu lực đến</Label>
-                  <Input
-                    id="effectiveTo"
-                    type="date"
-                    value={registerFormData.effectiveTo || ''}
-                    onChange={(e) => setRegisterFormData(prev => ({
-                      ...prev,
-                      effectiveTo: e.target.value
-                    }))}
-                    min={registerFormData.effectiveFrom || selectedSlot.effectiveFrom}
-                    max={selectedSlot.effectiveTo}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Leave empty to use slot's end date
-                  </p>
+                  <Label htmlFor="weekDuration">
+                    Số tuần đăng ký <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="weekDuration"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedWeekDuration}
+                    onChange={(e) => {
+                      const weeks = parseInt(e.target.value);
+                      setSelectedWeekDuration(weeks);
+
+                      if (registerFormData.effectiveFrom) {
+                        const startDate = new Date(registerFormData.effectiveFrom);
+                        const endDate = new Date(startDate);
+                        endDate.setDate(startDate.getDate() + (weeks * 7) - 1);
+
+                        // Don't exceed slot's end date
+                        const slotEndDate = new Date(selectedSlot.effectiveTo);
+                        if (endDate > slotEndDate) {
+                          endDate.setTime(slotEndDate.getTime());
+                        }
+
+                        setRegisterFormData(prev => ({
+                          ...prev,
+                          effectiveTo: format(endDate, 'yyyy-MM-dd')
+                        }));
+                      }
+                    }}
+                    required
+                    disabled={!registerFormData.effectiveFrom}
+                  >
+                    {registerFormData.effectiveFrom && (() => {
+                      const maxWeeks = calculateWeeksRemaining(
+                        registerFormData.effectiveFrom,
+                        selectedSlot.effectiveTo
+                      );
+                      return Array.from({ length: maxWeeks }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>
+                          {num} tuần ({num === 1 ? '1 tuần' : `${num} tuần`})
+                        </option>
+                      ));
+                    })()}
+                    {!registerFormData.effectiveFrom && (
+                      <option value="">-- Chọn tuần bắt đầu trước --</option>
+                    )}
+                  </select>
+                  {registerFormData.effectiveFrom && registerFormData.effectiveTo && (
+                    <p className="text-sm text-blue-600 font-medium mt-2">
+                      📅 Đăng ký từ {formatDate(registerFormData.effectiveFrom)} đến {formatDate(registerFormData.effectiveTo)}
+                      {' '}({selectedWeekDuration} tuần)
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -587,7 +673,7 @@ export default function SlotRegistrationPage() {
                       setSelectedSlot(null);
                     }}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button type="submit" disabled={registering}>
                     {registering ? (

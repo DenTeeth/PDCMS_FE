@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
   faPlus,
-  faEye,
   faCheck,
   faTimes,
   faBan,
@@ -15,6 +14,7 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -350,7 +350,7 @@ export default function AdminOvertimeRequestsPage() {
       {/* Filters - Bỏ Card */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="search">Tìm kiếm</Label>
             <Input
               id="search"
@@ -360,37 +360,33 @@ export default function AdminOvertimeRequestsPage() {
             />
           </div>
 
-          <div>
-            <CustomSelect
-              label="Nhân viên"
-              value={employeeFilter}
-              onChange={(value: string) => setEmployeeFilter(value)}
-              options={[
-                { value: 'ALL', label: 'Tất cả nhân viên' },
-                ...employees.map((emp) => ({
-                  value: emp.employeeId.toString(),
-                  label: `${emp.fullName} (${emp.employeeCode})`,
-                })),
-              ]}
-            />
-          </div>
+          <CustomSelect
+            label="Nhân viên"
+            value={employeeFilter}
+            onChange={(value: string) => setEmployeeFilter(value)}
+            options={[
+              { value: 'ALL', label: 'Tất cả nhân viên' },
+              ...employees.map((emp) => ({
+                value: emp.employeeId.toString(),
+                label: `${emp.fullName} (${emp.employeeCode})`,
+              })),
+            ]}
+          />
 
-          <div>
-            <CustomSelect
-              label="Trạng thái"
-              value={statusFilter}
-              onChange={(value: string) => setStatusFilter(value as OvertimeStatus | 'ALL')}
-              options={[
-                { value: 'ALL', label: 'Tất cả' },
-                { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
-                { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
-                { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
-                { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
-              ]}
-            />
-          </div>
+          <CustomSelect
+            label="Trạng thái"
+            value={statusFilter}
+            onChange={(value: string) => setStatusFilter(value as OvertimeStatus | 'ALL')}
+            options={[
+              { value: 'ALL', label: 'Tất cả' },
+              { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
+              { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
+              { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
+              { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
+            ]}
+          />
 
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="dateFrom">Từ ngày</Label>
             <Input
               id="dateFrom"
@@ -400,7 +396,7 @@ export default function AdminOvertimeRequestsPage() {
             />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="dateTo">Đến ngày</Label>
             <Input
               id="dateTo"
@@ -462,7 +458,7 @@ export default function AdminOvertimeRequestsPage() {
                             size="sm"
                             onClick={() => router.push(`/admin/overtime-requests/${request.requestId}`)}
                           >
-                            <FontAwesomeIcon icon={faEye} className="mr-1" />
+                            <Eye className="h-4 w-4 mr-1" />
                             Chi tiết
                           </Button>
 
@@ -472,7 +468,7 @@ export default function AdminOvertimeRequestsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  className="text-green-800 hover:bg-green-50 border-green-200"
                                   onClick={() => openStatusModal(request, 'approve')}
                                 >
                                   <FontAwesomeIcon icon={faCheck} className="mr-1" />
@@ -484,7 +480,7 @@ export default function AdminOvertimeRequestsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  className="text-red-800 hover:bg-red-50 border-red-200"
                                   onClick={() => openStatusModal(request, 'reject')}
                                 >
                                   <FontAwesomeIcon icon={faTimes} className="mr-1" />
@@ -542,7 +538,7 @@ export default function AdminOvertimeRequestsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="workDate">Ngày làm việc <span className="text-red-500">*</span></Label>
                   <Input
                     id="workDate"
@@ -567,7 +563,7 @@ export default function AdminOvertimeRequestsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="reason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="reason"

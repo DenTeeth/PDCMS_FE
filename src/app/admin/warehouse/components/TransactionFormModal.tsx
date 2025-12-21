@@ -157,8 +157,8 @@ export default function TransactionFormModal({
             {transaction
               ? 'Chỉnh sửa phiếu'
               : type === TransactionType.IMPORT
-              ? 'Thêm phiếu nhập'
-              : 'Thêm phiếu xuất'}
+                ? 'Thêm phiếu nhập'
+                : 'Thêm phiếu xuất'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             {transaction ? 'Cập nhật thông tin phiếu giao dịch' : type === TransactionType.IMPORT ? 'Tạo phiếu nhập kho mới' : 'Tạo phiếu xuất kho mới'}
@@ -169,7 +169,7 @@ export default function TransactionFormModal({
           <div className="grid grid-cols-2 gap-4">
             {type === TransactionType.IMPORT && (
               <div>
-                <Label htmlFor="supplierId">Nhà cung cấp *</Label>
+                <Label htmlFor="supplierId" className="mb-2 block">Nhà cung cấp *</Label>
                 <Select
                   value={formData.supplierId || ''}
                   onValueChange={(value: string) => setFormData({ ...formData, supplierId: value })}
@@ -190,7 +190,7 @@ export default function TransactionFormModal({
             )}
 
             <div>
-              <Label htmlFor="transactionDate">
+              <Label htmlFor="transactionDate" className="mb-2 block">
                 {type === TransactionType.IMPORT ? 'Ngày nhập' : 'Ngày xuất'} *
               </Label>
               <Input
@@ -320,7 +320,7 @@ export default function TransactionFormModal({
           </div>
 
           <div>
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes" className="mb-2 block">Ghi chú</Label>
             <Textarea
               id="notes"
               value={formData.notes}

@@ -447,7 +447,7 @@ export default function RegistrationsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Đăng kí ca làm</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Đăng ký ca làm</h1>
             <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm bán thời gian và ca cố định</p>
           </div>
           <div className="flex gap-2">
@@ -657,7 +657,7 @@ export default function RegistrationsPage() {
                       </select>
                     </div>
                     <Button variant="outline" onClick={() => setFilterEmployeeId(null)}>
-                  Xoá
+                      Xoá
                     </Button>
                   </div>
                 </CardContent>
@@ -678,7 +678,7 @@ export default function RegistrationsPage() {
                     </div>
                   ) : fixedRegistrations.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                     Không tìm thấy đăng ký ca cố định
+                      Không tìm thấy đăng ký ca cố định
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -698,17 +698,11 @@ export default function RegistrationsPage() {
                           {fixedRegistrations.map((registration) => (
                             <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
                               <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
-                              <td className="p-3">
-                                <div>
-                                  <div className="font-medium">{registration.employeeName}</div>
-                                  <div className="text-sm text-gray-500">ID: {registration.employeeId}</div>
-                                </div>
+                              <td className="p-3 whitespace-nowrap">
+                                <div className="font-medium">{registration.employeeName}</div>
                               </td>
-                              <td className="p-3">
-                                <div>
-                                  <div className="font-medium">{registration.workShiftName}</div>
-                                  <div className="text-sm text-gray-500">{registration.workShiftId}</div>
-                                </div>
+                              <td className="p-3 whitespace-nowrap">
+                                <div className="font-medium">{registration.workShiftName}</div>
                               </td>
                               <td className="p-3">
                                 <Badge variant="outline">
@@ -720,7 +714,7 @@ export default function RegistrationsPage() {
                                 <div>To: {formatDate(registration.effectiveTo)}</div>
                               </td>
                               <td className="p-3">
-                                <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                <Badge className={registration.isActive ? "bg-green-50 text-green-800" : "bg-gray-100 text-gray-800"}>
                                   {registration.isActive ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />
@@ -904,7 +898,7 @@ export default function RegistrationsPage() {
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Tạo đăng ký ca cố định</h2>
               <form onSubmit={handleFixedCreate} className="space-y-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createEmployee">Nhân viên <span className="text-red-500">*</span></Label>
                   <select
                     id="createEmployee"
@@ -920,7 +914,7 @@ export default function RegistrationsPage() {
                         employeeId: e.target.value ? parseInt(e.target.value) : 0
                       }));
                     }}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
                     <option value="0">Chọn nhân viên</option>
@@ -932,7 +926,7 @@ export default function RegistrationsPage() {
                   </select>
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="createWorkShift">Ca làm việc <span className="text-red-500">*</span></Label>
                   <select
                     id="createWorkShift"
@@ -941,7 +935,7 @@ export default function RegistrationsPage() {
                       ...prev,
                       workShiftId: e.target.value
                     }))}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
                     <option value="">Ca làm việc</option>
@@ -982,7 +976,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="createEffectiveFrom"> Hiệu lực từ <span className="text-red-500">*</span></Label>
                     <Input
                       id="createEffectiveFrom"
@@ -995,7 +989,7 @@ export default function RegistrationsPage() {
                       required
                     />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="createEffectiveTo">Hiệu lực đến (Tùy chọn)</Label>
                     <Input
                       id="createEffectiveTo"
@@ -1043,17 +1037,17 @@ export default function RegistrationsPage() {
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Chỉnh sửa đăng ký ca cố định</h2>
               <form onSubmit={handleFixedUpdate} className="space-y-4">
-                <div>
+                <div className="space-y-1">
                   <Label>ID</Label>
                   <Input value={fixedEditingRegistration.registrationId} disabled />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label>Nhân viên</Label>
                   <Input value={fixedEditingRegistration.employeeName} disabled />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="editWorkShift">Ca làm</Label>
                   <select
                     id="editWorkShift"
@@ -1106,7 +1100,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="editEffectiveFrom">Hiệu lực từ</Label>
                     <Input
                       id="editEffectiveFrom"
@@ -1118,7 +1112,7 @@ export default function RegistrationsPage() {
                       }))}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="editEffectiveTo">Hiệu lực đến</Label>
                     <Input
                       id="editEffectiveTo"

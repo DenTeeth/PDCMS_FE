@@ -70,7 +70,7 @@ export default function CategoryFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="name">Tên nhóm *</Label>
             <Input
               id="name"
@@ -81,13 +81,14 @@ export default function CategoryFormModal({
             />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="description">Mô tả</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Nhập mô tả nhóm vật tư"
+              className="resize-none"
               rows={3}
             />
           </div>

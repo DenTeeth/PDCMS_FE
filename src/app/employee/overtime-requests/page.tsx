@@ -13,6 +13,7 @@ import {
   faSearch,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -259,7 +260,7 @@ export default function EmployeeOvertimeRequestsPage() {
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="search">Tìm kiếm</Label>
             <div className="relative">
               <FontAwesomeIcon
@@ -275,20 +276,18 @@ export default function EmployeeOvertimeRequestsPage() {
               />
             </div>
           </div>
-          <div>
-            <CustomSelect
-              label="Trạng thái"
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value as OvertimeStatus | 'ALL')}
-              options={[
-                { value: 'ALL', label: 'Tất cả' },
-                { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
-                { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
-                { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
-                { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
-              ]}
-            />
-          </div>
+          <CustomSelect
+            label="Trạng thái"
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value as OvertimeStatus | 'ALL')}
+            options={[
+              { value: 'ALL', label: 'Tất cả' },
+              { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
+              { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
+              { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
+              { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
+            ]}
+          />
         </div>
       </div>
 
@@ -342,7 +341,7 @@ export default function EmployeeOvertimeRequestsPage() {
                             size="sm"
                             onClick={() => router.push(`/employee/overtime-requests/${request.requestId}`)}
                           >
-                            <FontAwesomeIcon icon={faEye} className="mr-1" />
+                            <Eye className="h-4 w-4 mr-1" />
                             Chi tiết
                           </Button>
 
@@ -390,7 +389,7 @@ export default function EmployeeOvertimeRequestsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="workDate">Ngày làm việc</Label>
                   <Input
                     id="workDate"
@@ -403,7 +402,7 @@ export default function EmployeeOvertimeRequestsPage() {
                   {formData.workDate && hasExistingOvertimeForDate(formData.workDate) && (
                     <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <p className="text-sm text-red-700 font-medium">
-                         Bạn đã có đơn overtime cho ngày này rồi!
+                        Bạn đã có đơn overtime cho ngày này rồi!
                       </p>
                       <p className="text-xs text-red-600 mt-1">
                         Chỉ được gửi 1 đơn overtime cho mỗi ngày. Vui lòng kiểm tra danh sách đơn hiện tại.
@@ -412,7 +411,7 @@ export default function EmployeeOvertimeRequestsPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <CustomSelect
                     label="Ca làm việc"
                     value={formData.workShiftId}
@@ -422,16 +421,19 @@ export default function EmployeeOvertimeRequestsPage() {
                       value: shift.workShiftId,
                       label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`,
                     }))}
+                    required
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="reason">Lý do</Label>
                   <Textarea
                     id="reason"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                     placeholder="Nhập lý do làm thêm giờ..."
+                    className="resize-none"
+                    rows={3}
                     required
                   />
                 </div>
@@ -472,13 +474,15 @@ export default function EmployeeOvertimeRequestsPage() {
                   Yêu cầu: <strong>{selectedRequest.requestId}</strong>
                 </p>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="cancelReason">Lý do <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="cancelReason"
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
                     placeholder="Nhập lý do yêu cầu..."
+                    className="resize-none"
+                    rows={3}
                     required
                   />
                 </div>
