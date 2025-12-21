@@ -55,4 +55,22 @@ public interface PatientPlanItemRepository extends JpaRepository<PatientPlanItem
      */
     @Query("SELECT i FROM PatientPlanItem i WHERE i.phase.patientPhaseId = :phaseId")
     List<PatientPlanItem> findByPhase_PatientPhaseId(@Param("phaseId") Long phaseId);
+    
+    /**
+     * AUTO_SCHEDULE_HOLIDAYS_AND_SPACING: Find items by plan ID and status
+     * Used for auto-scheduling to get all READY_FOR_BOOKING items
+     * 
+     * @param planId Treatment plan ID
+     * @param status Item status to filter
+     * @return List of items matching criteria
+     */
+    @Query("SELECT i FROM PatientPlanItem i " +
+           "JOIN i.phase p " +
+           "JOIN p.treatmentPlan pl " +
+           "WHERE pl.planId = :planId " +
+           "AND i.status = :status " +
+           "ORDER BY p.phaseNumber, i.sequenceNumber")
+    List<PatientPlanItem> findByPlanIdAndStatus(
+            @Param("planId") Long planId,
+            @Param("status") com.dental.clinic.management.treatment_plans.enums.PlanItemStatus status);
 }

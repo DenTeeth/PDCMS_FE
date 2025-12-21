@@ -83,6 +83,9 @@ public class AppointmentCreationService {
         // Notification Service
         private final com.dental.clinic.management.notification.service.NotificationService notificationService;
 
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";
 
@@ -175,7 +178,10 @@ public class AppointmentCreationService {
                 // STEP 5C: Rule #1 - Validate maximum 3-month advance booking
                 validateMaximumAdvanceBooking(startTime);
 
-                // STEP 5D: Rule #5 - Check if patient is blocked from booking
+                // STEP 5D: ISSUE #53 - Validate appointment date is NOT a holiday
+                holidayValidator.validateNotHoliday(startTime.toLocalDate(), "lịch hẹn");
+
+                // STEP 5E: Rule #5 - Check if patient is blocked from booking
                 validatePatientNotBlocked(patient);
 
                 // STEP 6: Validate shifts (doctor and participants have working shifts)
@@ -222,6 +228,11 @@ public class AppointmentCreationService {
                 }
 
                 insertAuditLog(appointment, createdById);
+
+                // Send notification to patient, doctor, and participants
+                log.info("CALLING sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
+                sendAppointmentCreatedNotification(appointment, patient);
+                log.info("FINISHED sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
 
                 log.info("Successfully created appointment: {}", appointment.getAppointmentCode());
 
@@ -981,7 +992,8 @@ public class AppointmentCreationService {
         }
 
         /**
-         * Send notifications to patient, dentist, and participants when appointment is created
+         * Send notifications to patient, dentist, and participants when appointment is
+         * created
          */
         private void sendAppointmentCreatedNotification(Appointment appointment, Patient patient) {
                 try {
@@ -991,21 +1003,26 @@ public class AppointmentCreationService {
                         String formattedTime = appointment.getAppointmentStartTime()
                                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
+                        // Reload patient with account to avoid LazyInitializationException
+                        // Use findOneByPatientCodeWithAccount to eagerly fetch account relationship
+                        Patient patientWithAccount = patientRepository.findOneByPatientCodeWithAccount(patient.getPatientCode())
+                                        .orElse(patient);
+
                         // 1. Send notification to PATIENT
-                        if (patient.getAccount() != null) {
-                                Integer patientUserId = patient.getAccount().getAccountId();
+                        if (patientWithAccount.getAccount() != null) {
+                                Integer patientUserId = patientWithAccount.getAccount().getAccountId();
                                 log.info("Sending notification to PATIENT userId={} for appointment {}",
                                                 patientUserId, appointment.getAppointmentCode());
 
-                                com.dental.clinic.management.notification.dto.CreateNotificationRequest patientNotification = 
-                                        com.dental.clinic.management.notification.dto.CreateNotificationRequest.builder()
+                                com.dental.clinic.management.notification.dto.CreateNotificationRequest patientNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                .builder()
                                                 .userId(patientUserId)
                                                 .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
                                                 .title("Đặt lịch thành công")
                                                 .message(String.format("Cuộc hẹn %s đã được đặt thành công vào %s",
                                                                 appointment.getAppointmentCode(), formattedTime))
                                                 .relatedEntityType(
-                                                        com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                 .build();
 
@@ -1013,10 +1030,37 @@ public class AppointmentCreationService {
                                 log.info("✓ Patient notification created successfully");
                         } else {
                                 log.warn("Patient {} has no account, skipping patient notification",
-                                                patient.getPatientId());
+                                                patientWithAccount.getPatientId());
                         }
 
-                        // 2. Query participants from database (Appointment entity doesn't have @OneToMany relationship)
+                        // 2. Send notification to MAIN DOCTOR (dentist assigned to appointment)
+                        Employee mainDoctor = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
+                        if (mainDoctor != null && mainDoctor.getAccount() != null) {
+                                Integer doctorUserId = mainDoctor.getAccount().getAccountId();
+                                log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
+                                                doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
+
+                                com.dental.clinic.management.notification.dto.CreateNotificationRequest doctorNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                .builder()
+                                                .userId(doctorUserId)
+                                                .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                                .title("Bạn có lịch hẹn mới")
+                                                .message(String.format("Cuộc hẹn %s vào %s - Bệnh nhân: %s",
+                                                                appointment.getAppointmentCode(), formattedTime, patient.getFullName()))
+                                                .relatedEntityType(
+                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                .relatedEntityId(appointment.getAppointmentCode())
+                                                .build();
+
+                                notificationService.createNotification(doctorNotification);
+                                log.info("✓ Main doctor notification created successfully");
+                        } else {
+                                log.warn("Main doctor has no account, skipping doctor notification");
+                        }
+
+                        // 3. Send notifications to ALL PARTICIPANTS (assistants, observers, additional dentists)
+                        // Query participants from repository since they're not loaded in appointment
+                        // entity
                         List<AppointmentParticipant> participants = appointmentParticipantRepository
                                         .findByIdAppointmentId(appointment.getAppointmentId());
 
@@ -1026,19 +1070,27 @@ public class AppointmentCreationService {
 
                                 for (AppointmentParticipant participant : participants) {
                                         try {
-                                                // Get employee from participant
-                                                Employee staff = participant.getEmployee();
-                                                if (staff == null || staff.getAccount() == null) {
+                                                // Get employee from participant (use getEmployee method we added)
+                                                Employee participantEmployee = participant.getEmployee();
+
+                                                if (participantEmployee == null) {
+                                                        log.warn("Participant employeeId={} not loaded, skipping notification",
+                                                                        participant.getId().getEmployeeId());
+                                                        continue;
+                                                }
+
+                                                if (participantEmployee.getAccount() == null) {
                                                         log.warn("Participant employeeId={} has no account, skipping notification",
                                                                         participant.getId().getEmployeeId());
                                                         continue;
                                                 }
 
-                                                Integer staffUserId = staff.getAccount().getAccountId();
-                                                AppointmentParticipantRole role = participant.getRole();
+                                                Integer staffUserId = participantEmployee.getAccount().getAccountId();
+                                                AppointmentParticipantRole role = participant.getRole(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
-                                                                role.name(), staffUserId, appointment.getAppointmentCode());
+                                                                role.name(), staffUserId,
+                                                                appointment.getAppointmentCode());
 
                                                 String title = String.format("Bạn đã được phân công làm %s",
                                                                 getRoleDisplayName(role));
@@ -1047,19 +1099,20 @@ public class AppointmentCreationService {
                                                                 formattedTime,
                                                                 patient.getFullName());
 
-                                                com.dental.clinic.management.notification.dto.CreateNotificationRequest staffNotification = 
-                                                        com.dental.clinic.management.notification.dto.CreateNotificationRequest.builder()
+                                                com.dental.clinic.management.notification.dto.CreateNotificationRequest staffNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                                .builder()
                                                                 .userId(staffUserId)
                                                                 .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
                                                                 .title(title)
                                                                 .message(message)
                                                                 .relatedEntityType(
-                                                                        com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
                                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                                 .build();
 
                                                 notificationService.createNotification(staffNotification);
-                                                log.info("✓ {} notification created for userId={}", role.name(), staffUserId);
+                                                log.info("✓ {} notification created for userId={}", role.name(),
+                                                                staffUserId);
                                         } catch (Exception e) {
                                                 log.error("Failed to send notification to participant employeeId={}: {}",
                                                                 participant.getId().getEmployeeId(), e.getMessage(), e);
@@ -1074,7 +1127,8 @@ public class AppointmentCreationService {
                 } catch (Exception e) {
                         log.error("Failed to send notifications for appointment {}: {}",
                                         appointment.getAppointmentCode(), e.getMessage(), e);
-                        // Don't throw exception - notification failure should not block appointment creation
+                        // Don't throw exception - notification failure should not block appointment
+                        // creation
                 }
         }
 
@@ -1082,16 +1136,10 @@ public class AppointmentCreationService {
          * Get display name for participant role (Vietnamese)
          */
         private String getRoleDisplayName(AppointmentParticipantRole role) {
-                switch (role) {
-                        case ASSISTANT:
-                                return "Trợ lý";
-                        case SECONDARY_DOCTOR:
-                                return "Bác sĩ phụ";
-                        case OBSERVER:
-                                return "Quan sát viên";
-                        default:
-                                return role.name();
+                if (role == AppointmentParticipantRole.ASSISTANT) {
+                        return "Trợ lý";
                 }
+                return role.name();
         }
 
         // ====================================================================
