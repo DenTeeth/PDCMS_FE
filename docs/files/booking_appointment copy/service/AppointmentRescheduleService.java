@@ -60,6 +60,9 @@ public class AppointmentRescheduleService {
         private final PatientPlanItemRepository itemRepository;
         private final EntityManager entityManager;
 
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
         /**
          * Reschedule appointment: Cancel old and create new in one transaction.
          *
@@ -74,6 +77,10 @@ public class AppointmentRescheduleService {
 
                 log.info("Rescheduling appointment {} to new time {}",
                                 oldAppointmentCode, request.getNewStartTime());
+
+                // STEP 0: ISSUE #53 - Validate new date is NOT a holiday (early check)
+                java.time.LocalDate newDate = request.getNewStartTime().toLocalDate();
+                holidayValidator.validateNotHoliday(newDate, "lịch hẹn (reschedule)");
 
                 // STEP 1: Lock old appointment
                 Appointment oldAppointment = appointmentRepository.findByCodeForUpdate(oldAppointmentCode)

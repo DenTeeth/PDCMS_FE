@@ -681,3 +681,249 @@ export const SCHEDULE_WARNING_TYPE_LABELS: Record<ScheduleWarningType, string> =
   [ScheduleWarningType.OTHER]: 'Cảnh báo khác',
 };
 
+/**
+ * ============================================================================
+ * AUTO-SCHEDULE TREATMENT PLANS API
+ * ============================================================================
+ * 
+ * Issue: ISSUE_BE_AUTO_SCHEDULE_TREATMENT_PLANS_WITH_HOLIDAYS
+ * Endpoint: POST /api/v1/treatment-plans/{planId}/auto-schedule
+ * 
+ * Tự động tạo gợi ý lịch hẹn từ treatment plan với xử lý:
+ * - Ngày lễ (tự động dời sang ngày làm việc)
+ * - Spacing rules (preparation, recovery, spacing days)
+ * - Daily limit (tối đa 2 lịch/ngày/bệnh nhân)
+ * - Employee contract validation (Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION)
+ */
+
+/**
+ * Auto-Schedule Request
+ * Request body cho API auto-schedule
+ */
+export interface AutoScheduleRequest {
+  /**
+   * Mã nhân viên (bác sĩ) ưu tiên
+   * Optional - nếu không chỉ định, hệ thống sẽ suggest available doctors
+   */
+  employeeCode?: string;
+
+  /**
+   * Mã phòng khám ưu tiên
+   * Optional - nếu không chỉ định, hệ thống sẽ suggest available rooms
+   */
+  roomCode?: string;
+
+  /**
+   * Khung giờ ưu tiên
+   * Options: "MORNING" (8h-12h), "AFTERNOON" (13h-17h), "EVENING" (17h-20h)
+   * Optional - nếu không chỉ định, suggest tất cả khung giờ
+   */
+  preferredTimeSlots?: ('MORNING' | 'AFTERNOON' | 'EVENING')[];
+
+  /**
+   * Số ngày tối đa để tìm slot (giới hạn 3 tháng)
+   * Default: 90
+   */
+  lookAheadDays?: number;
+
+  /**
+   * Bỏ qua spacing rules (chỉ dùng cho trường hợp khẩn cấp)
+   * Default: false
+   */
+  forceSchedule?: boolean;
+}
+
+/**
+ * Auto-Schedule Response
+ * Response từ API auto-schedule
+ */
+export interface AutoScheduleResponse {
+  /**
+   * ID của treatment plan
+   */
+  planId: number;
+
+  /**
+   * Danh sách gợi ý lịch hẹn
+   */
+  suggestions: AppointmentSuggestion[];
+
+  /**
+   * Tổng số item đã xử lý
+   */
+  totalItemsProcessed: number;
+
+  /**
+   * Số gợi ý thành công
+   */
+  successfulSuggestions: number;
+
+  /**
+   * Số item thất bại (conflicts, no slots, etc.)
+   */
+  failedItems: number;
+
+  /**
+   * Tổng quan về các điều chỉnh
+   */
+  summary: SchedulingSummary;
+}
+
+/**
+ * Appointment Suggestion
+ * Gợi ý lịch hẹn cho một plan item
+ */
+export interface AppointmentSuggestion {
+  /**
+   * ID của plan item
+   */
+  itemId: number;
+
+  /**
+   * Mã dịch vụ
+   */
+  serviceCode: string;
+
+  /**
+   * Tên dịch vụ (Tiếng Việt)
+   */
+  serviceName: string;
+
+  /**
+   * Ngày gợi ý sau khi điều chỉnh
+   */
+  suggestedDate: string; // YYYY-MM-DD
+
+  /**
+   * Ngày dự kiến ban đầu từ treatment plan
+   */
+  originalEstimatedDate: string; // YYYY-MM-DD
+
+  /**
+   * true nếu ngày bị dời do trùng ngày lễ
+   */
+  holidayAdjusted: boolean;
+
+  /**
+   * true nếu ngày bị dời do spacing rules
+   */
+  spacingAdjusted: boolean;
+
+  /**
+   * Lý do điều chỉnh (hiển thị cho user)
+   * Example: "Ngày lễ: Tết Dương lịch", "Yêu cầu 7 ngày hồi phục"
+   */
+  adjustmentReason?: string;
+
+  /**
+   * Các khung giờ trống trong ngày gợi ý
+   */
+  availableSlots: TimeSlot[];
+
+  /**
+   * true nếu tạo gợi ý thành công
+   */
+  success: boolean;
+
+  /**
+   * Thông báo lỗi nếu success = false
+   */
+  errorMessage?: string;
+
+  /**
+   * Warning message nếu employee contract expires before suggested date
+   * Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION
+   */
+  warning?: string;
+
+  /**
+   * true nếu suggestion này cần reassign doctor
+   * Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION
+   */
+  requiresReassign?: boolean;
+
+  /**
+   * Employee contract end date (nếu applicable)
+   * Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION
+   */
+  employeeContractEndDate?: string; // YYYY-MM-DD
+}
+
+/**
+ * Time Slot
+ * Khung giờ trống cho booking
+ */
+export interface TimeSlot {
+  /**
+   * Giờ bắt đầu
+   */
+  startTime: string; // HH:mm
+
+  /**
+   * Giờ kết thúc
+   */
+  endTime: string; // HH:mm
+
+  /**
+   * true nếu slot có sẵn
+   */
+  available: boolean;
+
+  /**
+   * Lý do nếu không available (doctor busy, room occupied, etc.)
+   */
+  unavailableReason?: string;
+}
+
+/**
+ * Scheduling Summary
+ * Tổng quan về các điều chỉnh
+ */
+export interface SchedulingSummary {
+  /**
+   * Số lần điều chỉnh do ngày lễ
+   */
+  holidayAdjustments: number;
+
+  /**
+   * Số lần điều chỉnh do spacing rules
+   */
+  spacingAdjustments: number;
+
+  /**
+   * Số lần điều chỉnh do giới hạn ngày
+   */
+  dailyLimitAdjustments: number;
+
+  /**
+   * Tổng số ngày đã dời
+   */
+  totalDaysShifted: number;
+
+  /**
+   * Danh sách ngày lễ gặp phải
+   */
+  holidaysEncountered: HolidayInfo[];
+}
+
+/**
+ * Holiday Info
+ * Thông tin ngày lễ
+ */
+export interface HolidayInfo {
+  /**
+   * Ngày lễ
+   */
+  date: string; // YYYY-MM-DD
+
+  /**
+   * Tên ngày lễ (Tiếng Việt)
+   */
+  name: string;
+
+  /**
+   * true nếu là ngày lễ định kỳ
+   */
+  recurring: boolean;
+}
+
