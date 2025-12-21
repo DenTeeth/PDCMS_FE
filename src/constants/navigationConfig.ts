@@ -154,6 +154,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SHIFTS_ALL'],
         },
+        {
+          name: 'Ngày lễ',
+          href: '/admin/holidays',
+          icon: faCalendarDays,
+          requiredPermissions: ['VIEW_HOLIDAY'],
+        }
       ],
     },
     {

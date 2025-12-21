@@ -53,7 +53,7 @@ export default function EmployeeDashboard() {
             </h1>
             
             <p className="text-blue-200/80 text-lg max-w-2xl">
-              Chúc bạn một ngày làm việc hiệu quả! Hãy chọn chức năng bên dưới để bắt đầu.
+              Chúc bạn một ngày làm việc hiệu quả! 
             </p>
           </div>
         </div>

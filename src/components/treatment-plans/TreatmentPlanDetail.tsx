@@ -148,8 +148,10 @@ export default function TreatmentPlanDetail({
     suggestions,
     summary,
     isLoading: isAutoScheduling,
+    error: autoScheduleError,
     generateSchedule,
     clearSuggestions,
+    retry: retryAutoSchedule,
     hasWarnings,
     hasReassignRequired,
   } = useAutoSchedule();
@@ -1216,8 +1218,10 @@ export default function TreatmentPlanDetail({
               suggestions={suggestions}
               summary={summary}
               isLoading={isAutoScheduling}
+              error={autoScheduleError}
               onSelectSlot={handleSelectSlot}
               onReassignDoctor={handleReassignDoctor}
+              onRetry={retryAutoSchedule}
             />
           </CardContent>
         </Card>

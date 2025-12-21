@@ -1,7 +1,11 @@
 /**
  * Holiday Service
  * Handles holiday-related API operations
- * Based on BE_4: Treatment Plan Auto-Scheduling
+ * Based on BE Holiday Management API Documentation
+ * 
+ * Reference: docs/message_from_BE/holiday/Holiday_Management_API_Test_Guide.md
+ * 
+ * Note: apiClient already has /api/v1 in baseURL, so we only use relative paths
  */
 
 import { apiClient } from '@/lib/api';
@@ -10,139 +14,198 @@ import {
   HolidayDate,
   HolidayCheckResponse,
   HolidayRangeResponse,
-  NextWorkingDayResponse,
   CreateHolidayDateRequest,
   CreateHolidayDefinitionRequest,
   UpdateHolidayDefinitionRequest,
+  UpdateHolidayDateRequest,
 } from '@/types/holiday';
 
 class HolidayService {
-  private readonly endpoint = '/holidays';
 
   /**
    * Check if a specific date is a holiday
-   * GET /api/holidays/check?date=YYYY-MM-DD
+   * GET /api/v1/holiday-dates/check/{date}
+   * 
+   * BE returns: { isHoliday: true/false }
    */
   async checkHoliday(date: string): Promise<HolidayCheckResponse> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/check`, {
-      params: { date },
-    });
+    const response = await axiosInstance.get(`/holiday-dates/check/${date}`);
     
     return response.data?.data || response.data;
   }
 
   /**
    * Get all holidays in a date range
-   * GET /api/holidays/range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+   * GET /api/v1/holiday-dates/by-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+   * 
+   * BE returns: Array of HolidayDate
    */
-  async getHolidaysInRange(startDate: string, endDate: string): Promise<HolidayRangeResponse> {
+  async getHolidaysInRange(startDate: string, endDate: string): Promise<HolidayDate[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/range`, {
+    const response = await axiosInstance.get(`/holiday-dates/by-range`, {
       params: { startDate, endDate },
     });
     
-    return response.data?.data || response.data;
-  }
-
-  /**
-   * Get next working day after a given date
-   * GET /api/holidays/next-working-day?date=YYYY-MM-DD
-   */
-  async getNextWorkingDay(date: string): Promise<NextWorkingDayResponse> {
-    const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/next-working-day`, {
-      params: { date },
-    });
-    
-    return response.data?.data || response.data;
+    const data = response.data?.data || response.data;
+    // Convert to HolidayRangeResponse format for backward compatibility
+    return Array.isArray(data) ? data : [];
   }
 
   /**
    * Get all holiday definitions
-   * GET /api/holidays/definitions
+   * GET /api/v1/holiday-definitions
+   * Permission Required: VIEW_HOLIDAY
    */
   async getDefinitions(): Promise<HolidayDefinition[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/definitions`);
+    const response = await axiosInstance.get(`/holiday-definitions`);
+    
+    return response.data?.data || response.data;
+  }
+
+  /**
+   * Get holiday definitions by type
+   * GET /api/v1/holiday-definitions/by-type/{holidayType}
+   * 
+   * @param holidayType 'NATIONAL' | 'COMPANY'
+   */
+  async getDefinitionsByType(holidayType: 'NATIONAL' | 'COMPANY'): Promise<HolidayDefinition[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get(`/holiday-definitions/by-type/${holidayType}`);
     
     return response.data?.data || response.data;
   }
 
   /**
    * Get a specific holiday definition
-   * GET /api/holidays/definitions/{definitionId}
+   * GET /api/v1/holiday-definitions/{definitionId}
    */
   async getDefinition(definitionId: string): Promise<HolidayDefinition> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/definitions/${definitionId}`);
+    const response = await axiosInstance.get(`/holiday-definitions/${definitionId}`);
     
     return response.data?.data || response.data;
   }
 
   /**
    * Create a new holiday definition
-   * POST /api/holidays/definitions
+   * POST /api/v1/holiday-definitions
+   * Permission Required: CREATE_HOLIDAY
    */
   async createDefinition(data: CreateHolidayDefinitionRequest): Promise<HolidayDefinition> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post(`${this.endpoint}/definitions`, data);
+    const response = await axiosInstance.post(`/holiday-definitions`, data);
     
     return response.data?.data || response.data;
   }
 
   /**
    * Update a holiday definition
-   * PUT /api/holidays/definitions/{definitionId}
+   * PATCH /api/v1/holiday-definitions/{definitionId}
+   * Permission Required: UPDATE_HOLIDAY
    */
   async updateDefinition(
     definitionId: string,
     data: UpdateHolidayDefinitionRequest
   ): Promise<HolidayDefinition> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.put(`${this.endpoint}/definitions/${definitionId}`, data);
+    const response = await axiosInstance.patch(`/holiday-definitions/${definitionId}`, data);
     
     return response.data?.data || response.data;
   }
 
   /**
-   * Delete a holiday definition
-   * DELETE /api/holidays/definitions/{definitionId}
+   * Delete a holiday definition (Cascade Delete)
+   * DELETE /api/v1/holiday-definitions/{definitionId}
+   * Permission Required: DELETE_HOLIDAY
+   * 
+   * Note: This will also delete all associated holiday dates
    */
   async deleteDefinition(definitionId: string): Promise<void> {
     const axiosInstance = apiClient.getAxiosInstance();
-    await axiosInstance.delete(`${this.endpoint}/definitions/${definitionId}`);
+    await axiosInstance.delete(`/holiday-definitions/${definitionId}`);
+  }
+
+  /**
+   * Get all holiday dates
+   * GET /api/v1/holiday-dates
+   * Permission Required: VIEW_HOLIDAY
+   */
+  async getAllDates(): Promise<HolidayDate[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get(`/holiday-dates`);
+    
+    return response.data?.data || response.data;
   }
 
   /**
    * Get all dates for a specific holiday definition
-   * GET /api/holidays/definitions/{definitionId}/dates
+   * GET /api/v1/holiday-dates/by-definition/{definitionId}
    */
   async getDatesForDefinition(definitionId: string): Promise<HolidayDate[]> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.get(`${this.endpoint}/definitions/${definitionId}/dates`);
+    const response = await axiosInstance.get(`/holiday-dates/by-definition/${definitionId}`);
+    
+    return response.data?.data || response.data;
+  }
+
+  /**
+   * Get a specific holiday date
+   * GET /api/v1/holiday-dates/{holidayDate}/definition/{definitionId}
+   */
+  async getDate(holidayDate: string, definitionId: string): Promise<HolidayDate> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.get(
+      `/holiday-dates/${holidayDate}/definition/${definitionId}`
+    );
     
     return response.data?.data || response.data;
   }
 
   /**
    * Create a new holiday date
-   * POST /api/holidays/dates
+   * POST /api/v1/holiday-dates
+   * Permission Required: CREATE_HOLIDAY
    */
   async createDate(data: CreateHolidayDateRequest): Promise<HolidayDate> {
     const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post(`${this.endpoint}/dates`, data);
+    const response = await axiosInstance.post(`/holiday-dates`, data);
+    
+    return response.data?.data || response.data;
+  }
+
+  /**
+   * Update a holiday date
+   * PATCH /api/v1/holiday-dates/{holidayDate}/definition/{definitionId}
+   * Permission Required: UPDATE_HOLIDAY
+   * 
+   * Important: Must provide ALL fields (holidayDate, definitionId, description)
+   */
+  async updateDate(
+    holidayDate: string,
+    definitionId: string,
+    data: UpdateHolidayDateRequest
+  ): Promise<HolidayDate> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    const response = await axiosInstance.patch(
+      `/holiday-dates/${holidayDate}/definition/${definitionId}`,
+      data
+    );
     
     return response.data?.data || response.data;
   }
 
   /**
    * Delete a holiday date
-   * DELETE /api/holidays/dates/{definitionId}/{date}
+   * DELETE /api/v1/holiday-dates/{holidayDate}/definition/{definitionId}
+   * Permission Required: DELETE_HOLIDAY
    */
-  async deleteDate(definitionId: string, date: string): Promise<void> {
+  async deleteDate(holidayDate: string, definitionId: string): Promise<void> {
     const axiosInstance = apiClient.getAxiosInstance();
-    await axiosInstance.delete(`${this.endpoint}/dates/${definitionId}/${date}`);
+    await axiosInstance.delete(
+      `/holiday-dates/${holidayDate}/definition/${definitionId}`
+    );
   }
 
   /**
@@ -152,7 +215,16 @@ class HolidayService {
   async getHolidaysForYear(year: number): Promise<HolidayRangeResponse> {
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
-    return this.getHolidaysInRange(startDate, endDate);
+    const dates = await this.getHolidaysInRange(startDate, endDate);
+    
+    // Convert to HolidayRangeResponse format
+    return {
+      holidays: dates.map(date => ({
+        date: date.holidayDate,
+        holidayName: date.holidayName || '',
+        definitionId: date.definitionId,
+      })),
+    };
   }
 
   /**
@@ -164,7 +236,11 @@ class HolidayService {
     
     // Batch API calls
     const checks = await Promise.all(
-      dates.map(date => this.checkHoliday(date).catch(() => ({ date, isHoliday: false } as HolidayCheckResponse)))
+      dates.map(date => 
+        this.checkHoliday(date)
+          .then(res => ({ date, isHoliday: res.isHoliday }))
+          .catch(() => ({ date, isHoliday: false }))
+      )
     );
     
     checks.forEach(check => {

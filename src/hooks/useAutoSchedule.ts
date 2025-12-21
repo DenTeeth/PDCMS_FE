@@ -32,9 +32,12 @@ interface UseAutoScheduleReturn {
   // Actions
   generateSchedule: (planId: number, request: AutoScheduleRequest) => Promise<void>;
   clearSuggestions: () => void;
+  retry: () => Promise<void>;
   // Helpers
   hasWarnings: boolean;
   hasReassignRequired: boolean;
+  // Last request for retry
+  lastRequest: { planId: number; request: AutoScheduleRequest } | null;
 }
 
 export const useAutoSchedule = (): UseAutoScheduleReturn => {
@@ -45,6 +48,7 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
   const [totalItemsProcessed, setTotalItemsProcessed] = useState(0);
   const [successfulSuggestions, setSuccessfulSuggestions] = useState(0);
   const [failedItems, setFailedItems] = useState(0);
+  const [lastRequest, setLastRequest] = useState<{ planId: number; request: AutoScheduleRequest } | null>(null);
 
   /**
    * Generate automatic appointment suggestions for a treatment plan
@@ -53,6 +57,9 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
     async (planId: number, request: AutoScheduleRequest) => {
       setIsLoading(true);
       setError(null);
+      
+      // Store last request for retry
+      setLastRequest({ planId, request });
 
       try {
         const response = await TreatmentPlanService.autoSchedule(planId, request);
@@ -120,7 +127,20 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
     setSuccessfulSuggestions(0);
     setFailedItems(0);
     setError(null);
+    setLastRequest(null);
   }, []);
+
+  /**
+   * Retry last failed request
+   */
+  const retry = useCallback(async () => {
+    if (!lastRequest) {
+      toast.error('Không có yêu cầu nào để thử lại');
+      return;
+    }
+    
+    await generateSchedule(lastRequest.planId, lastRequest.request);
+  }, [lastRequest, generateSchedule]);
 
   /**
    * Check if any suggestions have warnings
@@ -142,8 +162,10 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
     failedItems,
     generateSchedule,
     clearSuggestions,
+    retry,
     hasWarnings,
     hasReassignRequired,
+    lastRequest,
   };
 };
 

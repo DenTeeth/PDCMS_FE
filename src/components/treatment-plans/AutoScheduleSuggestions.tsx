@@ -21,7 +21,7 @@ import {
   SchedulingSummary,
   TimeSlot,
 } from '@/types/treatmentPlan';
-import { Calendar, Clock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Clock, AlertTriangle, CheckCircle2, XCircle, UserX, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -30,16 +30,20 @@ interface AutoScheduleSuggestionsProps {
   suggestions: AppointmentSuggestion[];
   summary: SchedulingSummary | null;
   isLoading?: boolean;
+  error?: string | null;
   onSelectSlot?: (suggestion: AppointmentSuggestion, slot: TimeSlot) => void;
   onReassignDoctor?: (suggestion: AppointmentSuggestion) => void;
+  onRetry?: () => void;
 }
 
 export const AutoScheduleSuggestions: React.FC<AutoScheduleSuggestionsProps> = ({
   suggestions,
   summary,
   isLoading = false,
+  error,
   onSelectSlot,
   onReassignDoctor,
+  onRetry,
 }) => {
   if (isLoading) {
     return (
@@ -52,11 +56,30 @@ export const AutoScheduleSuggestions: React.FC<AutoScheduleSuggestionsProps> = (
     );
   }
 
-  if (suggestions.length === 0) {
+  if (suggestions.length === 0 && !error) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
           <p className="text-muted-foreground">Không có gợi ý lịch hẹn nào</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state with retry button
+  if (error && suggestions.length === 0) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="py-12 text-center">
+          <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Lỗi khi tạo gợi ý lịch hẹn</h3>
+          <p className="text-sm text-red-700 mb-4">{error}</p>
+          {onRetry && (
+            <Button onClick={onRetry} variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Thử lại
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -148,6 +171,16 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
   const hasAdjustment = suggestion.holidayAdjusted || suggestion.spacingAdjusted;
   const hasWarning = !!suggestion.warning;
   const requiresReassign = suggestion.requiresReassign === true;
+  
+  // Check if error is related to no doctor shifts
+  const isNoDoctorShiftsError = suggestion.errorMessage?.includes('ca làm việc của bác sĩ') || 
+                                 suggestion.errorMessage?.includes('doctor shifts') ||
+                                 suggestion.adjustmentReason?.includes('ca làm việc của bác sĩ');
+  
+  // Check if no slots available (but not due to no doctor shifts)
+  const hasNoSlots = (!suggestion.availableSlots || suggestion.availableSlots.length === 0) && 
+                     suggestion.success && 
+                     !isNoDoctorShiftsError;
 
   // Format dates
   const suggestedDate = suggestion.suggestedDate
@@ -158,14 +191,39 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
     : 'N/A';
 
   if (!suggestion.success) {
+    // Special styling for "no doctor shifts" error
+    const isNoDoctorShifts = isNoDoctorShiftsError;
+    
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className={cn(
+        'border-red-200 bg-red-50',
+        isNoDoctorShifts && 'border-purple-200 bg-purple-50'
+      )}>
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            {isNoDoctorShifts ? (
+              <UserX className="h-5 w-5 text-purple-600 mt-0.5" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            )}
             <div className="flex-1">
-              <h4 className="font-semibold text-red-900">{suggestion.serviceName}</h4>
-              <p className="text-sm text-red-700 mt-1">{suggestion.errorMessage}</p>
+              <h4 className={cn(
+                'font-semibold',
+                isNoDoctorShifts ? 'text-purple-900' : 'text-red-900'
+              )}>
+                {suggestion.serviceName}
+              </h4>
+              <p className={cn(
+                'text-sm mt-1',
+                isNoDoctorShifts ? 'text-purple-700' : 'text-red-700'
+              )}>
+                {suggestion.errorMessage || suggestion.adjustmentReason}
+              </p>
+              {isNoDoctorShifts && (
+                <p className="text-xs text-purple-600 mt-2">
+                  💡 Gợi ý: Vui lòng chọn bác sĩ khác hoặc kiểm tra lịch làm việc của bác sĩ
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -230,8 +288,18 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
 
         {/* Adjustment Reason */}
         {suggestion.adjustmentReason && (
-          <Alert>
-            <AlertDescription>{suggestion.adjustmentReason}</AlertDescription>
+          <Alert className={isNoDoctorShiftsError ? 'border-purple-200 bg-purple-50' : ''}>
+            {isNoDoctorShiftsError && (
+              <UserX className="h-4 w-4 text-purple-600" />
+            )}
+            <AlertDescription className={isNoDoctorShiftsError ? 'text-purple-800' : ''}>
+              {suggestion.adjustmentReason}
+              {isNoDoctorShiftsError && (
+                <div className="mt-2 text-xs text-purple-600">
+                  💡 Hệ thống đã tìm kiếm trong 30 ngày tới nhưng không tìm thấy ca làm việc của bác sĩ
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -300,11 +368,29 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
           </div>
         )}
 
-        {/* No Slots Available */}
-        {(!suggestion.availableSlots || suggestion.availableSlots.length === 0) && (
+        {/* No Slots Available - Different message based on reason */}
+        {hasNoSlots && (
           <Alert>
+            <Clock className="h-4 w-4" />
+            <AlertTitle>Không có khung giờ trống</AlertTitle>
             <AlertDescription>
-              Không có khung giờ trống trong ngày này. Vui lòng thử ngày khác hoặc chọn bác sĩ khác.
+              {isNoDoctorShiftsError ? (
+                <>
+                  Bác sĩ không có ca làm việc vào ngày này. Vui lòng:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Chọn bác sĩ khác có ca làm việc</li>
+                    <li>Hoặc kiểm tra lại lịch làm việc của bác sĩ</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  Tất cả khung giờ trong ngày này đã được đặt kín. Vui lòng:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Thử ngày khác</li>
+                    <li>Hoặc chọn bác sĩ khác</li>
+                  </ul>
+                </>
+              )}
             </AlertDescription>
           </Alert>
         )}
