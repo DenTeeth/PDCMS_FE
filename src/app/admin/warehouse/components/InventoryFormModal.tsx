@@ -103,18 +103,18 @@ export default function InventoryFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (formData.warehouseType === WarehouseType.COLD && !formData.expiryDate) {
       toast.error('Kho lạnh bắt buộc phải có ngày hết hạn');
       return;
     }
-    
+
     if (formData.stockQuantity <= 0) {
       toast.error('Số lượng tồn kho phải lớn hơn 0');
       return;
     }
-    
+
     setLoading(true);
     try {
       await onSave(formData);
@@ -135,8 +135,8 @@ export default function InventoryFormModal({
             {inventory ? 'Cập nhật thông tin tồn kho vật tư' : 'Thêm vật tư vào tồn kho'}
           </DialogDescription>
           <DialogDescription>
-            {inventory 
-              ? 'Cập nhật thông tin vật tư y tế trong kho' 
+            {inventory
+              ? 'Cập nhật thông tin vật tư y tế trong kho'
               : 'Thêm mới vật tư y tế vào kho'}
           </DialogDescription>
         </DialogHeader>
@@ -145,7 +145,7 @@ export default function InventoryFormModal({
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Label htmlFor="itemName">Tên vật tư *</Label>
+              <Label htmlFor="itemName" className="mb-2 block">Tên vật tư *</Label>
               <Input
                 id="itemName"
                 value={formData.itemName}
@@ -156,7 +156,7 @@ export default function InventoryFormModal({
             </div>
 
             <div>
-              <Label htmlFor="supplierId">Nhà cung cấp *</Label>
+              <Label htmlFor="supplierId" className="mb-2 block">Nhà cung cấp *</Label>
               <select
                 id="supplierId"
                 value={formData.supplierId}
@@ -174,7 +174,7 @@ export default function InventoryFormModal({
             </div>
 
             <div>
-              <Label htmlFor="category">Nhóm vật tư</Label>
+              <Label htmlFor="category" className="mb-2 block">Nhóm vật tư</Label>
               <Input
                 id="category"
                 value={formData.category}
@@ -184,7 +184,7 @@ export default function InventoryFormModal({
             </div>
 
             <div>
-              <Label htmlFor="warehouseType">Loại kho *</Label>
+              <Label htmlFor="warehouseType" className="mb-2 block">Loại kho *</Label>
               <select
                 id="warehouseType"
                 value={formData.warehouseType}
@@ -198,7 +198,7 @@ export default function InventoryFormModal({
             </div>
 
             <div>
-              <Label htmlFor="unitOfMeasure">Đơn vị tính *</Label>
+              <Label htmlFor="unitOfMeasure" className="mb-2 block">Đơn vị tính *</Label>
               <select
                 id="unitOfMeasure"
                 value={formData.unitOfMeasure}
@@ -221,7 +221,7 @@ export default function InventoryFormModal({
             <h3 className="font-semibold text-sm mb-3">Giá & Tồn kho</h3>
             <div className="grid grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="unitPrice">Đơn giá *</Label>
+                <Label htmlFor="unitPrice" className="mb-2 block">Đơn giá *</Label>
                 <Input
                   id="unitPrice"
                   type="number"
@@ -234,7 +234,7 @@ export default function InventoryFormModal({
               </div>
 
               <div>
-                <Label htmlFor="stockQuantity">Số lượng *</Label>
+                <Label htmlFor="stockQuantity" className="mb-2 block">Số lượng *</Label>
                 <Input
                   id="stockQuantity"
                   type="number"
@@ -247,7 +247,7 @@ export default function InventoryFormModal({
               </div>
 
               <div>
-                <Label htmlFor="minStockLevel">Tồn tối thiểu</Label>
+                <Label htmlFor="minStockLevel" className="mb-2 block">Tồn tối thiểu</Label>
                 <Input
                   id="minStockLevel"
                   type="number"
@@ -259,7 +259,7 @@ export default function InventoryFormModal({
               </div>
 
               <div>
-                <Label htmlFor="maxStockLevel">Tồn tối đa</Label>
+                <Label htmlFor="maxStockLevel" className="mb-2 block">Tồn tối đa</Label>
                 <Input
                   id="maxStockLevel"
                   type="number"
@@ -277,7 +277,7 @@ export default function InventoryFormModal({
             <h3 className="font-semibold text-sm mb-3">Hạn sử dụng & Chứng nhận</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="expiryDate">
+                <Label htmlFor="expiryDate" className="mb-2 block">
                   Hạn sử dụng {formData.warehouseType === WarehouseType.COLD && '*'}
                 </Label>
                 <Input
@@ -290,7 +290,7 @@ export default function InventoryFormModal({
               </div>
 
               <div>
-                <Label htmlFor="certificationDate">Ngày chứng nhận</Label>
+                <Label htmlFor="certificationDate" className="mb-2 block">Ngày chứng nhận</Label>
                 <Input
                   id="certificationDate"
                   type="date"
@@ -300,7 +300,7 @@ export default function InventoryFormModal({
               </div>
 
               <div>
-                <Label htmlFor="status">Trạng thái *</Label>
+                <Label htmlFor="status" className="mb-2 block">Trạng thái *</Label>
                 <select
                   id="status"
                   value={formData.status}
@@ -331,7 +331,7 @@ export default function InventoryFormModal({
 
           {/* Notes */}
           <div className="border-t pt-4 mt-4">
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes" className="mb-2 block">Ghi chú</Label>
             <Textarea
               id="notes"
               value={formData.notes}

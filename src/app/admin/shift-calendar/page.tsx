@@ -97,6 +97,18 @@ export default function AdminShiftCalendarPage() {
   console.log('Admin permissions:', user?.permissions);
   console.log('Can view all:', canViewAll);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showDetailModal || showCreateModal || showUpdateModal || showDeleteModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showDetailModal, showCreateModal, showUpdateModal, showDeleteModal]);
+
   // Load data
   useEffect(() => {
     loadData();
@@ -1011,7 +1023,7 @@ export default function AdminShiftCalendarPage() {
 
             <div className="space-y-4">
               {/* Employee Selection */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="employee-select" className="text-sm font-medium text-gray-700">
                   Nhân viên <span className="text-red-500">*</span>
                 </Label>
@@ -1031,7 +1043,7 @@ export default function AdminShiftCalendarPage() {
               </div>
 
               {/* Work Date */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="work-date" className="text-sm font-medium text-gray-700">
                   Ngày làm việc <span className="text-red-500">*</span>
                 </Label>
@@ -1045,7 +1057,7 @@ export default function AdminShiftCalendarPage() {
               </div>
 
               {/* Work Shift */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="work-shift-select" className="text-sm font-medium text-gray-700">
                   Mẫu ca <span className="text-red-500">*</span>
                 </Label>
@@ -1065,7 +1077,7 @@ export default function AdminShiftCalendarPage() {
               </div>
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="notes" className="text-sm font-medium text-gray-700">
                   Ghi chú
                 </Label>
@@ -1074,7 +1086,7 @@ export default function AdminShiftCalendarPage() {
                   value={createForm.notes}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-none"
                   placeholder="Nhập ghi chú (không bắt buộc)"
                 />
               </div>
@@ -1106,7 +1118,7 @@ export default function AdminShiftCalendarPage() {
 
             <div className="space-y-4">
               {/* Status */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-status" className="text-sm font-medium text-gray-700">
                   Trạng thái
                 </Label>
@@ -1125,7 +1137,7 @@ export default function AdminShiftCalendarPage() {
               </div>
 
               {/* Notes */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-notes" className="text-sm font-medium text-gray-700">
                   Ghi chú
                 </Label>
@@ -1134,7 +1146,7 @@ export default function AdminShiftCalendarPage() {
                   value={updateForm.notes}
                   onChange={(e) => setUpdateForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                   placeholder="Nhập ghi chú cập nhật"
                 />
               </div>

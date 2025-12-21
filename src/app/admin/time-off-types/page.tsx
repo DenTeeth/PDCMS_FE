@@ -112,6 +112,18 @@ export default function AdminTimeOffTypesPage() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showEditModal || showToggleModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal, showToggleModal]);
+
   useEffect(() => {
     if (canView) {
       loadTimeOffTypes();
@@ -663,7 +675,7 @@ export default function AdminTimeOffTypesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Badge className={type.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      <Badge className={type.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
                         {type.isActive ? 'Hoạt động' : 'Vô hiệu'}
                       </Badge>
                     </td>
@@ -718,7 +730,7 @@ export default function AdminTimeOffTypesPage() {
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="typeCode">Mã loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="typeCode"
@@ -736,7 +748,7 @@ export default function AdminTimeOffTypesPage() {
                   <p className="text-xs text-gray-500 mt-1">Chỉ chữ in hoa, số và gạch dưới</p>
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="typeName">Tên loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="typeName"
@@ -754,7 +766,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="description">Mô tả <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="description"
@@ -773,7 +785,7 @@ export default function AdminTimeOffTypesPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="defaultDays">
                     Ngày mặc định/năm
                     {!formData.requiresBalance && (
@@ -889,7 +901,7 @@ export default function AdminTimeOffTypesPage() {
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6 space-y-4">{/* Scrollable content */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="edit-typeCode">Mã loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-typeCode"
@@ -906,7 +918,7 @@ export default function AdminTimeOffTypesPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="edit-typeName">Tên loại <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-typeName"
@@ -924,7 +936,7 @@ export default function AdminTimeOffTypesPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="edit-description">Mô tả <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="edit-description"
@@ -943,7 +955,7 @@ export default function AdminTimeOffTypesPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="edit-defaultDays">
                     Ngày mặc định/năm
                     {!formData.requiresBalance && (

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import {
   Clock,
   Plus,
-  Pencil,
+  Edit,
   Trash2,
   X,
   AlertTriangle,
@@ -179,6 +179,18 @@ export default function WorkShiftsPage() {
 
   const [editFormData, setEditFormData] = useState<UpdateWorkShiftRequest>({});
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (isCreateModalOpen || isEditModalOpen || isDeleteModalOpen || isReactivateModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isCreateModalOpen, isEditModalOpen, isDeleteModalOpen, isReactivateModalOpen]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -303,7 +315,7 @@ export default function WorkShiftsPage() {
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-green-100 text-green-800">Đang hoạt động</Badge>
+      <Badge className="bg-green-50 text-green-800">Đang hoạt động</Badge>
     ) : (
       <Badge className="bg-gray-100 text-gray-800">Không hoạt động</Badge>
     );
@@ -682,15 +694,13 @@ export default function WorkShiftsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => openEditModal(shift)}
-                              className="hover:bg-gray-100"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => openDeleteModal(shift)}
-                              className="hover:bg-red-50 text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -743,7 +753,7 @@ export default function WorkShiftsPage() {
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
-            <CardHeader className="border-b flex-shrink-0">
+            <CardHeader className="border-b flex-shrink-0 pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle>Tạo ca làm mới</CardTitle>
                 <Button
@@ -757,9 +767,9 @@ export default function WorkShiftsPage() {
             </CardHeader>
             <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleCreateSubmit}>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <Label htmlFor="shiftName">
+                    <Label htmlFor="shiftName" className="mb-2 block">
                       Tên ca làm <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -775,7 +785,7 @@ export default function WorkShiftsPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="startTime">
+                      <Label htmlFor="startTime" className="mb-2 block">
                         Giờ bắt đầu <span className="text-red-500">*</span>
                       </Label>
                       <TimePicker
@@ -787,7 +797,7 @@ export default function WorkShiftsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="endTime">
+                      <Label htmlFor="endTime" className="mb-2 block">
                         Giờ kết thúc <span className="text-red-500">*</span>
                       </Label>
                       <TimePicker

@@ -55,6 +55,18 @@ export default function AdminTreatmentPlanDetailPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const handleErrorRef = useRef(handleError);
 
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showAppointmentModal || showBookFromPlanModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAppointmentModal, showBookFromPlanModal]);
+
   // Update handleError ref when it changes
   useEffect(() => {
     handleErrorRef.current = handleError;

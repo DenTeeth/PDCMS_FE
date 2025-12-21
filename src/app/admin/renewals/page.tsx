@@ -30,12 +30,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Clock, 
-  Calendar, 
-  CheckCircle, 
-  XCircle, 
-  Loader2, 
+import {
+  Clock,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Loader2,
   RotateCcw,
   AlertCircle,
   Info,
@@ -103,18 +103,18 @@ export default function AdminRenewalsPage() {
   const { user, hasPermission } = useAuth();
 
   // ==================== STATE MANAGEMENT ====================
-  
+
   /**
    * Danh sách TẤT CẢ renewal requests (tất cả status)
    * Admin có thể xem renewals của tất cả nhân viên
    */
   const [allRenewals, setAllRenewals] = useState<ShiftRenewal[]>([]);
-  
+
   /**
    * Loading state
    */
   const [loading, setLoading] = useState(true);
-  
+
   /**
    * Danh sách employees (để filter)
    */
@@ -236,7 +236,7 @@ export default function AdminRenewalsPage() {
         size: 1000,
         isActive: true
       });
-      
+
       const employeeList = response.content || [];
       setEmployees(employeeList);
     } catch (error: any) {
@@ -270,7 +270,7 @@ export default function AdminRenewalsPage() {
     }
 
     setSelectedRenewal(renewal);
-    
+
     // Set default date: old effective_to + 1 năm
     try {
       const oldDate = parseISO(renewal.effectiveTo);
@@ -279,7 +279,7 @@ export default function AdminRenewalsPage() {
     } catch {
       setNewEffectiveTo('');
     }
-    
+
     setShowFinalizeModal(true);
   };
 
@@ -312,7 +312,7 @@ export default function AdminRenewalsPage() {
     try {
       const oldDate = parseISO(selectedRenewal.effectiveTo);
       const newDate = parseISO(newEffectiveTo);
-      
+
       if (newDate <= oldDate) {
         toast.error('Ngày hết hạn mới phải sau ngày hết hạn cũ');
         return;
@@ -486,7 +486,7 @@ export default function AdminRenewalsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="statusFilter">Trạng thái</Label>
                 <select
                   id="statusFilter"
@@ -502,7 +502,7 @@ export default function AdminRenewalsPage() {
                   <option value={RenewalStatus.EXPIRED}>Đã quá hạn</option>
                 </select>
               </div>
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="employeeFilter">Nhân viên</Label>
                 <select
                   id="employeeFilter"
@@ -633,7 +633,7 @@ export default function AdminRenewalsPage() {
 
               {/* Date picker */}
               <div className="mb-4">
-                <Label htmlFor="newEffectiveTo" className="text-sm font-medium">
+                <Label htmlFor="newEffectiveTo" className="text-sm font-medium mb-2 block">
                   Ngày hết hạn mới <span className="text-red-500">*</span>
                 </Label>
                 <Input

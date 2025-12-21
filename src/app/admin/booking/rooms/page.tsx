@@ -552,7 +552,6 @@ export default function BookingRoomsPage() {
                 e.stopPropagation();
                 handleEditClick(room);
               }}
-              className="hover:bg-gray-100"
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
@@ -566,7 +565,6 @@ export default function BookingRoomsPage() {
                 e.stopPropagation();
                 handleDeleteClick(room);
               }}
-              className="hover:bg-red-50 text-red-600"
               title="Vô hiệu hóa"
             >
               <Trash2 className="h-4 w-4" />
@@ -802,7 +800,7 @@ export default function BookingRoomsPage() {
 
             <div className="space-y-4">
               {/* Room Code */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="create-room-code">Mã phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-code"
@@ -814,7 +812,7 @@ export default function BookingRoomsPage() {
               </div>
 
               {/* Room Name */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="create-room-name">Tên phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="create-room-name"
@@ -826,13 +824,13 @@ export default function BookingRoomsPage() {
               </div>
 
               {/* Room Type */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="create-room-type">Loại phòng <span className="text-red-500">*</span></Label>
                 <Select
                   value={createForm.roomType}
                   onValueChange={(value) => setCreateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
                 >
-                  <SelectTrigger id="create-room-type" className="mt-1">
+                  <SelectTrigger id="create-room-type">
                     <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
                   <SelectContent align="start">
@@ -884,7 +882,7 @@ export default function BookingRoomsPage() {
 
             <div className="space-y-4">
               {/* Room Code */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-room-code">Mã phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-code"
@@ -896,7 +894,7 @@ export default function BookingRoomsPage() {
               </div>
 
               {/* Room Name */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-room-name">Tên phòng <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-room-name"
@@ -908,13 +906,13 @@ export default function BookingRoomsPage() {
               </div>
 
               {/* Room Type */}
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-room-type">Loại phòng <span className="text-red-500">*</span></Label>
                 <Select
                   value={updateForm.roomType}
                   onValueChange={(value) => setUpdateForm(prev => ({ ...prev, roomType: value as RoomType | '' }))}
                 >
-                  <SelectTrigger id="update-room-type" className="mt-1">
+                  <SelectTrigger id="update-room-type">
                     <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
                   <SelectContent align="start">

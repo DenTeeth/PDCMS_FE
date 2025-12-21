@@ -8,7 +8,6 @@ import {
   faCheck,
   faTimes,
   faBan,
-  faEye,
   faCalendarAlt,
   faUser,
   faClock,
@@ -18,6 +17,7 @@ import {
   faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,6 +100,18 @@ export default function AdminTimeOffRequestsPage() {
     slotId: null,
     reason: ''
   });
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showViewModal || showApproveModal || showRejectModal || showCancelModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showViewModal, showApproveModal, showRejectModal, showCancelModal]);
 
   useEffect(() => {
     loadData();
@@ -549,8 +561,8 @@ export default function AdminTimeOffRequestsPage() {
               }`}
           >
             <FontAwesomeIcon icon={faWallet} className="h-4 w-4" />
-                Số dư nghỉ phép
-            </button>
+            Số dư nghỉ phép
+          </button>
         </div>
       </div>
 
@@ -625,38 +637,34 @@ export default function AdminTimeOffRequestsPage() {
               </div>
 
               {canViewAll && (
-                <div>
-                  <CustomSelect
-                    label="Nhân viên"
-                    value={employeeFilter}
-                    onChange={(value: string) => setEmployeeFilter(value)}
-                    options={[
-                      { value: 'ALL', label: 'Tất cả nhân viên' },
-                      ...employees.map(emp => ({
-                        value: emp.employeeId.toString(),
-                        label: `${emp.lastName} ${emp.firstName}`
-                      }))
-                    ]}
-                  />
-                </div>
-              )}
-
-              <div>
                 <CustomSelect
-                  label="Trạng thái"
-                  value={statusFilter}
-                  onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                  label="Nhân viên"
+                  value={employeeFilter}
+                  onChange={(value: string) => setEmployeeFilter(value)}
                   options={[
-                    { value: 'ALL', label: 'Tất cả' },
-                    { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                    { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                    { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                    { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+                    { value: 'ALL', label: 'Tất cả nhân viên' },
+                    ...employees.map(emp => ({
+                      value: emp.employeeId.toString(),
+                      label: `${emp.lastName} ${emp.firstName}`
+                    }))
                   ]}
                 />
-              </div>
+              )}
 
-              <div>
+              <CustomSelect
+                label="Trạng thái"
+                value={statusFilter}
+                onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                options={[
+                  { value: 'ALL', label: 'Tất cả' },
+                  { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                  { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                  { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                  { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+                ]}
+              />
+
+              <div className="space-y-1">
                 <Label htmlFor="dateFrom">Từ ngày</Label>
                 <Input
                   id="dateFrom"
@@ -666,7 +674,7 @@ export default function AdminTimeOffRequestsPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="dateTo">Đến ngày</Label>
                 <Input
                   id="dateTo"
@@ -760,7 +768,7 @@ export default function AdminTimeOffRequestsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openApproveModal(request)}
-                                className="text-green-600 hover:bg-green-50 border-green-300"
+                                className="text-green-800 hover:bg-green-50 border-green-200"
                               >
                                 <FontAwesomeIcon icon={faCheck} className="h-4 w-4 mr-1" />
                                 Duyệt
@@ -772,7 +780,7 @@ export default function AdminTimeOffRequestsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openRejectModal(request)}
-                                className="text-red-600 hover:bg-red-50 border-red-300"
+                                className="text-red-800 hover:bg-red-50 border-red-200"
                               >
                                 <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-1" />
                                 Từ chối
@@ -784,7 +792,7 @@ export default function AdminTimeOffRequestsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openCancelModal(request)}
-                                className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                                className="text-orange-800 hover:bg-orange-50 border-orange-200"
                               >
                                 <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
                                 Hủy
@@ -797,7 +805,7 @@ export default function AdminTimeOffRequestsPage() {
                             size="sm"
                             onClick={() => openViewModal(request)}
                           >
-                            <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
+                            <Eye className="h-4 w-4 mr-1" />
                             Xem
                           </Button>
                         )}
@@ -820,34 +828,30 @@ export default function AdminTimeOffRequestsPage() {
                 <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {canViewAll && (
-                      <div>
-                        <CustomSelect
-                          label="Nhân viên"
-                          value={createForm.employeeId?.toString() || ''}
-                          onChange={(value: string) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
-                          options={employees?.map(emp => ({
-                            value: emp.employeeId.toString(),
-                            label: `${emp.fullName} (${emp.employeeCode})`
-                          })) || []}
-                          required
-                        />
-                      </div>
-                    )}
-
-                    <div>
                       <CustomSelect
-                        label="Loại nghỉ phép"
-                        value={createForm.timeOffTypeId}
-                        onChange={(value: string) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
-                        options={timeOffTypes?.filter(type => type.isActive).map(type => ({
-                          value: type.typeId,
-                          label: type.typeName
+                        label="Nhân viên"
+                        value={createForm.employeeId?.toString() || ''}
+                        onChange={(value: string) => setCreateForm(prev => ({ ...prev, employeeId: parseInt(value) }))}
+                        options={employees?.map(emp => ({
+                          value: emp.employeeId.toString(),
+                          label: `${emp.fullName} (${emp.employeeCode})`
                         })) || []}
                         required
                       />
-                    </div>
+                    )}
 
-                    <div>
+                    <CustomSelect
+                      label="Loại nghỉ phép"
+                      value={createForm.timeOffTypeId}
+                      onChange={(value: string) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
+                      options={timeOffTypes?.filter(type => type.isActive).map(type => ({
+                        value: type.typeId,
+                        label: type.typeName
+                      })) || []}
+                      required
+                    />
+
+                    <div className="space-y-1">
                       <Label htmlFor="startDate">Ngày bắt đầu <span className="text-red-500">*</span></Label>
                       <Input
                         id="startDate"
@@ -865,7 +869,7 @@ export default function AdminTimeOffRequestsPage() {
                       />
                     </div>
 
-                    <div>
+                    <div className="space-y-1">
                       <Label htmlFor="endDate">Ngày kết thúc <span className="text-red-500">*</span></Label>
                       <Input
                         id="endDate"
@@ -877,7 +881,7 @@ export default function AdminTimeOffRequestsPage() {
                       />
                     </div>
 
-                    <div className={canViewAll ? '' : 'md:col-span-2'}>
+                    <div className={`space-y-1 ${canViewAll ? '' : 'md:col-span-2'}`}>
                       <CustomSelect
                         label="Ca nghỉ (tùy chọn)"
                         value={createForm.slotId || ''}
@@ -898,13 +902,13 @@ export default function AdminTimeOffRequestsPage() {
                           }))
                         ]}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500">
                         {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
                       </p>
                     </div>
                   </div>
 
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="reason">Lý do nghỉ phép <span className="text-red-500">*</span></Label>
                     <Textarea
                       id="reason"

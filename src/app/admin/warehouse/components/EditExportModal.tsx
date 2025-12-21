@@ -50,7 +50,7 @@ export default function EditExportModal({
     if (transaction && isOpen) {
       setTransactionDate(transaction.transactionDate?.split('T')[0] || '');
       setNotes(transaction.notes || '');
-      
+
       // Map transaction items to edit items
       setItems(transaction.items.map(item => ({
         batch_id: item.transactionItemId || 0, // Assuming batch_id is stored somewhere
@@ -70,7 +70,7 @@ export default function EditExportModal({
     const txnDate = new Date(transaction.transactionDate);
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - txnDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysDiff > 30) {
       toast.error('Không thể sửa phiếu xuất quá 30 ngày!');
       return;
@@ -94,14 +94,14 @@ export default function EditExportModal({
       // TODO: Call API to update full export transaction
       // Currently backend only supports updateNotes
       await storageService.updateNotes(transactionId, notes);
-      
+
       toast.success('Cập nhật phiếu xuất thành công!');
       toast.warning('Lưu ý: Hiện tại chỉ cập nhật được ghi chú. Vui lòng liên hệ IT để cập nhật items.');
-      
+
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      
+
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật phiếu xuất!');
@@ -178,7 +178,7 @@ export default function EditExportModal({
             {/* Header Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="transaction_date">Ngày xuất</Label>
+                <Label htmlFor="transaction_date" className="mb-2 block">Ngày xuất</Label>
                 <div className="relative">
                   <Input
                     id="transaction_date"
@@ -198,7 +198,7 @@ export default function EditExportModal({
             {/* Items List */}
             <div>
               <Label className="text-base font-semibold mb-4 block">Danh sách vật tư</Label>
-              
+
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -272,7 +272,7 @@ export default function EditExportModal({
 
             {/* Notes */}
             <div>
-              <Label htmlFor="notes">Ghi chú</Label>
+              <Label htmlFor="notes" className="mb-2 block">Ghi chú</Label>
               <Textarea
                 id="notes"
                 value={notes}

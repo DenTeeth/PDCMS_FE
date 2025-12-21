@@ -325,8 +325,8 @@ export default function CreateAppointmentModal({
                                             key={service.id}
                                             onClick={() => setValue('serviceId', service.id)}
                                             className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${selectedServiceId === service.id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <div className="font-medium">{service.name}</div>
@@ -349,7 +349,7 @@ export default function CreateAppointmentModal({
                     {/* Step 3: Select Date & Time */}
                     {step === 3 && (
                         <div className="space-y-4">
-                            <div>
+                            <div className="space-y-1">
                                 <Label htmlFor="appointmentDate">Chọn ngày</Label>
                                 <Input
                                     id="appointmentDate"
@@ -425,24 +425,24 @@ export default function CreateAppointmentModal({
                     {/* Step 5: Add Notes */}
                     {step === 5 && (
                         <div className="space-y-4">
-                            <div>
+                            <div className="space-y-1">
                                 <Label htmlFor="reasonForVisit">Lý do khám (Tùy chọn)</Label>
                                 <Textarea
                                     id="reasonForVisit"
                                     placeholder="Ví dụ: Đau răng, Khám định kỳ..."
                                     {...register('reasonForVisit')}
                                     rows={3}
-                                    className="mt-1"
+                                    className="resize-none"
                                 />
                             </div>
-                            <div>
+                            <div className="space-y-1">
                                 <Label htmlFor="notes">Ghi chú bổ sung (Tùy chọn)</Label>
                                 <Textarea
                                     id="notes"
                                     placeholder="Bất kỳ hướng dẫn đặc biệt hoặc thông tin..."
                                     {...register('notes')}
                                     rows={3}
-                                    className="mt-1"
+                                    className="resize-none"
                                 />
                             </div>
                         </div>

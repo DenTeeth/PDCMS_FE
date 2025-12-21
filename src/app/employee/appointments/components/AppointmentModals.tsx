@@ -293,7 +293,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
+                    <div className="space-y-1">
                         <Label htmlFor="newDate">Ngày mới</Label>
                         <Input
                             id="newDate"
@@ -350,7 +350,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                         </div>
                     )}
 
-                    <div>
+                    <div className="space-y-1">
                         <Label htmlFor="reason">Lý do dời lịch <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="reason"
@@ -359,7 +359,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
                             onChange={(e) => setReason(e.target.value)}
                             required
                             rows={3}
-                            className="mt-1"
+                            className="resize-none"
                         />
                     </div>
 
@@ -425,7 +425,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
 
         try {
             setLoading(true);
-            
+
             // Use updateAppointmentStatus with status = CANCELLED (BE API)
             await appointmentService.updateAppointmentStatus(appointmentCode, {
                 status: 'CANCELLED',
@@ -476,7 +476,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                                     if (!isNaN(date.getTime())) {
                                         return format(date, 'PPP', { locale: vi });
                                     }
-                                } catch {}
+                                } catch { }
                             }
                             if (startTime) {
                                 return `Lịch hẹn lúc ${startTime}`;
@@ -500,7 +500,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                     </div>
 
                     {/* Reason Code - Required */}
-                    <div>
+                    <div className="space-y-1">
                         <Label htmlFor="cancelReasonCode">Mã lý do hủy <span className="text-red-500">*</span></Label>
                         <select
                             id="cancelReasonCode"
@@ -519,7 +519,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                     </div>
 
                     {/* Notes - Required */}
-                    <div>
+                    <div className="space-y-1">
                         <Label htmlFor="cancelNotes">Ghi chú <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="cancelNotes"
@@ -528,7 +528,7 @@ export function CancelModal({ open, onClose, appointment, onSuccess }: CancelMod
                             onChange={(e) => setNotes(e.target.value)}
                             required
                             rows={4}
-                            className="mt-1"
+                            className="resize-none"
                         />
                     </div>
 

@@ -6,13 +6,13 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
   faBan,
-  faEye,
   faCalendarAlt,
   faClock,
   faSearch,
   faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -517,20 +517,18 @@ export default function EmployeeTimeOffRequestsPage() {
               />
             </div>
           </div>
-          <div>
-            <CustomSelect
-              label="Trạng thái"
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
-              options={[
-                { value: 'ALL', label: 'Tất cả' },
-                { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
-              ]}
-            />
-          </div>
+          <CustomSelect
+            label="Trạng thái"
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+            options={[
+              { value: 'ALL', label: 'Tất cả' },
+              { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+              { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+              { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+              { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+            ]}
+          />
         </div>
       </div>
 
@@ -590,7 +588,7 @@ export default function EmployeeTimeOffRequestsPage() {
                       size="sm"
                       onClick={() => router.push(`/employee/time-off-requests/${request.requestId}`)}
                     >
-                      <FontAwesomeIcon icon={faEye} className="h-4 w-4 mr-1" />
+                      <Eye className="h-4 w-4 mr-1" />
                       Chi tiết
                     </Button>
 
@@ -631,7 +629,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="timeOffTypeId">Loại nghỉ phép <span className="text-red-500">*</span></Label>
                   <CustomSelect
                     value={createForm.timeOffTypeId}
@@ -659,7 +657,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="startDate">Ngày bắt đầu <span className="text-red-500">*</span></Label>
                   <Input
                     id="startDate"
@@ -670,7 +668,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="endDate">Ngày kết thúc <span className="text-red-500">*</span></Label>
                   <Input
                     id="endDate"
@@ -681,7 +679,7 @@ export default function EmployeeTimeOffRequestsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <CustomSelect
                     label="Ca làm việc (nếu nghỉ nửa ngày)"
                     value={createForm.slotId || ''}
@@ -699,19 +697,20 @@ export default function EmployeeTimeOffRequestsPage() {
                       }))
                     ]}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500">
                     {createForm.slotId ? 'Nghỉ theo ca: Ngày kết thúc sẽ tự động bằng ngày bắt đầu' : 'Để trống nếu nghỉ cả ngày'}
                   </p>
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="reason">Lý do nghỉ phép <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="reason"
                   value={createForm.reason}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Nhập lý do nghỉ phép..."
+                  className="resize-none"
                   rows={3}
                 />
               </div>
@@ -737,7 +736,7 @@ export default function EmployeeTimeOffRequestsPage() {
                         <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
                         <div className="flex-1">
                           <h4 className="font-semibold text-yellow-900 mb-2">
-                             Cảnh báo: Trùng lịch nghỉ phép
+                            Cảnh báo: Trùng lịch nghỉ phép
                           </h4>
                           <p className="text-sm text-yellow-800 mb-2">
                             Đã có {overlappingRequests.length} yêu cầu nghỉ phép trong khoảng thời gian này:
@@ -786,13 +785,14 @@ export default function EmployeeTimeOffRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
-            <div className="mb-4">
+            <div className="mb-4 space-y-1">
               <Label htmlFor="cancelReason">Lý do hủy <span className="text-red-500">*</span></Label>
               <Textarea
                 id="cancelReason"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Nhập lý do hủy..."
+                className="resize-none"
                 rows={3}
                 required
               />

@@ -142,7 +142,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissions: ['VIEW_WORK_SHIFTS'],
         },
         {
-          name: 'Đăng ký ca',
+          name: 'Đăng ký ca làm',
           href: '/admin/registrations',
           icon: faCalendarCheck,
           requiredPermissions: ['VIEW_REGISTRATION_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL'],

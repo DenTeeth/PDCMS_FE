@@ -33,7 +33,7 @@ export default function UpdateStorageNotesModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setLoading(true);
     try {
       await onSave(notes);
@@ -59,7 +59,7 @@ export default function UpdateStorageNotesModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes" className="mb-2 block">Ghi chú</Label>
             <Textarea
               id="notes"
               value={notes}

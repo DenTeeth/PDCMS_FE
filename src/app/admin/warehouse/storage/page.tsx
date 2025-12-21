@@ -18,9 +18,6 @@ import {
   faDownload,
   faUpload,
   faSearch,
-  faEdit,
-  faTrash,
-  faEye,
   faChevronLeft,
   faChevronRight,
   faSort,
@@ -30,6 +27,7 @@ import {
   faSnowflake,
   faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { storageService, type StorageTransaction, type StorageTransactionListResult } from '@/services/storageService';
 import inventoryService, { InventorySummary } from '@/services/inventoryService';
 import { supplierService } from '@/services/supplierService';
@@ -85,6 +83,18 @@ export default function StorageInOutPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; transaction: StorageTransaction | null }>({ isOpen: false, transaction: null });
 
   const queryClient = useQueryClient();
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (isImportModalOpen || isExportModalOpen || isViewModalOpen || isEditModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isImportModalOpen, isExportModalOpen, isViewModalOpen, isEditModalOpen]);
 
   // Debounce search
   useEffect(() => {
@@ -861,7 +871,7 @@ export default function StorageInOutPage() {
                                   title="Xem chi tiết"
                                   className="h-8 w-8 p-0"
                                 >
-                                  <FontAwesomeIcon icon={faEye} className="h-4 w-4 text-blue-600" />
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                                 {/* 
                                   Tạm thời ẩn nút sửa/xóa vì chưa được BE support.

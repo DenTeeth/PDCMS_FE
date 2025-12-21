@@ -188,10 +188,10 @@ export default function ExportTransactionFormNew({
 
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
-      
+
       // Try to get units using API 6.11
       const unitsResponse = await itemUnitService.getItemUnits(itemMasterId, 'active');
-      
+
       if (!unitsResponse || !unitsResponse.units || unitsResponse.units.length === 0) {
         // Fallback: Try getBaseUnit
         try {
@@ -214,7 +214,7 @@ export default function ExportTransactionFormNew({
         } catch (baseUnitError) {
           console.warn(' Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
         }
-        
+
         // If both fail, BE will auto-create base unit from unitOfMeasure
         const fallbackUnitName = item?.unitOfMeasure || 'Cái';
         const fallbackUnit: ItemUnitResponse = {
@@ -224,7 +224,7 @@ export default function ExportTransactionFormNew({
           isBaseUnit: true,
           displayOrder: 1,
         };
-        
+
         setItems((prev) => {
           const updated = [...prev];
           updated[rowIndex] = {
@@ -235,7 +235,7 @@ export default function ExportTransactionFormNew({
           };
           return updated;
         });
-        
+
         toast.warning('Chưa có đơn vị cho vật tư này', {
           description: `Hệ thống sẽ tự động tạo đơn vị cơ sở "${fallbackUnitName}" khi bạn xuất kho.`,
           duration: 5000,
@@ -257,7 +257,7 @@ export default function ExportTransactionFormNew({
 
       // Set default to base unit (or first unit if no base unit found)
       const baseUnit = units.find(u => u.isBaseUnit) || units[0];
-      
+
       // Update item with base unit and available units
       setItems((prev) => {
         const updated = [...prev];
@@ -271,7 +271,7 @@ export default function ExportTransactionFormNew({
       });
     } catch (error: any) {
       console.error(' Failed to fetch units:', error);
-      
+
       // Fallback: Try getBaseUnit
       try {
         const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
@@ -293,14 +293,14 @@ export default function ExportTransactionFormNew({
       } catch (baseUnitError) {
         console.warn(' getBaseUnit also failed');
       }
-      
+
       // Final fallback: BE will auto-create
       const fallbackUnitName = item?.unitOfMeasure || 'Cái';
       toast.warning('Không thể tải đơn vị', {
         description: `Hệ thống sẽ tự động tạo đơn vị "${fallbackUnitName}" khi xuất kho.`,
         duration: 5000,
       });
-      
+
       setItems((prev) => {
         const updated = [...prev];
         updated[rowIndex] = {
@@ -403,7 +403,7 @@ export default function ExportTransactionFormNew({
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      
+
       toast.success('Xuất kho thành công!', {
         description: `Mã phiếu: ${response.transactionCode}${response.totalValue ? ` | Tổng giá trị: ${response.totalValue.toLocaleString('vi-VN')} VNĐ` : ''}`,
         duration: 5000,
@@ -422,7 +422,7 @@ export default function ExportTransactionFormNew({
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi xuất kho!';
       const errorCode = error.response?.data?.error || error.response?.data?.errorCode;
-      
+
       if (errorCode === 'INSUFFICIENT_STOCK') {
         toast.error('Không đủ hàng tồn kho', {
           description: errorMessage,
@@ -475,7 +475,7 @@ export default function ExportTransactionFormNew({
         toast.error(`Vật tư "${item.itemName}" chưa có đơn vị. Vui lòng đợi hệ thống tải đơn vị hoặc chọn vật tư khác.`);
         return false;
       }
-      
+
       return (
         item.itemMasterId > 0 &&
         item.unitId > 0 && // Must be positive (BE validation @Positive)
@@ -495,7 +495,7 @@ export default function ExportTransactionFormNew({
     // Prepare payload
     // Convert date to LocalDateTime format (YYYY-MM-DDTHH:mm:ss)
     const transactionDateTime = `${transactionDate}T00:00:00`;
-    
+
     const payload: CreateExportTransactionDto = {
       transactionDate: transactionDateTime,
       exportType,
@@ -537,7 +537,7 @@ export default function ExportTransactionFormNew({
           {/* Header Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="transactionDate" className="text-sm font-medium">
+              <Label htmlFor="transactionDate" className="text-sm font-medium mb-2 block">
                 Ngày xuất kho <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -555,7 +555,7 @@ export default function ExportTransactionFormNew({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="exportType" className="text-sm font-medium">
+              <Label htmlFor="exportType" className="text-sm font-medium mb-2 block">
                 Loại xuất kho <span className="text-red-500">*</span>
               </Label>
               <Select value={exportType} onValueChange={(value: ExportType) => setExportType(value)}>
@@ -571,7 +571,7 @@ export default function ExportTransactionFormNew({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="referenceCode" className="text-sm font-medium">
+              <Label htmlFor="referenceCode" className="text-sm font-medium mb-2 block">
                 Mã tham chiếu
               </Label>
               <Input
@@ -583,7 +583,7 @@ export default function ExportTransactionFormNew({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="departmentName" className="text-sm font-medium">
+              <Label htmlFor="departmentName" className="text-sm font-medium mb-2 block">
                 Phòng ban
               </Label>
               <Input
@@ -595,7 +595,7 @@ export default function ExportTransactionFormNew({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="requestedBy" className="text-sm font-medium">
+              <Label htmlFor="requestedBy" className="text-sm font-medium mb-2 block">
                 Người yêu cầu
               </Label>
               <Input
@@ -626,7 +626,7 @@ export default function ExportTransactionFormNew({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm font-medium">
+            <Label htmlFor="notes" className="text-sm font-medium mb-2 block">
               Ghi chú
             </Label>
             <Textarea
@@ -698,10 +698,10 @@ export default function ExportTransactionFormNew({
                                   {item.itemMasterId > 0
                                     ? `${item.itemCode} - ${item.itemName}`
                                     : itemsLoading
-                                    ? 'Đang tải...'
-                                    : itemMasters.length === 0
-                                    ? 'Không có dữ liệu'
-                                    : 'Chọn vật tư'}
+                                      ? 'Đang tải...'
+                                      : itemMasters.length === 0
+                                        ? 'Không có dữ liệu'
+                                        : 'Chọn vật tư'}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>

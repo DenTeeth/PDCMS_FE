@@ -40,6 +40,7 @@ import { roleService } from '@/services/roleService';
 import { Specialization } from '@/types/specialization';
 import { specializationService } from '@/services/specializationService';
 import { toast } from 'sonner';
+import { getRoleDisplayName } from '@/utils/roleFormatter';
 
 export default function EmployeeDetailPage() {
   const params = useParams();
@@ -279,7 +280,7 @@ export default function EmployeeDetailPage() {
               <div>
                 <CardTitle className="text-2xl">{employee.fullName}</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  {employee.employeeCode} • {employee.roleName} •
+                  {employee.employeeCode} • {getRoleDisplayName(employee.roleName)} •
                   <span className={`ml-1 px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
                     ? 'bg-blue-100 text-blue-800'
                     : 'bg-orange-100 text-orange-800'
@@ -468,7 +469,7 @@ export default function EmployeeDetailPage() {
                     <div className="flex-1">
                       <Label className="text-gray-600">Tên vai trò</Label>
                       <Badge variant="outline" className="text-base px-3 py-1">
-                        {employee.roleName}
+                        {getRoleDisplayName(employee.roleName)}
                       </Badge>
                     </div>
                   </div>
@@ -481,19 +482,19 @@ export default function EmployeeDetailPage() {
                         className={`text-base px-3 py-1 ${employee.employeeType === EmploymentType.FULL_TIME
                           ? 'border-blue-200 text-blue-800'
                           : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                          ? 'border-green-200 text-green-800'
-                          : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                          ? 'border-orange-200 text-orange-800'
-                          : 'border-gray-200 text-gray-800'
+                            ? 'border-green-200 text-green-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'border-orange-200 text-orange-800'
+                              : 'border-gray-200 text-gray-800'
                           }`}
                       >
-                        {employee.employeeType === EmploymentType.FULL_TIME 
-                          ? 'Toàn thời gian' 
+                        {employee.employeeType === EmploymentType.FULL_TIME
+                          ? 'Toàn thời gian'
                           : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                          ? 'Bán thời gian - Cố định'
-                          : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                          ? 'Bán thời gian - Linh hoạt'
-                          : 'Bán thời gian'}
+                            ? 'Bán thời gian - Cố định'
+                            : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                              ? 'Bán thời gian - Linh hoạt'
+                              : 'Bán thời gian'}
                       </Badge>
                     </div>
                   </div>
@@ -555,7 +556,7 @@ export default function EmployeeDetailPage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Current Role</p>
-                      <Badge>{employee.roleName}</Badge>
+                      <Badge>{getRoleDisplayName(employee.roleName)}</Badge>
                     </div>
                   </div>
                 </div>
@@ -765,7 +766,7 @@ export default function EmployeeDetailPage() {
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>
@@ -814,7 +815,7 @@ export default function EmployeeDetailPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
+                      Đang xóa...
                     </>
                   ) : (
                     <>

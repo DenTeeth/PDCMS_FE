@@ -631,7 +631,7 @@ export default function AdminLeaveBalancesPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <CustomSelect
                     label="Loại Phép *"
                     value={adjustFormData.timeOffTypeId}
@@ -650,11 +650,11 @@ export default function AdminLeaveBalancesPage() {
                     ]}
                   />
                   {adjustFormErrors.timeOffTypeId && (
-                    <p className="text-red-500 text-sm mt-1">{adjustFormErrors.timeOffTypeId}</p>
+                    <p className="text-red-500 text-sm">{adjustFormErrors.timeOffTypeId}</p>
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="adj-year">Năm *</Label>
                   <Input
                     id="adj-year"
@@ -802,7 +802,7 @@ export default function AdminLeaveBalancesPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="reset-type">Loại phép <span className="text-red-500">*</span></Label>
                 <CustomSelect
                   value={annualResetFormData.applyToTypeId}
@@ -821,7 +821,7 @@ export default function AdminLeaveBalancesPage() {
                   ]}
                 />
                 {annualResetFormErrors.applyToTypeId && (
-                  <p className="text-red-500 text-sm mt-1">{annualResetFormErrors.applyToTypeId}</p>
+                  <p className="text-red-500 text-sm">{annualResetFormErrors.applyToTypeId}</p>
                 )}
               </div>
 

@@ -34,12 +34,12 @@ import { patientService } from '@/services/patientService';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   BookingBlockReason,
   getBlockStatusDisplay,
   getBookingBlockReasonLabel,
   isTemporaryBlock,
-  BOOKING_BLOCK_REASON_OPTIONS 
+  BOOKING_BLOCK_REASON_OPTIONS
 } from '@/types/patientBlockReason';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -56,7 +56,7 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Unban modal states
   const [showUnbanModal, setShowUnbanModal] = useState(false);
   const [unbanReason, setUnbanReason] = useState('');
@@ -411,9 +411,8 @@ export default function PatientDetailPage() {
             : 'border-red-200 bg-red-50'
         }>
           <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${
-              isTemporaryBlock(patient.bookingBlockReason) ? 'text-orange-700' : 'text-red-700'
-            }`}>
+            <CardTitle className={`flex items-center gap-2 ${isTemporaryBlock(patient.bookingBlockReason) ? 'text-orange-700' : 'text-red-700'
+              }`}>
               <AlertCircle className="h-5 w-5" />
               Trạng thái chặn đặt lịch
             </CardTitle>
@@ -547,8 +546,8 @@ export default function PatientDetailPage() {
                       <div className="flex-1">
                         <Label className="text-gray-600">Trạng thái chặn đặt lịch</Label>
                         <div className="flex items-center gap-2">
-                          <Badge 
-                            variant="destructive" 
+                          <Badge
+                            variant="destructive"
                             className={
                               isTemporaryBlock(patient.bookingBlockReason)
                                 ? 'bg-orange-600 text-white'
@@ -874,7 +873,7 @@ export default function PatientDetailPage() {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
+                      Đang xóa...
                     </>
                   ) : (
                     <>
@@ -1103,7 +1102,7 @@ export default function PatientDetailPage() {
                         <option value="true">Bị chặn</option>
                       </select>
                     </div>
-                    
+
                     {editFormData.isBookingBlocked && (
                       <>
                         <div className="space-y-2">
@@ -1131,7 +1130,7 @@ export default function PatientDetailPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label htmlFor="edit-bookingBlockNotes">Chi tiết</Label>
                           <Textarea
@@ -1167,7 +1166,7 @@ export default function PatientDetailPage() {
                     {updating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        Đang cập nhật...
                       </>
                     ) : (
                       <>

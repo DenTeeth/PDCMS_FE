@@ -676,7 +676,6 @@ export default function BookingServicesPage() {
                 e.stopPropagation();
                 handleEditClick(service);
               }}
-              className="hover:bg-gray-100"
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
@@ -690,7 +689,6 @@ export default function BookingServicesPage() {
                 e.stopPropagation();
                 handleDeleteClick(service);
               }}
-              className="hover:bg-red-50 text-red-600"
               title="Vô hiệu hóa"
             >
               <Trash2 className="h-4 w-4" />
@@ -925,7 +923,7 @@ export default function BookingServicesPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-serviceCode">Mã dịch vụ <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceCode"
@@ -934,7 +932,7 @@ export default function BookingServicesPage() {
                     placeholder="e.g., SV-CAOVOI"
                   />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-serviceName">Tên dịch vụ <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-serviceName"
@@ -944,7 +942,7 @@ export default function BookingServicesPage() {
                   />
                 </div>
               </div>
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="create-description">Mô tả</Label>
                 <Input
                   id="create-description"
@@ -954,7 +952,7 @@ export default function BookingServicesPage() {
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-duration">Thời lượng (phút) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-duration"
@@ -971,7 +969,7 @@ export default function BookingServicesPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-buffer">Thời gian đệm (phút) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-buffer"
@@ -988,7 +986,7 @@ export default function BookingServicesPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-price">Giá (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-price"
@@ -1011,7 +1009,7 @@ export default function BookingServicesPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-specialization">Chuyên khoa</Label>
                   <Select
                     value={createForm.specializationId ? String(createForm.specializationId) : 'none-selected'}
@@ -1037,7 +1035,7 @@ export default function BookingServicesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="create-displayOrder">Thứ tự hiển thị</Label>
                   <Input
                     id="create-displayOrder"
@@ -1059,7 +1057,7 @@ export default function BookingServicesPage() {
               <div className="border-t pt-4">
                 <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="create-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
                     <Input
                       id="create-minimumPreparationDays"
@@ -1071,7 +1069,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Số ngày tối thiểu trước khi dịch vụ có thể thực hiện</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="create-recoveryDays">Thời gian hồi phục (ngày)</Label>
                     <Input
                       id="create-recoveryDays"
@@ -1083,7 +1081,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Số ngày cần nghỉ sau khi hoàn thành dịch vụ</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="create-spacingDays">Khoảng cách tối thiểu (ngày)</Label>
                     <Input
                       id="create-spacingDays"
@@ -1095,7 +1093,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Khoảng cách tối thiểu giữa các lần thực hiện cùng dịch vụ</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="create-maxAppointmentsPerDay">Giới hạn lịch/ngày</Label>
                     <Input
                       id="create-maxAppointmentsPerDay"
@@ -1140,7 +1138,7 @@ export default function BookingServicesPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-serviceCode">Mã dịch vụ</Label>
                 <Input
                   id="update-serviceCode"
@@ -1150,7 +1148,7 @@ export default function BookingServicesPage() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">Mã dịch vụ không thể thay đổi</p>
               </div>
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-serviceName">Tên dịch vụ <span className="text-red-500">*</span></Label>
                 <Input
                   id="update-serviceName"
@@ -1159,7 +1157,7 @@ export default function BookingServicesPage() {
                   placeholder="e.g., Cạo vôi răng"
                 />
               </div>
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="update-description">Mô tả</Label>
                 <Input
                   id="update-description"
@@ -1169,8 +1167,8 @@ export default function BookingServicesPage() {
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="update-duration">Thời lượng (phút) <span className="text-red-500">*</span></Label>
+                <div className="space-y-1">
+                  <Label htmlFor="update-duration">Thới lượng (phút) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-duration"
                     type="number"
@@ -1186,7 +1184,7 @@ export default function BookingServicesPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 15 (15, 30, 45, 60...)</p>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="update-buffer">Thời gian đệm (phút) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-buffer"
@@ -1203,7 +1201,7 @@ export default function BookingServicesPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Phải là bội số của 5 (0, 5, 10, 15, 20...)</p>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="update-price">Giá (VND) <span className="text-red-500">*</span></Label>
                   <Input
                     id="update-price"
@@ -1226,7 +1224,7 @@ export default function BookingServicesPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="update-specialization">Chuyên khoa</Label>
                   <Select
                     value={updateForm.specializationId ? String(updateForm.specializationId) : 'none-selected'}
@@ -1252,7 +1250,7 @@ export default function BookingServicesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="update-displayOrder">Thứ tự hiển thị</Label>
                   <Input
                     id="update-displayOrder"
@@ -1274,7 +1272,7 @@ export default function BookingServicesPage() {
               <div className="border-t pt-4">
                 <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="update-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
                     <Input
                       id="update-minimumPreparationDays"
@@ -1286,7 +1284,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Số ngày tối thiểu trước khi dịch vụ có thể thực hiện</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="update-recoveryDays">Thời gian hồi phục (ngày)</Label>
                     <Input
                       id="update-recoveryDays"
@@ -1298,7 +1296,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Số ngày cần nghỉ sau khi hoàn thành dịch vụ</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="update-spacingDays">Khoảng cách tối thiểu (ngày)</Label>
                     <Input
                       id="update-spacingDays"
@@ -1310,7 +1308,7 @@ export default function BookingServicesPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Khoảng cách tối thiểu giữa các lần thực hiện cùng dịch vụ</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <Label htmlFor="update-maxAppointmentsPerDay">Giới hạn lịch/ngày</Label>
                     <Input
                       id="update-maxAppointmentsPerDay"

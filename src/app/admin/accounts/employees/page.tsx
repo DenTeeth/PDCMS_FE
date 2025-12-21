@@ -38,6 +38,7 @@ import { roleService } from '@/services/roleService';
 import { Specialization } from '@/types/specialization';
 import { specializationService } from '@/services/specializationService';
 import { useAuth } from '@/contexts/AuthContext';
+import { getRoleDisplayName } from '@/utils/roleFormatter';
 
 // ==================== MAIN COMPONENT ====================
 export default function EmployeesPage() {
@@ -100,6 +101,18 @@ export default function EmployeesPage() {
     employeeType: EmploymentType.FULL_TIME,
     specializationIds: [],
   });
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal]);
 
   // ==================== DEBOUNCE SEARCH ====================
   useEffect(() => {
@@ -534,22 +547,22 @@ export default function EmployeesPage() {
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Employee
+                        NHÂN VIÊN
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
+                        VỊ TRÍ
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
+                        LOẠI
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact
+                        LIÊN HỆ
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        TRẠNG THÁI
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        HÀNH ĐỘNG
                       </th>
                     </tr>
                   </thead>
@@ -574,16 +587,16 @@ export default function EmployeesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{employee.roleName}</div>
+                          <div className="text-sm text-gray-900">{getRoleDisplayName(employee.roleName)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs ${employee.employeeType === EmploymentType.FULL_TIME
-                              ? 'bg-blue-100 text-blue-800'
-                              : employee.employeeType === EmploymentType.PART_TIME_FIXED
-                                ? 'bg-green-100 text-green-800'
-                                : employee.employeeType === EmploymentType.PART_TIME_FLEX
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-gray-100 text-gray-800'
+                            ? 'bg-blue-100 text-blue-800'
+                            : employee.employeeType === EmploymentType.PART_TIME_FIXED
+                              ? 'bg-green-100 text-green-800'
+                              : employee.employeeType === EmploymentType.PART_TIME_FLEX
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-gray-100 text-gray-800'
                             }`}>
                             {employee.employeeType === EmploymentType.FULL_TIME
                               ? 'Toàn thời gian'
@@ -601,8 +614,8 @@ export default function EmployeesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                            {employee.isActive ? 'Active' : 'Inactive'}
+                          <Badge className={employee.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
+                            {employee.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -615,7 +628,6 @@ export default function EmployeesPage() {
                               title={!canView ? "Bạn không có quyền xem chi tiết nhân viên" : ""}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              Xem
                             </Button>
                             <Button
                               variant="ghost"
@@ -628,7 +640,6 @@ export default function EmployeesPage() {
                               title={!canUpdate ? "Bạn không có quyền chỉnh sửa nhân viên" : ""}
                             >
                               <Edit className="h-4 w-4 mr-1" />
-                              Chỉnh sửa
                             </Button>
                           </div>
                         </td>
@@ -737,18 +748,29 @@ export default function EmployeesPage() {
         {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <Card className="w-full max-w-5xl my-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  Tạo nhân viên mới
-                </CardTitle>
+            <Card className="w-full max-w-5xl my-8 max-h-[90vh] flex flex-col">
+              <CardHeader className="border-b flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Tạo nhân viên mới
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCreateModal(false)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCreateEmployee} className="space-y-4">
+              <CardContent className="overflow-y-auto flex-1 p-6">
+                <form onSubmit={handleCreateEmployee} className="space-y-5">
                   {/* Role Selection - Always shown first */}
-                  <div>
-                    <Label htmlFor="roleId">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <Label htmlFor="roleId" className="text-sm font-medium">
                       Vai trò <span className="text-red-500">*</span>
                     </Label>
                     <select
@@ -757,7 +779,7 @@ export default function EmployeesPage() {
                       onChange={(e) => handleRoleChange(e.target.value)}
                       disabled={creating}
                       required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 text-sm"
                     >
                       <option value="">Chọn một vai trò</option>
                       {roles.map((role) => (
@@ -769,8 +791,8 @@ export default function EmployeesPage() {
                   </div>
 
                   {/* Employment Type Selection */}
-                  <div>
-                    <Label htmlFor="employeeType">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <Label htmlFor="employeeType" className="text-sm font-medium">
                       Loại hình lao động <span className="text-red-500">*</span>
                     </Label>
                     <select
@@ -779,13 +801,13 @@ export default function EmployeesPage() {
                       onChange={(e) => setFormData({ ...formData, employeeType: e.target.value as EmploymentType })}
                       disabled={creating}
                       required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 text-sm"
                     >
                       <option value={EmploymentType.FULL_TIME}>Toàn thời gian</option>
                       <option value={EmploymentType.PART_TIME_FIXED}>Bán thời gian - Cố định</option>
                       <option value={EmploymentType.PART_TIME_FLEX}>Bán thời gian - Linh hoạt</option>
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-2">
                       <strong>Toàn thời gian:</strong> Làm việc toàn thời gian, Admin gán lịch cố định<br />
                       <strong>Bán thời gian - Cố định:</strong> Part-time với lịch cố định (Admin gán)<br />
                       <strong>Bán thời gian - Linh hoạt:</strong> Part-time linh hoạt (Tự đăng ký ca từ các slot có sẵn)
@@ -794,15 +816,15 @@ export default function EmployeesPage() {
 
                   {/* Conditional Fields based on Role */}
                   {formData.roleId && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-5 mt-5">
                       {/* LEFT COLUMN: Account & Personal Information */}
-                      <div className="space-y-6">
+                      <div className="space-y-5">
                         {/* Account Information - Always shown */}
                         <div>
-                          <h3 className="font-semibold mb-3 text-lg">Thông tin tài khoản</h3>
-                          <div className="space-y-4">
+                          <h3 className="font-semibold mb-3 text-base">Thông tin tài khoản</h3>
+                          <div className="space-y-3">
                             <div>
-                              <Label htmlFor="username">
+                              <Label htmlFor="username" className="mb-1.5 block text-sm">
                                 Tên đăng nhập <span className="text-red-500">*</span>
                               </Label>
                               <Input
@@ -812,10 +834,11 @@ export default function EmployeesPage() {
                                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                 disabled={creating}
                                 required
+                                className="text-sm"
                               />
                             </div>
                             <div>
-                              <Label htmlFor="email">
+                              <Label htmlFor="email" className="mb-1.5 block text-sm">
                                 Email <span className="text-red-500">*</span>
                               </Label>
                               <Input
@@ -826,10 +849,11 @@ export default function EmployeesPage() {
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 disabled={creating}
                                 required
+                                className="text-sm"
                               />
                             </div>
                             <div>
-                              <Label htmlFor="password">
+                              <Label htmlFor="password" className="mb-1.5 block text-sm">
                                 Mật khẩu <span className="text-red-500">*</span>
                               </Label>
                               <Input
@@ -849,12 +873,12 @@ export default function EmployeesPage() {
                         </div>
 
                         {/* Personal Information */}
-                        <div className="border-t pt-6">
-                          <h3 className="font-semibold mb-3 text-lg">Thông tin cá nhân</h3>
-                          <div className="space-y-4">
+                        <div className="border-t pt-5 mt-5">
+                          <h3 className="font-semibold mb-3 text-base">Thông tin cá nhân</h3>
+                          <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <Label htmlFor="firstName">
+                                <Label htmlFor="firstName" className="mb-1.5 block text-sm">
                                   Họ <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
@@ -864,10 +888,11 @@ export default function EmployeesPage() {
                                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                                   disabled={creating}
                                   required
+                                  className="text-sm"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="lastName">
+                                <Label htmlFor="lastName" className="mb-1.5 block text-sm">
                                   Tên <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
@@ -877,21 +902,23 @@ export default function EmployeesPage() {
                                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                                   disabled={creating}
                                   required
+                                  className="text-sm"
                                 />
                               </div>
                             </div>
                             <div>
-                              <Label htmlFor="phone">Số điện thoại</Label>
+                              <Label htmlFor="phone" className="mb-1.5 block text-sm">Số điện thoại</Label>
                               <Input
                                 id="phone"
                                 placeholder="e.g., 0123456789"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 disabled={creating}
+                                className="text-sm"
                               />
                             </div>
                             <div>
-                              <Label htmlFor="dateOfBirth">Ngày tháng năm sinh</Label>
+                              <Label htmlFor="dateOfBirth" className="mb-1.5 block text-sm">Ngày tháng năm sinh</Label>
                               <Input
                                 id="dateOfBirth"
                                 type="date"
@@ -901,7 +928,7 @@ export default function EmployeesPage() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="address">Đại chỉ</Label>
+                              <Label htmlFor="address" className="mb-1.5 block text-sm">Địa chỉ</Label>
                               <textarea
                                 id="address"
                                 placeholder="Enter full address"
@@ -909,7 +936,7 @@ export default function EmployeesPage() {
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                 disabled={creating}
                                 rows={3}
-                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               />
                             </div>
                           </div>
@@ -919,7 +946,7 @@ export default function EmployeesPage() {
                       {/* RIGHT COLUMN: Specialization (Only for roles that require specialization) */}
                       {requiresSpecialization && (
                         <div className="lg:border-l lg:pl-6">
-                          <h3 className="font-semibold mb-3 text-lg">Chuyên khoa</h3>
+                          <h3 className="font-semibold mb-3 text-base">Chuyên khoa</h3>
                           {loadingSpecializations ? (
                             <div className="flex items-center gap-2 text-gray-500">
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -934,91 +961,90 @@ export default function EmployeesPage() {
                           ) : (
                             <div className="space-y-3">
                               <div>
-                                <Label>
+                                <Label className="text-sm mb-1.5 block">
                                   Chọn chuyên khoa <span className="text-red-500">*</span>
                                 </Label>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Chọn một hoặc nhiều chuyên khoa cho nhân viên này
-                                </p>
-                              </div>
+                                
+                                {/* Selected badges at top */}
+                                {formData.specializationIds && formData.specializationIds.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                    {formData.specializationIds.map((specId) => {
+                                      const spec = specializations.find(s => s.specializationId === specId);
+                                      return spec ? (
+                                        <Badge
+                                          key={specId}
+                                          className="bg-blue-600 text-white text-xs px-2 py-1 flex items-center gap-1.5"
+                                        >
+                                          <span>{spec.specializationCode}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setFormData({
+                                                ...formData,
+                                                specializationIds: formData.specializationIds?.filter(id => id !== specId)
+                                              });
+                                            }}
+                                            className="hover:bg-blue-700 rounded-full p-0.5"
+                                            disabled={creating}
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </button>
+                                        </Badge>
+                                      ) : null;
+                                    })}
+                                  </div>
+                                )}
 
-                              {/* Selected Specializations Badges */}
-                              {formData.specializationIds && formData.specializationIds.length > 0 && (
-                                <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                  {formData.specializationIds.map((specId) => {
-                                    const spec = specializations.find(s => s.specializationId === specId);
-                                    return spec ? (
-                                      <Badge
-                                        key={specId}
-                                        className="bg-blue-600 text-white px-3 py-1 flex items-center gap-2"
-                                      >
-                                        <span>{spec.specializationCode}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
+                                {/* Compact checkbox list */}
+                                <div className="border rounded-md bg-white">
+                                  {specializations.map((spec) => (
+                                    <label
+                                      key={spec.specializationId}
+                                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={formData.specializationIds?.includes(spec.specializationId) || false}
+                                        onChange={(e) => {
+                                          const currentIds = formData.specializationIds || [];
+                                          if (e.target.checked) {
                                             setFormData({
                                               ...formData,
-                                              specializationIds: formData.specializationIds?.filter(id => id !== specId)
+                                              specializationIds: [...currentIds, spec.specializationId]
                                             });
-                                          }}
-                                          className="hover:bg-blue-700 rounded-full p-0.5"
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
-                                      </Badge>
-                                    ) : null;
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Checkbox List */}
-                              <div className="border rounded-lg max-h-96 overflow-y-auto">
-                                {specializations.map((spec) => (
-                                  <label
-                                    key={spec.specializationId}
-                                    className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={formData.specializationIds?.includes(spec.specializationId) || false}
-                                      onChange={(e) => {
-                                        const currentIds = formData.specializationIds || [];
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            specializationIds: [...currentIds, spec.specializationId]
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            specializationIds: currentIds.filter(id => id !== spec.specializationId)
-                                          });
-                                        }
-                                      }}
-                                      disabled={creating}
-                                      className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="font-medium text-sm text-gray-900">
-                                        {spec.specializationCode}
-                                      </div>
-                                      <div className="text-sm text-gray-600">
-                                        {spec.specializationName}
-                                      </div>
-                                      {spec.description && (
-                                        <div className="text-xs text-gray-500 mt-1">
-                                          {spec.description}
+                                          } else {
+                                            setFormData({
+                                              ...formData,
+                                              specializationIds: currentIds.filter(id => id !== spec.specializationId)
+                                            });
+                                          }
+                                        }}
+                                        disabled={creating}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm text-gray-900">
+                                          {spec.specializationCode} - {spec.specializationName}
                                         </div>
-                                      )}
-                                    </div>
-                                  </label>
-                                ))}
+                                        {spec.description && (
+                                          <div className="text-xs text-gray-500 mt-0.5 truncate">
+                                            {spec.description}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </label>
+                                  ))}
+                                </div>
+                                
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Đã chọn: {formData.specializationIds?.length || 0} chuyên khoa
+                                </p>
                               </div>
 
                               {/* Validation message */}
                               {formData.specializationIds?.length === 0 && (
                                 <p className="text-xs text-red-500">
-                                  Vui lòng chọn ít nhất một chuyên ngành
+                                  Vui lòng chọn ít nhất một chuyên khoa
                                 </p>
                               )}
                             </div>
@@ -1091,7 +1117,7 @@ export default function EmployeesPage() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Vai trò hiện tại</p>
-                        <Badge>{editingEmployee.roleName}</Badge>
+                        <Badge>{getRoleDisplayName(editingEmployee.roleName)}</Badge>
                       </div>
                     </div>
                   </div>

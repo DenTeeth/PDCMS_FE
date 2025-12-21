@@ -89,6 +89,7 @@ export default function PatientsPage() {
   });
 
   const [showOtherRelationship, setShowOtherRelationship] = useState(false);
+  const [showOtherRelationshipEdit, setShowOtherRelationshipEdit] = useState(false);
 
   // Edit patient modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -114,6 +115,18 @@ export default function PatientsPage() {
     bookingBlockReason: undefined,
     bookingBlockNotes: '',
   });
+
+  // ==================== LOCK BODY SCROLL WHEN MODAL OPEN ====================
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal]);
 
   // ==================== DEBOUNCE SEARCH ====================
   useEffect(() => {
@@ -203,6 +216,7 @@ export default function PatientsPage() {
       if (formData.allergies) payload.allergies = formData.allergies;
       if (formData.emergencyContactName) payload.emergencyContactName = formData.emergencyContactName;
       if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
+      if (formData.emergencyContactRelationship) payload.emergencyContactRelationship = formData.emergencyContactRelationship;
 
       // Debug logging
       console.log('� Creating patient with payload:', payload);
@@ -342,6 +356,8 @@ export default function PatientsPage() {
   // ==================== EDIT PATIENT ====================
   const openEditModal = (patient: Patient) => {
     setEditingPatient(patient);
+    const relationship = patient.emergencyContactRelationship || '';
+    setShowOtherRelationshipEdit(relationship !== '' && relationship !== 'PARENT' && relationship !== 'SPOUSE' && relationship !== 'CHILD' && relationship !== 'SIBLING' && relationship !== 'RELATIVE' && relationship !== 'FRIEND');
     setEditFormData({
       firstName: patient.firstName || '',
       lastName: patient.lastName || '',
@@ -354,6 +370,7 @@ export default function PatientsPage() {
       allergies: patient.allergies || '',
       emergencyContactName: patient.emergencyContactName || '',
       emergencyContactPhone: patient.emergencyContactPhone || '',
+      emergencyContactRelationship: relationship,
       isActive: patient.isActive,
       isBookingBlocked: patient.isBookingBlocked || false,
       bookingBlockReason: patient.bookingBlockReason || undefined,
@@ -405,6 +422,9 @@ export default function PatientsPage() {
       }
       if (editFormData.emergencyContactPhone && editFormData.emergencyContactPhone !== editingPatient.emergencyContactPhone) {
         payload.emergencyContactPhone = editFormData.emergencyContactPhone;
+      }
+      if (editFormData.emergencyContactRelationship && editFormData.emergencyContactRelationship !== editingPatient.emergencyContactRelationship) {
+        payload.emergencyContactRelationship = editFormData.emergencyContactRelationship;
       }
       if (editFormData.isActive !== undefined && editFormData.isActive !== editingPatient.isActive) {
         payload.isActive = editFormData.isActive;
@@ -753,16 +773,16 @@ export default function PatientsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openEditModal(patient)}
+                          onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
                         >
-                          <Edit className="h-4 w-4 mr-1" />
+                          <Eye className="h-4 w-4 mr-1" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/admin/accounts/users/${patient.patientCode}`)}
+                          onClick={() => openEditModal(patient)}
                         >
-                          <Eye className="h-4 w-4 mr-1" />
+                          <Edit className="h-4 w-4 mr-1" />
                         </Button>
                       </div>
                       {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
@@ -890,15 +910,15 @@ export default function PatientsPage() {
 
       {/* ==================== CREATE PATIENT MODAL ==================== */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <Card className="w-full max-w-2xl my-8">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Tạo bệnh nhân mới</CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
                 Tạo tài khoản bệnh nhân. Nếu cung cấp email, tài khoản sẽ được tạo tự động và email thiết lập mật khẩu sẽ được gửi đến bệnh nhân.
               </p>
             </CardHeader>
-            <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto">
+            <CardContent className="overflow-y-auto flex-1 pt-6">
               <form onSubmit={handleCreatePatient} className="space-y-4">
                 {/* Account Information */}
                 <div>
@@ -908,7 +928,7 @@ export default function PatientsPage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="username">
+                      <Label htmlFor="username" className="mb-2 block">
                         Tên đăng nhập
                       </Label>
                       <Input
@@ -920,7 +940,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="email">
+                      <Label htmlFor="email" className="mb-2 block">
                         Email <span className="text-red-500">*</span>
                       </Label>
                       <Input
@@ -947,7 +967,7 @@ export default function PatientsPage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="firstName">
+                      <Label htmlFor="firstName" className="mb-2 block">
                         Họ <span className="text-red-500">*</span>
                       </Label>
                       <Input
@@ -960,7 +980,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">
+                      <Label htmlFor="lastName" className="mb-2 block">
                         Tên <span className="text-red-500">*</span>
                       </Label>
                       <Input
@@ -973,7 +993,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">Số điện thoại</Label>
+                      <Label htmlFor="phone" className="mb-2 block">Số điện thoại</Label>
                       <Input
                         id="phone"
                         placeholder="e.g., 0912345678"
@@ -983,7 +1003,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="dateOfBirth">Ngày sinh</Label>
+                      <Label htmlFor="dateOfBirth" className="mb-2 block">Ngày sinh</Label>
                       <Input
                         id="dateOfBirth"
                         type="date"
@@ -993,7 +1013,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="gender" className="text-sm">Giới tính</Label>
+                      <Label htmlFor="gender" className="text-sm mb-2 block">Giới tính</Label>
                       <select
                         id="gender"
                         value={formData.gender || ''}
@@ -1008,7 +1028,7 @@ export default function PatientsPage() {
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="address" className="text-sm">Địa chỉ</Label>
+                      <Label htmlFor="address" className="text-sm mb-2 block">Địa chỉ</Label>
                       <textarea
                         id="address"
                         placeholder="e.g., 123 Đường Lê Lợi, Quận 1, TP.HCM"
@@ -1030,7 +1050,7 @@ export default function PatientsPage() {
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <Label htmlFor="medicalHistory" className="text-sm">Tiền sử bệnh</Label>
+                      <Label htmlFor="medicalHistory" className="text-sm mb-2 block">Tiền sử bệnh</Label>
                       <textarea
                         id="medicalHistory"
                         placeholder="e.g., Đã điều trị viêm lợi năm 2020"
@@ -1042,7 +1062,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="allergies" className="text-sm">Dị ứng</Label>
+                      <Label htmlFor="allergies" className="text-sm mb-2 block">Dị ứng</Label>
                       <textarea
                         id="allergies"
                         placeholder="e.g., Dị ứng thuốc tê lidocaine"
@@ -1063,7 +1083,7 @@ export default function PatientsPage() {
                     Liên hệ khẩn cấp
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
+                    <div className="space-y-1">
                       <Label htmlFor="emergencyContactName">Tên người liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactName"
@@ -1073,7 +1093,7 @@ export default function PatientsPage() {
                         disabled={creating}
                       />
                     </div>
-                    <div>
+                    <div className="space-y-1">
                       <Label htmlFor="emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
                       <Input
                         id="emergencyContactPhone"
@@ -1083,7 +1103,7 @@ export default function PatientsPage() {
                         disabled={creating}
                       />
                     </div>
-                    <div>
+                    <div className="space-y-1">
                       <Label htmlFor="emergencyContactRelationship">Mối quan hệ với bệnh nhân</Label>
                       <select
                         id="emergencyContactRelationship"
@@ -1107,7 +1127,7 @@ export default function PatientsPage() {
                       </select>
                     </div>
                     {showOtherRelationship && (
-                      <div>
+                      <div className="space-y-1">
                         <Label htmlFor="emergencyContactRelationshipOther">Ghi rõ mối quan hệ</Label>
                         <Input
                           id="emergencyContactRelationshipOther"
@@ -1172,7 +1192,7 @@ export default function PatientsPage() {
       {/* ==================== EDIT PATIENT MODAL ==================== */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
+          <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Chỉnh sửa bệnh nhân - {editingPatient?.patientCode}</CardTitle>
             </CardHeader>
@@ -1183,7 +1203,7 @@ export default function PatientsPage() {
                   <h3 className="text-lg font-semibold mb-3">Thông tin cơ bản</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">Họ</Label>
+                      <Label htmlFor="edit-firstName" className="mb-2 block">Họ</Label>
                       <Input
                         id="edit-firstName"
                         value={editFormData.firstName}
@@ -1194,7 +1214,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Tên</Label>
+                      <Label htmlFor="edit-lastName" className="mb-2 block">Tên</Label>
                       <Input
                         id="edit-lastName"
                         value={editFormData.lastName}
@@ -1205,7 +1225,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-gender">Giới tính</Label>
+                      <Label htmlFor="edit-gender" className="mb-2 block">Giới tính</Label>
                       <select
                         id="edit-gender"
                         value={editFormData.gender || ''}
@@ -1224,7 +1244,7 @@ export default function PatientsPage() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-dateOfBirth">Ngày sinh</Label>
+                      <Label htmlFor="edit-dateOfBirth" className="mb-2 block">Ngày sinh</Label>
                       <Input
                         id="edit-dateOfBirth"
                         type="date"
@@ -1242,7 +1262,7 @@ export default function PatientsPage() {
                   <h3 className="text-lg font-semibold mb-3">Thông tin liên hệ</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-email">Email</Label>
+                      <Label htmlFor="edit-email" className="mb-2 block">Email</Label>
                       <Input
                         id="edit-email"
                         type="email"
@@ -1254,7 +1274,7 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-phone">Số điện thoại</Label>
+                      <Label htmlFor="edit-phone" className="mb-2 block">Số điện thoại</Label>
                       <Input
                         id="edit-phone"
                         value={editFormData.phone}
@@ -1315,7 +1335,7 @@ export default function PatientsPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Liên hệ khẩn cấp</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label htmlFor="edit-emergencyContactName">Tên người liên hệ khẩn cấp</Label>
                       <Input
                         id="edit-emergencyContactName"
@@ -1329,7 +1349,7 @@ export default function PatientsPage() {
                         placeholder="Nhập tên người liên hệ khẩn cấp"
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label htmlFor="edit-emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
                       <Input
                         id="edit-emergencyContactPhone"
@@ -1343,6 +1363,46 @@ export default function PatientsPage() {
                         placeholder="Nhập số điện thoại khẩn cấp"
                       />
                     </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="edit-emergencyContactRelationship">Mối quan hệ với bệnh nhân</Label>
+                      <select
+                        id="edit-emergencyContactRelationship"
+                        value={showOtherRelationshipEdit ? 'OTHER' : (editFormData.emergencyContactRelationship || '')}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === 'OTHER') {
+                            setShowOtherRelationshipEdit(true);
+                            setEditFormData({ ...editFormData, emergencyContactRelationship: '' });
+                          } else {
+                            setShowOtherRelationshipEdit(false);
+                            setEditFormData({ ...editFormData, emergencyContactRelationship: value });
+                          }
+                        }}
+                        disabled={updating}
+                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      >
+                        <option value="">Chọn mối quan hệ</option>
+                        <option value="PARENT">Bố/Mẹ</option>
+                        <option value="SPOUSE">Vợ/Chồng</option>
+                        <option value="CHILD">Con</option>
+                        <option value="SIBLING">Anh/Chị/Em</option>
+                        <option value="RELATIVE">Họ hàng</option>
+                        <option value="FRIEND">Bạn bè</option>
+                        <option value="OTHER">Khác</option>
+                      </select>
+                    </div>
+                    {showOtherRelationshipEdit && (
+                      <div className="space-y-1">
+                        <Label htmlFor="edit-emergencyContactRelationshipOther">Ghi rõ mối quan hệ</Label>
+                        <Input
+                          id="edit-emergencyContactRelationshipOther"
+                          placeholder="Nhập mối quan hệ cụ thể"
+                          value={editFormData.emergencyContactRelationship || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, emergencyContactRelationship: e.target.value })}
+                          disabled={updating}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

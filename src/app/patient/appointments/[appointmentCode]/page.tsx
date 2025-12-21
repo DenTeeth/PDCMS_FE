@@ -33,6 +33,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { clinicalRecordService } from '@/services/clinicalRecordService';
 import { patientService } from '@/services/patientService';
+import { getRoleDisplayName } from '@/utils/roleFormatter';
 import {
   AppointmentDetailDTO,
   AppointmentStatus,
@@ -436,7 +437,7 @@ export default function PatientAppointmentDetailPage() {
               <Stethoscope className="h-4 w-4 mr-2" />
               Clinical Record
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="treatment-plan"
               disabled={!appointment?.linkedTreatmentPlanCode && hasTriedLoadingTreatmentPlan && !treatmentPlan}
             >
@@ -455,68 +456,68 @@ export default function PatientAppointmentDetailPage() {
                     <Calendar className="h-5 w-5" />
                     Thông Tin Lịch Hẹn
                   </h3>
-                <div className="space-y-4">
-                  {/* Mã Lịch Hẹn và Trạng Thái cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Mã Lịch Hẹn</label>
-                      <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Trạng Thái</label>
-                      <div className="mt-1 flex items-center">{getStatusBadge(appointment.status)}</div>
-                    </div>
-                  </div>
-
-                  {/* Thời Lượng Dự Kiến và Ngày Tạo cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Thời Lượng Dự Kiến</label>
-                      <p className="text-base mt-1">{appointment.expectedDurationMinutes} phút</p>
-                    </div>
-                    {appointment.createdAt && (
+                  <div className="space-y-4">
+                    {/* Mã Lịch Hẹn và Trạng Thái cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Ngày Tạo</label>
-                        <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
+                        <label className="text-sm font-medium text-muted-foreground">Mã Lịch Hẹn</label>
+                        <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Trạng Thái</label>
+                        <div className="mt-1 flex items-center">{getStatusBadge(appointment.status)}</div>
+                      </div>
+                    </div>
+
+                    {/* Thời Lượng Dự Kiến và Ngày Tạo cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Thời Lượng Dự Kiến</label>
+                        <p className="text-base mt-1">{appointment.expectedDurationMinutes} phút</p>
+                      </div>
+                      {appointment.createdAt && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Ngày Tạo</label>
+                          <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Thời Gian Bắt Đầu và Thời Gian Kết Thúc cùng dòng */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Thời Gian Bắt Đầu
+                        </label>
+                        <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
+                        {appointment.actualStartTime && (
+                          <>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Bắt Đầu Thực Tế</label>
+                            <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
+                          </>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Thời Gian Kết Thúc</label>
+                        <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
+                        {appointment.actualEndTime && (
+                          <>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Kết Thúc Thực Tế</label>
+                            <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Ghi Chú để riêng vì có thể dài */}
+                    {appointment.notes && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Ghi Chú</label>
+                        <p className="text-base mt-1">{appointment.notes}</p>
                       </div>
                     )}
                   </div>
-
-                  {/* Thời Gian Bắt Đầu và Thời Gian Kết Thúc cùng dòng */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Thời Gian Bắt Đầu
-                      </label>
-                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
-                      {appointment.actualStartTime && (
-                        <>
-                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Bắt Đầu Thực Tế</label>
-                          <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Thời Gian Kết Thúc</label>
-                      <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
-                      {appointment.actualEndTime && (
-                        <>
-                          <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Kết Thúc Thực Tế</label>
-                          <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Ghi Chú để riêng vì có thể dài */}
-                  {appointment.notes && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Ghi Chú</label>
-                      <p className="text-base mt-1">{appointment.notes}</p>
-                    </div>
-                  )}
-                </div>
                 </div>
 
                 {/* Doctor & Room Info */}
@@ -525,60 +526,60 @@ export default function PatientAppointmentDetailPage() {
                     <UserCog className="h-5 w-5" />
                     Bác Sĩ & Phòng
                   </h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {appointment.doctor ? (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
-                        <div className="mt-1">
-                          <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
-                        <p className="text-base text-muted-foreground mt-1">N/A</p>
-                      </div>
-                    )}
-                    {appointment.room ? (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Building2 className="h-4 w-4" />
-                          Phòng
-                        </label>
-                        <div className="mt-1">
-                          <p className="text-base font-semibold">{appointment.room.roomName}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Phòng</label>
-                        <p className="text-base text-muted-foreground mt-1">N/A</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Participants */}
-                  {appointment.participants && appointment.participants.length > 0 && (
-                    <div className="pt-4 border-t">
-                      <label className="text-sm font-medium text-muted-foreground mb-3 block">Người Tham Gia</label>
-                      <div className="space-y-1.5">
-                        {appointment.participants.map((participant, index) => (
-                          <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{participant.fullName}</p>
-                                <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
-                              </div>
-                              <Badge variant="secondary" className="text-xs shrink-0">{participant.role}</Badge>
-                            </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {appointment.doctor ? (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
+                          <div className="mt-1">
+                            <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
+                            <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
+                          <p className="text-base text-muted-foreground mt-1">N/A</p>
+                        </div>
+                      )}
+                      {appointment.room ? (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            Phòng
+                          </label>
+                          <div className="mt-1">
+                            <p className="text-base font-semibold">{appointment.room.roomName}</p>
+                            <p className="text-sm text-muted-foreground">{appointment.room.roomCode}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Phòng</label>
+                          <p className="text-base text-muted-foreground mt-1">N/A</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Participants */}
+                    {appointment.participants && appointment.participants.length > 0 && (
+                      <div className="pt-4 border-t">
+                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Người Tham Gia</label>
+                        <div className="space-y-1.5">
+                          {appointment.participants.map((participant, index) => (
+                            <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{participant.fullName}</p>
+                                  <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
+                                </div>
+                                <Badge variant="secondary" className="text-xs shrink-0">{getRoleDisplayName(participant.role)}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -654,6 +655,9 @@ export default function PatientAppointmentDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Người liên hệ khẩn cấp</label>
                       <p className="text-base">{patientDetail.emergencyContactName}</p>
+                      {patientDetail.emergencyContactRelationship && (
+                        <p className="text-sm text-muted-foreground">Mối quan hệ: {patientDetail.emergencyContactRelationship}</p>
+                      )}
                       {patientDetail.emergencyContactPhone && (
                         <p className="text-sm text-muted-foreground mt-1">{patientDetail.emergencyContactPhone}</p>
                       )}

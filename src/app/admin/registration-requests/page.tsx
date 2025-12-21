@@ -374,7 +374,7 @@ export default function RegistrationRequestsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-            Bộ lọc & Tìm kiếm
+              Bộ lọc & Tìm kiếm
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -486,7 +486,8 @@ export default function RegistrationRequestsPage() {
                                 <>
                                   <Button
                                     size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    variant="outline"
+                                    className="text-green-800 hover:bg-green-50 border-green-200"
                                     onClick={() => handleApprove(registration)}
                                     disabled={slotDetails && slotDetails.overallRemaining === 0}
                                     title={slotDetails && slotDetails.overallRemaining === 0 ? 'Slot đã đầy' : ''}
@@ -495,7 +496,8 @@ export default function RegistrationRequestsPage() {
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="destructive"
+                                    variant="outline"
+                                    className="text-red-800 hover:bg-red-50 border-red-200"
                                     onClick={() => handleReject(registration)}
                                   >
                                     Từ chối
@@ -548,7 +550,7 @@ export default function RegistrationRequestsPage() {
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                      Phê duyệt đăng ký
+                  Phê duyệt đăng ký
                 </h2>
               </div>
               <div className="px-6 py-4 space-y-4">
@@ -592,9 +594,10 @@ export default function RegistrationRequestsPage() {
                   Cancel
                 </Button>
                 <Button
+                  variant="outline"
                   onClick={confirmApprove}
                   disabled={processing}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="text-green-800 hover:bg-green-50 border-green-200"
                 >
                   {processing ? (
                     <>
@@ -626,7 +629,7 @@ export default function RegistrationRequestsPage() {
               <div className="px-6 py-4 space-y-4">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-sm text-red-800">
-                  Vui lòng cung cấp lý do từ chối yêu cầu đăng ký này.
+                    Vui lòng cung cấp lý do từ chối yêu cầu đăng ký này.
                   </p>
                 </div>
 
