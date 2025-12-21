@@ -16,7 +16,9 @@ import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faCalendarDay, faCalendarWeek, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import { appointmentService } from '@/services/appointmentService';
+import { holidayService } from '@/services/holidayService';
 import { AppointmentSummaryDTO, CalendarEvent, APPOINTMENT_STATUS_COLORS, AppointmentFilterCriteria, resolveAppointmentStatus } from '@/types/appointment';
+import { HolidayDate } from '@/types/holiday';
 import { toast } from 'sonner';
 
 interface AppointmentCalendarProps {
@@ -33,9 +35,24 @@ export default function AppointmentCalendar({
     canViewAll = true, // Default to true for backward compatibility
 }: AppointmentCalendarProps) {
     const [appointments, setAppointments] = useState<AppointmentSummaryDTO[]>([]);
+    const [holidays, setHolidays] = useState<HolidayDate[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentView, setCurrentView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+    // Fetch holidays for current view
+    const fetchHolidays = useCallback(async (start: Date, end: Date) => {
+        try {
+            const startDate = start.toISOString().split('T')[0];
+            const endDate = end.toISOString().split('T')[0];
+            const holidayDates = await holidayService.getHolidaysInRange(startDate, endDate);
+            setHolidays(holidayDates || []);
+        } catch (error: any) {
+            console.error('Failed to fetch holidays:', error);
+            setHolidays([]);
+            // Don't show error toast for holidays - it's not critical
+        }
+    }, []);
 
     // Fetch appointments for current view
     const fetchAppointments = useCallback(async (start: Date, end: Date) => {
@@ -44,39 +61,45 @@ export default function AppointmentCalendar({
             const startDate = start.toISOString().split('T')[0];
             const endDate = end.toISOString().split('T')[0];
             
-            // Build filter criteria
-            const criteria: AppointmentFilterCriteria = {
-                ...filters,
-                dateFrom: startDate,
-                dateTo: endDate,
-                page: 0,
-                size: 1000, // Get all appointments for date range
-            };
+            // Fetch holidays and appointments in parallel
+            await Promise.all([
+                fetchHolidays(start, end),
+                (async () => {
+                    // Build filter criteria
+                    const criteria: AppointmentFilterCriteria = {
+                        ...filters,
+                        dateFrom: startDate,
+                        dateTo: endDate,
+                        page: 0,
+                        size: 1000, // Get all appointments for date range
+                    };
 
-            // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
-            // DO NOT send employeeCode filter - backend will handle RBAC filtering automatically
-            // Only send employeeCode if user has VIEW_APPOINTMENT_ALL (for searching other employees)
-            if (!canViewAll) {
-                // Remove any entity filters that require VIEW_APPOINTMENT_ALL
-                delete criteria.employeeCode;
-                delete criteria.patientCode;
-                delete criteria.patientName;
-                delete criteria.patientPhone;
-            }
-            
-            console.log('[AppointmentCalendar] Fetching appointments:', {
-                dateFrom: startDate,
-                dateTo: endDate,
-                canViewAll,
-                criteria,
-            });
-            
-            const response = await appointmentService.getAppointmentsPage(criteria);
-            console.log('[AppointmentCalendar] Fetched appointments:', {
-                total: response.totalElements,
-                count: response.content?.length || 0,
-            });
-            setAppointments(response.content || []);
+                    // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
+                    // DO NOT send employeeCode filter - backend will handle RBAC filtering automatically
+                    // Only send employeeCode if user has VIEW_APPOINTMENT_ALL (for searching other employees)
+                    if (!canViewAll) {
+                        // Remove any entity filters that require VIEW_APPOINTMENT_ALL
+                        delete criteria.employeeCode;
+                        delete criteria.patientCode;
+                        delete criteria.patientName;
+                        delete criteria.patientPhone;
+                    }
+                    
+                    console.log('[AppointmentCalendar] Fetching appointments:', {
+                        dateFrom: startDate,
+                        dateTo: endDate,
+                        canViewAll,
+                        criteria,
+                    });
+                    
+                    const response = await appointmentService.getAppointmentsPage(criteria);
+                    console.log('[AppointmentCalendar] Fetched appointments:', {
+                        total: response.totalElements,
+                        count: response.content?.length || 0,
+                    });
+                    setAppointments(response.content || []);
+                })(),
+            ]);
         } catch (error: any) {
             console.error('Failed to fetch appointments:', error);
             setAppointments([]);
@@ -93,11 +116,11 @@ export default function AppointmentCalendar({
         } finally {
             setLoading(false);
         }
-    }, [filters, canViewAll]); // Dependencies: filters and canViewAll
+    }, [filters, canViewAll, fetchHolidays]); // Dependencies: filters, canViewAll, and fetchHolidays
 
-    // Convert appointments to calendar events
+    // Convert appointments and holidays to calendar events
     const events: CalendarEvent[] = useMemo(() => {
-        return appointments.map((appointment) => {
+        const appointmentEvents: CalendarEvent[] = appointments.map((appointment) => {
             // Use computedStatus if available, otherwise fall back to status
             const displayStatus = resolveAppointmentStatus(appointment.status, appointment.computedStatus);
             const statusColor = APPOINTMENT_STATUS_COLORS[displayStatus];
@@ -127,10 +150,37 @@ export default function AppointmentCalendar({
                     doctorName,
                     patientName,
                     serviceNames,
+                    isHoliday: false,
                 },
             };
         });
-    }, [appointments]);
+
+        // Convert holidays to all-day events
+        const holidayEvents: CalendarEvent[] = holidays.map((holiday) => {
+            const holidayDate = new Date(holiday.holidayDate);
+            // Set to start of day
+            holidayDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(holidayDate);
+            
+            return {
+                id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
+                title: holiday.holidayName || 'Ngày lễ',
+                start: holidayDate,
+                end: endDate,
+                backgroundColor: '#fef3c7', // Light yellow/amber
+                borderColor: '#f59e0b', // Amber border
+                extendedProps: {
+                    isHoliday: true,
+                    holiday,
+                    holidayName: holiday.holidayName,
+                    holidayDate: holiday.holidayDate,
+                    appointment: {} as AppointmentSummaryDTO, // Required by CalendarEvent interface
+                },
+            } as CalendarEvent;
+        });
+
+        return [...appointmentEvents, ...holidayEvents];
+    }, [appointments, holidays]);
 
     // Handle date range change
     const handleDatesSet = (dateInfo: any) => {
@@ -285,6 +335,14 @@ export default function AppointmentCalendar({
                         <span className="text-gray-700">{color.text}</span>
                     </div>
                 ))}
+                {/* Holiday Legend */}
+                <div className="flex items-center gap-2">
+                    <div
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1 }}
+                    />
+                    <span className="text-gray-700 font-semibold">Ngày lễ</span>
+                </div>
             </div>
 
             {/* Calendar */}
@@ -295,12 +353,18 @@ export default function AppointmentCalendar({
                     initialView={currentView}
                     headerToolbar={false}
                     events={events}
-                    eventClick={handleEventClick}
+                    eventClick={(info) => {
+                        // Only handle click for appointments, not holidays
+                        if (info.event.extendedProps.isHoliday) {
+                            return; // Don't trigger appointment click for holidays
+                        }
+                        handleEventClick(info);
+                    }}
                     datesSet={handleDatesSet}
                     height="auto"
                     slotMinTime="08:00:00"
                     slotMaxTime="20:00:00"
-                    allDaySlot={false}
+                    allDaySlot={true}
                     nowIndicator={true}
                     editable={false}
                     selectable={true}
@@ -317,6 +381,19 @@ export default function AppointmentCalendar({
                         hour12: false,
                     }}
                     eventContent={(eventInfo) => {
+                        // Handle holiday events differently
+                        if (eventInfo.event.extendedProps.isHoliday) {
+                            const holidayName = eventInfo.event.extendedProps.holidayName || 'Ngày lễ';
+                            return (
+                                <div className="p-2 overflow-hidden">
+                                    <div className="text-base font-bold text-black leading-tight">
+                                        {holidayName}
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // Handle appointment events
                         const appointment = eventInfo.event.extendedProps.appointment as AppointmentSummaryDTO;
                         const doctorName = eventInfo.event.extendedProps.doctorName || 'No Doctor';
                         const patientName = eventInfo.event.extendedProps.patientName || 'Unknown Patient';
@@ -376,6 +453,20 @@ export default function AppointmentCalendar({
                 }
                 .appointment-calendar .fc-timegrid-slot {
                     height: 3rem;
+                }
+                /* Holiday styling */
+                .appointment-calendar .fc-event[data-is-holiday="true"] {
+                    background-color: #fef3c7 !important;
+                    border-color: #f59e0b !important;
+                    border-width: 2px !important;
+                }
+                .appointment-calendar .fc-event[data-is-holiday="true"] .fc-event-title {
+                    color: #000000 !important;
+                    font-weight: bold !important;
+                    font-size: 0.875rem !important;
+                }
+                .appointment-calendar .fc-daygrid-day[data-holiday="true"] {
+                    background-color: #fef3c7 !important;
                 }
             `}</style>
         </Card>

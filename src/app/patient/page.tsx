@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function PatientDashboard() {
   const { user } = useAuth();
-  
+
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? 'Chào buổi sáng' : currentHour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
@@ -37,7 +37,7 @@ export default function PatientDashboard() {
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-rose-400/20 to-pink-400/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="h-5 w-5 text-emerald-300 animate-pulse" />
@@ -45,13 +45,13 @@ export default function PatientDashboard() {
               Cổng thông tin bệnh nhân
             </span>
           </div>
-          
+
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
             {greeting}, <span className="bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent">{displayName}</span>
           </h1>
-          
+
           <p className="text-teal-200/80 text-lg max-w-2xl">
-            Chúc bạn một ngày tốt lành! Hãy chọn chức năng bên dưới để xem thông tin sức khỏe của bạn.
+            Chúc bạn một ngày tốt lành!
           </p>
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function PatientDashboard() {
               </div>
               <ArrowRight className="h-5 w-5 text-slate-300 dark:text-slate-600 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
             </div>
-            
+
             {/* Hover gradient overlay */}
             <div className={`absolute inset-0 bg-gradient-to-br ${link.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
           </Link>

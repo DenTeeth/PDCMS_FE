@@ -38,16 +38,22 @@ export function useHolidays(options: UseHolidaysOptions = {}): UseHolidaysReturn
     try {
       const response = await holidayService.getHolidaysForYear(year);
       
-      if (response && response.holidays) {
+      if (response && response.holidays && Array.isArray(response.holidays)) {
         const holidayDates = response.holidays.map(h => h.date);
         const map = new Map<string, string>();
         
         response.holidays.forEach(h => {
-          map.set(h.date, h.holidayName);
+          if (h.date && h.holidayName) {
+            map.set(h.date, h.holidayName);
+          }
         });
 
         setHolidays(holidayDates);
         setHolidayMap(map);
+      } else {
+        // Empty response - no holidays for this year
+        setHolidays([]);
+        setHolidayMap(new Map());
       }
     } catch (err: any) {
       console.error('Failed to fetch holidays:', err);

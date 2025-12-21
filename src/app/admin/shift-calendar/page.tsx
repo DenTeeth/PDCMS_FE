@@ -25,9 +25,11 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { workShiftService } from '@/services/workShiftService';
 import { EmployeeService } from '@/services/employeeService';
+import { holidayService } from '@/services/holidayService';
 import { EmployeeShift, ShiftStatus, ShiftSummaryResponse } from '@/types/employeeShift';
 import { WorkShift as WorkShiftTemplate } from '@/types/workShift';
 import { Employee } from '@/types/employee';
+import { HolidayDate } from '@/types/holiday';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -42,6 +44,7 @@ export default function AdminShiftCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
   const [shifts, setShifts] = useState<EmployeeShift[]>([]);
+  const [holidays, setHolidays] = useState<HolidayDate[]>([]);
   const [workShifts, setWorkShifts] = useState<WorkShiftTemplate[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
@@ -134,9 +137,22 @@ export default function AdminShiftCalendarPage() {
   // }, [currentDate, selectedEmployee]);
 
   // Handle FullCalendar view changes
-  const handleDatesSet = (dateInfo: any) => {
+  const handleDatesSet = async (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
     const newDate = new Date(dateInfo.start);
+    const start = new Date(dateInfo.start);
+    const end = new Date(dateInfo.end);
+
+    // Fetch holidays for the visible date range
+    try {
+      const startDate = format(start, 'yyyy-MM-dd');
+      const endDate = format(end, 'yyyy-MM-dd');
+      const holidayDates = await holidayService.getHolidaysInRange(startDate, endDate);
+      setHolidays(holidayDates || []);
+    } catch (error: any) {
+      console.error('Failed to fetch holidays:', error);
+      // Don't show error - holidays are not critical
+    }
 
     // Update currentDate to keep title in sync with calendar
     setCurrentDate(prevDate => {
@@ -188,13 +204,18 @@ export default function AdminShiftCalendarPage() {
       const startDate = format(startOfMonth(filterDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(filterDate), 'yyyy-MM-dd');
 
-      const shiftsData = await EmployeeShiftService.getShifts({
-        start_date: startDate,
-        end_date: endDate,
-        employee_id: calendarFilter.selectedEmployeeForCalendar || undefined,
-      });
+      // Load shifts and holidays in parallel
+      const [shiftsData, holidayDates] = await Promise.all([
+        EmployeeShiftService.getShifts({
+          start_date: startDate,
+          end_date: endDate,
+          employee_id: calendarFilter.selectedEmployeeForCalendar || undefined,
+        }),
+        holidayService.getHolidaysInRange(startDate, endDate).catch(() => []), // Don't fail if holidays fail
+      ]);
 
       setShifts(shiftsData);
+      setHolidays(holidayDates || []);
       setHasViewedCalendar(true); // Mark as viewed
     } catch (error: any) {
       console.error('Error loading shifts:', error);
@@ -286,11 +307,42 @@ export default function AdminShiftCalendarPage() {
         allDay: false,
         backgroundColor: getEventColor(shift.status),
         borderColor: getEventColor(shift.status),
+        extendedProps: {
+          isHoliday: false,
+          shift,
+        },
       };
     });
 
     console.log('� Calendar events generated:', events.length);
-    return events;
+    // Convert holidays to all-day events
+    const holidayEvents = holidays.map((holiday) => {
+      const holidayDate = new Date(holiday.holidayDate);
+      holidayDate.setHours(0, 0, 0, 0);
+      
+      return {
+        id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
+        title: holiday.holidayName || 'Ngày lễ',
+        start: holidayDate,
+        allDay: true,
+        backgroundColor: '#fef3c7', // Light yellow/amber
+        borderColor: '#f59e0b', // Amber border
+        borderWidth: 2, // Thicker border for better visibility
+        textColor: '#000000', // Black bold text
+        display: 'background', // Show as background highlight
+        extendedProps: {
+          isHoliday: true,
+          holiday,
+        },
+      };
+    });
+
+    console.log(' Calendar events generated:', {
+      shifts: events.length,
+      holidays: holidayEvents.length,
+      total: events.length + holidayEvents.length
+    });
+    return [...events, ...holidayEvents];
   };
 
   const getEventColor = (status: ShiftStatus) => {
@@ -306,6 +358,11 @@ export default function AdminShiftCalendarPage() {
 
   // Handle event click
   const handleEventClick = async (clickInfo: any) => {
+    // Don't handle clicks on holidays
+    if (clickInfo.event.extendedProps?.isHoliday) {
+      return;
+    }
+
     try {
       setDetailLoading(true);
       const shiftId = clickInfo.event.id;
@@ -784,6 +841,37 @@ export default function AdminShiftCalendarPage() {
           </div>
         </div>
 
+        {/* Legend */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-blue-500"></div>
+              <span className="text-sm text-gray-600">Đã lên lịch</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-500"></div>
+              <span className="text-sm text-gray-600">Hoàn thành</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gray-500"></div>
+              <span className="text-sm text-gray-600">Đã hủy</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-yellow-500"></div>
+              <span className="text-sm text-gray-600">Nghỉ phép</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-500"></div>
+              <span className="text-sm text-gray-600">Vắng mặt</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1 }}></div>
+              <span className="text-sm text-gray-600 font-semibold">Ngày lễ</span>
+            </div>
+          </div>
+        </div>
+
         {/* Calendar */}
         <Card>
           <CardHeader>
@@ -828,7 +916,8 @@ export default function AdminShiftCalendarPage() {
                   slotMaxTime="23:00:00"
                   slotDuration="00:30:00"
                   slotLabelInterval="01:00:00"
-                  allDaySlot={false}
+                  allDaySlot={true}
+                  eventClick={handleEventClick}
                   nowIndicator={true}
                   scrollTime="08:00:00"
                   slotEventOverlap={false}
@@ -848,39 +937,33 @@ export default function AdminShiftCalendarPage() {
                     hour12: false
                   }}
                   datesSet={handleDatesSet}
-                  eventClick={handleEventClick}
+                  eventContent={(eventInfo) => {
+                    // Handle holiday events differently
+                    if (eventInfo.event.extendedProps?.isHoliday) {
+                      const holiday = eventInfo.event.extendedProps.holiday;
+                      const holidayName = holiday?.holidayName || 'Ngày lễ';
+                      return (
+                        <div className="p-2 overflow-hidden">
+                          <div className="text-base font-bold text-black leading-tight">
+                            {holidayName}
+                          </div>
+                        </div>
+                      );
+                    }
+                    // For shift events, return the default title
+                    return (
+                      <div className="p-1 overflow-hidden">
+                        <div className="text-xs font-medium truncate">
+                          {eventInfo.event.title}
+                        </div>
+                      </div>
+                    );
+                  }}
                 />
               )}
             </div>
           </CardContent>
         </Card>
-
-        {/* Legend */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Đã lên lịch</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-500"></div>
-              <span className="text-sm text-gray-600">Hoàn thành</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gray-500"></div>
-              <span className="text-sm text-gray-600">Đã hủy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-yellow-500"></div>
-              <span className="text-sm text-gray-600">Nghỉ phép</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-500"></div>
-              <span className="text-sm text-gray-600">Vắng mặt</span>
-            </div>
-          </div>
-        </div>
 
         {/* Detail Modal */}
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>

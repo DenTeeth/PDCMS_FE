@@ -60,7 +60,7 @@ export default function AdminDashboard() {
             </h1>
             
             <p className="text-slate-400 text-lg max-w-2xl">
-              Chúc bạn một ngày làm việc hiệu quả! Hãy chọn một chức năng bên dưới để bắt đầu.
+              Chúc bạn một ngày làm việc hiệu quả!
             </p>
           </div>
         </div>
