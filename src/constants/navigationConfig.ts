@@ -166,7 +166,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Yêu cầu làm thêm giờ',
           href: '/admin/overtime-requests',
           icon: faClockFour,
-          requiredPermissions: ['VIEW_OT_ALL'],
+          requiredPermissions: ['VIEW_OVERTIME_ALL'],
         },
         {
           name: 'Yêu cầu nghỉ phép',
@@ -192,7 +192,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Loại nghỉ phép',
           href: '/admin/time-off-types',
           icon: faListAlt,
-          requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
+          requiredPermissions: ['VIEW_LEAVE_TYPE'],
         },
       ],
     },
@@ -693,6 +693,9 @@ export const filterNavigationItems = (
   userRoles?: string[], // Add userRoles parameter to check ROLE_ADMIN
   employmentType?: string // Add employmentType for employment type filtering
 ): NavigationItem[] => {
+  // ✅ ADMIN BYPASS: If user is ROLE_ADMIN, show all items (admin has all permissions)
+  const isAdmin = userRoles?.includes('ROLE_ADMIN') || false;
+  
   return items.filter(item => {
     // Check employment type restriction
     if (item.employmentTypes && item.employmentTypes.length > 0 && employmentType) {
@@ -759,6 +762,15 @@ export const filterNavigationItems = (
 
     // Check permission group (for parent menu)
     if (item.requiredPermissionGroup) {
+      // ✅ ADMIN BYPASS: Admin has all permission groups
+      if (isAdmin) {
+        // Admin can see all, but still filter submenu if exists
+        if (item.hasSubmenu && item.submenu) {
+          item.submenu = filterNavigationItems(item.submenu, userPermissions, groupedPermissions, userRoles, employmentType);
+        }
+        return true;
+      }
+      
       if (!hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup)) {
         return false;
       }
@@ -766,6 +778,11 @@ export const filterNavigationItems = (
 
     // Check specific permissions (for parent menu)
     if (item.requiredPermissions && item.requiredPermissions.length > 0) {
+      // ✅ ADMIN BYPASS: Admin has all permissions
+      if (isAdmin) {
+        return true;
+      }
+      
       if (!userPermissions || !hasPermissions(userPermissions, item.requiredPermissions, item.requireAll)) {
         return false;
       }

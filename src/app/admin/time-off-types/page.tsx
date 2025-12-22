@@ -12,10 +12,8 @@
  *  Error handling (DUPLICATE_TYPE_CODE, TIMEOFF_TYPE_IN_USE)
  * 
  * RBAC Permissions:
- * - VIEW_TIMEOFF_TYPE_ALL: Required to access page
- * - CREATE_TIMEOFF_TYPE: Show Create button
- * - UPDATE_TIMEOFF_TYPE: Show Edit button
- * - DELETE_TIMEOFF_TYPE: Show Toggle Status button
+ * - VIEW_LEAVE_TYPE: Required to access page (replaces VIEW_TIMEOFF_TYPE_ALL)
+ * - MANAGE_LEAVE_TYPE: Covers create/update/delete operations (replaces separate CREATE/UPDATE/DELETE permissions)
  * 
  * API Endpoints:
  * - GET /api/v1/admin/time-off-types (get all including inactive)
@@ -77,10 +75,12 @@ export default function AdminTimeOffTypesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canView = user?.permissions?.includes('VIEW_TIMEOFF_TYPE_ALL');
-  const canCreate = user?.permissions?.includes('CREATE_TIMEOFF_TYPE');
-  const canUpdate = user?.permissions?.includes('UPDATE_TIMEOFF_TYPE');
-  const canDelete = user?.permissions?.includes('DELETE_TIMEOFF_TYPE');
+  const isAdmin = user?.roles?.includes('ROLE_ADMIN');
+  const canView = isAdmin || user?.permissions?.includes('VIEW_LEAVE_TYPE');
+  const canManage = user?.permissions?.includes('MANAGE_LEAVE_TYPE');
+  const canCreate = isAdmin || canManage;
+  const canUpdate = isAdmin || canManage;
+  const canDelete = isAdmin || canManage;
 
   // State
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
@@ -625,7 +625,7 @@ export default function AdminTimeOffTypesPage() {
                     Mã
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên loại
+                    Tên loại nghỉ
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Mô tả

@@ -210,7 +210,7 @@ export default function InventoryPage() {
 
   const getStockStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string; className?: string }> = {
-      NORMAL: { variant: 'default', label: 'Bình thường' },
+      NORMAL: { variant: 'default', label: 'Bình thường', className: 'bg-green-100 text-green-800 border-green-300' },
       LOW_STOCK: { variant: 'destructive', label: 'Sắp hết hàng', className: 'bg-orange-100 text-orange-800 border-orange-300' },
       OUT_OF_STOCK: { variant: 'secondary', label: 'Hết hàng', className: 'bg-red-100 text-red-800 border-red-300' },
       OVERSTOCK: { variant: 'outline', label: 'Dư thừa', className: 'bg-blue-100 text-blue-800 border-blue-300' },
@@ -287,49 +287,47 @@ export default function InventoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Tổng số vật tư
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalElements}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Sắp hết hàng
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Tổng số vật tư */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số vật tư</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faBoxes} className="text-blue-600 text-xl" />
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{totalElements}</p>
+          </div>
+        </div>
+
+        {/* Sắp hết hàng */}
+        <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-red-800 mb-2">Sắp hết hàng</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-700 text-xl" />
+            </div>
             {statsError ? (
-              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
+              <div className="text-sm text-red-600">Lỗi</div>
             ) : (
-              <div className="text-2xl font-bold text-red-600">
-                {stats?.lowStockCount || 0}
-              </div>
+              <p className="text-3xl font-bold text-red-800">{stats?.lowStockCount || 0}</p>
             )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Sắp hết hạn
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          </div>
+        </div>
+
+        {/* Sắp hết hạn */}
+        <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
+          <p className="text-sm font-semibold text-orange-800 mb-2">Sắp hết hạn</p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faClock} className="text-orange-700 text-xl" />
+            </div>
             {statsError ? (
-              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
+              <div className="text-sm text-orange-600">Lỗi</div>
             ) : (
-              <div className="text-2xl font-bold text-orange-600">
-                {stats?.expiringWithin30Days || 0}
-              </div>
+              <p className="text-3xl font-bold text-orange-800">{stats?.expiringWithin30Days || 0}</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}

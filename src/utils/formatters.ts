@@ -11,7 +11,7 @@ import { vi } from 'date-fns/locale';
  */
 export const formatDateTime = (isoString: string | undefined): string => {
   if (!isoString) return '-';
-  
+
   try {
     const date = new Date(isoString);
     return format(date, 'dd/MM/yyyy HH:mm', { locale: vi });
@@ -26,7 +26,7 @@ export const formatDateTime = (isoString: string | undefined): string => {
  */
 export const formatDate = (isoString: string | undefined): string => {
   if (!isoString) return '-';
-  
+
   try {
     const date = new Date(isoString);
     return format(date, 'dd/MM/yyyy', { locale: vi });
@@ -41,7 +41,7 @@ export const formatDate = (isoString: string | undefined): string => {
  */
 export const formatCurrency = (amount: number | undefined): string => {
   if (amount === undefined || amount === null) return '-';
-  
+
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -54,15 +54,15 @@ export const formatCurrency = (amount: number | undefined): string => {
  */
 export const formatPhone = (phone: string | undefined): string => {
   if (!phone) return '-';
-  
+
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '');
-  
+
   // Format: XXX XXX XXXX
   if (cleaned.length === 10) {
     return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
   }
-  
+
   return phone;
 };
 
@@ -70,7 +70,7 @@ export const formatPhone = (phone: string | undefined): string => {
  * Get status badge color class
  */
 export const getStatusColor = (status: 'ACTIVE' | 'INACTIVE'): string => {
-  return status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+  return status === 'ACTIVE' ? 'bg-green-600 text-white' : 'bg-gray-500 text-white';
 };
 
 /**

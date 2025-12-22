@@ -478,7 +478,7 @@ export default function SlotRegistrationPage() {
                           </div>
                         </td>
                         <td className="p-3">
-                          <Badge variant={registration.isActive ? "default" : "secondary"}>
+                          <Badge variant={registration.isActive ? "active" : "inactive"}>
                             {registration.isActive ? (
                               <>
                                 <CheckCircle className="h-3 w-3 mr-1" />

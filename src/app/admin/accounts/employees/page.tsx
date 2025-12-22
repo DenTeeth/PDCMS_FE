@@ -614,7 +614,7 @@ export default function EmployeesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={employee.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
+                          <Badge className={employee.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
                             {employee.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </Badge>
                         </td>

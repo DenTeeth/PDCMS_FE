@@ -1595,7 +1595,7 @@ export default function EmployeeRegistrationsPage() {
                                   <Badge variant="outline">
                                     {formatFixedDaysOfWeek(registration.daysOfWeek)}
                                   </Badge>
-                                  <Badge variant={registration.isActive ? "default" : "secondary"}>
+                                  <Badge variant={registration.isActive ? "active" : "inactive"}>
                                     <div className="flex items-center space-x-1">
                                       {registration.isActive ? (
                                         <CheckCircle className="h-3 w-3" />

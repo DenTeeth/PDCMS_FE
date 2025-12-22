@@ -758,10 +758,41 @@ export default function ShiftCalendarPage() {
                 <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                   <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600 text-sm" />
                 </div>
-                {format(currentDate, 'MMMM yyyy', { locale: vi })}
+                {format(currentDate, 'MMMM yyyy', { locale: vi }).charAt(0).toUpperCase() + format(currentDate, 'MMMM yyyy', { locale: vi }).slice(1).toLowerCase()}
               </CardTitle>
             </div>
           </CardHeader>
+
+          {/* Legend - Chú thích */}
+          <div className="px-6 py-3 border-b bg-gray-50">
+            <div className="flex items-center gap-2 mb-2">
+              <FontAwesomeIcon icon={faListAlt} className="text-purple-600 text-sm" />
+              <span className="text-sm font-semibold text-gray-700">Chú thích trạng thái</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-blue-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã lên lịch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-500"></div>
+                <span className="text-xs font-medium text-gray-600">Hoàn thành</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-gray-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã hủy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                <span className="text-xs font-medium text-gray-600">Nghỉ phép</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-red-500"></div>
+                <span className="text-xs font-medium text-gray-600">Vắng mặt</span>
+              </div>
+            </div>
+          </div>
+
           <CardContent className="p-4">
             <div className="h-[600px]">
               {loading ? (
@@ -780,6 +811,12 @@ export default function ShiftCalendarPage() {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                  }}
+                  buttonText={{
+                    today: 'Hôm nay',
+                    month: 'Tháng',
+                    week: 'Tuần',
+                    day: 'Ngày'
                   }}
                   locale="vi"
                   events={getCalendarEvents()}
@@ -866,43 +903,6 @@ export default function ShiftCalendarPage() {
             transform: translateY(-1px);
           }
         `}</style>
-
-
-        {/* Legend */}
-        <Card className="shadow-sm border-purple-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
-                <FontAwesomeIcon icon={faListAlt} className="text-purple-600 text-xs" />
-              </div>
-              Chú thích trạng thái
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-                <div className="w-3 h-3 rounded bg-blue-500"></div>
-                <span className="text-sm font-medium text-gray-700">Đã lên lịch</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
-                <div className="w-3 h-3 rounded bg-green-500"></div>
-                <span className="text-sm font-medium text-gray-700">Hoàn thành</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
-                <div className="w-3 h-3 rounded bg-gray-500"></div>
-                <span className="text-sm font-medium text-gray-700">Đã hủy</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg">
-                <div className="w-3 h-3 rounded bg-yellow-500"></div>
-                <span className="text-sm font-medium text-gray-700">Nghỉ phép</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
-                <div className="w-3 h-3 rounded bg-red-500"></div>
-                <span className="text-sm font-medium text-gray-700">Vắng mặt</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Detail Modal */}
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>

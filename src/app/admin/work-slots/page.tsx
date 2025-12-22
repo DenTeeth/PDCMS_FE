@@ -409,7 +409,7 @@ export default function WorkSlotsManagementPage() {
                         <td className="p-3 font-semibold">{slot.quota}</td>
                         <td className="p-3 font-medium">{slot.registered}</td>
                         <td className="p-3">
-                          <Badge variant={slot.isActive ? "default" : "secondary"}>
+                          <Badge variant={slot.isActive ? "active" : "inactive"}>
                             {slot.isActive ? (
                               <>
                                 <CheckCircle className="h-3 w-3 mr-1" />

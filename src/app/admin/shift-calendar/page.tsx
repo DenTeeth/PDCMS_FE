@@ -522,7 +522,7 @@ export default function AdminShiftCalendarPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lịch Ca Làm Việc - Admin</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lịch ca làm việc</h1>
             <p className="text-gray-600 mt-1">Quản lý và theo dõi lịch làm việc của tất cả nhân viên</p>
           </div>
           <div className="flex gap-2">
@@ -790,10 +790,41 @@ export default function AdminShiftCalendarPage() {
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarAlt} />
-                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi })}
+                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).charAt(0).toUpperCase() + format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).slice(1).toLowerCase()}
               </CardTitle>
             </div>
           </CardHeader>
+
+          {/* Legend - Chú thích */}
+          <div className="px-6 py-3 border-b bg-gray-50">
+            <div className="flex items-center gap-2 mb-2">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600 text-sm" />
+              <span className="text-sm font-semibold text-gray-700">Chú thích trạng thái</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-blue-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã lên lịch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-500"></div>
+                <span className="text-xs font-medium text-gray-600">Hoàn thành</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-gray-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã hủy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                <span className="text-xs font-medium text-gray-600">Nghỉ phép</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-red-500"></div>
+                <span className="text-xs font-medium text-gray-600">Vắng mặt</span>
+              </div>
+            </div>
+          </div>
+
           <CardContent>
             <div className="h-[600px]">
               {!hasViewedCalendar ? (
@@ -820,6 +851,13 @@ export default function AdminShiftCalendarPage() {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                  }}
+                  buttonText={{
+                    today: 'Hôm nay',
+                    month: 'Tháng',
+                    week: 'Tuần',
+                    day: 'Ngày',
+                    list: 'Danh sách'
                   }}
                   locale="vi"
                   events={getCalendarEvents()}
@@ -854,33 +892,6 @@ export default function AdminShiftCalendarPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Legend */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Đã lên lịch</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-500"></div>
-              <span className="text-sm text-gray-600">Hoàn thành</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gray-500"></div>
-              <span className="text-sm text-gray-600">Đã hủy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-yellow-500"></div>
-              <span className="text-sm text-gray-600">Nghỉ phép</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-500"></div>
-              <span className="text-sm text-gray-600">Vắng mặt</span>
-            </div>
-          </div>
-        </div>
 
         {/* Detail Modal */}
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>

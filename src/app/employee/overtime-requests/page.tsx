@@ -225,8 +225,8 @@ export default function EmployeeOvertimeRequestsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const canCreate = user?.permissions?.includes('CREATE_OT') || user?.permissions?.includes('CREATE_OVERTIME');
-  const canCancelOwn = user?.permissions?.includes('CANCEL_OT_OWN') || user?.permissions?.includes('CANCEL_OVERTIME_OWN');
+  const canCreate = user?.permissions?.includes('CREATE_OVERTIME');
+  const canCancelOwn = user?.permissions?.includes('CANCEL_OVERTIME_OWN');
 
   if (loading) {
     return (
@@ -384,13 +384,15 @@ export default function EmployeeOvertimeRequestsPage() {
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle>Tạo yêu cầu làm thêm giờ</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="workDate">Ngày làm việc</Label>
+                  <Label htmlFor="workDate">
+                    Ngày làm việc <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="workDate"
                     type="date"
@@ -413,7 +415,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
                 <div className="space-y-1">
                   <CustomSelect
-                    label="Ca làm việc"
+                    label="Ca làm việc *"
                     value={formData.workShiftId}
                     onChange={(value) => setFormData({ ...formData, workShiftId: value })}
                     placeholder={workShifts.length === 0 ? "Đang tải danh sách ca làm việc..." : "Chọn ca làm việc"}
@@ -426,7 +428,9 @@ export default function EmployeeOvertimeRequestsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="reason">Lý do</Label>
+                  <Label htmlFor="reason">
+                    Lý do <span className="text-red-500">*</span>
+                  </Label>
                   <Textarea
                     id="reason"
                     value={formData.reason}

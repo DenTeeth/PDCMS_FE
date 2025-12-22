@@ -122,14 +122,14 @@ export default function AdminTimeOffRequestsPage() {
       setLoading(true);
 
       //  Load timeOffTypes and workShifts FIRST (needed for enrichment)
-      await Promise.all([
+      const [types, , shifts] = await Promise.all([
         loadTimeOffTypes(),
         loadEmployees(),
         loadWorkShifts()
       ]);
 
       //  Then load requests (uses timeOffTypes and workShifts for enrichment)
-      await loadTimeOffRequests();
+      await loadTimeOffRequests(types, shifts);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -137,7 +137,7 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  const loadTimeOffRequests = async () => {
+  const loadTimeOffRequests = async (types?: TimeOffType[], shifts?: WorkShift[]) => {
     try {
       const response = await TimeOffRequestService.getTimeOffRequests({
         page: 0,
@@ -149,8 +149,8 @@ export default function AdminTimeOffRequestsPage() {
         //  Enrich data with timeOffTypeName, workShiftName, and totalDays
         const enrichedRequests = TimeOffDataEnricher.enrichRequests(
           response.content,
-          timeOffTypes,
-          workShifts
+          types || timeOffTypes,
+          shifts || workShifts
         );
 
         setTimeOffRequests(enrichedRequests);
@@ -163,17 +163,20 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  const loadTimeOffTypes = async () => {
+  const loadTimeOffTypes = async (): Promise<TimeOffType[]> => {
     try {
       const types = await TimeOffTypeService.getAllTimeOffTypes();
       setTimeOffTypes(types || []);
+      return types || [];
     } catch (error) {
       console.error('Error loading time off types:', error);
       try {
         const activeTypes = await TimeOffTypeService.getActiveTimeOffTypes();
         setTimeOffTypes(activeTypes || []);
+        return activeTypes || [];
       } catch (fallbackError) {
         setTimeOffTypes([]);
+        return [];
       }
     }
   };
@@ -190,14 +193,16 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  const loadWorkShifts = async () => {
+  const loadWorkShifts = async (): Promise<WorkShift[]> => {
     try {
       const shifts = await workShiftService.getAll(true); // Get only active shifts
       console.log(' Work Shifts loaded:', shifts);
       setWorkShifts(shifts);
+      return shifts || [];
     } catch (error) {
       console.error('Error loading work shifts:', error);
       setWorkShifts([]); // Fallback to empty array
+      return [];
     }
   };
 
@@ -619,7 +624,7 @@ export default function AdminTimeOffRequestsPage() {
           {/* Filters - Bỏ Card */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative">
                   <FontAwesomeIcon
@@ -637,32 +642,36 @@ export default function AdminTimeOffRequestsPage() {
               </div>
 
               {canViewAll && (
-                <CustomSelect
-                  label="Nhân viên"
-                  value={employeeFilter}
-                  onChange={(value: string) => setEmployeeFilter(value)}
-                  options={[
-                    { value: 'ALL', label: 'Tất cả nhân viên' },
-                    ...employees.map(emp => ({
-                      value: emp.employeeId.toString(),
-                      label: `${emp.lastName} ${emp.firstName}`
-                    }))
-                  ]}
-                />
+                <div className="space-y-1">
+                  <CustomSelect
+                    label="Nhân viên"
+                    value={employeeFilter}
+                    onChange={(value: string) => setEmployeeFilter(value)}
+                    options={[
+                      { value: 'ALL', label: 'Tất cả nhân viên' },
+                      ...employees.map(emp => ({
+                        value: emp.employeeId.toString(),
+                        label: `${emp.lastName} ${emp.firstName}`
+                      }))
+                    ]}
+                  />
+                </div>
               )}
 
-              <CustomSelect
-                label="Trạng thái"
-                value={statusFilter}
-                onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
-                options={[
-                  { value: 'ALL', label: 'Tất cả' },
-                  { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-                  { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-                  { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-                  { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
-                ]}
-              />
+              <div className="space-y-1">
+                <CustomSelect
+                  label="Trạng thái"
+                  value={statusFilter}
+                  onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                  options={[
+                    { value: 'ALL', label: 'Tất cả' },
+                    { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                    { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                    { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                    { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+                  ]}
+                />
+              </div>
 
               <div className="space-y-1">
                 <Label htmlFor="dateFrom">Từ ngày</Label>
@@ -727,7 +736,10 @@ export default function AdminTimeOffRequestsPage() {
 
                           <div className="flex items-center space-x-2">
                             <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                            <span>{request.timeOffTypeName || request.timeOffTypeId}</span>
+                            <div>
+                              <div className="font-medium text-gray-900">{request.timeOffTypeName || request.timeOffTypeId}</div>
+                              <div className="text-xs text-gray-500">Loại nghỉ</div>
+                            </div>
                           </div>
 
                           <div className="flex items-center space-x-2">

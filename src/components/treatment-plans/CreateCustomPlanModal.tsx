@@ -38,9 +38,9 @@ import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { ServiceService } from '@/services/serviceService';
 import { EmployeeService } from '@/services/employeeService';
 import { patientService } from '@/services/patientService';
-import { 
-  CreateCustomPlanRequest, 
-  CreateCustomPlanPhaseRequest, 
+import {
+  CreateCustomPlanRequest,
+  CreateCustomPlanPhaseRequest,
   CreateCustomPlanItemRequest,
   PaymentType,
   TemplateDetailResponse,
@@ -85,7 +85,7 @@ export default function CreateCustomPlanModal({
   const { user } = useAuth();
   const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || false;
   const canViewServices = user?.permissions?.includes('VIEW_SERVICE') || false;
-  
+
   // Check if user is employee (hide discount and price for employee role)
   const isEmployee = user?.baseRole === 'employee';
 
@@ -130,7 +130,7 @@ export default function CreateCustomPlanModal({
     phases: PhaseFormData[];
     planName: string;
   } | null>(null);
-  
+
   // V21: API 6.6 - Load templates from API
   const [availableTemplates, setAvailableTemplates] = useState<Array<{ code: string; name: string; description?: string }>>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -171,10 +171,10 @@ export default function CreateCustomPlanModal({
     if (open && canCreate && currentStep >= 1 && selectedPatientCode) {
       // Only load doctors list if user is admin/manager (not doctor)
       // If user is doctor, auto-fill their employeeCode
-      const isDoctor = user?.baseRole === 'employee' && 
-                       (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || 
-                        user?.permissions?.includes('CREATE_TREATMENT_PLAN'));
-      
+      const isDoctor = user?.baseRole === 'employee' &&
+        (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) ||
+          user?.permissions?.includes('CREATE_TREATMENT_PLAN'));
+
       if (isDoctor && user?.employeeCode) {
         // Auto-fill current doctor
         setDoctorEmployeeCode(user.employeeCode);
@@ -183,7 +183,7 @@ export default function CreateCustomPlanModal({
         // Load doctors list for admin/manager to select
         loadDoctors();
       }
-      
+
       loadServices();
     }
   }, [open, canCreate, currentStep, selectedPatientCode, user]);
@@ -326,12 +326,12 @@ export default function CreateCustomPlanModal({
 
       // Filter to only ROLE_DENTIST (case-insensitive)
       const dentists = response.content.filter(
-        (emp) => 
-          emp.roleName?.toUpperCase() === 'ROLE_DENTIST' || 
+        (emp) =>
+          emp.roleName?.toUpperCase() === 'ROLE_DENTIST' ||
           emp.roleName?.toUpperCase().includes('DENTIST')
       );
       setDoctors(dentists);
-      
+
       if (dentists.length === 0) {
         console.warn('No dentists found in employee list');
       }
@@ -358,30 +358,30 @@ export default function CreateCustomPlanModal({
       // Priority 1: If doctorEmployeeCode is selected, filter by that doctor's specializations
       // Priority 2: If current user is a doctor, use /my-specializations endpoint
       // Priority 3: Otherwise, load all services
-      
+
       let response;
       let allServices: Service[] = [];
-      
+
       // Check if a doctor is selected in the form
-      const selectedDoctor = doctorEmployeeCode 
+      const selectedDoctor = doctorEmployeeCode
         ? doctors.find(d => d.employeeCode === doctorEmployeeCode)
         : null;
-      
+
       const selectedDoctorSpecializations = selectedDoctor?.specializations || [];
       const selectedDoctorSpecializationIds = selectedDoctorSpecializations
         .map(s => {
           // Handle both string and number types
-          const id = typeof s.specializationId === 'string' 
-            ? parseInt(s.specializationId) 
+          const id = typeof s.specializationId === 'string'
+            ? parseInt(s.specializationId)
             : s.specializationId;
           return id;
         })
         .filter(id => !isNaN(id) && id > 0);
-      
-      console.log('Loading services - selectedDoctor:', selectedDoctor?.fullName, 
+
+      console.log('Loading services - selectedDoctor:', selectedDoctor?.fullName,
         'specializations:', selectedDoctorSpecializationIds.length,
         'doctorEmployeeCode:', doctorEmployeeCode);
-      
+
       // If doctor is selected, we need to filter by their specializations
       if (selectedDoctor && selectedDoctorSpecializationIds.length > 0) {
         // Load all services first, then filter client-side by specializations
@@ -394,7 +394,7 @@ export default function CreateCustomPlanModal({
           sortDirection: 'ASC',
         });
         allServices = response.content || [];
-        
+
         // Filter services that match ANY of the selected doctor's specializations
         const filteredServices = allServices.filter(service => {
           // Service matches if:
@@ -402,16 +402,16 @@ export default function CreateCustomPlanModal({
           // 2. OR service has a specializationId that matches one of the doctor's specializations
           return !service.specializationId || selectedDoctorSpecializationIds.includes(service.specializationId);
         });
-        
+
         console.log(` Filtered services for doctor ${selectedDoctor.fullName}: ${filteredServices.length}/${allServices.length} services match specializations`);
         setServices(filteredServices);
         return;
       }
-      
+
       // If no doctor selected, check if current user is a doctor
-      const isCurrentUserDoctor = (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || false) 
+      const isCurrentUserDoctor = (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || false)
         && !!user?.employeeId;
-      
+
       if (isCurrentUserDoctor) {
         try {
           // Use new endpoint that automatically filters by current doctor's specializations
@@ -524,7 +524,7 @@ export default function CreateCustomPlanModal({
     try {
       const detail = await TreatmentPlanService.getTemplateDetail(templateCode);
       setTemplateDetail(detail);
-      
+
       // Populate plan name from template
       if (!planName) {
         setPlanName(detail.templateName);
@@ -543,13 +543,13 @@ export default function CreateCustomPlanModal({
       }));
 
       setPhases(populatedPhases);
-      
+
       // V21.4: Save original template data for change detection
       setOriginalTemplateData({
         phases: populatedPhases,
         planName: detail.templateName,
       });
-      
+
       toast.success('Đã tải cấu trúc gói mẫu', {
         description: `${detail.summary.totalPhases} giai đoạn, ${detail.summary.totalItemsInTemplate} loại dịch vụ`,
       });
@@ -677,7 +677,7 @@ export default function CreateCustomPlanModal({
       if (selectedDoctor && selectedDoctor.specializations) {
         // Convert specializationId to number for comparison (BE returns as string in Employee, number in Service)
         const doctorSpecializationIds = selectedDoctor.specializations.map(s => Number(s.specializationId));
-        
+
         phases.forEach((phase) => {
           phase.items.forEach((item, itemIndex) => {
             if (item.serviceCode) {
@@ -689,7 +689,7 @@ export default function CreateCustomPlanModal({
                   if (!newItemErrors[itemKey]) {
                     newItemErrors[itemKey] = {};
                   }
-                  newItemErrors[itemKey].serviceCode = 
+                  newItemErrors[itemKey].serviceCode =
                     `Dịch vụ "${service.serviceName}" yêu cầu chuyên môn "${service.specializationName || 'chưa xác định'}". Bác sĩ "${selectedDoctor.fullName}" không có chuyên môn này.`;
                 }
               }
@@ -742,7 +742,7 @@ export default function CreateCustomPlanModal({
     }
 
     // Show toast if specialization mismatch errors found
-    const hasSpecializationErrors = Object.values(newItemErrors).some(errors => 
+    const hasSpecializationErrors = Object.values(newItemErrors).some(errors =>
       errors.serviceCode && errors.serviceCode.includes('yêu cầu chuyên môn')
     );
     if (hasSpecializationErrors) {
@@ -851,17 +851,17 @@ export default function CreateCustomPlanModal({
     const updatedPhases = phases.map((p) =>
       p.phaseNumber === phaseNumber
         ? {
-            ...p,
-            items: [
-              ...p.items,
-              {
-                serviceCode: '',
-                price: 0,
-                sequenceNumber: newSequenceNumber,
-                quantity: 1,
-              },
-            ],
-          }
+          ...p,
+          items: [
+            ...p.items,
+            {
+              serviceCode: '',
+              price: 0,
+              sequenceNumber: newSequenceNumber,
+              quantity: 1,
+            },
+          ],
+        }
         : p
     );
     setPhases(updatedPhases);
@@ -930,43 +930,43 @@ export default function CreateCustomPlanModal({
     }
 
     setLoading(true);
-    
+
     // Always use API 5.4: Create Custom Plan (DRAFT, needs approval)
     // Build request payload - ensure no undefined values are sent
     const request: CreateCustomPlanRequest = {
-        planName: planName.trim(),
-        doctorEmployeeCode,
-        paymentType,
-        //  FIX: BE requires @NotNull, so send 0 instead of undefined
-        // For employee role, always send 0 (discount field is hidden)
-        discountAmount: isEmployee ? 0 : (discountAmount === '' ? 0 : Number(discountAmount)),
-        // BE expects LocalDate (yyyy-MM-dd format) or null
-        // Send null if empty string, otherwise send the date string
-        startDate: startDate && startDate.trim() ? startDate.trim() : null,
-        expectedEndDate: expectedEndDate && expectedEndDate.trim() ? expectedEndDate.trim() : null,
-        phases: phases.map((phase) => {
-          const phaseRequest: CreateCustomPlanPhaseRequest = {
-            phaseNumber: phase.phaseNumber,
-            phaseName: phase.phaseName.trim(),
-            items: phase.items.map((item) => {
-              const itemRequest: CreateCustomPlanItemRequest = {
-                serviceCode: item.serviceCode,
-                sequenceNumber: item.sequenceNumber,
-                quantity: item.quantity,
-              };
-              // V21.4: price is optional - only include if explicitly set
-              // Backend will auto-fill from service default if omitted
-              // Note: FE auto-fills price from service when user selects service,
-              // so price is usually present. BE will validate and use it if provided.
-              if (item.price != null && item.price > 0) {
-                itemRequest.price = item.price;
-              }
-              return itemRequest;
-            }),
-          };
-          return phaseRequest;
-        }),
-      };
+      planName: planName.trim(),
+      doctorEmployeeCode,
+      paymentType,
+      //  FIX: BE requires @NotNull, so send 0 instead of undefined
+      // For employee role, always send 0 (discount field is hidden)
+      discountAmount: isEmployee ? 0 : (discountAmount === '' ? 0 : Number(discountAmount)),
+      // BE expects LocalDate (yyyy-MM-dd format) or null
+      // Send null if empty string, otherwise send the date string
+      startDate: startDate && startDate.trim() ? startDate.trim() : null,
+      expectedEndDate: expectedEndDate && expectedEndDate.trim() ? expectedEndDate.trim() : null,
+      phases: phases.map((phase) => {
+        const phaseRequest: CreateCustomPlanPhaseRequest = {
+          phaseNumber: phase.phaseNumber,
+          phaseName: phase.phaseName.trim(),
+          items: phase.items.map((item) => {
+            const itemRequest: CreateCustomPlanItemRequest = {
+              serviceCode: item.serviceCode,
+              sequenceNumber: item.sequenceNumber,
+              quantity: item.quantity,
+            };
+            // V21.4: price is optional - only include if explicitly set
+            // Backend will auto-fill from service default if omitted
+            // Note: FE auto-fills price from service when user selects service,
+            // so price is usually present. BE will validate and use it if provided.
+            if (item.price != null && item.price > 0) {
+              itemRequest.price = item.price;
+            }
+            return itemRequest;
+          }),
+        };
+        return phaseRequest;
+      }),
+    };
 
     // Log request payload with full details for debugging
     console.log('Creating custom plan (API 5.4):', JSON.stringify(request, null, 2));
@@ -979,11 +979,11 @@ export default function CreateCustomPlanModal({
     });
 
     try {
-        const createdPlan = await TreatmentPlanService.createCustomTreatmentPlan(selectedPatientCode, request);
+      const createdPlan = await TreatmentPlanService.createCustomTreatmentPlan(selectedPatientCode, request);
 
-        toast.success('Tạo lộ trình điều trị thành công', {
-          description: `Lộ trình "${createdPlan.planName}" đã được tạo với trạng thái DRAFT, cần được quản lý duyệt.`,
-        });
+      toast.success('Tạo lộ trình điều trị thành công', {
+        description: `Lộ trình "${createdPlan.planName}" đã được tạo với trạng thái DRAFT, cần được quản lý duyệt.`,
+      });
 
       // Reset form
       handleClose();
@@ -1021,18 +1021,18 @@ export default function CreateCustomPlanModal({
         })),
       })));
       console.error('� Error stack:', error.stack);
-      
+
       // V21.4: Handle specialization validation errors
       // BE returns error code as 'error.doctorSpecializationMismatch' or 'doctorSpecializationMismatch'
       const errorCode = error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error;
       const errorDetail = error.response?.data?.detail || error.response?.data?.message || error.message;
-      
+
       // Handle validation errors (400 Bad Request)
       if (error.response?.status === 400) {
         // Check for specialization mismatch error (BE may return 'error.doctorSpecializationMismatch' or 'doctorSpecializationMismatch')
-        if (errorCode === 'doctorSpecializationMismatch' || 
-            errorCode === 'error.doctorSpecializationMismatch' ||
-            (typeof errorCode === 'string' && errorCode.includes('doctorSpecializationMismatch'))) {
+        if (errorCode === 'doctorSpecializationMismatch' ||
+          errorCode === 'error.doctorSpecializationMismatch' ||
+          (typeof errorCode === 'string' && errorCode.includes('doctorSpecializationMismatch'))) {
           // Specialization validation error - show detailed message from BE
           toast.error('Không thể tạo lộ trình điều trị', {
             description: errorDetail || 'Bác sĩ không có chuyên môn phù hợp với các dịch vụ đã chọn. Vui lòng chọn lại dịch vụ hoặc liên hệ quản trị viên để cập nhật chuyên môn.',
@@ -1042,13 +1042,13 @@ export default function CreateCustomPlanModal({
           // Other validation errors - show detailed message
           const validationErrors = error.response?.data?.errors || error.response?.data?.validationErrors;
           let errorMessage = errorDetail || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
-          
+
           if (validationErrors && Array.isArray(validationErrors)) {
             errorMessage = validationErrors.map((err: any) => err.message || err).join(', ');
           } else if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
           }
-          
+
           toast.error('Lỗi khi tạo lộ trình điều trị', {
             description: errorMessage,
             duration: 6000,
@@ -1143,21 +1143,19 @@ export default function CreateCustomPlanModal({
           {[0, 1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center flex-1">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step === currentStep
+                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${step === currentStep
                     ? 'bg-primary text-primary-foreground border-primary'
                     : step < currentStep
-                    ? 'bg-green-500 text-white border-green-500'
-                    : 'bg-gray-100 text-gray-400 border-gray-300'
-                }`}
+                      ? 'bg-green-500 text-white border-green-500'
+                      : 'bg-gray-100 text-gray-400 border-gray-300'
+                  }`}
               >
                 {step < currentStep ? <CheckCircle className="w-5 h-5" /> : step === 0 ? 'BN' : step}
               </div>
               {step < 4 && (
                 <div
-                  className={`flex-1 h-1 mx-2 ${
-                    step < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
+                  className={`flex-1 h-1 mx-2 ${step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                    }`}
                 />
               )}
             </div>
@@ -1168,7 +1166,7 @@ export default function CreateCustomPlanModal({
         {currentStep === 0 && (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="patientSearch">
+              <Label htmlFor="patientSearch" className="mb-2">
                 Chọn bệnh nhân <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -1272,16 +1270,15 @@ export default function CreateCustomPlanModal({
           <div className="space-y-4">
             {/* V21: Creation Mode Selection */}
             <div>
-              <Label>
+              <Label className="mb-2">
                 Cách tạo lộ trình <span className="text-red-500">*</span>
               </Label>
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <Card
-                  className={`p-4 cursor-pointer border-2 transition-colors ${
-                    creationMode === 'custom'
+                  className={`p-4 cursor-pointer border-2 transition-colors ${creationMode === 'custom'
                       ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                   onClick={() => handleCreationModeChange('custom')}
                 >
                   <div className="flex items-center gap-2">
@@ -1298,11 +1295,10 @@ export default function CreateCustomPlanModal({
                   </div>
                 </Card>
                 <Card
-                  className={`p-4 cursor-pointer border-2 transition-colors ${
-                    creationMode === 'template'
+                  className={`p-4 cursor-pointer border-2 transition-colors ${creationMode === 'template'
                       ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                   onClick={() => handleCreationModeChange('template')}
                 >
                   <div className="flex items-center gap-2">
@@ -1324,7 +1320,7 @@ export default function CreateCustomPlanModal({
             {/* Template Selection (if template mode) */}
             {creationMode === 'template' && (
               <div>
-                <Label htmlFor="templateCode">
+                <Label htmlFor="templateCode" className="mb-2">
                   Chọn gói mẫu <span className="text-red-500">*</span>
                 </Label>
                 <Select
@@ -1347,29 +1343,29 @@ export default function CreateCustomPlanModal({
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn gói mẫu..." />
                   </SelectTrigger>
-                 <SelectContent align="start">
-                   {loadingTemplates ? (
-                     <div className="flex items-center justify-center p-4">
-                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                       <span className="text-sm text-muted-foreground">Đang tải danh sách gói mẫu...</span>
-                     </div>
-                   ) : availableTemplates.length === 0 ? (
-                     <div className="p-4 text-sm text-muted-foreground text-center">
-                       Không có gói mẫu nào
-                     </div>
-                   ) : (
-                     availableTemplates.map((template) => (
-                       <SelectItem key={template.code} value={template.code}>
-                         <div>
-                           <div className="font-medium">{template.name}</div>
-                           {template.description && (
-                             <div className="text-xs text-muted-foreground">{template.description}</div>
-                           )}
-                         </div>
-                       </SelectItem>
-                     ))
-                   )}
-                 </SelectContent>
+                  <SelectContent align="start">
+                    {loadingTemplates ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <span className="text-sm text-muted-foreground">Đang tải danh sách gói mẫu...</span>
+                      </div>
+                    ) : availableTemplates.length === 0 ? (
+                      <div className="p-4 text-sm text-muted-foreground text-center">
+                        Không có gói mẫu nào
+                      </div>
+                    ) : (
+                      availableTemplates.map((template) => (
+                        <SelectItem key={template.code} value={template.code}>
+                          <div>
+                            <div className="font-medium">{template.name}</div>
+                            {template.description && (
+                              <div className="text-xs text-muted-foreground">{template.description}</div>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
                 </Select>
                 {loadingTemplate && (
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
@@ -1397,7 +1393,7 @@ export default function CreateCustomPlanModal({
             )}
 
             <div>
-              <Label htmlFor="planName">
+              <Label htmlFor="planName" className="mb-2">
                 Tên lộ trình điều trị <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -1413,16 +1409,16 @@ export default function CreateCustomPlanModal({
             </div>
 
             <div>
-              <Label htmlFor="doctorEmployeeCode">
+              <Label htmlFor="doctorEmployeeCode" className="mb-2">
                 Bác sĩ phụ trách <span className="text-red-500">*</span>
               </Label>
               {(() => {
                 // Check if current user is a doctor
-                const isCurrentUserDoctor = user?.baseRole === 'employee' && 
-                                          (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || 
-                                           user?.permissions?.includes('CREATE_TREATMENT_PLAN')) &&
-                                          user?.employeeCode;
-                
+                const isCurrentUserDoctor = user?.baseRole === 'employee' &&
+                  (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) ||
+                    user?.permissions?.includes('CREATE_TREATMENT_PLAN')) &&
+                  user?.employeeCode;
+
                 if (isCurrentUserDoctor && user.employeeCode) {
                   // Display current doctor (read-only for doctors)
                   return (
@@ -1479,7 +1475,7 @@ export default function CreateCustomPlanModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="paymentType">
+                <Label htmlFor="paymentType" className="mb-2">
                   Hình thức thanh toán <span className="text-red-500">*</span>
                 </Label>
                 <Select
@@ -1500,7 +1496,7 @@ export default function CreateCustomPlanModal({
               {/* Hide discount field for employee role */}
               {!isEmployee && (
                 <div>
-                  <Label htmlFor="discountAmount">Giảm giá (VND)</Label>
+                  <Label htmlFor="discountAmount" className="mb-2">Giảm giá (VND)</Label>
                   <Input
                     id="discountAmount"
                     type="number"
@@ -1522,7 +1518,7 @@ export default function CreateCustomPlanModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="startDate">Ngày bắt đầu (tùy chọn)</Label>
+                <Label htmlFor="startDate" className="mb-2">Ngày bắt đầu (tùy chọn)</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -1535,7 +1531,7 @@ export default function CreateCustomPlanModal({
               </div>
 
               <div>
-                <Label htmlFor="expectedEndDate">Ngày kết thúc dự kiến (tùy chọn)</Label>
+                <Label htmlFor="expectedEndDate" className="mb-2">Ngày kết thúc dự kiến (tùy chọn)</Label>
                 <Input
                   id="expectedEndDate"
                   type="date"
@@ -1579,7 +1575,7 @@ export default function CreateCustomPlanModal({
 
                 <div className="space-y-4">
                   <div>
-                    <Label>
+                    <Label className="mb-2">
                       Tên giai đoạn <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -1687,7 +1683,7 @@ export default function CreateCustomPlanModal({
 
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label>
+                              <Label className="mb-2">
                                 Dịch vụ <span className="text-red-500">*</span>
                               </Label>
                               <Select
@@ -1737,7 +1733,7 @@ export default function CreateCustomPlanModal({
                             {/* Hide price field for employee role */}
                             {!isEmployee && (
                               <div>
-                                <Label>
+                                <Label className="mb-2">
                                   Giá (VND)
                                 </Label>
                                 <Input
@@ -1755,7 +1751,7 @@ export default function CreateCustomPlanModal({
                             )}
 
                             <div>
-                              <Label>
+                              <Label className="mb-2">
                                 Số lượng <span className="text-red-500">*</span>
                               </Label>
                               <Input
@@ -1817,8 +1813,8 @@ export default function CreateCustomPlanModal({
                     {paymentType === PaymentType.FULL
                       ? 'Trả một lần'
                       : paymentType === PaymentType.PHASED
-                      ? 'Trả theo giai đoạn'
-                      : 'Trả góp'}
+                        ? 'Trả theo giai đoạn'
+                        : 'Trả góp'}
                   </span>
                 </div>
                 {!isEmployee && discountAmount !== '' && discountAmount > 0 && (
@@ -1849,7 +1845,7 @@ export default function CreateCustomPlanModal({
                             • {service?.serviceName || item.serviceCode}
                             {!isEmployee && item.price != null && item.price > 0 && (
                               <> - {item.price.toLocaleString('vi-VN')} VND × {item.quantity} ={' '}
-                              {(item.price * item.quantity).toLocaleString('vi-VN')} VND</>
+                                {(item.price * item.quantity).toLocaleString('vi-VN')} VND</>
                             )}
                             {isEmployee && item.quantity > 1 && (
                               <> × {item.quantity}</>
@@ -1903,7 +1899,7 @@ export default function CreateCustomPlanModal({
         )}
 
         <DialogFooter>
-            <div className="flex items-center justify-between w-full">
+          <div className="flex items-center justify-between w-full">
             <Button
               type="button"
               variant="outline"

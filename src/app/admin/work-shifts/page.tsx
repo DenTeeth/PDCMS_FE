@@ -315,9 +315,9 @@ export default function WorkShiftsPage() {
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-green-50 text-green-800">Đang hoạt động</Badge>
+      <Badge className="bg-green-600 text-white">Đang hoạt động</Badge>
     ) : (
-      <Badge className="bg-gray-100 text-gray-800">Không hoạt động</Badge>
+      <Badge className="bg-gray-500 text-white">Không hoạt động</Badge>
     );
   };
 
@@ -576,11 +576,11 @@ export default function WorkShiftsPage() {
             <button
               onClick={() => setActiveTab('active')}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${activeTab === 'active'
-                ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                ? 'bg-green-600 text-white shadow-[0_2px_8px_rgba(22,163,74,0.4)]'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
-              <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-gray-300'
+              <div className={`h-4 w-4 rounded-full flex items-center justify-center ${activeTab === 'active' ? 'bg-white/20' : 'bg-green-200'
                 }`}>
                 <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

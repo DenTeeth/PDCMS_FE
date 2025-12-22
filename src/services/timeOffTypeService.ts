@@ -25,7 +25,7 @@ export class TimeOffTypeService {
   /**
    * Lấy danh sách loại nghỉ phép (Employee view - chỉ active)
    * 
-   * Requires: VIEW_TIME_OFF_TYPE permission
+   * Requires: VIEW_LEAVE_TYPE permission
    * 
    * Query parameters:
    * - isActive: Filter by active status (true/false)
@@ -35,7 +35,7 @@ export class TimeOffTypeService {
    * - size: Page size (default: 20)
    * 
    * Possible errors:
-   * - 403: Access Denied (missing VIEW_TIME_OFF_TYPE permission)
+   * - 403: Access Denied (missing VIEW_LEAVE_TYPE permission)
    */
   static async getTimeOffTypes(params?: {
     isActive?: boolean;
@@ -55,7 +55,7 @@ export class TimeOffTypeService {
   /**
    * Lấy danh sách loại nghỉ phép cho dropdown (chỉ active types)
    * 
-   * Requires: VIEW_TIME_OFF_TYPE permission
+   * Requires: VIEW_LEAVE_TYPE permission
    */
   static async getActiveTimeOffTypes(): Promise<TimeOffType[]> {
     const response = await this.getTimeOffTypes({
@@ -67,7 +67,7 @@ export class TimeOffTypeService {
   /**
    * Lấy danh sách loại nghỉ phép yêu cầu phê duyệt
    * 
-   * Requires: VIEW_TIME_OFF_TYPE permission
+   * Requires: VIEW_LEAVE_TYPE permission
    */
   static async getApprovalRequiredTypes(): Promise<TimeOffType[]> {
     const response = await this.getTimeOffTypes({
@@ -87,7 +87,7 @@ export class TimeOffTypeService {
    * 1. GET /api/v1/admin/time-off-types
    * Lấy danh sách TẤT CẢ loại nghỉ phép (bao gồm cả inactive)
    * 
-   * Requires: VIEW_TIMEOFF_TYPE_ALL permission
+   * Requires: VIEW_LEAVE_TYPE permission
    * 
    * Possible errors:
    * - 403: FORBIDDEN - Insufficient permissions
@@ -108,7 +108,7 @@ export class TimeOffTypeService {
    * 2. POST /api/v1/admin/time-off-types
    * Tạo loại nghỉ phép mới
    * 
-   * Requires: CREATE_TIMEOFF_TYPE permission
+   * Requires: MANAGE_LEAVE_TYPE permission
    * 
    * Possible errors:
    * - 400: BAD_REQUEST - Validation errors
@@ -128,7 +128,7 @@ export class TimeOffTypeService {
    * 3. PATCH /api/v1/admin/time-off-types/{id}
    * Cập nhật loại nghỉ phép
    * 
-   * Requires: UPDATE_TIMEOFF_TYPE permission
+   * Requires: MANAGE_LEAVE_TYPE permission
    * 
    * Possible errors:
    * - 400: BAD_REQUEST - Validation errors
@@ -152,7 +152,7 @@ export class TimeOffTypeService {
    * 4. DELETE /api/v1/admin/time-off-types/{id}
    * Toggle trạng thái is_active (soft delete)
    * 
-   * Requires: DELETE_TIMEOFF_TYPE permission
+   * Requires: MANAGE_LEAVE_TYPE permission
    * 
    * Business Logic:
    * - Đảo ngược is_active (true -> false hoặc false -> true)

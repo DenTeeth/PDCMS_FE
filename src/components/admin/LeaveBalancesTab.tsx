@@ -50,7 +50,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL');
+  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE');
   const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE');
 
   // Balance Viewer State
@@ -673,7 +673,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             <CardContent className="space-y-4">
               <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
                 <p className="text-sm text-red-800 font-medium mb-2">
-                   CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
+                  CẢNH BÁO: Thao tác này sẽ ảnh hưởng đến TOÀN BỘ nhân viên!
                 </p>
                 <p className="text-sm text-red-700">
                   Job sẽ cộng số ngày phép mặc định cho tất cả nhân viên trong hệ thống cho năm được chọn.

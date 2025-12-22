@@ -247,14 +247,11 @@ export default function AdminOvertimeRequestsPage() {
   }, [overtimeRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
   // ⚡ Memoize permission checks
-  const canApprove = useMemo(() => user?.permissions?.includes('APPROVE_OT'), [user?.permissions]);
-  const canReject = useMemo(() => user?.permissions?.includes('REJECT_OT'), [user?.permissions]);
-  const canCancelPending = useMemo(() => user?.permissions?.includes('CANCEL_OT_PENDING'), [user?.permissions]);
-  const canCancelOwn = useMemo(() => user?.permissions?.includes('CANCEL_OT_OWN'), [user?.permissions]);
-  const canCreate = useMemo(() =>
-    user?.permissions?.includes('CREATE_OT') || user?.permissions?.includes('CREATE_OVERTIME'),
-    [user?.permissions]
-  );
+  const canApprove = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]);
+  const canReject = useMemo(() => user?.permissions?.includes('REJECT_OVERTIME'), [user?.permissions]);
+  const canCancelPending = useMemo(() => user?.permissions?.includes('CANCEL_OVERTIME_PENDING'), [user?.permissions]);
+  const canCancelOwn = useMemo(() => user?.permissions?.includes('CANCEL_OVERTIME_OWN'), [user?.permissions]);
+  const canCreate = useMemo(() => user?.permissions?.includes('CREATE_OVERTIME'), [user?.permissions]);
 
   // ⚡ useCallback helper function
   const canCancelRequest = useCallback((request: OvertimeRequest) => {
@@ -423,7 +420,7 @@ export default function AdminOvertimeRequestsPage() {
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Trạng thái</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Nhân viên</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Ngày làm việc</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Thao tác</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -452,14 +449,13 @@ export default function AdminOvertimeRequestsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-end">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/admin/overtime-requests/${request.requestId}`)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            Chi tiết
                           </Button>
 
                           {request.status === OvertimeStatus.PENDING && (
@@ -520,12 +516,12 @@ export default function AdminOvertimeRequestsPage() {
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle>Tạo yêu cầu làm thêm giờ</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleCreateOvertimeRequest} className="space-y-4">
-                <div>
+                <div className="space-y-1">
                   <Label>Nhân viên <span className="text-red-500">*</span></Label>
                   <CustomSelect
                     value={formData.employeeId ? formData.employeeId.toString() : ''}
@@ -550,7 +546,7 @@ export default function AdminOvertimeRequestsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <Label>Ca làm việc <span className="text-red-500">*</span></Label>
                   <CustomSelect
                     value={formData.workShiftId}
