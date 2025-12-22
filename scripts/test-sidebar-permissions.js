@@ -154,16 +154,16 @@ let passed = 0, failed = 0;
 
 adminMenuTests.forEach(test => {
   let show = true;
-  
+
   if (test.requiredPermissionGroup) {
     show = hasPermissionGroup(mockAdminUser.groupedPermissions, test.requiredPermissionGroup);
   } else if (test.requiredPermissions) {
     show = hasPermissions(mockAdminUser.permissions, test.requiredPermissions, test.requireAll);
   }
-  
+
   const result = show === test.shouldShow ? '✅ PASS' : '❌ FAIL';
   if (show === test.shouldShow) passed++; else failed++;
-  
+
   console.log(`${result} - ${test.name}`);
   console.log(`  Expected: ${test.shouldShow}, Got: ${show}`);
   if (test.requiredPermissionGroup) {
@@ -181,16 +181,16 @@ console.log('\n=== TESTING EMPLOYEE USER ===\n');
 
 employeeMenuTests.forEach(test => {
   let show = true;
-  
+
   if (test.requiredPermissionGroup) {
     show = hasPermissionGroup(mockEmployeeUser.groupedPermissions, test.requiredPermissionGroup);
   } else if (test.requiredPermissions) {
     show = hasPermissions(mockEmployeeUser.permissions, test.requiredPermissions, test.requireAll);
   }
-  
+
   const result = show === test.shouldShow ? '✅ PASS' : '❌ FAIL';
   if (show === test.shouldShow) passed++; else failed++;
-  
+
   console.log(`${result} - ${test.name}`);
   console.log(`  Expected: ${test.shouldShow}, Got: ${show}`);
   if (test.requiredPermissionGroup) {
