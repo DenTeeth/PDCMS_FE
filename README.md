@@ -1,401 +1,671 @@
 # Private Dental Clinic Management System - Frontend
 
-A modern, high-performance dental clinic management system built with Next.js 14, React, TypeScript, and Tailwind CSS.
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38bdf8?style=for-the-badge&logo=tailwind-css)
+
+**A modern, high-performance dental clinic management system built with Next.js 16, React 19, TypeScript, and Tailwind CSS.**
+
+[Features](#-features) • [Installation](#-installation) • [Documentation](#-documentation) • [Contributing](#-contributing)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Installation](#-installation)
+- [Development](#-development)
+- [Project Structure](#-project-structure)
+- [Authentication & Authorization](#-authentication--authorization)
+- [Key Features](#-key-features)
+- [Environment Variables](#-environment-variables)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [Support](#-support)
+
+---
+
+## 🎯 Overview
+
+Private Dental Clinic Management System (PDCMS) is a comprehensive web application designed to manage all aspects of a dental clinic's operations. The system provides role-based access control for different user types including administrators, managers, dentists, receptionists, accountants, warehouse staff, and patients.
+
+### Project Information
+- **Project Name**: SEP193_PRIVATEDENTALCLINIC
+- **Institution**: FPT University
+- **Repository**: [GitLab](http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git)
+- **Version**: 0.1.0
+
+---
 
 ## 🚀 Features
 
-### Public Website
+### 🌐 Public Website
 - **Modern Homepage** with impressive animations using Framer Motion
-- **Responsive Design** optimized for all devices
-- **Performance Optimized** with lazy loading and code splitting
+- **Responsive Design** optimized for all devices (mobile, tablet, desktop)
+- **Performance Optimized** with lazy loading, code splitting, and image optimization
 - **SEO Friendly** with proper meta tags and structured data
-- Sections: Hero, About, Stats, Services, Doctors, Testimonials, FAQ, Appointment
+- **Sections**: Hero, About, Stats, Services, Doctors, Testimonials, FAQ, Appointment Booking
 
-### Management System
-Three main route groups with role-based access control:
-- **Admin** (`/admin`): System management, accounts, appointments, blogs, roles, permissions, schedules, settings
-- **Employee** (`/employee`): Unified dashboard for all employee roles (Manager, Dentist, Receptionist, Accountant, Warehouse) with permission-based menu filtering:
-  - **Manager**: Analytics, appointments, employees, feedback, patients, settings
-  - **Dentist**: Schedule, patients, treatments, stages, follow-ups
-  - **Receptionist**: Appointments, customer management (groups & contacts), patient records, KPI, settings
-  - **Accountant**: Performance monitoring and financial management
-  - **Warehouse**: Inventory, products, statistics
-- **Patient** (`/patient`): Patient portal for appointments, treatment plans, medical records, billing, notifications
+### 👨‍💼 Admin Dashboard (`/admin`)
+Full system management capabilities:
+- **Dashboard**: System overview with statistics and recent activities
+- **Account Management**: User and employee account management
+- **Blog Management**: Content management for clinic blog
+- **Appointment Management**: View and manage all appointments
+- **Role & Permission Management**: RBAC system with granular permissions
+- **Holiday Management**: Define and manage national/company holidays
+- **Shift Calendar**: Manage employee shifts and schedules
+- **System Settings**: Configure clinic information and system preferences
 
-### Customer Management
-- **Integrated Tabs Interface** for Customer Groups and Customer Contacts
-- **Contact Form** with validation for customer details
-- **Source Tracking**: Website, Facebook, Zalo, Walk-in, Referral
-- **Service Selection**: 13+ dental services available
-- **Clean URL Structure**: `/receptionist/customers/contact/*`
+### 👔 Employee Dashboard (`/employee`)
+Unified dashboard for all employee roles with permission-based menu filtering:
 
-## 🎨 Design System
+#### Manager
+- Analytics and reporting
+- Appointment management
+- Employee management
+- Customer feedback and reviews
+- Patient records
+- System settings
 
-### Colors
-- **Primary**: `#8b5fbf` (Purple)
-- **Secondary**: `#b794f6` (Light Purple)
-- **Accent**: `#e9d5ff` (Pale Purple)
+#### Dentist
+- Personal schedule and calendar
+- Patient management
+- Treatment plans and procedures
+- Clinical records
+- Follow-up appointments
 
-### Typography
-- Font: Inter (Google Fonts)
-- Headings: Bold, large sizes
-- Body: Regular, readable sizes
+#### Receptionist
+- Appointment booking and management
+- Customer management (groups & contacts)
+- Patient registration
+- KPI tracking
+- Settings
 
-### Components
-- Built with Radix UI for accessibility
-- Styled with Tailwind CSS
-- Animations with Framer Motion
+#### Accountant
+- Financial performance monitoring
+- Revenue and expense tracking
+- Payment management
+- Financial reports
 
-## ⚡ Performance Optimizations
+#### Warehouse Staff
+- Inventory management
+- Product and consumable tracking
+- Stock statistics
+- Supplier management
 
-### Implemented
-- ✅ **Code Splitting**: Dynamic imports for below-fold components
-- ✅ **Image Optimization**: Next.js Image component with WebP/AVIF
-- ✅ **Lazy Loading**: Intersection Observer for animations and images
-- ✅ **Bundle Optimization**: Tree-shaking and vendor chunk splitting
-- ✅ **Animation Optimization**: React.memo, reduced complexity
-- ✅ **Caching Strategy**: Static assets and vendor bundles
+### 👤 Patient Portal (`/patient`)
+Patient-facing features:
+- **Appointment Booking**: Schedule appointments online
+- **Treatment Plans**: View and track treatment progress
+- **Medical Records**: Access clinical records and history
+- **Billing**: View invoices and payment history
+- **Notifications**: Real-time updates via WebSocket
 
-### Custom Hooks
-- `useOptimizedAnimation`: Performance-aware animations
-- `useDevicePerformance`: Adaptive animations based on device capabilities
+### 🎨 Advanced Features
 
-### Target Metrics
-- LCP (Largest Contentful Paint): < 2.5s
-- FID (First Input Delay): < 100ms
-- CLS (Cumulative Layout Shift): < 0.1
-- Initial Bundle Size: < 200KB
+#### Holiday Management
+- **Holiday Definitions**: Create and manage national/company holidays
+- **Holiday Dates**: Manage specific holiday dates
+- **Calendar Integration**: Holidays displayed on all calendar views
+- **Auto-Schedule Integration**: Automatically avoids scheduling on holidays
 
-See [PERFORMANCE_OPTIMIZATION.md](./PERFORMANCE_OPTIMIZATION.md) for detailed guide.
+#### Auto-Schedule System
+- **Intelligent Scheduling**: Automatic appointment suggestions based on:
+  - Doctor availability and shifts
+  - Room availability
+  - Service spacing rules
+  - Holiday avoidance
+- **Smart Suggestions**: Multiple time slot suggestions with conflict detection
+- **Retry Mechanism**: Retry failed scheduling attempts
+- **Warning System**: Clear warnings for "no doctor shifts" and availability issues
+
+#### Calendar System
+- **FullCalendar Integration**: Interactive calendar with multiple views
+- **Holiday Display**: Visual indication of holidays with custom styling
+- **Shift Management**: View and manage employee shifts
+- **Appointment Viewing**: See all appointments in calendar format
+
+#### Real-time Notifications
+- **WebSocket Integration**: Real-time notifications via STOMP/WebSocket
+- **Notification Center**: Centralized notification management
+- **Unread Count**: Track unread notifications
+- **Mark as Read**: Individual and bulk read status management
+
+---
 
 ## 🛠️ Tech Stack
 
-### Core
-- **Next.js 14+**: React framework with App Router
-- **React 18+**: UI library
-- **TypeScript**: Type safety
-- **Tailwind CSS**: Utility-first CSS
+### Core Framework
+- **Next.js 16+**: React framework with App Router and Server Components
+- **React 19+**: Latest React with concurrent features
+- **TypeScript 5+**: Type-safe development
+- **Tailwind CSS 4+**: Utility-first CSS framework
 
-### UI Libraries
+### UI Libraries & Components
 - **Radix UI**: Accessible component primitives
-- **Framer Motion**: Animation library
-- **React Intersection Observer**: Scroll-triggered animations
-- **Lucide React**: Icon library
+  - Dialog, Select, Checkbox, Label, Popover, Progress, Separator, Tabs
+- **Shadcn/ui**: High-quality component library
+- **Framer Motion**: Advanced animation library
+- **Lucide React**: Modern icon library
+- **Font Awesome**: Additional icon support
 
 ### Forms & Validation
-- **React Hook Form**: Form management
-- **Zod**: Schema validation
+- **React Hook Form**: Performant form management
+- **Zod**: Schema validation with TypeScript inference
+- **@hookform/resolvers**: Zod integration for React Hook Form
 
-### Data Fetching
-- **TanStack Query (React Query)**: Server state management
-- **Axios**: HTTP client
+### Data Fetching & State Management
+- **TanStack Query (React Query)**: Server state management and caching
+- **Axios**: HTTP client with interceptors
+- **React Context**: Client-side state management (Auth, Language, Status)
+
+### Calendar & Scheduling
+- **FullCalendar**: Full-featured calendar component
+  - DayGrid, TimeGrid, Interaction plugins
+- **date-fns**: Date manipulation and formatting
 
 ### Charts & Visualization
-- **Recharts**: Chart library
+- **Recharts**: Composable charting library
+
+### Real-time Communication
+- **STOMP.js**: WebSocket messaging protocol
+- **SockJS**: WebSocket fallback support
+
+### Internationalization
+- **next-intl**: Internationalization for Next.js
+- Support for Vietnamese and English
+
+### Image & File Management
+- **Cloudinary**: Cloud-based image management
+- **next-cloudinary**: Next.js Cloudinary integration
+- **Firebase**: Additional file storage support
 
 ### Development Tools
 - **ESLint**: Code linting
-- **Prettier**: Code formatting
 - **TypeScript**: Static type checking
+- **tsx**: TypeScript execution for scripts
+
+---
 
 ## 📦 Installation
 
-```bash
-# Clone the repository
-git clone http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git
-cd fe
+### Prerequisites
+- **Node.js**: 18.x or higher
+- **npm**: 9.x or higher (or yarn/pnpm)
+- **Git**: For version control
 
-# Install dependencies
-npm install
+### Setup Steps
 
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your configuration
+1. **Clone the repository**
+   ```bash
+   git clone http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git
+   cd fe
+   ```
 
-# Run development server
-npm run dev
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edit `.env.local` with your configuration (see [Environment Variables](#-environment-variables))
+
+4. **Run development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+---
 
 ## 🚀 Development
 
+### Available Scripts
+
 ```bash
-# Start development server
-npm run dev
+# Development
+npm run dev              # Start development server with Turbo
+npm run dev:fast         # Start with HTTPS enabled
 
-# Build for production
-npm run build
+# Production
+npm run build            # Build for production
+npm run start            # Start production server
+npm run build:analyze    # Build with bundle analysis
 
-# Start production server
-npm start
+# Code Quality
+npm run lint             # Run ESLint
 
-# Lint code
-npm run lint
+# Analysis
+npm run analyze          # Analyze bundle size
 
-# Analyze bundle size
-npm run analyze
+# API Testing
+npm run test:api         # Test API endpoints
+npm run test:api:watch   # Watch mode for API tests
+npm run test:api:participants  # Test participants API
+npm run test:features    # Test feature modules
+npm run test:all-modules # Test all modules
+npm run test:comprehensive # Comprehensive tests
+npm run test:warehouse   # Test warehouse APIs
 ```
+
+### Development Workflow
+
+1. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes**
+   - Follow the code style guidelines
+   - Write meaningful commit messages
+   - Add comments for complex logic
+
+3. **Test your changes**
+   ```bash
+   npm run lint
+   npm run build
+   ```
+
+4. **Commit and push**
+   ```bash
+   git add .
+   git commit -m "feat: Add your feature"
+   git push origin feature/your-feature-name
+   ```
+
+5. **Create a Merge Request** on GitLab
+
+---
 
 ## 📁 Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── (public)/          # Public pages (About, Contact, Services, Doctors, Login)
-│   ├── admin/             # Admin dashboard (full system access)
-│   ├── employee/          # Employee dashboard (unified for all employee roles: Manager, Dentist, Receptionist, Accountant, Warehouse)
-│   └── patient/           # Patient dashboard (patient portal)
-├── components/            # React components
-│   ├── accountant/        # Accountant-specific components
-│   ├── admin/             # Admin-specific components
-│   ├── auth/              # Authentication components
-│   ├── dentist/           # Dentist-specific components
-│   ├── homepage/          # Homepage sections
-│   ├── layout/            # Layout components (Header, Footer, Navigation)
-│   ├── manager/           # Manager-specific components
-│   ├── receptionist/      # Receptionist-specific components
-│   ├── ui/                # Reusable UI components
-│   ├── patient/           # Patient-specific components
-│   └── warehouse/         # Warehouse-specific components
-├── contexts/              # React contexts
-│   ├── AuthContext.tsx    # Authentication state
-│   └── StatusContext.tsx  # Status management
-├── data/                  # Mock data and constants
-├── hooks/                 # Custom React hooks
-│   ├── useOptimizedAnimation.ts
-│   └── useDevicePerformance.ts
-├── lib/                   # Utility functions
-│   ├── api.ts             # API client
-│   ├── cookies.ts         # Cookie utilities
-│   └── utils.ts           # Common utilities
-├── types/                 # TypeScript types
-└── img/                   # Static images
+├── app/                          # Next.js App Router pages
+│   ├── (public)/                  # Public pages (About, Contact, Services, Doctors, Login)
+│   ├── admin/                    # Admin dashboard
+│   │   ├── holidays/             # Holiday management page
+│   │   ├── shift-calendar/       # Shift calendar management
+│   │   └── ...                   # Other admin pages
+│   ├── employee/                 # Employee dashboard (unified for all roles)
+│   │   ├── analytics/            # Analytics and reporting
+│   │   ├── appointments/         # Appointment management
+│   │   ├── customers/            # Customer management
+│   │   └── ...                   # Other employee pages
+│   ├── patient/                  # Patient portal
+│   ├── api/                      # API routes
+│   └── layout.tsx                # Root layout
+│
+├── components/                   # React components
+│   ├── admin/                    # Admin-specific components
+│   ├── appointments/             # Appointment components
+│   │   └── AppointmentCalendar.tsx  # Calendar component with holiday integration
+│   ├── auth/                     # Authentication components
+│   ├── clinical-records/         # Clinical record components
+│   ├── homepage/                 # Homepage sections
+│   ├── layout/                   # Layout components (Header, Footer, Navigation)
+│   ├── notifications/            # Notification components
+│   ├── treatment-plans/          # Treatment plan components
+│   │   ├── AutoScheduleConfigModal.tsx  # Auto-schedule configuration
+│   │   ├── AutoScheduleSuggestions.tsx  # Auto-schedule suggestions display
+│   │   └── TreatmentPlanDetail.tsx      # Treatment plan details
+│   ├── ui/                       # Reusable UI components (Shadcn/ui)
+│   └── ...                       # Other component directories
+│
+├── contexts/                     # React contexts
+│   ├── AuthContext.tsx           # Authentication state
+│   ├── LanguageContext.tsx       # Internationalization
+│   └── StatusContext.tsx         # Status management
+│
+├── hooks/                        # Custom React hooks
+│   ├── useApiErrorHandler.ts     # API error handling
+│   ├── useAutoSchedule.ts        # Auto-schedule logic
+│   ├── useHolidays.ts            # Holiday data fetching
+│   ├── useNotifications.ts       # Notification management
+│   ├── usePermissions.ts         # Permission checking
+│   └── ...                       # Other custom hooks
+│
+├── services/                     # API service layer
+│   ├── appointmentService.ts     # Appointment API
+│   ├── holidayService.ts         # Holiday management API
+│   ├── treatmentPlanService.ts   # Treatment plan API
+│   ├── employeeService.ts        # Employee API
+│   ├── notificationService.ts    # Notification API
+│   └── ...                       # Other service files
+│
+├── types/                        # TypeScript type definitions
+│   ├── holiday.ts                # Holiday-related types
+│   ├── appointment.ts            # Appointment types
+│   ├── auth.ts                   # Authentication types
+│   └── ...                       # Other type files
+│
+├── utils/                        # Utility functions
+│   ├── holidayErrorHandler.ts    # Holiday error handling
+│   ├── formatters.ts             # Data formatting utilities
+│   └── ...                       # Other utilities
+│
+├── constants/                    # Constants and configuration
+│   ├── navigationConfig.ts       # Navigation menu configuration
+│   └── permissions.ts            # Permission constants
+│
+├── lib/                          # Core libraries
+│   ├── api.ts                    # API client configuration
+│   ├── cookies.ts                # Cookie utilities
+│   ├── utils.ts                  # Common utilities
+│   └── i18n.ts                   # Internationalization setup
+│
+├── config/                       # Configuration files
+│   └── cloudinary.ts             # Cloudinary configuration
+│
+├── styles/                       # Global styles
+│   ├── responsive-layout.css     # Responsive layout styles
+│   └── sidebar-animations.css    # Sidebar animation styles
+│
+└── middleware.ts                 # Next.js middleware (auth, i18n)
 ```
 
-## 🔐 Authentication
+---
 
-The system uses JWT-based authentication with role-based access control (RBAC).
+## 🔐 Authentication & Authorization
 
-### Available Roles
-- `ADMIN`: Full system access
-- `MANAGER`: Management operations
-- `DENTIST`: Clinical operations
-- `RECEPTIONIST`: Front desk operations
-- `ACCOUNTANT`: Financial operations
-- `WAREHOUSE`: Inventory operations
-- `USER`: Patient portal
+### Authentication
+The system uses **JWT-based authentication** with secure token storage in HTTP-only cookies.
 
-### Protected Routes
+### Role-Based Access Control (RBAC)
+The system implements granular permission-based access control:
+
+#### Available Roles
+- **ADMIN**: Full system access
+- **MANAGER**: Management operations
+- **DENTIST**: Clinical operations
+- **RECEPTIONIST**: Front desk operations
+- **ACCOUNTANT**: Financial operations
+- **WAREHOUSE**: Inventory operations
+- **USER**: Patient portal access
+
+#### Permission Groups
+- **ACCOUNT**: Account management
+- **EMPLOYEE**: Employee management
+- **APPOINTMENT**: Appointment operations
+- **TREATMENT_PLAN**: Treatment plan management
+- **HOLIDAY**: Holiday management
+- **SHIFT**: Shift management
+- **CLINICAL_RECORD**: Clinical records
+- **WAREHOUSE**: Inventory management
+- And more...
+
+#### Protected Routes
 - All dashboard routes are protected with `ProtectedRoute` component
 - Automatic redirect to login if not authenticated
-- Role-based access control for specific features
+- Role-based menu filtering based on permissions
+- API-level permission checking
 
-## 🎯 Key Features Implementation
+---
 
-### Customer Management with Tabs
-Location: `/receptionist/customers`
+## 🎯 Key Features
 
-Features:
-- **Customer Groups Tab**: View and manage customer groups
-- **Customer Contacts Tab**: View, create, edit customer contacts
-- **Integrated Interface**: Seamless switching between tabs
-- **Clean URLs**: `/receptionist/customers/contact/[id]` for contact details
+### Holiday Management
+**Location**: `/admin/holidays`
 
-### Contact Form with Dropdowns
-Location: `src/components/receptionist/ContactForm.tsx`
+**Features**:
+- Create, read, update, delete holiday definitions
+- Manage holiday dates (national and company holidays)
+- Filter by holiday type
+- Search functionality
+- Pagination support
+- Integration with calendar views
+- Auto-schedule holiday avoidance
 
-Features:
-- **Source Dropdown**: WEBSITE, FACEBOOK, ZALO, WALK_IN, REFERRAL
-- **Service Dropdown**: 13 dental services
-- **Form Validation**: Zod schema validation
-- **Error Handling**: Field-level error messages
+### Auto-Schedule System
+**Location**: Treatment Plan Detail page
 
-### Homepage with Animations
-Location: `src/components/homepage/`
+**Features**:
+- Intelligent appointment scheduling
+- Multiple time slot suggestions
+- Doctor shift validation
+- Room availability checking
+- Service spacing rules
+- Holiday conflict detection
+- Retry mechanism for failed attempts
+- Clear warning messages
 
-Sections:
-1. **HeroSection**: Main banner with gradient background
-2. **StatsSection**: Counter animations for key metrics
-3. **AboutSection**: Company overview with features
-4. **FeaturesSection**: Why choose us
-5. **ServicesSection**: Dental services showcase
-6. **DoctorsSection**: Team members
-7. **TestimonialsSection**: Customer reviews carousel
-8. **FAQSection**: Accordion FAQ
-9. **AppointmentSection**: Booking form
-10. **TeamSection**: Extended team information
+### Calendar Integration
+**Components**: `AppointmentCalendar.tsx`, `AdminShiftCalendarPage.tsx`
 
-## 📊 Performance Monitoring
+**Features**:
+- FullCalendar integration with multiple views
+- Holiday display with custom styling
+- Shift visualization
+- Appointment viewing
+- Interactive date selection
+- Automatic data loading based on visible range
 
-### Tools
-- **Lighthouse**: Built-in Chrome DevTools
-- **WebPageTest**: External performance testing
-- **PageSpeed Insights**: Google's performance tool
+### Real-time Notifications
+**Features**:
+- WebSocket-based real-time updates
+- Notification center with unread count
+- Mark as read (individual and bulk)
+- Delete notifications
+- Real-time badge updates
 
-### Commands
-```bash
-# Build and analyze bundle
-npm run build
-npm run analyze
-
-# Run Lighthouse
-lighthouse http://localhost:3000 --view
-```
-
-## 🧪 Testing
-
-```bash
-# Run unit tests
-npm test
-
-# Run tests in watch mode
-npm test -- --watch
-
-# Run tests with coverage
-npm test -- --coverage
-```
+---
 
 ## 🌐 Environment Variables
 
+Create a `.env.local` file in the root directory:
+
 ```env
 # API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 # Authentication
 NEXT_PUBLIC_JWT_SECRET=your-secret-key
 
+# Cloudinary (for image uploads)
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+NEXT_PUBLIC_CLOUDINARY_API_KEY=your-api-key
+NEXT_PUBLIC_CLOUDINARY_API_SECRET=your-api-secret
+
+# Firebase (optional, for additional file storage)
+NEXT_PUBLIC_FIREBASE_API_KEY=your-firebase-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+
 # Feature Flags
 NEXT_PUBLIC_ENABLE_ANIMATIONS=true
 NEXT_PUBLIC_ENABLE_ANALYTICS=false
+
+# WebSocket (for real-time notifications)
+NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
 ```
-
-## 📝 Documentation
-
-- [Performance Optimization Guide](./PERFORMANCE_OPTIMIZATION.md)
-- [Authentication Flow](./AUTH_FLOW_DETAILED.md)
-- [Authentication Implementation Journey](./AUTH_IMPLEMENTATION_JOURNEY.md)
-- [Frontend Integration Guide](./FRONTEND_INTEGRATION.md)
-- [Code Review Checklist](./CODE_REVIEW_CHECKLIST.md)
-
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Commit your changes: `git commit -m 'Add some feature'`
-3. Push to the branch: `git push origin feature/your-feature`
-4. Submit a merge request
-
-### Code Style
-- Follow ESLint rules
-- Use TypeScript strict mode
-- Write meaningful commit messages
-- Add comments for complex logic
-- Keep components small and focused
-
-## 👥 Team
-
-- **Frontend Developers**: [Your Team]
-- **Backend Developers**: [Your Team]
-- **Designers**: [Your Team]
-- **Project Manager**: [Your Team]
-
-## 📄 License
-
-This project is private and confidential.
-
-## 🔗 Related Repositories
-
-- **Backend API**: [Link to backend repo]
-- **Design System**: [Link to design system]
-- **Documentation**: [Link to docs]
-
-## 📞 Support
-
-For support, email support@dentalclinic.com or join our Slack channel.
 
 ---
 
+## 🚢 Deployment
+
+### Build for Production
+
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
+```
+
+### Docker Deployment
+
+A `docker-compose.yml` file is included for containerized deployment:
+
+```bash
+docker-compose up -d
+```
+
+### Environment Setup
+- Ensure all environment variables are set in production
+- Configure API URLs for production backend
+- Set up SSL certificates for HTTPS
+- Configure CDN for static assets (if applicable)
+
+---
+
+## 📊 Performance Optimizations
+
+### Implemented Optimizations
+- ✅ **Code Splitting**: Dynamic imports for route-based splitting
+- ✅ **Image Optimization**: Next.js Image component with WebP/AVIF formats
+- ✅ **Lazy Loading**: Intersection Observer for below-fold content
+- ✅ **Bundle Optimization**: Tree-shaking and vendor chunk splitting
+- ✅ **Animation Optimization**: React.memo and reduced complexity
+- ✅ **Caching Strategy**: Static assets and API response caching
+- ✅ **Package Optimization**: Optimized imports for large libraries
+
+### Custom Performance Hooks
+- `useOptimizedAnimation`: Performance-aware animations
+- `useDevicePerformance`: Adaptive animations based on device capabilities
+- `useDebounce`: Debounced input handling
+
+### Target Metrics
+- **LCP** (Largest Contentful Paint): < 2.5s
+- **FID** (First Input Delay): < 100ms
+- **CLS** (Cumulative Layout Shift): < 0.1
+- **Initial Bundle Size**: < 200KB
+
+---
+
+## 🧪 Testing
+
+### API Testing Scripts
+```bash
+# Test all API endpoints
+npm run test:api
+
+# Test specific modules
+npm run test:features
+npm run test:warehouse
+
+# Comprehensive testing
+npm run test:comprehensive
+```
+
+### Manual Testing Checklist
+- [ ] Authentication flow (login, logout, token refresh)
+- [ ] Role-based access control
+- [ ] CRUD operations for all modules
+- [ ] Calendar and scheduling features
+- [ ] Holiday management
+- [ ] Auto-schedule functionality
+- [ ] Real-time notifications
+- [ ] Responsive design on all devices
+
+---
+
+## 📝 Code Style Guidelines
+
+### TypeScript
+- Use strict TypeScript mode
+- Define types for all props and state
+- Avoid `any` type
+- Use interfaces for object shapes
+- Use enums for constants
+
+### React
+- Use functional components with hooks
+- Keep components small and focused
+- Use React.memo for expensive components
+- Extract custom hooks for reusable logic
+
+### Styling
+- Use Tailwind CSS utility classes
+- Follow mobile-first responsive design
+- Use CSS variables for theme colors
+- Keep component styles co-located
+
+### Git Commit Messages
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style changes
+- `refactor:` Code refactoring
+- `test:` Test additions/changes
+- `chore:` Build process or auxiliary tool changes
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/your-feature`
+3. **Make your changes** following the code style guidelines
+4. **Test your changes**: Run linting and build checks
+5. **Commit your changes**: Use conventional commit messages
+6. **Push to your branch**: `git push origin feature/your-feature`
+7. **Create a Merge Request** on GitLab with a clear description
+
+### Code Review Process
+- All code must be reviewed before merging
+- Ensure tests pass and code is linted
+- Update documentation for new features
+- Follow the existing code patterns
+
+---
+
+## 📞 Support
+
+### Getting Help
+- **Issues**: Create an issue on GitLab for bugs or feature requests
+- **Documentation**: Check the docs folder for detailed guides
+- **Team**: Contact the development team via GitLab
+
+### Resources
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+---
+
+## 📄 License
+
+This project is private and confidential. All rights reserved.
+
 **Note**: This is a student project for FPT University (SEP193_PRIVATEDENTALCLINIC).
 
+---
 
-## Add your files
+## 🔗 Related Repositories
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- **Backend API**: [Backend Repository](http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/be.git)
+- **Documentation**: See `docs/` folder for detailed documentation
 
-```
-cd existing_repo
-git remote add origin http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git
-git branch -M main
-git push -uf origin main
-```
+---
 
-## Integrate with your tools
+## 👥 Team
 
-- [ ] [Set up project integrations](http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe/-/settings/integrations)
+**Frontend Development Team** - FPT University SEP193
 
-## Collaborate with your team
+---
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+<div align="center">
 
-## Test and Deploy
+**Built with ❤️ by the SEP193 Team**
 
-Use the built-in continuous integration in GitLab.
+[⬆ Back to Top](#-table-of-contents)
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+</div>
