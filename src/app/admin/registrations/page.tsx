@@ -563,7 +563,7 @@ export default function RegistrationsPage() {
                                 </span>
                               </td>
                               <td className="p-3">
-                                <Badge variant={slot.isActive ? "default" : "secondary"}>
+                                <Badge variant={slot.isActive ? "active" : "inactive"}>
                                   {slot.isActive ? (
                                     <>
                                       <CheckCircle className="h-3 w-3 mr-1" />

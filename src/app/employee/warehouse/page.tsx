@@ -169,50 +169,49 @@ export default function EmployeeWarehouseDashboard() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tổng vật tư</p>
-                  <p className="text-2xl font-bold mt-1">{stats?.totalItems || 0}</p>
-                </div>
-                <FontAwesomeIcon icon={faBoxes} className="h-8 w-8 text-gray-400" />
+          {/* Tổng vật tư */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng vật tư</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faBoxes} className="text-blue-600 text-xl" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Danh mục</p>
-                  <p className="text-2xl font-bold mt-1">{categories?.length || 0}</p>
-                </div>
-                <FontAwesomeIcon icon={faTags} className="h-8 w-8 text-gray-400" />
+              <p className="text-3xl font-bold text-gray-900">{stats?.totalItems || 0}</p>
+            </div>
+          </div>
+
+          {/* Danh mục */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Danh mục</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faTags} className="text-purple-600 text-xl" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Sắp hết hàng</p>
-                  <p className="text-2xl font-bold text-orange-600 mt-1">{stats?.lowStockCount || 0}</p>
-                </div>
-                <FontAwesomeIcon icon={faExclamationTriangle} className="h-8 w-8 text-orange-400" />
+              <p className="text-3xl font-bold text-gray-900">{categories?.length || 0}</p>
+            </div>
+          </div>
+
+          {/* Sắp hết hàng */}
+          <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-orange-800 mb-2">Sắp hết hàng</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-700 text-xl" />
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Sắp hết hạn</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">{stats?.expiringWithin30Days || 0}</p>
-                </div>
-                <FontAwesomeIcon icon={faClock} className="h-8 w-8 text-red-400" />
+              <p className="text-3xl font-bold text-orange-800">{stats?.lowStockCount || 0}</p>
+            </div>
+          </div>
+
+          {/* Sắp hết hạn */}
+          <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-red-800 mb-2">Sắp hết hạn</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faClock} className="text-red-700 text-xl" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-3xl font-bold text-red-800">{stats?.expiringWithin30Days || 0}</p>
+            </div>
+          </div>
         </div>
 
         {/* Alerts Section */}
@@ -233,41 +232,41 @@ export default function EmployeeWarehouseDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-                {lowStockItems && lowStockItems.length > 0 ? (
-                  <div className="space-y-3">
-                    {lowStockItems.slice(0, 5).map((item: any) => (
-                      <div
-                        key={item.id || item.itemMasterId}
-                        className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.itemName}</p>
-                          <p className="text-xs text-gray-500">
-                            Mã: {item.itemCode} • {item.warehouseType === 'COLD' ? (
-                              <>
-                                <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
-                                Kho lạnh
-                              </>
-                            ) : 'Kho thường'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-orange-600">
-                            {item.totalQuantity ?? item.totalQuantityOnHand ?? 0}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Min: {item.minStockLevel}
-                          </p>
-                        </div>
+              {lowStockItems && lowStockItems.length > 0 ? (
+                <div className="space-y-3">
+                  {lowStockItems.slice(0, 5).map((item: any) => (
+                    <div
+                      key={item.id || item.itemMasterId}
+                      className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.itemName}</p>
+                        <p className="text-xs text-gray-500">
+                          Mã: {item.itemCode} • {item.warehouseType === 'COLD' ? (
+                            <>
+                              <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
+                              Kho lạnh
+                            </>
+                          ) : 'Kho thường'}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <FontAwesomeIcon icon={faBoxes} className="h-12 w-12 mb-2 opacity-20" />
-                    <p>Không có vật tư sắp hết hàng</p>
-                  </div>
-                )}
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-orange-600">
+                          {item.totalQuantity ?? item.totalQuantityOnHand ?? 0}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Min: {item.minStockLevel}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FontAwesomeIcon icon={faBoxes} className="h-12 w-12 mb-2 opacity-20" />
+                  <p>Không có vật tư sắp hết hàng</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -287,53 +286,51 @@ export default function EmployeeWarehouseDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-                {expiringAlerts && expiringAlerts.length > 0 ? (
-                  <div className="space-y-3">
-                    {expiringAlerts.slice(0, 5).map((alert: any) => {
-                      const daysRemaining = alert.daysRemaining ?? 0;
-                      const status = alert.status || (daysRemaining < 0 ? 'EXPIRED' : daysRemaining <= 7 ? 'CRITICAL' : 'EXPIRING_SOON');
+              {expiringAlerts && expiringAlerts.length > 0 ? (
+                <div className="space-y-3">
+                  {expiringAlerts.slice(0, 5).map((alert: any) => {
+                    const daysRemaining = alert.daysRemaining ?? 0;
+                    const status = alert.status || (daysRemaining < 0 ? 'EXPIRED' : daysRemaining <= 7 ? 'CRITICAL' : 'EXPIRING_SOON');
 
-                      return (
-                        <div
-                          key={alert.batchId}
-                          className={`flex items-center justify-between p-3 rounded-lg border ${
-                            status === 'EXPIRED'
-                              ? 'bg-red-50 border-red-200'
-                              : status === 'CRITICAL'
+                    return (
+                      <div
+                        key={alert.batchId}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${status === 'EXPIRED'
+                            ? 'bg-red-50 border-red-200'
+                            : status === 'CRITICAL'
                               ? 'bg-orange-50 border-orange-200'
                               : 'bg-yellow-50 border-yellow-200'
                           }`}
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{alert.itemName}</p>
-                            <p className="text-xs text-gray-500">
-                              Mã: {alert.itemCode} | Lô: {alert.lotNumber}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-sm font-bold ${
-                              status === 'EXPIRED' ? 'text-red-600' :
-                              status === 'CRITICAL' ? 'text-orange-600' :
-                              'text-yellow-600'
-                            }`}>
-                              {daysRemaining < 0 ? `Đã hết hạn ${Math.abs(daysRemaining)} ngày` :
-                               daysRemaining === 0 ? 'Hết hạn hôm nay' :
-                               `${daysRemaining} ngày`}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {alert.expiryDate ? new Date(alert.expiryDate).toLocaleDateString('vi-VN') : 'N/A'}
-                            </p>
-                          </div>
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{alert.itemName}</p>
+                          <p className="text-xs text-gray-500">
+                            Mã: {alert.itemCode} | Lô: {alert.lotNumber}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <FontAwesomeIcon icon={faClock} className="h-12 w-12 mb-2 opacity-20" />
-                    <p>Không có vật tư sắp hết hạn</p>
-                  </div>
-                )}
+                        <div className="text-right">
+                          <p className={`text-sm font-bold ${status === 'EXPIRED' ? 'text-red-600' :
+                              status === 'CRITICAL' ? 'text-orange-600' :
+                                'text-yellow-600'
+                            }`}>
+                            {daysRemaining < 0 ? `Đã hết hạn ${Math.abs(daysRemaining)} ngày` :
+                              daysRemaining === 0 ? 'Hết hạn hôm nay' :
+                                `${daysRemaining} ngày`}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {alert.expiryDate ? new Date(alert.expiryDate).toLocaleDateString('vi-VN') : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FontAwesomeIcon icon={faClock} className="h-12 w-12 mb-2 opacity-20" />
+                  <p>Không có vật tư sắp hết hạn</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

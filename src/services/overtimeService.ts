@@ -21,7 +21,7 @@ export class OvertimeService {
    * 
    * Possible errors:
    * - 400: Validation errors (missing fields, past date)
-   * - 403: FORBIDDEN - Insufficient permissions (CREATE_OT)
+   * - 403: FORBIDDEN - Insufficient permissions (CREATE_OVERTIME)
    * - 404: RELATED_RESOURCE_NOT_FOUND - Employee or work shift not found
    * - 409: DUPLICATE_OT_REQUEST - Duplicate request for same employee/date/shift
    */
@@ -66,9 +66,9 @@ export class OvertimeService {
    * Lấy danh sách yêu cầu làm thêm giờ
    * 
    * Possible errors:
-   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OT_ALL, VIEW_OT_OWN)
+   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OVERTIME_ALL, VIEW_OVERTIME_OWN)
    * 
-   * Note: VIEW_OT_ALL sees all requests, VIEW_OT_OWN sees only own requests
+   * Note: VIEW_OVERTIME_ALL sees all requests, VIEW_OVERTIME_OWN sees only own requests
    */
   static async getOvertimeRequests(
     params?: {
@@ -102,7 +102,7 @@ export class OvertimeService {
    * Lấy chi tiết yêu cầu làm thêm giờ
    * 
    * Possible errors:
-   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OT_ALL, VIEW_OT_OWN)
+   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OVERTIME_ALL, VIEW_OVERTIME_OWN)
    * - 404: OT_REQUEST_NOT_FOUND - Request not found or not accessible
    */
   static async getOvertimeRequestById(
@@ -120,7 +120,7 @@ export class OvertimeService {
    * 
    * Possible errors:
    * - 400: Validation errors (missing reason for REJECT/CANCEL)
-   * - 403: FORBIDDEN - Insufficient permissions (APPROVE_OT, REJECT_OT, CANCEL_OT_OWN, CANCEL_OT_PENDING)
+   * - 403: FORBIDDEN - Insufficient permissions (APPROVE_OVERTIME, REJECT_OVERTIME, CANCEL_OVERTIME_OWN, CANCEL_OVERTIME_PENDING)
    * - 404: OT_REQUEST_NOT_FOUND - Request not found
    * - 409: INVALID_STATE_TRANSITION - Cannot update non-PENDING request
    */
@@ -139,7 +139,7 @@ export class OvertimeService {
   /**
    * Duyệt yêu cầu làm thêm giờ
    * 
-   * Requires: APPROVE_OT permission
+   * Requires: APPROVE_OVERTIME permission
    * Note: Automatically creates employee_shifts record with is_overtime = true
    */
   static async approveOvertimeRequest(
@@ -153,7 +153,7 @@ export class OvertimeService {
   /**
    * Từ chối yêu cầu làm thêm giờ
    * 
-   * Requires: REJECT_OT permission
+   * Requires: REJECT_OVERTIME permission
    * Note: Reason is required for rejection
    */
   static async rejectOvertimeRequest(
@@ -169,7 +169,7 @@ export class OvertimeService {
   /**
    * Hủy yêu cầu làm thêm giờ
    * 
-   * Requires: CANCEL_OT_OWN (own requests) or CANCEL_OT_PENDING (any pending request)
+   * Requires: CANCEL_OVERTIME_OWN (own requests) or CANCEL_OVERTIME_PENDING (any pending request)
    * Note: Reason is required for cancellation
    */
   static async cancelOvertimeRequest(

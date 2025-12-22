@@ -250,9 +250,9 @@ export default function AppointmentsPage() {
           <CardContent className="p-6">
             {/* Search and Filters Row */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1">
+              <div className="flex-1 space-y-1">
                 <Label htmlFor="search">Tìm kiếm</Label>
-                <div className="relative mt-2">
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="search"
@@ -263,7 +263,7 @@ export default function AppointmentsPage() {
                   />
                 </div>
               </div>
-              <div className="md:w-48">
+              <div className="md:w-48 space-y-1">
                 <Label htmlFor="status">Trạng thái</Label>
                 <select
                   id="status"

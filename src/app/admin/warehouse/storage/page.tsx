@@ -515,92 +515,72 @@ export default function StorageInOutPage() {
       {viewMode === 'transactions' ? (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Phiếu nhập kho
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {filterStats.IMPORT}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Phiếu nhập kho */}
+            <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-green-800 mb-2">Phiếu nhập kho</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faDownload} className="text-green-700 text-xl" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Phiếu nhập trong tháng
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Phiếu xuất kho
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {filterStats.EXPORT}
+                <p className="text-3xl font-bold text-green-800">{filterStats.IMPORT}</p>
+              </div>
+            </div>
+
+            {/* Phiếu xuất kho */}
+            <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-red-800 mb-2">Phiếu xuất kho</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faUpload} className="text-red-700 text-xl" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Phiếu xuất trong tháng
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Tổng giao dịch
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {filterStats.ALL}
+                <p className="text-3xl font-bold text-red-800">{filterStats.EXPORT}</p>
+              </div>
+            </div>
+
+            {/* Tổng giao dịch */}
+            <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-green-800 mb-2">Tổng giao dịch</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faBoxes} className="text-green-700 text-xl" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Tất cả loại phiếu
-                </p>
-              </CardContent>
-            </Card>
+                <p className="text-3xl font-bold text-green-800">{filterStats.ALL}</p>
+              </div>
+            </div>
 
             {/* API 6.6 Statistics */}
             {transactionStats && (
               <>
                 {transactionStats.pendingApprovalCount !== undefined && (
-                  <Card className="border-orange-200 bg-orange-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-orange-700">
-                        Chờ duyệt
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-orange-600">
-                        {transactionStats.pendingApprovalCount}
+                  <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
+                    <p className="text-sm font-semibold text-orange-800 mb-2">Chờ duyệt</p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-700 text-xl" />
                       </div>
-                      <p className="text-xs text-orange-600 mt-1">
-                        Phiếu đang chờ
-                      </p>
-                    </CardContent>
-                  </Card>
+                      <p className="text-3xl font-bold text-orange-800">{transactionStats.pendingApprovalCount}</p>
+                    </div>
+                  </div>
                 )}
 
                 {hasViewCost && transactionStats.totalImportValue !== undefined && (
-                  <Card className="border-blue-200 bg-blue-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">
-                        Tổng giá trị nhập
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫
+                  <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
+                    <p className="text-sm font-semibold text-blue-800 mb-2">Tổng giá trị nhập</p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FontAwesomeIcon icon={faChartLine} className="text-blue-700 text-xl" />
                       </div>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {transactionStats.periodStart && transactionStats.periodEnd
-                          ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
-                          : 'Trong kỳ'}
-                      </p>
-                    </CardContent>
-                  </Card>
+                      <div>
+                        <p className="text-2xl font-bold text-blue-800">{transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫</p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {transactionStats.periodStart && transactionStats.periodEnd
+                            ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
+                            : 'Trong kỳ'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </>
             )}

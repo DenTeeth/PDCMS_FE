@@ -67,6 +67,8 @@ export default function RolesPage() {
   const [assigning, setAssigning] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
+  const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
+  const [permissionFilterAction, setPermissionFilterAction] = useState<string>('ALL');
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -332,8 +334,8 @@ export default function RolesPage() {
       {/* ==================== SEARCH ==================== */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex-1">
-            <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2">Tìm kiếm</Label>
+          <div className="space-y-1">
+            <Label htmlFor="search" className="text-sm font-medium text-gray-700">Tìm kiếm</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -396,7 +398,7 @@ export default function RolesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={role.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
+                        <Badge className={role.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
                           {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
                       </td>
@@ -701,105 +703,251 @@ export default function RolesPage() {
                   <span className="ml-3 text-gray-600">Đang tải quyền hạn...</span>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b sticky top-0 bg-white z-10">
-                    <p className="text-sm text-gray-600">
-                      Chọn quyền hạn cho vai trò này ({selectedPermissions.length} đã chọn)
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
+                <div className="space-y-3 px-6">
+                  {/* Sticky Header with Search and Filters */}
+                  <div className="flex flex-col gap-4 py-4 border-b sticky top-0 bg-white z-10">
+                    {/* Title and Counter */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-semibold text-gray-800">
+                          Chọn quyền hạn cho vai trò này
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {selectedPermissions.length} / {allPermissions.length} quyền đã chọn
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const allModules = Object.keys(
+                              allPermissions.reduce((acc, p) => {
+                                acc[p.module] = true;
+                                return acc;
+                              }, {} as Record<string, boolean>)
+                            );
+                            setExpandedModules(allModules);
+                          }}
+                          className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300"
+                        >
+                          Mở tất cả
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedModules([])}
+                          className="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                        >
+                          Đóng tất cả
+                        </Button>
+                        <div className="h-4 w-px bg-gray-300"></div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
+                          className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300"
+                        >
+                          Chọn tất cả
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedPermissions([])}
+                          className="text-xs bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
+                        >
+                          Bỏ chọn tất cả
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Search and Filter */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="Tìm kiếm quyền theo tên..."
+                          value={permissionSearchTerm}
+                          onChange={(e) => setPermissionSearchTerm(e.target.value)}
+                          className="pl-10 text-sm"
+                        />
+                      </div>
+                      <select
+                        value={permissionFilterAction}
+                        onChange={(e) => setPermissionFilterAction(e.target.value)}
+                        className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       >
-                        Chọn tất cả
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPermissions([])}
-                      >
-                        Bỏ chọn tất cả
-                      </Button>
+                        <option value="ALL">Tất cả chức năng</option>
+                        <option value="VIEW">VIEW - Xem</option>
+                        <option value="CREATE">CREATE - Tạo</option>
+                        <option value="UPDATE">UPDATE - Cập nhật</option>
+                        <option value="DELETE">DELETE - Xóa</option>
+                        <option value="MANAGE">MANAGE - Quản lý</option>
+                        <option value="APPROVE">APPROVE - Phê duyệt</option>
+                        <option value="REJECT">REJECT - Từ chối</option>
+                      </select>
                     </div>
                   </div>
 
                   {/* Group permissions by module - Dropdown Accordion */}
                   {Object.entries(
-                    allPermissions.reduce((acc, permission) => {
-                      if (!acc[permission.module]) {
-                        acc[permission.module] = [];
-                      }
-                      acc[permission.module].push(permission);
-                      return acc;
-                    }, {} as Record<string, Permission[]>)
-                  ).map(([module, permissions]) => {
-                    const isExpanded = expandedModules.includes(module);
-                    const modulePermissionsSelected = permissions.filter(p => selectedPermissions.includes(p.permissionId)).length;
+                    allPermissions
+                      .filter(permission => {
+                        // Filter by search term
+                        const matchesSearch = permissionSearchTerm === '' ||
+                          permission.permissionName.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
+                          permission.permissionId.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
+                          (permission.description && permission.description.toLowerCase().includes(permissionSearchTerm.toLowerCase()));
 
-                    return (
-                      <div key={module} className="border rounded-lg overflow-hidden">
-                        {/* Module Header - Clickable */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedModules(prev =>
-                              prev.includes(module)
-                                ? prev.filter(m => m !== module)
-                                : [...prev, module]
-                            );
-                          }}
-                          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            {isExpanded ? (
-                              <ChevronDown className="h-5 w-5 text-blue-600" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5 text-gray-600" />
-                            )}
-                            <Shield className="h-5 w-5 text-blue-600" />
-                            <h3 className="font-semibold text-lg">{module}</h3>
-                          </div>
-                          <Badge variant="outline">
-                            {modulePermissionsSelected}/{permissions.length}
-                          </Badge>
-                        </button>
+                        // Filter by action type
+                        const matchesAction = permissionFilterAction === 'ALL' ||
+                          permission.permissionName.toUpperCase().startsWith(permissionFilterAction);
 
-                        {/* Module Content - Collapsible */}
-                        {isExpanded && (
-                          <div className="p-4 bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {permissions.map((permission) => (
-                                <label
-                                  key={permission.permissionId}
-                                  className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${selectedPermissions.includes(permission.permissionId)
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200'
-                                    }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedPermissions.includes(permission.permissionId)}
-                                    onChange={() => handlePermissionToggle(permission.permissionId)}
-                                    className="mt-1"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{permission.permissionName}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{permission.description}</div>
-                                    <div className="text-xs text-gray-400 mt-1 font-mono">
-                                      {permission.permissionId}
-                                    </div>
-                                  </div>
-                                </label>
-                              ))}
+                        return matchesSearch && matchesAction;
+                      })
+                      .reduce((acc, permission) => {
+                        if (!acc[permission.module]) {
+                          acc[permission.module] = [];
+                        }
+                        acc[permission.module].push(permission);
+                        return acc;
+                      }, {} as Record<string, Permission[]>)
+                  )
+                    .sort(([moduleA], [moduleB]) => moduleA.localeCompare(moduleB)) // Sort modules alphabetically
+                    .map(([module, permissions]) => {
+                      const isExpanded = expandedModules.includes(module);
+                      const modulePermissionsSelected = permissions.filter(p => selectedPermissions.includes(p.permissionId)).length;
+
+                      return (
+                        <div key={module} className="border rounded-lg overflow-hidden">
+                          {/* Module Header */}
+                          <div className="flex items-center justify-between p-4 bg-gray-50 gap-4">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExpandedModules(prev =>
+                                  prev.includes(module)
+                                    ? prev.filter(m => m !== module)
+                                    : [...prev, module]
+                                );
+                              }}
+                              className="flex items-center gap-3 hover:opacity-70 transition-opacity"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="h-5 w-5 text-blue-600" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5 text-gray-600" />
+                              )}
+                              <Shield className="h-5 w-5 text-blue-600" />
+                              <h3 className="font-semibold text-lg">{module}</h3>
+                              <Badge variant="outline">
+                                {modulePermissionsSelected}/{permissions.length}
+                              </Badge>
+                            </button>
+
+                            {/* Group Actions */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const modulePermissionIds = permissions.map(p => p.permissionId);
+                                  setSelectedPermissions(prev => {
+                                    const filtered = prev.filter(id => !modulePermissionIds.includes(id));
+                                    return [...filtered, ...modulePermissionIds];
+                                  });
+                                }}
+                                className="text-xs px-2 py-1 h-7 bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              >
+                                Chọn hết
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const modulePermissionIds = permissions.map(p => p.permissionId);
+                                  setSelectedPermissions(prev => prev.filter(id => !modulePermissionIds.includes(id)));
+                                }}
+                                className="text-xs px-2 py-1 h-7 bg-red-100 text-red-700 hover:bg-red-200"
+                              >
+                                Xóa hết
+                              </Button>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+
+                          {/* Module Content - Collapsible - Table Format */}
+                          {isExpanded && (
+                            <div className="bg-white">
+                              <table className="w-full">
+                                <thead className="bg-gray-100 border-y">
+                                  <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                      Tên quyền
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                      Mô tả
+                                    </th>
+                                    <th className="w-48 px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                      Permission ID
+                                    </th>
+                                    <th className="w-12 px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">
+                                      Chọn
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                  {permissions
+                                    .sort((a, b) => a.permissionName.localeCompare(b.permissionName))
+                                    .map((permission) => (
+                                      <tr
+                                        key={permission.permissionId}
+                                        className={`hover:bg-gray-50 cursor-pointer transition ${selectedPermissions.includes(permission.permissionId)
+                                          ? 'bg-blue-50'
+                                          : ''
+                                          }`}
+                                        onClick={() => handlePermissionToggle(permission.permissionId)}
+                                      >
+                                        <td className="px-4 py-3">
+                                          <div className="font-medium text-sm text-gray-900">
+                                            {permission.permissionName}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <div className="text-sm text-gray-600">
+                                            {permission.description || '-'}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <code className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            {permission.permissionId}
+                                          </code>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedPermissions.includes(permission.permissionId)}
+                                            onChange={() => handlePermissionToggle(permission.permissionId)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="cursor-pointer w-4 h-4"
+                                          />
+                                        </td>
+                                      </tr>
+                                    ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
@@ -814,6 +962,8 @@ export default function RolesPage() {
                   setAssigningRole(null);
                   setSelectedPermissions([]);
                   setExpandedModules([]);
+                  setPermissionSearchTerm('');
+                  setPermissionFilterAction('ALL');
                 }}
                 disabled={assigning}
               >
