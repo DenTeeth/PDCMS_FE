@@ -97,13 +97,13 @@ async function testLogin() {
 
     // Summary
     console.log('\n\n📊 DIAGNOSTIC SUMMARY:');
-    console.log('=' .repeat(50));
+    console.log('='.repeat(50));
     console.log('1. Login API works:', adminLogin.status === 200 ? '✅' : '❌');
     console.log('2. Permissions array exists:', adminLogin.data.permissions ? '✅' : '❌');
     console.log('3. BaseRole exists:', adminLogin.data.baseRole ? '✅' : '❌');
     console.log('4. GroupedPermissions exists:', adminLogin.data.groupedPermissions ? '✅' : '⚠️ (Optional)');
     console.log('5. Token exists:', adminLogin.data.token ? '✅' : '❌');
-    console.log('=' .repeat(50));
+    console.log('='.repeat(50));
 
     if (!adminLogin.data.permissions || adminLogin.data.permissions.length === 0) {
       console.log('\n🔴 CRITICAL ISSUE FOUND:');

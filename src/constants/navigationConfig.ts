@@ -695,7 +695,7 @@ export const filterNavigationItems = (
 ): NavigationItem[] => {
   // ✅ ADMIN BYPASS: If user is ROLE_ADMIN, show all items (admin has all permissions)
   const isAdmin = userRoles?.includes('ROLE_ADMIN') || false;
-  
+
   return items.filter(item => {
     // Check employment type restriction
     if (item.employmentTypes && item.employmentTypes.length > 0 && employmentType) {
@@ -770,7 +770,7 @@ export const filterNavigationItems = (
         }
         return true;
       }
-      
+
       if (!hasPermissionGroup(groupedPermissions, item.requiredPermissionGroup)) {
         return false;
       }
@@ -782,7 +782,7 @@ export const filterNavigationItems = (
       if (isAdmin) {
         return true;
       }
-      
+
       if (!userPermissions || !hasPermissions(userPermissions, item.requiredPermissions, item.requireAll)) {
         return false;
       }
