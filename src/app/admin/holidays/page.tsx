@@ -12,9 +12,7 @@
  * 
  * RBAC Permissions:
  * - VIEW_HOLIDAY: Required to access page
- * - CREATE_HOLIDAY: Show Create button
- * - UPDATE_HOLIDAY: Show Edit button
- * - DELETE_HOLIDAY: Show Delete button
+ * - MANAGE_HOLIDAY: Required for Create/Update/Delete operations (BE consolidated permission)
  * 
  * API Endpoints:
  * - GET /api/v1/holiday-definitions
@@ -86,11 +84,12 @@ interface DateFormData {
 export default function AdminHolidaysPage() {
   const { user } = useAuth();
 
-  // RBAC Permissions
-  const canView = user?.permissions?.includes('VIEW_HOLIDAY');
-  const canCreate = user?.permissions?.includes('CREATE_HOLIDAY');
-  const canUpdate = user?.permissions?.includes('UPDATE_HOLIDAY');
-  const canDelete = user?.permissions?.includes('DELETE_HOLIDAY');
+  // RBAC Permissions - BE uses MANAGE_HOLIDAY for all CRUD operations
+  const canView = user?.permissions?.includes('VIEW_HOLIDAY') || false;
+  const canManage = user?.permissions?.includes('MANAGE_HOLIDAY') || false;
+  const canCreate = canManage;
+  const canUpdate = canManage;
+  const canDelete = canManage;
 
   // State
   const [definitions, setDefinitions] = useState<HolidayDefinition[]>([]);
@@ -500,7 +499,7 @@ export default function AdminHolidaysPage() {
                   <SelectContent>
                     <SelectItem value="ALL">Tất cả</SelectItem>
                     <SelectItem value="NATIONAL">Quốc gia</SelectItem>
-                    <SelectItem value="COMPANY">Công ty</SelectItem>
+                    <SelectItem value="COMPANY">Phòng khám</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -550,7 +549,7 @@ export default function AdminHolidaysPage() {
                             ) : (
                               <Building2 className="h-3 w-3 mr-1" />
                             )}
-                            {definition.holidayType === 'NATIONAL' ? 'Quốc gia' : 'Công ty'}
+                            {definition.holidayType === 'NATIONAL' ? 'Quốc gia' : 'Phòng khám'}
                           </Badge>
                           <Badge variant="outline">
                             {definition.totalDates || 0} ngày
@@ -768,7 +767,7 @@ export default function AdminHolidaysPage() {
                     <SelectItem value="COMPANY">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4" />
-                        Công ty
+                        Phòng khám
                       </div>
                     </SelectItem>
                   </SelectContent>

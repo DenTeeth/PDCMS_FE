@@ -1055,7 +1055,7 @@ export default function BookingServicesPage() {
 
               {/* BE_4: Appointment Constraints */}
               <div className="border-t pt-4">
-                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
+                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="create-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
@@ -1270,7 +1270,7 @@ export default function BookingServicesPage() {
 
               {/* BE_4: Appointment Constraints */}
               <div className="border-t pt-4">
-                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn (BE_4)</h4>
+                <h4 className="font-semibold text-sm mb-3 text-gray-700">Ràng buộc lịch hẹn</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="update-minimumPreparationDays">Thời gian chuẩn bị tối thiểu (ngày)</Label>
@@ -1427,7 +1427,7 @@ export default function BookingServicesPage() {
                 {/* BE_4: Appointment Constraints */}
                 {(selectedService.minimumPreparationDays || selectedService.recoveryDays || selectedService.spacingDays || selectedService.maxAppointmentsPerDay) && (
                   <div className="border-t pt-4">
-                    <Label className="text-base font-semibold mb-3 block">Ràng buộc lịch hẹn (BE_4)</Label>
+                    <Label className="text-base font-semibold mb-3 block">Ràng buộc lịch hẹn</Label>
                     <div className="grid grid-cols-2 gap-4">
                       {selectedService.minimumPreparationDays && (
                         <div>
