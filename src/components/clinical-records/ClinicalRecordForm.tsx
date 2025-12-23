@@ -22,6 +22,7 @@ import { Loader2, Save, X } from 'lucide-react';
 import Odontogram from './Odontogram';
 import ToothStatusDialog from './ToothStatusDialog';
 import PrescriptionForm from './PrescriptionForm';
+import VitalSignsInput from './VitalSignsInput';
 
 interface ClinicalRecordFormProps {
   appointmentId: number;
@@ -387,63 +388,17 @@ export default function ClinicalRecordForm({
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Vital Signs */}
-          <div className="space-y-4">
-            <Label className="text-sm font-semibold">Dấu Hiệu Sinh Tồn</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="bloodPressure" className="text-xs text-muted-foreground">
-                  Huyết Áp (mmHg)
-                </Label>
-                <Input
-                  id="bloodPressure"
-                  {...register('bloodPressure')}
-                  placeholder="120/80"
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="heartRate" className="text-xs text-muted-foreground">
-                  Nhịp Tim (bpm)
-                </Label>
-                <Input
-                  id="heartRate"
-                  {...register('heartRate')}
-                  placeholder="72"
-                  type="number"
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="temperature" className="text-xs text-muted-foreground">
-                  Nhiệt Độ (°C)
-                </Label>
-                <Input
-                  id="temperature"
-                  {...register('temperature')}
-                  placeholder="36.5"
-                  type="number"
-                  step="0.1"
-                  disabled={!canEdit}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="oxygenSaturation" className="text-xs text-muted-foreground">
-                  SpO2 (%)
-                </Label>
-                <Input
-                  id="oxygenSaturation"
-                  {...register('oxygenSaturation')}
-                  placeholder="98"
-                  type="number"
-                  disabled={!canEdit}
-                />
-              </div>
-            </div>
-          </div>
+          {/* Vital Signs - Enhanced with reference ranges */}
+          <VitalSignsInput
+            register={register}
+            errors={errors}
+            patientDateOfBirth={existingRecord?.patient.dateOfBirth}
+            disabled={!canEdit}
+            bloodPressure={watch('bloodPressure')}
+            heartRate={watch('heartRate')}
+            temperature={watch('temperature')}
+            oxygenSaturation={watch('oxygenSaturation')}
+          />
 
           {/* Follow-up Date */}
           <div className="space-y-2">

@@ -61,7 +61,7 @@ const CustomSelect = forwardRef<HTMLSelectElement, CustomSelectProps>(
     return (
       <div className="relative" data-select-wrapper>
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none mb-2 text-gray-700">
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -70,10 +70,10 @@ const CustomSelect = forwardRef<HTMLSelectElement, CustomSelectProps>(
           <button
             type="button"
             disabled={props.disabled}
-            className={`relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left border shadow-sm transition-all duration-200 ease-in-out
+            className={`relative w-full cursor-default rounded-md bg-white h-9 px-3 py-1 text-left border-2 border-gray-300 shadow-sm transition-all duration-200 ease-in-out
               ${error ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'}
               ${isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''}
-              ${props.disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400'}
+              ${props.disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400 focus-visible:border-gray-400 focus-visible:ring-gray-400/20 focus-visible:ring-[3px]'}
               ${className}`}
             onClick={() => !props.disabled && setIsOpen(!isOpen)}
             aria-haspopup="listbox"

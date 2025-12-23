@@ -132,11 +132,11 @@ export default function BookingServicesPage() {
     isActive: true,
   });
 
-  // Permissions
+  // Permissions - Updated to match BE naming
   const canView = user?.permissions?.includes('VIEW_SERVICE') || false;
-  const canCreate = user?.permissions?.includes('CREATE_SERVICE') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_SERVICE') || false;
-  const canDelete = user?.permissions?.includes('DELETE_SERVICE') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_SERVICE') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_SERVICE') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_SERVICE') || false;
 
   // Search state - separate from debounced search
   // searchInput: what user types (immediate update)
@@ -646,7 +646,7 @@ export default function BookingServicesPage() {
       key: 'isActive',
       header: 'Trạng thái',
       accessor: (service) => (
-        <Badge variant={service.isActive ? 'default' : 'secondary'}>
+        <Badge variant={service.isActive ? 'active' : 'inactive'}>
           {service.isActive ? 'Hoạt động' : 'Không hoạt động'}
         </Badge>
       ),
@@ -825,14 +825,14 @@ export default function BookingServicesPage() {
               onClick={() => setIsActiveFilter('active')}
               className={
                 isActiveFilter === 'active'
-                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-green-600 text-white shadow-[0_2px_8px_rgba(22,163,74,0.4)]'
                   : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
               }
             >
               <div className={
                 isActiveFilter === 'active'
                   ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
-                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-green-200'
               }>
                 <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1460,7 +1460,7 @@ export default function BookingServicesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Trạng thái</Label>
-                    <Badge variant={selectedService.isActive ? 'default' : 'secondary'}>
+                    <Badge variant={selectedService.isActive ? 'active' : 'inactive'}>
                       {selectedService.isActive ? 'Hoạt động' : 'Không hoạt động'}
                     </Badge>
                   </div>

@@ -16,10 +16,10 @@ export default function AdminCreateCustomerContact() {
     const onSubmit = async (values: any) => {
         try {
             await create.mutateAsync(values);
-            toast.success('Customer contact created');
+            toast.success('Tạo liên hệ khách hàng thành công');
             router.push('/admin/customer-contacts');
         } catch (err: any) {
-            toast.error(err.message || 'Create failed');
+            toast.error(err.message || 'Tạo mới thất bại');
         }
     };
 
@@ -36,8 +36,8 @@ export default function AdminCreateCustomerContact() {
                     <span>Quay lại</span>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Create New Customer Contact</h1>
-                    <p className="text-muted-foreground mt-2">Add a new customer contact record to the system</p>
+                    <h1 className="text-3xl font-bold text-foreground">Tạo mới liên hệ khách hàng</h1>
+                    <p className="text-muted-foreground mt-2">Thêm thông tin liên hệ khách hàng mới vào hệ thống</p>
                 </div>
             </div>
 
@@ -45,9 +45,9 @@ export default function AdminCreateCustomerContact() {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faUserPlus} className="h-5 w-5" />
-                        <span>Contact Information</span>
+                        <span>Thông tin liên hệ</span>
                     </CardTitle>
-                    <CardDescription>Fill in the customer contact details below</CardDescription>
+                    <CardDescription>Điền thông tin liên hệ khách hàng bên dưới</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ContactForm onSubmit={onSubmit} />

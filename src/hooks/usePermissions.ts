@@ -51,10 +51,12 @@ export const usePermissionGroup = (group: string) => {
 
 /**
  * Hook to get sidebar navigation items
+ * Note: This hook is deprecated - use navigationConfig directly
  */
 export const useSidebar = () => {
-  const { getSidebarItems } = useAuth();
-  return getSidebarItems();
+  // Deprecated: Sidebar items are now managed via navigationConfig
+  // This hook is kept for backward compatibility but returns empty array
+  return [];
 };
 
 /**
@@ -81,6 +83,8 @@ export const useEmploymentType = () => {
 
 /**
  * Hook for common permission patterns
+ * ✅ Updated to use new BE permissions (MANAGE_X pattern)
+ * Backward compatibility: Old permissions are automatically mapped via checkPermission
  */
 export const useCommonPermissions = () => {
   const { hasPermission } = useAuth();
@@ -88,27 +92,27 @@ export const useCommonPermissions = () => {
   return {
     // Employee management
     canViewEmployees: hasPermission('VIEW_EMPLOYEE'),
-    canCreateEmployees: hasPermission('CREATE_EMPLOYEE'),
-    canUpdateEmployees: hasPermission('UPDATE_EMPLOYEE'),
-    canDeleteEmployees: hasPermission('DELETE_EMPLOYEE'),
+    canCreateEmployees: hasPermission('MANAGE_EMPLOYEE'), // ✅ BE: MANAGE_EMPLOYEE covers create/update
+    canUpdateEmployees: hasPermission('MANAGE_EMPLOYEE'), // ✅ BE: MANAGE_EMPLOYEE covers create/update
+    canDeleteEmployees: hasPermission('DELETE_EMPLOYEE'), // ✅ BE: Separate permission
     
     // Registration management
-    canViewAllRegistrations: hasPermission('VIEW_REGISTRATION_ALL'),
-    canViewOwnRegistrations: hasPermission('VIEW_REGISTRATION_OWN'),
-    canCreateRegistrations: hasPermission('CREATE_REGISTRATION'),
-    canUpdateRegistrations: hasPermission('UPDATE_REGISTRATION'),
-    canDeleteRegistrations: hasPermission('DELETE_REGISTRATION'),
+    canViewAllRegistrations: hasPermission('MANAGE_PART_TIME_REGISTRATIONS'), // ✅ BE: MANAGE_PART_TIME_REGISTRATIONS
+    canViewOwnRegistrations: hasPermission('VIEW_REGISTRATION_OWN'), // ✅ BE: VIEW_REGISTRATION_OWN
+    canCreateRegistrations: hasPermission('CREATE_REGISTRATION'), // ✅ BE: CREATE_REGISTRATION
+    canUpdateRegistrations: hasPermission('MANAGE_PART_TIME_REGISTRATIONS'), // ✅ BE: MANAGE_PART_TIME_REGISTRATIONS
+    canDeleteRegistrations: hasPermission('MANAGE_PART_TIME_REGISTRATIONS'), // ✅ BE: MANAGE_PART_TIME_REGISTRATIONS
     
     // Account management
     canViewAccounts: hasPermission('VIEW_ACCOUNT'),
-    canCreateAccounts: hasPermission('CREATE_ACCOUNT'),
-    canUpdateAccounts: hasPermission('UPDATE_ACCOUNT'),
-    canDeleteAccounts: hasPermission('DELETE_ACCOUNT'),
+    canCreateAccounts: hasPermission('MANAGE_ACCOUNT'), // ✅ BE: MANAGE_ACCOUNT covers create/update/delete
+    canUpdateAccounts: hasPermission('MANAGE_ACCOUNT'), // ✅ BE: MANAGE_ACCOUNT covers create/update/delete
+    canDeleteAccounts: hasPermission('MANAGE_ACCOUNT'), // ✅ BE: MANAGE_ACCOUNT covers create/update/delete
     
     // Work shifts
-    canViewWorkShifts: hasPermission('VIEW_WORK_SHIFTS'),
-    canCreateWorkShifts: hasPermission('CREATE_WORK_SHIFTS'),
-    canUpdateWorkShifts: hasPermission('UPDATE_WORK_SHIFTS'),
-    canDeleteWorkShifts: hasPermission('DELETE_WORK_SHIFTS'),
+    canViewWorkShifts: hasPermission('MANAGE_WORK_SHIFTS'), // ✅ BE: MANAGE_WORK_SHIFTS covers view/create/update/delete
+    canCreateWorkShifts: hasPermission('MANAGE_WORK_SHIFTS'), // ✅ BE: MANAGE_WORK_SHIFTS
+    canUpdateWorkShifts: hasPermission('MANAGE_WORK_SHIFTS'), // ✅ BE: MANAGE_WORK_SHIFTS
+    canDeleteWorkShifts: hasPermission('MANAGE_WORK_SHIFTS'), // ✅ BE: MANAGE_WORK_SHIFTS
   };
 };

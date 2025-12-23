@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, ArrowRight, Calendar, Heart } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationList } from '@/components/notifications/NotificationList';
 
 export default function PatientDashboard() {
   const { user } = useAuth();
@@ -54,6 +55,11 @@ export default function PatientDashboard() {
             Chúc bạn một ngày tốt lành!
           </p>
         </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="mb-8">
+        <NotificationList maxItems={5} viewAllHref="/patient/notifications" />
       </div>
 
       {/* Quick Links Grid */}

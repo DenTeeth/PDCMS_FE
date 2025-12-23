@@ -155,15 +155,25 @@ interface ToothData {
 
 // SVG layout constants (shared between geometry & rendering)
 const SVG_WIDTH = 800;
-const SVG_HEIGHT = 400;
+const SVG_HEIGHT = 250;
 const TOOTH_WIDTH = 36;
 const TOOTH_HEIGHT = 52;
 const TOOTH_SPACING = 5;
 const CENTER_GAP = 50;    // Khoảng cách giữa cung trái/phải
-const VERTICAL_GAP = 60;  // Khoảng cách giữa hàm trên & hàm dưới
-const TOP_MARGIN = 40;    // Lề trên cho label + hàng răng trên
-const BOTTOM_MARGIN = 40; // Lề dưới
+const VERTICAL_GAP = 30;  // Khoảng cách giữa hàm trên & hàm dưới
+const TOP_MARGIN = 55;    // Lề trên cho label + hàng răng trên
+const BOTTOM_MARGIN = 30; // Lề dưới
 
+// SVG dimensions - Better spacing
+   // const svgWidth = 800;
+  //  const svgHeight = 400; // Increased height for better spacing
+   // const toothWidth = 36;
+   // const toothHeight = 52;
+  //  const spacing = 5;
+   // const centerGap = 50; // Gap between left and right quadrants
+   // const verticalGap = 30; // Increased gap between upper and lower jaw
+   // const topMargin = 55; // Top margin for labels
+   // const bottomMargin = 30; // Bottom margin for better spacing
 // ============================================================================
 // Component
 // ============================================================================

@@ -38,6 +38,11 @@ import { toast } from 'sonner';
 
 export default function AdminShiftCalendarPage() {
   const { user } = useAuth();
+  // Debug quyền admin
+  console.log('[DEBUG] user:', user);
+  if (user) {
+    console.log('[DEBUG] roles:', user.roles, 'baseRole:', user.baseRole, 'permissions:', user.permissions);
+  }
   const { is403Error, handleError } = useApiErrorHandler();
 
   // State
@@ -89,12 +94,12 @@ export default function AdminShiftCalendarPage() {
     notes: '',
   });
 
-  // Permissions - Admin luôn có quyền VIEW_SHIFTS_ALL
-  const canViewAll = user?.permissions?.includes('VIEW_SHIFTS_ALL') || false;
-  const canCreate = user?.permissions?.includes('CREATE_SHIFTS') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_SHIFTS') || false;
-  const canDelete = user?.permissions?.includes('DELETE_SHIFTS') || false;
-  const canViewSummary = user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') || false;
+  // Permissions - Updated to match BE naming (VIEW_SCHEDULE_ALL instead of VIEW_SHIFTS_ALL)
+  const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
   // Debug permissions
   console.log('Admin permissions:', user?.permissions);
@@ -572,14 +577,14 @@ export default function AdminShiftCalendarPage() {
   return (
     <ProtectedRoute
       requiredBaseRole="admin"
-      requiredPermissions={['VIEW_SHIFTS_ALL']}
+      requiredPermissions={['VIEW_SCHEDULE_ALL']}
       requireAll={false}
     >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lịch Ca Làm Việc - Admin</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lịch ca làm việc</h1>
             <p className="text-gray-600 mt-1">Quản lý và theo dõi lịch làm việc của tất cả nhân viên</p>
           </div>
           <div className="flex gap-2">
@@ -878,10 +883,41 @@ export default function AdminShiftCalendarPage() {
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarAlt} />
-                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi })}
+                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).charAt(0).toUpperCase() + format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).slice(1).toLowerCase()}
               </CardTitle>
             </div>
           </CardHeader>
+
+          {/* Legend - Chú thích */}
+          <div className="px-6 py-3 border-b bg-gray-50">
+            <div className="flex items-center gap-2 mb-2">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600 text-sm" />
+              <span className="text-sm font-semibold text-gray-700">Chú thích trạng thái</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-blue-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã lên lịch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-500"></div>
+                <span className="text-xs font-medium text-gray-600">Hoàn thành</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-gray-500"></div>
+                <span className="text-xs font-medium text-gray-600">Đã hủy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                <span className="text-xs font-medium text-gray-600">Nghỉ phép</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-red-500"></div>
+                <span className="text-xs font-medium text-gray-600">Vắng mặt</span>
+              </div>
+            </div>
+          </div>
+
           <CardContent>
             <div className="h-[600px]">
               {!hasViewedCalendar ? (
@@ -908,6 +944,13 @@ export default function AdminShiftCalendarPage() {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                  }}
+                  buttonText={{
+                    today: 'Hôm nay',
+                    month: 'Tháng',
+                    week: 'Tuần',
+                    day: 'Ngày',
+                    list: 'Danh sách'
                   }}
                   locale="vi"
                   events={getCalendarEvents()}

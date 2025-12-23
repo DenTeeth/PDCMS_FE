@@ -35,7 +35,7 @@ export default function DeletePlanItemModal({
   onSuccess,
 }: DeletePlanItemModalProps) {
   const { user } = useAuth();
-  const canUpdate = user?.permissions?.includes('UPDATE_TREATMENT_PLAN') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
 
   const [loading, setLoading] = useState(false);
 

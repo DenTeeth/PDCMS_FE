@@ -79,7 +79,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       requiredPermissionGroup: 'ACCOUNT',
       submenu: [
         {
-          name: 'Tài khoản người dùng',
+          name: 'Tài khoản bệnh nhân',
           href: '/admin/accounts/users',
           icon: faUser,
           requiredPermissions: ['VIEW_ACCOUNT'],
@@ -133,13 +133,13 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Ca làm việc',
           href: '/admin/work-shifts',
           icon: faBusinessTime,
-          requiredPermissions: ['VIEW_WORK_SHIFTS'],
+          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
         },
         {
           name: 'Khung giờ làm việc',
           href: '/admin/work-slots',
           icon: faClock,
-          requiredPermissions: ['VIEW_WORK_SHIFTS'],
+          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
         },
         {
           name: 'Đăng ký ca làm',
@@ -152,7 +152,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Lịch ca làm việc',
           href: '/admin/shift-calendar',
           icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_SHIFTS_ALL'],
+          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
         },
         {
           name: 'Ngày lễ',
@@ -172,19 +172,19 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Yêu cầu làm thêm giờ',
           href: '/admin/overtime-requests',
           icon: faClockFour,
-          requiredPermissions: ['VIEW_OT_ALL'],
+          requiredPermissions: ['VIEW_OT_ALL'], // ✅ BE permission (mapped from old VIEW_OVERTIME_ALL)
         },
         {
           name: 'Yêu cầu nghỉ phép',
           href: '/admin/time-off-requests',
           icon: faUmbrellaBeach,
-          requiredPermissions: ['VIEW_TIMEOFF_ALL'],
+          requiredPermissions: ['VIEW_LEAVE_ALL'], // ✅ BE permission (mapped from old VIEW_TIMEOFF_ALL)
         },
         {
           name: 'Yêu cầu đăng ký ca',
           href: '/admin/registration-requests',
           icon: faClipboard,
-          requiredPermissions: ['VIEW_REGISTRATION_ALL'],
+          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'], // ✅ BE permission (mapped from old VIEW_REGISTRATION_ALL)
         },
       ],
     },
@@ -198,7 +198,7 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Loại nghỉ phép',
           href: '/admin/time-off-types',
           icon: faListAlt,
-          requiredPermissions: ['VIEW_TIMEOFF_TYPE'],
+          requiredPermissions: ['APPROVE_TIME_OFF'], // ✅ BE permission (mapped from old VIEW_LEAVE_TYPE - BE không có permission riêng)
         },
       ],
     },
@@ -333,7 +333,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Quản lý lịch làm việc',
       icon: faCalendarCheck,
       hasSubmenu: true,
-      requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+      requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
       requireAll: false,
       submenu: [
         {
@@ -348,14 +348,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Lịch ca làm việc',
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_SHIFTS_OWN'],
+          requiredPermissions: ['VIEW_SCHEDULE_OWN'],
           // Show for all employment types
         },
         {
           name: 'Lịch của tôi',
           href: '/employee/my-calendar',
           icon: faCalendarDays,
-          requiredPermissions: ['VIEW_SHIFTS_OWN', 'VIEW_APPOINTMENT_OWN'],
+          requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_APPOINTMENT_OWN'],
           requireAll: false,
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
@@ -479,6 +479,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Xem CBCT',
       href: '/employee/nii-viewer',
       icon: faImage,
+      requiredPermissions: ['PATIENT_IMAGE_READ'],
     },
     // Settings
     {
@@ -622,6 +623,7 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Xem cbct',
       href: '/patient/nii-viewer',
       icon: faImage,
+      requiredPermissions: ['PATIENT_IMAGE_READ'],
     },
     {
       name: 'Thanh toán',
@@ -683,10 +685,9 @@ export const canAccessWarehouse = (
     return true;
   }
 
-  // Priority 2: Fallback - Check if user is ROLE_ADMIN (has all permissions)
-  // Note: This is a fallback only, as ROLE_ADMIN should have VIEW_WAREHOUSE permission
-  const isAdmin = userRoles?.includes('ROLE_ADMIN') || false;
-  return isAdmin;
+  // Admin should have VIEW_WAREHOUSE permission in seed data
+  // No bypass - check permissions only
+  return false;
 };
 
 /**

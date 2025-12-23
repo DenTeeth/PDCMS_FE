@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, ArrowRight, Calendar, Users, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationList } from '@/components/notifications/NotificationList';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -63,6 +64,11 @@ export default function AdminDashboard() {
               Chúc bạn một ngày làm việc hiệu quả!
             </p>
           </div>
+        </div>
+
+        {/* Notifications Section */}
+        <div className="mb-8">
+          <NotificationList maxItems={5} viewAllHref="/admin/notifications" />
         </div>
 
         {/* Quick Links Grid */}

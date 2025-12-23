@@ -56,7 +56,7 @@ export default function TreatmentPlanPhase({
   const [isReorderMode, setIsReorderMode] = useState(false);
 
   // Phase 3.5: Check permission
-  const canUpdate = user?.permissions?.includes('UPDATE_TREATMENT_PLAN') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
   
   // V21.4: Emergent items (API 5.7) allowed for DRAFT and APPROVED plans
   const isDraftPlan = planApprovalStatus === ApprovalStatus.DRAFT;

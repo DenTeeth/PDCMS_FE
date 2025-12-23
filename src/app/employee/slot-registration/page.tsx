@@ -324,7 +324,7 @@ export default function SlotRegistrationPage() {
 
   // ==================== RENDER ====================
   return (
-    <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_OWN]}>
+    <ProtectedRoute requiredPermissions={[Permission.VIEW_SCHEDULE_OWN]}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -478,7 +478,7 @@ export default function SlotRegistrationPage() {
                           </div>
                         </td>
                         <td className="p-3">
-                          <Badge variant={registration.isActive ? "default" : "secondary"}>
+                          <Badge variant={registration.isActive ? "active" : "inactive"}>
                             {registration.isActive ? (
                               <>
                                 <CheckCircle className="h-3 w-3 mr-1" />

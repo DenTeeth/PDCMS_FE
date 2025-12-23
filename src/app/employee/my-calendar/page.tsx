@@ -62,8 +62,8 @@ export default function MyCalendarPage() {
   const [selectedShift, setSelectedShift] = useState<EmployeeShift | null>(null);
   const [shiftDetailLoading, setShiftDetailLoading] = useState(false);
 
-  // Permissions
-  const canViewShifts = user?.permissions?.includes('VIEW_SHIFTS_OWN') || false;
+  // Permissions - Updated to match BE naming
+  const canViewShifts = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
   const canViewAppointments = user?.permissions?.includes('VIEW_APPOINTMENT_OWN') || false;
 
   // Get current user's employee ID
@@ -435,7 +435,7 @@ export default function MyCalendarPage() {
   return (
     <ProtectedRoute
       requiredBaseRole="employee"
-      requiredPermissions={['VIEW_SHIFTS_OWN', 'VIEW_APPOINTMENT_OWN']}
+      requiredPermissions={['VIEW_SCHEDULE_OWN', 'VIEW_APPOINTMENT_OWN']}
       requireAll={false}
     >
       <div className="space-y-6">

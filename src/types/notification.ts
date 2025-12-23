@@ -6,23 +6,30 @@
 // Notification Type Enum - matches BE docs:
 // - NOTIFICATION_SYSTEM_FE_INTEGRATION_GUIDE.md
 // - NOTIFICATION_SYSTEM_FE_READY.md
+// - REQUEST_NOTIFICATION_SYSTEM_FE_INTEGRATION_GUIDE.md
 export type NotificationType =
   | 'APPOINTMENT_CREATED'
   | 'APPOINTMENT_UPDATED'
   | 'APPOINTMENT_CANCELLED'
-  | 'APPOINTMENT_DELAYED'
+  | 'APPOINTMENT_REMINDER'
   | 'APPOINTMENT_COMPLETED'
-  | 'TREATMENT_PLAN_CREATED'
+  | 'TREATMENT_PLAN_APPROVED'
   | 'TREATMENT_PLAN_UPDATED'
   | 'PAYMENT_RECEIVED'
-  | 'SYSTEM_ANNOUNCEMENT';
+  | 'SYSTEM_ANNOUNCEMENT'
+  | 'REQUEST_TIME_OFF_PENDING'
+  | 'REQUEST_OVERTIME_PENDING'
+  | 'REQUEST_PART_TIME_PENDING';
 
 // Notification Entity Type Enum - matches BE
 export type NotificationEntityType =
   | 'APPOINTMENT'
   | 'TREATMENT_PLAN'
   | 'PAYMENT'
-  | 'SYSTEM';
+  | 'SYSTEM'
+  | 'TIME_OFF_REQUEST'
+  | 'OVERTIME_REQUEST'
+  | 'PART_TIME_REGISTRATION';
 
 // Notification DTO - matches BE NotificationDTO
 export interface Notification {
@@ -73,12 +80,15 @@ export const NOTIFICATION_ICONS: Record<NotificationType, string> = {
   APPOINTMENT_CREATED: '📅',
   APPOINTMENT_UPDATED: '📝',
   APPOINTMENT_CANCELLED: '❌',
-  APPOINTMENT_DELAYED: '⏰',
+  APPOINTMENT_REMINDER: '⏰',
   APPOINTMENT_COMPLETED: '✅',
-  TREATMENT_PLAN_CREATED: '🩺',
+  TREATMENT_PLAN_APPROVED: '🩺',
   TREATMENT_PLAN_UPDATED: '📋',
   PAYMENT_RECEIVED: '💰',
   SYSTEM_ANNOUNCEMENT: '📢',
+  REQUEST_TIME_OFF_PENDING: '🏖️',
+  REQUEST_OVERTIME_PENDING: '⏰',
+  REQUEST_PART_TIME_PENDING: '📋',
 };
 
 // Notification type labels (Vietnamese)
@@ -86,12 +96,15 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   APPOINTMENT_CREATED: 'Đặt lịch thành công',
   APPOINTMENT_UPDATED: 'Cập nhật lịch hẹn',
   APPOINTMENT_CANCELLED: 'Hủy lịch hẹn',
-  APPOINTMENT_DELAYED: 'Hoãn lịch hẹn',
+  APPOINTMENT_REMINDER: 'Nhắc nhở lịch hẹn',
   APPOINTMENT_COMPLETED: 'Hoàn thành khám',
-  TREATMENT_PLAN_CREATED: 'Tạo kế hoạch điều trị',
+  TREATMENT_PLAN_APPROVED: 'Phê duyệt kế hoạch điều trị',
   TREATMENT_PLAN_UPDATED: 'Cập nhật kế hoạch điều trị',
   PAYMENT_RECEIVED: 'Thanh toán thành công',
   SYSTEM_ANNOUNCEMENT: 'Thông báo hệ thống',
+  REQUEST_TIME_OFF_PENDING: 'Yêu cầu nghỉ phép',
+  REQUEST_OVERTIME_PENDING: 'Yêu cầu tăng ca',
+  REQUEST_PART_TIME_PENDING: 'Yêu cầu đăng ký part-time',
 };
 
 
