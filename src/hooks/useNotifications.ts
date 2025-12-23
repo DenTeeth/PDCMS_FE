@@ -27,6 +27,7 @@ interface UseNotificationsReturn {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: number) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
+  getNotificationPath: (notification: Notification) => string | null;
   // Pagination
   hasMore: boolean;
   currentPage: number;
@@ -175,6 +176,31 @@ export const useNotifications = (): UseNotificationsReturn => {
   }, [notifications]);
 
   /**
+   * Get navigation path for notification based on entity type
+   */
+  const getNotificationPath = useCallback((notification: Notification): string | null => {
+    if (!notification.relatedEntityType || !notification.relatedEntityId) {
+      return null;
+    }
+
+    switch (notification.relatedEntityType) {
+      case 'TIME_OFF_REQUEST':
+        return `/admin/time-off-requests/${notification.relatedEntityId}`;
+      case 'OVERTIME_REQUEST':
+        return `/admin/overtime-requests/${notification.relatedEntityId}`;
+      case 'PART_TIME_REGISTRATION':
+        // Part-time registration ID is numeric, navigate to registrations page with filter
+        return `/admin/registration-requests`;
+      case 'APPOINTMENT':
+        return `/admin/appointments/${notification.relatedEntityId}`;
+      case 'TREATMENT_PLAN':
+        return `/admin/treatment-plans/${notification.relatedEntityId}`;
+      default:
+        return null;
+    }
+  }, []);
+
+  /**
    * Handle new real-time notification
    */
   const handleNewNotification = useCallback((notification: Notification) => {
@@ -204,12 +230,30 @@ export const useNotifications = (): UseNotificationsReturn => {
     // Increment unread count
     setUnreadCount((prev) => prev + 1);
     
-    // Show toast notification
-    toast.info(notification.title, {
-      description: notification.message,
-      duration: 5000,
-    });
-  }, []);
+    // Get navigation path
+    const navigationPath = getNotificationPath(notification);
+    
+    // Show toast notification with action button if navigation available
+    if (navigationPath) {
+      toast.info(notification.title, {
+        description: notification.message,
+        duration: 5000,
+        action: {
+          label: 'Xem chi tiết',
+          onClick: () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = navigationPath;
+            }
+          },
+        },
+      });
+    } else {
+      toast.info(notification.title, {
+        description: notification.message,
+        duration: 5000,
+      });
+    }
+  }, [getNotificationPath]);
 
   /**
    * Connect WebSocket and load initial data when authenticated
@@ -262,6 +306,7 @@ export const useNotifications = (): UseNotificationsReturn => {
     markAllAsRead,
     deleteNotification,
     refreshUnreadCount,
+    getNotificationPath,
     hasMore,
     currentPage,
     totalPages,
