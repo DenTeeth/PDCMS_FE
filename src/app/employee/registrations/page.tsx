@@ -391,7 +391,9 @@ export default function EmployeeRegistrationsPage() {
       setPartTimeLoading(true);
 
       // ✅ UPDATED: Backend now returns paginated response
-      const response = await shiftRegistrationService.getMyRegistrations({
+
+      // Use correct API endpoint for part-time-flex registrations
+      const response = await shiftRegistrationService.getRegistrations({
         page: partTimeCurrentPage,
         size: 10,
         sortBy: 'effectiveFrom',
@@ -961,7 +963,7 @@ export default function EmployeeRegistrationsPage() {
 
   // ==================== RENDER ====================
   return (
-    <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_OWN, Permission.VIEW_FIXED_REGISTRATIONS_OWN]}>
+    <ProtectedRoute requiredPermissions={[Permission.VIEW_SCHEDULE_OWN]}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header - Đơn giản hóa */}
         <div>

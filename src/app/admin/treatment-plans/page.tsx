@@ -33,6 +33,11 @@ export default function AdminTreatmentPlansPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  // Debug quyền admin
+  console.log('[DEBUG] user:', user);
+  if (user) {
+    console.log('[DEBUG] roles:', user.roles, 'baseRole:', user.baseRole, 'permissions:', user.permissions);
+  }
   const { is403Error, handleError } = useApiErrorHandler();
 
   // Get patientCode from URL query params (optional filter)
@@ -57,7 +62,7 @@ export default function AdminTreatmentPlansPage() {
 
   // Permissions
   const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') || false;
-  const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || false;
+  const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false;
 
   // Request cancellation để tránh race condition
   const abortControllerRef = useRef<AbortController | null>(null);

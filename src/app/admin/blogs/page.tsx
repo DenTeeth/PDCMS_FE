@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,12 @@ import { blogs } from '@/data/admin-data';
 import { Blog } from '@/types/admin';
 
 export default function BlogsPage() {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('CREATE_BLOG') || hasPermission('MANAGE_BLOG');
+  const canUpdate = hasPermission('UPDATE_BLOG');
+  const canDelete = hasPermission('DELETE_BLOG');
+  const canView = hasPermission('VIEW_BLOG');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -54,7 +61,10 @@ export default function BlogsPage() {
   };
 
   return (
-    <ProtectedRoute requiredBaseRole="admin">
+    <ProtectedRoute
+      requiredBaseRole="admin"
+      requiredPermissions={['VIEW_BLOG']}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -62,7 +72,11 @@ export default function BlogsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Quản lý Blog</h1>
             <p className="text-gray-600">Quản lý bài viết và nội dung tin tức</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+            disabled={!canCreate}
+          >
             <Plus className="h-4 w-4" />
             Bài viết mới
           </Button>

@@ -36,6 +36,11 @@ import { toast } from 'sonner';
 
 export default function AdminShiftCalendarPage() {
   const { user } = useAuth();
+  // Debug quyền admin
+  console.log('[DEBUG] user:', user);
+  if (user) {
+    console.log('[DEBUG] roles:', user.roles, 'baseRole:', user.baseRole, 'permissions:', user.permissions);
+  }
   const { is403Error, handleError } = useApiErrorHandler();
 
   // State
@@ -86,12 +91,12 @@ export default function AdminShiftCalendarPage() {
     notes: '',
   });
 
-  // Permissions - Admin luôn có quyền VIEW_SHIFTS_ALL
-  const canViewAll = user?.permissions?.includes('VIEW_SHIFTS_ALL') || false;
-  const canCreate = user?.permissions?.includes('CREATE_SHIFTS') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_SHIFTS') || false;
-  const canDelete = user?.permissions?.includes('DELETE_SHIFTS') || false;
-  const canViewSummary = user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') || false;
+  // Permissions - Updated to match BE naming (VIEW_SCHEDULE_ALL instead of VIEW_SHIFTS_ALL)
+  const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
   // Debug permissions
   console.log('Admin permissions:', user?.permissions);
@@ -515,7 +520,7 @@ export default function AdminShiftCalendarPage() {
   return (
     <ProtectedRoute
       requiredBaseRole="admin"
-      requiredPermissions={['VIEW_SHIFTS_ALL']}
+      requiredPermissions={['VIEW_SCHEDULE_ALL']}
       requireAll={false}
     >
       <div className="space-y-6">

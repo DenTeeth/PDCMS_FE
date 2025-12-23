@@ -324,7 +324,7 @@ export default function SlotRegistrationPage() {
 
   // ==================== RENDER ====================
   return (
-    <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_OWN]}>
+    <ProtectedRoute requiredPermissions={[Permission.VIEW_SCHEDULE_OWN]}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">

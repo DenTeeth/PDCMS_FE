@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+// ...existing code...
 import { User, AuthState, LoginRequest } from '@/types/auth';
 import { apiClient } from '@/lib/api';
 import { getToken, getUserData, setUserData, setToken, clearAuthData } from '@/lib/cookies';
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const token = getToken();
         const userData = getUserData();
-        
+
         if (token && userData) {
           // Extract employeeId from token if not already in userData
           if (!userData.employeeId && token) {
@@ -65,7 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log(' Extracted employeeId from token:', employeeId);
             }
           }
-          
+
           // Extract employeeCode from token if not already in userData
           if (!userData.employeeCode && token) {
             const employeeCode = getEmployeeCodeFromToken(token);
@@ -74,17 +75,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log(' Extracted employeeCode from token:', employeeCode);
             }
           }
-          
+
           // Update localStorage if we extracted new data
-          if ((!userData.employeeId && getEmployeeIdFromToken(token)) || 
-              (!userData.employeeCode && getEmployeeCodeFromToken(token))) {
+          if ((!userData.employeeId && getEmployeeIdFromToken(token)) ||
+            (!userData.employeeCode && getEmployeeCodeFromToken(token))) {
             setUserData(userData);
           }
-          
+
           // Token exists, set authenticated
           setUser(userData);
           setIsAuthenticated(true);
-          
+
           console.log(' User authenticated from localStorage', {
             username: userData.username,
             employeeId: userData.employeeId,
@@ -109,11 +110,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log(' Attempting to refresh token...');
       const response = await apiClient.refreshToken();
-      
+
       if (response.accessToken) {
         // Update access token in localStorage (already done in apiClient)
         setToken(response.accessToken);
-        
+
         // Update user data with new token and expiration time
         const currentUser = getUserData();
         if (currentUser) {
@@ -123,15 +124,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             tokenExpiresAt: response.accessTokenExpiresAt,
             refreshTokenExpiresAt: response.refreshTokenExpiresAt,
           };
-          
+
           setUserData(updatedUser);
           setUser(updatedUser);
           setIsAuthenticated(true);
-          
-          const expiresIn = response.accessTokenExpiresAt 
+
+          const expiresIn = response.accessTokenExpiresAt
             ? response.accessTokenExpiresAt - Math.floor(Date.now() / 1000)
             : 'unknown';
-          
+
           console.log(' Token refreshed successfully');
           console.log(`⏰ New token expires in: ${expiresIn} seconds`);
           console.log('� Refresh token rotated by backend');
@@ -191,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const refreshDelay = Math.max((timeUntilExpiry - refreshBeforeExpiry) * 1000, 1000); // Convert to ms, min 1 second
 
       console.log(`⏰ Token expires in ${timeUntilExpiry}s, will refresh in ${Math.floor(refreshDelay / 1000)}s (${refreshBeforeExpiry}s before expiry)`);
-      
+
       return refreshDelay;
     };
 
@@ -230,15 +231,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('� Starting login process...');
       const response = await apiClient.login(credentials);
-      
+
       console.log('� Login response received:', response);
-      
+
       // Response now directly contains the data (no statusCode wrapper)
       if (response.token) {
         // Extract employeeId and employeeCode from JWT token
         const employeeId = getEmployeeIdFromToken(response.token);
         const employeeCode = getEmployeeCodeFromToken(response.token);
-        
+
         const userData: User = {
           username: response.username,
           email: response.email,
@@ -259,11 +260,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Store user data in localStorage
         setUserData(userData);
-        
-        const expiresIn = response.tokenExpiresAt 
+
+        const expiresIn = response.tokenExpiresAt
           ? response.tokenExpiresAt - Math.floor(Date.now() / 1000)
           : 'unknown';
-        
+
         // Note: accessToken already stored in apiClient.login()
         // Note: refreshToken automatically stored in HTTP-Only Cookie by backend
         console.log(' Login successful');
@@ -274,7 +275,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Update state IMMEDIATELY
         setUser(userData);
         setIsAuthenticated(true);
-        
+
         console.log(' Auth state updated - isAuthenticated: true');
       } else {
         throw new Error('Đăng nhập thất bại - không nhận được token');
@@ -312,15 +313,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   //  Permission helper functions
+
   const hasPermission = useCallback((permission: string): boolean => {
     if (!user?.permissions) return false;
     return user.permissions.includes(permission);
   }, [user]);
 
+
   const hasAnyPermission = useCallback((permissions: string[]): boolean => {
     if (!user?.permissions || permissions.length === 0) return false;
     return permissions.some(permission => user.permissions.includes(permission));
   }, [user]);
+
 
   const hasAllPermissions = useCallback((permissions: string[]): boolean => {
     if (!user?.permissions || permissions.length === 0) return false;

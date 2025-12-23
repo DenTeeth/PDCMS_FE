@@ -132,11 +132,11 @@ export default function BookingServicesPage() {
     isActive: true,
   });
 
-  // Permissions
+  // Permissions - Updated to match BE naming
   const canView = user?.permissions?.includes('VIEW_SERVICE') || false;
-  const canCreate = user?.permissions?.includes('CREATE_SERVICE') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_SERVICE') || false;
-  const canDelete = user?.permissions?.includes('DELETE_SERVICE') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_SERVICE') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_SERVICE') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_SERVICE') || false;
 
   // Search state - separate from debounced search
   // searchInput: what user types (immediate update)
