@@ -246,11 +246,12 @@ export default function AdminOvertimeRequestsPage() {
     });
   }, [overtimeRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
-  // ⚡ Memoize permission checks
+  // ⚡ Memoize permission checks - Using new BE consolidated permissions
+  // BE uses APPROVE_OVERTIME for both approve and reject
   const canApprove = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]);
-  const canReject = useMemo(() => user?.permissions?.includes('REJECT_OVERTIME'), [user?.permissions]);
-  const canCancelPending = useMemo(() => user?.permissions?.includes('CANCEL_OVERTIME_PENDING'), [user?.permissions]);
-  const canCancelOwn = useMemo(() => user?.permissions?.includes('CANCEL_OVERTIME_OWN'), [user?.permissions]);
+  const canReject = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]); // Same as approve
+  const canCancelPending = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]); // Admin can cancel
+  const canCancelOwn = useMemo(() => user?.permissions?.includes('CREATE_OVERTIME'), [user?.permissions]); // User can cancel own
   const canCreate = useMemo(() => user?.permissions?.includes('CREATE_OVERTIME'), [user?.permissions]);
 
   // ⚡ useCallback helper function
