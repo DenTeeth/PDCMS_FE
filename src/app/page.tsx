@@ -36,6 +36,9 @@ const Footer = dynamic(() => import("@/components/layout/Footer"), {
   loading: () => <div className="min-h-[200px] bg-background" />,
 });
 
+// ChatbotWrapper is already a Client Component, import directly
+import ChatbotWrapper from "@/components/chatbot/ChatbotWrapper";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
@@ -50,6 +53,7 @@ export default function Home() {
       <AppointmentSection />
       <FAQSection />
       <Footer />
+      <ChatbotWrapper />
     </div>
   );
 }

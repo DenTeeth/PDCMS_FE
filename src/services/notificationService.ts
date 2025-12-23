@@ -61,10 +61,10 @@ export const notificationService = {
 
   /**
    * Đánh dấu tất cả thông báo là đã đọc
-   * PATCH /api/v1/notifications/read-all
+   * PATCH /api/v1/notifications/mark-all-read
    */
   markAllAsRead: async (): Promise<void> => {
-    await api.patch(`${BASE_URL}/read-all`);
+    await api.patch(`${BASE_URL}/mark-all-read`);
   },
 
   /**

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Check, CheckCheck, Trash2, Loader2, WifiOff, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export const NotificationBell: React.FC = () => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -26,6 +28,7 @@ export const NotificationBell: React.FC = () => {
     deleteNotification,
     loadMore,
     hasMore,
+    getNotificationPath,
   } = useNotifications();
 
   // Close dropdown when clicking outside
@@ -57,9 +60,10 @@ export const NotificationBell: React.FC = () => {
     }
     
     // Navigate to related entity if available
-    if (notification.relatedEntityType && notification.relatedEntityId) {
-      // TODO: Implement navigation based on entity type
-      console.log('Navigate to:', notification.relatedEntityType, notification.relatedEntityId);
+    const navigationPath = getNotificationPath(notification);
+    if (navigationPath) {
+      router.push(navigationPath);
+      setIsOpen(false); // Close dropdown after navigation
     }
   };
 
