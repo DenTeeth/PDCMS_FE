@@ -94,11 +94,11 @@ export default function BookingRoomsPage() {
     isActive: true,
   });
 
-  // Permissions
+  // Permissions - Updated to match BE naming
   const canView = user?.permissions?.includes('VIEW_ROOM') || false;
-  const canCreate = user?.permissions?.includes('CREATE_ROOM') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_ROOM') || false;
-  const canDelete = user?.permissions?.includes('DELETE_ROOM') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_ROOM') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_ROOM') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_ROOM') || false;
 
   // Search state - separate from debounced search
   // searchInput: what user types (immediate update)

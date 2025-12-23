@@ -59,7 +59,7 @@ export default function AddItemsToPhaseModal({
   onSuccess,
 }: AddItemsToPhaseModalProps) {
   const { user } = useAuth();
-  const canUpdate = user?.permissions?.includes('UPDATE_TREATMENT_PLAN') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
   const canViewServices = user?.permissions?.includes('VIEW_SERVICE') || false;
 
   // State
@@ -90,7 +90,7 @@ export default function AddItemsToPhaseModal({
         setServices([]); // Clear services to show empty state
       }
     } else if (open) {
-      // Modal opened but user doesn't have UPDATE_TREATMENT_PLAN permission
+      // Modal opened but user doesn't have MANAGE_TREATMENT_PLAN permission
       setServices([]);
     }
   }, [open, canUpdate, canViewServices]);

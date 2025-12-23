@@ -73,7 +73,7 @@ export class TimeOffRequestService {
   /**
    * Lấy danh sách yêu cầu nghỉ phép
    * 
-   * Requires: VIEW_TIME_OFF_ALL or VIEW_TIME_OFF_OWN permission
+   * Requires: VIEW_LEAVE_ALL or VIEW_LEAVE_OWN permission - ✅ BE uses VIEW_LEAVE_ALL/OWN (BE controller line 52, 87)
    * 
    * Query parameters:
    * - status: Filter by status (PENDING, APPROVED, REJECTED, CANCELLED)
@@ -108,7 +108,7 @@ export class TimeOffRequestService {
    * Requires: VIEW_TIME_OFF_ALL or VIEW_TIME_OFF_OWN (for own requests)
    * 
    * Possible errors:
-   * - 403: Access Denied (trying to view other's request without VIEW_TIME_OFF_ALL)
+   * - 403: Access Denied (trying to view other's request without VIEW_LEAVE_ALL) - ✅ BE uses VIEW_LEAVE_ALL
    * - 404: Time off request not found
    */
   static async getTimeOffRequestById(

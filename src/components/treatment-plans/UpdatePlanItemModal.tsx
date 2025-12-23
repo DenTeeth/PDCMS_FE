@@ -37,7 +37,7 @@ export default function UpdatePlanItemModal({
   onSuccess,
 }: UpdatePlanItemModalProps) {
   const { user } = useAuth();
-  const canUpdate = user?.permissions?.includes('UPDATE_TREATMENT_PLAN') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
 
   // Form state
   const [itemName, setItemName] = useState('');

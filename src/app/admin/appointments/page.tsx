@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,12 @@ import { appointments } from '@/data/admin-data';
 import { Appointment } from '@/types/admin';
 
 export default function AppointmentsPage() {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('CREATE_APPOINTMENT');
+  const canUpdate = hasPermission('UPDATE_APPOINTMENT_STATUS');
+  const canDelete = hasPermission('DELETE_APPOINTMENT');
+  const canView = hasPermission('VIEW_APPOINTMENT_ALL') || hasPermission('VIEW_APPOINTMENT_OWN');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDate, setFilterDate] = useState('');
@@ -161,7 +168,10 @@ export default function AppointmentsPage() {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <ProtectedRoute requiredBaseRole="admin">
+    <ProtectedRoute
+      requiredBaseRole="admin"
+      requiredPermissions={['VIEW_APPOINTMENT_ALL']}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -186,7 +196,7 @@ export default function AppointmentsPage() {
                 Lịch
               </Button>
             </div>
-            <Button>
+            <Button disabled={!canCreate}>
               <Plus className="h-4 w-4 mr-2" />
               Lịch hẹn mới
             </Button>

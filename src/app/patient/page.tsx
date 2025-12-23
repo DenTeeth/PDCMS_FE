@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, ArrowRight, Calendar, Heart } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationList } from '@/components/notifications/NotificationList';
 
 export default function PatientDashboard() {
   const { user } = useAuth();
@@ -51,9 +52,14 @@ export default function PatientDashboard() {
           </h1>
           
           <p className="text-teal-200/80 text-lg max-w-2xl">
-            Chúc bạn một ngày tốt lành! Hãy chọn chức năng bên dưới để xem thông tin sức khỏe của bạn.
+            Chúc bạn một ngày tốt lành!
           </p>
         </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="mb-8">
+        <NotificationList maxItems={5} viewAllHref="/patient/notifications" />
       </div>
 
       {/* Quick Links Grid */}

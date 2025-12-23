@@ -79,15 +79,29 @@ export default function ShiftCalendarPage() {
     notes: '',
   });
 
-  // Permissions
-  const canViewAll = user?.permissions?.includes('VIEW_SHIFTS_ALL') || false;
-  const canViewOwn = user?.permissions?.includes('VIEW_SHIFTS_OWN') || false;
-  const canCreate = user?.permissions?.includes('CREATE_SHIFTS') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_SHIFTS') || false;
-  const canDelete = user?.permissions?.includes('DELETE_SHIFTS') || false;
-  const canViewSummary = user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') || false;
+  // Permissions - Updated to match BE naming and add backward compatibility
+  const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
+  const canViewOwn = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
 
-  // Manager có thể xem tất cả nếu có quyền VIEW_SHIFTS_ALL hoặc là manager
+  // BE uses MANAGE_WORK_SHIFTS for CRUD operations on shifts
+  // Support both old names (if roles have them) and new names
+  const canCreate =
+    user?.permissions?.includes('CREATE_SHIFTS') ||           // Old name (backward compat)
+    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name (BE standard)
+
+  const canUpdate =
+    user?.permissions?.includes('UPDATE_SHIFTS') ||           // Old name
+    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name
+
+  const canDelete =
+    user?.permissions?.includes('DELETE_SHIFTS') ||           // Old name
+    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name
+
+  const canViewSummary =
+    user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') ||     // Old name
+    user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false; // New name
+
+  // Manager có thể xem tất cả nếu có quyền VIEW_SCHEDULE_ALL hoặc là manager
   const isManager = user?.roles?.includes('ROLE_MANAGER') || false;
   const canViewShifts = canViewAll || canViewOwn || isManager;
 
@@ -207,9 +221,9 @@ export default function ShiftCalendarPage() {
         params.employee_id = selectedEmployee;
         console.log(' Admin/Manager viewing employee_id:', selectedEmployee);
       } else if (canViewOwn) {
-        // Employee with VIEW_SHIFTS_OWN:
+        // Employee with VIEW_SCHEDULE_OWN:
         // KHÔNG truyền employee_id - Backend tự động filter theo JWT token
-        console.log(' Employee with VIEW_SHIFTS_OWN - Backend will auto-filter by JWT token');
+        console.log(' Employee with VIEW_SCHEDULE_OWN - Backend will auto-filter by JWT token');
       }
 
       console.log(' API params:', params);
@@ -254,7 +268,7 @@ export default function ShiftCalendarPage() {
       if ((canViewAll || isManager) && selectedEmployee) {
         params.employee_id = selectedEmployee;
       }
-      // Nếu VIEW_SHIFTS_OWN: KHÔNG truyền employee_id, backend tự filter
+      // Nếu VIEW_SCHEDULE_OWN: KHÔNG truyền employee_id, backend tự filter
 
       console.log('Loading summary with params:', params);
 
@@ -564,7 +578,7 @@ export default function ShiftCalendarPage() {
   return (
     <ProtectedRoute
       requiredBaseRole="employee"
-      requiredPermissions={['VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_ALL']}
+      requiredPermissions={['VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_ALL']}
       requireAll={false}
     >
       <div className="space-y-6">

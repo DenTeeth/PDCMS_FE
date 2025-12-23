@@ -32,22 +32,27 @@ export const workShiftService = {
   getAll: async (isActive?: boolean): Promise<WorkShift[]> => {
     try {
       const params = isActive !== undefined ? { isActive } : {};
+      console.log('🔍 Fetching work shifts with params:', params);
       const response = await api.get<WorkShiftListResponse | WorkShift[]>('/work-shifts', { params });
+      console.log('✅ Work shifts response:', response.data);
 
       // Handle both response structures
       // Case 1: { statusCode, data: [...] }
       // Case 2: [...]
       if (Array.isArray(response.data)) {
+        console.log('📊 Returning array data:', response.data.length, 'items');
         return response.data;
       }
 
       // @ts-ignore - Type assertion for wrapped response
-      return response.data.data || [];
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error fetching work shifts:', error);
-      }
-      return [];
+      const result = response.data.data || [];
+      console.log('📊 Returning wrapped data:', result.length, 'items');
+      return result;
+    } catch (error: any) {
+      console.error('❌ Error fetching work shifts:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      // Throw error để UI có thể bắt và hiển thị
+      throw error;
     }
   },
 

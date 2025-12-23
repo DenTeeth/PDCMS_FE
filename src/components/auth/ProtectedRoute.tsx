@@ -22,15 +22,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAll = false,
   fallbackPath = '/login',
 }) => {
-  const { 
-    isAuthenticated, 
-    user, 
-    isLoading, 
-    hasPermission, 
-    hasAnyPermission, 
-    hasAllPermissions, 
+  const {
+    isAuthenticated,
+    user,
+    isLoading,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
     hasRole,
-    getHomePath 
+    getHomePath
   } = useAuth();
   const router = useRouter();
 
@@ -50,11 +50,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         }
       }
       //  Priority 2: Check permissions (RBAC - Recommended for feature protection)
-      else if (requiredPermissions.length > 0) {
+      if (requiredPermissions.length > 0) {
         const hasRequiredPermission = requireAll
           ? hasAllPermissions(requiredPermissions)
           : hasAnyPermission(requiredPermissions);
-        
+
         if (!hasRequiredPermission) {
           console.warn(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
           router.push('/unauthorized');
@@ -64,7 +64,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       //  Priority 3: Fallback to roles check (Legacy support)
       else if (requiredRoles.length > 0) {
         const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
-        
+
         if (!hasRequiredRole) {
           console.warn(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
           router.push('/unauthorized');
@@ -72,7 +72,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         }
       }
     }
-  }, [isAuthenticated, user, isLoading, requiredRoles, requiredBaseRole, requiredPermissions, requireAll, router, fallbackPath]);
+  }, [isAuthenticated, user, isLoading, requiredRoles, requiredBaseRole, requiredPermissions, requireAll, router, fallbackPath, hasAllPermissions, hasAnyPermission, hasRole]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -97,23 +97,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
             <p className="text-gray-600 mb-4">Bạn không có quyền truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required baseRole: {requiredBaseRole}</p>
-            <button 
+            <button
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Trở về Trang chủ
-            </button>
+            >Trở về Trang chủ</button>
           </div>
         </div>
       );
     }
   }
   //  Check permissions (RBAC - Recommended for feature protection)
-  else if (requiredPermissions.length > 0) {
+  if (requiredPermissions.length > 0) {
     const hasRequiredPermission = requireAll
       ? hasAllPermissions(requiredPermissions)
       : hasAnyPermission(requiredPermissions);
-    
+
     if (!hasRequiredPermission) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -121,7 +119,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
             <p className="text-gray-600 mb-4">Bạn không có quyền truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required: {requiredPermissions.join(', ')}</p>
-            <button 
+            <button
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -135,7 +133,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   //  Fallback: Check roles (Legacy support)
   else if (requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.some(role => hasRole(role as string));
-    
+
     if (!hasRequiredRole) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -143,7 +141,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Truy cập bị từ chối</h2>
             <p className="text-gray-600 mb-4">Bạn không có vai trò cần thiết để truy cập trang này.</p>
             <p className="text-sm text-gray-500">Required role: {requiredRoles.join(', ')}</p>
-            <button 
+            <button
               onClick={() => router.push(getHomePath())}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >

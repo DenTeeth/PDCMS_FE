@@ -423,15 +423,16 @@ export default function RegistrationsPage() {
   };
 
   // ==================== RENDER ====================
-  // Check permissions for both tabs
-  const canViewPartTime = hasPermission(Permission.VIEW_REGISTRATION_ALL);
-  const canViewFixed = hasPermission(Permission.VIEW_FIXED_REGISTRATIONS_ALL);
+  // Check permissions for both tabs - Using new BE consolidated permissions
+  // BE uses MANAGE_PART_TIME_REGISTRATIONS and MANAGE_FIXED_REGISTRATIONS
+  const canViewPartTime = hasPermission(Permission.MANAGE_PART_TIME_REGISTRATIONS);
+  const canViewFixed = hasPermission(Permission.MANAGE_FIXED_REGISTRATIONS);
   const canManageFixed = hasPermission(Permission.MANAGE_FIXED_REGISTRATIONS);
 
   // If user doesn't have permission for any tab, show unauthorized
   if (!canViewPartTime && !canViewFixed) {
     return (
-      <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_ALL, Permission.VIEW_FIXED_REGISTRATIONS_ALL]}>
+      <ProtectedRoute requiredPermissions={[Permission.MANAGE_PART_TIME_REGISTRATIONS, Permission.MANAGE_FIXED_REGISTRATIONS]}>
         <div className="container mx-auto p-6">
           <div className="text-center py-8 text-gray-500">
             You do not have permission to view registrations
@@ -442,7 +443,7 @@ export default function RegistrationsPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermissions={[Permission.VIEW_REGISTRATION_ALL, Permission.VIEW_FIXED_REGISTRATIONS_ALL]}>
+    <ProtectedRoute requiredPermissions={[Permission.MANAGE_PART_TIME_REGISTRATIONS, Permission.MANAGE_FIXED_REGISTRATIONS]}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">

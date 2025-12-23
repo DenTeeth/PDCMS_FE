@@ -83,7 +83,7 @@ export default function CreateCustomPlanModal({
   onSuccess,
 }: CreateCustomPlanModalProps) {
   const { user } = useAuth();
-  const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
   const canViewServices = user?.permissions?.includes('VIEW_SERVICE') || false;
 
   // Check if user is employee (hide discount and price for employee role)
@@ -173,7 +173,7 @@ export default function CreateCustomPlanModal({
       // If user is doctor, auto-fill their employeeCode
       const isDoctor = user?.baseRole === 'employee' &&
         (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) ||
-          user?.permissions?.includes('CREATE_TREATMENT_PLAN'));
+          user?.permissions?.includes('MANAGE_TREATMENT_PLAN')); // ✅ BE: MANAGE_TREATMENT_PLAN
 
       if (isDoctor && user?.employeeCode) {
         // Auto-fill current doctor

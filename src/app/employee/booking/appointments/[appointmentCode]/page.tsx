@@ -257,12 +257,12 @@ export default function EmployeeAppointmentDetailPage() {
   const [patientDetail, setPatientDetail] = useState<Patient | null>(null);
   const [loadingPatientDetail, setLoadingPatientDetail] = useState(false);
 
-  // Permissions
+  // Permissions - ✅ Updated to use new BE permissions
   const canViewAll = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
   const canViewOwn = user?.permissions?.includes('VIEW_APPOINTMENT_OWN') || false;
   const canView = canViewAll || canViewOwn;
   const canUpdateStatus = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || false;
-  const canDelay = user?.permissions?.includes('DELAY_APPOINTMENT') || false;
+  const canDelay = user?.permissions?.includes('MANAGE_APPOINTMENT') || false; // ✅ BE: MANAGE_APPOINTMENT covers delay/cancel
   // Employees do not have reschedule permission
   const canReschedule = false;
   // Clinical Record permissions

@@ -347,7 +347,7 @@ export default function WorkSlotsManagementPage() {
   // ==================== RENDER ====================
 
   return (
-    <ProtectedRoute requiredPermissions={[Permission.MANAGE_WORK_SLOTS]}>
+    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_SCHEDULE_ALL']}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -355,12 +355,15 @@ export default function WorkSlotsManagementPage() {
             <h1 className="text-3xl font-bold text-gray-900">Quản lý suất làm việc</h1>
             <p className="text-gray-600 mt-1">Quản lý các suất và hạn mức cho nhân viên bán thời gian</p>
           </div>
-          {hasPermission(Permission.MANAGE_WORK_SLOTS) && (
-            <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Tạo suất mới
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2"
+            disabled={!hasPermission(Permission.MANAGE_WORK_SLOTS)}
+            title={!hasPermission(Permission.MANAGE_WORK_SLOTS) ? 'Bạn không có quyền tạo suất' : ''}
+          >
+            <Plus className="h-4 w-4" />
+            Tạo suất mới
+          </Button>
         </div>
 
         {/* Filters temporarily hidden */}
@@ -425,16 +428,15 @@ export default function WorkSlotsManagementPage() {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            {hasPermission(Permission.MANAGE_WORK_SLOTS) && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditWorkSlot(slot)}
-                                title="Chỉnh sửa"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditWorkSlot(slot)}
+                              title={!hasPermission(Permission.MANAGE_WORK_SLOTS) ? 'Bạn không có quyền chỉnh sửa suất' : 'Chỉnh sửa'}
+                              disabled={!hasPermission(Permission.MANAGE_WORK_SLOTS)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
