@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 import { inventoryService, type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import CreateItemMasterModal from '../components/CreateItemMasterModal';
 import ItemDetailModal from '../components/ItemDetailModal';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 type FilterTab = 'ALL' | 'COLD' | 'NORMAL' | 'LOW_STOCK' | 'EXPIRING_SOON';
 
@@ -39,6 +41,12 @@ interface TabState {
 }
 
 export default function InventoryPage() {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('CREATE_WAREHOUSE_ITEM') || hasPermission('MANAGE_WAREHOUSE');
+  const canUpdate = hasPermission('UPDATE_WAREHOUSE_ITEM') || hasPermission('MANAGE_WAREHOUSE');
+  const canDelete = hasPermission('DELETE_WAREHOUSE_ITEM') || hasPermission('MANAGE_WAREHOUSE');
+  const canView = hasPermission('VIEW_WAREHOUSE');
+
   const queryClient = useQueryClient();
   const [tabState, setTabState] = useState<TabState>({
     activeFilter: 'ALL',
@@ -210,7 +218,7 @@ export default function InventoryPage() {
 
   const getStockStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string; className?: string }> = {
-      NORMAL: { variant: 'default', label: 'Bình thường' },
+      NORMAL: { variant: 'default', label: 'Bình thường', className: 'bg-green-100 text-green-800 border-green-300' },
       LOW_STOCK: { variant: 'destructive', label: 'Sắp hết hàng', className: 'bg-orange-100 text-orange-800 border-orange-300' },
       OUT_OF_STOCK: { variant: 'secondary', label: 'Hết hàng', className: 'bg-red-100 text-red-800 border-red-300' },
       OVERSTOCK: { variant: 'outline', label: 'Dư thừa', className: 'bg-blue-100 text-blue-800 border-blue-300' },
@@ -273,280 +281,286 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Quản lý tồn kho</h1>
-          <p className="text-slate-600 mt-1">Quản lý vật tư master & theo dõi tồn kho</p>
-        </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-          Thêm vật tư
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Tổng số vật tư
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalElements}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Sắp hết hàng
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statsError ? (
-              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
-            ) : (
-              <div className="text-2xl font-bold text-red-600">
-                {stats?.lowStockCount || 0}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Sắp hết hạn
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statsError ? (
-              <div className="text-sm text-red-600">Lỗi tải dữ liệu</div>
-            ) : (
-              <div className="text-2xl font-bold text-orange-600">
-                {stats?.expiringWithin30Days || 0}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Tìm kiếm theo mã vật tư, tên, danh mục..."
-              className="pl-10"
-              value={tabState.searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
+    <ProtectedRoute
+      requiredBaseRole="admin"
+      requiredPermissions={['VIEW_WAREHOUSE']}
+    >
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Quản lý tồn kho</h1>
+            <p className="text-slate-600 mt-1">Quản lý vật tư master & theo dõi tồn kho</p>
           </div>
-        </CardContent>
-      </Card>
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            disabled={!canCreate}
+          >
+            <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
+            Thêm vật tư
+          </Button>
+        </div>
 
-      {/* Inventory Table */}
-      <Card>
-        <CardContent className="pt-6">
-          {inventoryError ? (
-            <div className="text-center py-8">
-              <div className="text-red-600 font-semibold mb-2">Lỗi tải dữ liệu tồn kho</div>
-              <div className="text-sm text-gray-600">
-                {(inventoryError as any)?.message || 'Không thể tải danh sách vật tư. Vui lòng thử lại sau.'}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Tổng số vật tư */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số vật tư</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faBoxes} className="text-blue-600 text-xl" />
               </div>
+              <p className="text-3xl font-bold text-gray-900">{totalElements}</p>
             </div>
-          ) : isLoading ? (
-            <div className="text-center py-8">Đang tải...</div>
-          ) : inventory.length === 0 ? (
-            <EmptyState
-              icon={faBoxes}
-              title={tabState.searchQuery ? "Không tìm thấy vật tư" : "Chưa có vật tư nào"}
-              description={tabState.searchQuery ? "Thử thay đổi từ khóa tìm kiếm" : "Bắt đầu thêm vật tư mới vào kho"}
-              actionLabel={!tabState.searchQuery ? "Thêm vật tư" : undefined}
-              onAction={!tabState.searchQuery ? () => setIsCreateModalOpen(true) : undefined}
-            />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th
-                        className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
-                        onClick={() => handleSort('itemCode')}
-                      >
-                        <div className="flex items-center gap-2 font-semibold text-sm">
-                          Mã vật tư
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                        </div>
-                      </th>
-                      <th
-                        className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
-                        onClick={() => handleSort('itemName')}
-                      >
-                        <div className="flex items-center gap-2 font-semibold text-sm">
-                          Tên vật tư
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                        </div>
-                      </th>
-                      <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
-                      <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
-                      <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
-                      <th
-                        className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
-                        onClick={() => handleSort('totalQuantity')}
-                      >
-                        <div className="flex items-center justify-end gap-2 font-semibold text-sm">
-                          Số lượng
-                          <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
-                        </div>
-                      </th>
-                      <th className="text-left p-3 font-semibold text-sm">HSD</th>
-                      <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
-                      <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventory.map((item: InventorySummary) => (
-                      <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
-                        <td className="p-3">
-                          <span className="font-mono text-sm font-medium">{item.itemCode}</span>
-                        </td>
-                        <td className="p-3 font-medium">{item.itemName}</td>
-                        <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
-                        <td className="p-3 text-sm">{item.categoryName || '-'}</td>
-                        <td className="p-3">
-                          <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
-                        </td>
-                        <td className="p-3 text-right">
-                          <div className="flex flex-col items-end">
-                            <span className={`font-bold ${getQuantityColor(item)}`}>
-                              {item.totalQuantity}
-                            </span>
-                            <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          {getExpiryDateDisplay(item)}
-                        </td>
-                        <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
-                        <td className="p-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetail(item.itemMasterId)}
-                              title="Xem chi tiết"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(item)}
-                              title="Chỉnh sửa"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(item.itemMasterId, item.itemName)}
-                              title="Xóa"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          {/* Sắp hết hàng */}
+          <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-red-800 mb-2">Sắp hết hàng</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-700 text-xl" />
+              </div>
+              {statsError ? (
+                <div className="text-sm text-red-600">Lỗi</div>
+              ) : (
+                <p className="text-3xl font-bold text-red-800">{stats?.lowStockCount || 0}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Sắp hết hạn */}
+          <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-orange-800 mb-2">Sắp hết hạn</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faClock} className="text-orange-700 text-xl" />
+              </div>
+              {statsError ? (
+                <div className="text-sm text-orange-600">Lỗi</div>
+              ) : (
+                <p className="text-3xl font-bold text-orange-800">{stats?.expiringWithin30Days || 0}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm theo mã vật tư, tên, danh mục..."
+                className="pl-10"
+                value={tabState.searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inventory Table */}
+        <Card>
+          <CardContent className="pt-6">
+            {inventoryError ? (
+              <div className="text-center py-8">
+                <div className="text-red-600 font-semibold mb-2">Lỗi tải dữ liệu tồn kho</div>
                 <div className="text-sm text-gray-600">
-                  Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
-                  {tabState.searchQuery && (
-                    <span className="text-muted-foreground ml-2">
-                      (đã lọc theo: "{tabState.searchQuery}")
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(0)}
-                    disabled={page === 0}
-                  >
-                    Đầu
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(page - 1)}
-                    disabled={page === 0}
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
-                  </Button>
-                  <span className="text-sm px-3">
-                    Trang {page + 1} / {totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(page + 1)}
-                    disabled={page >= totalPages - 1}
-                  >
-                    <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(totalPages - 1)}
-                    disabled={page >= totalPages - 1}
-                  >
-                    Cuối
-                  </Button>
+                  {(inventoryError as any)?.message || 'Không thể tải danh sách vật tư. Vui lòng thử lại sau.'}
                 </div>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ) : isLoading ? (
+              <div className="text-center py-8">Đang tải...</div>
+            ) : inventory.length === 0 ? (
+              <EmptyState
+                icon={faBoxes}
+                title={tabState.searchQuery ? "Không tìm thấy vật tư" : "Chưa có vật tư nào"}
+                description={tabState.searchQuery ? "Thử thay đổi từ khóa tìm kiếm" : "Bắt đầu thêm vật tư mới vào kho"}
+                actionLabel={!tabState.searchQuery ? "Thêm vật tư" : undefined}
+                onAction={!tabState.searchQuery ? () => setIsCreateModalOpen(true) : undefined}
+              />
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th
+                          className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                          onClick={() => handleSort('itemCode')}
+                        >
+                          <div className="flex items-center gap-2 font-semibold text-sm">
+                            Mã vật tư
+                            <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                          </div>
+                        </th>
+                        <th
+                          className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                          onClick={() => handleSort('itemName')}
+                        >
+                          <div className="flex items-center gap-2 font-semibold text-sm">
+                            Tên vật tư
+                            <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                          </div>
+                        </th>
+                        <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
+                        <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
+                        <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
+                        <th
+                          className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
+                          onClick={() => handleSort('totalQuantity')}
+                        >
+                          <div className="flex items-center justify-end gap-2 font-semibold text-sm">
+                            Số lượng
+                            <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
+                          </div>
+                        </th>
+                        <th className="text-left p-3 font-semibold text-sm">HSD</th>
+                        <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
+                        <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inventory.map((item: InventorySummary) => (
+                        <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
+                          <td className="p-3">
+                            <span className="font-mono text-sm font-medium">{item.itemCode}</span>
+                          </td>
+                          <td className="p-3 font-medium">{item.itemName}</td>
+                          <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
+                          <td className="p-3 text-sm">{item.categoryName || '-'}</td>
+                          <td className="p-3">
+                            <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className={`font-bold ${getQuantityColor(item)}`}>
+                                {item.totalQuantity}
+                              </span>
+                              <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            {getExpiryDateDisplay(item)}
+                          </td>
+                          <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
+                          <td className="p-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDetail(item.itemMasterId)}
+                                title="Xem chi tiết"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(item)}
+                                title="Chỉnh sửa"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(item.itemMasterId, item.itemName)}
+                                title="Xóa"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-      {/* Create/Edit Modal */}
-      <CreateItemMasterModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseModal}
-        item={editingItem}
-      />
+                {/* Pagination */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-gray-600">
+                    Hiển thị {page * size + 1} - {Math.min((page + 1) * size, totalElements)} của {totalElements} vật tư
+                    {tabState.searchQuery && (
+                      <span className="text-muted-foreground ml-2">
+                        (đã lọc theo: "{tabState.searchQuery}")
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(0)}
+                      disabled={page === 0}
+                    >
+                      Đầu
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 0}
+                    >
+                      <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm px-3">
+                      Trang {page + 1} / {totalPages || 1}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page >= totalPages - 1}
+                    >
+                      <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages - 1)}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Cuối
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* View Detail Modal */}
-      <ItemDetailModal
-        isOpen={isViewModalOpen}
-        onClose={handleCloseViewModal}
-        itemId={viewingItemId}
-      />
+        {/* Create/Edit Modal */}
+        <CreateItemMasterModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCloseModal}
+          item={editingItem}
+        />
 
-      {/* Delete Confirmation */}
-      <ConfirmDialog
-        isOpen={deleteConfirm.isOpen}
-        onClose={() => setDeleteConfirm({ isOpen: false, itemId: null, itemName: '' })}
-        onConfirm={confirmDelete}
-        title="Xác nhận xóa vật tư"
-        description={`Bạn có chắc chắn muốn xóa vật tư "${deleteConfirm.itemName}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa"
-        variant="destructive"
-      />
-    </div>
+        {/* View Detail Modal */}
+        <ItemDetailModal
+          isOpen={isViewModalOpen}
+          onClose={handleCloseViewModal}
+          itemId={viewingItemId}
+        />
+
+        {/* Delete Confirmation */}
+        <ConfirmDialog
+          isOpen={deleteConfirm.isOpen}
+          onClose={() => setDeleteConfirm({ isOpen: false, itemId: null, itemName: '' })}
+          onConfirm={confirmDelete}
+          title="Xác nhận xóa vật tư"
+          description={`Bạn có chắc chắn muốn xóa vật tư "${deleteConfirm.itemName}"? Hành động này không thể hoàn tác.`}
+          confirmLabel="Xóa"
+          variant="destructive"
+        />
+      </div>
+    </ProtectedRoute>
   );
 }

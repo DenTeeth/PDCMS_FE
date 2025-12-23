@@ -11,6 +11,7 @@ export interface ClinicalRecordResponse {
   clinicalRecordId: number;
   diagnosis: string;
   vitalSigns?: Record<string, any>; // JSONB - flexible structure
+  vitalSignsAssessment?: VitalSignAssessment[]; // ✅ Added: BE returns assessment for each vital sign
   chiefComplaint: string;
   examinationFindings: string;
   treatmentNotes?: string;
@@ -132,6 +133,33 @@ export interface PrescriptionItemRequest {
 export interface SavePrescriptionRequest {
   prescriptionNotes?: string; // Optional - max 2000 chars
   items: PrescriptionItemRequest[]; // Required - must not be empty
+}
+
+// ============================================================================
+// Vital Signs Reference Types
+// ============================================================================
+
+export interface VitalSignsReferenceResponse {
+  referenceId: number;
+  vitalType: string; // "BLOOD_PRESSURE_SYSTOLIC", "HEART_RATE", "TEMPERATURE", etc.
+  ageMin: number;
+  ageMax: number | null;
+  normalMin: number;
+  normalMax: number;
+  unit: string; // "mmHg", "bpm", "°C", "%"
+  description: string | null;
+  effectiveDate: string; // "yyyy-MM-dd"
+  isActive: boolean;
+}
+
+export interface VitalSignAssessment {
+  vitalType: string;
+  value: number;
+  unit: string;
+  status: 'NORMAL' | 'BELOW_NORMAL' | 'ABOVE_NORMAL' | 'UNKNOWN';
+  normalMin: number;
+  normalMax: number;
+  message: string; // Tiếng Việt
 }
 
 // ============================================================================

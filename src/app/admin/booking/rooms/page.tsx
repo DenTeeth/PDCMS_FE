@@ -94,11 +94,11 @@ export default function BookingRoomsPage() {
     isActive: true,
   });
 
-  // Permissions
+  // Permissions - Updated to match BE naming
   const canView = user?.permissions?.includes('VIEW_ROOM') || false;
-  const canCreate = user?.permissions?.includes('CREATE_ROOM') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_ROOM') || false;
-  const canDelete = user?.permissions?.includes('DELETE_ROOM') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_ROOM') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_ROOM') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_ROOM') || false;
 
   // Search state - separate from debounced search
   // searchInput: what user types (immediate update)
@@ -522,7 +522,7 @@ export default function BookingRoomsPage() {
       key: 'isActive',
       header: 'Trạng thái',
       accessor: (room) => (
-        <Badge variant={room.isActive ? 'default' : 'secondary'}>
+        <Badge variant={room.isActive ? 'active' : 'inactive'}>
           {room.isActive ? 'Hoạt động' : 'Không hoạt động'}
         </Badge>
       ),
@@ -700,14 +700,14 @@ export default function BookingRoomsPage() {
               onClick={() => setIsActiveFilter('active')}
               className={
                 isActiveFilter === 'active'
-                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                  ? 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-green-600 text-white shadow-[0_2px_8px_rgba(22,163,74,0.4)]'
                   : 'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200'
               }
             >
               <div className={
                 isActiveFilter === 'active'
                   ? 'h-4 w-4 rounded-full flex items-center justify-center bg-white bg-opacity-20'
-                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-gray-300'
+                  : 'h-4 w-4 rounded-full flex items-center justify-center bg-green-200'
               }>
                 <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1023,7 +1023,7 @@ export default function BookingRoomsPage() {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
                     <div className="text-base">
-                      <Badge variant={selectedRoom.isActive ? 'default' : 'secondary'}>
+                      <Badge variant={selectedRoom.isActive ? 'active' : 'inactive'}>
                         {selectedRoom.isActive ? 'Hoạt động' : 'Không hoạt động'}
                       </Badge>
                     </div>

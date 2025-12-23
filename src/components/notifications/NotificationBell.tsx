@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Check, CheckCheck, Trash2, Loader2, WifiOff, Wifi } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, Check, CheckCheck, Trash2, Loader2, WifiOff, Wifi, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +14,7 @@ import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export const NotificationBell: React.FC = () => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -26,6 +28,7 @@ export const NotificationBell: React.FC = () => {
     deleteNotification,
     loadMore,
     hasMore,
+    getNotificationPath,
   } = useNotifications();
 
   // Close dropdown when clicking outside
@@ -57,9 +60,10 @@ export const NotificationBell: React.FC = () => {
     }
     
     // Navigate to related entity if available
-    if (notification.relatedEntityType && notification.relatedEntityId) {
-      // TODO: Implement navigation based on entity type
-      console.log('Navigate to:', notification.relatedEntityType, notification.relatedEntityId);
+    const navigationPath = getNotificationPath(notification);
+    if (navigationPath) {
+      router.push(navigationPath);
+      setIsOpen(false); // Close dropdown after navigation
     }
   };
 
@@ -122,7 +126,7 @@ export const NotificationBell: React.FC = () => {
           </div>
 
           {/* Notification List */}
-          <ScrollArea className="max-h-[400px]">
+          <ScrollArea className="h-[400px]">
             {isLoading && notifications.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -133,7 +137,7 @@ export const NotificationBell: React.FC = () => {
                 <p className="text-sm">Không có thông báo</p>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y pr-2">
                 {notifications.map((notification) => (
                   <NotificationItem
                     key={notification.notificationId}
@@ -141,6 +145,9 @@ export const NotificationBell: React.FC = () => {
                     onClick={() => handleNotificationClick(notification)}
                     onDelete={() => deleteNotification(notification.notificationId)}
                     formatTime={formatTime}
+                    getNotificationPath={getNotificationPath}
+                    markAsRead={markAsRead}
+                    router={router}
                   />
                 ))}
                 
@@ -175,6 +182,9 @@ interface NotificationItemProps {
   onClick: () => void;
   onDelete: () => void;
   formatTime: (timestamp: string) => string;
+  getNotificationPath: (notification: Notification) => string | null;
+  markAsRead: (notificationId: number) => Promise<void>;
+  router: any;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
@@ -182,25 +192,33 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   onClick,
   onDelete,
   formatTime,
+  getNotificationPath,
+  markAsRead,
+  router,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigationPath = getNotificationPath(notification);
+
+  const handleViewDetail = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.isRead) {
+      await markAsRead(notification.notificationId);
+    }
+    if (navigationPath) {
+      router.push(navigationPath);
+    }
+  };
 
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-4 cursor-pointer transition-colors relative group',
+        'flex items-start gap-3 p-4 transition-colors relative group',
         notification.isRead ? 'bg-background' : 'bg-primary/5',
         'hover:bg-accent/50'
       )}
-      onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Icon */}
-      <div className="flex-shrink-0 text-2xl">
-        {NOTIFICATION_ICONS[notification.type] || '🔔'}
-      </div>
-
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
@@ -220,25 +238,38 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           {notification.message}
         </p>
         
-        <span className="text-xs text-muted-foreground mt-1 block">
-          {formatTime(notification.createdAt)}
-        </span>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-muted-foreground">
+            {formatTime(notification.createdAt)}
+          </span>
+          <div className="flex items-center gap-2">
+            {navigationPath && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleViewDetail}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                Xem chi tiết
+              </Button>
+            )}
+            {isHovered && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+              >
+                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Delete Button (visible on hover) */}
-      {isHovered && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        >
-          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-        </Button>
-      )}
     </div>
   );
 };

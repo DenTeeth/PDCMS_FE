@@ -27,6 +27,7 @@ interface UseNotificationsReturn {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: number) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
+  getNotificationPath: (notification: Notification) => string | null;
   // Pagination
   hasMore: boolean;
   currentPage: number;
@@ -175,6 +176,66 @@ export const useNotifications = (): UseNotificationsReturn => {
   }, [notifications]);
 
   /**
+   * Get navigation path for notification based on entity type and user role
+   * ✅ Updated: Routes now depend on user's baseRole (admin/employee/patient)
+   */
+  const getNotificationPath = useCallback((notification: Notification): string | null => {
+    if (!notification.relatedEntityType || !notification.relatedEntityId) {
+      return null;
+    }
+
+    const baseRole = user?.baseRole; // 'admin' | 'employee' | 'patient'
+
+    switch (notification.relatedEntityType) {
+      case 'TIME_OFF_REQUEST':
+        // Only admin can view time-off requests
+        if (baseRole === 'admin') {
+          return `/admin/time-off-requests/${notification.relatedEntityId}`;
+        }
+        return null;
+      
+      case 'OVERTIME_REQUEST':
+        // Only admin can view overtime requests
+        if (baseRole === 'admin') {
+          return `/admin/overtime-requests/${notification.relatedEntityId}`;
+        }
+        return null;
+      
+      case 'PART_TIME_REGISTRATION':
+        // Only admin can view part-time registrations
+        if (baseRole === 'admin') {
+          return `/admin/registration-requests`;
+        }
+        return null;
+      
+      case 'APPOINTMENT':
+        // ✅ Route based on user role
+        if (baseRole === 'admin') {
+          return `/admin/booking/appointments/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          return `/employee/booking/appointments/${notification.relatedEntityId}`;
+        } else if (baseRole === 'patient') {
+          return `/patient/appointments/${notification.relatedEntityId}`;
+        }
+        return null;
+      
+      case 'TREATMENT_PLAN':
+        // ✅ Route based on user role
+        if (baseRole === 'admin') {
+          return `/admin/treatment-plans/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          return `/employee/treatment-plans/${notification.relatedEntityId}`;
+        } else if (baseRole === 'patient') {
+          return `/patient/treatment-plans/${notification.relatedEntityId}`;
+        }
+        return null;
+      
+      default:
+        return null;
+    }
+  }, [user?.baseRole]);
+
+  /**
    * Handle new real-time notification
    */
   const handleNewNotification = useCallback((notification: Notification) => {
@@ -204,12 +265,30 @@ export const useNotifications = (): UseNotificationsReturn => {
     // Increment unread count
     setUnreadCount((prev) => prev + 1);
     
-    // Show toast notification
-    toast.info(notification.title, {
-      description: notification.message,
-      duration: 5000,
-    });
-  }, []);
+    // Get navigation path
+    const navigationPath = getNotificationPath(notification);
+    
+    // Show toast notification with action button if navigation available
+    if (navigationPath) {
+      toast.info(notification.title, {
+        description: notification.message,
+        duration: 5000,
+        action: {
+          label: 'Xem chi tiết',
+          onClick: () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = navigationPath;
+            }
+          },
+        },
+      });
+    } else {
+      toast.info(notification.title, {
+        description: notification.message,
+        duration: 5000,
+      });
+    }
+  }, [getNotificationPath]);
 
   /**
    * Connect WebSocket and load initial data when authenticated
@@ -262,6 +341,7 @@ export const useNotifications = (): UseNotificationsReturn => {
     markAllAsRead,
     deleteNotification,
     refreshUnreadCount,
+    getNotificationPath,
     hasMore,
     currentPage,
     totalPages,

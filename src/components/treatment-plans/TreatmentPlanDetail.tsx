@@ -338,12 +338,10 @@ export default function TreatmentPlanDetail({
     console.log('Reassign doctor for suggestion:', suggestion);
   };
 
-  const hasApprovePermission = Boolean(user?.permissions?.includes('APPROVE_TREATMENT_PLAN'));
+  const hasApprovePermission = Boolean(user?.permissions?.includes('MANAGE_TREATMENT_PLAN')); // ✅ BE: MANAGE_TREATMENT_PLAN covers approve/reject
   const hasManagePricingPermission = Boolean(user?.permissions?.includes('MANAGE_PLAN_PRICING'));
   const hasEditPermission = Boolean(
-    user?.permissions?.some(permission =>
-      ['CREATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN'].includes(permission),
-    ),
+    user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
   );
 
   const treatmentStatusDescriptions: Record<
@@ -502,25 +500,25 @@ export default function TreatmentPlanDetail({
       normalizedApprovalStatus,
       userPermissions: user?.permissions,
       userPermissionsCount: user?.permissions?.length || 0,
-      hasCreatePermission: user?.permissions?.includes('CREATE_TREATMENT_PLAN'),
-      hasUpdatePermission: user?.permissions?.includes('UPDATE_TREATMENT_PLAN'),
-      hasApprovePermission: user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
-      // Check if APPROVE_TREATMENT_PLAN exists in permissions array
-      approvePermissionCheck: user?.permissions?.find(p => p.includes('APPROVE') || p.includes('approve')),
+      hasCreatePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
+      hasUpdatePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
+      hasApprovePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
+      // Check if MANAGE_TREATMENT_PLAN exists in permissions array
+      approvePermissionCheck: user?.permissions?.find(p => p.includes('MANAGE_TREATMENT_PLAN')),
       phasesCount: plan.phases.length,
       hasItems: plan.phases.some(p => p.items.length > 0),
-      canSubmitForReview: (user?.permissions?.includes('CREATE_TREATMENT_PLAN') || user?.permissions?.includes('UPDATE_TREATMENT_PLAN')) &&
+      canSubmitForReview: user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && // ✅ BE: MANAGE_TREATMENT_PLAN
         normalizedApprovalStatus === ApprovalStatus.DRAFT &&
         plan.phases.length > 0 &&
         plan.phases.some(p => p.items.length > 0),
       shouldShowApproveSection: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
-        user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
+        user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
       // Detailed check for approve section
       approveSectionCheck: {
         isPendingReview: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW,
-        hasPermission: user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
+        hasPermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
         shouldShow: normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
-          user?.permissions?.includes('APPROVE_TREATMENT_PLAN'),
+          user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
       },
     });
   }
@@ -528,7 +526,7 @@ export default function TreatmentPlanDetail({
   // Check if can submit for review
   // Điều kiện: approvalStatus === DRAFT (hoặc null/undefined - mặc định là DRAFT)
   const canSubmitForReview =
-    (user?.permissions?.includes('CREATE_TREATMENT_PLAN') || user?.permissions?.includes('UPDATE_TREATMENT_PLAN')) &&
+    user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
     normalizedApprovalStatus === ApprovalStatus.DRAFT &&
     plan.phases.length > 0 &&
     plan.phases.some(p => p.items.length > 0);
@@ -1169,7 +1167,7 @@ export default function TreatmentPlanDetail({
       {/* V21: Bước 3 - Approve/Reject Section */}
       {/* Chỉ check permission, không check role (theo yêu cầu dự án) */}
       {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
-        user?.permissions?.includes('APPROVE_TREATMENT_PLAN') && (
+        user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && ( // ✅ BE: MANAGE_TREATMENT_PLAN covers approve/reject
           <ApproveRejectSection
             plan={plan}
             onPlanUpdated={(updatedPlan) => {

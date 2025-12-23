@@ -66,9 +66,8 @@ export default function StorageDetailModal({
   const { user } = useAuth();
   // RBAC: Check VIEW_WAREHOUSE_COST permission (BE uses VIEW_WAREHOUSE_COST, not VIEW_COST)
   const hasViewCost = usePermission('VIEW_WAREHOUSE_COST');
-  // BE checks: hasRole('ADMIN') or hasAuthority('APPROVE_TRANSACTION')
-  const isAdmin = useRole('ROLE_ADMIN');
-  const hasApprovePermission = isAdmin || usePermission('APPROVE_TRANSACTION');
+  // BE checks: hasAuthority('APPROVE_TRANSACTION')
+  const hasApprovePermission = usePermission('APPROVE_TRANSACTION');
   const hasUpdatePermission = usePermission('UPDATE_WAREHOUSE') || usePermission('CANCEL_WAREHOUSE');
 
   // Fetch transaction data first (must be declared before useEffect that uses it)
@@ -91,7 +90,6 @@ export default function StorageDetailModal({
         transactionId: transaction.transactionId,
         transactionCode: transaction.transactionCode,
         transactionStatus: transaction.status,
-        isAdmin,
         hasApprovePermission,
         hasUpdatePermission,
         hasViewCost,
@@ -107,7 +105,7 @@ export default function StorageDetailModal({
           : 'OK',
       });
     }
-  }, [transaction, isOpen, isAdmin, hasApprovePermission, hasUpdatePermission, hasViewCost, user]);
+  }, [transaction, isOpen, hasApprovePermission, hasUpdatePermission, hasViewCost, user]);
 
   // Approve mutation
   const approveMutation = useMutation({

@@ -4,7 +4,7 @@
  *  ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
  * 
  * FEATURES:
- * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE_ALL)
+ * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE)
  * 2. Manual Adjustment - Điều chỉnh thủ công số dư (RBAC: ADJUST_LEAVE_BALANCE)
  * 3. Annual Reset Tool - Kích hoạt job cộng phép năm (RBAC: ADJUST_LEAVE_BALANCE)
  * 
@@ -58,8 +58,8 @@ export default function AdminLeaveBalancesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL');
-  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE');
+  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE') || user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL') || false;
+  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE') || false;
 
   // ==================== STATE ====================
 

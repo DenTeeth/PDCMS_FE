@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Search,
   Shield,
@@ -33,6 +35,13 @@ import { permissionService } from '@/services/permissionService';
 // ==================== MAIN COMPONENT ====================
 export default function RolesPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Permission checks - Updated to match BE naming
+  const canCreate = user?.permissions?.includes('MANAGE_ROLE') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_ROLE') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_ROLE') || false;
+  const canView = user?.permissions?.includes('VIEW_ROLE') || false;
 
   // State management
   const [roles, setRoles] = useState<Role[]>([]);
@@ -67,6 +76,8 @@ export default function RolesPage() {
   const [assigning, setAssigning] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
+  const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
+  const [permissionFilterAction, setPermissionFilterAction] = useState<string>('ALL');
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -280,634 +291,794 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* ==================== HEADER ==================== */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý vai trò</h1>
-          <p className="text-gray-600">Xem và quản lý vai trò hệ thống</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Tạo vai trò
-        </Button>
-      </div>
-
-      {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số vai trò</p>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Shield className="h-6 w-6 text-blue-600" />
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+    <ProtectedRoute
+      requiredBaseRole="admin"
+      requiredPermissions={['VIEW_ROLE']}
+    >
+      <div className="space-y-6 p-6">
+        {/* ==================== HEADER ==================== */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý vai trò</h1>
+            <p className="text-gray-600">Xem và quản lý vai trò hệ thống</p>
           </div>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            disabled={!canCreate}
+            title={!canCreate ? "Bạn không có quyền tạo vai trò" : ""}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Tạo vai trò
+          </Button>
         </div>
 
-        {/* Active */}
-        <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="h-6 w-6 text-green-700" />
+        {/* ==================== STATS ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số vai trò</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+          </div>
+
+          {/* Active */}
+          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+            <p className="text-sm font-semibold text-green-800 mb-2">Hoạt động</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-green-700" />
+              </div>
+              <p className="text-3xl font-bold text-green-800">{stats.active}</p>
+            </div>
+          </div>
+
+          {/* Inactive */}
+          <div className="bg-gray-50 rounded-xl border border-gray-300 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-800 mb-2">Không hoạt động</p>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <XCircle className="h-6 w-6 text-gray-700" />
+              </div>
+              <p className="text-3xl font-bold text-gray-800">{stats.inactive}</p>
+            </div>
           </div>
         </div>
 
-        {/* Inactive */}
-        <div className="bg-gray-50 rounded-xl border border-gray-300 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-800 mb-2">Không hoạt động</p>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <XCircle className="h-6 w-6 text-gray-700" />
-            </div>
-            <p className="text-3xl font-bold text-gray-800">{stats.inactive}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ==================== SEARCH ==================== */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex-1">
-            <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2">Tìm kiếm</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                id="search"
-                placeholder="Tìm theo tên vai trò, mô tả, hoặc ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ==================== ROLES TABLE ==================== */}
-      {filteredRoles.length > 0 ? (
+        {/* ==================== SEARCH ==================== */}
         <Card>
-          <CardContent className="p-0">
-            <div className="overflow-hidden">
-              <table className="w-full table-fixed">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Vai trò
-                    </th>
-                    <th className="w-1/3 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Mô tả
-                    </th>
-                    <th className="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
-                    </th>
-                    <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hành động
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRoles.map((role) => (
-                    <tr key={role.roleId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Shield className="h-5 w-5 text-blue-600" />
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {role.roleName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {role.roleId}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 truncate">
-                          {role.description}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={role.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
-                          {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/admin/roles/${role.roleId}`)}
-                            title="View"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(role);
-                            }}
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openAssignModal(role);
-                            }}
-                            title="Permissions"
-                          >
-                            <Key className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openDeleteModal(role);
-                            }}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+          <CardContent className="p-6">
+            <div className="space-y-1">
+              <Label htmlFor="search" className="text-sm font-medium text-gray-700">Tìm kiếm</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="search"
+                  placeholder="Tìm theo tên vai trò, mô tả, hoặc ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ==================== ROLES TABLE ==================== */}
+        {filteredRoles.length > 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Vai trò
+                      </th>
+                      <th className="w-1/3 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Mô tả
+                      </th>
+                      <th className="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Trạng thái
+                      </th>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Hành động
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        /* Empty State */
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No roles found</h3>
-            <p className="text-gray-500">
-              {searchTerm
-                ? 'Try changing search keywords'
-                : 'No roles available'
-              }
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ==================== CREATE ROLE MODAL ==================== */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-blue-600" />
-                Tạo vai trò mới
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateRole} className="space-y-4">
-                <div>
-                  <Label htmlFor="roleId">
-                    Mã vai trò <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="roleId"
-                    placeholder="VD: ROLE_CUSTOM"
-                    value={formData.roleId}
-                    onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
-                    disabled={creating}
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Chỉ sử dụng chữ hoa, gạch dưới và số
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="roleName">
-                    Tên vai trò <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="roleName"
-                    placeholder="VD: Vai trò tùy chỉnh"
-                    value={formData.roleName}
-                    onChange={(e) => setFormData({ ...formData, roleName: e.target.value })}
-                    disabled={creating}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">
-                    Mô tả <span className="text-red-500">*</span>
-                  </Label>
-                  <textarea
-                    id="description"
-                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    disabled={creating}
-                    required
-                    rows={4}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="baseRoleId">
-                    Vai trò cơ sở <span className="text-red-500">*</span>
-                  </Label>
-                  <select
-                    id="baseRoleId"
-                    value={formData.baseRoleId}
-                    onChange={(e) => setFormData({ ...formData, baseRoleId: e.target.value })}
-                    disabled={creating}
-                    required
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  >
-                    <option value="">Chọn vai trò cơ sở</option>
-                    <option value="ROLE_ADMIN">Quản trị viên (ROLE_ADMIN)</option>
-                    <option value="ROLE_EMPLOYEE">Nhân viên (ROLE_EMPLOYEE)</option>
-                    <option value="ROLE_PATIENT">Bệnh nhân (ROLE_PATIENT)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Chọn vai trò cơ sở để kế thừa quyền hạn
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="requiresSpecialization"
-                      checked={formData.requiresSpecialization}
-                      onChange={(e) => setFormData({ ...formData, requiresSpecialization: e.target.checked })}
-                      disabled={creating}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <Label htmlFor="requiresSpecialization" className="cursor-pointer">
-                      Yêu cầu chuyên môn
-                    </Label>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
-                    Đánh dấu nếu vai trò này yêu cầu chuyên môn (VD: bác sĩ)
-                  </p>
-                </div>
-
-                <div className="flex gap-3 justify-end pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setFormData({ roleId: '', roleName: '', description: '', baseRoleId: '', requiresSpecialization: false });
-                    }}
-                    disabled={creating}
-                  >
-                    Hủy
-                  </Button>
-                  <Button type="submit" disabled={creating}>
-                    {creating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang tạo...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Tạo vai trò
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ==================== EDIT ROLE MODAL ==================== */}
-      {showEditModal && editingRole && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="h-5 w-5 text-blue-600" />
-                Edit Role
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateRole} className="space-y-4">
-                <div>
-                  <Label>Role ID</Label>
-                  <Input
-                    value={editingRole.roleId}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Role ID cannot be changed</p>
-                </div>
-
-                <div>
-                  <Label htmlFor="editRoleName">
-                    Role Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="editRoleName"
-                    placeholder="e.g., Custom Role"
-                    value={editFormData.roleName}
-                    onChange={(e) => setEditFormData({ ...editFormData, roleName: e.target.value })}
-                    disabled={updating}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="editDescription">
-                    Description <span className="text-red-500">*</span>
-                  </Label>
-                  <textarea
-                    id="editDescription"
-                    placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
-                    value={editFormData.description}
-                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                    disabled={updating}
-                    required
-                    rows={4}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex gap-3 justify-end pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditingRole(null);
-                    }}
-                    disabled={updating}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={updating}>
-                    {updating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang cập nhật...
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Update Role
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ==================== ASSIGN PERMISSIONS MODAL ==================== */}
-      {showAssignModal && assigningRole && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-blue-600" />
-                Phân quyền cho {assigningRole.roleName}
-              </CardTitle>
-            </CardHeader>
-            <div className="flex-1 overflow-y-auto relative">
-              {loadingPermissions ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-3 text-gray-600">Đang tải quyền hạn...</span>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b sticky top-0 bg-white z-10">
-                    <p className="text-sm text-gray-600">
-                      Chọn quyền hạn cho vai trò này ({selectedPermissions.length} đã chọn)
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
-                      >
-                        Chọn tất cả
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPermissions([])}
-                      >
-                        Bỏ chọn tất cả
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Group permissions by module - Dropdown Accordion */}
-                  {Object.entries(
-                    allPermissions.reduce((acc, permission) => {
-                      if (!acc[permission.module]) {
-                        acc[permission.module] = [];
-                      }
-                      acc[permission.module].push(permission);
-                      return acc;
-                    }, {} as Record<string, Permission[]>)
-                  ).map(([module, permissions]) => {
-                    const isExpanded = expandedModules.includes(module);
-                    const modulePermissionsSelected = permissions.filter(p => selectedPermissions.includes(p.permissionId)).length;
-
-                    return (
-                      <div key={module} className="border rounded-lg overflow-hidden">
-                        {/* Module Header - Clickable */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedModules(prev =>
-                              prev.includes(module)
-                                ? prev.filter(m => m !== module)
-                                : [...prev, module]
-                            );
-                          }}
-                          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            {isExpanded ? (
-                              <ChevronDown className="h-5 w-5 text-blue-600" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5 text-gray-600" />
-                            )}
-                            <Shield className="h-5 w-5 text-blue-600" />
-                            <h3 className="font-semibold text-lg">{module}</h3>
-                          </div>
-                          <Badge variant="outline">
-                            {modulePermissionsSelected}/{permissions.length}
-                          </Badge>
-                        </button>
-
-                        {/* Module Content - Collapsible */}
-                        {isExpanded && (
-                          <div className="p-4 bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {permissions.map((permission) => (
-                                <label
-                                  key={permission.permissionId}
-                                  className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition ${selectedPermissions.includes(permission.permissionId)
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200'
-                                    }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedPermissions.includes(permission.permissionId)}
-                                    onChange={() => handlePermissionToggle(permission.permissionId)}
-                                    className="mt-1"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{permission.permissionName}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{permission.description}</div>
-                                    <div className="text-xs text-gray-400 mt-1 font-mono">
-                                      {permission.permissionId}
-                                    </div>
-                                  </div>
-                                </label>
-                              ))}
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredRoles.map((role) => (
+                      <tr key={role.roleId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <Shield className="h-5 w-5 text-blue-600" />
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {role.roleName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {role.roleId}
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Sticky Action Buttons - Inside Modal */}
-            <div className="sticky bottom-0 bg-white border-t shadow-lg p-4 flex gap-3 justify-end z-10">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAssignModal(false);
-                  setAssigningRole(null);
-                  setSelectedPermissions([]);
-                  setExpandedModules([]);
-                }}
-                disabled={assigning}
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={handleAssignPermissions}
-                disabled={assigning || loadingPermissions}
-              >
-                {assigning ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <Key className="h-4 w-4 mr-2" />
-                    Lưu quyền hạn
-                  </>
-                )}
-              </Button>
-            </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 truncate">
+                            {role.description}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge className={role.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
+                            {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/admin/roles/${role.roleId}`)}
+                              title="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(role);
+                              }}
+                              disabled={!canUpdate}
+                              title={!canUpdate ? 'Bạn không có quyền chỉnh sửa vai trò' : 'Edit'}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAssignModal(role);
+                              }}
+                              disabled={!canUpdate}
+                              title={!canUpdate ? 'Bạn không có quyền phân quyền' : 'Permissions'}
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(role);
+                              }}
+                              disabled={!canDelete}
+                              title={!canDelete ? 'Bạn không có quyền xóa vai trò' : 'Delete'}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
           </Card>
-        </div>
-      )}
-
-      {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
-      {showDeleteModal && deletingRole && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="h-5 w-5" />
-                Delete Role
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}".
-                  The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-gray-700">
-                  <strong>Role ID:</strong> <span className="font-mono">{deletingRole.roleId}</span>
-                </p>
-                <p className="text-sm text-gray-700">
-                  <strong>Role Name:</strong> {deletingRole.roleName}
-                </p>
-                <p className="text-sm text-gray-700">
-                  <strong>Description:</strong> {deletingRole.description}
-                </p>
-              </div>
-
-              <p className="text-sm text-gray-600">
-                Are you sure you want to deactivate this role?
+        ) : (
+          /* Empty State */
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No roles found</h3>
+              <p className="text-gray-500">
+                {searchTerm
+                  ? 'Try changing search keywords'
+                  : 'No roles available'
+                }
               </p>
+            </CardContent>
+          </Card>
+        )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t">
+        {/* ==================== CREATE ROLE MODAL ==================== */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  Tạo vai trò mới
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCreateRole} className="space-y-4">
+                  <div>
+                    <Label htmlFor="roleId">
+                      Mã vai trò <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="roleId"
+                      placeholder="VD: ROLE_CUSTOM"
+                      value={formData.roleId}
+                      onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
+                      disabled={creating}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Chỉ sử dụng chữ hoa, gạch dưới và số
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="roleName">
+                      Tên vai trò <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="roleName"
+                      placeholder="VD: Vai trò tùy chỉnh"
+                      value={formData.roleName}
+                      onChange={(e) => setFormData({ ...formData, roleName: e.target.value })}
+                      disabled={creating}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">
+                      Mô tả <span className="text-red-500">*</span>
+                    </Label>
+                    <textarea
+                      id="description"
+                      placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      disabled={creating}
+                      required
+                      rows={4}
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="baseRoleId">
+                      Vai trò cơ sở <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      id="baseRoleId"
+                      value={formData.baseRoleId}
+                      onChange={(e) => setFormData({ ...formData, baseRoleId: e.target.value })}
+                      disabled={creating}
+                      required
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                    >
+                      <option value="">Chọn vai trò cơ sở</option>
+                      <option value="ROLE_ADMIN">Quản trị viên (ROLE_ADMIN)</option>
+                      <option value="ROLE_EMPLOYEE">Nhân viên (ROLE_EMPLOYEE)</option>
+                      <option value="ROLE_PATIENT">Bệnh nhân (ROLE_PATIENT)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Chọn vai trò cơ sở để kế thừa quyền hạn
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="requiresSpecialization"
+                        checked={formData.requiresSpecialization}
+                        onChange={(e) => setFormData({ ...formData, requiresSpecialization: e.target.checked })}
+                        disabled={creating}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <Label htmlFor="requiresSpecialization" className="cursor-pointer">
+                        Yêu cầu chuyên môn
+                      </Label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 ml-6">
+                      Đánh dấu nếu vai trò này yêu cầu chuyên môn (VD: bác sĩ)
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setFormData({ roleId: '', roleName: '', description: '', baseRoleId: '', requiresSpecialization: false });
+                      }}
+                      disabled={creating}
+                    >
+                      Hủy
+                    </Button>
+                    <Button type="submit" disabled={creating}>
+                      {creating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Đang tạo...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Tạo vai trò
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ==================== EDIT ROLE MODAL ==================== */}
+        {showEditModal && editingRole && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5 text-blue-600" />
+                  Edit Role
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdateRole} className="space-y-4">
+                  <div>
+                    <Label>Role ID</Label>
+                    <Input
+                      value={editingRole.roleId}
+                      disabled
+                      className="bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Role ID cannot be changed</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="editRoleName">
+                      Role Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="editRoleName"
+                      placeholder="e.g., Custom Role"
+                      value={editFormData.roleName}
+                      onChange={(e) => setEditFormData({ ...editFormData, roleName: e.target.value })}
+                      disabled={updating}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="editDescription">
+                      Description <span className="text-red-500">*</span>
+                    </Label>
+                    <textarea
+                      id="editDescription"
+                      placeholder="Mô tả mục đích và trách nhiệm của vai trò..."
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      disabled={updating}
+                      required
+                      rows={4}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingRole(null);
+                      }}
+                      disabled={updating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={updating}>
+                      {updating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Update Role
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ==================== ASSIGN PERMISSIONS MODAL ==================== */}
+        {showAssignModal && assigningRole && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5 text-blue-600" />
+                  Phân quyền cho {assigningRole.roleName}
+                </CardTitle>
+              </CardHeader>
+              <div className="flex-1 overflow-y-auto relative">
+                {loadingPermissions ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-3 text-gray-600">Đang tải quyền hạn...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-3 px-6">
+                    {/* Sticky Header with Search and Filters */}
+                    <div className="flex flex-col gap-4 py-4 border-b sticky top-0 bg-white z-10">
+                      {/* Title and Counter */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-semibold text-gray-800">
+                            Chọn quyền hạn cho vai trò này
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {selectedPermissions.length} / {allPermissions.length} quyền đã chọn
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const allModules = Object.keys(
+                                allPermissions.reduce((acc, p) => {
+                                  acc[p.module] = true;
+                                  return acc;
+                                }, {} as Record<string, boolean>)
+                              );
+                              setExpandedModules(allModules);
+                            }}
+                            className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300"
+                          >
+                            Mở tất cả
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExpandedModules([])}
+                            className="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                          >
+                            Đóng tất cả
+                          </Button>
+                          <div className="h-4 w-px bg-gray-300"></div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
+                            className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300"
+                          >
+                            Chọn tất cả
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedPermissions([])}
+                            className="text-xs bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
+                          >
+                            Bỏ chọn tất cả
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Search and Filter */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1 relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input
+                            placeholder="Tìm kiếm quyền theo tên..."
+                            value={permissionSearchTerm}
+                            onChange={(e) => setPermissionSearchTerm(e.target.value)}
+                            className="pl-10 text-sm"
+                          />
+                        </div>
+                        <select
+                          value={permissionFilterAction}
+                          onChange={(e) => setPermissionFilterAction(e.target.value)}
+                          className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="ALL">Tất cả chức năng</option>
+                          <option value="VIEW">VIEW - Xem</option>
+                          <option value="CREATE">CREATE - Tạo</option>
+                          <option value="UPDATE">UPDATE - Cập nhật</option>
+                          <option value="DELETE">DELETE - Xóa</option>
+                          <option value="MANAGE">MANAGE - Quản lý</option>
+                          <option value="APPROVE">APPROVE - Phê duyệt</option>
+                          <option value="REJECT">REJECT - Từ chối</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Group permissions by module - Dropdown Accordion */}
+                    {Object.entries(
+                      allPermissions
+                        .filter(permission => {
+                          // Filter by search term
+                          const matchesSearch = permissionSearchTerm === '' ||
+                            permission.permissionName.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
+                            permission.permissionId.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
+                            (permission.description && permission.description.toLowerCase().includes(permissionSearchTerm.toLowerCase()));
+
+                          // Filter by action type
+                          const matchesAction = permissionFilterAction === 'ALL' ||
+                            permission.permissionName.toUpperCase().startsWith(permissionFilterAction);
+
+                          return matchesSearch && matchesAction;
+                        })
+                        .reduce((acc, permission) => {
+                          if (!acc[permission.module]) {
+                            acc[permission.module] = [];
+                          }
+                          acc[permission.module].push(permission);
+                          return acc;
+                        }, {} as Record<string, Permission[]>)
+                    )
+                      .sort(([moduleA], [moduleB]) => moduleA.localeCompare(moduleB)) // Sort modules alphabetically
+                      .map(([module, permissions]) => {
+                        const isExpanded = expandedModules.includes(module);
+                        const modulePermissionsSelected = permissions.filter(p => selectedPermissions.includes(p.permissionId)).length;
+
+                        return (
+                          <div key={module} className="border rounded-lg overflow-hidden">
+                            {/* Module Header */}
+                            <div className="flex items-center justify-between p-4 bg-gray-50 gap-4">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedModules(prev =>
+                                    prev.includes(module)
+                                      ? prev.filter(m => m !== module)
+                                      : [...prev, module]
+                                  );
+                                }}
+                                className="flex items-center gap-3 hover:opacity-70 transition-opacity"
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="h-5 w-5 text-blue-600" />
+                                ) : (
+                                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                                )}
+                                <Shield className="h-5 w-5 text-blue-600" />
+                                <h3 className="font-semibold text-lg">{module}</h3>
+                                <Badge variant="outline">
+                                  {modulePermissionsSelected}/{permissions.length}
+                                </Badge>
+                              </button>
+
+                              {/* Group Actions */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const modulePermissionIds = permissions.map(p => p.permissionId);
+                                    setSelectedPermissions(prev => {
+                                      const filtered = prev.filter(id => !modulePermissionIds.includes(id));
+                                      return [...filtered, ...modulePermissionIds];
+                                    });
+                                  }}
+                                  className="text-xs px-2 py-1 h-7 bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                >
+                                  Chọn hết
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const modulePermissionIds = permissions.map(p => p.permissionId);
+                                    setSelectedPermissions(prev => prev.filter(id => !modulePermissionIds.includes(id)));
+                                  }}
+                                  className="text-xs px-2 py-1 h-7 bg-red-100 text-red-700 hover:bg-red-200"
+                                >
+                                  Xóa hết
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Module Content - Collapsible - Table Format */}
+                            {isExpanded && (
+                              <div className="bg-white">
+                                <table className="w-full">
+                                  <thead className="bg-gray-100 border-y">
+                                    <tr>
+                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                        Tên quyền
+                                      </th>
+                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                        Mô tả
+                                      </th>
+                                      <th className="w-48 px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                        Permission ID
+                                      </th>
+                                      <th className="w-12 px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">
+                                        Chọn
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-200">
+                                    {permissions
+                                      .sort((a, b) => a.permissionName.localeCompare(b.permissionName))
+                                      .map((permission) => (
+                                        <tr
+                                          key={permission.permissionId}
+                                          className={`hover:bg-gray-50 cursor-pointer transition ${selectedPermissions.includes(permission.permissionId)
+                                            ? 'bg-blue-50'
+                                            : ''
+                                            }`}
+                                          onClick={() => handlePermissionToggle(permission.permissionId)}
+                                        >
+                                          <td className="px-4 py-3">
+                                            <div className="font-medium text-sm text-gray-900">
+                                              {permission.permissionName}
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <div className="text-sm text-gray-600">
+                                              {permission.description || '-'}
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <code className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                              {permission.permissionId}
+                                            </code>
+                                          </td>
+                                          <td className="px-4 py-3 text-center">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedPermissions.includes(permission.permissionId)}
+                                              onChange={() => handlePermissionToggle(permission.permissionId)}
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="cursor-pointer w-4 h-4"
+                                            />
+                                          </td>
+                                        </tr>
+                                      ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
+              {/* Sticky Action Buttons - Inside Modal */}
+              <div className="sticky bottom-0 bg-white border-t shadow-lg p-4 flex gap-3 justify-end z-10">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeletingRole(null);
+                    setShowAssignModal(false);
+                    setAssigningRole(null);
+                    setSelectedPermissions([]);
+                    setExpandedModules([]);
+                    setPermissionSearchTerm('');
+                    setPermissionFilterAction('ALL');
                   }}
-                  disabled={deleting}
+                  disabled={assigning}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
-                  onClick={handleDeleteRole}
-                  disabled={deleting}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleAssignPermissions}
+                  disabled={assigning || loadingPermissions}
                 >
-                  {deleting ? (
+                  {assigning ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deactivating...
+                      Đang lưu...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Deactivate Role
+                      <Key className="h-4 w-4 mr-2" />
+                      Lưu quyền hạn
                     </>
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
+        {showDeleteModal && deletingRole && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <Trash2 className="h-5 w-5" />
+                  Delete Role
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> This will soft delete the role "{deletingRole.roleName}".
+                    The role will be marked as inactive (isActive = false) and cannot be assigned to new employees.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-700">
+                    <strong>Role ID:</strong> <span className="font-mono">{deletingRole.roleId}</span>
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Role Name:</strong> {deletingRole.roleName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Description:</strong> {deletingRole.description}
+                  </p>
+                </div>
+
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to deactivate this role?
+                </p>
+
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeletingRole(null);
+                    }}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteRole}
+                    disabled={deleting}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Deactivating...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Deactivate Role
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </ProtectedRoute>
   );
 }

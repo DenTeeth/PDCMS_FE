@@ -256,10 +256,10 @@ export default function AdminAppointmentDetailPage() {
   const [patientDetail, setPatientDetail] = useState<Patient | null>(null);
   const [loadingPatientDetail, setLoadingPatientDetail] = useState(false);
 
-  // Permissions
+  // Permissions - ✅ Updated to use new BE permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
   const canUpdateStatus = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') || false;
-  const canDelay = user?.permissions?.includes('DELAY_APPOINTMENT') || false;
+  const canDelay = user?.permissions?.includes('MANAGE_APPOINTMENT') || false; // ✅ BE: MANAGE_APPOINTMENT covers delay/cancel
   // Reschedule permission: can reschedule if has UPDATE_APPOINTMENT_STATUS or can create appointments
   const canReschedule = user?.permissions?.includes('UPDATE_APPOINTMENT_STATUS') ||
     user?.permissions?.includes('CREATE_APPOINTMENT') || false;

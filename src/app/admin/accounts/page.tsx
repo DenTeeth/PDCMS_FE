@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,13 @@ import { users } from '@/data/admin-data';
 import { User } from '@/types/admin';
 
 export default function AccountsPage() {
+  const { hasPermission } = useAuth();
+  // Updated to match BE naming
+  const canCreate = hasPermission('MANAGE_ACCOUNT');
+  const canUpdate = hasPermission('MANAGE_ACCOUNT');
+  const canDelete = hasPermission('MANAGE_ACCOUNT');
+  const canView = hasPermission('VIEW_ACCOUNT');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -61,7 +69,11 @@ export default function AccountsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Quản lý tài khoản</h1>
             <p className="text-gray-600">Quản lý thông tin nhân viên phòng khám</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+            disabled={!canCreate}
+          >
             <UserPlus className="h-4 w-4" />
             Thêm tài khoản
           </Button>

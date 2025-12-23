@@ -22,13 +22,13 @@ export class LeaveBalanceService {
    * 
    * GET /api/v1/admin/employees/{employee_id}/leave-balances?cycle_year=2025
    * 
-   * Requires: VIEW_LEAVE_BALANCE_ALL permission
+   * Requires: VIEW_LEAVE_BALANCE permission
    * 
    * @param employeeId - ID của nhân viên
    * @param cycleYear - Năm chu kỳ (mặc định là năm hiện tại)
    * 
    * Possible errors:
-   * - 403: FORBIDDEN (missing VIEW_LEAVE_BALANCE_ALL permission)
+   * - 403: FORBIDDEN (missing VIEW_LEAVE_BALANCE permission)
    * - 404: RELATED_RESOURCE_NOT_FOUND (employee not found)
    */
   static async getEmployeeBalances(

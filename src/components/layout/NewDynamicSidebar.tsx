@@ -130,9 +130,10 @@ export default function NewDynamicSidebar({ title = "PDCMS" }: NewDynamicSidebar
         navigationConfig.items,
         user.permissions,
         user.groupedPermissions,
-        user.roles // Pass user roles to check ROLE_ADMIN
+        user.roles, // Pass user roles to check ROLE_ADMIN
+        user.employmentType // Pass employment type for filtering
       ) : [];
-  }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles]);
+  }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles, user?.employmentType]);
 
   // Memoize toggle function
   const toggleItem = useCallback((itemName: string) => {

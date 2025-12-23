@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   faPlus,
@@ -15,7 +16,6 @@ import {
   faChevronRight,
   faSort,
 } from '@fortawesome/free-solid-svg-icons';
-import { Eye, Edit, Trash2 } from 'lucide-react';
 import {
   useSuppliers,
   useCreateSupplier,
@@ -165,7 +165,7 @@ export default function SuppliersPage() {
 
   const getStatusBadge = (status: 'ACTIVE' | 'INACTIVE') => {
     return (
-      <Badge className={getStatusColor(status)}>
+      <Badge className={`${getStatusColor(status)} whitespace-nowrap`}>
         {getStatusLabel(status)}
       </Badge>
     );
@@ -263,10 +263,10 @@ export default function SuppliersPage() {
                     <thead>
                       <tr className="bg-gray-50 border-b">
                         <th
-                          className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                          className="text-left p-3 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
                           onClick={() => handleSort('supplierCode')}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             Mã NCC
                             <FontAwesomeIcon
                               icon={faSort}
@@ -275,10 +275,10 @@ export default function SuppliersPage() {
                           </div>
                         </th>
                         <th
-                          className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                          className="text-left p-3 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
                           onClick={() => handleSort('supplierName')}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             Tên nhà cung cấp
                             <FontAwesomeIcon
                               icon={faSort}
@@ -286,37 +286,36 @@ export default function SuppliersPage() {
                             />
                           </div>
                         </th>
-                        <th className="text-left p-4 font-semibold text-gray-700">Điện thoại</th>
-                        <th className="text-left p-4 font-semibold text-gray-700">Email</th>
-                        <th className="text-left p-4 font-semibold text-gray-700">Trạng thái</th>
-                        <th className="text-right p-4 font-semibold text-gray-700">Thao tác</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Điện thoại</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Email</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Trạng thái</th>
+                        <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {suppliers.map((supplier) => (
                         <tr key={supplier.supplierId} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-4">
-                            <span className="font-mono text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                          <td className="p-3">
+                            <span className="font-mono text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded whitespace-nowrap">
                               {supplier.supplierCode}
                             </span>
                           </td>
-                          <td className="p-4">
+                          <td className="p-3">
                             <span
-                              className="font-medium text-gray-900 block truncate max-w-[300px]"
+                              className="font-medium text-gray-900 block truncate max-w-[200px]"
                               title={supplier.supplierName}
                             >
                               {supplier.supplierName}
                             </span>
                           </td>
-                          <td className="p-4 text-gray-700">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
-                          <td className="p-4 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
-                          <td className="p-4">{getStatusBadge(supplier.status)}</td>
-                          <td className="p-4">
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
+                          <td className="p-3 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
+                          <td className="p-3">{getStatusBadge(supplier.status)}</td>
+                          <td className="p-3">
                             <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0"
                                 onClick={() => handleViewDetail(supplier)}
                                 title="Xem chi tiết"
                               >
@@ -325,7 +324,6 @@ export default function SuppliersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0"
                                 onClick={() => handleOpenFormModal(supplier)}
                                 title="Chỉnh sửa"
                               >
@@ -334,7 +332,6 @@ export default function SuppliersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0"
                                 onClick={() => handleDelete(supplier.supplierId, supplier.supplierName)}
                                 title="Xóa"
                               >

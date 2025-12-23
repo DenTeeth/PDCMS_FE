@@ -45,11 +45,19 @@ export default function EmployeesPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Permission checks
-  const canCreate = user?.permissions?.includes('CREATE_EMPLOYEE') || false;
-  const canUpdate = user?.permissions?.includes('UPDATE_EMPLOYEE') || false;
+  // Permission checks - Updated to match BE naming
+  const canCreate = user?.permissions?.includes('MANAGE_EMPLOYEE') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_EMPLOYEE') || false;
   const canDelete = user?.permissions?.includes('DELETE_EMPLOYEE') || false;
   const canView = user?.permissions?.includes('VIEW_EMPLOYEE') || false;
+
+  console.log('🔐 User permissions:', {
+    canCreate,
+    canUpdate,
+    canDelete,
+    canView,
+    allPermissions: user?.permissions
+  });
 
   // State management
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -63,6 +71,8 @@ export default function EmployeesPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [totalActive, setTotalActive] = useState(0);
+  const [totalInactive, setTotalInactive] = useState(0);
 
   // Roles list
   const [roles, setRoles] = useState<Role[]>([]);
@@ -194,6 +204,20 @@ export default function EmployeesPage() {
       setEmployees(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
+
+      // Fetch stats for all employees (without pagination) to get accurate counts
+      const statsResponse = await employeeService.getEmployees({
+        page: 0,
+        size: 10000, // Large number to get all employees
+        sortBy: 'employeeCode' as const,
+        sortDirection: 'ASC' as const,
+      });
+
+      // Count active and inactive from all employees
+      const allEmployees = statsResponse.content;
+      setTotalActive(allEmployees.filter(e => e.isActive).length);
+      setTotalInactive(allEmployees.filter(e => !e.isActive).length);
+
     } catch (error: any) {
       console.error('Failed to fetch employees:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch employees');
@@ -205,14 +229,19 @@ export default function EmployeesPage() {
   // ==================== CREATE EMPLOYEE ====================
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔵 Starting employee creation...');
+    console.log('📝 Form data:', formData);
 
     // Check if selected role requires specialization
     const selectedRoleForValidation = roles.find(role => role.roleId === formData.roleId);
     const requiresSpecializationForValidation = selectedRoleForValidation?.requiresSpecialization === true;
+    console.log('👔 Selected role:', selectedRoleForValidation);
+    console.log('🔧 Requires specialization:', requiresSpecializationForValidation);
 
     // Validation - All roles need basic fields + account credentials
     if (!formData.roleId || !formData.firstName || !formData.lastName ||
       !formData.username || !formData.email || !formData.password) {
+      console.error('❌ Validation failed: Missing required fields');
       toast.error('Please fill in all required fields');
       return;
     }
@@ -220,6 +249,7 @@ export default function EmployeesPage() {
     // Additional validation for roles that require specialization
     if (requiresSpecializationForValidation) {
       if (!formData.specializationIds || formData.specializationIds.length === 0) {
+        console.error('❌ Validation failed: Missing specialization for required role');
         toast.error('Please select at least one specialization for this role');
         return;
       }
@@ -261,9 +291,10 @@ export default function EmployeesPage() {
         };
       }
 
-      console.log('� Creating employee with payload:', payload);
+      console.log('📤 Creating employee with payload:', payload);
 
       await employeeService.createEmployee(payload);
+      console.log('✅ Employee created successfully!');
       toast.success('Employee created successfully');
       setShowCreateModal(false);
       // Reset form
@@ -282,7 +313,9 @@ export default function EmployeesPage() {
       });
       fetchEmployees(); // Refresh list
     } catch (error: any) {
-      console.error('Failed to create employee:', error);
+      console.error('❌ Failed to create employee:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       toast.error(error.response?.data?.message || 'Failed to create employee');
     } finally {
       setCreating(false);
@@ -350,8 +383,8 @@ export default function EmployeesPage() {
   // ==================== STATS ====================
   const stats = {
     total: totalElements,
-    active: (employees || []).filter(e => e.isActive).length,
-    inactive: (employees || []).filter(e => !e.isActive).length,
+    active: totalActive,
+    inactive: totalInactive,
   };
 
   // ==================== LOADING STATE ====================
@@ -614,7 +647,7 @@ export default function EmployeesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={employee.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}>
+                          <Badge className={employee.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
                             {employee.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </Badge>
                         </td>

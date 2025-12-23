@@ -51,8 +51,24 @@ export class TimeOffDataEnricher {
         typeId: string,
         timeOffTypes: TimeOffType[]
     ): string {
+        if (!typeId || !timeOffTypes || timeOffTypes.length === 0) {
+            return typeId || 'N/A';
+        }
+
+        // Try exact match first
         const type = timeOffTypes.find(t => t.typeId === typeId);
-        return type?.typeName || typeId; // Fallback to ID if not found
+        if (type?.typeName) {
+            return type.typeName;
+        }
+
+        // Try matching by typeCode as fallback (in case backend uses typeCode instead of typeId)
+        const typeByCode = timeOffTypes.find(t => t.typeCode === typeId);
+        if (typeByCode?.typeName) {
+            return typeByCode.typeName;
+        }
+
+        // Return the ID if no match found
+        return typeId;
     }
 
     /**

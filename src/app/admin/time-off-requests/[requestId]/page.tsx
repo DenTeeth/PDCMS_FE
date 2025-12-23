@@ -48,11 +48,11 @@ export default function AdminTimeOffDetailPage() {
     const [cancelReason, setCancelReason] = useState('');
     const [processing, setProcessing] = useState(false);
 
-    // Permissions
-    const canApprove = user?.permissions?.includes('APPROVE_TIMEOFF');
-    const canReject = user?.permissions?.includes('REJECT_TIMEOFF');
-    const canCancelPending = user?.permissions?.includes('CANCEL_TIMEOFF_PENDING');
-    const canCancelOwn = user?.permissions?.includes('CANCEL_TIMEOFF_OWN');
+    // Permissions - ✅ Updated to use new BE permissions
+    const canApprove = user?.permissions?.includes('APPROVE_TIME_OFF') || false; // ✅ BE: APPROVE_TIME_OFF
+    const canReject = user?.permissions?.includes('APPROVE_TIME_OFF') || false; // ✅ BE: APPROVE_TIME_OFF covers approve/reject
+    const canCancelPending = user?.permissions?.includes('APPROVE_TIME_OFF') || false; // ✅ BE: Admin can cancel pending
+    const canCancelOwn = user?.permissions?.includes('VIEW_LEAVE_OWN') || false; // ✅ BE: Employee can cancel own (BE uses VIEW_LEAVE_OWN)
 
     useEffect(() => {
         if (requestId) {
