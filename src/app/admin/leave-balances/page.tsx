@@ -58,9 +58,8 @@ export default function AdminLeaveBalancesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const isAdmin = user?.roles?.includes('ROLE_ADMIN');
-  const canViewBalances = isAdmin || user?.permissions?.includes('VIEW_LEAVE_BALANCE') || user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL');
-  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE');
+  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE') || user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL') || false;
+  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE') || false;
 
   // ==================== STATE ====================
 

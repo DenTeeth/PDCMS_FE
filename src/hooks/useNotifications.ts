@@ -176,29 +176,64 @@ export const useNotifications = (): UseNotificationsReturn => {
   }, [notifications]);
 
   /**
-   * Get navigation path for notification based on entity type
+   * Get navigation path for notification based on entity type and user role
+   * ✅ Updated: Routes now depend on user's baseRole (admin/employee/patient)
    */
   const getNotificationPath = useCallback((notification: Notification): string | null => {
     if (!notification.relatedEntityType || !notification.relatedEntityId) {
       return null;
     }
 
+    const baseRole = user?.baseRole; // 'admin' | 'employee' | 'patient'
+
     switch (notification.relatedEntityType) {
       case 'TIME_OFF_REQUEST':
-        return `/admin/time-off-requests/${notification.relatedEntityId}`;
+        // Only admin can view time-off requests
+        if (baseRole === 'admin') {
+          return `/admin/time-off-requests/${notification.relatedEntityId}`;
+        }
+        return null;
+      
       case 'OVERTIME_REQUEST':
-        return `/admin/overtime-requests/${notification.relatedEntityId}`;
+        // Only admin can view overtime requests
+        if (baseRole === 'admin') {
+          return `/admin/overtime-requests/${notification.relatedEntityId}`;
+        }
+        return null;
+      
       case 'PART_TIME_REGISTRATION':
-        // Part-time registration ID is numeric, navigate to registrations page with filter
-        return `/admin/registration-requests`;
+        // Only admin can view part-time registrations
+        if (baseRole === 'admin') {
+          return `/admin/registration-requests`;
+        }
+        return null;
+      
       case 'APPOINTMENT':
-        return `/admin/appointments/${notification.relatedEntityId}`;
+        // ✅ Route based on user role
+        if (baseRole === 'admin') {
+          return `/admin/booking/appointments/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          return `/employee/booking/appointments/${notification.relatedEntityId}`;
+        } else if (baseRole === 'patient') {
+          return `/patient/appointments/${notification.relatedEntityId}`;
+        }
+        return null;
+      
       case 'TREATMENT_PLAN':
-        return `/admin/treatment-plans/${notification.relatedEntityId}`;
+        // ✅ Route based on user role
+        if (baseRole === 'admin') {
+          return `/admin/treatment-plans/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          return `/employee/treatment-plans/${notification.relatedEntityId}`;
+        } else if (baseRole === 'patient') {
+          return `/patient/treatment-plans/${notification.relatedEntityId}`;
+        }
+        return null;
+      
       default:
         return null;
     }
-  }, []);
+  }, [user?.baseRole]);
 
   /**
    * Handle new real-time notification

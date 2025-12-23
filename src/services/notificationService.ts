@@ -61,10 +61,10 @@ export const notificationService = {
 
   /**
    * Đánh dấu tất cả thông báo là đã đọc
-   * PATCH /api/v1/notifications/mark-all-read
+   * ✅ BE endpoint: PATCH /api/v1/notifications/read-all (BE controller line 123)
    */
   markAllAsRead: async (): Promise<void> => {
-    await api.patch(`${BASE_URL}/mark-all-read`);
+    await api.patch(`${BASE_URL}/read-all`);
   },
 
   /**

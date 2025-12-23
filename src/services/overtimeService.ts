@@ -66,9 +66,9 @@ export class OvertimeService {
    * Lấy danh sách yêu cầu làm thêm giờ
    * 
    * Possible errors:
-   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OVERTIME_ALL, VIEW_OVERTIME_OWN)
+   * - 403: FORBIDDEN - Insufficient permissions (VIEW_OT_ALL, VIEW_OT_OWN) - ✅ BE uses VIEW_OT_ALL/OWN
    * 
-   * Note: VIEW_OVERTIME_ALL sees all requests, VIEW_OVERTIME_OWN sees only own requests
+   * Note: VIEW_OT_ALL sees all requests, VIEW_OT_OWN sees only own requests (BE service line 76, 110)
    */
   static async getOvertimeRequests(
     params?: {

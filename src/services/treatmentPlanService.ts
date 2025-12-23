@@ -434,12 +434,12 @@ export class TreatmentPlanService {
    * Manager approves or rejects a treatment plan that is pending review.
    * 
    * Key Features:
-   * - Manager Only: Requires APPROVE_TREATMENT_PLAN permission
+   * - Manager Only: Requires MANAGE_TREATMENT_PLAN permission (BE controller line 882)
    * - Status Guard: Only plans with approvalStatus = PENDING_REVIEW can be approved/rejected
    * - Zero-Price Validation: Cannot approve if any item has price ≤ 0
    * - Rejection Notes: Required when approvalStatus = REJECTED
    * 
-   * Required Permission: APPROVE_TREATMENT_PLAN (Manager/Admin only)
+   * Required Permission: MANAGE_TREATMENT_PLAN (Manager/Admin only) - BE uses MANAGE_TREATMENT_PLAN, not APPROVE_TREATMENT_PLAN
    * 
    * @param planCode Plan code
    * @param request Approval/rejection request

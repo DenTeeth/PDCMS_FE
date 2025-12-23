@@ -39,7 +39,8 @@ export default function ApproveRejectSection({
     });
   }
   // Chỉ check permission, không check role (theo yêu cầu dự án)
-  const canApprove = user?.permissions?.includes('APPROVE_TREATMENT_PLAN') || false;
+  // ✅ BE: MANAGE_TREATMENT_PLAN covers approve/reject (BE controller line 882)
+  const canApprove = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false;
 
   // State
   const [isProcessing, setIsProcessing] = useState(false);

@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, ArrowRight, Calendar, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationList } from '@/components/notifications/NotificationList';
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
@@ -53,9 +54,14 @@ export default function EmployeeDashboard() {
             </h1>
             
             <p className="text-blue-200/80 text-lg max-w-2xl">
-              Chúc bạn một ngày làm việc hiệu quả! Hãy chọn chức năng bên dưới để bắt đầu.
+              Chúc bạn một ngày làm việc hiệu quả!
             </p>
           </div>
+        </div>
+
+        {/* Notifications Section */}
+        <div className="mb-8">
+          <NotificationList maxItems={5} showViewAll={false} />
         </div>
 
         {/* Quick Links Grid */}

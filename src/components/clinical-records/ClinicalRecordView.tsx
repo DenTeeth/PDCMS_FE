@@ -292,8 +292,9 @@ export default function ClinicalRecordView({
               </div>
             )}
 
-            {/* Vital Signs */}
-            {record.vitalSigns && Object.keys(record.vitalSigns).length > 0 && (
+            {/* Vital Signs - Enhanced with assessment status */}
+            {(record.vitalSigns && Object.keys(record.vitalSigns).length > 0) || 
+             (record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0) ? (
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="h-4 w-4 text-muted-foreground" />
@@ -301,29 +302,76 @@ export default function ClinicalRecordView({
                 </div>
                 <div className="pl-6">
                   <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(record.vitalSigns).map(([key, value]) => {
-                      // Map key to Vietnamese label
-                      const labelMap: Record<string, string> = {
-                        blood_pressure: 'Huyết áp',
-                        bloodPressure: 'Huyết áp',
-                        heart_rate: 'Nhịp tim',
-                        heartRate: 'Nhịp tim',
-                        temperature: 'Nhiệt độ',
-                        oxygen_saturation: 'SpO2',
-                        oxygenSaturation: 'SpO2',
-                      };
-                      const label = labelMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
-                      return (
-                        <div key={key} className="p-3 bg-muted rounded-md">
-                          <div className="text-xs text-muted-foreground mb-1">{label}</div>
-                          <div className="text-sm font-medium">{String(value)}</div>
-                        </div>
-                      );
-                    })}
+                    {/* Use assessment if available, otherwise fallback to vitalSigns */}
+                    {record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0 ? (
+                      record.vitalSignsAssessment.map((assessment) => {
+                        const labelMap: Record<string, string> = {
+                          BLOOD_PRESSURE_SYSTOLIC: 'Huyết áp tâm thu',
+                          BLOOD_PRESSURE_DIASTOLIC: 'Huyết áp tâm trương',
+                          HEART_RATE: 'Nhịp tim',
+                          TEMPERATURE: 'Nhiệt độ',
+                          OXYGEN_SATURATION: 'SpO2',
+                          RESPIRATORY_RATE: 'Nhịp thở',
+                          BLOOD_GLUCOSE: 'Đường huyết',
+                          WEIGHT: 'Cân nặng',
+                          HEIGHT: 'Chiều cao',
+                          BMI: 'BMI',
+                        };
+                        const label = labelMap[assessment.vitalType] || assessment.vitalType;
+                        
+                        const statusConfig = {
+                          NORMAL: { color: 'bg-green-100 text-green-800 border-green-200', icon: '✓' },
+                          BELOW_NORMAL: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: '⚠' },
+                          ABOVE_NORMAL: { color: 'bg-red-100 text-red-800 border-red-200', icon: '⚠' },
+                          UNKNOWN: { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: '?' },
+                        };
+                        const config = statusConfig[assessment.status] || statusConfig.UNKNOWN;
+                        
+                        return (
+                          <div key={assessment.vitalType} className="p-3 bg-muted rounded-md border-l-4" style={{
+                            borderLeftColor: assessment.status === 'NORMAL' ? '#10b981' : 
+                                           assessment.status === 'ABOVE_NORMAL' || assessment.status === 'BELOW_NORMAL' ? '#f59e0b' : '#6b7280'
+                          }}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-xs text-muted-foreground">{label}</div>
+                              <Badge variant="outline" className={`text-xs ${config.color}`}>
+                                {config.icon} {assessment.status === 'NORMAL' ? 'Bình thường' : 
+                                 assessment.status === 'BELOW_NORMAL' ? 'Thấp' : 
+                                 assessment.status === 'ABOVE_NORMAL' ? 'Cao' : 'Không xác định'}
+                              </Badge>
+                            </div>
+                            <div className="text-sm font-medium">{assessment.value} {assessment.unit}</div>
+                            {assessment.message && (
+                              <div className="text-xs text-muted-foreground mt-1">{assessment.message}</div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      // Fallback to old display if no assessment
+                      Object.entries(record.vitalSigns || {}).map(([key, value]) => {
+                        const labelMap: Record<string, string> = {
+                          blood_pressure: 'Huyết áp',
+                          bloodPressure: 'Huyết áp',
+                          heart_rate: 'Nhịp tim',
+                          heartRate: 'Nhịp tim',
+                          temperature: 'Nhiệt độ',
+                          oxygen_saturation: 'SpO2',
+                          oxygenSaturation: 'SpO2',
+                        };
+                        const label = labelMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                        return (
+                          <div key={key} className="p-3 bg-muted rounded-md">
+                            <div className="text-xs text-muted-foreground mb-1">{label}</div>
+                            <div className="text-sm font-medium">{String(value)}</div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
