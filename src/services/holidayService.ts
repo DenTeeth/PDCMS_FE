@@ -91,7 +91,7 @@ class HolidayService {
   /**
    * Create a new holiday definition
    * POST /api/v1/holiday-definitions
-   * Permission Required: CREATE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    */
   async createDefinition(data: CreateHolidayDefinitionRequest): Promise<HolidayDefinition> {
     const axiosInstance = apiClient.getAxiosInstance();
@@ -103,7 +103,7 @@ class HolidayService {
   /**
    * Update a holiday definition
    * PATCH /api/v1/holiday-definitions/{definitionId}
-   * Permission Required: UPDATE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    */
   async updateDefinition(
     definitionId: string,
@@ -118,7 +118,7 @@ class HolidayService {
   /**
    * Delete a holiday definition (Cascade Delete)
    * DELETE /api/v1/holiday-definitions/{definitionId}
-   * Permission Required: DELETE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    * 
    * Note: This will also delete all associated holiday dates
    */
@@ -166,7 +166,7 @@ class HolidayService {
   /**
    * Create a new holiday date
    * POST /api/v1/holiday-dates
-   * Permission Required: CREATE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    */
   async createDate(data: CreateHolidayDateRequest): Promise<HolidayDate> {
     const axiosInstance = apiClient.getAxiosInstance();
@@ -178,7 +178,7 @@ class HolidayService {
   /**
    * Update a holiday date
    * PATCH /api/v1/holiday-dates/{holidayDate}/definition/{definitionId}
-   * Permission Required: UPDATE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    * 
    * Important: Must provide ALL fields (holidayDate, definitionId, description)
    */
@@ -199,7 +199,7 @@ class HolidayService {
   /**
    * Delete a holiday date
    * DELETE /api/v1/holiday-dates/{holidayDate}/definition/{definitionId}
-   * Permission Required: DELETE_HOLIDAY
+   * Permission Required: MANAGE_HOLIDAY (BE consolidated permission for CREATE/UPDATE/DELETE)
    */
   async deleteDate(holidayDate: string, definitionId: string): Promise<void> {
     const axiosInstance = apiClient.getAxiosInstance();
