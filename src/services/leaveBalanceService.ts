@@ -22,13 +22,13 @@ export class LeaveBalanceService {
    * 
    * GET /api/v1/admin/employees/{employee_id}/leave-balances?cycle_year=2025
    * 
-   * Requires: VIEW_LEAVE_BALANCE permission
+   * Requires: VIEW_LEAVE_ALL permission (AdminLeaveBalanceController line 135)
    * 
    * @param employeeId - ID của nhân viên
    * @param cycleYear - Năm chu kỳ (mặc định là năm hiện tại)
    * 
    * Possible errors:
-   * - 403: FORBIDDEN (missing VIEW_LEAVE_BALANCE permission)
+   * - 403: FORBIDDEN (missing VIEW_LEAVE_ALL permission)
    * - 404: RELATED_RESOURCE_NOT_FOUND (employee not found)
    */
   static async getEmployeeBalances(
@@ -67,13 +67,13 @@ export class LeaveBalanceService {
    * 
    * POST /api/v1/admin/leave-balances/adjust
    * 
-   * Requires: ADJUST_LEAVE_BALANCE permission
+   * Requires: APPROVE_TIME_OFF permission (AdminLeaveBalanceController line 187)
    * 
    * @param data - Dữ liệu điều chỉnh (employee_id, type_id, year, amount, notes)
    * 
    * Possible errors:
    * - 400: INVALID_BALANCE (balance would be negative after adjustment)
-   * - 403: FORBIDDEN (missing ADJUST_LEAVE_BALANCE permission)
+   * - 403: FORBIDDEN (missing APPROVE_TIME_OFF permission)
    * - 404: RELATED_RESOURCE_NOT_FOUND (employee or type not found)
    */
   static async adjustBalance(
@@ -92,13 +92,13 @@ export class LeaveBalanceService {
    * 
    * POST /api/v1/admin/leave-balances/annual-reset
    * 
-   * Requires: ADJUST_LEAVE_BALANCE permission (hoặc admin cấp cao)
+   * Requires: ROLE_ADMIN only (AdminLeaveBalanceController line 237)
    * 
    * @param data - Dữ liệu reset (year, type_id, default_allowance)
    * 
    * Possible errors:
    * - 400: INVALID_YEAR (invalid cycle year)
-   * - 403: FORBIDDEN (missing ADJUST_LEAVE_BALANCE permission)
+   * - 403: FORBIDDEN (not admin role)
    * - 409: JOB_ALREADY_RUN (job already run for this year)
    */
   static async annualReset(
