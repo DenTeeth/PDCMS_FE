@@ -145,8 +145,10 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Đăng ký ca làm',
           href: '/admin/registrations',
           icon: faCalendarCheck,
-          requiredPermissions: ['VIEW_REGISTRATION_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL'],
-          requireAll: false,
+          // BE permissions: MANAGE_PART_TIME_REGISTRATIONS (PartTimeRegistrationAdminController line 64)
+          // and MANAGE_FIXED_REGISTRATIONS (FixedShiftRegistrationController line 53, 79)
+          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS'],
+          requireAll: false, // User needs at least one permission to view the page
         },
         {
           name: 'Lịch ca làm việc',
