@@ -94,11 +94,13 @@ export default function AdminShiftCalendarPage() {
     notes: '',
   });
 
-  // Permissions - Updated to match BE naming (VIEW_SCHEDULE_ALL instead of VIEW_SHIFTS_ALL)
+  // Permissions - Updated to match BE naming
+  // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting employee shifts (EmployeeShiftController line 196, 229, 252)
+  // BE uses VIEW_SCHEDULE_ALL for viewing all schedules
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
-  const canCreate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
-  const canUpdate = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
-  const canDelete = user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false;
+  const canCreate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
+  const canUpdate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
+  const canDelete = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
   const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
   // Debug permissions

@@ -410,6 +410,9 @@ export default function EmployeeTimeOffRequestsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Permission check: BE requires CREATE_TIME_OFF for creating time-off requests (TimeOffRequestController line 120)
+  const canCreate = user?.permissions?.includes('CREATE_TIME_OFF') || false;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -439,13 +442,15 @@ export default function EmployeeTimeOffRequestsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Yêu cầu nghỉ phép của tôi</h1>
           <p className="text-gray-600 mt-2">Quản lý yêu cầu nghỉ phép</p>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
-        >
-          <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-          Tạo yêu cầu
-        </Button>
+        {canCreate && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
+          >
+            <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
+            Tạo yêu cầu
+          </Button>
+        )}
       </div>
 
       {/* Leave Balances Card */}

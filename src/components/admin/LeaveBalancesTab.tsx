@@ -50,8 +50,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE');
-  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE');
+  // BE uses VIEW_LEAVE_ALL for viewing leave balances (AdminLeaveBalanceController line 77, 135)
+  // BE uses APPROVE_TIME_OFF for adjusting balances (AdminLeaveBalanceController line 187)
+  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_ALL') || false;
+  const canAdjustBalances = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
 
   // Balance Viewer State
   const [employees, setEmployees] = useState<Employee[]>(propEmployees);

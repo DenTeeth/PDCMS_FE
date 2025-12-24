@@ -4,11 +4,15 @@
  *  ADMIN LEAVE BALANCE MANAGEMENT PAGE (P6.1/P6.2)
  * 
  * FEATURES:
- * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_BALANCE)
- * 2. Manual Adjustment - Điều chỉnh thủ công số dư (RBAC: ADJUST_LEAVE_BALANCE)
- * 3. Annual Reset Tool - Kích hoạt job cộng phép năm (RBAC: ADJUST_LEAVE_BALANCE)
+ * 1. Balance Viewer - Xem số dư phép của nhân viên (RBAC: VIEW_LEAVE_ALL)
+ * 2. Manual Adjustment - Điều chỉnh thủ công số dư (RBAC: APPROVE_TIME_OFF)
+ * 3. Annual Reset Tool - Kích hoạt job cộng phép năm (RBAC: APPROVE_TIME_OFF)
  * 
  * UI/UX: Following work-shifts pattern with purple theme
+ * 
+ * BE Permissions:
+ * - VIEW_LEAVE_ALL: View leave balances (AdminLeaveBalanceController line 77, 135)
+ * - APPROVE_TIME_OFF: Adjust leave balances (AdminLeaveBalanceController line 187)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -58,8 +62,10 @@ export default function AdminLeaveBalancesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_BALANCE') || user?.permissions?.includes('VIEW_LEAVE_BALANCE_ALL') || false;
-  const canAdjustBalances = user?.permissions?.includes('ADJUST_LEAVE_BALANCE') || false;
+  // BE uses VIEW_LEAVE_ALL for viewing leave balances (AdminLeaveBalanceController line 77, 135)
+  // BE uses APPROVE_TIME_OFF for adjusting balances (AdminLeaveBalanceController line 187)
+  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_ALL') || false;
+  const canAdjustBalances = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
 
   // ==================== STATE ====================
 

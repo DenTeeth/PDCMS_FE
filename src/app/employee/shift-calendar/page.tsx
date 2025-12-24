@@ -83,19 +83,19 @@ export default function ShiftCalendarPage() {
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
   const canViewOwn = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
 
-  // BE uses MANAGE_WORK_SHIFTS for CRUD operations on shifts
+  // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting shifts (EmployeeShiftController line 196, 229, 252)
   // Support both old names (if roles have them) and new names
   const canCreate =
-    user?.permissions?.includes('CREATE_SHIFTS') ||           // Old name (backward compat)
-    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name (BE standard)
+    user?.permissions?.includes('CREATE_SHIFTS') ||                    // Old name (backward compat)
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 196)
 
   const canUpdate =
-    user?.permissions?.includes('UPDATE_SHIFTS') ||           // Old name
-    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name
+    user?.permissions?.includes('UPDATE_SHIFTS') ||                    // Old name
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 229)
 
   const canDelete =
-    user?.permissions?.includes('DELETE_SHIFTS') ||           // Old name
-    user?.permissions?.includes('MANAGE_WORK_SHIFTS') || false; // New name
+    user?.permissions?.includes('DELETE_SHIFTS') ||                     // Old name
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 252)
 
   const canViewSummary =
     user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') ||     // Old name
