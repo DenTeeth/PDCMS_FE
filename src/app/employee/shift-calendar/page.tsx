@@ -25,9 +25,11 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { workShiftService } from '@/services/workShiftService';
 import { EmployeeService } from '@/services/employeeService';
+import { holidayService } from '@/services/holidayService';
 import { EmployeeShift, ShiftStatus, ShiftSummaryResponse } from '@/types/employeeShift';
 import { WorkShift as WorkShiftTemplate } from '@/types/workShift';
 import { Employee } from '@/types/employee';
+import { HolidayDate } from '@/types/holiday';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatTimeToHHMM } from '@/lib/utils';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
@@ -43,6 +45,7 @@ export default function ShiftCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
   const [shifts, setShifts] = useState<EmployeeShift[]>([]);
+  const [holidays, setHolidays] = useState<HolidayDate[]>([]);
   const [workShifts, setWorkShifts] = useState<WorkShiftTemplate[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
@@ -80,8 +83,12 @@ export default function ShiftCalendarPage() {
   });
 
   // Permissions - Updated to match BE naming and add backward compatibility
+  // Logic: User needs ONE of these permissions:
+  // - VIEW_SCHEDULE_ALL: Can view all employees' shifts
+  // - VIEW_SCHEDULE_OWN: Can only view own shifts
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
   const canViewOwn = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
+  const canViewShifts = canViewAll || canViewOwn;
 
   // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting shifts (EmployeeShiftController line 196, 229, 252)
   // Support both old names (if roles have them) and new names
@@ -97,20 +104,13 @@ export default function ShiftCalendarPage() {
     user?.permissions?.includes('DELETE_SHIFTS') ||                     // Old name
     user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 252)
 
-  const canViewSummary =
-    user?.permissions?.includes('VIEW_SHIFTS_SUMMARY') ||     // Old name
-    user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false; // New name
-
-  // Manager có thể xem tất cả nếu có quyền VIEW_SCHEDULE_ALL hoặc là manager
-  const isManager = user?.roles?.includes('ROLE_MANAGER') || false;
-  const canViewShifts = canViewAll || canViewOwn || isManager;
+  // Summary chỉ hiển thị cho user có VIEW_SCHEDULE_ALL (có thể xem tất cả)
+  const canViewSummary = canViewAll;
 
   // Debug permissions
   console.log('User permissions:', user?.permissions);
-  console.log('User roles:', user?.roles);
-  console.log('Can view all:', canViewAll);
-  console.log('Can view own:', canViewOwn);
-  console.log('Is manager:', isManager);
+  console.log('Can view all (VIEW_SCHEDULE_ALL):', canViewAll);
+  console.log('Can view own (VIEW_SCHEDULE_OWN):', canViewOwn);
   console.log('Can view shifts:', canViewShifts);
   console.log(' User employeeId:', user?.employeeId); // Debug employeeId
 
@@ -138,7 +138,7 @@ export default function ShiftCalendarPage() {
   }, [currentDate, selectedEmployee]);
 
   // Handle FullCalendar view changes
-  const handleDatesSet = (dateInfo: any) => {
+  const handleDatesSet = async (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
 
     // Get the middle date of the view to determine the correct month/year
@@ -146,6 +146,19 @@ export default function ShiftCalendarPage() {
     const startDate = new Date(dateInfo.start);
     const endDate = new Date(dateInfo.end);
     const middleDate = new Date((startDate.getTime() + endDate.getTime()) / 2);
+
+    // Fetch holidays for the visible date range
+    try {
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+      const holidayDates = await holidayService.getHolidaysInRange(startDateStr, endDateStr);
+      setHolidays(holidayDates || []);
+      console.log(' Holidays loaded:', holidayDates?.length || 0);
+    } catch (error: any) {
+      console.error('Failed to fetch holidays:', error);
+      // Don't show error - holidays are not critical
+      setHolidays([]);
+    }
 
     // Update currentDate to keep title in sync with calendar
     setCurrentDate(prevDate => {
@@ -176,8 +189,8 @@ export default function ShiftCalendarPage() {
       setWorkShifts(workShiftsData);
       console.log(' Work shifts loaded:', workShiftsData.length);
 
-      // Load employees if can view all or is manager
-      if (canViewAll || isManager) {
+      // Load employees list only if user has VIEW_SCHEDULE_ALL (can view all employees' shifts)
+      if (canViewAll) {
         try {
           const employeeService = new EmployeeService();
           const employeesResponse = await employeeService.getEmployees({});
@@ -189,6 +202,9 @@ export default function ShiftCalendarPage() {
           // Nếu không load được employees, vẫn tiếp tục với shifts
           setEmployees([]);
         }
+      } else {
+        // If only VIEW_SCHEDULE_OWN, clear employees list (not needed)
+        setEmployees([]);
       }
 
       // Load shifts
@@ -216,14 +232,23 @@ export default function ShiftCalendarPage() {
         end_date: endDate,
       };
 
-      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
-      if ((canViewAll || isManager) && selectedEmployee) {
-        params.employee_id = selectedEmployee;
-        console.log(' Admin/Manager viewing employee_id:', selectedEmployee);
+      // Logic based on permissions:
+      // - VIEW_SCHEDULE_ALL: Can view all employees, can filter by selectedEmployee
+      // - VIEW_SCHEDULE_OWN: Can only view own shifts, DO NOT pass employee_id (BE auto-filters by JWT)
+      if (canViewAll) {
+        // User with VIEW_SCHEDULE_ALL: Can view all employees' shifts
+        // If selectedEmployee is set, filter by that employee; otherwise show all
+        if (selectedEmployee) {
+          params.employee_id = selectedEmployee;
+          console.log(' VIEW_SCHEDULE_ALL: Filtering by employee_id:', selectedEmployee);
+        } else {
+          // No employee selected, show all employees' shifts
+          console.log(' VIEW_SCHEDULE_ALL: Showing all employees\' shifts');
+        }
       } else if (canViewOwn) {
-        // Employee with VIEW_SCHEDULE_OWN:
-        // KHÔNG truyền employee_id - Backend tự động filter theo JWT token
-        console.log(' Employee with VIEW_SCHEDULE_OWN - Backend will auto-filter by JWT token');
+        // User with VIEW_SCHEDULE_OWN: Can only view own shifts
+        // DO NOT pass employee_id - Backend will auto-filter by JWT token
+        console.log(' VIEW_SCHEDULE_OWN: Backend will auto-filter by JWT token (own shifts only)');
       }
 
       console.log(' API params:', params);
@@ -264,11 +289,16 @@ export default function ShiftCalendarPage() {
         end_date: summaryDateRange.endDate,
       };
 
-      // Chỉ truyền employee_id khi admin/manager muốn xem của người khác
-      if ((canViewAll || isManager) && selectedEmployee) {
+      // Summary logic: Only VIEW_SCHEDULE_ALL can view summary
+      // If selectedEmployee is set, filter by that employee; otherwise show all
+      if (canViewAll && selectedEmployee) {
         params.employee_id = selectedEmployee;
+        console.log(' Summary: Filtering by employee_id:', selectedEmployee);
+      } else if (canViewAll) {
+        // No employee selected, show summary for all employees
+        console.log(' Summary: Showing summary for all employees');
       }
-      // Nếu VIEW_SCHEDULE_OWN: KHÔNG truyền employee_id, backend tự filter
+      // If VIEW_SCHEDULE_OWN: Summary is not available (canViewSummary = false)
 
       console.log('Loading summary with params:', params);
 
@@ -294,7 +324,8 @@ export default function ShiftCalendarPage() {
 
   // Convert shifts to calendar events
   const getCalendarEvents = () => {
-    return shifts.map(shift => {
+    // Convert shifts to events
+    const shiftEvents = shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
       const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
 
@@ -322,6 +353,36 @@ export default function ShiftCalendarPage() {
         }
       };
     });
+
+    // Convert holidays to all-day events
+    const holidayEvents = holidays.map((holiday) => {
+      const holidayDate = new Date(holiday.holidayDate);
+      holidayDate.setHours(0, 0, 0, 0);
+      
+      return {
+        id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
+        title: holiday.holidayName || 'Ngày lễ',
+        start: holidayDate,
+        allDay: true,
+        backgroundColor: '#fef3c7', // Light yellow/amber
+        borderColor: '#f59e0b', // Amber border
+        borderWidth: 2, // Thicker border for better visibility
+        textColor: '#000000', // Black text
+        display: 'background', // Show as background highlight
+        extendedProps: {
+          isHoliday: true,
+          holiday,
+        },
+      };
+    });
+
+    console.log(' Calendar events generated:', {
+      shifts: shiftEvents.length,
+      holidays: holidayEvents.length,
+      total: shiftEvents.length + holidayEvents.length
+    });
+
+    return [...shiftEvents, ...holidayEvents];
   };
 
   const getEventColor = (status: ShiftStatus) => {
@@ -337,6 +398,14 @@ export default function ShiftCalendarPage() {
 
   // Handle event click
   const handleEventClick = async (clickInfo: any) => {
+    // Check if clicked event is a holiday
+    if (clickInfo.event.extendedProps?.isHoliday) {
+      const holiday = clickInfo.event.extendedProps.holiday as HolidayDate;
+      toast.info(`${holiday.holidayName || 'Ngày lễ'} - ${format(new Date(holiday.holidayDate), 'dd/MM/yyyy', { locale: vi })}`);
+      return;
+    }
+
+    // Handle shift click
     try {
       setDetailLoading(true);
       const shiftId = clickInfo.event.id;
@@ -803,6 +872,10 @@ export default function ShiftCalendarPage() {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-red-500"></div>
                 <span className="text-xs font-medium text-gray-600">Vắng mặt</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}></div>
+                <span className="text-xs font-medium text-gray-600">Ngày lễ</span>
               </div>
             </div>
           </div>

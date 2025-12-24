@@ -38,10 +38,13 @@ import { toast } from 'sonner';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { appointmentService } from '@/services/appointmentService';
 import { employeeService } from '@/services/employeeService';
+import { holidayService } from '@/services/holidayService';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
 import { AppointmentSummaryDTO, APPOINTMENT_STATUS_COLORS } from '@/types/appointment';
 import { Employee } from '@/types/employee';
+import { HolidayDate } from '@/types/holiday';
 import { getEmployeeIdFromToken } from '@/lib/utils';
+import { vi } from 'date-fns/locale';
 
 export default function MyCalendarPage() {
   const router = useRouter();
@@ -53,6 +56,7 @@ export default function MyCalendarPage() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [shifts, setShifts] = useState<EmployeeShift[]>([]);
   const [appointments, setAppointments] = useState<AppointmentSummaryDTO[]>([]);
+  const [holidays, setHolidays] = useState<HolidayDate[]>([]);
   const [employeeInfo, setEmployeeInfo] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef<FullCalendar>(null);
@@ -63,8 +67,9 @@ export default function MyCalendarPage() {
   const [shiftDetailLoading, setShiftDetailLoading] = useState(false);
 
   // Permissions - Updated to match BE naming
-  const canViewShifts = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
+  const canViewShifts = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
   const canViewAppointments = user?.permissions?.includes('VIEW_APPOINTMENT_OWN') || false;
+  const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
   // Get current user's employee ID
   const currentEmployeeId = useMemo(() => {
@@ -136,26 +141,21 @@ export default function MyCalendarPage() {
     loadEmployeeInfo();
   }, [currentEmployeeId]);
 
-  // Load initial data when component mounts and employeeInfo is ready
-  useEffect(() => {
-    if (!currentEmployeeId || !canViewShifts && !canViewAppointments) return;
-
-    // Only load data if we have employeeInfo (for appointments) or can proceed without it (for shifts)
-    if (canViewAppointments && !employeeInfo?.employeeCode) {
-      // Wait for employeeInfo to load before loading appointments
-      return;
-    }
-
-    // Load data for current month
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    loadData(start, end);
-  }, [currentEmployeeId, canViewShifts, canViewAppointments, employeeInfo?.employeeCode]);
-
   // Load shifts and appointments
   const loadData = useCallback(async (start: Date, end: Date) => {
-    if (!currentEmployeeId) return;
+    // For VIEW_SCHEDULE_OWN, we don't need currentEmployeeId - BE auto-filters by JWT token
+    // Only need currentEmployeeId for appointments or if we have VIEW_SCHEDULE_ALL
+    if (!canViewShifts && !canViewAppointments) {
+      setLoading(false);
+      return;
+    }
+    if (canViewAppointments && !currentEmployeeId) {
+      // Need employeeId for appointments, but can still load shifts
+      if (!canViewShifts) {
+        setLoading(false);
+        return;
+      }
+    }
 
     // Cancel previous request if exists
     if (abortControllerRef.current) {
@@ -171,13 +171,19 @@ export default function MyCalendarPage() {
     try {
       setLoading(true);
 
+      // Get current employeeCode from state (use closure to avoid dependency)
+      const currentEmployeeCode = employeeInfo?.employeeCode;
+
       // Load shifts and appointments in parallel
       const [shiftsData, appointmentsData] = await Promise.all([
         canViewShifts
           ? EmployeeShiftService.getShifts({
             start_date: format(start, 'yyyy-MM-dd'),
             end_date: format(end, 'yyyy-MM-dd'),
-            employee_id: currentEmployeeId,
+            // BE logic (EmployeeShiftController line 96-106):
+            // - If VIEW_SCHEDULE_OWN: Do NOT pass employee_id, BE auto-filters by JWT token
+            // - If VIEW_SCHEDULE_ALL: Can pass employee_id to view other employees
+            ...(canViewAll && currentEmployeeId ? { employee_id: currentEmployeeId } : {}),
           }).catch((error) => {
             if (error.name === 'AbortError' || abortController.signal.aborted) {
               return [];
@@ -189,17 +195,12 @@ export default function MyCalendarPage() {
         canViewAppointments
           ? (async () => {
             try {
-              // First, try to get employeeCode from employee info
-              // If not available, we'll need to fetch employee list
-              // For now, we'll use a workaround: fetch appointments and filter by participant
-              // Or use employeeCode if we have it
-
-              // If employeeInfo is available, use employeeCode
-              if (employeeInfo?.employeeCode) {
+              // If employeeCode is available, use it
+              if (currentEmployeeCode) {
                 const response = await appointmentService.getAppointmentsPage({
                   dateFrom: format(start, 'yyyy-MM-dd'),
                   dateTo: format(end, 'yyyy-MM-dd'),
-                  employeeCode: employeeInfo.employeeCode,
+                  employeeCode: currentEmployeeCode,
                   page: 0,
                   size: 1000,
                 });
@@ -218,12 +219,12 @@ export default function MyCalendarPage() {
                 // This is a workaround - ideally backend should filter by employeeCode
                 return (response.content || []).filter((apt) => {
                   // Check if employee is doctor (primary employee)
-                  const currentEmployeeCode = employeeInfo?.employeeCode || String(currentEmployeeId);
+                  const empCode = currentEmployeeCode || String(currentEmployeeId);
                   // Check if employee is doctor (primary employee)
-                  const isDoctor = apt.doctor?.employeeCode === currentEmployeeCode;
+                  const isDoctor = apt.doctor?.employeeCode === empCode;
                   // Check if employee is participant
                   const isParticipant = apt.participants?.some(
-                    (p) => p.employeeCode === currentEmployeeCode
+                    (p) => p.employeeCode === empCode
                   );
                   return isDoctor || isParticipant;
                 });
@@ -240,7 +241,9 @@ export default function MyCalendarPage() {
       ]);
 
       // Check if request was cancelled or component unmounted
-      if (abortController.signal.aborted || !isMounted) return;
+      if (abortController.signal.aborted || !isMounted) {
+        return;
+      }
 
       setShifts(shiftsData);
       setAppointments(appointmentsData);
@@ -252,7 +255,7 @@ export default function MyCalendarPage() {
       console.error('Error loading data:', error);
       handleErrorRef.current(error);
     } finally {
-      // Only update loading state if request wasn't cancelled and component is mounted
+      // Always update loading state if component is still mounted and request wasn't cancelled
       if (isMounted && !abortController.signal.aborted) {
         setLoading(false);
       }
@@ -261,14 +264,95 @@ export default function MyCalendarPage() {
         abortControllerRef.current = null;
       }
     }
-  }, [currentEmployeeId, canViewShifts, canViewAppointments, employeeInfo]);
+  }, [currentEmployeeId, canViewShifts, canViewAppointments, employeeInfo?.employeeCode, canViewAll]);
+
+  // Load initial data when component mounts and employeeInfo is ready
+  useEffect(() => {
+    // For VIEW_SCHEDULE_OWN, we can load shifts without currentEmployeeId (BE auto-filters by JWT)
+    // Only need currentEmployeeId for appointments or if we have VIEW_SCHEDULE_ALL
+    if (!canViewShifts && !canViewAppointments) return;
+    
+    // Load holidays for current month
+    const loadInitialHolidays = async () => {
+      try {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const startDateStr = format(start, 'yyyy-MM-dd');
+        const endDateStr = format(end, 'yyyy-MM-dd');
+        const holidayDates = await holidayService.getHolidaysInRange(startDateStr, endDateStr);
+        setHolidays(holidayDates || []);
+        console.log(' Initial holidays loaded:', holidayDates?.length || 0);
+      } catch (error: any) {
+        console.error('Failed to fetch initial holidays:', error);
+        setHolidays([]);
+      }
+    };
+    
+    loadInitialHolidays();
+    
+    // If viewing appointments, need currentEmployeeId and employeeCode
+    // But we can still load shifts even if employeeInfo is not ready yet
+    if (canViewAppointments) {
+      if (!currentEmployeeId || !employeeInfo?.employeeCode) {
+        // Wait for employeeInfo to load before loading appointments
+        // But if we can view shifts, load them now
+        if (canViewShifts) {
+          const now = new Date();
+          const start = new Date(now.getFullYear(), now.getMonth(), 1);
+          const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          loadData(start, end);
+        }
+        return;
+      }
+    }
+
+    // Load data for current month
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    loadData(start, end);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentEmployeeId, canViewShifts, canViewAppointments, employeeInfo?.employeeCode]);
 
   // Handle FullCalendar dates change
-  const handleDatesSet = useCallback((dateInfo: any) => {
+  const handleDatesSet = useCallback(async (dateInfo: any) => {
     const start = new Date(dateInfo.start);
     const end = new Date(dateInfo.end);
+    
+    // Load holidays for the visible date range
+    try {
+      const startDateStr = format(start, 'yyyy-MM-dd');
+      const endDateStr = format(end, 'yyyy-MM-dd');
+      const holidayDates = await holidayService.getHolidaysInRange(startDateStr, endDateStr);
+      setHolidays(holidayDates || []);
+      console.log(' Holidays loaded:', holidayDates?.length || 0);
+    } catch (error: any) {
+      console.error('Failed to fetch holidays:', error);
+      // Don't show error - holidays are not critical
+      setHolidays([]);
+    }
+    
     loadData(start, end);
   }, [loadData]);
+
+  // Get shift color by status
+  const getShiftColor = (status: ShiftStatus) => {
+    switch (status) {
+      case ShiftStatus.SCHEDULED:
+        return { bg: '#3b82f6', border: '#3b82f6', text: '#ffffff' };
+      case ShiftStatus.COMPLETED:
+        return { bg: '#10b981', border: '#10b981', text: '#ffffff' };
+      case ShiftStatus.CANCELLED:
+        return { bg: '#6b7280', border: '#6b7280', text: '#ffffff' };
+      case ShiftStatus.ON_LEAVE:
+        return { bg: '#f59e0b', border: '#f59e0b', text: '#ffffff' };
+      case ShiftStatus.ABSENT:
+        return { bg: '#ef4444', border: '#ef4444', text: '#ffffff' };
+      default:
+        return { bg: '#9ca3af', border: '#9ca3af', text: '#ffffff' };
+    }
+  };
 
   // Convert shifts to calendar events (background style)
   const shiftEvents = useMemo(() => {
@@ -338,14 +422,47 @@ export default function MyCalendarPage() {
     });
   }, [appointments]);
 
-  // Merge all events (shifts first, then appointments)
+  // Convert holidays to calendar events (all-day background style)
+  const holidayEvents = useMemo(() => {
+    return holidays.map((holiday) => {
+      const holidayDate = new Date(holiday.holidayDate);
+      holidayDate.setHours(0, 0, 0, 0);
+      
+      return {
+        id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
+        title: holiday.holidayName || 'Ngày lễ', // Empty title - holidays are background only
+        start: holidayDate,
+        allDay: true,
+        backgroundColor: '#fef3c7', // Light yellow/amber
+        borderColor: '#f59e0b', // Amber border
+        borderWidth: 2, // Thicker border for better visibility
+        textColor: '#000000', // Black text
+        display: 'background', // Show as background highlight
+        extendedProps: {
+          type: 'holiday',
+          isHoliday: true,
+          holiday,
+          holidayName: holiday.holidayName || 'Ngày lễ', // Store name for click handler
+        },
+      };
+    });
+  }, [holidays]);
+
+  // Merge all events (holidays first as background, then shifts, then appointments)
   const allEvents = useMemo(() => {
-    return [...shiftEvents, ...appointmentEvents];
-  }, [shiftEvents, appointmentEvents]);
+    return [...holidayEvents, ...shiftEvents, ...appointmentEvents];
+  }, [holidayEvents, shiftEvents, appointmentEvents]);
 
   // Handle event click
   const handleEventClick = useCallback(async (clickInfo: any) => {
     const eventType = clickInfo.event.extendedProps.type;
+
+    // Check if clicked event is a holiday
+    if (eventType === 'holiday' || clickInfo.event.extendedProps?.isHoliday) {
+      const holiday = clickInfo.event.extendedProps.holiday as HolidayDate;
+      toast.info(`${holiday.holidayName || 'Ngày lễ'} - ${format(new Date(holiday.holidayDate), 'dd/MM/yyyy', { locale: vi })}`);
+      return;
+    }
 
     if (eventType === 'shift') {
       const shift = clickInfo.event.extendedProps.shift as EmployeeShift;
@@ -366,24 +483,6 @@ export default function MyCalendarPage() {
       router.push(`/employee/booking/appointments/${appointment.appointmentCode}`);
     }
   }, [router]);
-
-  // Get shift color by status
-  const getShiftColor = (status: ShiftStatus) => {
-    switch (status) {
-      case ShiftStatus.SCHEDULED:
-        return { bg: '#3b82f6', border: '#3b82f6', text: '#ffffff' };
-      case ShiftStatus.COMPLETED:
-        return { bg: '#10b981', border: '#10b981', text: '#ffffff' };
-      case ShiftStatus.CANCELLED:
-        return { bg: '#6b7280', border: '#6b7280', text: '#ffffff' };
-      case ShiftStatus.ON_LEAVE:
-        return { bg: '#f59e0b', border: '#f59e0b', text: '#ffffff' };
-      case ShiftStatus.ABSENT:
-        return { bg: '#ef4444', border: '#ef4444', text: '#ffffff' };
-      default:
-        return { bg: '#6b7280', border: '#6b7280', text: '#ffffff' };
-    }
-  };
 
   // Navigation handlers
   const handlePrev = () => {
@@ -457,6 +556,10 @@ export default function MyCalendarPage() {
             <div className="w-4 h-4 border-2 border-solid border-green-500 bg-green-500 rounded"></div>
             <span className="text-sm text-gray-700">Lịch hẹn</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}></div>
+            <span className="text-sm text-gray-700">Ngày lễ</span>
+          </div>
         </div>
 
         {/* Calendar */}
@@ -519,7 +622,17 @@ export default function MyCalendarPage() {
               locale="vi"
               firstDay={1} // Monday
               eventContent={(eventInfo) => {
-                const eventType = eventInfo.event.extendedProps.type;
+                const eventType = eventInfo.event.extendedProps?.type;
+                const isHoliday = eventInfo.event.extendedProps?.isHoliday;
+                
+                // Check if event ID starts with 'holiday-' as additional check
+                const isHolidayById = eventInfo.event.id?.toString().startsWith('holiday-');
+
+                // Holidays with display: 'background' should not show content
+                // They are displayed as background highlight only
+                if (isHoliday || eventType === 'holiday' || isHolidayById) {
+                  return { html: '' }; // Return empty HTML to prevent any text rendering
+                }
 
                 if (eventType === 'shift') {
                   // Shift event: Show shift name
@@ -530,11 +643,11 @@ export default function MyCalendarPage() {
                       </div>
                     </div>
                   );
-                } else {
+                } else if (eventType === 'appointment') {
                   // Appointment event: Show time range and doctor name
-                  const appointment = eventInfo.event.extendedProps.appointment as AppointmentSummaryDTO;
-                  const doctorName = eventInfo.event.extendedProps.doctorName || 'No Doctor';
-                  const timeRange = eventInfo.event.extendedProps.timeRange || '';
+                  const appointment = eventInfo.event.extendedProps?.appointment as AppointmentSummaryDTO;
+                  const doctorName = eventInfo.event.extendedProps?.doctorName || appointment?.doctor?.fullName || 'No Doctor';
+                  const timeRange = eventInfo.event.extendedProps?.timeRange || '';
 
                   return (
                     <div className="p-1 overflow-hidden cursor-pointer">
@@ -545,6 +658,15 @@ export default function MyCalendarPage() {
                     </div>
                   );
                 }
+
+                // Default: Show title
+                return (
+                  <div className="p-1 overflow-hidden">
+                    <div className="text-xs font-medium truncate">
+                      {eventInfo.event.title}
+                    </div>
+                  </div>
+                );
               }}
               className="my-calendar"
               {...({} as any)}
