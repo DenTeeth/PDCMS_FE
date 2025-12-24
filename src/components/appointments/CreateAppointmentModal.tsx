@@ -1323,31 +1323,7 @@ export default function CreateAppointmentModal({
         };
       }
 
-      console.groupCollapsed(
-        '%c[CreateAppointment] Submitting booking request',
-        'color:#2563eb;font-weight:600;',
-      );
-      console.log('📦 Request payload gửi lên BE:', request);
-      console.groupEnd();
-
-      const response = await appointmentService.createAppointment(request);
-
-      console.groupCollapsed(
-        '%c[CreateAppointment] Appointment created successfully',
-        'color:#16a34a;font-weight:600;',
-      );
-      console.log('🆔 Mã cuộc hẹn (appointmentCode):', response.appointmentCode);
-      console.log('👤 Bệnh nhân:', response.patientFullName, '- code:', response.patientCode);
-      console.log('👨‍⚕️ Bác sĩ chính:', response.employeeFullName, '- code:', response.employeeCode);
-      console.log('📅 Thời gian:', response.appointmentStartTime, '->', response.appointmentEndTime);
-      console.log('🔔 Lưu ý:', 'Ngay sau log này, hãy quan sát console:');
-      console.log(
-        '- Nếu BE đã gửi notification, bạn sẽ thấy log [Notifications] New notification received',
-      );
-      console.log(
-        '- Và nếu là luồng tạo lịch, sẽ có group log [Appointment → Notification] với thông tin chi tiết.',
-      );
-      console.groupEnd();
+      await appointmentService.createAppointment(request);
 
       toast.success(' Đặt lịch hẹn thành công!');
       onSuccess();

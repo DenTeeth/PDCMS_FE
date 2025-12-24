@@ -748,7 +748,7 @@ export default function TreatmentPlanDetail({
                   className="flex items-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-700"
                 >
                   <CalendarCheck className="h-4 w-4" />
-                  Tự động xếp lịch
+                  Gợi ý lịch hẹn
                 </Button>
               )}
             </div>

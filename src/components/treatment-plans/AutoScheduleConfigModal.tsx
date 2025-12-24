@@ -143,7 +143,7 @@ export default function AutoScheduleConfigModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Cấu hình tự động xếp lịch
+            Cấu hình gợi ý lịch hẹn
           </DialogTitle>
           <DialogDescription>
             Cấu hình các tham số để hệ thống tự động đề xuất lịch hẹn cho lộ trình điều trị.
