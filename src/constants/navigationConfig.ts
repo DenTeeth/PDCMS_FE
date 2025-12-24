@@ -351,7 +351,8 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SCHEDULE_OWN'],
-          // Show for all employment types
+          // Only show for ROLE_MANAGER (handled in filterNavigationItems)
+          // Admin can access via /admin/shift-calendar
         },
         {
           name: 'Lịch của tôi',
@@ -708,6 +709,27 @@ export const filterNavigationItems = (
       if (!item.employmentTypes.includes(employmentType)) {
         return false;
       }
+    }
+
+    // Special handling for "Lịch ca làm việc" (shift-calendar)
+    // Only show for ROLE_MANAGER (employee)
+    // Admin can access via /admin/shift-calendar, so hide from employee menu if not ROLE_MANAGER
+    if (item.name === 'Lịch ca làm việc' && item.href === '/employee/shift-calendar') {
+      // Check if user is ROLE_MANAGER
+      const isManager = userRoles?.includes('ROLE_MANAGER') || false;
+      
+      // Only show for ROLE_MANAGER (employee) - admin has their own page at /admin/shift-calendar
+      if (!isManager) {
+        return false;
+      }
+      
+      // Continue with normal permission check
+      if (item.requiredPermissions && item.requiredPermissions.length > 0) {
+        if (!userPermissions || !hasPermissions(userPermissions, item.requiredPermissions, item.requireAll)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     // Special handling for Warehouse Management menu

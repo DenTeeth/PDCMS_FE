@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/types/permission';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -967,7 +967,7 @@ export default function EmployeeRegistrationsPage() {
       <div className="container mx-auto p-6 space-y-6">
         {/* Header - Đơn giản hóa */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Đăng Ký Ca Làm Việc</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Đăng ký ca làm việc</h1>
           <p className="text-gray-600 mt-1">Quản lý đăng ký ca làm việc của bạn</p>
         </div>
 
@@ -1181,8 +1181,46 @@ export default function EmployeeRegistrationsPage() {
                               {sortedAvailableSlots.map((slot) => {
                                 const slotDetails = slotDetailsMap[slot.slotId];
                                 const shiftHours = calculateShiftHours(slot.shiftName);
-                                const totalWeeks = slot.totalDatesAvailable; // Reusing as week count
-                                const availableWeeks = slot.totalDatesEmpty; // Reusing as available weeks
+                                
+                                // Calculate weeks from date range
+                                // BE returns totalDatesAvailable and totalDatesEmpty (dates, not weeks)
+                                // We need to calculate weeks from effectiveFrom to effectiveTo
+                                let totalWeeks = 0;
+                                let availableWeeks = 0;
+                                
+                                if (slot.effectiveFrom && slot.effectiveTo) {
+                                  try {
+                                    const fromDate = parseISO(slot.effectiveFrom);
+                                    const toDate = parseISO(slot.effectiveTo);
+                                    // Calculate total weeks in the date range
+                                    totalWeeks = Math.ceil(differenceInWeeks(toDate, fromDate, { roundingMethod: 'ceil' })) || 1;
+                                    
+                                    // Calculate available weeks from totalDatesEmpty
+                                    // Each week has a certain number of working days (based on dayOfWeek)
+                                    const daysPerWeek = slot.dayOfWeek.split(',').length; // e.g., "MONDAY,TUESDAY" = 2 days/week
+                                    
+                                    // Estimate available weeks: totalDatesEmpty / daysPerWeek
+                                    // This gives us an approximation of how many weeks have available slots
+                                    if (daysPerWeek > 0 && slot.totalDatesEmpty > 0) {
+                                      availableWeeks = Math.floor(slot.totalDatesEmpty / daysPerWeek);
+                                      // Ensure availableWeeks doesn't exceed totalWeeks
+                                      availableWeeks = Math.min(availableWeeks, totalWeeks);
+                                    } else {
+                                      availableWeeks = 0;
+                                    }
+                                  } catch (error) {
+                                    console.error('Error calculating weeks for slot:', slot.slotId, error);
+                                    // Fallback: show 0 if calculation fails
+                                    totalWeeks = 0;
+                                    availableWeeks = 0;
+                                  }
+                                } else {
+                                  // No date range - cannot calculate weeks
+                                  console.warn('Slot missing date range:', slot.slotId);
+                                  totalWeeks = 0;
+                                  availableWeeks = 0;
+                                }
+                                
                                 const availablePercent = totalWeeks > 0 ? (availableWeeks / totalWeeks) * 100 : 0;
 
                                 const getColorClass = () => {
@@ -1200,8 +1238,8 @@ export default function EmployeeRegistrationsPage() {
                                 const isExpanded = expandedSlotId === slot.slotId;
 
                                 return (
-                                  <>
-                                    <tr key={slot.slotId} className="hover:bg-gray-50 transition-colors">
+                                  <React.Fragment key={slot.slotId}>
+                                    <tr className="hover:bg-gray-50 transition-colors">
                                       <td className="px-4 py-3">
                                         <div className="font-medium text-gray-900">{slot.shiftName}</div>
                                       </td>
@@ -1358,7 +1396,7 @@ export default function EmployeeRegistrationsPage() {
                                         </td>
                                       </tr>
                                     )}
-                                  </>
+                                  </React.Fragment>
                                 );
                               })}
                             </tbody>
@@ -1568,7 +1606,7 @@ export default function EmployeeRegistrationsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Lịch Làm Việc Của Tôi ({fixedRegistrations.length})
+                    Lịch làm việc của tôi ({fixedRegistrations.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1631,7 +1669,7 @@ export default function EmployeeRegistrationsPage() {
         {showPartTimeCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Đăng Ký Ca Làm Việc</h2>
+              <h2 className="text-xl font-bold mb-4">Đăng ký ca làm việc</h2>
               <form onSubmit={handlePartTimeCreate} className="space-y-4">
                 {isPartTimeFlex ? (
                   <>

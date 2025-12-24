@@ -11,6 +11,8 @@ import {
   faCalendarAlt,
   faClock,
   faSearch,
+  faCheck,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Eye } from 'lucide-react';
@@ -25,6 +27,7 @@ import CustomSelect from '@/components/ui/custom-select';
 
 import { OvertimeService } from '@/services/overtimeService';
 import { workShiftService } from '@/services/workShiftService';
+import { employeeService } from '@/services/employeeService';
 import { validateOvertimeForm, showOvertimeError } from '@/utils/overtimeErrorHandler';
 import { toast } from 'sonner';
 import {
@@ -33,6 +36,7 @@ import {
   OVERTIME_STATUS_CONFIG,
 } from '@/types/overtime';
 import { WorkShift } from '@/types/workShift';
+import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatTimeToHHMM } from '@/lib/utils';
 
@@ -48,15 +52,21 @@ export default function EmployeeOvertimeRequestsPage() {
   const { user } = useAuth();
   const [overtimeRequests, setOvertimeRequests] = useState<OvertimeRequest[]>([]);
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
+  const [workShiftsError, setWorkShiftsError] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OvertimeStatus | 'ALL'>('ALL');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
 
   // Modal states for manager functions
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<OvertimeRequest | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [statusReason, setStatusReason] = useState('');
+  const [statusAction, setStatusAction] = useState<'approve' | 'reject' | 'cancel'>('approve');
 
   const [formData, setFormData] = useState<OvertimeRequestFormData>({
     employeeId: Number(user?.employeeId) || 0,
@@ -91,11 +101,16 @@ export default function EmployeeOvertimeRequestsPage() {
   useEffect(() => {
     loadOvertimeRequests();
     loadWorkShifts();
-  }, []);
+    // Load employees if user has VIEW_OT_ALL permission
+    if (user?.permissions?.includes('VIEW_OT_ALL')) {
+      loadEmployees();
+    }
+  }, [user?.permissions]);
 
   const loadOvertimeRequests = async () => {
     try {
       setLoading(true);
+      // BE automatically filters by VIEW_OT_ALL (all requests) or VIEW_OT_OWN (own requests)
       const response = await OvertimeService.getOvertimeRequests({
         page: 0,
         size: 50,
@@ -104,17 +119,48 @@ export default function EmployeeOvertimeRequestsPage() {
       setOvertimeRequests(response.content);
     } catch (error) {
       console.error('Error loading overtime requests:', error);
+      toast.error('Không thể tải danh sách yêu cầu làm thêm giờ');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadEmployees = async () => {
+    try {
+      const response = await employeeService.getEmployees({
+        page: 0,
+        size: 100,
+        sort: 'fullName,asc',
+      });
+      setEmployees(response.content);
+    } catch (error) {
+      console.error('Error loading employees:', error);
+    }
+  };
+
   const loadWorkShifts = async () => {
     try {
+      setWorkShiftsError(null);
       const response = await workShiftService.getAll();
       setWorkShifts(response);
-    } catch (error) {
+      if (response.length === 0) {
+        setWorkShiftsError('Không có ca làm việc nào trong hệ thống.');
+      }
+    } catch (error: any) {
       console.error('Error loading work shifts:', error);
+      // Handle 403 error - user doesn't have permission to view work shifts
+      if (error.response?.status === 403) {
+        console.warn('⚠️ User does not have permission to view work shifts (VIEW_SCHEDULE_ALL or MANAGE_WORK_SHIFTS required)');
+        // Set empty array to prevent UI errors, but user won't be able to select shifts
+        setWorkShifts([]);
+        setWorkShiftsError('Bạn không có quyền xem danh sách ca làm việc. Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.');
+        // Show warning toast
+        toast.error('Không có quyền xem danh sách ca làm việc. Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.');
+      } else {
+        // Other errors - set empty array
+        setWorkShifts([]);
+        setWorkShiftsError('Không thể tải danh sách ca làm việc. Vui lòng thử lại sau.');
+      }
     }
   };
 
@@ -213,20 +259,88 @@ export default function EmployeeOvertimeRequestsPage() {
     setShowCancelModal(true);
   };
 
+  const openStatusModal = (request: OvertimeRequest, action: 'approve' | 'reject' | 'cancel') => {
+    setSelectedRequest(request);
+    setStatusAction(action);
+    setStatusReason('');
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!selectedRequest) return;
+
+    try {
+      const loadingToast = toast.loading('Đang xử lý...');
+
+      switch (statusAction) {
+        case 'approve':
+          await OvertimeService.approveOvertimeRequest(selectedRequest.requestId);
+          toast.dismiss(loadingToast);
+          toast.success('Đã duyệt yêu cầu làm thêm giờ');
+          break;
+        case 'reject':
+          if (!statusReason.trim()) {
+            toast.dismiss(loadingToast);
+            toast.error('Vui lòng nhập lý do từ chối');
+            return;
+          }
+          await OvertimeService.rejectOvertimeRequest(selectedRequest.requestId, statusReason);
+          toast.dismiss(loadingToast);
+          toast.success('Đã từ chối yêu cầu làm thêm giờ');
+          break;
+        case 'cancel':
+          if (!statusReason.trim()) {
+            toast.dismiss(loadingToast);
+            toast.error('Vui lòng nhập lý do hủy');
+            return;
+          }
+          await OvertimeService.cancelOvertimeRequest(selectedRequest.requestId, statusReason);
+          toast.dismiss(loadingToast);
+          toast.success('Đã hủy yêu cầu làm thêm giờ');
+          break;
+      }
+
+      setShowStatusModal(false);
+      setStatusReason('');
+      setSelectedRequest(null);
+      loadOvertimeRequests();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái yêu cầu');
+    }
+  };
+
 
 
   const filteredRequests = overtimeRequests.filter((request) => {
     const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
+      request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesEmployee = employeeFilter === 'ALL' ||
+      request.employeeId?.toString() === employeeFilter;
+
+    return matchesSearch && matchesStatus && matchesEmployee;
   });
 
+  // Permission checks
   const canCreate = user?.permissions?.includes('CREATE_OVERTIME');
-  const canCancelOwn = user?.permissions?.includes('CANCEL_OVERTIME_OWN');
+  const canViewAll = user?.permissions?.includes('VIEW_OT_ALL') || false;
+  const canApprove = user?.permissions?.includes('APPROVE_OVERTIME') || false;
+  const canReject = user?.permissions?.includes('APPROVE_OVERTIME') || false;
+  // BE logic: Employee with CREATE_OVERTIME can cancel their own PENDING requests
+  // (OvertimeRequestService.java line 441)
+  const canCancelOwn = user?.permissions?.includes('CREATE_OVERTIME');
+  // Manager with APPROVE_OVERTIME can cancel any PENDING request
+  const canCancelPending = user?.permissions?.includes('APPROVE_OVERTIME') || false;
+
+  const canCancelRequest = (request: OvertimeRequest) => {
+    if (canCancelPending) return true;
+    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    return false;
+  };
 
   if (loading) {
     return (
@@ -259,7 +373,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 md:grid-cols-${canViewAll ? '3' : '2'} gap-4`}>
           <div className="space-y-1">
             <Label htmlFor="search">Tìm kiếm</Label>
             <div className="relative">
@@ -288,6 +402,21 @@ export default function EmployeeOvertimeRequestsPage() {
               { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
             ]}
           />
+          {canViewAll && (
+            <CustomSelect
+              label="Nhân viên"
+              value={employeeFilter}
+              onChange={(value) => setEmployeeFilter(value)}
+              placeholder="Tất cả nhân viên"
+              options={[
+                { value: 'ALL', label: 'Tất cả nhân viên' },
+                ...employees.map(emp => ({
+                  value: emp.employeeId.toString(),
+                  label: emp.fullName || `${emp.firstName} ${emp.lastName}`,
+                })),
+              ]}
+            />
+          )}
         </div>
       </div>
 
@@ -335,7 +464,7 @@ export default function EmployeeOvertimeRequestsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           <Button
                             variant="outline"
                             size="sm"
@@ -345,16 +474,44 @@ export default function EmployeeOvertimeRequestsPage() {
                             Chi tiết
                           </Button>
 
-                          {request.status === OvertimeStatus.PENDING && canCancelOwn && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-gray-600 border-gray-600 hover:bg-gray-50"
-                              onClick={() => openCancelModal(request)}
-                            >
-                              <FontAwesomeIcon icon={faBan} className="mr-1" />
-                              Hủy
-                            </Button>
+                          {request.status === OvertimeStatus.PENDING && (
+                            <>
+                              {canApprove && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  onClick={() => openStatusModal(request, 'approve')}
+                                >
+                                  <FontAwesomeIcon icon={faCheck} className="mr-1" />
+                                  Duyệt
+                                </Button>
+                              )}
+
+                              {canReject && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => openStatusModal(request, 'reject')}
+                                >
+                                  <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                                  Từ chối
+                                </Button>
+                              )}
+
+                              {canCancelRequest(request) && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-gray-600 border-gray-600 hover:bg-gray-50"
+                                  onClick={() => openStatusModal(request, 'cancel')}
+                                >
+                                  <FontAwesomeIcon icon={faBan} className="mr-1" />
+                                  Hủy
+                                </Button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -418,13 +575,35 @@ export default function EmployeeOvertimeRequestsPage() {
                     label="Ca làm việc *"
                     value={formData.workShiftId}
                     onChange={(value) => setFormData({ ...formData, workShiftId: value })}
-                    placeholder={workShifts.length === 0 ? "Đang tải danh sách ca làm việc..." : "Chọn ca làm việc"}
+                    placeholder={
+                      workShiftsError 
+                        ? "Không thể tải danh sách ca làm việc" 
+                        : workShifts.length === 0 
+                        ? "Đang tải danh sách ca làm việc..." 
+                        : "Chọn ca làm việc"
+                    }
                     options={workShifts.map((shift) => ({
                       value: shift.workShiftId,
                       label: `${shift.shiftName} (${formatTimeToHHMM(shift.startTime)} - ${formatTimeToHHMM(shift.endTime)})`,
                     }))}
                     required
+                    disabled={workShiftsError !== null || workShifts.length === 0}
                   />
+                  {workShiftsError && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ {workShiftsError}
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Bạn không thể tạo yêu cầu làm thêm giờ khi không có quyền xem danh sách ca làm việc.
+                      </p>
+                    </div>
+                  )}
+                  {!workShiftsError && workShifts.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Đang tải danh sách ca làm việc...
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -514,7 +693,79 @@ export default function EmployeeOvertimeRequestsPage() {
         </div>
       )}
 
+      {/* Status Update Modal (Approve/Reject/Cancel) */}
+      {showStatusModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle>
+                {statusAction === 'approve' && 'Duyệt yêu cầu làm thêm giờ'}
+                {statusAction === 'reject' && 'Từ chối yêu cầu làm thêm giờ'}
+                {statusAction === 'cancel' && 'Hủy yêu cầu làm thêm giờ'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Yêu cầu: <strong>{selectedRequest.requestId}</strong>
+                </p>
 
+                {(statusAction === 'reject' || statusAction === 'cancel') && (
+                  <div>
+                    <Label htmlFor="statusReason">
+                      {statusAction === 'reject' ? 'Lý do từ chối' : 'Lý do hủy'} <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="statusReason"
+                      value={statusReason}
+                      onChange={(e) => setStatusReason(e.target.value)}
+                      placeholder={`Nhập ${statusAction === 'reject' ? 'lý do từ chối' : 'lý do hủy'}...`}
+                      className="resize-none"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                )}
+
+                {statusAction === 'approve' && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      Bạn có chắc chắn muốn duyệt yêu cầu này không?
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowStatusModal(false);
+                      setStatusReason('');
+                      setSelectedRequest(null);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleStatusUpdate}
+                    disabled={statusAction !== 'approve' && !statusReason.trim()}
+                    className={
+                      statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
+                      statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                      'bg-gray-600 hover:bg-gray-700'
+                    }
+                  >
+                    {statusAction === 'approve' && 'Duyệt'}
+                    {statusAction === 'reject' && 'Từ chối'}
+                    {statusAction === 'cancel' && 'Hủy'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
