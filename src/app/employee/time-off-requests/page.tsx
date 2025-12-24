@@ -10,6 +10,8 @@ import {
   faClock,
   faSearch,
   faPlus,
+  faCheck,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Eye } from 'lucide-react';
@@ -25,6 +27,7 @@ import CustomSelect from '@/components/ui/custom-select';
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
 import { TimeOffTypeService } from '@/services/timeOffTypeService';
 import { workShiftService } from '@/services/workShiftService';
+import { employeeService } from '@/services/employeeService';
 import { formatTimeToHHMM } from '@/lib/utils';
 import {
   TimeOffRequest,
@@ -34,11 +37,13 @@ import {
 } from '@/types/timeOff';
 import { TimeOffType } from '@/types/timeOff';
 import { WorkShift } from '@/types/workShift';
+import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { EmployeeLeaveBalancesResponse } from '@/types/leaveBalance';
+import { toast } from 'sonner';
 
 export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
@@ -48,16 +53,21 @@ export default function EmployeeTimeOffRequestsPage() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalancesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<TimeOffRequest | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [statusReason, setStatusReason] = useState('');
+  const [statusAction, setStatusAction] = useState<'approve' | 'reject' | 'cancel'>('approve');
   const [processing, setProcessing] = useState(false);
 
   // Create form states
@@ -72,7 +82,11 @@ export default function EmployeeTimeOffRequestsPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // Load employees if user has VIEW_LEAVE_ALL permission
+    if (user?.permissions?.includes('VIEW_LEAVE_ALL')) {
+      loadEmployees();
+    }
+  }, [user?.permissions]);
 
   const loadData = async () => {
     try {
@@ -93,24 +107,26 @@ export default function EmployeeTimeOffRequestsPage() {
   };
 
   const loadLeaveBalances = async () => {
-    // Validate employeeId exists and is a valid number
-    if (!user?.employeeId) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(' Cannot load leave balances: user.employeeId is missing');
-        console.warn('User object:', user);
-      }
+    // Only load leave balances if user has VIEW_LEAVE_OWN permission
+    // Managers with VIEW_LEAVE_ALL don't need to see their own balances on this page
+    const canViewOwn = user?.permissions?.includes('VIEW_LEAVE_OWN') || false;
+    if (!canViewOwn) {
+      // User doesn't have permission to view own balances, skip loading
       return;
     }
 
+    // Validate employeeId exists and is a valid number
+    if (!user?.employeeId) {
+      // No employeeId - silently skip (might be a manager viewing all requests)
+      return;
+    }
+
+    // Try to parse employeeId as number
+    // Some users might have employeeId as string (e.g., "bacsi2"), which is invalid
     const employeeIdNum = Number(user.employeeId);
     if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(' Invalid employeeId:');
-        console.error('  Raw value:', user.employeeId);
-        console.error('  Parsed value:', employeeIdNum);
-        console.error('  Type:', typeof user.employeeId);
-        console.error('Full user object:', user);
-      }
+      // Invalid employeeId format - silently skip (might be a manager or special account)
+      // Don't log errors as this is expected for some user types
       return;
     }
 
@@ -121,19 +137,7 @@ export default function EmployeeTimeOffRequestsPage() {
         currentYear
       );
       setLeaveBalances(balances);
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log(' Leave balances loaded:', balances);
-      }
     } catch (error: any) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(' Error loading leave balances:', {
-          employeeId: employeeIdNum,
-          status: error?.response?.status,
-          message: error?.response?.data?.message || error.message
-        });
-      }
-
       // Don't show error if 404 (no balances yet) or 403 (no permission)
       const status = error?.response?.status;
       if (status === 404) {
@@ -143,8 +147,15 @@ export default function EmployeeTimeOffRequestsPage() {
         // No permission - silently ignore
         setLeaveBalances(null);
       } else {
-        // Other errors - show to user
-        handleError(error, 'Không thể tải số dư ngày nghỉ');
+        // Other errors - only log in development, don't show to user
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Error loading leave balances:', {
+            employeeId: employeeIdNum,
+            status: error?.response?.status,
+            message: error?.response?.data?.message || error.message
+          });
+        }
+        setLeaveBalances(null);
       }
     }
   };
@@ -186,6 +197,21 @@ export default function EmployeeTimeOffRequestsPage() {
         console.error('Error loading work shifts:', error);
       }
       setWorkShifts([]);
+    }
+  };
+
+  const loadEmployees = async () => {
+    try {
+      const response = await employeeService.getEmployees({
+        page: 0,
+        size: 100,
+        sort: 'fullName,asc',
+      });
+      setEmployees(response.content);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading employees:', error);
+      }
     }
   };
 
@@ -251,22 +277,11 @@ export default function EmployeeTimeOffRequestsPage() {
       alert('Vui lòng nhập lý do nghỉ phép');
       return;
     }
-    if (!user?.employeeId) {
-      alert('Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.');
-      return;
-    }
-
-    // For employee self-requests, send employeeId from auth context
-    const employeeId = Number(user.employeeId);
-
-    // Double check employeeId is valid
-    if (!employeeId || isNaN(employeeId)) {
-      alert(`Lỗi: Employee ID không hợp lệ (${user.employeeId}). Vui lòng đăng nhập lại.`);
-      return;
-    }
-
-    const requestData = {
-      employeeId: employeeId, // Required by backend API
+    // ✅ BE FIXED: employeeId is now optional - BE auto-fills from JWT token
+    // For employee self-requests, we don't need to send employeeId
+    // For admin creating for another employee, we would send employeeId (not implemented yet)
+    const requestData: CreateTimeOffRequestDto = {
+      // employeeId: undefined, // ✅ Omit for employee self-requests - BE auto-fills from JWT
       timeOffTypeId: createForm.timeOffTypeId,
       startDate: createForm.startDate,
       endDate: createForm.endDate,
@@ -401,17 +416,87 @@ export default function EmployeeTimeOffRequestsPage() {
     setShowCancelModal(true);
   };
 
+  const openStatusModal = (request: TimeOffRequest, action: 'approve' | 'reject' | 'cancel') => {
+    setSelectedRequest(request);
+    setStatusAction(action);
+    setStatusReason('');
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!selectedRequest) return;
+
+    try {
+      const loadingToast = toast.loading('Đang xử lý...');
+
+      switch (statusAction) {
+        case 'approve':
+          await TimeOffRequestService.approveTimeOffRequest(selectedRequest.requestId);
+          toast.dismiss(loadingToast);
+          toast.success('Đã duyệt yêu cầu nghỉ phép');
+          break;
+        case 'reject':
+          if (!statusReason.trim()) {
+            toast.dismiss(loadingToast);
+            toast.error('Vui lòng nhập lý do từ chối');
+            return;
+          }
+          await TimeOffRequestService.rejectTimeOffRequest(selectedRequest.requestId, {
+            rejectedReason: statusReason
+          });
+          toast.dismiss(loadingToast);
+          toast.success('Đã từ chối yêu cầu nghỉ phép');
+          break;
+        case 'cancel':
+          if (!statusReason.trim()) {
+            toast.dismiss(loadingToast);
+            toast.error('Vui lòng nhập lý do hủy');
+            return;
+          }
+          await TimeOffRequestService.cancelTimeOffRequest(selectedRequest.requestId, {
+            cancellationReason: statusReason
+          });
+          toast.dismiss(loadingToast);
+          toast.success('Đã hủy yêu cầu nghỉ phép');
+          break;
+      }
+
+      setShowStatusModal(false);
+      setStatusReason('');
+      setSelectedRequest(null);
+      loadTimeOffRequests();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái yêu cầu');
+    }
+  };
+
   const filteredRequests = timeOffRequests.filter((request) => {
     const matchesSearch =
-      request.requestId.toLowerCase().includes(searchTerm.toLowerCase());
+      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesEmployee = employeeFilter === 'ALL' ||
+      request.employeeId?.toString() === employeeFilter;
+
+    return matchesSearch && matchesStatus && matchesEmployee;
   });
 
-  // Permission check: BE requires CREATE_TIME_OFF for creating time-off requests (TimeOffRequestController line 120)
+  // Permission checks
   const canCreate = user?.permissions?.includes('CREATE_TIME_OFF') || false;
+  const canViewAll = user?.permissions?.includes('VIEW_LEAVE_ALL') || false;
+  const canApprove = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
+  const canReject = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
+  const canCancelPending = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
+  const canCancelOwn = user?.permissions?.includes('CREATE_TIME_OFF') || false;
+
+  const canCancelRequest = (request: TimeOffRequest) => {
+    if (canCancelPending) return true;
+    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    return false;
+  };
 
   if (loading) {
     return (
@@ -505,7 +590,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 md:grid-cols-${canViewAll ? '3' : '2'} gap-4`}>
           <div>
             <Label htmlFor="search">Tìm kiếm</Label>
             <div className="relative">
@@ -534,6 +619,21 @@ export default function EmployeeTimeOffRequestsPage() {
               { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
             ]}
           />
+          {canViewAll && (
+            <CustomSelect
+              label="Nhân viên"
+              value={employeeFilter}
+              onChange={(value) => setEmployeeFilter(value)}
+              placeholder="Tất cả nhân viên"
+              options={[
+                { value: 'ALL', label: 'Tất cả nhân viên' },
+                ...employees.map(emp => ({
+                  value: emp.employeeId.toString(),
+                  label: emp.fullName || `${emp.firstName} ${emp.lastName}`,
+                })),
+              ]}
+            />
+          )}
         </div>
       </div>
 
@@ -541,7 +641,7 @@ export default function EmployeeTimeOffRequestsPage() {
       <div className="grid gap-4">
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
-          const canCancel = request.status === TimeOffStatus.PENDING;
+          const isPending = request.status === TimeOffStatus.PENDING;
 
           return (
             <Card key={request.requestId} className="hover:shadow-md transition-shadow">
@@ -587,7 +687,7 @@ export default function EmployeeTimeOffRequestsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 justify-end ml-auto">
+                  <div className="flex items-center gap-2 justify-end ml-auto flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -597,16 +697,44 @@ export default function EmployeeTimeOffRequestsPage() {
                       Chi tiết
                     </Button>
 
-                    {canCancel && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openCancelModal(request)}
-                        className="text-orange-600 hover:bg-orange-50 border-orange-300"
-                      >
-                        <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
-                        Hủy
-                      </Button>
+                    {isPending && (
+                      <>
+                        {canApprove && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => openStatusModal(request, 'approve')}
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="mr-1" />
+                            Duyệt
+                          </Button>
+                        )}
+
+                        {canReject && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            onClick={() => openStatusModal(request, 'reject')}
+                          >
+                            <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                            Từ chối
+                          </Button>
+                        )}
+
+                        {canCancelRequest(request) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                            onClick={() => openStatusModal(request, 'cancel')}
+                          >
+                            <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
+                            Hủy
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -819,6 +947,80 @@ export default function EmployeeTimeOffRequestsPage() {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Status Update Modal (Approve/Reject/Cancel) */}
+      {showStatusModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle>
+                {statusAction === 'approve' && 'Duyệt yêu cầu nghỉ phép'}
+                {statusAction === 'reject' && 'Từ chối yêu cầu nghỉ phép'}
+                {statusAction === 'cancel' && 'Hủy yêu cầu nghỉ phép'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Yêu cầu: <strong>{selectedRequest.requestId}</strong>
+                </p>
+
+                {(statusAction === 'reject' || statusAction === 'cancel') && (
+                  <div>
+                    <Label htmlFor="statusReason">
+                      {statusAction === 'reject' ? 'Lý do từ chối' : 'Lý do hủy'} <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="statusReason"
+                      value={statusReason}
+                      onChange={(e) => setStatusReason(e.target.value)}
+                      placeholder={`Nhập ${statusAction === 'reject' ? 'lý do từ chối' : 'lý do hủy'}...`}
+                      className="resize-none"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                )}
+
+                {statusAction === 'approve' && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      Bạn có chắc chắn muốn duyệt yêu cầu này không?
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowStatusModal(false);
+                      setStatusReason('');
+                      setSelectedRequest(null);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleStatusUpdate}
+                    disabled={statusAction !== 'approve' && !statusReason.trim()}
+                    className={
+                      statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
+                      statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                      'bg-gray-600 hover:bg-gray-700'
+                    }
+                  >
+                    {statusAction === 'approve' && 'Duyệt'}
+                    {statusAction === 'reject' && 'Từ chối'}
+                    {statusAction === 'cancel' && 'Hủy'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

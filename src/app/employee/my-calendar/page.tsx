@@ -422,7 +422,7 @@ export default function MyCalendarPage() {
     });
   }, [appointments]);
 
-  // Convert holidays to calendar events (all-day background style)
+  // Convert holidays to calendar events (all-day background style with title)
   const holidayEvents = useMemo(() => {
     return holidays.map((holiday) => {
       const holidayDate = new Date(holiday.holidayDate);
@@ -430,19 +430,19 @@ export default function MyCalendarPage() {
       
       return {
         id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
-        title: holiday.holidayName || 'Ngày lễ', // Empty title - holidays are background only
+        title: holiday.holidayName || 'Ngày lễ', // Show holiday name
         start: holidayDate,
         allDay: true,
         backgroundColor: '#fef3c7', // Light yellow/amber
         borderColor: '#f59e0b', // Amber border
         borderWidth: 2, // Thicker border for better visibility
-        textColor: '#000000', // Black text
+        textColor: '#92400e', // Dark amber text for better readability
         display: 'background', // Show as background highlight
         extendedProps: {
           type: 'holiday',
           isHoliday: true,
           holiday,
-          holidayName: holiday.holidayName || 'Ngày lễ', // Store name for click handler
+          holidayName: holiday.holidayName || 'Ngày lễ',
         },
       };
     });
@@ -541,7 +541,7 @@ export default function MyCalendarPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lịch Của Tôi</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lịch của tôi</h1>
             <p className="text-gray-600 mt-1">Xem ca làm việc và lịch hẹn của bạn</p>
           </div>
         </div>
@@ -628,10 +628,16 @@ export default function MyCalendarPage() {
                 // Check if event ID starts with 'holiday-' as additional check
                 const isHolidayById = eventInfo.event.id?.toString().startsWith('holiday-');
 
-                // Holidays with display: 'background' should not show content
-                // They are displayed as background highlight only
+                // Holidays: Show holiday name (even with display: 'background')
                 if (isHoliday || eventType === 'holiday' || isHolidayById) {
-                  return { html: '' }; // Return empty HTML to prevent any text rendering
+                  const holidayName = eventInfo.event.extendedProps?.holidayName || eventInfo.event.title || 'Ngày lễ';
+                  return (
+                    <div className="p-1 overflow-hidden">
+                      <div className="text-xs font-bold truncate" style={{ color: '#92400e', fontWeight: 700 }}>
+                        {holidayName}
+                      </div>
+                    </div>
+                  );
                 }
 
                 if (eventType === 'shift') {
