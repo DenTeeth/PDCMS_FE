@@ -94,7 +94,6 @@ export default function ImportTransactionForm({
       notes: '',
     },
   ]);
-
   // UI state
   const [openPopovers, setOpenPopovers] = useState<Record<number, boolean>>({});
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});

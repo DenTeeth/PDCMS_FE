@@ -539,7 +539,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Create Form Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader className="pb-3">
               <CardTitle>Tạo yêu cầu làm thêm giờ</CardTitle>
@@ -646,7 +646,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Cancel Modal */}
       {showCancelModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>Hủy yêu cầu làm thêm giờ</CardTitle>
@@ -695,7 +695,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Status Update Modal (Approve/Reject/Cancel) */}
       {showStatusModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>

@@ -537,7 +537,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
       {/* ==================== ADJUSTMENT MODAL ==================== */}
       {showAdjustModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -664,7 +664,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
       {/* ==================== ANNUAL RESET MODAL ==================== */}
       {showAnnualResetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

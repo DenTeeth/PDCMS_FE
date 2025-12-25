@@ -287,10 +287,13 @@
 
   /* Warehouse V3 - Modern Animations */
   @keyframes border-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       border-color: rgb(251 191 36);
       box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3);
     }
+
     50% {
       border-color: rgb(245 158 11);
       box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15);
@@ -299,5 +302,14 @@
 
   .animate-border-pulse {
     animation: border-pulse 2s ease-in-out infinite;
+  }
+
+  /* Modal Backdrop with Blur Effect */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-50;
+  }
+
+  .modal-backdrop-dark {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50;
   }
 }
