@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, Eye, Edit, Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -35,8 +36,8 @@ import type { TransactionType } from '@/types/warehouse';
 import categoryService from '@/services/categoryService';
 import { usePermission } from '@/hooks/usePermissions';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import ImportTransactionFormNew from '@/app/admin/warehouse/components/ImportTransactionFormNew';
-import ExportTransactionFormNew from '@/app/admin/warehouse/components/ExportTransactionFormNew';
+import ImportTransactionForm from '@/app/admin/warehouse/components/ImportTransactionForm';
+import ExportTransactionForm from '@/app/admin/warehouse/components/ExportTransactionForm';
 import StorageDetailModal from '@/app/admin/warehouse/components/StorageDetailModal';
 import UpdateStorageNotesModal from '@/app/admin/warehouse/components/UpdateStorageNotesModal';
 import EditImportModal from '@/app/admin/warehouse/components/EditImportModal';
@@ -368,8 +369,9 @@ export default function StorageInOutPage() {
             <p className="text-slate-600 mt-1">Quản lý giao dịch nhập/xuất kho & báo cáo</p>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex gap-2">
             <Button
               variant={viewMode === 'transactions' ? 'default' : 'outline'}
               onClick={() => setViewMode('transactions')}
@@ -386,6 +388,7 @@ export default function StorageInOutPage() {
               <FontAwesomeIcon icon={faChartLine} />
               Báo cáo
             </Button>
+          </div>
           </div>
         </div>
 
@@ -1076,7 +1079,7 @@ export default function StorageInOutPage() {
         {/* Modals - Only for transactions view */}
         {viewMode === 'transactions' && (
           <>
-            <ImportTransactionFormNew
+            <ImportTransactionForm
               isOpen={isImportModalOpen}
               onClose={() => {
                 setIsImportModalOpen(false);
@@ -1084,14 +1087,13 @@ export default function StorageInOutPage() {
                 queryClient.invalidateQueries({ queryKey: ['storageStats'] });
               }}
             />
-            <ExportTransactionFormNew
+            <ExportTransactionForm
               isOpen={isExportModalOpen}
               onClose={() => {
                 setIsExportModalOpen(false);
                 queryClient.invalidateQueries({ queryKey: ['transactions'] });
                 queryClient.invalidateQueries({ queryKey: ['storageStats'] });
               }}
-              warehouseType="NORMAL"
             />
             <StorageDetailModal
               isOpen={isViewModalOpen}

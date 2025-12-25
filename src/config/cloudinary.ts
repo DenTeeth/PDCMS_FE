@@ -10,13 +10,35 @@ const CLOUDINARY_CONFIG = {
   api_secret: process.env.CLOUDINARY_API_SECRET || '',
 };
 
-// Cấu hình Cloudinary
-cloudinary.config({
-  cloud_name: CLOUDINARY_CONFIG.cloud_name,
-  api_key: CLOUDINARY_CONFIG.api_key,
-  api_secret: CLOUDINARY_CONFIG.api_secret,
-  secure: true,
-});
+// Kiểm tra xem có đủ biến môi trường không
+const hasValidConfig = 
+  CLOUDINARY_CONFIG.cloud_name && 
+  CLOUDINARY_CONFIG.api_key && 
+  CLOUDINARY_CONFIG.api_secret;
+
+// Chỉ cấu hình Cloudinary nếu có đủ biến môi trường
+// Tránh lỗi ENVIRONMENT_FALLBACK khi deploy lên Vercel mà chưa set env vars
+if (hasValidConfig) {
+  try {
+    cloudinary.config({
+      cloud_name: CLOUDINARY_CONFIG.cloud_name,
+      api_key: CLOUDINARY_CONFIG.api_key,
+      api_secret: CLOUDINARY_CONFIG.api_secret,
+      secure: true,
+    });
+  } catch (error) {
+    console.error('Failed to configure Cloudinary:', error);
+  }
+} else {
+  // Log warning trong development để dễ debug
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('Cloudinary config is missing. Please set environment variables:', {
+      cloud_name: !!CLOUDINARY_CONFIG.cloud_name,
+      api_key: !!CLOUDINARY_CONFIG.api_key,
+      api_secret: !!CLOUDINARY_CONFIG.api_secret,
+    });
+  }
+}
 
 // Log để debug (chỉ trong development)
 if (process.env.NODE_ENV === 'development') {
@@ -51,6 +73,13 @@ export const uploadImage = async (
   height: number;
   format: string;
 }> => {
+  // Kiểm tra config trước khi upload
+  if (!hasValidConfig) {
+    throw new Error(
+      'Cloudinary is not configured. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.'
+    );
+  }
+
   try {
     const uploadOptions: any = {
       resource_type: options?.resourceType || 'auto',
@@ -68,25 +97,13 @@ export const uploadImage = async (
       uploadOptions.transformation = options.transformation;
     }
 
-    let uploadResult;
+    let uploadResult: any;
     
     if (typeof file === 'string') {
       // Upload từ URL
       uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
     } else if (file instanceof Buffer) {
       // Upload từ Buffer
-      uploadResult = await cloudinary.uploader.upload_stream(
-        uploadOptions,
-        (error, result) => {
-          if (error) throw error;
-          return result;
-        }
-      ).end(file);
-    } else {
-      // Upload từ File (cần convert sang base64 hoặc buffer)
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      
       uploadResult = await new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           uploadOptions,
@@ -94,17 +111,46 @@ export const uploadImage = async (
             if (error) reject(error);
             else resolve(result);
           }
-        ).end(buffer);
+        ).end(file);
       });
+    } else {
+      // Upload từ File (cần convert sang base64 hoặc buffer)
+      // Type guard để đảm bảo file là File object
+      if (file instanceof File) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            uploadOptions,
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(buffer);
+        });
+      } else {
+        throw new Error('Invalid file type. Expected File, Buffer, or string URL.');
+      }
     }
 
+    // Type assertion cho uploadResult
+    const result = uploadResult as {
+      public_id: string;
+      secure_url: string;
+      url: string;
+      width: number;
+      height: number;
+      format: string;
+    };
+
     return {
-      public_id: uploadResult.public_id,
-      secure_url: uploadResult.secure_url,
-      url: uploadResult.url,
-      width: uploadResult.width,
-      height: uploadResult.height,
-      format: uploadResult.format,
+      public_id: result.public_id,
+      secure_url: result.secure_url,
+      url: result.url,
+      width: result.width,
+      height: result.height,
+      format: result.format,
     };
   } catch (error: any) {
     console.error('Cloudinary upload error:', error);
@@ -113,6 +159,13 @@ export const uploadImage = async (
 };
 
 export const deleteImage = async (publicId: string): Promise<void> => {
+  // Kiểm tra config trước khi delete
+  if (!hasValidConfig) {
+    throw new Error(
+      'Cloudinary is not configured. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.'
+    );
+  }
+
   try {
     await cloudinary.uploader.destroy(publicId);
   } catch (error: any) {
@@ -131,6 +184,12 @@ export const getImageUrl = (
     format?: string;
   }
 ): string => {
+  // Kiểm tra config trước khi tạo URL
+  if (!hasValidConfig || !CLOUDINARY_CONFIG.cloud_name) {
+    console.warn('Cloudinary cloud_name is not configured. Returning empty string.');
+    return '';
+  }
+
   const transformations: string[] = [];
 
   if (options?.width) {

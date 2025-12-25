@@ -68,10 +68,11 @@ export default function CreateExportModal({
     mutationFn: (data: CreateExportTransactionDto) =>
       inventoryService.createExportTransaction(data),
     onSuccess: () => {
+      // Note: Inventory is NOT updated when creating transaction (only when approved)
+      // So we only invalidate transaction queries, not inventory queries
       queryClient.invalidateQueries({ queryKey: ['storageTransactions'] });
-      queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      queryClient.invalidateQueries({ queryKey: ['itemMasterSummary'] });
       toast.success('Xuất kho thành công!');
       handleReset();
       onClose();

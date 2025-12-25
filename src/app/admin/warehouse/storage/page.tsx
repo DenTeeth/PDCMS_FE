@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -34,8 +35,8 @@ import { supplierService } from '@/services/supplierService';
 import type { TransactionType } from '@/types/warehouse';
 import categoryService from '@/services/categoryService';
 import { usePermission } from '@/hooks/usePermissions';
-import ImportTransactionFormNew from '../components/ImportTransactionFormNew';
-import ExportTransactionFormNew from '../components/ExportTransactionFormNew';
+import ImportTransactionForm from '../components/ImportTransactionForm';
+import ExportTransactionForm from '../components/ExportTransactionForm';
 import StorageDetailModal from '../components/StorageDetailModal';
 import UpdateStorageNotesModal from '../components/UpdateStorageNotesModal';
 import EditImportModal from '../components/EditImportModal';
@@ -487,8 +488,9 @@ export default function StorageInOutPage() {
             <p className="text-slate-600 mt-1">Quản lý giao dịch nhập/xuất kho & báo cáo</p>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex gap-2">
             <Button
               variant={viewMode === 'transactions' ? 'default' : 'outline'}
               onClick={() => setViewMode('transactions')}
@@ -505,6 +507,7 @@ export default function StorageInOutPage() {
               <FontAwesomeIcon icon={faChartLine} />
               Báo cáo
             </Button>
+          </div>
           </div>
         </div>
 
@@ -1153,7 +1156,7 @@ export default function StorageInOutPage() {
         {/* Modals - Only for transactions view */}
         {viewMode === 'transactions' && (
           <>
-            <ImportTransactionFormNew
+            <ImportTransactionForm
               isOpen={isImportModalOpen}
               onClose={() => {
                 setIsImportModalOpen(false);
@@ -1161,14 +1164,13 @@ export default function StorageInOutPage() {
                 queryClient.invalidateQueries({ queryKey: ['storageStats'] });
               }}
             />
-            <ExportTransactionFormNew
+            <ExportTransactionForm
               isOpen={isExportModalOpen}
               onClose={() => {
                 setIsExportModalOpen(false);
                 queryClient.invalidateQueries({ queryKey: ['transactions'] });
                 queryClient.invalidateQueries({ queryKey: ['storageStats'] });
               }}
-              warehouseType="NORMAL"
             />
             <StorageDetailModal
               isOpen={isViewModalOpen}
@@ -1208,3 +1210,4 @@ export default function StorageInOutPage() {
     </ProtectedRoute>
   );
 }
+
