@@ -290,7 +290,7 @@ export default function InventoryPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Quản lý tồn kho</h1>
-            <p className="text-slate-600 mt-1">Quản lý vật tư master & theo dõi tồn kho</p>
+            <p className="text-slate-600 mt-1">Quản lý vật tư & theo dõi tồn kho</p>
           </div>
           <Button
             onClick={() => setIsCreateModalOpen(true)}

@@ -656,8 +656,8 @@ export default function ExportTransactionFormNew({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[30%]">Vật tư *</th>
-                      <th className="p-3 text-left w-[15%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[30%]">Vật tư <span className="text-red-500">*</span></th>
+                      <th className="p-3 text-left w-[15%]">Số lượng <span className="text-red-500">*</span></th>
                       <th className="p-3 text-left w-[15%]">Đơn vị</th>
                       <th className="p-3 text-left w-[25%]">Ghi chú</th>
                       <th className="p-3 text-center w-[10%]">Hành động</th>

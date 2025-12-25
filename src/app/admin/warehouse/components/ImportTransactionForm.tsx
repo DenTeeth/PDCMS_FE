@@ -217,7 +217,7 @@ export default function ImportTransactionForm({
     // Check cache first
     if (unitCache[itemMasterId]) {
       const cachedUnit = unitCache[itemMasterId];
-      setValue(`items.${rowIndex}.unitId`, Number(cachedUnit.unitId), { 
+      setValue(`items.${rowIndex}.unitId`, Number(cachedUnit.unitId), {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -228,16 +228,16 @@ export default function ImportTransactionForm({
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
       const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
-      
+
       if (!baseUnit || !baseUnit.unitId) {
         throw new Error('Base unit không hợp lệ');
       }
-      
+
       // Cache the unit
       setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
-      
+
       // Set unitId with validation (ensure it's a number)
-      setValue(`items.${rowIndex}.unitId`, Number(baseUnit.unitId), { 
+      setValue(`items.${rowIndex}.unitId`, Number(baseUnit.unitId), {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -262,7 +262,7 @@ export default function ImportTransactionForm({
       queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
       queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      
+
       // Show success with details
       toast.success('Nhập kho thành công!', {
         description: `Mã phiếu: ${response.transactionCode} | Tổng giá trị: ${response.totalValue.toLocaleString('vi-VN')} VNĐ`,
@@ -284,7 +284,7 @@ export default function ImportTransactionForm({
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi nhập kho!';
       const errorCode = error.response?.data?.error || error.response?.data?.errorCode;
-      
+
       if (errorCode === 'DUPLICATE_INVOICE') {
         toast.error('Số hóa đơn đã tồn tại', {
           description: 'Vui lòng sử dụng số hóa đơn khác',
@@ -399,8 +399,8 @@ export default function ImportTransactionForm({
           // Show first error to user
           const firstError = Object.values(errors).find(Boolean);
           if (firstError) {
-            const errorMessage = typeof firstError === 'object' && 'message' in firstError 
-              ? firstError.message 
+            const errorMessage = typeof firstError === 'object' && 'message' in firstError
+              ? firstError.message
               : 'Vui lòng kiểm tra lại thông tin đã nhập';
             toast.error('Thông tin không hợp lệ', {
               description: errorMessage,
@@ -509,7 +509,7 @@ export default function ImportTransactionForm({
                       const selectedItem = items.find((item) => item.id === selectedItemId);
                       const baseUnit = selectedItem ? unitCache[selectedItem.id!] : undefined;
                       const itemErrors = errors.items?.[index];
-                      
+
                       return (
                         <tr key={field.id} className="border-t hover:bg-slate-50">
                           {/* Hidden inputs for form tracking */}
@@ -518,9 +518,9 @@ export default function ImportTransactionForm({
                             control={control}
                             defaultValue={0}
                             render={({ field }) => (
-                              <input 
-                                type="hidden" 
-                                {...field} 
+                              <input
+                                type="hidden"
+                                {...field}
                                 value={Number(field.value) || 0}
                                 onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                               />
@@ -531,15 +531,15 @@ export default function ImportTransactionForm({
                             control={control}
                             defaultValue={0}
                             render={({ field }) => (
-                              <input 
-                                type="hidden" 
-                                {...field} 
+                              <input
+                                type="hidden"
+                                {...field}
                                 value={Number(field.value) || 0}
                                 onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                               />
                             )}
                           />
-                          
+
                           <td className="p-3 text-center font-medium text-slate-600">
                             {index + 1}
                           </td>
@@ -563,10 +563,10 @@ export default function ImportTransactionForm({
                                   {selectedItem
                                     ? `${selectedItem.itemCode} - ${selectedItem.itemName}`
                                     : itemsLoading
-                                    ? "Đang tải..."
-                                    : items.length === 0
-                                    ? "Không có dữ liệu"
-                                    : "Chọn vật tư"}
+                                      ? "Đang tải..."
+                                      : items.length === 0
+                                        ? "Không có dữ liệu"
+                                        : "Chọn vật tư"}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
@@ -614,17 +614,17 @@ export default function ImportTransactionForm({
                                                 toast.error('Lỗi: Không thể xác định ID vật tư');
                                                 return;
                                               }
-                                              
+
                                               // Set itemMasterId as number (ensure it's a number)
-                                              setValue(`items.${index}.itemMasterId`, Number(itemId), { 
+                                              setValue(`items.${index}.itemMasterId`, Number(itemId), {
                                                 shouldValidate: true,
                                                 shouldDirty: true,
                                                 shouldTouch: true
                                               });
-                                              
+
                                               // Fetch and set unitId
                                               await fetchBaseUnitForItem(Number(itemId), index);
-                                              
+
                                               setOpenPopovers((prev) => ({ ...prev, [index]: false }));
                                               setSearchQueries((prev) => ({ ...prev, [index]: '' }));
                                             }}
@@ -732,7 +732,6 @@ export default function ImportTransactionForm({
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
                 <Label className="text-sm font-semibold text-emerald-900">Tổng Giá Trị Phiếu Nhập</Label>
               </div>
               <div className="text-2xl font-bold text-emerald-700">

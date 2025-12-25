@@ -65,6 +65,9 @@ export default function SuppliersPage() {
   // Tab state - filter by status
   const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'blacklisted'>('active');
 
+  // Stats state - fetch separately to avoid filter issues
+  const [stats, setStats] = useState({ active: 0, inactive: 0, blacklisted: 0, total: 0 });
+
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierDetailResponse | null>(null);
@@ -122,6 +125,43 @@ export default function SuppliersPage() {
   const suppliers: SupplierListDTO[] = suppliersPage?.suppliers || [];
   const totalPages = suppliersPage?.totalPages || 0;
   const totalElements = suppliersPage?.totalElements || 0;
+
+  // Fetch stats for each tab separately using hooks
+  const { data: activeStatsPage } = useSuppliersWithMetrics({
+    page: 0,
+    size: 1,
+    isActive: true,
+    isBlacklisted: false,
+  });
+
+  const { data: inactiveStatsPage } = useSuppliersWithMetrics({
+    page: 0,
+    size: 1,
+    isActive: false,
+    isBlacklisted: false,
+  });
+
+  const { data: blacklistedStatsPage } = useSuppliersWithMetrics({
+    page: 0,
+    size: 1,
+    isBlacklisted: true,
+  });
+
+  // Calculate stats from separate queries
+  const activeCount = activeStatsPage?.totalElements || 0;
+  const inactiveCount = inactiveStatsPage?.totalElements || 0;
+  const blacklistedCount = blacklistedStatsPage?.totalElements || 0;
+  const totalCount = activeCount + inactiveCount + blacklistedCount;
+
+  // Update stats state
+  useEffect(() => {
+    setStats({
+      active: activeCount,
+      inactive: inactiveCount,
+      blacklisted: blacklistedCount,
+      total: totalCount,
+    });
+  }, [activeCount, inactiveCount, blacklistedCount, totalCount]);
 
   // Mutations
   const createMutation = useCreateSupplier();
@@ -263,9 +303,8 @@ export default function SuppliersPage() {
     return labels[sortBy];
   };
 
-  const activeCount = suppliers.filter((s) => s.isActive && !s.isBlacklisted).length;
-  const inactiveCount = suppliers.filter((s) => !s.isActive && !s.isBlacklisted).length;
-  const blacklistedCount = suppliers.filter((s) => s.isBlacklisted).length;
+  // Use stats from state (updated by useEffect above)
+  // No need to recalculate here
 
   return (
     <ProtectedRoute
@@ -296,7 +335,7 @@ export default function SuppliersPage() {
               <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <FontAwesomeIcon icon={faUsers} className="text-blue-700 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-blue-800">{totalElements}</p>
+              <p className="text-3xl font-bold text-blue-800">{stats.total}</p>
             </div>
           </div>
           <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">

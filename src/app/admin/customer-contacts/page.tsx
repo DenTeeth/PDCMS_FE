@@ -179,14 +179,14 @@ export default function AdminContactsList() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản Lý Liên Hệ Khách Hàng</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Quản lý liên hệ khách hàng</h1>
                     <p className="text-sm text-gray-600 mt-1">Quản lý thông tin liên hệ từ khách hàng tiềm năng</p>
                 </div>
                 {canCreate && (
                     <Link href="/admin/customer-contacts/new">
                         <Button className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white">
                             <Plus className="h-4 w-4 mr-2" />
-                            Tạo Liên Hệ
+                            Tạo liên hệ
                         </Button>
                     </Link>
                 )}
