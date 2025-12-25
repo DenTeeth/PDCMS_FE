@@ -728,7 +728,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
               <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
@@ -899,7 +899,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Edit Modal */}
         {showEditModal && selectedType && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
               <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
@@ -1070,7 +1070,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Toggle Status Modal */}
         {showToggleModal && selectedType && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader className="border-b flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">

@@ -810,7 +810,7 @@ export default function WorkShiftsPage() {
 
         {/* CREATE MODAL */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
               <CardHeader className="border-b flex-shrink-0 pb-4">
                 <div className="flex items-center justify-between">
@@ -902,7 +902,7 @@ export default function WorkShiftsPage() {
 
         {/* ==================== EDIT MODAL ==================== */}
         {isEditModalOpen && selectedShift && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <Card className="w-full max-w-2xl my-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
@@ -991,7 +991,7 @@ export default function WorkShiftsPage() {
 
         {/* ==================== DELETE MODAL ==================== */}
         {isDeleteModalOpen && selectedShift && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -1032,7 +1032,7 @@ export default function WorkShiftsPage() {
 
         {/* ==================== REACTIVATE MODAL ==================== */}
         {isReactivateModalOpen && selectedShift && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#e2e8f0]">
               <CardHeader>
                 <div className="flex items-center gap-3">

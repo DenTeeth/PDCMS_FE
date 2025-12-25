@@ -505,7 +505,7 @@ export default function RolesPage() {
 
         {/* ==================== CREATE ROLE MODAL ==================== */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -637,7 +637,7 @@ export default function RolesPage() {
 
         {/* ==================== EDIT ROLE MODAL ==================== */}
         {showEditModal && editingRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -721,7 +721,7 @@ export default function RolesPage() {
 
         {/* ==================== ASSIGN PERMISSIONS MODAL ==================== */}
         {showAssignModal && assigningRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1011,7 +1011,7 @@ export default function RolesPage() {
 
         {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
         {showDeleteModal && deletingRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">

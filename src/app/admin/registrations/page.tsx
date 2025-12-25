@@ -777,7 +777,7 @@ export default function RegistrationsPage() {
         {/* PART-TIME DETAILS MODAL */}
         {/* SLOT DETAILS MODAL */}
         {showSlotDetailsModal && selectedSlot && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Slot Details</h2>
 
@@ -895,7 +895,7 @@ export default function RegistrationsPage() {
 
         {/* FIXED CREATE MODAL */}
         {showFixedCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Tạo đăng ký ca cố định</h2>
               <form onSubmit={handleFixedCreate} className="space-y-4">
@@ -1034,7 +1034,7 @@ export default function RegistrationsPage() {
 
         {/* FIXED EDIT MODAL */}
         {showFixedEditModal && fixedEditingRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Chỉnh sửa đăng ký ca cố định</h2>
               <form onSubmit={handleFixedUpdate} className="space-y-4">
@@ -1157,7 +1157,7 @@ export default function RegistrationsPage() {
 
         {/* FIXED DETAILS MODAL */}
         {showFixedDetailsModal && fixedDetailsRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Chi tiết đăng ký</h2>
               <div className="space-y-3">
