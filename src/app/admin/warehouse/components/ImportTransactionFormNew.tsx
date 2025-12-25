@@ -683,12 +683,12 @@ export default function ImportTransactionFormNew({
                     <thead className="bg-slate-100">
                       <tr className="text-xs font-semibold text-slate-700">
                         <th className="p-3 text-left w-[5%]">STT</th>
-                        <th className="p-3 text-left w-[18%]">Vật tư *</th>
-                        <th className="p-3 text-left w-[8%]">Đơn vị *</th>
-                        <th className="p-3 text-left w-[14%]">Số Lô *</th>
-                        <th className="p-3 text-left w-[10%]">Số lượng *</th>
-                        <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) *</th>
-                        <th className="p-3 text-left w-[12%]">Hạn sử dụng *</th>
+                        <th className="p-3 text-left w-[18%]">Vật tư <span className="text-red-500">*</span></th>
+                        <th className="p-3 text-left w-[8%]">Đơn vị <span className="text-red-500">*</span></th>
+                        <th className="p-3 text-left w-[14%]">Số Lô <span className="text-red-500">*</span></th>
+                        <th className="p-3 text-left w-[10%]">Số lượng <span className="text-red-500">*</span></th>
+                        <th className="p-3 text-left w-[12%]">Đơn Giá (VNĐ) <span className="text-red-500">*</span></th>
+                        <th className="p-3 text-left w-[12%]">Hạn sử dụng <span className="text-red-500">*</span></th>
                         <th className="p-3 text-left w-[15%]">Hành động</th>
                       </tr>
                     </thead>
@@ -868,9 +868,6 @@ export default function ImportTransactionFormNew({
             <div className="rounded-lg p-6 border-2 bg-gray-50 border-gray-300 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-800 shadow-md">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-600 uppercase tracking-wide">
                       Tổng giá trị phiếu nhập

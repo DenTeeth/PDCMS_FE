@@ -759,26 +759,18 @@ export default function PatientsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {patient.isBookingBlocked ? (
                         isTemporaryBlock(patient.bookingBlockReason) ? (
-                          <AlertCircle
-                            className="h-6 w-6 text-orange-600"
-                            title={`Tạm chặn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
-                          />
+                          <Badge className="bg-orange-600 text-white">
+                            Tạm chặn
+                          </Badge>
                         ) : (
-                          <Ban
-                            className="h-6 w-6 text-red-600"
-                            title={`Chặn vĩnh viễn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}`}
-                          />
+                          <Badge className="bg-red-600 text-white">
+                            Chặn vĩnh viễn
+                          </Badge>
                         )
-                      ) : patient.isActive ? (
-                        <CheckCircle2
-                          className="h-6 w-6 text-green-600"
-                          title="Hoạt động"
-                        />
                       ) : (
-                        <XCircle
-                          className="h-6 w-6 text-gray-400"
-                          title="Không hoạt động"
-                        />
+                        <Badge className={patient.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
+                          {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                        </Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">

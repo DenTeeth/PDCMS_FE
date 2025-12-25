@@ -81,8 +81,10 @@ export default function AdminTimeOffTypesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canView = user?.permissions?.includes('VIEW_LEAVE_TYPE') || false;
-  const canManage = user?.permissions?.includes('MANAGE_LEAVE_TYPE') || false;
+  // Note: BE controller uses VIEW_LEAVE_ALL and APPROVE_TIME_OFF (not VIEW_LEAVE_TYPE/MANAGE_LEAVE_TYPE)
+  // See: AdminTimeOffTypeController.java
+  const canView = user?.permissions?.includes('VIEW_LEAVE_ALL') || user?.permissions?.includes('APPROVE_TIME_OFF') || false;
+  const canManage = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
   const canCreate = canManage;
   const canUpdate = canManage;
   const canDelete = canManage;
@@ -442,7 +444,7 @@ export default function AdminTimeOffTypesPage() {
   }
 
   return (
-    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_LEAVE_TYPE']}>
+    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF']} requireAll={false}>
       <>
         <div className="container mx-auto p-6">
           {/* Header */}

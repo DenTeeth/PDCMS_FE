@@ -84,7 +84,7 @@ export const BE_PERMISSIONS = {
     VIEW_TIME_OFF_ALL: 'VIEW_TIME_OFF_ALL', // View all time-off requests
     VIEW_TIME_OFF_OWN: 'VIEW_TIME_OFF_OWN', // View own time-off requests
     CREATE_TIME_OFF: 'CREATE_TIME_OFF', // Create time-off request
-    APPROVE_TIME_OFF: 'APPROVE_TIME_OFF', // Approve/Reject time-off (Manager/HR)
+    APPROVE_TIME_OFF: 'APPROVE_TIME_OFF', // Approve/Reject time-off (Manager/HR) - Also used for managing leave types
     VIEW_OVERTIME_ALL: 'VIEW_OVERTIME_ALL', // View all overtime requests
     VIEW_OVERTIME_OWN: 'VIEW_OVERTIME_OWN', // View own overtime requests
     CREATE_OVERTIME: 'CREATE_OVERTIME', // Create overtime request
