@@ -32,6 +32,24 @@ import { Permission } from '@/types/admin';
 import { roleService } from '@/services/roleService';
 import { permissionService } from '@/services/permissionService';
 
+// Helper function: Format role name to Vietnamese
+const formatRoleName = (roleName: string): string => {
+  const roleNameMap: Record<string, string> = {
+    'ROLE_ADMIN': 'Quản trị viên',
+    'ROLE_MANAGER': 'Quản lý',
+    'ROLE_EMPLOYEE': 'Nhân viên',
+    'ROLE_DOCTOR': 'Bác sĩ',
+    'ROLE_DENTIST': 'Nha sĩ',
+    'ROLE_NURSE': 'Y tá',
+    'ROLE_RECEPTIONIST': 'Lễ tân',
+    'ROLE_ACCOUNTANT': 'Kế toán',
+    'ROLE_DENTIST_INTERN': 'Thực tập sinh',
+    'ROLE_PATIENT': 'Bệnh nhân',
+  };
+
+  return roleNameMap[roleName] || roleName;
+};
+
 // ==================== MAIN COMPONENT ====================
 export default function RolesPage() {
   const router = useRouter();
@@ -394,17 +412,12 @@ export default function RolesPage() {
                       <tr key={role.roleId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <Shield className="h-5 w-5 text-blue-600" />
-                              </div>
-                            </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                {role.roleName}
+                                {formatRoleName(role.roleName)}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {role.roleId}
+                                {role.roleName}
                               </div>
                             </div>
                           </div>
@@ -492,7 +505,7 @@ export default function RolesPage() {
 
         {/* ==================== CREATE ROLE MODAL ==================== */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -502,7 +515,7 @@ export default function RolesPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleCreateRole} className="space-y-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="roleId">
                       Mã vai trò <span className="text-red-500">*</span>
                     </Label>
@@ -519,7 +532,7 @@ export default function RolesPage() {
                     </p>
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="roleName">
                       Tên vai trò <span className="text-red-500">*</span>
                     </Label>
@@ -533,7 +546,7 @@ export default function RolesPage() {
                     />
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="description">
                       Mô tả <span className="text-red-500">*</span>
                     </Label>
@@ -545,11 +558,11 @@ export default function RolesPage() {
                       disabled={creating}
                       required
                       rows={4}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     />
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="baseRoleId">
                       Vai trò cơ sở <span className="text-red-500">*</span>
                     </Label>
@@ -559,7 +572,7 @@ export default function RolesPage() {
                       onChange={(e) => setFormData({ ...formData, baseRoleId: e.target.value })}
                       disabled={creating}
                       required
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     >
                       <option value="">Chọn vai trò cơ sở</option>
                       <option value="ROLE_ADMIN">Quản trị viên (ROLE_ADMIN)</option>
@@ -571,7 +584,7 @@ export default function RolesPage() {
                     </p>
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -585,7 +598,7 @@ export default function RolesPage() {
                         Yêu cầu chuyên môn
                       </Label>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 ml-6">
+                    <p className="text-xs text-gray-500 ml-6">
                       Đánh dấu nếu vai trò này yêu cầu chuyên môn (VD: bác sĩ)
                     </p>
                   </div>
@@ -624,7 +637,7 @@ export default function RolesPage() {
 
         {/* ==================== EDIT ROLE MODAL ==================== */}
         {showEditModal && editingRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -634,17 +647,17 @@ export default function RolesPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleUpdateRole} className="space-y-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label>Role ID</Label>
                     <Input
                       value={editingRole.roleId}
                       disabled
                       className="bg-gray-100"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Role ID cannot be changed</p>
+                    <p className="text-xs text-gray-500">Role ID cannot be changed</p>
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="editRoleName">
                       Role Name <span className="text-red-500">*</span>
                     </Label>
@@ -658,7 +671,7 @@ export default function RolesPage() {
                     />
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="editDescription">
                       Description <span className="text-red-500">*</span>
                     </Label>
@@ -670,7 +683,7 @@ export default function RolesPage() {
                       disabled={updating}
                       required
                       rows={4}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -708,7 +721,7 @@ export default function RolesPage() {
 
         {/* ==================== ASSIGN PERMISSIONS MODAL ==================== */}
         {showAssignModal && assigningRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -742,45 +755,37 @@ export default function RolesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const allModules = Object.keys(
-                                allPermissions.reduce((acc, p) => {
-                                  acc[p.module] = true;
-                                  return acc;
-                                }, {} as Record<string, boolean>)
-                              );
-                              setExpandedModules(allModules);
+                              if (expandedModules.length > 0) {
+                                setExpandedModules([]);
+                              } else {
+                                const allModules = Object.keys(
+                                  allPermissions.reduce((acc, p) => {
+                                    acc[p.module] = true;
+                                    return acc;
+                                  }, {} as Record<string, boolean>)
+                                );
+                                setExpandedModules(allModules);
+                              }
                             }}
-                            className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300"
+                            className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-300"
                           >
-                            Mở tất cả
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setExpandedModules([])}
-                            className="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
-                          >
-                            Đóng tất cả
+                            {expandedModules.length > 0 ? 'Đóng tất cả' : 'Mở tất cả'}
                           </Button>
                           <div className="h-4 w-px bg-gray-300"></div>
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedPermissions(allPermissions.map((p) => p.permissionId))}
-                            className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300"
+                            onClick={() => {
+                              if (selectedPermissions.length > 0) {
+                                setSelectedPermissions([]);
+                              } else {
+                                setSelectedPermissions(allPermissions.map((p) => p.permissionId));
+                              }
+                            }}
+                            className="text-xs bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-300"
                           >
-                            Chọn tất cả
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedPermissions([])}
-                            className="text-xs bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
-                          >
-                            Bỏ chọn tất cả
+                            {selectedPermissions.length > 0 ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                           </Button>
                         </div>
                       </div>
@@ -862,7 +867,6 @@ export default function RolesPage() {
                                 ) : (
                                   <ChevronRight className="h-5 w-5 text-gray-600" />
                                 )}
-                                <Shield className="h-5 w-5 text-blue-600" />
                                 <h3 className="font-semibold text-lg">{module}</h3>
                                 <Badge variant="outline">
                                   {modulePermissionsSelected}/{permissions.length}
@@ -878,27 +882,22 @@ export default function RolesPage() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     const modulePermissionIds = permissions.map(p => p.permissionId);
-                                    setSelectedPermissions(prev => {
-                                      const filtered = prev.filter(id => !modulePermissionIds.includes(id));
-                                      return [...filtered, ...modulePermissionIds];
-                                    });
+                                    const allSelected = modulePermissionIds.every(id => selectedPermissions.includes(id));
+
+                                    if (allSelected) {
+                                      // Xóa hết
+                                      setSelectedPermissions(prev => prev.filter(id => !modulePermissionIds.includes(id)));
+                                    } else {
+                                      // Chọn hết
+                                      setSelectedPermissions(prev => {
+                                        const filtered = prev.filter(id => !modulePermissionIds.includes(id));
+                                        return [...filtered, ...modulePermissionIds];
+                                      });
+                                    }
                                   }}
-                                  className="text-xs px-2 py-1 h-7 bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                  className="text-xs px-2 py-1 h-7 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-300"
                                 >
-                                  Chọn hết
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const modulePermissionIds = permissions.map(p => p.permissionId);
-                                    setSelectedPermissions(prev => prev.filter(id => !modulePermissionIds.includes(id)));
-                                  }}
-                                  className="text-xs px-2 py-1 h-7 bg-red-100 text-red-700 hover:bg-red-200"
-                                >
-                                  Xóa hết
+                                  {permissions.every(p => selectedPermissions.includes(p.permissionId)) ? 'Xóa hết' : 'Chọn hết'}
                                 </Button>
                               </div>
                             </div>
@@ -1012,7 +1011,7 @@ export default function RolesPage() {
 
         {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
         {showDeleteModal && deletingRole && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
@@ -1079,6 +1078,6 @@ export default function RolesPage() {
           </div>
         )}
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 }

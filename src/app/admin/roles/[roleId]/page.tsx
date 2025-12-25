@@ -396,7 +396,7 @@ export default function RoleDetailPage() {
 
       {/* ==================== EDIT ROLE MODAL ==================== */}
       {showEditModal && role && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export default function RoleDetailPage() {
 
       {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
       {showDeleteModal && role && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">

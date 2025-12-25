@@ -358,7 +358,7 @@ export default function ShiftCalendarPage() {
     const holidayEvents = holidays.map((holiday) => {
       const holidayDate = new Date(holiday.holidayDate);
       holidayDate.setHours(0, 0, 0, 0);
-      
+
       return {
         id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
         title: holiday.holidayName || 'Ngày lễ',
@@ -681,7 +681,7 @@ export default function ShiftCalendarPage() {
                 <FontAwesomeIcon icon={faChartBar} className="text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Thống kê Ca Làm Việc</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Thống kê ca làm việc</h3>
                 <p className="text-sm text-gray-600">Theo dõi hiệu suất làm việc của nhân viên</p>
               </div>
             </div>
