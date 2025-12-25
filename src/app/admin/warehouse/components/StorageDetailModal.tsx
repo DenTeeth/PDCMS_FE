@@ -115,8 +115,14 @@ export default function StorageDetailModal({
     },
     onSuccess: () => {
       toast.success('Đã duyệt phiếu thành công');
+      // IMPORTANT: Inventory is updated ONLY when transaction is approved
+      // So we need to invalidate inventory queries after approval
       queryClient.invalidateQueries({ queryKey: ['storageTransaction', transactionId] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['storageTransactions'] });
+      queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary'] });
+      queryClient.invalidateQueries({ queryKey: ['storageStats'] });
       onClose();
     },
     onError: (error: any) => {

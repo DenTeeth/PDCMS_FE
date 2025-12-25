@@ -1,29 +1,25 @@
 'use client';
 
 /**
- * Export Transaction Form - API 6.5
- * Complete implementation matching BE requirements
+ * Export Transaction Form
+ * Simplified and more reliable implementation
  * 
  * Features:
- * - FEFO Algorithm (First Expired First Out)
- * - Auto-Unpacking support
- * - Multi-Batch Allocation
- * - Financial Tracking (COGS)
- * - Warning System
- * - Export Types: USAGE, DISPOSAL, RETURN
+ * - Export types: USAGE, DISPOSAL, RETURN
+ * - FEFO algorithm (handled by BE)
+ * - Auto-unpacking (handled by BE)
+ * - Multi-batch allocation (handled by BE)
+ * - Financial tracking (COGS)
+ * - Warning system
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -36,47 +32,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Search, Plus, Trash2, TruckIcon, AlertCircle, DollarSign } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, Plus, Trash2, Calendar, AlertCircle, Box } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
+import { faSnowflake, faBoxes } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { CreateExportTransactionDto, ExportType, ItemUnitResponse } from '@/types/warehouse';
-import inventoryService, { type ItemMasterV1 } from '@/services/inventoryService';
+import { CreateExportTransactionDto, CreateExportItemDto, ExportType, ItemUnitResponse } from '@/types/warehouse';
+import inventoryService, { type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import itemUnitService from '@/services/itemUnitService';
 
-// ============================================
-// VALIDATION SCHEMA (Matching BE)
-// ============================================
-
-const exportItemSchema = z.object({
-  itemMasterId: z.number().positive('Vui lòng chọn vật tư'),
-  quantity: z.number().min(1, 'Số lượng phải >= 1').max(1000000, 'Số lượng không được vượt quá 1,000,000'),
-  unitId: z.number().positive('Đơn vị là bắt buộc'),
-  notes: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự').optional().or(z.literal('')),
-});
-
-const exportFormSchema = z.object({
-  transactionDate: z.string().min(1, 'Ngày xuất là bắt buộc').refine(
-    (date) => {
-      const txDate = new Date(date);
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      return txDate < tomorrow;
-    },
-    { message: 'Ngày xuất không được là tương lai' }
-  ),
-  exportType: z.enum(['USAGE', 'DISPOSAL', 'RETURN'] as [string, ...string[]]),
-  referenceCode: z.string().max(100, 'Mã tham chiếu không được vượt quá 100 ký tự').optional().or(z.literal('')),
-  departmentName: z.string().max(200, 'Tên phòng ban không được vượt quá 200 ký tự').optional().or(z.literal('')),
-  requestedBy: z.string().max(200, 'Người yêu cầu không được vượt quá 200 ký tự').optional().or(z.literal('')),
-  notes: z.string().max(500, 'Ghi chú không được vượt quá 500 ký tự').optional().or(z.literal('')),
-  allowExpired: z.boolean().default(false),
-  items: z.array(exportItemSchema).min(1, 'Phải có ít nhất 1 vật tư'),
-});
-
-type ExportFormData = z.infer<typeof exportFormSchema>;
+interface ExportItem {
+  itemMasterId: number;
+  itemCode: string;
+  itemName: string;
+  quantity: number;
+  unitId: number;
+  unitName: string;
+  notes: string;
+  availableUnits?: ItemUnitResponse[]; // Danh sách units có sẵn cho item này
+}
 
 interface ExportTransactionFormProps {
   isOpen: boolean;
@@ -87,90 +61,341 @@ interface ExportTransactionFormProps {
 export default function ExportTransactionForm({
   isOpen,
   onClose,
-  warehouseType,
+  warehouseType: initialWarehouseType,
 }: ExportTransactionFormProps) {
   const queryClient = useQueryClient();
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(exportFormSchema) as any,
-    defaultValues: {
-      transactionDate: new Date().toISOString().split('T')[0],
-      exportType: 'USAGE',
-      referenceCode: '',
-      departmentName: '',
-      requestedBy: '',
+  // Form state
+  const [selectedWarehouseType, setSelectedWarehouseType] = useState<'COLD' | 'NORMAL'>(
+    initialWarehouseType || 'NORMAL'
+  );
+  const [transactionDate, setTransactionDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [exportType, setExportType] = useState<ExportType>('USAGE');
+  const [referenceCode, setReferenceCode] = useState<string>('');
+  const [departmentName, setDepartmentName] = useState<string>('');
+  const [requestedBy, setRequestedBy] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
+  const [allowExpired, setAllowExpired] = useState<boolean>(false);
+  const [items, setItems] = useState<ExportItem[]>([
+    {
+      itemMasterId: 0,
+      itemCode: '',
+      itemName: '',
+      quantity: 1,
+      unitId: 0,
+      unitName: '',
       notes: '',
-      allowExpired: false,
-      items: [
-        {
-          itemMasterId: 0,
-          quantity: 1,
-          unitId: 0,
-          notes: '',
-        },
-      ],
     },
-  });
+  ]);
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'items',
-  });
-
-  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse>>({});
-  const [unitLoading, setUnitLoading] = useState<Record<number, boolean>>({});
+  // UI state
   const [openPopovers, setOpenPopovers] = useState<Record<number, boolean>>({});
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
+  const [unitCache, setUnitCache] = useState<Record<number, ItemUnitResponse[]>>({}); // Cache danh sách units
+  const [unitLoading, setUnitLoading] = useState<Record<number, boolean>>({});
 
-  // Fetch Item Masters
-  const { data: items = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ['itemMasters', warehouseType],
+  // Fetch Item Masters - Using getSummary for better compatibility
+  const { data: itemMastersResponse, isLoading: itemsLoading } = useQuery({
+    queryKey: ['itemMasters', selectedWarehouseType],
     queryFn: async () => {
       try {
-        const result = await inventoryService.getAll({
-          warehouseType,
+        // Use getSummary which returns paginated response with proper structure
+        const result = await inventoryService.getSummary({
+          warehouseType: selectedWarehouseType,
+          size: 1000, // Get all items
+          page: 0,
         });
-        return result;
+        // Map InventorySummary to ItemMasterV1 format
+        return (result.content || []).map((item) => ({
+          id: item.itemMasterId,
+          itemMasterId: item.itemMasterId,
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          categoryId: 0, // Not available in summary
+          categoryName: item.categoryName,
+          unitOfMeasure: item.unitOfMeasure,
+          warehouseType: item.warehouseType,
+          minStockLevel: item.minStockLevel,
+          maxStockLevel: item.maxStockLevel,
+          currentStock: item.totalQuantity,
+          stockStatus: item.stockStatus,
+          isTool: item.isTool || false,
+          notes: '',
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+        }));
       } catch (error: any) {
         console.error(' Failed to fetch item masters:', error);
         toast.error('Không thể tải danh sách vật tư', {
-          description: error.response?.data?.message || 'Vui lòng kiểm tra quyền truy cập',
+          description: error.response?.data?.message || 'Vui lòng thử lại',
         });
         return [];
       }
     },
-    enabled: isOpen,
+    enabled: isOpen && !!selectedWarehouseType,
   });
 
-  const fetchBaseUnitForItem = async (itemMasterId: number, rowIndex: number) => {
-    if (!itemMasterId) return;
+  const itemMasters: ItemMasterV1[] = itemMastersResponse || [];
 
-    if (unitCache[itemMasterId]) {
-      setValue(`items.${rowIndex}.unitId`, unitCache[itemMasterId].unitId);
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedWarehouseType(initialWarehouseType || 'NORMAL');
+      setTransactionDate(new Date().toISOString().split('T')[0]);
+      setExportType('USAGE');
+      setReferenceCode('');
+      setDepartmentName('');
+      setRequestedBy('');
+      setNotes('');
+      setAllowExpired(false);
+      setItems([
+        {
+          itemMasterId: 0,
+          itemCode: '',
+          itemName: '',
+          quantity: 1,
+          unitId: 0,
+          unitName: '',
+          notes: '',
+          availableUnits: undefined,
+        },
+      ]);
+      setOpenPopovers({});
+      setSearchQueries({});
+      setUnitCache({});
+      setUnitLoading({});
+    }
+  }, [isOpen]);
+
+  // Fetch units for item (API 6.11)
+  const fetchItemUnits = async (itemMasterId: number, rowIndex: number, item?: ItemMasterV1) => {
+    if (!itemMasterId || itemMasterId <= 0) return;
+
+    // Check cache
+    if (unitCache[itemMasterId] && unitCache[itemMasterId].length > 0) {
+      const cachedUnits = unitCache[itemMasterId];
+      const baseUnit = cachedUnits.find(u => u.isBaseUnit) || cachedUnits[0];
+      setItems((prev) => {
+        const updated = [...prev];
+        updated[rowIndex] = {
+          ...updated[rowIndex],
+          unitId: baseUnit.unitId,
+          unitName: baseUnit.unitName,
+          availableUnits: cachedUnits,
+        };
+        return updated;
+      });
       return;
     }
 
     try {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: true }));
-      const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
-      setUnitCache((prev) => ({ ...prev, [itemMasterId]: baseUnit }));
-      setValue(`items.${rowIndex}.unitId`, baseUnit.unitId);
+
+      // Try to get units using API 6.11
+      const unitsResponse = await itemUnitService.getItemUnits(itemMasterId, 'active');
+
+      if (!unitsResponse || !unitsResponse.units || unitsResponse.units.length === 0) {
+        // Fallback: Try getBaseUnit
+        try {
+          const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+          if (baseUnit && baseUnit.unitId) {
+            const units = [baseUnit];
+            setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+            setItems((prev) => {
+              const updated = [...prev];
+              updated[rowIndex] = {
+                ...updated[rowIndex],
+                unitId: baseUnit.unitId,
+                unitName: baseUnit.unitName,
+                availableUnits: units,
+              };
+              return updated;
+            });
+            return;
+          }
+        } catch (baseUnitError) {
+          console.warn(' Both getItemUnits and getBaseUnit failed, BE will auto-create unit');
+        }
+
+        // If both fail, BE will auto-create base unit from unitOfMeasure
+        const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+        const fallbackUnit: ItemUnitResponse = {
+          unitId: 0, // Will be set by BE
+          unitName: fallbackUnitName,
+          conversionRate: 1,
+          isBaseUnit: true,
+          displayOrder: 1,
+        };
+
+        setItems((prev) => {
+          const updated = [...prev];
+          updated[rowIndex] = {
+            ...updated[rowIndex],
+            unitId: 0, // BE will auto-create and use correct unitId
+            unitName: fallbackUnitName,
+            availableUnits: [fallbackUnit],
+          };
+          return updated;
+        });
+
+        toast.warning('Chưa có đơn vị cho vật tư này', {
+          description: `Hệ thống sẽ tự động tạo đơn vị cơ sở "${fallbackUnitName}" khi bạn xuất kho.`,
+          duration: 5000,
+        });
+        return;
+      }
+
+      // Cache the units
+      const units = unitsResponse.units.map(u => ({
+        unitId: u.unitId,
+        unitName: u.unitName,
+        conversionRate: u.conversionRate,
+        isBaseUnit: u.isBaseUnit,
+        displayOrder: u.displayOrder,
+        isActive: u.isActive,
+        description: u.description,
+      }));
+      setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+
+      // Set default to base unit (or first unit if no base unit found)
+      const baseUnit = units.find(u => u.isBaseUnit) || units[0];
+
+      // Update item with base unit and available units
+      setItems((prev) => {
+        const updated = [...prev];
+        updated[rowIndex] = {
+          ...updated[rowIndex],
+          unitId: baseUnit.unitId,
+          unitName: baseUnit.unitName,
+          availableUnits: units,
+        };
+        return updated;
+      });
     } catch (error: any) {
-      console.error(' Failed to fetch base unit:', error);
-      toast.error('Không thể tải đơn vị cơ sở', {
-        description: error.response?.data?.message || 'Vui lòng thử lại',
+      console.error(' Failed to fetch units:', error);
+
+      // Fallback: Try getBaseUnit
+      try {
+        const baseUnit = await itemUnitService.getBaseUnit(itemMasterId);
+        if (baseUnit && baseUnit.unitId) {
+          const units = [baseUnit];
+          setUnitCache((prev) => ({ ...prev, [itemMasterId]: units }));
+          setItems((prev) => {
+            const updated = [...prev];
+            updated[rowIndex] = {
+              ...updated[rowIndex],
+              unitId: baseUnit.unitId,
+              unitName: baseUnit.unitName,
+              availableUnits: units,
+            };
+            return updated;
+          });
+          return;
+        }
+      } catch (baseUnitError) {
+        console.warn(' getBaseUnit also failed');
+      }
+
+      // Final fallback: BE will auto-create
+      const fallbackUnitName = item?.unitOfMeasure || 'Cái';
+      toast.warning('Không thể tải đơn vị', {
+        description: `Hệ thống sẽ tự động tạo đơn vị "${fallbackUnitName}" khi xuất kho.`,
+        duration: 5000,
+      });
+
+      setItems((prev) => {
+        const updated = [...prev];
+        updated[rowIndex] = {
+          ...updated[rowIndex],
+          unitId: 0, // BE will auto-create
+          unitName: fallbackUnitName,
+          availableUnits: [],
+        };
+        return updated;
       });
     } finally {
       setUnitLoading((prev) => ({ ...prev, [rowIndex]: false }));
     }
+  };
+
+  // Handle item selection
+  const handleItemSelect = async (item: ItemMasterV1, rowIndex: number) => {
+    // Check if item has valid id
+    if (!item || item.id === undefined || item.id === null) {
+      console.error(' Invalid item:', item);
+      toast.error('Lỗi: Không thể xác định ID vật tư', {
+        description: 'Vui lòng thử chọn lại vật tư khác',
+      });
+      return;
+    }
+
+    const itemId = Number(item.id);
+    if (!itemId || isNaN(itemId) || itemId <= 0) {
+      console.error(' Invalid itemId:', item.id, 'for item:', item);
+      toast.error('Lỗi: ID vật tư không hợp lệ', {
+        description: `ID: ${item.id}`,
+      });
+      return;
+    }
+
+    // Update item
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[rowIndex] = {
+        ...updated[rowIndex],
+        itemMasterId: itemId,
+        itemCode: item.itemCode || '',
+        itemName: item.itemName || '',
+      };
+      return updated;
+    });
+
+    // Fetch units (pass item for fallback to unitOfMeasure)
+    await fetchItemUnits(itemId, rowIndex, item);
+
+    // Close popover
+    setOpenPopovers((prev) => ({ ...prev, [rowIndex]: false }));
+    setSearchQueries((prev) => ({ ...prev, [rowIndex]: '' }));
+  };
+
+  // Add new item row
+  const handleAddItem = () => {
+    setItems((prev) => [
+      ...prev,
+      {
+        itemMasterId: 0,
+        itemCode: '',
+        itemName: '',
+        quantity: 1,
+        unitId: 0,
+        unitName: '',
+        notes: '',
+        availableUnits: undefined,
+      },
+    ]);
+  };
+
+  // Remove item row
+  const handleRemoveItem = (index: number) => {
+    if (items.length === 1) {
+      toast.error('Phải có ít nhất 1 dòng vật tư!');
+      return;
+    }
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Update item field
+  const updateItemField = (index: number, field: keyof ExportItem, value: any) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
   };
 
   // Create Export Mutation
@@ -178,104 +403,130 @@ export default function ExportTransactionForm({
     mutationFn: (data: CreateExportTransactionDto) =>
       inventoryService.createExportTransaction(data),
     onSuccess: (response) => {
+      // Note: Inventory is NOT updated when creating transaction (only when approved)
+      // So we only invalidate transaction queries, not inventory queries
       queryClient.invalidateQueries({ queryKey: ['storageTransactions'] });
-      queryClient.invalidateQueries({ queryKey: ['inventoryStats'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['storageStats'] });
-      queryClient.invalidateQueries({ queryKey: ['itemMasterSummary'] });
-      
-      // Show success with details
+
       toast.success('Xuất kho thành công!', {
-        description: `Mã phiếu: ${response.transactionCode}${response.totalValue ? ` | Tổng giá trị: ${response.totalValue.toLocaleString('vi-VN')} VNĐ` : ''}`,
+        description: `Mã phiếu: ${response.transactionCode}${response.totalValue ? ` | Tổng giá trị: ${response.totalValue.toLocaleString('vi-VN')} VNĐ` : ''} | Trạng thái: ${response.status === 'PENDING_APPROVAL' ? 'Chờ duyệt' : response.status}`,
         duration: 5000,
       });
 
-      // Show warnings if any
       if (response.warnings && response.warnings.length > 0) {
         response.warnings.forEach((warning) => {
-          toast.warning(warning.message || 'Cảnh báo', {
+          toast.warning(warning.message, {
             description: warning.itemCode ? `Vật tư: ${warning.itemCode}` : undefined,
           });
         });
       }
 
-      handleReset();
       onClose();
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi xuất kho!';
       const errorCode = error.response?.data?.error || error.response?.data?.errorCode;
-      
+
       if (errorCode === 'INSUFFICIENT_STOCK') {
-        const details = error.response?.data?.details;
-        toast.error('Không đủ hàng', {
-          description: details?.availableNonExpired 
-            ? `Còn: ${details.availableNonExpired} ${details.requestedUnit || ''}`
-            : 'Vui lòng kiểm tra lại số lượng tồn kho',
+        toast.error('Không đủ hàng tồn kho', {
+          description: errorMessage,
         });
       } else if (errorCode === 'EXPIRED_STOCK_NOT_ALLOWED') {
         toast.error('Không thể xuất hàng hết hạn', {
-          description: 'Vui lòng chọn loại xuất DISPOSAL hoặc bật "Cho phép hàng hết hạn"',
+          description: 'Vui lòng chọn loại xuất DISPOSAL hoặc bật "Cho phép xuất hàng hết hạn"',
+        });
+      } else if (errorCode === 'ITEM_NOT_FOUND') {
+        toast.error('Vật tư không tồn tại', {
+          description: errorMessage,
+        });
+      } else if (errorCode === 'UNIT_MISMATCH') {
+        toast.error('Đơn vị không hợp lệ', {
+          description: errorMessage,
+        });
+      } else if (errorCode === 'EMPLOYEE_NOT_FOUND') {
+        toast.error('Không tìm thấy nhân viên', {
+          description: 'Tài khoản của bạn chưa được liên kết với nhân viên. Vui lòng liên hệ quản trị viên.',
+        });
+      } else if (errorCode === 'EMPLOYEE_INACTIVE') {
+        toast.error('Nhân viên không hoạt động', {
+          description: 'Tài khoản nhân viên của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
         });
       } else {
-        toast.error(errorMessage);
+        toast.error('Lỗi xuất kho', {
+          description: errorMessage,
+        });
       }
     },
   });
 
-  const handleReset = () => {
-    reset();
-    setUnitCache({});
-    setUnitLoading({});
-    setOpenPopovers({});
-    setSearchQueries({});
-  };
+  // Handle form submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const onSubmit: SubmitHandler<ExportFormData> = (data) => {
+    // Validation
+    if (!exportType) {
+      toast.error('Vui lòng chọn loại xuất kho');
+      return;
+    }
+
+    // Validate items
+    // Note: BE sẽ auto-create base unit nếu unitId = 0 hoặc không tìm thấy
+    // Nhưng theo BE validation, unitId phải là @Positive, nên FE cần đảm bảo unitId > 0
+    const validItems = items.filter((item) => {
+      // If unitId is 0, it means BE will auto-create, but BE validation requires @Positive
+      // So we need to ensure unitId > 0 before submit
+      if (item.unitId === 0) {
+        toast.error(`Vật tư "${item.itemName}" chưa có đơn vị. Vui lòng đợi hệ thống tải đơn vị hoặc chọn vật tư khác.`);
+        return false;
+      }
+
+      return (
+        item.itemMasterId > 0 &&
+        item.unitId > 0 && // Must be positive (BE validation @Positive)
+        item.quantity > 0
+      );
+    });
+
+    if (validItems.length === 0) {
+      toast.error('Vui lòng điền đầy đủ thông tin cho ít nhất 1 vật tư');
+      return;
+    }
+
+    if (validItems.length !== items.length) {
+      toast.warning(`Có ${items.length - validItems.length} dòng chưa hợp lệ, chỉ gửi ${validItems.length} dòng hợp lệ`);
+    }
+
+    // Prepare payload
+    // Convert date to LocalDateTime format (YYYY-MM-DDTHH:mm:ss)
+    const transactionDateTime = `${transactionDate}T00:00:00`;
+
     const payload: CreateExportTransactionDto = {
-      transactionDate: `${data.transactionDate}T00:00:00`,
-      exportType: data.exportType as ExportType,
-      referenceCode: data.referenceCode?.trim() || undefined,
-      departmentName: data.departmentName?.trim() || undefined,
-      requestedBy: data.requestedBy?.trim() || undefined,
-      notes: data.notes?.trim() || undefined,
-      allowExpired: data.exportType === 'DISPOSAL' ? true : data.allowExpired,
-      items: data.items.map((item) => ({
-        itemMasterId: item.itemMasterId,
-        quantity: item.quantity,
-        unitId: item.unitId,
-        notes: item.notes?.trim() || undefined,
+      transactionDate: transactionDateTime,
+      exportType,
+      referenceCode: referenceCode.trim() || undefined,
+      departmentName: departmentName.trim() || undefined,
+      requestedBy: requestedBy.trim() || undefined,
+      notes: notes.trim() || undefined,
+      allowExpired: exportType === 'DISPOSAL' ? true : allowExpired,
+      items: validItems.map((item) => ({
+        itemMasterId: Number(item.itemMasterId),
+        quantity: Number(item.quantity),
+        unitId: Number(item.unitId),
+        notes: item.notes.trim() || undefined,
       })),
     };
 
     mutation.mutate(payload);
   };
 
-  const handleAddItem = () => {
-    append({
-      itemMasterId: 0,
-      quantity: 1,
-      unitId: 0,
-      notes: '',
-    });
-  };
-
-  const handleRemoveItem = (index: number) => {
-    if (fields.length === 1) {
-      toast.error('Phải có ít nhất 1 dòng vật tư!');
-      return;
-    }
-    remove(index);
-  };
-
-  const exportType = watch('exportType');
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <TruckIcon className="h-6 w-6 text-blue-600" />
-            Phiếu xuất kho (FEFO) {warehouseType === 'COLD' ? (
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Box className="h-5 w-5" />
+            Phiếu xuất kho {selectedWarehouseType === 'COLD' ? (
               <>
                 <FontAwesomeIcon icon={faSnowflake} className="mr-1" />
                 (Kho lạnh)
@@ -283,119 +534,170 @@ export default function ExportTransactionForm({
             ) : '(Kho thường)'}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Tạo phiếu xuất kho với FEFO (First Expired, First Out) và auto-unpacking
+            Tạo phiếu xuất kho mới với FEFO, auto-unpacking, và tracking tài chính
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
-          {/* Header Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border">
-            <div>
-              <Label className="text-sm font-medium">
-                Ngày xuất <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                type="date"
-                {...register('transactionDate')}
-                className={errors.transactionDate ? 'border-red-500' : ''}
-              />
-              {errors.transactionDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.transactionDate.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">
-                Loại phiếu <span className="text-red-500">*</span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Header Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="warehouseType" className="text-sm font-medium mb-2 block">
+                Loại kho <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={exportType}
-                onValueChange={(value) => setValue('exportType', value as ExportType)}
+                value={selectedWarehouseType}
+                onValueChange={(value: 'COLD' | 'NORMAL') => {
+                  setSelectedWarehouseType(value);
+                  // Reset items when warehouse type changes
+                  setItems([
+                    {
+                      itemMasterId: 0,
+                      itemCode: '',
+                      itemName: '',
+                      quantity: 1,
+                      unitId: 0,
+                      unitName: '',
+                      notes: '',
+                      availableUnits: undefined,
+                    },
+                  ]);
+                  setOpenPopovers({});
+                  setSearchQueries({});
+                  setUnitCache({});
+                  setUnitLoading({});
+                }}
+                required
               >
-                <SelectTrigger className={errors.exportType ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Chọn loại xuất" />
+                <SelectTrigger id="warehouseType">
+                  <SelectValue placeholder="Chọn loại kho" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USAGE">Xuất dùng (USAGE)</SelectItem>
-                  <SelectItem value="DISPOSAL">Xuất hủy (DISPOSAL)</SelectItem>
-                  <SelectItem value="RETURN">Trả nhà cung cấp (RETURN)</SelectItem>
+                  <SelectItem value="NORMAL">
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faBoxes} />
+                      Kho thường
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="COLD">
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faSnowflake} />
+                      Kho lạnh
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              {errors.exportType && (
-                <p className="text-xs text-red-500 mt-1">{errors.exportType.message}</p>
-              )}
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">Bộ phận / khoa yêu cầu</Label>
-              <Input
-                {...register('departmentName')}
-                placeholder="VD: Khoa Nội, Phòng khám tổng quát"
-                className={errors.departmentName ? 'border-red-500' : ''}
-              />
-              {errors.departmentName && (
-                <p className="text-xs text-red-500 mt-1">{errors.departmentName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Người yêu cầu</Label>
-              <Input
-                {...register('requestedBy')}
-                placeholder="VD: BS. Nguyễn Văn A"
-                className={errors.requestedBy ? 'border-red-500' : ''}
-              />
-              {errors.requestedBy && (
-                <p className="text-xs text-red-500 mt-1">{errors.requestedBy.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Mã tham chiếu / ca điều trị</Label>
-              <Input
-                {...register('referenceCode')}
-                placeholder="VD: CASE-2025-001"
-                className={errors.referenceCode ? 'border-red-500' : ''}
-              />
-              {errors.referenceCode && (
-                <p className="text-xs text-red-500 mt-1">{errors.referenceCode.message}</p>
-              )}
-            </div>
-
-            {exportType === 'USAGE' && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="allowExpired"
-                  {...register('allowExpired')}
-                  className="h-4 w-4"
+            <div className="space-y-2">
+              <Label htmlFor="transactionDate" className="text-sm font-medium mb-2 block">
+                Ngày xuất kho <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="transactionDate"
+                  type="date"
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  className="pl-10"
+                  required
+                  max={new Date().toISOString().split('T')[0]}
                 />
-                <Label htmlFor="allowExpired" className="text-sm font-medium cursor-pointer">
-                  Cho phép xuất hàng hết hạn (yêu cầu phê duyệt!)
-                </Label>
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
-            )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="exportType" className="text-sm font-medium mb-2 block">
+                Loại xuất kho <span className="text-red-500">*</span>
+              </Label>
+              <Select value={exportType} onValueChange={(value: ExportType) => setExportType(value)}>
+                <SelectTrigger id="exportType">
+                  <SelectValue placeholder="Chọn loại xuất kho" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USAGE"> Xuất Dùng (USAGE)</SelectItem>
+                  <SelectItem value="DISPOSAL"> Xuất Hủy (DISPOSAL)</SelectItem>
+                  <SelectItem value="RETURN">↩ Trả nhà cung cấp (RETURN)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="referenceCode" className="text-sm font-medium mb-2 block">
+                Mã tham chiếu
+              </Label>
+              <Input
+                id="referenceCode"
+                value={referenceCode}
+                onChange={(e) => setReferenceCode(e.target.value)}
+                placeholder="REQ-2025-001"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="departmentName" className="text-sm font-medium mb-2 block">
+                Phòng ban
+              </Label>
+              <Input
+                id="departmentName"
+                value={departmentName}
+                onChange={(e) => setDepartmentName(e.target.value)}
+                placeholder="Phòng khám tổng hợp"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="requestedBy" className="text-sm font-medium mb-2 block">
+                Người yêu cầu
+              </Label>
+              <Input
+                id="requestedBy"
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+                placeholder="Dr. Nguyen Van A"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 pt-6">
+              <input
+                type="checkbox"
+                id="allowExpired"
+                checked={allowExpired}
+                onChange={(e) => setAllowExpired(e.target.checked)}
+                disabled={exportType === 'DISPOSAL'}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="allowExpired" className="text-sm font-medium cursor-pointer">
+                Cho phép xuất hàng hết hạn
+                {exportType === 'DISPOSAL' && (
+                  <span className="text-xs text-gray-500 ml-1">(Tự động bật cho DISPOSAL)</span>
+                )}
+              </Label>
+            </div>
           </div>
 
-          {/* FEFO Info Alert */}
-          <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-violet-600 mt-0.5" />
-            <div className="text-sm space-y-1">
-              <p className="font-semibold text-violet-900">🤖 FEFO - First Expired, First Out</p>
-              <p className="text-violet-700">
-                Hệ thống tự động chọn lô hàng có HSD sớm nhất để xuất trước. 
-                Nếu thiếu hàng lẻ, hệ thống sẽ tự động xé lẻ từ đơn vị lớn hơn.
-              </p>
-            </div>
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes" className="text-sm font-medium mb-2 block">
+              Ghi chú
+            </Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ghi chú chung cho phiếu xuất..."
+              rows={2}
+            />
           </div>
 
           {/* Items Table */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium">
-                Danh sách vật tư xuất <span className="text-red-500">*</span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">
+                Danh sách vật tư <span className="text-red-500">*</span>
               </Label>
-              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2">
+              <Button type="button" size="sm" onClick={handleAddItem} className="gap-2 bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4" />
                 Thêm dòng
               </Button>
@@ -407,21 +709,24 @@ export default function ExportTransactionForm({
                   <thead className="bg-slate-100">
                     <tr className="text-xs font-semibold text-slate-700">
                       <th className="p-3 text-left w-[5%]">STT</th>
-                      <th className="p-3 text-left w-[40%]">Vật tư *</th>
-                      <th className="p-3 text-left w-[25%]">Số lượng *</th>
-                      <th className="p-3 text-left w-[20%]">Ghi chú</th>
+                      <th className="p-3 text-left w-[30%]">Vật tư *</th>
+                      <th className="p-3 text-left w-[15%]">Số lượng *</th>
+                      <th className="p-3 text-left w-[15%]">Đơn vị</th>
+                      <th className="p-3 text-left w-[25%]">Ghi chú</th>
                       <th className="p-3 text-center w-[10%]">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {fields.map((field, index) => {
-                      const selectedItemId = watch(`items.${index}.itemMasterId`);
-                      const selectedItem = items.find((item) => item.id === selectedItemId);
-                      const baseUnit = selectedItem ? unitCache[selectedItem.id!] : undefined;
-                      const itemErrors = errors.items?.[index];
-                      
+                    {items.map((item, index) => {
+                      const searchQuery = (searchQueries[index] || '').toLowerCase();
+                      const filteredItems = itemMasters.filter(
+                        (im) =>
+                          im.itemCode?.toLowerCase().includes(searchQuery) ||
+                          im.itemName?.toLowerCase().includes(searchQuery)
+                      );
+
                       return (
-                        <tr key={field.id} className="border-t hover:bg-slate-50">
+                        <tr key={index} className="border-t hover:bg-slate-50">
                           <td className="p-3 text-center font-medium text-slate-600">
                             {index + 1}
                           </td>
@@ -441,14 +746,15 @@ export default function ExportTransactionForm({
                                   role="combobox"
                                   className="w-full justify-between"
                                   disabled={itemsLoading}
+                                  type="button"
                                 >
-                                  {selectedItem
-                                    ? `${selectedItem.itemCode} - ${selectedItem.itemName}`
+                                  {item.itemMasterId > 0
+                                    ? `${item.itemCode} - ${item.itemName}`
                                     : itemsLoading
-                                    ? "Đang tải..."
-                                    : items.length === 0
-                                    ? "Không có dữ liệu"
-                                    : "Chọn vật tư"}
+                                      ? 'Đang tải...'
+                                      : itemMasters.length === 0
+                                        ? 'Không có dữ liệu'
+                                        : 'Chọn vật tư'}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
@@ -461,105 +767,94 @@ export default function ExportTransactionForm({
                                     onChange={(e) => {
                                       setSearchQueries((prev) => ({ ...prev, [index]: e.target.value }));
                                     }}
-                                    className="h-9 border-0 focus-visible:ring-0"
+                                    className="border-0 focus-visible:ring-0"
                                   />
                                 </div>
-                                <div className="max-h-[300px] overflow-auto">
-                                  {itemsLoading ? (
+                                <div className="max-h-[300px] overflow-y-auto">
+                                  {filteredItems.length === 0 ? (
                                     <div className="p-4 text-center text-sm text-gray-500">
-                                      Đang tải...
-                                    </div>
-                                  ) : items.length === 0 ? (
-                                    <div className="p-4 text-center text-sm text-gray-500">
-                                      Không có vật tư. Vui lòng tạo mới.
+                                      Không tìm thấy vật tư
                                     </div>
                                   ) : (
-                                    (() => {
-                                      const query = (searchQueries[index] || '').toLowerCase();
-                                      const filteredItems = items.filter(
-                                        (item) =>
-                                          item.itemCode?.toLowerCase().includes(query) ||
-                                          item.itemName?.toLowerCase().includes(query)
-                                      );
-                                      return filteredItems.length === 0 ? (
-                                        <div className="p-4 text-center text-sm text-gray-500">
-                                          Không tìm thấy vật tư
-                                        </div>
-                                      ) : (
-                                        filteredItems.map((item) => (
+                                    filteredItems
+                                      .filter((im) => im && im.id !== undefined && im.id !== null)
+                                      .map((im, itemIndex) => {
+                                        const itemId = Number(im.id);
+                                        if (!itemId || isNaN(itemId)) {
+                                          return null;
+                                        }
+                                        return (
                                           <div
-                                            key={item.id}
-                                            className="flex items-center px-4 py-2 hover:bg-slate-100 cursor-pointer"
-                                            onClick={() => {
-                                              const itemId = item.id!;
-                                              setValue(`items.${index}.itemMasterId`, itemId);
-                                              fetchBaseUnitForItem(itemId, index);
-                                              setOpenPopovers((prev) => ({ ...prev, [index]: false }));
-                                              setSearchQueries((prev) => ({ ...prev, [index]: '' }));
-                                            }}
+                                            key={im.id || `item-${index}-${itemIndex}`}
+                                            className="flex items-center px-3 py-2 hover:bg-slate-100 cursor-pointer"
+                                            onClick={() => handleItemSelect(im, index)}
                                           >
                                             <Check
                                               className={cn(
-                                                "mr-2 h-4 w-4",
-                                                selectedItemId === item.id ? "opacity-100" : "opacity-0"
+                                                'mr-2 h-4 w-4',
+                                                item.itemMasterId === itemId ? 'opacity-100' : 'opacity-0'
                                               )}
                                             />
                                             <div className="flex-1">
-                                              <div className="font-medium">{item.itemCode} - {item.itemName}</div>
-                                              {item.unitOfMeasure && (
-                                                <div className="text-xs text-gray-500">Đơn vị: {item.unitOfMeasure}</div>
+                                              <div className="text-sm font-medium">
+                                                {im.itemCode} - {im.itemName}
+                                              </div>
+                                              {im.currentStock !== undefined && (
+                                                <div className="text-xs text-gray-500">
+                                                  Tồn kho: {im.currentStock} {im.unitOfMeasure}
+                                                </div>
                                               )}
                                             </div>
                                           </div>
-                                        ))
-                                      );
-                                    })()
+                                        );
+                                      })
                                   )}
                                 </div>
                               </PopoverContent>
                             </Popover>
-                            {itemErrors?.itemMasterId && (
-                              <p className="text-xs text-red-500 mt-1">{itemErrors.itemMasterId.message}</p>
-                            )}
-                            {unitLoading[index] && (
-                              <p className="text-xs text-blue-500 mt-1">Đang tải đơn vị...</p>
-                            )}
-                            {baseUnit && !unitLoading[index] && (
-                              <p className="text-xs text-gray-500 mt-1">Đơn vị: {baseUnit.unitName}</p>
-                            )}
                           </td>
                           <td className="p-3">
                             <Input
                               type="number"
                               min="1"
-                              max="1000000"
-                              {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                              placeholder="1"
-                              className={itemErrors?.quantity ? 'border-red-500' : ''}
+                              value={item.quantity || ''}
+                              onChange={(e) => updateItemField(index, 'quantity', Number(e.target.value) || 0)}
+                              placeholder="0"
+                              required
+                              className="w-full"
                             />
-                            {itemErrors?.quantity && (
-                              <p className="text-xs text-red-500 mt-1">{itemErrors.quantity.message}</p>
+                          </td>
+                          <td className="p-3">
+                            {unitLoading[index] ? (
+                              <div className="text-sm text-gray-500">Đang tải...</div>
+                            ) : item.unitId > 0 && item.unitName ? (
+                              <div className="text-sm font-medium text-slate-700">
+                                {item.unitName}
+                              </div>
+                            ) : item.itemMasterId > 0 ? (
+                              <div className="text-sm text-gray-400">Chưa có đơn vị</div>
+                            ) : (
+                              <div className="text-sm text-gray-400">-</div>
                             )}
                           </td>
                           <td className="p-3">
                             <Input
-                              {...register(`items.${index}.notes`)}
-                              placeholder="Ghi chú (nếu có)"
-                              className={itemErrors?.notes ? 'border-red-500' : ''}
+                              type="text"
+                              value={item.notes || ''}
+                              onChange={(e) => updateItemField(index, 'notes', e.target.value)}
+                              placeholder="Ghi chú..."
+                              className="w-full"
                             />
-                            {itemErrors?.notes && (
-                              <p className="text-xs text-red-500 mt-1">{itemErrors.notes.message}</p>
-                            )}
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="p-3">
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => handleRemoveItem(index)}
-                              disabled={fields.length === 1}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </td>
                         </tr>
@@ -569,47 +864,34 @@ export default function ExportTransactionForm({
                 </table>
               </div>
             </div>
-            {errors.items && typeof errors.items === 'object' && 'message' in errors.items && (
-              <p className="text-xs text-red-500 mt-1">{errors.items.message as string}</p>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label className="text-sm font-medium">Ghi chú</Label>
-            <Textarea
-              {...register('notes')}
-              placeholder="Nhập ghi chú (nếu có)"
-              rows={3}
-              className={errors.notes ? 'border-red-500' : ''}
-            />
-            {errors.notes && (
-              <p className="text-xs text-red-500 mt-1">{errors.notes.message}</p>
-            )}
           </div>
 
           {/* Info Alert */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div className="text-sm space-y-1">
-              <p className="font-semibold text-blue-900">Lưu ý quan trọng!</p>
-              <ul className="text-blue-700 list-disc list-inside space-y-1">
-                <li>Hệ thống tự động chọn lô hàng theo FEFO (lô hết hạn trước được xuất trước)</li>
-                <li>Nếu thiếu hàng lẻ, hệ thống sẽ tự động xé lẻ từ đơn vị lớn hơn</li>
-                <li>Loại USAGE: Không cho phép xuất hàng hết hạn (trừ khi bật "Cho phép hàng hết hạn")</li>
-                <li>Loại DISPOSAL: Cho phép xuất hàng hết hạn để tiêu hủy</li>
-                <li>Giá trị xuất (COGS) sẽ được tính tự động dựa trên giá nhập ban đầu</li>
+            <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm text-blue-800">
+              <div className="font-medium mb-1">Lưu ý!</div>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>Hệ thống tự động áp dụng FEFO (xuất hàng gần hết hạn trước)</li>
+                <li>Tự động xé lẻ từ đơn vị lớn khi thiếu hàng lẻ</li>
+                <li>Phân bổ từ nhiều lô nếu cần thiết</li>
+                {exportType === 'USAGE' && (
+                  <li className="text-orange-600 font-medium">Không cho phép xuất hàng hết hạn (trừ khi bật "Cho phép xuất hàng hết hạn")</li>
+                )}
+                {exportType === 'DISPOSAL' && (
+                  <li className="text-orange-600 font-medium">Cho phép xuất hàng hết hạn (tự động bật)</li>
+                )}
               </ul>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button type="submit" className="flex-1" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Đang lưu...' : 'Lưu phiếu xuất'}
-            </Button>
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>
               Hủy
+            </Button>
+            <Button type="submit" disabled={mutation.isPending} className="bg-purple-600 hover:bg-purple-700">
+              {mutation.isPending ? 'Đang xử lý...' : 'Tạo phiếu xuất'}
             </Button>
           </div>
         </form>
@@ -617,4 +899,3 @@ export default function ExportTransactionForm({
     </Dialog>
   );
 }
-

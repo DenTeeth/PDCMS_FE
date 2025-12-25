@@ -777,6 +777,7 @@ export interface ExportTransactionResponse {
   notes?: string;
   createdBy?: string;
   createdAt?: string;
+  status?: string; // PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED, COMPLETED
   totalItems?: number;
   totalValue?: number; // COGS
   items: ExportItemResponse[];
