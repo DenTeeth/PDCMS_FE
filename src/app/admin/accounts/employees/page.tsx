@@ -794,7 +794,7 @@ export default function EmployeesPage() {
 
         {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <Card className="w-full max-w-5xl my-8 max-h-[90vh] flex flex-col">
               <CardHeader className="border-b flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -1148,7 +1148,7 @@ export default function EmployeesPage() {
 
         {/* Edit Employee Modal */}
         {showEditModal && editingEmployee && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Chỉnh sửa nhân viên</CardTitle>

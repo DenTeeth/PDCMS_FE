@@ -54,6 +54,7 @@ export default function AdminOvertimeRequestsPage() {
   const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<OvertimeRequest | null>(null);
   const [statusAction, setStatusAction] = useState<'approve' | 'reject' | 'cancel'>('approve');
@@ -83,8 +84,8 @@ export default function AdminOvertimeRequestsPage() {
       setLoading(true);
       const response = await OvertimeService.getOvertimeRequests({
         page: 0,
-        size: 20, // ⚡ Giảm từ 50 → 20
-        sort: 'createdAt,desc',
+        size: 100, // Load nhiều hơn để hiển thị đầy đủ
+        sort: 'createdAt,desc', // Mới nhất ở đầu
       });
       setOvertimeRequests(response.content);
     } catch (error) {
@@ -226,9 +227,9 @@ export default function AdminOvertimeRequestsPage() {
     setShowStatusModal(true);
   };
 
-  // ⚡ Memoize filtered requests
+  // ⚡ Memoize filtered requests - Sort by createdAt DESC (newest first)
   const filteredRequests = useMemo(() => {
-    return overtimeRequests.filter((request) => {
+    const filtered = overtimeRequests.filter((request) => {
       const matchesSearch =
         request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -243,6 +244,13 @@ export default function AdminOvertimeRequestsPage() {
       const matchesDateTo = !dateTo || requestDate <= new Date(dateTo);
 
       return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
+    });
+
+    // Sort by createdAt DESC (newest first) - client-side to ensure correct order
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.workDate).getTime();
+      const dateB = new Date(b.createdAt || b.workDate).getTime();
+      return dateB - dateA; // DESC: newest first
     });
   }, [overtimeRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
@@ -348,7 +356,7 @@ export default function AdminOvertimeRequestsPage() {
       {/* Filters - Bỏ Card */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="search">Tìm kiếm</Label>
             <Input
               id="search"
@@ -358,33 +366,37 @@ export default function AdminOvertimeRequestsPage() {
             />
           </div>
 
-          <CustomSelect
-            label="Nhân viên"
-            value={employeeFilter}
-            onChange={(value: string) => setEmployeeFilter(value)}
-            options={[
-              { value: 'ALL', label: 'Tất cả nhân viên' },
-              ...employees.map((emp) => ({
-                value: emp.employeeId.toString(),
-                label: `${emp.fullName} (${emp.employeeCode})`,
-              })),
-            ]}
-          />
+          <div className="space-y-2">
+            <CustomSelect
+              label="Nhân viên"
+              value={employeeFilter}
+              onChange={(value: string) => setEmployeeFilter(value)}
+              options={[
+                { value: 'ALL', label: 'Tất cả nhân viên' },
+                ...employees.map((emp) => ({
+                  value: emp.employeeId.toString(),
+                  label: `${emp.fullName} (${emp.employeeCode})`,
+                })),
+              ]}
+            />
+          </div>
 
-          <CustomSelect
-            label="Trạng thái"
-            value={statusFilter}
-            onChange={(value: string) => setStatusFilter(value as OvertimeStatus | 'ALL')}
-            options={[
-              { value: 'ALL', label: 'Tất cả' },
-              { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
-              { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
-              { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
-              { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
-            ]}
-          />
+          <div className="space-y-2">
+            <CustomSelect
+              label="Trạng thái"
+              value={statusFilter}
+              onChange={(value: string) => setStatusFilter(value as OvertimeStatus | 'ALL')}
+              options={[
+                { value: 'ALL', label: 'Tất cả' },
+                { value: OvertimeStatus.PENDING, label: 'Chờ duyệt' },
+                { value: OvertimeStatus.APPROVED, label: 'Đã duyệt' },
+                { value: OvertimeStatus.REJECTED, label: 'Từ chối' },
+                { value: OvertimeStatus.CANCELLED, label: 'Đã hủy' },
+              ]}
+            />
+          </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="dateFrom">Từ ngày</Label>
             <Input
               id="dateFrom"
@@ -394,7 +406,7 @@ export default function AdminOvertimeRequestsPage() {
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="dateTo">Đến ngày</Label>
             <Input
               id="dateTo"
@@ -402,6 +414,24 @@ export default function AdminOvertimeRequestsPage() {
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
             />
+          </div>
+
+          {/* Nút xóa bộ lọc */}
+          <div className="space-y-2 flex flex-col justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('ALL');
+                setEmployeeFilter('ALL');
+                setDateFrom('');
+                setDateTo('');
+              }}
+              className="w-full"
+            >
+              <FontAwesomeIcon icon={faTimes} className="mr-2" />
+              Xóa bộ lọc
+            </Button>
           </div>
         </div>
       </div>
@@ -454,50 +484,14 @@ export default function AdminOvertimeRequestsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.push(`/admin/overtime-requests/${request.requestId}`)}
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setShowViewModal(true);
+                            }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
+                            Xem
                           </Button>
-
-                          {request.status === OvertimeStatus.PENDING && (
-                            <>
-                              {canApprove && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-green-800 hover:bg-green-50 border-green-200"
-                                  onClick={() => openStatusModal(request, 'approve')}
-                                >
-                                  <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                                  Duyệt
-                                </Button>
-                              )}
-
-                              {canReject && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-red-800 hover:bg-red-50 border-red-200"
-                                  onClick={() => openStatusModal(request, 'reject')}
-                                >
-                                  <FontAwesomeIcon icon={faTimes} className="mr-1" />
-                                  Từ chối
-                                </Button>
-                              )}
-
-                              {canCancelRequest(request) && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-gray-600 border-gray-600 hover:bg-gray-50"
-                                  onClick={() => openStatusModal(request, 'cancel')}
-                                >
-                                  <FontAwesomeIcon icon={faBan} className="mr-1" />
-                                  Hủy
-                                </Button>
-                              )}
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -515,7 +509,7 @@ export default function AdminOvertimeRequestsPage() {
 
       {/* Create Form Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader className="pb-3">
               <CardTitle>Tạo yêu cầu làm thêm giờ</CardTitle>
@@ -587,9 +581,155 @@ export default function AdminOvertimeRequestsPage() {
             </CardContent>
           </Card>
         </div>
-      )}      {/* Status Update Modal */}
+      )}
+
+      {/* View Modal */}
+      {showViewModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl mx-4">
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  Chi tiết yêu cầu làm thêm giờ
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setSelectedRequest(null);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                {/* Status Badge */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-600">Trạng thái:</span>
+                  <Badge className={`${OVERTIME_STATUS_CONFIG[selectedRequest.status].bgColor} ${OVERTIME_STATUS_CONFIG[selectedRequest.status].textColor}`}>
+                    {OVERTIME_STATUS_CONFIG[selectedRequest.status].label}
+                  </Badge>
+                </div>
+
+                {/* Request Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Mã yêu cầu</p>
+                    <p className="font-semibold text-gray-900">{selectedRequest.requestId}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Nhân viên</p>
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faUser} className="h-4 w-4 text-gray-400" />
+                      <p className="font-medium text-gray-900">{selectedRequest.employeeName || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Ngày làm việc</p>
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4 text-gray-400" />
+                      <p className="font-medium text-gray-900">
+                        {format(new Date(selectedRequest.workDate), 'dd/MM/yyyy', { locale: vi })}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Ca làm việc</p>
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faClock} className="h-4 w-4 text-gray-400" />
+                      <p className="font-medium text-gray-900">
+                        {workShifts.find(s => s.workShiftId === selectedRequest.workShiftId)?.shiftName || selectedRequest.workShiftId}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Lý do</p>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-900">{selectedRequest.reason || 'Không có lý do'}</p>
+                  </div>
+                </div>
+
+                {/* Timestamps */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <p className="text-sm text-gray-600">Ngày tạo</p>
+                    <p className="text-sm text-gray-900">
+                      {format(new Date(selectedRequest.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                    </p>
+                  </div>
+                  {selectedRequest.updatedAt && (
+                    <div>
+                      <p className="text-sm text-gray-600">Cập nhật lần cuối</p>
+                      <p className="text-sm text-gray-900">
+                        {format(new Date(selectedRequest.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions for PENDING status */}
+                {selectedRequest.status === OvertimeStatus.PENDING && (
+                  <div className="flex gap-3 pt-4 border-t justify-end">
+                    {canApprove && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          setStatusAction('approve');
+                          setShowStatusModal(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                        Duyệt
+                      </Button>
+                    )}
+                    {canReject && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          setStatusAction('reject');
+                          setStatusReason('');
+                          setShowStatusModal(true);
+                        }}
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        Từ chối
+                      </Button>
+                    )}
+                    {canCancelRequest(selectedRequest) && (
+                      <Button
+                        onClick={() => {
+                          setShowViewModal(false);
+                          setStatusAction('cancel');
+                          setStatusReason('');
+                          setShowStatusModal(true);
+                        }}
+                        variant="outline"
+                        className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                      >
+                        <FontAwesomeIcon icon={faBan} className="mr-2" />
+                        Hủy
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Status Update Modal */}
       {showStatusModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>

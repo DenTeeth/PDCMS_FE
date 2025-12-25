@@ -624,7 +624,7 @@ export default function AdminLeaveBalancesPage() {
       {/* ==================== ADJUSTMENT MODAL ==================== */}
 
       {showAdjustModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Điều chỉnh số dư ngày nghỉ thủ công</CardTitle>
@@ -745,7 +745,7 @@ export default function AdminLeaveBalancesPage() {
       {/* ==================== ANNUAL RESET MODAL ==================== */}
 
       {showAnnualResetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
