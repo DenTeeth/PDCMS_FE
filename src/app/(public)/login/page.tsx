@@ -77,8 +77,8 @@ export default function Page() {
                 />
               </div>
 
-              <p className="mx-auto max-w-sm text-gray-700">
-                Giải pháp hiện đại cho việc lập lịch và quản lý các phòng khám nha khoa. Chăm sóc nụ cười từ lần đăng nhập đầu tiên.
+              <p className="mx-auto max-w-sm text-xl font-semibold text-gray-800 tracking-wide">
+                Chăm sóc từ Tâm, Nâng tầm nụ cười
               </p>
             </div>
           </section>
