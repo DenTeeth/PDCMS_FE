@@ -15,6 +15,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -174,7 +175,7 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
           <div className="flex gap-3">
             {/* Hour Selector */}
             <div className="flex flex-col">
-              <label className="text-xs font-semibold mb-2 text-center">Hour</label>
+              <label className="text-xs font-semibold mb-2 text-center">Giờ</label>
               <div className="h-40 w-16 overflow-y-auto rounded-lg border">
                 {hours.map((h) => (
                   <div
@@ -195,7 +196,7 @@ function TimePicker({ value, onChange, disabled }: TimePickerProps) {
 
             {/* Minute Selector */}
             <div className="flex flex-col">
-              <label className="text-xs font-semibold mb-2 text-center">Min</label>
+              <label className="text-xs font-semibold mb-2 text-center">Phút</label>
               <div className="h-40 w-16 overflow-y-auto rounded-lg border">
                 {minutes.map((m) => (
                   <div
@@ -326,6 +327,14 @@ export default function CreateAppointmentModal({
   const [selectedSpecializationFilter, setSelectedSpecializationFilter] = useState<string>('all');
   // Step 3: Selected doctor for filtering services by specialization (optional)
   const [selectedDoctorForFilter, setSelectedDoctorForFilter] = useState<string>('all');
+  // Step 3: Service search term
+  const [serviceSearchTerm, setServiceSearchTerm] = useState<string>('');
+  // Step 3: Service group filter (by specialization)
+  const [serviceGroupFilter, setServiceGroupFilter] = useState<string>('all');
+  // Step 3: Show/hide doctor dropdown (hide when doctor is selected, show when clicking on card)
+  const [showDoctorDropdown, setShowDoctorDropdown] = useState<boolean>(true);
+  // Step 3: Ref for doctor select trigger to programmatically open dropdown
+  const doctorSelectTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Current user's employee data (if employee)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
@@ -451,6 +460,10 @@ export default function CreateAppointmentModal({
     setAllEmployeeShifts(new Map());
     setSuggestedDates([]);
     setSelectedSpecializationFilter('all');
+    setSelectedDoctorForFilter('all');
+    setServiceSearchTerm('');
+    setServiceGroupFilter('all');
+    setShowDoctorDropdown(true);
     setSelectedMonth(startOfMonth(new Date()));
     // Phase 5: Reset plan item IDs
     setPlanItemIds([]);
@@ -512,7 +525,7 @@ export default function CreateAppointmentModal({
       setRooms(roomsData);
     } catch (error: any) {
       console.error('Failed to load initial data:', error);
-      toast.error('Failed to load data: ' + (error.response?.data?.message || error.message));
+      toast.error('Không thể tải dữ liệu: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingData(false);
     }
@@ -993,13 +1006,13 @@ export default function CreateAppointmentModal({
     return grouped;
   }, [services, specializations]);
 
-  // Step 3: Get filtered services based on selected specialization filter and doctor's specialization
+  // Step 3: Get filtered services based on selected specialization filter, doctor's specialization, search term, and group filter
   const getFilteredServices = (): Service[] => {
     let filtered = services;
 
-    // Filter by doctor's specialization if doctor is selected
-    if (selectedDoctorForFilter && selectedDoctorForFilter !== 'all') {
-      const selectedDoctor = employees.find((e) => e.employeeCode === selectedDoctorForFilter);
+    // Filter by doctor's specialization if doctor is selected (employeeCode from step 3)
+    if (employeeCode && employeeCode !== '') {
+      const selectedDoctor = employees.find((e) => e.employeeCode === employeeCode);
       if (selectedDoctor && selectedDoctor.specializations && selectedDoctor.specializations.length > 0) {
         const doctorSpecializationIds = selectedDoctor.specializations.map((spec: any) => {
           const specId = typeof spec === 'string' ? parseInt(spec, 10) : (typeof spec === 'object' ? parseInt(String(spec.specializationId || spec.id || spec), 10) : spec);
@@ -1016,14 +1029,19 @@ export default function CreateAppointmentModal({
       }
     }
 
-    // Apply specialization filter if set
-    if (selectedSpecializationFilter !== 'all') {
-      if (selectedSpecializationFilter === 'none') {
-        filtered = filtered.filter((service) => !service.specializationId);
-      } else {
-        const specId = parseInt(selectedSpecializationFilter, 10);
-        filtered = filtered.filter((service) => service.specializationId === specId);
-      }
+    // Apply service group filter (by specialization of selected doctor)
+    if (serviceGroupFilter !== 'all') {
+      const specId = parseInt(serviceGroupFilter, 10);
+      filtered = filtered.filter((service) => service.specializationId === specId);
+    }
+
+    // Apply search term filter
+    if (serviceSearchTerm.trim()) {
+      const searchLower = serviceSearchTerm.toLowerCase().trim();
+      filtered = filtered.filter((service) =>
+        service.serviceName.toLowerCase().includes(searchLower) ||
+        service.serviceCode.toLowerCase().includes(searchLower)
+      );
     }
 
     return filtered;
@@ -1164,11 +1182,11 @@ export default function CreateAppointmentModal({
   const handleNext = () => {
     // Validate current step
     if (currentStep === 1 && !patientCode) {
-      toast.error('Please select a patient');
+      toast.error('Vui lòng chọn bệnh nhân');
       return;
     }
     if (currentStep === 2 && !appointmentDate) {
-      toast.error('Please select a date');
+      toast.error('Vui lòng chọn ngày');
       return;
     }
     // Phase 5: Skip step 3 (services) if booking from plan items
@@ -1177,19 +1195,21 @@ export default function CreateAppointmentModal({
       setCurrentStep(4);
       return;
     }
-    // Phase 5: Validate step 3 only if NOT booking from plan items
-    if (currentStep === 3 && planItemIds.length === 0 && serviceCodes.length === 0) {
-      toast.error('Please select at least one service');
-      return;
-    }
-    // Step 3 validation is already handled above (line 1104)
-    if (currentStep === 4) {
+    // Step 3: Validate doctor and services selection
+    if (currentStep === 3) {
       if (!employeeCode) {
-        toast.error('Please select a doctor');
+        toast.error('Vui lòng chọn bác sĩ');
         return;
       }
+      if (planItemIds.length === 0 && serviceCodes.length === 0) {
+        toast.error('Vui lòng chọn ít nhất một dịch vụ');
+        return;
+      }
+    }
+    // Step 4: Validate time slot and room
+    if (currentStep === 4) {
       if (!appointmentStartTime) {
-        toast.error('Please select a start time');
+        toast.error('Vui lòng chọn khung giờ');
         return;
       }
       // Validate time is in 15-minute intervals
@@ -1197,12 +1217,12 @@ export default function CreateAppointmentModal({
       if (timeMatch) {
         const minutes = parseInt(timeMatch[2], 10);
         if (minutes % 15 !== 0) {
-          toast.error('Time must be in 15-minute intervals (e.g., 8:00, 8:15, 8:30, 8:45)');
+          toast.error('Thời gian phải là bội số của 15 phút (ví dụ: 8:00, 8:15, 8:30, 8:45)');
           return;
         }
       }
       if (!roomCode) {
-        toast.error('Please select a room');
+        toast.error('Vui lòng chọn phòng');
         return;
       }
     }
@@ -1388,6 +1408,12 @@ export default function CreateAppointmentModal({
   const selectedSlot = availableSlots.find((slot) => slot.startTime === appointmentStartTime);
   const groupedSlots = groupSlotsByTimeOfDay(availableSlots);
 
+  // Get specializations of selected doctor for filter dropdown
+  const selectedDoctorSpecializations = useMemo(() => {
+    if (!selectedEmployee || !selectedEmployee.specializations) return [];
+    return selectedEmployee.specializations;
+  }, [selectedEmployee]);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -1429,7 +1455,7 @@ export default function CreateAppointmentModal({
         </div>
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-3">
           {/* Step 1: Select Patient */}
           {currentStep === 1 && (
             <div className="space-y-4">
@@ -1446,13 +1472,13 @@ export default function CreateAppointmentModal({
                   />
                 </div>
                 {searchingPatients && (
-                  <p className="text-sm text-muted-foreground mt-1">Searching...</p>
+                  <p className="text-sm text-muted-foreground mt-1">Đang tìm kiếm...</p>
                 )}
               </div>
 
               {/* Show patients list only when there are search results */}
               {patientSearch.length > 0 && patientSearchResults.length > 0 && (
-                <Card className="p-4 max-h-[60vh] overflow-y-auto">
+                <Card className="p-4">
                   <div className="space-y-2">
                     {patientSearchResults.map((patient) => (
                       <div
@@ -1468,7 +1494,7 @@ export default function CreateAppointmentModal({
                           }
                           handleSelectPatient(patient);
                         }}
-                        className={`p-3 border rounded-lg transition-colors ${patient.isBookingBlocked
+                        className={`p-2 border rounded-lg transition-colors ${patient.isBookingBlocked
                           ? isTemporaryBlock(patient.bookingBlockReason)
                             ? 'border-orange-300 bg-orange-50 cursor-not-allowed opacity-60'
                             : 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
@@ -1478,22 +1504,16 @@ export default function CreateAppointmentModal({
                           }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="font-medium">{patient.fullName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {patient.patientCode} {patient.phone && `• ${patient.phone}`}
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{patient.fullName}</span>
+                            {patient.phone && <span className="text-xs text-muted-foreground">• {patient.phone}</span>}
                           </div>
                           {patient.isBookingBlocked && (
                             <Badge
                               variant="destructive"
-                              className={
-                                isTemporaryBlock(patient.bookingBlockReason)
-                                  ? 'bg-orange-600 text-white text-xs'
-                                  : 'bg-red-600 text-white text-xs'
-                              }
+                              className={`text-xs ${isTemporaryBlock(patient.bookingBlockReason) ? 'bg-orange-600' : 'bg-red-600'}`}
                             >
-                              {isTemporaryBlock(patient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
+                              {isTemporaryBlock(patient.bookingBlockReason) ? 'TẠM CHẶN' : 'BLACKLIST'}
                             </Badge>
                           )}
                         </div>
@@ -1511,7 +1531,7 @@ export default function CreateAppointmentModal({
               )}
 
               {selectedPatient && (
-                <Card className={`p-4 border-2 ${selectedPatient.isBookingBlocked
+                <Card className={`p-3 border-2 ${selectedPatient.isBookingBlocked
                   ? isTemporaryBlock(selectedPatient.bookingBlockReason)
                     ? 'bg-orange-50 border-orange-300'
                     : 'bg-red-50 border-red-300'
@@ -1519,45 +1539,30 @@ export default function CreateAppointmentModal({
                   }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <User className={`h-5 w-5 ${selectedPatient.isBookingBlocked
+                      <User className={`h-4 w-4 ${selectedPatient.isBookingBlocked
                         ? isTemporaryBlock(selectedPatient.bookingBlockReason)
                           ? 'text-orange-600'
                           : 'text-red-600'
                         : 'text-primary'
                         }`} />
-                      <div>
-                        <div className="font-medium">{selectedPatient.fullName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {selectedPatient.patientCode}
-                        </div>
-                      </div>
+                      <span className="font-medium text-sm">{selectedPatient.fullName}</span>
+                      {selectedPatient.phone && <span className="text-xs text-muted-foreground">• {selectedPatient.phone}</span>}
                     </div>
                     {selectedPatient.isBookingBlocked && (
                       <Badge
                         variant="destructive"
-                        className={
-                          isTemporaryBlock(selectedPatient.bookingBlockReason)
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-red-600 text-white'
-                        }
+                        className={`text-xs ${isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'bg-orange-600' : 'bg-red-600'}`}
                       >
-                        {isTemporaryBlock(selectedPatient.bookingBlockReason) ? '🟠 TẠM CHẶN' : '⛔ BLACKLIST'}
+                        {isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'TẠM CHẶN' : 'BLACKLIST'}
                       </Badge>
                     )}
                   </div>
                   {selectedPatient.isBookingBlocked && (
-                    <div className={`mt-3 p-3 border rounded-lg ${isTemporaryBlock(selectedPatient.bookingBlockReason)
-                      ? 'bg-orange-100 border-orange-300'
-                      : 'bg-red-100 border-red-300'
+                    <div className={`mt-2 p-2 border rounded-lg text-xs ${isTemporaryBlock(selectedPatient.bookingBlockReason)
+                      ? 'bg-orange-100 border-orange-300 text-orange-800'
+                      : 'bg-red-100 border-red-300 text-red-800'
                       }`}>
-                      <p className={`text-sm ${isTemporaryBlock(selectedPatient.bookingBlockReason)
-                        ? 'text-orange-800'
-                        : 'text-red-800'
-                        }`}>
-                        <strong>⚠️ Cảnh báo:</strong> Bệnh nhân này đang bị {isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'tạm chặn' : 'blacklist'}: {getBookingBlockReasonLabel(selectedPatient.bookingBlockReason)}
-                        {selectedPatient.consecutiveNoShows ? ` (${selectedPatient.consecutiveNoShows} lần no-show)` : ''}.
-                        Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.
-                      </p>
+                      <strong>⚠️ Cảnh báo:</strong> Bệnh nhân đang bị {isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'tạm chặn' : 'blacklist'}: {getBookingBlockReasonLabel(selectedPatient.bookingBlockReason)}. Không thể tạo lịch hẹn.
                     </div>
                   )}
                 </Card>
@@ -1573,9 +1578,8 @@ export default function CreateAppointmentModal({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="appointmentDate">Chọn ngày ưu tiên <span className="text-red-500">*</span></Label>
-                    <Input
+                    <DateInput
                       id="appointmentDate"
-                      type="date"
                       value={appointmentDate}
                       onChange={(e) => {
                         setAppointmentDate(e.target.value);
@@ -1587,7 +1591,7 @@ export default function CreateAppointmentModal({
                       className="mt-1"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Select the date you prefer for the appointment
+                      Chọn ngày bạn muốn đặt lịch hẹn
                     </p>
                   </div>
 
@@ -1622,7 +1626,7 @@ export default function CreateAppointmentModal({
                     {loadingShifts ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
-                        <span className="text-sm text-muted-foreground">Loading availability...</span>
+                        <span className="text-sm text-muted-foreground">Đang tải lịch trống...</span>
                       </div>
                     ) : (
                       <>
@@ -1730,7 +1734,7 @@ export default function CreateAppointmentModal({
                         <Card className="p-4">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Checking availability...</span>
+                            <span>Đang kiểm tra lịch trống...</span>
                           </div>
                         </Card>
                       ) : (
@@ -1739,7 +1743,7 @@ export default function CreateAppointmentModal({
                           <Card className="p-4 bg-blue-50 border-blue-200">
                             <div className="flex items-center gap-2 mb-3">
                               <Calendar className="h-5 w-5 text-blue-600" />
-                              <h4 className="font-semibold text-sm">Availability Summary</h4>
+                              <h4 className="font-semibold text-sm">Tổng quan lịch trống</h4>
                             </div>
                             {loadingShifts ? (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1749,13 +1753,13 @@ export default function CreateAppointmentModal({
                             ) : (
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">Total Doctors:</span>
+                                  <span className="text-muted-foreground">Tổng số bác sĩ:</span>
                                   <span className="font-semibold">{getAllDoctors().length}</span>
                                 </div>
                                 {appointmentDate ? (
                                   <>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-muted-foreground">Doctors with Shifts:</span>
+                                      <span className="text-muted-foreground">Bác sĩ có ca làm:</span>
                                       <span className="font-semibold">
                                         {getAllDoctors().filter((doctor) => {
                                           const shifts = getShiftsForDoctorAndDate(doctor.employeeCode, appointmentDate);
@@ -1767,13 +1771,13 @@ export default function CreateAppointmentModal({
                                       <>
                                         <div className="pt-2 border-t">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Compatible Doctors:</span>
+                                            <span className="text-muted-foreground">Bác sĩ phù hợp:</span>
                                             <span className="font-semibold">{getCompatibleDoctors().length}</span>
                                           </div>
                                         </div>
                                         {selectedServices.length > 0 && (
                                           <div className="pt-2 border-t">
-                                            <div className="text-xs text-muted-foreground mb-1">Selected Services:</div>
+                                            <div className="text-xs text-muted-foreground mb-1">Dịch vụ đã chọn:</div>
                                             <div className="flex flex-wrap gap-1">
                                               {selectedServices.map((service) => (
                                                 <Badge key={service.serviceId} variant="outline" className="text-xs">
@@ -1788,7 +1792,7 @@ export default function CreateAppointmentModal({
                                   </>
                                 ) : (
                                   <p className="text-xs text-muted-foreground">
-                                    Select a date to see availability for that date
+                                    Chọn ngày để xem thông tin lịch trống
                                   </p>
                                 )}
                               </div>
@@ -1801,7 +1805,7 @@ export default function CreateAppointmentModal({
                               <div className="flex items-center gap-2 mb-3">
                                 <UserCog className="h-4 w-4 text-primary" />
                                 <h4 className="font-semibold text-sm">
-                                  Doctors Available on {format(new Date(appointmentDate), 'MMM dd, yyyy')}
+                                  Bác sĩ có lịch ngày {format(new Date(appointmentDate), 'dd/MM/yyyy')}
                                 </h4>
                               </div>
                               {loadingShifts ? (
@@ -1810,7 +1814,7 @@ export default function CreateAppointmentModal({
                                   <span>Đang tải...</span>
                                 </div>
                               ) : (
-                                <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                                <div className="space-y-2">
                                   {(() => {
                                     const doctorsWithShifts = getDoctorsWithShiftsForDate(appointmentDate);
                                     if (doctorsWithShifts.length === 0) {
@@ -1836,7 +1840,7 @@ export default function CreateAppointmentModal({
                                               >
                                                 <Clock className="h-3 w-3" />
                                                 <span>
-                                                  {shift.workShift?.shiftName || 'Shift'}: {shift.workShift?.startTime} - {shift.workShift?.endTime}
+                                                  {shift.workShift?.shiftName || 'Ca làm'}: {shift.workShift?.startTime} - {shift.workShift?.endTime}
                                                 </span>
                                               </div>
                                             ))}
@@ -1857,10 +1861,10 @@ export default function CreateAppointmentModal({
                                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-sm text-yellow-800 mb-1">
-                                    Limited availability on selected date
+                                    Lịch trống hạn chế vào ngày đã chọn
                                   </h4>
                                   <p className="text-xs text-yellow-700 mb-3">
-                                    The selected date may have limited doctors or time slots. Consider these alternative dates:
+                                    Ngày đã chọn có thể có ít bác sĩ hoặc khung giờ trống. Hãy xem xét các ngày thay thế:
                                   </p>
                                   <div className="flex flex-wrap gap-2">
                                     {suggestedDates.slice(0, 5).map((date) => (
@@ -1875,7 +1879,7 @@ export default function CreateAppointmentModal({
                                         }}
                                         className="px-3 py-1.5 text-xs border border-yellow-300 rounded-md bg-white hover:bg-yellow-100 transition-colors"
                                       >
-                                        {format(new Date(date), 'MMM dd')}
+                                        {format(new Date(date), 'dd/MM')}
                                       </button>
                                     ))}
                                   </div>
@@ -1890,7 +1894,7 @@ export default function CreateAppointmentModal({
                     <Card className="p-8 bg-muted/50 border-dashed">
                       <div className="text-center text-muted-foreground">
                         <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Select a date to see availability information</p>
+                        <p className="text-sm">Chọn ngày để xem thông tin lịch trống</p>
                       </div>
                     </Card>
                   )}
@@ -1899,755 +1903,822 @@ export default function CreateAppointmentModal({
             </div>
           )}
 
-          {/* Step 3: Select Services (table layout with doctor filter) */}
+          {/* Step 3: Select Doctor & Services */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              {/* Filter Row */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Doctor Filter - Filter services by doctor's specialization */}
-                <div>
-                  <Label>Lọc theo bác sĩ (tùy chọn)</Label>
-                  <Select
-                    value={selectedDoctorForFilter}
-                    onValueChange={(value) => {
-                      setSelectedDoctorForFilter(value);
-                      // Clear specialization filter when doctor is selected
-                      if (value) {
-                        setSelectedSpecializationFilter('all');
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Tất cả bác sĩ" />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      <SelectItem value="all">Tất cả bác sĩ</SelectItem>
-                      {employees
-                        .filter((employee) => {
-                          // Only show doctors (ROLE_DENTIST or ROLE_DOCTOR) with specializations
-                          if (!employee.roleName.includes('DENTIST') && !employee.roleName.includes('DOCTOR')) {
-                            return false;
-                          }
-                          return employee.specializations && employee.specializations.length > 0;
-                        })
-                        .map((employee) => (
-                          <SelectItem key={employee.employeeId} value={employee.employeeCode}>
-                            {employee.fullName} ({employee.employeeCode})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Chọn bác sĩ để chỉ hiển thị dịch vụ phù hợp với chuyên khoa của bác sĩ
-                  </p>
-                </div>
+              {/* Doctor Selection */}
+              <div>
+                <Label>Chọn bác sĩ <span className="text-red-500">*</span></Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Chỉ hiển thị bác sĩ có lịch làm việc vào ngày {appointmentDate ? format(new Date(appointmentDate), 'dd/MM/yyyy') : ''}
+                </p>
+                {loadingShifts ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Đang tải danh sách bác sĩ...</span>
+                  </div>
+                ) : (
+                  <>
+                    {/* Doctor Selection */}
+                    {!employeeCode ? (
+                      /* No doctor selected - show dropdown */
+                      <Select
+                        value={employeeCode}
+                        onValueChange={(value) => {
+                          setEmployeeCode(value);
+                          setServiceCodes([]);
+                          setServiceSearchTerm('');
+                          setServiceGroupFilter('all');
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Chọn bác sĩ" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const doctorsWithShifts = getDoctorsWithShiftsForDate(appointmentDate);
+                            if (doctorsWithShifts.length === 0) {
+                              return (
+                                <SelectItem value="no-doctors" disabled>
+                                  Không có bác sĩ nào có lịch làm việc vào ngày này
+                                </SelectItem>
+                              );
+                            }
+                            return doctorsWithShifts.map((doctor) => {
+                              const shifts = getShiftsForDoctorAndDate(doctor.employeeCode, appointmentDate);
+                              const shiftTimes = shifts.map(s => `${s.workShift?.startTime?.slice(0, 5)} - ${s.workShift?.endTime?.slice(0, 5)}`).join(', ');
+                              return (
+                                <SelectItem key={doctor.employeeId} value={doctor.employeeCode}>
+                                  {doctor.fullName} ({doctor.employeeCode}) - {shiftTimes}
+                                </SelectItem>
+                              );
+                            });
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      /* Doctor selected - show compact card with change button */
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary rounded-xl">
+                          <div className="p-1.5 rounded-full bg-primary text-white flex-shrink-0">
+                            <UserCog className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm">{selectedEmployee?.fullName}</span>
+                              <span className="text-xs text-muted-foreground">({selectedEmployee?.employeeCode})</span>
+                            </div>
+                            {selectedEmployee?.specializations && selectedEmployee.specializations.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {selectedEmployee.specializations.slice(0, 3).map((s: any) => (
+                                  <Badge key={s.specializationId} variant="secondary" className="text-xs py-0">
+                                    {s.specializationName || s.name}
+                                  </Badge>
+                                ))}
+                                {selectedEmployee.specializations.length > 3 && (
+                                  <span className="text-xs text-muted-foreground">+{selectedEmployee.specializations.length - 3}</span>
+                                )}
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Ca làm: {getShiftsForDoctorAndDate(employeeCode, appointmentDate).map(s =>
+                                `${s.workShift?.startTime?.slice(0, 5)} - ${s.workShift?.endTime?.slice(0, 5)}`
+                              ).join(', ')}
+                            </div>
+                          </div>
+                          <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEmployeeCode('');
+                            setServiceCodes([]);
+                            setServiceSearchTerm('');
+                            setServiceGroupFilter('all');
+                          }}
+                          className="text-xs"
+                        >
+                          Đổi bác sĩ
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
 
-                {/* Specialization Filter - Only show if no doctor is selected */}
-                {(selectedDoctorForFilter === 'all' || !selectedDoctorForFilter) && hasUserSpecializations && (
-                  <div>
-                    <Label>Lọc theo chuyên khoa</Label>
-                    <Select
-                      value={selectedSpecializationFilter}
-                      onValueChange={setSelectedSpecializationFilter}
-                    >
-                      <SelectTrigger className="mt-1">
+              {/* Services Section - Only show when doctor is selected */}
+              {employeeCode && (
+                <div>
+                  <Label>Chọn dịch vụ (ít nhất 1) <span className="text-red-500">*</span></Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Chỉ hiển thị dịch vụ phù hợp với chuyên khoa của bác sĩ đã chọn
+                  </p>
+
+                  {/* Search + Filter Bar */}
+                  <div className="flex gap-3 mb-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Tìm kiếm dịch vụ..."
+                        value={serviceSearchTerm}
+                        onChange={(e) => setServiceSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select value={serviceGroupFilter} onValueChange={setServiceGroupFilter}>
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Tất cả chuyên khoa" />
                       </SelectTrigger>
-                      <SelectContent align="start">
+                      <SelectContent>
                         <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
-                        <SelectItem value="none">Không có chuyên khoa</SelectItem>
-                        {specializations.map((spec) => (
+                        {selectedEmployee?.specializations?.map((spec: any) => (
                           <SelectItem key={spec.specializationId} value={String(spec.specializationId)}>
-                            {spec.specializationName}
+                            {spec.specializationName || spec.name || 'Chuyên khoa'}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {(serviceSearchTerm || serviceGroupFilter !== 'all') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setServiceSearchTerm('');
+                          setServiceGroupFilter('all');
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Xóa filter
+                      </Button>
+                    )}
                   </div>
-                )}
 
-                {/* Show selected doctor info */}
-                {selectedDoctorForFilter && selectedDoctorForFilter !== 'all' && (
-                  <div>
-                    <Label>Bác sĩ đã chọn</Label>
-                    <Card className="p-3 mt-1 bg-primary/5 border-primary">
-                      <div className="flex items-center gap-2">
-                        <UserCog className="h-4 w-4 text-primary" />
-                        <div>
-                          <div className="font-medium text-sm">
-                            {employees.find((e) => e.employeeCode === selectedDoctorForFilter)?.fullName}
+                  {/* Services List - NO SCROLL */}
+                  <Card className="p-4">
+                    {loadingData ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        <span className="ml-2 text-sm text-muted-foreground">Đang tải dịch vụ...</span>
+                      </div>
+                    ) : (() => {
+                      const filteredServices = getFilteredServices();
+                      if (filteredServices.length === 0) {
+                        return (
+                          <div className="text-center py-8">
+                            <p className="text-sm text-muted-foreground">
+                              {serviceSearchTerm || serviceGroupFilter !== 'all'
+                                ? 'Không tìm thấy dịch vụ phù hợp với bộ lọc.'
+                                : 'Không có dịch vụ nào phù hợp với chuyên khoa của bác sĩ.'}
+                            </p>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {selectedDoctorForFilter}
-                          </div>
+                        );
+                      }
+
+                      // Group filtered services by specialization for display
+                      const groupedServices = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
+                      filteredServices.forEach((service) => {
+                        const specId = service.specializationId || 'none';
+                        if (!groupedServices.has(specId)) {
+                          const specialization = specId !== 'none'
+                            ? specializations.find(s =>
+                              String(s.specializationId) === String(specId) ||
+                              (s.specializationId as any) === specId
+                            )
+                            : undefined;
+                          groupedServices.set(specId, { specialization, services: [] });
+                        }
+                        groupedServices.get(specId)!.services.push(service);
+                      });
+
+                      return (
+                        <div className="space-y-4">
+                          {Array.from(groupedServices.entries()).map(([key, group]) => (
+                            <div key={key} className="space-y-2">
+                              {/* Group Header */}
+                              <div className="flex items-center gap-2 pb-2 border-b">
+                                <h4 className="font-semibold text-sm text-primary">
+                                  {group.specialization?.specializationName || 'Chưa phân loại chuyên khoa'}
+                                </h4>
+                                <Badge variant="outline" className="text-xs">
+                                  {group.services.length} dịch vụ
+                                </Badge>
+                              </div>
+
+                              {/* Table Layout */}
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-12 px-6 py-3">
+                                      <Checkbox
+                                        checked={group.services.every((s) => serviceCodes.includes(s.serviceCode))}
+                                        className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            group.services.forEach((service) => {
+                                              if (!serviceCodes.includes(service.serviceCode)) {
+                                                handleToggleService(service.serviceCode);
+                                              }
+                                            });
+                                          } else {
+                                            group.services.forEach((service) => {
+                                              if (serviceCodes.includes(service.serviceCode)) {
+                                                handleToggleService(service.serviceCode);
+                                              }
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </TableHead>
+                                    <TableHead className="px-6 py-3">Tên dịch vụ</TableHead>
+                                    <TableHead className="px-6 py-3">Mã dịch vụ</TableHead>
+                                    <TableHead className="px-6 py-3 text-right">Thời gian</TableHead>
+                                    <TableHead className="px-6 py-3 text-right">Giá</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.services.map((service) => {
+                                    const isSelected = serviceCodes.includes(service.serviceCode);
+                                    return (
+                                      <TableRow
+                                        key={service.serviceId}
+                                        className={`cursor-pointer ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
+                                        onClick={() => handleToggleService(service.serviceCode)}
+                                      >
+                                        <TableCell className="px-6 py-4">
+                                          <Checkbox
+                                            checked={isSelected}
+                                            className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                            onCheckedChange={() => handleToggleService(service.serviceCode)}
+                                          />
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 font-medium">
+                                          {service.serviceName}
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 text-muted-foreground">
+                                          {service.serviceCode}
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 text-right">
+                                          {service.defaultDurationMinutes} phút
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 text-right font-medium">
+                                          {service.price?.toLocaleString('vi-VN')} VND
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </Card>
+
+                  {/* Selected Services Summary */}
+                  {serviceCodes.length > 0 && (
+                    <Card className="p-3 mt-3 bg-primary/5 border-primary">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Đã chọn {serviceCodes.length} dịch vụ</span>
+                        </div>
+                        <div className="text-sm font-semibold text-primary">
+                          Tổng: {selectedServices.reduce((sum, s) => sum + (s.price || 0), 0).toLocaleString('vi-VN')} VND
                         </div>
                       </div>
                     </Card>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )
+              }
+            </div >
+          )
+          }
 
-              <div>
-                <Label>Chọn dịch vụ (ít nhất 1) <span className="text-red-500">*</span></Label>
-                <Card className="p-4 mt-1">
-                  {loadingData ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      <span className="ml-2 text-sm text-muted-foreground">Đang tải dịch vụ...</span>
+          {/* Step 4: Time Slots + Room + Participants (Doctor already selected in Step 3) */}
+          {/* Phase 5: Show step 4 if either serviceCodes OR planItemIds are present */}
+          {
+            currentStep === 4 && appointmentDate && (serviceCodes.length > 0 || planItemIds.length > 0) && (
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left Column: Selected Doctor Info (read-only) & Time Slots */}
+                <div className="space-y-4">
+                  {/* Selected Doctor Info - Read Only */}
+                  {selectedEmployee && (
+                    <div>
+                      <Label>Bác sĩ đã chọn</Label>
+                      <Card className="p-4 mt-1 bg-primary/5 border-primary">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-primary text-white">
+                            <UserCog className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">{selectedEmployee.fullName}</div>
+                            <div className="text-sm text-muted-foreground">{selectedEmployee.employeeCode}</div>
+                            {selectedEmployee.specializations && selectedEmployee.specializations.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {selectedEmployee.specializations.map((spec: any) => (
+                                  <Badge key={spec.specializationId} variant="outline" className="text-xs">
+                                    {spec.specializationName}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        </div>
+                      </Card>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Để thay đổi bác sĩ, vui lòng quay lại bước 3.
+                      </p>
                     </div>
-                  ) : (() => {
-                    const filteredServices = getFilteredServices();
-                    if (filteredServices.length === 0) {
-                      return (
-                        <Card className="p-4 bg-red-50 border-red-200">
-                          <p className="text-sm text-red-800">Không tìm thấy dịch vụ nào.</p>
+                  )}
+
+                  {/* Available Time Slots (grouped by morning/afternoon/evening) */}
+                  {employeeCode && (
+                    <div>
+                      <Label>Chọn khung giờ <span className="text-red-500">*</span></Label>
+                      {loadingAvailableSlots ? (
+                        <Card className="p-4 mt-1">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Đang tải khung giờ...</span>
+                          </div>
                         </Card>
-                      );
-                    }
+                      ) : availableSlots.length > 0 ? (
+                        <div className="space-y-3 mt-1">
+                          {/* Morning Slots */}
+                          {groupedSlots.morning.length > 0 && (
+                            <Card className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Sun className="h-4 w-4 text-yellow-600" />
+                                <h4 className="font-semibold text-xs">Sáng (6:00 - 12:00)</h4>
+                              </div>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {groupedSlots.morning.map((slot) => {
+                                  const slotTime = slot.startTime.includes('T')
+                                    ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
+                                    : '';
+                                  const isSelected = slot.startTime === appointmentStartTime;
+                                  const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
+                                  const areParticipantsAvailable = participantCodes.length > 0
+                                    ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
+                                    : true;
+                                  const isAvailable = isDoctorAvailable && areParticipantsAvailable;
 
-                    // Group filtered services by specialization for table display
-                    const groupedServices = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
-                    filteredServices.forEach((service) => {
-                      const specId = service.specializationId || 'none';
-                      if (!groupedServices.has(specId)) {
-                        const specialization = specId !== 'none'
-                          ? specializations.find(s =>
-                            String(s.specializationId) === String(specId) ||
-                            (s.specializationId as any) === specId
-                          )
-                          : undefined;
-                        groupedServices.set(specId, { specialization, services: [] });
-                      }
-                      groupedServices.get(specId)!.services.push(service);
-                    });
-
-                    return (
-                      <div className="space-y-4 max-h-96 overflow-y-auto">
-                        {Array.from(groupedServices.entries()).map(([key, group]) => (
-                          <div key={key} className="space-y-2">
-                            {/* Group Header - Specialization Name */}
-                            <div className="flex items-center gap-2 pb-2 border-b sticky top-0 bg-white z-10">
-                              <h4 className="font-semibold text-sm text-primary">
-                                {group.specialization?.specializationName || 'Chưa phân loại chuyên khoa'}
-                              </h4>
-                              <Badge variant="outline" className="text-xs">
-                                {group.services.length} {group.services.length === 1 ? 'dịch vụ' : 'dịch vụ'}
-                              </Badge>
-                            </div>
-
-                            {/* Table Layout */}
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-12">
-                                    <Checkbox
-                                      checked={group.services.every((s) => serviceCodes.includes(s.serviceCode))}
-                                      className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          // Select all services in this group
-                                          group.services.forEach((service) => {
-                                            if (!serviceCodes.includes(service.serviceCode)) {
-                                              handleToggleService(service.serviceCode);
-                                            }
-                                          });
-                                        } else {
-                                          // Deselect all services in this group
-                                          group.services.forEach((service) => {
-                                            if (serviceCodes.includes(service.serviceCode)) {
-                                              handleToggleService(service.serviceCode);
-                                            }
-                                          });
-                                        }
-                                      }}
-                                    />
-                                  </TableHead>
-                                  <TableHead>Tên dịch vụ</TableHead>
-                                  <TableHead>Mã dịch vụ</TableHead>
-                                  <TableHead>Chuyên khoa</TableHead>
-                                  <TableHead className="text-right">Thời gian</TableHead>
-                                  <TableHead className="text-right">Giá</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {group.services.map((service) => {
-                                  const isSelected = serviceCodes.includes(service.serviceCode);
                                   return (
-                                    <TableRow
-                                      key={service.serviceId}
-                                      className={isSelected ? 'bg-primary/5' : ''}
+                                    <button
+                                      key={slot.startTime}
+                                      type="button"
+                                      onClick={() => handleSelectTimeSlot(slot)}
+                                      disabled={!isAvailable}
+                                      className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
+                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                        }`}
+                                      title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
                                     >
-                                      <TableCell>
-                                        <Checkbox
-                                          checked={isSelected}
-                                          className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                          onCheckedChange={() => handleToggleService(service.serviceCode)}
-                                        />
-                                      </TableCell>
-                                      <TableCell className="font-medium">
-                                        {service.serviceName}
-                                      </TableCell>
-                                      <TableCell className="text-muted-foreground">
-                                        {service.serviceCode}
-                                      </TableCell>
-                                      <TableCell>
-                                        {service.specializationName ? (
-                                          <Badge variant="outline" className="text-xs">
-                                            {service.specializationName}
-                                          </Badge>
-                                        ) : (
-                                          <span className="text-xs text-muted-foreground">-</span>
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        {service.defaultDurationMinutes} phút
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium">
-                                        {service.price?.toLocaleString('vi-VN')} VND
-                                      </TableCell>
-                                    </TableRow>
+                                      {slotTime}
+                                      {!isAvailable && (
+                                        <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
+                                      )}
+                                    </button>
                                   );
                                 })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </Card>
-              </div>
-
-            </div>
-          )}
-
-          {/* Step 4: Select Doctor + Time Slots (grouped by morning/afternoon/evening) + Participants */}
-          {/* Phase 5: Show step 4 if either serviceCodes OR planItemIds are present */}
-          {currentStep === 4 && appointmentDate && (serviceCodes.length > 0 || planItemIds.length > 0) && (
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left Column: Doctor Selection & Time Slots */}
-              <div className="space-y-4">
-                {/* Doctor Selection */}
-                <div>
-                  <Label htmlFor="employeeCode">Chọn bác sĩ <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={employeeCode}
-                    onValueChange={(value) => {
-                      setEmployeeCode(value);
-                      setAppointmentStartTime('');
-                      setRoomCode('');
-                    }}
-                    disabled={loadingData || loadingShifts}
-                  >
-                    <SelectTrigger id="employeeCode" className="mt-1">
-                      <SelectValue placeholder={loadingData || loadingShifts ? 'Đang tải...' : 'Chọn bác sĩ'} />
-                    </SelectTrigger>
-                    <SelectContent align="start">
-                      {(() => {
-                        const compatibleDoctors = getCompatibleDoctors();
-                        const doctorsWithShifts = compatibleDoctors.filter((employee) => {
-                          // Only show doctors with shifts on the selected date
-                          const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
-                          return shiftsForDate.length > 0;
-                        });
-
-                        // If no doctors with shifts, show all compatible doctors (user can still select to see available slots)
-                        const doctorsToShow = doctorsWithShifts.length > 0 ? doctorsWithShifts : compatibleDoctors;
-
-                        if (doctorsToShow.length === 0) {
-                          return (
-                            <SelectItem value="no-doctors" disabled>
-                              No compatible doctors available
-                            </SelectItem>
-                          );
-                        }
-
-                        return doctorsToShow.map((employee) => {
-                          const shiftsForDate = getShiftsForDoctorAndDate(employee.employeeCode, appointmentDate);
-                          const hasShifts = shiftsForDate.length > 0;
-                          return (
-                            <SelectItem
-                              key={employee.employeeId}
-                              value={employee.employeeCode}
-                            >
-                              {employee.fullName} ({employee.employeeCode})
-                              {!hasShifts && (
-                                <span className="text-xs text-muted-foreground ml-2">(No shifts on this date)</span>
-                              )}
-                            </SelectItem>
-                          );
-                        });
-                      })()}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Chỉ hiển thị bác sĩ có chuyên khoa phù hợp và có lịch làm việc vào ngày đã chọn.
-                  </p>
-                </div>
-
-                {selectedEmployee && (
-                  <Card className="p-4 bg-primary/5 border-primary">
-                    <div className="flex items-center gap-2">
-                      <UserCog className="h-5 w-5 text-primary" />
-                      <div>
-                        <div className="font-medium">{selectedEmployee.fullName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {selectedEmployee.employeeCode}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {/* Available Time Slots (grouped by morning/afternoon/evening) */}
-                {employeeCode && (
-                  <div>
-                    <Label>Chọn khung giờ <span className="text-red-500">*</span></Label>
-                    {loadingAvailableSlots ? (
-                      <Card className="p-4 mt-1">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Đang tải khung giờ...</span>
-                        </div>
-                      </Card>
-                    ) : availableSlots.length > 0 ? (
-                      <div className="space-y-3 mt-1">
-                        {/* Morning Slots */}
-                        {groupedSlots.morning.length > 0 && (
-                          <Card className="p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Sun className="h-4 w-4 text-yellow-600" />
-                              <h4 className="font-semibold text-xs">Sáng (6:00 - 12:00)</h4>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {groupedSlots.morning.map((slot) => {
-                                const slotTime = slot.startTime.includes('T')
-                                  ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
-                                  : '';
-                                const isSelected = slot.startTime === appointmentStartTime;
-                                const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0
-                                  ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
-                                  : true;
-                                const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-
-                                return (
-                                  <button
-                                    key={slot.startTime}
-                                    type="button"
-                                    onClick={() => handleSelectTimeSlot(slot)}
-                                    disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                      : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                      }`}
-                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
-                                  >
-                                    {slotTime}
-                                    {!isAvailable && (
-                                      <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </Card>
-                        )}
-
-                        {/* Afternoon Slots */}
-                        {groupedSlots.afternoon.length > 0 && (
-                          <Card className="p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Sunset className="h-4 w-4 text-orange-600" />
-                              <h4 className="font-semibold text-xs">Chiều (12:00 - 18:00)</h4>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {groupedSlots.afternoon.map((slot) => {
-                                const slotTime = slot.startTime.includes('T')
-                                  ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
-                                  : '';
-                                const isSelected = slot.startTime === appointmentStartTime;
-                                const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0
-                                  ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
-                                  : true;
-                                const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-
-                                return (
-                                  <button
-                                    key={slot.startTime}
-                                    type="button"
-                                    onClick={() => handleSelectTimeSlot(slot)}
-                                    disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                      : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                      }`}
-                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
-                                  >
-                                    {slotTime}
-                                    {!isAvailable && (
-                                      <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </Card>
-                        )}
-
-                        {/* Evening Slots */}
-                        {groupedSlots.evening.length > 0 && (
-                          <Card className="p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Moon className="h-4 w-4 text-blue-600" />
-                              <h4 className="font-semibold text-xs">Tối (18:00 - 22:00)</h4>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {groupedSlots.evening.map((slot) => {
-                                const slotTime = slot.startTime.includes('T')
-                                  ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
-                                  : '';
-                                const isSelected = slot.startTime === appointmentStartTime;
-                                const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
-                                const areParticipantsAvailable = participantCodes.length > 0
-                                  ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
-                                  : true;
-                                const isAvailable = isDoctorAvailable && areParticipantsAvailable;
-
-                                return (
-                                  <button
-                                    key={slot.startTime}
-                                    type="button"
-                                    onClick={() => handleSelectTimeSlot(slot)}
-                                    disabled={!isAvailable}
-                                    className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
-                                      ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
-                                      : isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                        : 'bg-background hover:bg-primary/10 border-border'
-                                      }`}
-                                    title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
-                                  >
-                                    {slotTime}
-                                    {!isAvailable && (
-                                      <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </Card>
-                        )}
-                      </div>
-                    ) : (
-                      <Card className="p-4 mt-1 bg-red-50 border-red-200">
-                        <div className="space-y-3">
-                          {/* Main error title */}
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-semibold text-red-700">
-                                Không tìm thấy khung giờ khả dụng
-                              </p>
-                              <p className="text-xs text-red-600 mt-1">
-                                Không có lịch trống cho bác sĩ này vào ngày {appointmentDate}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Friendly suggestions */}
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p className="text-xs font-medium text-blue-800 mb-2">
-                              Gợi ý giải pháp:
-                            </p>
-                            <ul className="text-xs text-blue-700 space-y-1.5">
-                              <li className="flex items-start gap-2">
-                                <span className="mt-0.5">•</span>
-                                <span>Thử chọn <strong>ngày khác</strong> (bác sĩ có thể chưa có lịch làm việc ngày này)</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="mt-0.5">•</span>
-                                <span>Chọn <strong>bác sĩ khác</strong> cùng chuyên khoa</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="mt-0.5">•</span>
-                                <span>Liên hệ lễ tân để được tư vấn lịch hẹn phù hợp</span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          {/* Technical details - collapsible for advanced users */}
-                          {loadSlotsError && (
-                            <details className="text-xs">
-                              <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
-                                Chi tiết kỹ thuật (dành cho quản trị viên)
-                              </summary>
-                              <div className="mt-2 space-y-2">
-                                <div className="bg-gray-50 border border-gray-200 p-2 rounded">
-                                  <span className="font-semibold text-gray-700">Thông báo từ hệ thống:</span>
-                                  <p className="text-gray-600 mt-1">{loadSlotsError}</p>
-                                </div>
-                                <div className="bg-amber-50 border border-amber-200 p-2 rounded">
-                                  <p className="text-amber-800">
-                                    ⚙ <strong>Yêu cầu cấu hình:</strong> Admin cần cấu hình ánh xạ phòng-dịch vụ tại trang quản lý phòng
-                                  </p>
-                                </div>
                               </div>
-                            </details>
+                            </Card>
+                          )}
+
+                          {/* Afternoon Slots */}
+                          {groupedSlots.afternoon.length > 0 && (
+                            <Card className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Sunset className="h-4 w-4 text-orange-600" />
+                                <h4 className="font-semibold text-xs">Chiều (12:00 - 18:00)</h4>
+                              </div>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {groupedSlots.afternoon.map((slot) => {
+                                  const slotTime = slot.startTime.includes('T')
+                                    ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
+                                    : '';
+                                  const isSelected = slot.startTime === appointmentStartTime;
+                                  const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
+                                  const areParticipantsAvailable = participantCodes.length > 0
+                                    ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
+                                    : true;
+                                  const isAvailable = isDoctorAvailable && areParticipantsAvailable;
+
+                                  return (
+                                    <button
+                                      key={slot.startTime}
+                                      type="button"
+                                      onClick={() => handleSelectTimeSlot(slot)}
+                                      disabled={!isAvailable}
+                                      className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
+                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                        }`}
+                                      title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
+                                    >
+                                      {slotTime}
+                                      {!isAvailable && (
+                                        <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </Card>
+                          )}
+
+                          {/* Evening Slots */}
+                          {groupedSlots.evening.length > 0 && (
+                            <Card className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Moon className="h-4 w-4 text-blue-600" />
+                                <h4 className="font-semibold text-xs">Tối (18:00 - 22:00)</h4>
+                              </div>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {groupedSlots.evening.map((slot) => {
+                                  const slotTime = slot.startTime.includes('T')
+                                    ? slot.startTime.split('T')[1]?.slice(0, 5) || ''
+                                    : '';
+                                  const isSelected = slot.startTime === appointmentStartTime;
+                                  const isDoctorAvailable = employeeCode ? isDoctorAvailableInSlot(employeeCode, slot.startTime) : true;
+                                  const areParticipantsAvailable = participantCodes.length > 0
+                                    ? participantCodes.every((code) => isParticipantAvailableInSlot(code, slot.startTime))
+                                    : true;
+                                  const isAvailable = isDoctorAvailable && areParticipantsAvailable;
+
+                                  return (
+                                    <button
+                                      key={slot.startTime}
+                                      type="button"
+                                      onClick={() => handleSelectTimeSlot(slot)}
+                                      disabled={!isAvailable}
+                                      className={`p-2 text-xs rounded border transition-colors relative ${!isAvailable
+                                        ? 'bg-muted/30 opacity-50 cursor-not-allowed border-muted'
+                                        : isSelected
+                                          ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                          : 'bg-background hover:bg-primary/10 border-border'
+                                        }`}
+                                      title={!isAvailable ? 'Bác sĩ hoặc người tham gia không có lịch trong khung giờ này' : ''}
+                                    >
+                                      {slotTime}
+                                      {!isAvailable && (
+                                        <AlertCircle className="h-3 w-3 text-red-500 absolute top-0 right-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </Card>
                           )}
                         </div>
-                      </Card>
-                    )}
-                  </div>
-                )}
+                      ) : (
+                        <Card className="p-4 mt-1 bg-red-50 border-red-200">
+                          <div className="space-y-3">
+                            {/* Main error title */}
+                            <div className="flex items-start gap-2">
+                              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-red-700">
+                                  Không tìm thấy khung giờ khả dụng
+                                </p>
+                                <p className="text-xs text-red-600 mt-1">
+                                  Không có lịch trống cho bác sĩ này vào ngày {appointmentDate}
+                                </p>
+                              </div>
+                            </div>
 
-                {/* Room Selection */}
-                {appointmentStartTime && (
-                  <div>
-                    <Label htmlFor="roomCode">Chọn phòng <span className="text-red-500">*</span></Label>
-                    <Select value={roomCode} onValueChange={setRoomCode}>
-                      <SelectTrigger id="roomCode" className="mt-1">
-                        <SelectValue placeholder="Chọn phòng" />
-                      </SelectTrigger>
-                      <SelectContent align="start">
-                        {(() => {
-                          const compatibleRoomCodes = selectedSlot?.availableCompatibleRoomCodes || [];
+                            {/* Friendly suggestions */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <p className="text-xs font-medium text-blue-800 mb-2">
+                                Gợi ý giải pháp:
+                              </p>
+                              <ul className="text-xs text-blue-700 space-y-1.5">
+                                <li className="flex items-start gap-2">
+                                  <span className="mt-0.5">•</span>
+                                  <span>Thử chọn <strong>ngày khác</strong> (bác sĩ có thể chưa có lịch làm việc ngày này)</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="mt-0.5">•</span>
+                                  <span>Chọn <strong>bác sĩ khác</strong> cùng chuyên khoa</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="mt-0.5">•</span>
+                                  <span>Liên hệ lễ tân để được tư vấn lịch hẹn phù hợp</span>
+                                </li>
+                              </ul>
+                            </div>
 
-                          // CRITICAL FIX: Only show compatible rooms, never show all rooms
-                          if (compatibleRoomCodes.length === 0) {
-                            return (
-                              <SelectItem value="" disabled>
-                                Không có phòng phù hợp cho khung giờ này
-                              </SelectItem>
-                            );
-                          }
-
-                          return rooms
-                            .filter((room) => {
-                              if (!room.isActive) return false;
-                              // MUST be in compatible room list
-                              return compatibleRoomCodes.includes(room.roomCode);
-                            })
-                            .map((room) => (
-                              <SelectItem key={room.roomId} value={room.roomCode}>
-                                {room.roomCode} - {room.roomName}
-                              </SelectItem>
-                            ));
-                        })()}
-                      </SelectContent>
-                    </Select>
-                    {selectedSlot && selectedSlot.availableCompatibleRoomCodes.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Chỉ hiển thị các phòng phù hợp cho khung giờ đã chọn
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Participants */}
-              <div className="space-y-4">
-                {/* Participants Selection */}
-                <div>
-                  <Label>Chọn người tham gia (Tùy chọn)</Label>
-                  <p className="text-xs text-muted-foreground mt-1 mb-2">
-                    Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn làm người tham gia.
-                  </p>
-                  <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto">
-                    {(() => {
-                      const eligibleParticipants = employees.filter((e) => {
-                        if (e.employeeCode === employeeCode) return false;
-
-                        const hasStandardSpecialization = e.specializations?.some(
-                          (spec) =>
-                            String(spec.specializationId) === '8' ||
-                            spec.specializationId === '8'
-                        );
-
-                        if (!hasStandardSpecialization) return false;
-
-                        // Only show participants with shifts on the selected date
-                        if (appointmentDate) {
-                          const shiftsForDate = getParticipantShiftsForDate(e.employeeCode, appointmentDate);
-                          return shiftsForDate.length > 0;
-                        }
-
-                        return true;
-                      });
-
-                      if (eligibleParticipants.length === 0) {
-                        return (
-                          <div className="text-center py-4 text-sm text-muted-foreground">
-                            {appointmentDate
-                              ? 'Không tìm thấy người tham gia phù hợp có lịch làm việc vào ngày đã chọn. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) có ca làm việc vào ngày này mới có thể được chọn.'
-                              : 'Không tìm thấy người tham gia phù hợp. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn.'}
+                            {/* Technical details - collapsible for advanced users */}
+                            {loadSlotsError && (
+                              <details className="text-xs">
+                                <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
+                                  Chi tiết kỹ thuật (dành cho quản trị viên)
+                                </summary>
+                                <div className="mt-2 space-y-2">
+                                  <div className="bg-gray-50 border border-gray-200 p-2 rounded">
+                                    <span className="font-semibold text-gray-700">Thông báo từ hệ thống:</span>
+                                    <p className="text-gray-600 mt-1">{loadSlotsError}</p>
+                                  </div>
+                                  <div className="bg-amber-50 border border-amber-200 p-2 rounded">
+                                    <p className="text-amber-800">
+                                      ⚙ <strong>Yêu cầu cấu hình:</strong> Admin cần cấu hình ánh xạ phòng-dịch vụ tại trang quản lý phòng
+                                    </p>
+                                  </div>
+                                </div>
+                              </details>
+                            )}
                           </div>
-                        );
-                      }
-
-                      return eligibleParticipants.map((employee) => (
-                        <div key={employee.employeeId} className="flex items-center space-x-2 py-2 border-b last:border-0">
-                          <Checkbox
-                            id={`participant-${employee.employeeId}`}
-                            checked={participantCodes.includes(employee.employeeCode)}
-                            className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                            onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
-                          />
-                          <Label
-                            htmlFor={`participant-${employee.employeeId}`}
-                            className="text-sm font-normal cursor-pointer flex-1"
-                          >
-                            <div className="font-medium">{employee.fullName}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {employee.employeeCode} • <Badge variant="outline" className="text-xs">
-                                {getRoleLabel(employee.roleName)}
-                              </Badge>
-                            </div>
-                          </Label>
-                        </div>
-                      ));
-                    })()}
-                  </Card>
-                </div>
-
-                {/* Participant Shifts Availability */}
-                {participantCodes.length > 0 && appointmentDate && (
-                  <Card className="p-4 bg-blue-50 border-blue-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <UserCog className="h-4 w-4 text-blue-600" />
-                      <h4 className="font-semibold text-sm">Participant Shift Availability</h4>
+                        </Card>
+                      )}
                     </div>
-                    {loadingParticipantShifts ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Loading shifts...</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {participantCodes.map((participantCode) => {
-                          const participant = employees.find((e) => e.employeeCode === participantCode);
-                          const shiftsForDate = getParticipantShiftsForDate(participantCode, appointmentDate);
+                  )}
 
-                          return (
-                            <div key={participantCode} className="space-y-2">
-                              <div className="text-xs font-medium text-muted-foreground">
-                                {participant?.fullName} ({participantCode})
-                              </div>
-                              <div className="text-xs text-muted-foreground mb-1">
-                                {getRoleLabel(participant?.roleName || '')}
-                              </div>
-                              {shiftsForDate.length > 0 ? (
-                                <div className="space-y-1">
-                                  {shiftsForDate.map((shift) => (
-                                    <div
-                                      key={shift.employeeShiftId}
-                                      className="flex items-center gap-2 text-xs bg-background p-2 rounded border"
-                                    >
-                                      <Clock className="h-3 w-3 text-muted-foreground" />
-                                      <span className="font-medium">
-                                        {shift.workShift?.shiftName || 'Shift'}
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        {shift.workShift?.startTime} - {shift.workShift?.endTime}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2 text-xs text-red-600">
-                                  <AlertCircle className="h-3 w-3" />
-                                  <span>
-                                    No shifts scheduled for this date
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </Card>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Review & Confirm */}
-          {currentStep === 5 && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="notes">Ghi chú (Tùy chọn)</Label>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Thêm ghi chú bổ sung..."
-                  className="mt-1"
-                  rows={4}
-                />
-              </div>
-
-              {/* Summary */}
-              <Card className="p-4 bg-muted">
-                <h3 className="font-semibold mb-2">Tóm tắt lịch hẹn</h3>
-                <div className="space-y-1 text-sm">
-                  <div>
-                    <span className="font-medium">Patient:</span> {selectedPatient?.fullName}
-                  </div>
-                  <div>
-                    <span className="font-medium">Date:</span>{' '}
-                    {appointmentDate &&
-                      format(new Date(appointmentDate), 'PPP')}
-                  </div>
-                  <div>
-                    <span className="font-medium">Doctor:</span> {selectedEmployee?.fullName}
-                  </div>
-                  <div>
-                    <span className="font-medium">Services:</span>{' '}
-                    {selectedServices.map((s) => s.serviceName).join(', ')}
-                  </div>
-                  <div>
-                    <span className="font-medium">Time:</span>{' '}
-                    {appointmentStartTime &&
-                      format(new Date(appointmentStartTime), 'HH:mm')}
-                  </div>
-                  <div>
-                    <span className="font-medium">Room:</span>{' '}
-                    {rooms.find((r) => r.roomCode === roomCode)?.roomName || roomCode}
-                  </div>
-                  {participantCodes.length > 0 && (
+                  {/* Room Selection */}
+                  {appointmentStartTime && (
                     <div>
-                      <span className="font-medium">Participants:</span>{' '}
-                      {participantCodes.map((code) => {
-                        const participant = employees.find((e) => e.employeeCode === code);
-                        return participant ? `${participant.fullName} (${getRoleLabel(participant.roleName)})` : code;
-                      }).join(', ')}
+                      <Label htmlFor="roomCode">Chọn phòng <span className="text-red-500">*</span></Label>
+                      <Select value={roomCode} onValueChange={setRoomCode}>
+                        <SelectTrigger id="roomCode" className="mt-1">
+                          <SelectValue placeholder="Chọn phòng" />
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                          {(() => {
+                            const compatibleRoomCodes = selectedSlot?.availableCompatibleRoomCodes || [];
+
+                            // CRITICAL FIX: Only show compatible rooms, never show all rooms
+                            if (compatibleRoomCodes.length === 0) {
+                              return (
+                                <SelectItem value="" disabled>
+                                  Không có phòng phù hợp cho khung giờ này
+                                </SelectItem>
+                              );
+                            }
+
+                            return rooms
+                              .filter((room) => {
+                                if (!room.isActive) return false;
+                                // MUST be in compatible room list
+                                return compatibleRoomCodes.includes(room.roomCode);
+                              })
+                              .map((room) => (
+                                <SelectItem key={room.roomId} value={room.roomCode}>
+                                  {room.roomCode} - {room.roomName}
+                                </SelectItem>
+                              ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                      {selectedSlot && selectedSlot.availableCompatibleRoomCodes.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Chỉ hiển thị các phòng phù hợp cho khung giờ đã chọn
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
-              </Card>
-            </div>
-          )}
-        </div>
+
+                {/* Right Column: Participants */}
+                <div className="space-y-4">
+                  {/* Participants Selection */}
+                  <div>
+                    <Label>Chọn người tham gia (Tùy chọn)</Label>
+                    <p className="text-xs text-muted-foreground mt-1 mb-2">
+                      Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn làm người tham gia.
+                    </p>
+                    <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto">
+                      {(() => {
+                        const eligibleParticipants = employees.filter((e) => {
+                          if (e.employeeCode === employeeCode) return false;
+
+                          const hasStandardSpecialization = e.specializations?.some(
+                            (spec) =>
+                              String(spec.specializationId) === '8' ||
+                              spec.specializationId === '8'
+                          );
+
+                          if (!hasStandardSpecialization) return false;
+
+                          // Only show participants with shifts on the selected date
+                          if (appointmentDate) {
+                            const shiftsForDate = getParticipantShiftsForDate(e.employeeCode, appointmentDate);
+                            return shiftsForDate.length > 0;
+                          }
+
+                          return true;
+                        });
+
+                        if (eligibleParticipants.length === 0) {
+                          return (
+                            <div className="text-center py-4 text-sm text-muted-foreground">
+                              {appointmentDate
+                                ? 'Không tìm thấy người tham gia phù hợp có lịch làm việc vào ngày đã chọn. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) có ca làm việc vào ngày này mới có thể được chọn.'
+                                : 'Không tìm thấy người tham gia phù hợp. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn.'}
+                            </div>
+                          );
+                        }
+
+                        return eligibleParticipants.map((employee) => (
+                          <div key={employee.employeeId} className="flex items-center space-x-2 py-2 border-b last:border-0">
+                            <Checkbox
+                              id={`participant-${employee.employeeId}`}
+                              checked={participantCodes.includes(employee.employeeCode)}
+                              className="border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              onCheckedChange={() => handleToggleParticipant(employee.employeeCode)}
+                            />
+                            <Label
+                              htmlFor={`participant-${employee.employeeId}`}
+                              className="text-sm font-normal cursor-pointer flex-1"
+                            >
+                              <div className="font-medium">{employee.fullName}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {employee.employeeCode} • <Badge variant="outline" className="text-xs">
+                                  {getRoleLabel(employee.roleName)}
+                                </Badge>
+                              </div>
+                            </Label>
+                          </div>
+                        ));
+                      })()}
+                    </Card>
+                  </div>
+
+                  {/* Participant Shifts Availability */}
+                  {participantCodes.length > 0 && appointmentDate && (
+                    <Card className="p-4 bg-blue-50 border-blue-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <UserCog className="h-4 w-4 text-blue-600" />
+                        <h4 className="font-semibold text-sm">Lịch làm việc người tham gia</h4>
+                      </div>
+                      {loadingParticipantShifts ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Đang tải lịch...</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {participantCodes.map((participantCode) => {
+                            const participant = employees.find((e) => e.employeeCode === participantCode);
+                            const shiftsForDate = getParticipantShiftsForDate(participantCode, appointmentDate);
+
+                            return (
+                              <div key={participantCode} className="space-y-2">
+                                <div className="text-xs font-medium text-muted-foreground">
+                                  {participant?.fullName} ({participantCode})
+                                </div>
+                                <div className="text-xs text-muted-foreground mb-1">
+                                  {getRoleLabel(participant?.roleName || '')}
+                                </div>
+                                {shiftsForDate.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {shiftsForDate.map((shift) => (
+                                      <div
+                                        key={shift.employeeShiftId}
+                                        className="flex items-center gap-2 text-xs bg-background p-2 rounded border"
+                                      >
+                                        <Clock className="h-3 w-3 text-muted-foreground" />
+                                        <span className="font-medium">
+                                          {shift.workShift?.shiftName || 'Ca làm'}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {shift.workShift?.startTime} - {shift.workShift?.endTime}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-xs text-red-600">
+                                    <AlertCircle className="h-3 w-3" />
+                                    <span>
+                                      Không có ca làm việc vào ngày này
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </Card>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          {/* Step 5: Review & Confirm */}
+          {
+            currentStep === 5 && (
+              <div className="space-y-4">
+                {/* Summary - On Top */}
+                <Card className="p-4 bg-primary/5 border-primary">
+                  <h3 className="font-bold text-lg mb-4 text-primary">Xác nhận thông tin lịch hẹn</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">Bệnh nhân:</span>
+                        <span className="font-semibold">{selectedPatient?.fullName}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">Ngày:</span>
+                        <span className="font-semibold">
+                          {appointmentDate && format(new Date(appointmentDate), 'dd/MM/yyyy')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">Giờ:</span>
+                        <span className="font-semibold">
+                          {appointmentStartTime && format(new Date(appointmentStartTime), 'HH:mm')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <UserCog className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">Bác sĩ:</span>
+                        <span className="font-semibold">{selectedEmployee?.fullName}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-sm text-muted-foreground mt-0.5">Phòng:</span>
+                        <span className="font-semibold">
+                          {rooms.find((r) => r.roomCode === roomCode)?.roomName || roomCode}
+                        </span>
+                      </div>
+                      {participantCodes.length > 0 && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-sm text-muted-foreground mt-0.5">Người tham gia:</span>
+                          <span className="font-semibold">
+                            {participantCodes.map((code) => {
+                              const participant = employees.find((e) => e.employeeCode === code);
+                              return participant ? participant.fullName : code;
+                            }).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Services */}
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground mb-2">Dịch vụ:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedServices.map((s) => (
+                        <Badge key={s.serviceId} variant="secondary" className="text-sm">
+                          {s.serviceName}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-right">
+                      <span className="text-sm text-muted-foreground">Tổng tiền: </span>
+                      <span className="font-bold text-lg text-primary">
+                        {selectedServices.reduce((sum, s) => sum + (s.price || 0), 0).toLocaleString('vi-VN')} VND
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Notes - At Bottom */}
+                <div>
+                  <Label htmlFor="notes">Ghi chú (Tùy chọn)</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Thêm ghi chú bổ sung..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )
+          }
+        </div >
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={loading}>
-            Cancel
+            Hủy
           </Button>
           {currentStep > 1 && (
             <Button variant="outline" onClick={handleBack} disabled={loading}>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
+              Quay lại
             </Button>
           )}
           {currentStep < 5 ? (
             <Button onClick={handleNext} disabled={loading}>
-              Next
+              Tiếp theo
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
@@ -2655,19 +2726,19 @@ export default function CreateAppointmentModal({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  Đang tạo...
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Create Appointment
+                  Tạo lịch hẹn
                 </>
               )}
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </DialogContent >
+    </Dialog >
   );
 } function getStepTitle(step: Step): string {
   switch (step) {
@@ -2676,9 +2747,9 @@ export default function CreateAppointmentModal({
     case 2:
       return 'Chọn ngày';
     case 3:
-      return 'Chọn dịch vụ';
+      return 'Chọn bác sĩ & dịch vụ';
     case 4:
-      return 'Chọn bác sĩ & thời gian';
+      return 'Chọn thời gian';
     case 5:
       return 'Xác nhận';
     default:
