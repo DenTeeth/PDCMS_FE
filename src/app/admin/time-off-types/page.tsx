@@ -462,7 +462,7 @@ export default function AdminTimeOffTypesPage() {
               title={!canCreate ? 'Bạn không có quyền tạo loại nghỉ phép' : ''}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Tạo loại
+              Tạo loại nghỉ phép
             </Button>
           </div>
 

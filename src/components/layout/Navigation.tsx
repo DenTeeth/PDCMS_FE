@@ -25,8 +25,8 @@ export default function Navigation() {
   ];
 
   const languages = [
-    { code: "vi", name: "Tiếng Việt", flag: "🇻🇳" },
-    { code: "en", name: "English", flag: "🇬🇧" },
+    { code: "vi", name: "Tiếng Việt", flag: "VN" },
+    { code: "en", name: "English", flag: "EN" },
   ];
 
   const currentLanguage = languages.find(lang => lang.code === locale);
