@@ -35,16 +35,16 @@ import { permissionService } from '@/services/permissionService';
 // Helper function: Format role name to Vietnamese
 const formatRoleName = (roleName: string): string => {
   const roleNameMap: Record<string, string> = {
-    'ROLE_ADMIN': 'Quản trị viên',
-    'ROLE_MANAGER': 'Quản lý',
-    'ROLE_EMPLOYEE': 'Nhân viên',
-    'ROLE_DOCTOR': 'Bác sĩ',
-    'ROLE_DENTIST': 'Nha sĩ',
-    'ROLE_NURSE': 'Y tá',
-    'ROLE_RECEPTIONIST': 'Lễ tân',
-    'ROLE_ACCOUNTANT': 'Kế toán',
-    'ROLE_DENTIST_INTERN': 'Thực tập sinh',
-    'ROLE_PATIENT': 'Bệnh nhân',
+    'ROLE_ADMIN': 'quản trị viên',
+    'ROLE_MANAGER': 'quản lý',
+    'ROLE_EMPLOYEE': 'nhân viên',
+    'ROLE_DOCTOR': 'bác sĩ',
+    'ROLE_DENTIST': 'nha sĩ',
+    'ROLE_NURSE': 'y tá',
+    'ROLE_RECEPTIONIST': 'lễ tân',
+    'ROLE_ACCOUNTANT': 'kế toán',
+    'ROLE_DENTIST_INTERN': 'thực tập sinh',
+    'ROLE_PATIENT': 'bệnh nhân',
   };
 
   return roleNameMap[roleName] || roleName;
@@ -726,7 +726,7 @@ export default function RolesPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Key className="h-5 w-5 text-blue-600" />
-                  Phân quyền cho {assigningRole.roleName}
+                  Phân quyền cho {formatRoleName(assigningRole.roleName)}
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto relative">
@@ -804,7 +804,7 @@ export default function RolesPage() {
                         <select
                           value={permissionFilterAction}
                           onChange={(e) => setPermissionFilterAction(e.target.value)}
-                          className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full sm:w-auto"
                         >
                           <option value="ALL">Tất cả chức năng</option>
                           <option value="VIEW">VIEW - Xem</option>
@@ -815,6 +815,20 @@ export default function RolesPage() {
                           <option value="APPROVE">APPROVE - Phê duyệt</option>
                           <option value="REJECT">REJECT - Từ chối</option>
                         </select>
+                        {(permissionSearchTerm || permissionFilterAction !== 'ALL') && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setPermissionSearchTerm('');
+                              setPermissionFilterAction('ALL');
+                            }}
+                            className="text-xs whitespace-nowrap"
+                          >
+                            Xóa filter
+                          </Button>
+                        )}
                       </div>
                     </div>
 

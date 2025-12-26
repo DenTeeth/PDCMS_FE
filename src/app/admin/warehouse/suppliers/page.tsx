@@ -329,40 +329,40 @@ export default function SuppliersPage() {
 
         {/* Stats Card */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-blue-800 mb-2">Tổng số nhà cung cấp</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số nhà cung cấp</p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faUsers} className="text-blue-700 text-xl" />
+                <FontAwesomeIcon icon={faUsers} className="text-blue-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-blue-800">{stats.total}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
-          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-green-800 mb-2">Đang hoạt động</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Đang hoạt động</p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faUsers} className="text-green-700 text-xl" />
+                <FontAwesomeIcon icon={faUsers} className="text-green-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-green-800">{activeCount}</p>
+              <p className="text-3xl font-bold text-gray-900">{activeCount}</p>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-xl border border-gray-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-gray-800 mb-2">Ngưng hoạt động</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Ngưng hoạt động</p>
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faUsers} className="text-gray-700 text-xl" />
+              <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faUsers} className="text-gray-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-gray-800">{inactiveCount}</p>
+              <p className="text-3xl font-bold text-gray-900">{inactiveCount}</p>
             </div>
           </div>
-          <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-red-800 mb-2">Danh sách đen</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Danh sách đen</p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faBan} className="text-red-700 text-xl" />
+                <FontAwesomeIcon icon={faBan} className="text-red-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-red-800">{blacklistedCount}</p>
+              <p className="text-3xl font-bold text-gray-900">{blacklistedCount}</p>
             </div>
           </div>
         </div>
@@ -542,13 +542,13 @@ export default function SuppliersPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên nhà cung cấp</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điện thoại</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng đơn</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn gần nhất</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên nhà cung cấp</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điện thoại</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng đơn</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn gần nhất</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -558,7 +558,7 @@ export default function SuppliersPage() {
                           key={supplier.supplierId}
                           className="hover:bg-gray-50 transition-colors"
                         >
-                          <td className="px-4 py-4">
+                          <td className="px-6 py-4">
                             <span
                               className="text-sm font-medium text-gray-900 block truncate max-w-[200px]"
                               title={supplier.supplierName}
@@ -566,22 +566,22 @@ export default function SuppliersPage() {
                               {supplier.supplierName}
                             </span>
                           </td>
-                          <td className="px-4 py-4 text-sm text-gray-700 whitespace-nowrap">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
-                          <td className="px-4 py-4 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
+                          <td className="px-6 py-4 text-center">
                             <span className="text-sm font-semibold text-gray-900">{supplier.totalOrders || 0}</span>
                           </td>
-                          <td className="px-4 py-4 text-center text-sm whitespace-nowrap">
+                          <td className="px-6 py-4 text-center text-sm whitespace-nowrap">
                             {supplier.lastOrderDate ? (
                               <span className="text-gray-700">{formatDate(supplier.lastOrderDate)}</span>
                             ) : (
                               <span className="text-gray-400 italic">Chưa có</span>
                             )}
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-6 py-4">
                             {getStatusBadge(supplier.isActive, supplier.isBlacklisted ?? false)}
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Button
                                 variant="ghost"
