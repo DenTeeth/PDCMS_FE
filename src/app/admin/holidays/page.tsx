@@ -45,6 +45,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
+import { DateRangeInput } from '@/components/ui/date-range-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -78,6 +80,7 @@ interface DefinitionFormData {
 
 interface DateFormData {
   holidayDate: string;
+  holidayDateEnd?: string; // For range selection
   description: string;
 }
 
@@ -125,6 +128,7 @@ export default function AdminHolidaysPage() {
   });
   const [dateFormData, setDateFormData] = useState<DateFormData>({
     holidayDate: '',
+    holidayDateEnd: '',
     description: '',
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -233,6 +237,7 @@ export default function AdminHolidaysPage() {
       setIsEditing(true);
       setDateFormData({
         holidayDate: date.holidayDate,
+        holidayDateEnd: '',
         description: date.description || '',
       });
     } else {
@@ -240,6 +245,7 @@ export default function AdminHolidaysPage() {
       setIsEditing(false);
       setDateFormData({
         holidayDate: '',
+        holidayDateEnd: '',
         description: '',
       });
     }
@@ -313,12 +319,20 @@ export default function AdminHolidaysPage() {
     // Validation
     const errors: Record<string, string> = {};
     if (!dateFormData.holidayDate.trim()) {
-      errors.holidayDate = 'Ngày là bắt buộc';
+      errors.holidayDate = 'Ngày bắt đầu là bắt buộc';
     } else {
       // Validate date format YYYY-MM-DD
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dateFormData.holidayDate)) {
         errors.holidayDate = 'Định dạng ngày không hợp lệ (YYYY-MM-DD)';
+      }
+    }
+
+    // Validate end date if provided (for range)
+    if (dateFormData.holidayDateEnd && !isEditing) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateFormData.holidayDateEnd)) {
+        errors.holidayDate = 'Định dạng ngày kết thúc không hợp lệ';
       }
     }
 
@@ -349,13 +363,41 @@ export default function AdminHolidaysPage() {
         );
         toast.success('Cập nhật ngày lễ thành công');
       } else {
-        const createData: CreateHolidayDateRequest = {
-          holidayDate: dateFormData.holidayDate.trim(),
-          definitionId: selectedDefinition.definitionId,
-          description: dateFormData.description || undefined,
-        };
-        await holidayService.createDate(createData);
-        toast.success('Thêm ngày lễ thành công');
+        // Check if range is selected
+        const startDate = new Date(dateFormData.holidayDate);
+        const endDate = dateFormData.holidayDateEnd ? new Date(dateFormData.holidayDateEnd) : startDate;
+
+        // Generate all dates in range
+        const datesToCreate: string[] = [];
+        const currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          datesToCreate.push(currentDate.toISOString().split('T')[0]);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Create all dates
+        let successCount = 0;
+        let errorCount = 0;
+        for (const date of datesToCreate) {
+          try {
+            const createData: CreateHolidayDateRequest = {
+              holidayDate: date,
+              definitionId: selectedDefinition.definitionId,
+              description: dateFormData.description || undefined,
+            };
+            await holidayService.createDate(createData);
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            console.error(`Failed to create date ${date}:`, error);
+          }
+        }
+
+        if (successCount > 0) {
+          toast.success(`Đã thêm ${successCount} ngày lễ thành công${errorCount > 0 ? ` (${errorCount} ngày bị lỗi/trùng)` : ''}`);
+        } else {
+          toast.error('Không thể thêm ngày lễ', { description: 'Tất cả các ngày đã tồn tại hoặc có lỗi' });
+        }
       }
 
       setShowDateModal(false);
@@ -821,29 +863,50 @@ export default function AdminHolidaysPage() {
               <DialogDescription>
                 {isEditing
                   ? 'Cập nhật thông tin ngày lễ'
-                  : `Thêm ngày lễ cho định nghĩa: ${selectedDefinition?.holidayName}`}
+                  : `Thêm ngày lễ cho định nghĩa: ${selectedDefinition?.holidayName}. Chọn khoảng ngày để thêm nhiều ngày liên tục.`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="holidayDate">
-                  Ngày <span className="text-red-500">*</span>
+                  {isEditing ? 'Ngày' : 'Chọn ngày hoặc khoảng ngày'} <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="holidayDate"
-                  type="date"
-                  value={dateFormData.holidayDate}
-                  onChange={(e) =>
-                    setDateFormData({ ...dateFormData, holidayDate: e.target.value })
-                  }
-                  disabled={isEditing}
-                  className={formErrors.holidayDate ? 'border-red-500' : ''}
-                />
+                {isEditing ? (
+                  <DateInput
+                    id="holidayDate"
+                    value={dateFormData.holidayDate}
+                    onChange={(e) =>
+                      setDateFormData({ ...dateFormData, holidayDate: e.target.value })
+                    }
+                    disabled={isEditing}
+                    className={formErrors.holidayDate ? 'border-red-500' : ''}
+                  />
+                ) : (
+                  <DateRangeInput
+                    id="holidayDate"
+                    value={{
+                      from: dateFormData.holidayDate || undefined,
+                      to: dateFormData.holidayDateEnd || undefined
+                    }}
+                    onChange={(value) =>
+                      setDateFormData({
+                        ...dateFormData,
+                        holidayDate: value.from || '',
+                        holidayDateEnd: value.to || ''
+                      })
+                    }
+                    className={formErrors.holidayDate ? 'border-red-500' : ''}
+                    placeholder="Chọn ngày bắt đầu - kết thúc"
+                    numberOfMonths={1}
+                  />
+                )}
+                {!isEditing && dateFormData.holidayDate && dateFormData.holidayDateEnd && (
+                  <p className="text-sm text-muted-foreground">
+                    Sẽ tạo {Math.ceil((new Date(dateFormData.holidayDateEnd).getTime() - new Date(dateFormData.holidayDate).getTime()) / (1000 * 60 * 60 * 24)) + 1} ngày lễ
+                  </p>
+                )}
                 {formErrors.holidayDate && (
                   <p className="text-sm text-red-500">{formErrors.holidayDate}</p>
-                )}
-                {!isEditing && (
-                  <p className="text-xs text-gray-500">Định dạng: YYYY-MM-DD</p>
                 )}
               </div>
 
