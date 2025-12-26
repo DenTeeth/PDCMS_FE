@@ -298,7 +298,7 @@ export default function AdminHolidaysPage() {
       toast.error('Lỗi khi lưu định nghĩa', {
         description: parsedError.userMessage,
       });
-      
+
       // Set field-specific errors if available
       if (parsedError.details?.definitionId) {
         setFormErrors({ definitionId: 'ID này đã tồn tại' });
@@ -366,7 +366,7 @@ export default function AdminHolidaysPage() {
       toast.error('Lỗi khi lưu ngày lễ', {
         description: parsedError.userMessage,
       });
-      
+
       // Set field-specific errors if available
       if (parsedError.details?.holidayDate) {
         setFormErrors({ holidayDate: 'Ngày này đã tồn tại cho định nghĩa này' });
@@ -643,9 +643,6 @@ export default function AdminHolidaysPage() {
                                         day: 'numeric',
                                       })}
                                     </span>
-                                    <Badge variant="outline" className="text-xs">
-                                      {date.holidayDate}
-                                    </Badge>
                                   </div>
                                   {date.description && (
                                     <p className="text-sm text-gray-600 mt-1">{date.description}</p>
