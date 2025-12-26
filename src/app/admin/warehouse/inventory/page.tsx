@@ -388,7 +388,7 @@ export default function InventoryPage() {
                     <thead>
                       <tr className="border-b bg-gray-50">
                         <th
-                          className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                          className="text-left px-6 py-3 cursor-pointer hover:bg-gray-100 transition"
                           onClick={() => handleSort('itemCode')}
                         >
                           <div className="flex items-center gap-2 font-semibold text-sm">
@@ -397,7 +397,7 @@ export default function InventoryPage() {
                           </div>
                         </th>
                         <th
-                          className="text-left p-3 cursor-pointer hover:bg-gray-100 transition"
+                          className="text-left px-6 py-3 cursor-pointer hover:bg-gray-100 transition"
                           onClick={() => handleSort('itemName')}
                         >
                           <div className="flex items-center gap-2 font-semibold text-sm">
@@ -405,11 +405,11 @@ export default function InventoryPage() {
                             <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                           </div>
                         </th>
-                        <th className="text-left p-3 font-semibold text-sm">Loại kho</th>
-                        <th className="text-left p-3 font-semibold text-sm">Danh mục</th>
-                        <th className="text-left p-3 font-semibold text-sm">Đơn vị</th>
+                        <th className="text-left px-6 py-3 font-semibold text-sm">Loại kho</th>
+                        <th className="text-left px-6 py-3 font-semibold text-sm">Danh mục</th>
+                        <th className="text-left px-6 py-3 font-semibold text-sm">Đơn vị</th>
                         <th
-                          className="text-right p-3 cursor-pointer hover:bg-gray-100 transition"
+                          className="text-right px-6 py-3 cursor-pointer hover:bg-gray-100 transition"
                           onClick={() => handleSort('totalQuantity')}
                         >
                           <div className="flex items-center justify-end gap-2 font-semibold text-sm">
@@ -417,24 +417,24 @@ export default function InventoryPage() {
                             <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                           </div>
                         </th>
-                        <th className="text-left p-3 font-semibold text-sm">HSD</th>
-                        <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
-                        <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                        <th className="text-left px-6 py-3 font-semibold text-sm">HSD</th>
+                        <th className="text-left px-6 py-3 font-semibold text-sm">Trạng thái</th>
+                        <th className="text-right px-6 py-3 font-semibold text-sm">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
                       {inventory.map((item: InventorySummary) => (
                         <tr key={item.itemMasterId} className="border-b hover:bg-gray-50 transition">
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <span className="font-mono text-sm font-medium">{item.itemCode}</span>
                           </td>
-                          <td className="p-3 font-medium">{item.itemName}</td>
-                          <td className="p-3">{getWarehouseTypeBadge(item.warehouseType)}</td>
-                          <td className="p-3 text-sm">{item.categoryName || '-'}</td>
-                          <td className="p-3">
+                          <td className="px-6 py-4 font-medium">{item.itemName}</td>
+                          <td className="px-6 py-4">{getWarehouseTypeBadge(item.warehouseType)}</td>
+                          <td className="px-6 py-4 text-sm">{item.categoryName || '-'}</td>
+                          <td className="px-6 py-4">
                             <span className="text-sm text-gray-600">{item.unitOfMeasure}</span>
                           </td>
-                          <td className="p-3 text-right">
+                          <td className="px-6 py-4 text-right">
                             <div className="flex flex-col items-end">
                               <span className={`font-bold ${getQuantityColor(item)}`}>
                                 {item.totalQuantity}
@@ -442,12 +442,12 @@ export default function InventoryPage() {
                               <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
                             </div>
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             {getExpiryDateDisplay(item)}
                           </td>
-                          <td className="p-3">{getStockStatusBadge(item.stockStatus)}</td>
-                          <td className="p-3">
-                            <div className="flex items-center justify-center gap-1">
+                          <td className="px-6 py-4">{getStockStatusBadge(item.stockStatus)}</td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"

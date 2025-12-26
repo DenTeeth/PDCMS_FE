@@ -192,24 +192,24 @@ export default function EmployeeWarehouseDashboard() {
           </div>
 
           {/* Sắp hết hàng */}
-          <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-orange-800 mb-2">Sắp hết hàng</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Sắp hết hàng</p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-700 text-xl" />
+                <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-orange-800">{stats?.lowStockCount || 0}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.lowStockCount || 0}</p>
             </div>
           </div>
 
           {/* Sắp hết hạn */}
-          <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
-            <p className="text-sm font-semibold text-red-800 mb-2">Sắp hết hạn</p>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Sắp hết hạn</p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faClock} className="text-red-700 text-xl" />
+                <FontAwesomeIcon icon={faClock} className="text-red-600 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-red-800">{stats?.expiringWithin30Days || 0}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.expiringWithin30Days || 0}</p>
             </div>
           </div>
         </div>
@@ -296,10 +296,10 @@ export default function EmployeeWarehouseDashboard() {
                       <div
                         key={alert.batchId}
                         className={`flex items-center justify-between p-3 rounded-lg border ${status === 'EXPIRED'
-                            ? 'bg-red-50 border-red-200'
-                            : status === 'CRITICAL'
-                              ? 'bg-orange-50 border-orange-200'
-                              : 'bg-yellow-50 border-yellow-200'
+                          ? 'bg-red-50 border-red-200'
+                          : status === 'CRITICAL'
+                            ? 'bg-orange-50 border-orange-200'
+                            : 'bg-yellow-50 border-yellow-200'
                           }`}
                       >
                         <div className="flex-1">
@@ -310,8 +310,8 @@ export default function EmployeeWarehouseDashboard() {
                         </div>
                         <div className="text-right">
                           <p className={`text-sm font-bold ${status === 'EXPIRED' ? 'text-red-600' :
-                              status === 'CRITICAL' ? 'text-orange-600' :
-                                'text-yellow-600'
+                            status === 'CRITICAL' ? 'text-orange-600' :
+                              'text-yellow-600'
                             }`}>
                             {daysRemaining < 0 ? `Đã hết hạn ${Math.abs(daysRemaining)} ngày` :
                               daysRemaining === 0 ? 'Hết hạn hôm nay' :
