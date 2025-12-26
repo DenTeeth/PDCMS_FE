@@ -71,9 +71,9 @@ import { Employee } from '@/types/employee';
 import { Patient } from '@/types/patient';
 import { Room } from '@/types/room';
 import { Specialization } from '@/types/specialization';
-import { 
+import {
   getBookingBlockReasonLabel,
-  isTemporaryBlock 
+  isTemporaryBlock
 } from '@/types/patientBlockReason';
 import {
   User,
@@ -1405,26 +1405,23 @@ export default function CreateAppointmentModal({
               <React.Fragment key={step}>
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm ${
-                      step === currentStep
-                        ? 'bg-[#8b5fbf] text-white scale-110 shadow-lg'
-                        : step < currentStep
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm ${step === currentStep
+                      ? 'bg-[#8b5fbf] text-white scale-110 shadow-lg'
+                      : step < currentStep
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                      }`}
                   >
                     {step < currentStep ? <CheckCircle className="h-6 w-6" /> : step}
                   </div>
-                  <div className={`text-xs mt-2 text-center font-medium max-w-[90px] ${
-                    step === currentStep ? 'text-[#8b5fbf]' : step < currentStep ? 'text-emerald-600' : 'text-gray-500'
-                  }`}>
+                  <div className={`text-xs mt-2 text-center font-medium max-w-[90px] ${step === currentStep ? 'text-[#8b5fbf]' : step < currentStep ? 'text-emerald-600' : 'text-gray-500'
+                    }`}>
                     {getStepTitle(step as Step)}
                   </div>
                 </div>
                 {index < 4 && (
-                  <div className={`flex-1 h-1 mx-3 mb-8 rounded-full transition-all ${
-                    step < currentStep ? 'bg-emerald-500' : 'bg-gray-200'
-                  }`} />
+                  <div className={`flex-1 h-1 mx-3 mb-8 rounded-full transition-all ${step < currentStep ? 'bg-emerald-500' : 'bg-gray-200'
+                    }`} />
                 )}
               </React.Fragment>
             ))}
@@ -1471,15 +1468,14 @@ export default function CreateAppointmentModal({
                           }
                           handleSelectPatient(patient);
                         }}
-                        className={`p-3 border rounded-lg transition-colors ${
-                          patient.isBookingBlocked
-                            ? isTemporaryBlock(patient.bookingBlockReason)
-                              ? 'border-orange-300 bg-orange-50 cursor-not-allowed opacity-60'
-                              : 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
-                            : patientCode === patient.patientCode
+                        className={`p-3 border rounded-lg transition-colors ${patient.isBookingBlocked
+                          ? isTemporaryBlock(patient.bookingBlockReason)
+                            ? 'border-orange-300 bg-orange-50 cursor-not-allowed opacity-60'
+                            : 'border-red-300 bg-red-50 cursor-not-allowed opacity-60'
+                          : patientCode === patient.patientCode
                             ? 'border-primary bg-primary/5 cursor-pointer'
                             : 'hover:bg-muted cursor-pointer'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -1489,8 +1485,8 @@ export default function CreateAppointmentModal({
                             </div>
                           </div>
                           {patient.isBookingBlocked && (
-                            <Badge 
-                              variant="destructive" 
+                            <Badge
+                              variant="destructive"
                               className={
                                 isTemporaryBlock(patient.bookingBlockReason)
                                   ? 'bg-orange-600 text-white text-xs'
@@ -1515,22 +1511,20 @@ export default function CreateAppointmentModal({
               )}
 
               {selectedPatient && (
-                <Card className={`p-4 border-2 ${
-                  selectedPatient.isBookingBlocked
-                    ? isTemporaryBlock(selectedPatient.bookingBlockReason)
-                      ? 'bg-orange-50 border-orange-300'
-                      : 'bg-red-50 border-red-300'
-                    : 'bg-primary/5 border-primary'
-                }`}>
+                <Card className={`p-4 border-2 ${selectedPatient.isBookingBlocked
+                  ? isTemporaryBlock(selectedPatient.bookingBlockReason)
+                    ? 'bg-orange-50 border-orange-300'
+                    : 'bg-red-50 border-red-300'
+                  : 'bg-primary/5 border-primary'
+                  }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <User className={`h-5 w-5 ${
-                        selectedPatient.isBookingBlocked
-                          ? isTemporaryBlock(selectedPatient.bookingBlockReason)
-                            ? 'text-orange-600'
-                            : 'text-red-600'
-                          : 'text-primary'
-                      }`} />
+                      <User className={`h-5 w-5 ${selectedPatient.isBookingBlocked
+                        ? isTemporaryBlock(selectedPatient.bookingBlockReason)
+                          ? 'text-orange-600'
+                          : 'text-red-600'
+                        : 'text-primary'
+                        }`} />
                       <div>
                         <div className="font-medium">{selectedPatient.fullName}</div>
                         <div className="text-sm text-muted-foreground">
@@ -1539,8 +1533,8 @@ export default function CreateAppointmentModal({
                       </div>
                     </div>
                     {selectedPatient.isBookingBlocked && (
-                      <Badge 
-                        variant="destructive" 
+                      <Badge
+                        variant="destructive"
                         className={
                           isTemporaryBlock(selectedPatient.bookingBlockReason)
                             ? 'bg-orange-600 text-white'
@@ -1552,18 +1546,16 @@ export default function CreateAppointmentModal({
                     )}
                   </div>
                   {selectedPatient.isBookingBlocked && (
-                    <div className={`mt-3 p-3 border rounded-lg ${
-                      isTemporaryBlock(selectedPatient.bookingBlockReason)
-                        ? 'bg-orange-100 border-orange-300'
-                        : 'bg-red-100 border-red-300'
-                    }`}>
-                      <p className={`text-sm ${
-                        isTemporaryBlock(selectedPatient.bookingBlockReason)
-                          ? 'text-orange-800'
-                          : 'text-red-800'
+                    <div className={`mt-3 p-3 border rounded-lg ${isTemporaryBlock(selectedPatient.bookingBlockReason)
+                      ? 'bg-orange-100 border-orange-300'
+                      : 'bg-red-100 border-red-300'
                       }`}>
+                      <p className={`text-sm ${isTemporaryBlock(selectedPatient.bookingBlockReason)
+                        ? 'text-orange-800'
+                        : 'text-red-800'
+                        }`}>
                         <strong>⚠️ Cảnh báo:</strong> Bệnh nhân này đang bị {isTemporaryBlock(selectedPatient.bookingBlockReason) ? 'tạm chặn' : 'blacklist'}: {getBookingBlockReasonLabel(selectedPatient.bookingBlockReason)}
-                        {selectedPatient.consecutiveNoShows ? ` (${selectedPatient.consecutiveNoShows} lần no-show)` : ''}. 
+                        {selectedPatient.consecutiveNoShows ? ` (${selectedPatient.consecutiveNoShows} lần no-show)` : ''}.
                         Không thể tạo lịch hẹn. Vui lòng liên hệ quản trị viên để unban.
                       </p>
                     </div>
@@ -1700,7 +1692,7 @@ export default function CreateAppointmentModal({
                                     <div className="text-[8px] mt-0.5 text-green-600">●</div>
                                   )}
                                   {isHolidayDate && isCurrentMonth && (
-                                    <div className="text-[8px] mt-0.5 text-red-600">🎊</div>
+                                    <div className="text-[8px] mt-0.5 text-red-600">●</div>
                                   )}
                                 </button>
                               );
@@ -1722,7 +1714,7 @@ export default function CreateAppointmentModal({
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-3 rounded bg-red-50 border border-red-300"></div>
-                            <span>Ngày lễ 🎊</span>
+                            <span>Ngày lễ</span>
                           </div>
                         </div>
                       </>
@@ -2371,7 +2363,7 @@ export default function CreateAppointmentModal({
                           {/* Friendly suggestions */}
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <p className="text-xs font-medium text-blue-800 mb-2">
-                               Gợi ý giải pháp:
+                              Gợi ý giải pháp:
                             </p>
                             <ul className="text-xs text-blue-700 space-y-1.5">
                               <li className="flex items-start gap-2">
@@ -2570,7 +2562,7 @@ export default function CreateAppointmentModal({
                                 <div className="flex items-center gap-2 text-xs text-red-600">
                                   <AlertCircle className="h-3 w-3" />
                                   <span>
-                                     No shifts scheduled for this date
+                                    No shifts scheduled for this date
                                   </span>
                                 </div>
                               )}

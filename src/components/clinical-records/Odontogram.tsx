@@ -165,15 +165,15 @@ const TOP_MARGIN = 55;    // Lề trên cho label + hàng răng trên
 const BOTTOM_MARGIN = 30; // Lề dưới
 
 // SVG dimensions - Better spacing
-   // const svgWidth = 800;
-  //  const svgHeight = 400; // Increased height for better spacing
-   // const toothWidth = 36;
-   // const toothHeight = 52;
-  //  const spacing = 5;
-   // const centerGap = 50; // Gap between left and right quadrants
-   // const verticalGap = 30; // Increased gap between upper and lower jaw
-   // const topMargin = 55; // Top margin for labels
-   // const bottomMargin = 30; // Bottom margin for better spacing
+// const svgWidth = 800;
+//  const svgHeight = 400; // Increased height for better spacing
+// const toothWidth = 36;
+// const toothHeight = 52;
+//  const spacing = 5;
+// const centerGap = 50; // Gap between left and right quadrants
+// const verticalGap = 30; // Increased gap between upper and lower jaw
+// const topMargin = 55; // Top margin for labels
+// const bottomMargin = 30; // Bottom margin for better spacing
 // ============================================================================
 // Component
 // ============================================================================
@@ -203,16 +203,16 @@ export default function Odontogram({
 
     // Calculate quadrant width (8 teeth per quadrant)
     const quadrantWidth = (TOOTH_WIDTH + TOOTH_SPACING) * 8 - TOOTH_SPACING;
-    
+
     // Calculate starting X positions for left and right quadrants
     // Center the entire layout
     const totalWidth = quadrantWidth * 2 + CENTER_GAP;
     const leftQuadrantStart = (SVG_WIDTH - totalWidth) / 2;
     const rightQuadrantStart = leftQuadrantStart + quadrantWidth + CENTER_GAP;
-    
+
     // Upper jaw Y position
     const upperY = TOP_MARGIN;
-    
+
     // Upper right quadrant (18-11): Display right to left
     // 18 is on the far right, 11 is near center
     UPPER_RIGHT.forEach((toothNum, index) => {
@@ -226,7 +226,7 @@ export default function Odontogram({
         notes: status?.notes,
       });
     });
-    
+
     // Cung trên - trái (Upper Left Quadrant 2): [28,27,26,25,24,23,22,21]
     // Array: ['28', '27', '26', '25', '24', '23', '22', '21']
     // Hiển thị từ trái sang phải: 28 ngoài cùng trái → 21 gần center
@@ -243,10 +243,10 @@ export default function Odontogram({
         notes: status?.notes,
       });
     });
-    
+
     // Lower jaw Y position - phía dưới hàm trên, với khoảng cách rõ ràng (VERTICAL_GAP)
     const lowerY = upperY + TOOTH_HEIGHT + VERTICAL_GAP;
-    
+
     // Cung dưới - phải (Lower Right Quadrant 4): [48,47,46,45,44,43,42,41]
     // Hiển thị từ phải sang trái: 48 ngoài cùng phải → 41 gần center
     // Nằm dưới cung trên - phải (cùng x positions)
@@ -264,7 +264,7 @@ export default function Odontogram({
         notes: status?.notes,
       });
     });
-    
+
     // Cung dưới - trái (Lower Left Quadrant 3): [38,37,36,35,34,33,32,31]
     // Array: ['38', '37', '36', '35', '34', '33', '32', '31']
     // Hiển thị từ trái sang phải: 38 ngoài cùng trái → 31 gần center
@@ -281,12 +281,12 @@ export default function Odontogram({
         notes: status?.notes,
       });
     });
-    
+
     // Verify all 32 teeth are generated
     if (teeth.length !== 32) {
       console.warn(`Expected 32 teeth, but generated ${teeth.length}`);
     }
-    
+
     return teeth;
   }, [statusMap]);
 
@@ -315,7 +315,7 @@ export default function Odontogram({
           >
             {/* Background */}
             <rect width={SVG_WIDTH} height={SVG_HEIGHT} fill="#fafafa" />
-            
+
             {/* Horizontal line separating upper and lower jaw */}
             {/* Position: TOP_MARGIN + TOOTH_HEIGHT + VERTICAL_GAP/2 */}
             <line
@@ -328,7 +328,7 @@ export default function Odontogram({
               strokeDasharray="4,4"
               opacity="0.6"
             />
-            
+
             {/* Quadrant labels with FDI notation explanation */}
             <text
               x="200"
@@ -346,7 +346,7 @@ export default function Odontogram({
               className="text-xs font-semibold fill-gray-600"
               fontSize="10"
             >
-              Cung 1: Hàm trên - phải 
+              Cung 1: Hàm trên - phải
             </text>
             <text
               x="200"
@@ -366,7 +366,7 @@ export default function Odontogram({
             >
               Cung 4: Hàm dưới - phải
             </text>
-            
+
             {/* Render teeth */}
             {teethData.map((tooth) => {
               const fillColor = tooth.status
@@ -375,7 +375,7 @@ export default function Odontogram({
               const isHovered = hoveredTooth === tooth.number;
               const strokeColor = isHovered ? '#3b82f6' : '#d1d5db';
               const strokeWidth = isHovered ? 2.5 : 1.5;
-              
+
               return (
                 <g key={tooth.number}>
                   {/* Tooth shape (rounded rectangle) */}
@@ -398,7 +398,7 @@ export default function Odontogram({
                     onMouseEnter={() => handleToothHover(tooth.number)}
                     onMouseLeave={() => handleToothHover(null)}
                   />
-                  
+
                   {/* Tooth number - always in center of tooth */}
                   <text
                     x={tooth.x + 18}
@@ -410,7 +410,7 @@ export default function Odontogram({
                   >
                     {tooth.number}
                   </text>
-                  
+
                   {/* Status abbreviation - above tooth (upper jaw) or below tooth (lower jaw) */}
                   {tooth.status && TOOTH_STATUS_ABBR[tooth.status] && (
                     <text
@@ -433,7 +433,7 @@ export default function Odontogram({
 
         {/* Legend */}
         <div className="border-t pt-4 mt-4">
-          <h4 className="text-sm font-semibold mb-3 text-foreground">Chú giải trạng thái răng</h4>
+          <h4 className="text-sm font-semibold mb-3 text-foreground">Chú thích trạng thái răng</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {LEGEND_STATUSES.map((status) => (
               <div key={status} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 transition-colors">

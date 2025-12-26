@@ -696,7 +696,7 @@ export default function WorkShiftsPage() {
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Trạng thái
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thao tác
                     </th>
                   </tr>
@@ -740,8 +740,8 @@ export default function WorkShiftsPage() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                         {getStatusBadge(shift.isActive)}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-1 sm:gap-2">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-right">
+                        <div className="flex items-center justify-end gap-1 sm:gap-2">
                           {shift.isActive ? (
                             <>
                               <Button
