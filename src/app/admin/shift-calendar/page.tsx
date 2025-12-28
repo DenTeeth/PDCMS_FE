@@ -326,7 +326,7 @@ export default function AdminShiftCalendarPage() {
     const holidayEvents = holidays.map((holiday) => {
       const holidayDate = new Date(holiday.holidayDate);
       holidayDate.setHours(0, 0, 0, 0);
-      
+
       return {
         id: `holiday-${holiday.holidayDate}-${holiday.definitionId}`,
         title: holiday.holidayName || 'Ngày lễ',
@@ -848,37 +848,6 @@ export default function AdminShiftCalendarPage() {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3">Chú thích</h3>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Đã lên lịch</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-500"></div>
-              <span className="text-sm text-gray-600">Hoàn thành</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gray-500"></div>
-              <span className="text-sm text-gray-600">Đã hủy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-yellow-500"></div>
-              <span className="text-sm text-gray-600">Nghỉ phép</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-500"></div>
-              <span className="text-sm text-gray-600">Vắng mặt</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1 }}></div>
-              <span className="text-sm text-gray-600 font-semibold">Ngày lễ</span>
-            </div>
-          </div>
-        </div>
-
         {/* Calendar */}
         <Card>
           <CardHeader>
@@ -916,6 +885,10 @@ export default function AdminShiftCalendarPage() {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-red-500"></div>
                 <span className="text-xs font-medium text-gray-600">Vắng mặt</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}></div>
+                <span className="text-xs font-medium text-gray-600">Ngày lễ</span>
               </div>
             </div>
           </div>

@@ -431,11 +431,11 @@ export default function EmployeeOvertimeRequestsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Mã yêu cầu</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Trạng thái</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Ngày làm việc</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Ca làm việc</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Thao tác</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-700">Mã yêu cầu</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-700">Trạng thái</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-700">Ngày làm việc</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-700">Ca làm việc</th>
+                  <th className="text-right px-6 py-3 font-medium text-gray-700">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -443,28 +443,28 @@ export default function EmployeeOvertimeRequestsPage() {
                   const statusConfig = OVERTIME_STATUS_CONFIG[request.status];
                   return (
                     <tr key={request.requestId} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         <span className="font-semibold text-gray-900">{request.requestId}</span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
                           {statusConfig.label}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
                           <span>{format(new Date(request.workDate), 'dd/MM/yyyy', { locale: vi })}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <FontAwesomeIcon icon={faClock} className="text-gray-400" />
                           <span>{request.workShiftName || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex gap-2 flex-wrap">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex gap-2 flex-wrap justify-end">
                           <Button
                             variant="outline"
                             size="sm"
@@ -539,7 +539,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Create Form Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader className="pb-3">
               <CardTitle>Tạo yêu cầu làm thêm giờ</CardTitle>
@@ -576,11 +576,11 @@ export default function EmployeeOvertimeRequestsPage() {
                     value={formData.workShiftId}
                     onChange={(value) => setFormData({ ...formData, workShiftId: value })}
                     placeholder={
-                      workShiftsError 
-                        ? "Không thể tải danh sách ca làm việc" 
-                        : workShifts.length === 0 
-                        ? "Đang tải danh sách ca làm việc..." 
-                        : "Chọn ca làm việc"
+                      workShiftsError
+                        ? "Không thể tải danh sách ca làm việc"
+                        : workShifts.length === 0
+                          ? "Đang tải danh sách ca làm việc..."
+                          : "Chọn ca làm việc"
                     }
                     options={workShifts.map((shift) => ({
                       value: shift.workShiftId,
@@ -646,7 +646,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Cancel Modal */}
       {showCancelModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>Hủy yêu cầu làm thêm giờ</CardTitle>
@@ -695,7 +695,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
       {/* Status Update Modal (Approve/Reject/Cancel) */}
       {showStatusModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>
@@ -752,8 +752,8 @@ export default function EmployeeOvertimeRequestsPage() {
                     disabled={statusAction !== 'approve' && !statusReason.trim()}
                     className={
                       statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                      statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                      'bg-gray-600 hover:bg-gray-700'
+                        statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                          'bg-gray-600 hover:bg-gray-700'
                     }
                   >
                     {statusAction === 'approve' && 'Duyệt'}

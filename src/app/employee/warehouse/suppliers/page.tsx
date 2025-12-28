@@ -286,21 +286,21 @@ export default function SuppliersPage() {
                             />
                           </div>
                         </th>
-                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Điện thoại</th>
-                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Email</th>
-                        <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Trạng thái</th>
-                        <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">Thao tác</th>
+                        <th className="text-left px-6 py-3 font-semibold text-gray-700 whitespace-nowrap">Điện thoại</th>
+                        <th className="text-left px-6 py-3 font-semibold text-gray-700 whitespace-nowrap">Email</th>
+                        <th className="text-left px-6 py-3 font-semibold text-gray-700 whitespace-nowrap">Trạng thái</th>
+                        <th className="text-right px-6 py-3 font-semibold text-gray-700 whitespace-nowrap">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {suppliers.map((supplier) => (
                         <tr key={supplier.supplierId} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <span className="font-mono text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded whitespace-nowrap">
                               {supplier.supplierCode}
                             </span>
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <span
                               className="font-medium text-gray-900 block truncate max-w-[200px]"
                               title={supplier.supplierName}
@@ -308,10 +308,10 @@ export default function SuppliersPage() {
                               {supplier.supplierName}
                             </span>
                           </td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
-                          <td className="p-3 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
-                          <td className="p-3">{getStatusBadge(supplier.status)}</td>
-                          <td className="p-3">
+                          <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap">{supplier.phoneNumber || <span className="text-gray-400">-</span>}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{supplier.email || <span className="text-gray-400">-</span>}</td>
+                          <td className="px-6 py-4">{getStatusBadge(supplier.status)}</td>
+                          <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
