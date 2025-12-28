@@ -205,26 +205,26 @@ Patient-facing features:
 ### Setup Steps
 
 1. **Clone the repository**
-   ```bash
-   git clone http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git
-   cd fe
+```bash
+git clone http://git.fa.edu.vn/hcm25_fr_fu_js_java_01/nha-khoa-group/sep193_privatedentalclinic/fe.git
+cd fe
    ```
 
 2. **Install dependencies**
    ```bash
-   npm install
+npm install
    ```
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env.local
+cp .env.example .env.local
    ```
    Edit `.env.local` with your configuration (see [Environment Variables](#-environment-variables))
 
 4. **Run development server**
    ```bash
-   npm run dev
-   ```
+npm run dev
+```
 
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
@@ -275,7 +275,7 @@ npm run test:warehouse   # Test warehouse APIs
 
 3. **Test your changes**
    ```bash
-   npm run lint
+npm run lint
    npm run build
    ```
 
