@@ -161,12 +161,12 @@ export default function AppointmentFilters({
   };
 
   const statusLabels: Record<AppointmentStatus, string> = {
-    SCHEDULED: 'Scheduled',
-    CHECKED_IN: 'Checked In',
-    IN_PROGRESS: 'In Progress',
-    COMPLETED: 'Completed',
-    CANCELLED: 'Cancelled',
-    NO_SHOW: 'No Show',
+    SCHEDULED: 'Đã đặt lịch',
+    CHECKED_IN: 'Đã check-in',
+    IN_PROGRESS: 'Đang điều trị',
+    COMPLETED: 'Hoàn thành',
+    CANCELLED: 'Đã hủy',
+    NO_SHOW: 'Không đến',
   };
 
   return (
@@ -215,8 +215,8 @@ export default function AppointmentFilters({
                         setIsSortDropdownOpen(false);
                       }}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${(filters.sortBy || 'appointmentStartTime') === option.value
-                          ? 'bg-[#8b5fbf] text-white'
-                          : 'text-gray-700 hover:bg-[#f3f0ff]'
+                        ? 'bg-[#8b5fbf] text-white'
+                        : 'text-gray-700 hover:bg-[#f3f0ff]'
                         }`}
                     >
                       {option.label}
@@ -234,8 +234,8 @@ export default function AppointmentFilters({
                 onFiltersChange({ ...filters, sortDirection: 'ASC' });
               }}
               className={`p-1.5 rounded transition-all ${(filters.sortDirection || 'ASC') === 'ASC'
-                  ? 'bg-[#8b5fbf] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#8b5fbf] text-white shadow-sm'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               title="Tăng dần"
             >
@@ -246,8 +246,8 @@ export default function AppointmentFilters({
                 onFiltersChange({ ...filters, sortDirection: 'DESC' });
               }}
               className={`p-1.5 rounded transition-all ${filters.sortDirection === 'DESC'
-                  ? 'bg-[#8b5fbf] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#8b5fbf] text-white shadow-sm'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               title="Giảm dần"
             >
@@ -262,8 +262,8 @@ export default function AppointmentFilters({
         <button
           onClick={() => onFiltersChange({ ...filters, status: undefined })}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap ${!filters.status || filters.status.length === 0
-              ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
         >
           Tất cả
@@ -277,8 +277,8 @@ export default function AppointmentFilters({
                 onFiltersChange({ ...filters, status: [value as AppointmentStatus] });
               }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap ${isActive
-                  ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-[#8b5fbf] text-white shadow-[0_2px_8px_rgba(139,95,191,0.4)]'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               <span className="hidden sm:inline">{label}</span>

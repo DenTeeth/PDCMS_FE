@@ -219,7 +219,7 @@ export default function NewDynamicSidebar({ title = "PDCMS" }: NewDynamicSidebar
       {/* Overlay - Đơn giản */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}

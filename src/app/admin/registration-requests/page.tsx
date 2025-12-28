@@ -76,9 +76,9 @@ export default function RegistrationRequestsPage() {
       setLoading(true);
       const params: ShiftRegistrationQueryParams = {
         page: currentPage,
-        size: 10,
+        size: 100, // Load nhiều hơn để hiển thị đầy đủ
         sortBy: 'registrationId',
-        sortDirection: 'DESC'
+        sortDirection: 'DESC' // Mới nhất lên đầu
       };
 
       // Add status filter if not ALL
@@ -378,9 +378,9 @@ export default function RegistrationRequestsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Search */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="search">Tìm kiếm</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -395,19 +395,34 @@ export default function RegistrationRequestsPage() {
               </div>
 
               {/* Status Filter */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="filterStatus">Trạng thái</Label>
                 <select
                   id="filterStatus"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
                 >
                   <option value="ALL">Tất cả trạng thái</option>
                   <option value="PENDING">Đang chờ</option>
                   <option value="APPROVED">Đã duyệt</option>
                   <option value="REJECTED">Đã từ chối</option>
                 </select>
+              </div>
+
+              {/* Clear Filters Button */}
+              <div className="space-y-2 flex flex-col justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterStatus('ALL');
+                  }}
+                  className="w-full"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Xóa bộ lọc
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -480,7 +495,8 @@ export default function RegistrationRequestsPage() {
                                   setShowDetailsModal(true);
                                 }}
                               >
-                                View
+                                <Eye className="h-4 w-4 mr-1" />
+                                Xem
                               </Button>
                               {registration.status === 'PENDING' && (
                                 <>
@@ -545,7 +561,7 @@ export default function RegistrationRequestsPage() {
 
         {/* Approve Modal */}
         {showApproveModal && selectedRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md">
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -618,7 +634,7 @@ export default function RegistrationRequestsPage() {
 
         {/* Reject Modal */}
         {showRejectModal && selectedRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md">
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -695,7 +711,7 @@ export default function RegistrationRequestsPage() {
 
         {/* Details Modal */}
         {showDetailsModal && selectedRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-2xl">
               <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">

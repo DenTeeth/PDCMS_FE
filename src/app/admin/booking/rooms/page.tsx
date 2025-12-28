@@ -590,7 +590,7 @@ export default function BookingRoomsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Quản lý phòng</h1>
+            <h1 className="text-3xl font-bold">Quản lý phòng khám</h1>
             <p className="text-muted-foreground mt-2">
               Quản lý phòng khám
             </p>

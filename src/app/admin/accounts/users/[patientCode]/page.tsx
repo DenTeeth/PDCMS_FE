@@ -698,7 +698,7 @@ export default function PatientDetailPage() {
 
       {/* Unban Patient Modal */}
       {showUnbanModal && patient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export default function PatientDetailPage() {
 
       {/* Unban History Modal */}
       {showUnbanHistory && patient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-4xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -842,7 +842,7 @@ export default function PatientDetailPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
@@ -890,7 +890,7 @@ export default function PatientDetailPage() {
 
       {/* ==================== EDIT PATIENT MODAL ==================== */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col">
             <CardHeader className="border-b flex-shrink-0">
               <CardTitle>Chỉnh sửa bệnh nhân - {patient?.patientCode}</CardTitle>

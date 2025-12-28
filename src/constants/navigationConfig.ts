@@ -200,7 +200,8 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Loại nghỉ phép',
           href: '/admin/time-off-types',
           icon: faListAlt,
-          requiredPermissions: ['APPROVE_TIME_OFF'], // ✅ BE permission (mapped from old VIEW_LEAVE_TYPE - BE không có permission riêng)
+          requiredPermissions: ['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF'], // BE uses these permissions (not VIEW_LEAVE_TYPE)
+          requireAll: false, // Only need one permission
         },
       ],
     },
@@ -351,8 +352,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
           requiredPermissions: ['VIEW_SCHEDULE_OWN'],
-          // Only show for ROLE_MANAGER (handled in filterNavigationItems)
-          // Admin can access via /admin/shift-calendar
+          // Show for all employment types - everyone can view their own schedule
         },
         {
           name: 'Lịch của tôi',
@@ -709,27 +709,6 @@ export const filterNavigationItems = (
       if (!item.employmentTypes.includes(employmentType)) {
         return false;
       }
-    }
-
-    // Special handling for "Lịch ca làm việc" (shift-calendar)
-    // Only show for ROLE_MANAGER (employee)
-    // Admin can access via /admin/shift-calendar, so hide from employee menu if not ROLE_MANAGER
-    if (item.name === 'Lịch ca làm việc' && item.href === '/employee/shift-calendar') {
-      // Check if user is ROLE_MANAGER
-      const isManager = userRoles?.includes('ROLE_MANAGER') || false;
-      
-      // Only show for ROLE_MANAGER (employee) - admin has their own page at /admin/shift-calendar
-      if (!isManager) {
-        return false;
-      }
-      
-      // Continue with normal permission check
-      if (item.requiredPermissions && item.requiredPermissions.length > 0) {
-        if (!userPermissions || !hasPermissions(userPermissions, item.requiredPermissions, item.requireAll)) {
-          return false;
-        }
-      }
-      return true;
     }
 
     // Special handling for Warehouse Management menu

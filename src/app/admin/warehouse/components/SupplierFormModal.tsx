@@ -131,10 +131,10 @@ export default function SupplierFormModal({
             </Button>
           </div>
         ) : (
-          <div className="overflow-hidden flex-1">
-            {/* Form */}
-            <div className="overflow-y-auto">
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-1">
+              <div className="space-y-4">
                 {/* Row 1: Name */}
                 <div className="space-y-1">
                   <Label htmlFor="supplierName">Tên nhà cung cấp <span className="text-red-500">*</span></Label>
@@ -256,7 +256,7 @@ export default function SupplierFormModal({
                 {/* Info for create mode */}
                 {!supplier && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                    <p className="font-semibold mb-1"> Lưu ý:</p>
+                    <p className="font-semibold mb-1">Lưu ý:</p>
                     <ul className="list-disc list-inside space-y-1">
                       <li>Mã nhà cung cấp sẽ được tự động tạo (SUP-001, SUP-002, ...)</li>
                       <li>Tên nhà cung cấp phải là duy nhất (không phân biệt hoa thường)</li>
@@ -264,18 +264,19 @@ export default function SupplierFormModal({
                     </ul>
                   </div>
                 )}
-
-                <div className="flex gap-2 pt-4 sticky bottom-0 bg-white pb-2">
-                  <Button type="submit" className="flex-1" disabled={loading}>
-                    {loading ? 'Đang lưu...' : 'Lưu'}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                    Hủy
-                  </Button>
-                </div>
-              </form>
+              </div>
             </div>
-          </div>
+
+            {/* Sticky footer with buttons */}
+            <div className="flex gap-2 pt-4 border-t mt-4 bg-white">
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? 'Đang lưu...' : 'Lưu'}
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                Hủy
+              </Button>
+            </div>
+          </form>
         )}
       </DialogContent>
     </Dialog>

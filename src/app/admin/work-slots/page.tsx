@@ -457,7 +457,7 @@ export default function WorkSlotsManagementPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col">
               <div className="flex-shrink-0 border-b px-6 py-4">
                 <h2 className="text-xl font-bold">Tạo suất mới</h2>
@@ -584,7 +584,7 @@ export default function WorkSlotsManagementPage() {
 
         {/* Edit Modal */}
         {showEditModal && editingSlot && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex-shrink-0 border-b px-6 py-4">
                 <h2 className="text-xl font-bold">Chỉnh sửa suất</h2>
