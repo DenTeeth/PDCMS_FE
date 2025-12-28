@@ -81,8 +81,10 @@ export default function AdminTimeOffTypesPage() {
   const { handleError: handleApiError } = useApiErrorHandler();
 
   // RBAC Permissions
-  const canView = user?.permissions?.includes('VIEW_LEAVE_TYPE') || false;
-  const canManage = user?.permissions?.includes('MANAGE_LEAVE_TYPE') || false;
+  // Note: BE controller uses VIEW_LEAVE_ALL and APPROVE_TIME_OFF (not VIEW_LEAVE_TYPE/MANAGE_LEAVE_TYPE)
+  // See: AdminTimeOffTypeController.java
+  const canView = user?.permissions?.includes('VIEW_LEAVE_ALL') || user?.permissions?.includes('APPROVE_TIME_OFF') || false;
+  const canManage = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
   const canCreate = canManage;
   const canUpdate = canManage;
   const canDelete = canManage;
@@ -442,7 +444,7 @@ export default function AdminTimeOffTypesPage() {
   }
 
   return (
-    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_LEAVE_TYPE']}>
+    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF']} requireAll={false}>
       <>
         <div className="container mx-auto p-6">
           {/* Header */}
@@ -460,7 +462,7 @@ export default function AdminTimeOffTypesPage() {
               title={!canCreate ? 'Bạn không có quyền tạo loại nghỉ phép' : ''}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Tạo loại
+              Tạo loại nghỉ phép
             </Button>
           </div>
 
@@ -726,7 +728,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
               <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
@@ -897,7 +899,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Edit Modal */}
         {showEditModal && selectedType && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl h-auto max-h-[85vh] flex flex-col">
               <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
@@ -1068,7 +1070,7 @@ export default function AdminTimeOffTypesPage() {
 
         {/* Toggle Status Modal */}
         {showToggleModal && selectedType && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader className="border-b flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">

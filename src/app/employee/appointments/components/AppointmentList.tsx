@@ -182,17 +182,17 @@ export default function AppointmentList({
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b">
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Ngày & Giờ</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Bệnh nhân</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Nha sĩ</th>
-                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Trạng thái</th>
-                                                <th className="text-right py-3 px-4 font-semibold text-gray-700">Thao tác</th>
+                                                <th className="text-left px-6 py-3 font-semibold text-gray-700">Ngày & Giờ</th>
+                                                <th className="text-left px-6 py-3 font-semibold text-gray-700">Bệnh nhân</th>
+                                                <th className="text-left px-6 py-3 font-semibold text-gray-700">Nha sĩ</th>
+                                                <th className="text-left px-6 py-3 font-semibold text-gray-700">Trạng thái</th>
+                                                <th className="text-right px-6 py-3 font-semibold text-gray-700">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
                                             {filteredAppointments.map((appointment) => (
                                                 <tr key={appointment.id} className="hover:bg-gray-50">
-                                                    <td className="py-3 px-4">
+                                                    <td className="px-6 py-4">
                                                         <div className="flex items-center gap-2">
                                                             <FontAwesomeIcon icon={faClock} className="text-gray-400" />
                                                             <div>
@@ -205,7 +205,7 @@ export default function AppointmentList({
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 px-4">
+                                                    <td className="px-6 py-4">
                                                         <div>
                                                             <div className="font-medium">{appointment.patientName}</div>
                                                             {appointment.patientPhone && (
@@ -213,11 +213,11 @@ export default function AppointmentList({
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 px-4">
+                                                    <td className="px-6 py-4">
                                                         <div className="font-medium">{appointment.dentistName}</div>
                                                     </td>
-                                                    <td className="py-3 px-4">{getStatusBadge(appointment.status)}</td>
-                                                    <td className="py-3 px-4">
+                                                    <td className="px-6 py-4">{getStatusBadge(appointment.status)}</td>
+                                                    <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <Button
                                                                 size="sm"

@@ -1181,46 +1181,25 @@ export default function EmployeeRegistrationsPage() {
                               {sortedAvailableSlots.map((slot) => {
                                 const slotDetails = slotDetailsMap[slot.slotId];
                                 const shiftHours = calculateShiftHours(slot.shiftName);
-                                
+
                                 // Calculate weeks from date range
                                 // BE returns totalDatesAvailable and totalDatesEmpty (dates, not weeks)
                                 // We need to calculate weeks from effectiveFrom to effectiveTo
-                                let totalWeeks = 0;
-                                let availableWeeks = 0;
-                                
-                                if (slot.effectiveFrom && slot.effectiveTo) {
-                                  try {
-                                    const fromDate = parseISO(slot.effectiveFrom);
-                                    const toDate = parseISO(slot.effectiveTo);
-                                    // Calculate total weeks in the date range
-                                    totalWeeks = Math.ceil(differenceInWeeks(toDate, fromDate, { roundingMethod: 'ceil' })) || 1;
-                                    
-                                    // Calculate available weeks from totalDatesEmpty
-                                    // Each week has a certain number of working days (based on dayOfWeek)
-                                    const daysPerWeek = slot.dayOfWeek.split(',').length; // e.g., "MONDAY,TUESDAY" = 2 days/week
-                                    
-                                    // Estimate available weeks: totalDatesEmpty / daysPerWeek
-                                    // This gives us an approximation of how many weeks have available slots
-                                    if (daysPerWeek > 0 && slot.totalDatesEmpty > 0) {
-                                      availableWeeks = Math.floor(slot.totalDatesEmpty / daysPerWeek);
-                                      // Ensure availableWeeks doesn't exceed totalWeeks
-                                      availableWeeks = Math.min(availableWeeks, totalWeeks);
-                                    } else {
-                                      availableWeeks = 0;
-                                    }
-                                  } catch (error) {
-                                    console.error('Error calculating weeks for slot:', slot.slotId, error);
-                                    // Fallback: show 0 if calculation fails
-                                    totalWeeks = 0;
-                                    availableWeeks = 0;
-                                  }
-                                } else {
-                                  // No date range - cannot calculate weeks
-                                  console.warn('Slot missing date range:', slot.slotId);
-                                  totalWeeks = 0;
-                                  availableWeeks = 0;
-                                }
-                                
+                                let totalWeeks = 14;
+                                let availableWeeks = 14;
+                                // Tạm thời hardcode để test UI, loại trừ lỗi backend
+
+
+                                // Debug log để kiểm tra dữ liệu slot
+                                console.log('[DEBUG] Slot:', slot.slotId, {
+                                  totalDatesEmpty: slot.totalDatesEmpty,
+                                  availableWeeks,
+                                  totalWeeks,
+                                  dayOfWeek: slot.dayOfWeek,
+                                  effectiveFrom: slot.effectiveFrom,
+                                  effectiveTo: slot.effectiveTo
+                                });
+
                                 const availablePercent = totalWeeks > 0 ? (availableWeeks / totalWeeks) * 100 : 0;
 
                                 const getColorClass = () => {
@@ -1297,11 +1276,11 @@ export default function EmployeeRegistrationsPage() {
                                             setSelectedSlotDays(daysOfWeek.map(d => String(d)));
                                             setShowPartTimeCreateModal(true);
                                           }}
-                                          disabled={availableWeeks === 0}
+                                          // Luôn enable button để test UI, không disable khi availableWeeks = 0
                                           size="sm"
-                                          className={availableWeeks === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                                        // Không set class opacity-50/cursor-not-allowed nữa
                                         >
-                                          {availableWeeks > 0 ? '+ Đăng Ký' : 'Đã Đầy'}
+                                          + Đăng Ký
                                         </Button>
                                       </td>
                                     </tr>
@@ -1667,7 +1646,7 @@ export default function EmployeeRegistrationsPage() {
 
         {/* PART-TIME CREATE MODAL */}
         {showPartTimeCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Đăng ký ca làm việc</h2>
               <form onSubmit={handlePartTimeCreate} className="space-y-4">
@@ -1979,7 +1958,7 @@ export default function EmployeeRegistrationsPage() {
 
         {/* PART-TIME DELETE MODAL */}
         {showPartTimeDeleteModal && partTimeDeletingRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h2 className="text-xl font-bold mb-4">Xác nhận xóa</h2>
               <p className="text-gray-600 mb-4">
@@ -2016,7 +1995,7 @@ export default function EmployeeRegistrationsPage() {
 
         {/* FIXED DETAILS MODAL */}
         {showFixedDetailsModal && fixedDetailsRegistration && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Chi Tiết Lịch Làm Việc</h2>
               <div className="space-y-3">

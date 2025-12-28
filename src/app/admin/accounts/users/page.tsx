@@ -759,26 +759,18 @@ export default function PatientsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {patient.isBookingBlocked ? (
                         isTemporaryBlock(patient.bookingBlockReason) ? (
-                          <AlertCircle
-                            className="h-6 w-6 text-orange-600"
-                            title={`Tạm chặn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}${patient.consecutiveNoShows ? ` - ${patient.consecutiveNoShows} lần no-show` : ''}`}
-                          />
+                          <Badge className="bg-orange-600 text-white">
+                            Tạm chặn
+                          </Badge>
                         ) : (
-                          <Ban
-                            className="h-6 w-6 text-red-600"
-                            title={`Chặn vĩnh viễn: ${getBookingBlockReasonLabel(patient.bookingBlockReason)}`}
-                          />
+                          <Badge className="bg-red-600 text-white">
+                            Chặn vĩnh viễn
+                          </Badge>
                         )
-                      ) : patient.isActive ? (
-                        <CheckCircle2
-                          className="h-6 w-6 text-green-600"
-                          title="Hoạt động"
-                        />
                       ) : (
-                        <XCircle
-                          className="h-6 w-6 text-gray-400"
-                          title="Không hoạt động"
-                        />
+                        <Badge className={patient.isActive ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'}>
+                          {patient.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                        </Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -926,7 +918,7 @@ export default function PatientsPage() {
 
         {/* ==================== CREATE PATIENT MODAL ==================== */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-semibold">Tạo bệnh nhân mới</CardTitle>
@@ -1207,7 +1199,7 @@ export default function PatientsPage() {
 
         {/* ==================== EDIT PATIENT MODAL ==================== */}
         {showEditModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col">
               <CardHeader className="border-b flex-shrink-0">
                 <CardTitle>Chỉnh sửa bệnh nhân - {editingPatient?.patientCode}</CardTitle>

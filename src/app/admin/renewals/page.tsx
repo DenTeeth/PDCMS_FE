@@ -545,13 +545,13 @@ export default function AdminRenewalsPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-3 font-medium">Renewal ID</th>
-                      <th className="text-left p-3 font-medium">Nhân viên</th>
-                      <th className="text-left p-3 font-medium">Ca làm việc</th>
-                      <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
-                      <th className="text-left p-3 font-medium">Trạng thái</th>
-                      <th className="text-left p-3 font-medium">Deadline</th>
-                      <th className="text-left p-3 font-medium">Thao tác</th>
+                      <th className="text-left px-6 py-3 font-medium">Renewal ID</th>
+                      <th className="text-left px-6 py-3 font-medium">Nhân viên</th>
+                      <th className="text-left px-6 py-3 font-medium">Ca làm việc</th>
+                      <th className="text-left px-6 py-3 font-medium">Thời gian hiệu lực</th>
+                      <th className="text-left px-6 py-3 font-medium">Trạng thái</th>
+                      <th className="text-left px-6 py-3 font-medium">Deadline</th>
+                      <th className="text-right px-6 py-3 font-medium">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -561,30 +561,30 @@ export default function AdminRenewalsPage() {
 
                       return (
                         <tr key={renewal.renewalId} className="border-b hover:bg-gray-50">
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <span className="font-mono text-sm">{renewal.renewalId}</span>
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <div className="font-medium">{renewal.employeeName}</div>
                             <div className="text-sm text-gray-500">ID: {renewal.employeeId}</div>
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <div className="font-medium">{renewal.workShiftName}</div>
                             <div className="text-sm text-gray-500">{renewal.shiftDetails}</div>
                           </td>
-                          <td className="p-3 text-sm">
+                          <td className="px-6 py-4 text-sm">
                             {formatDate(renewal.effectiveFrom)} → {formatDate(renewal.effectiveTo)}
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4">
                             <Badge variant={statusBadge.variant} className="flex items-center gap-1 w-fit">
                               <StatusIcon className={`h-3 w-3 ${statusBadge.color}`} />
                               {statusBadge.label}
                             </Badge>
                           </td>
-                          <td className="p-3 text-sm">
+                          <td className="px-6 py-4 text-sm">
                             {renewal.expiresAt ? formatDateTime(renewal.expiresAt) : 'N/A'}
                           </td>
-                          <td className="p-3">
+                          <td className="px-6 py-4 text-right">
                             {renewal.status === RenewalStatus.CONFIRMED && canManageRenewals && (
                               <Button
                                 variant="default"
@@ -611,7 +611,7 @@ export default function AdminRenewalsPage() {
 
         {/* Finalize Modal */}
         {showFinalizeModal && selectedRenewal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h2 className="text-xl font-bold mb-4">Hoàn tất gia hạn</h2>
 

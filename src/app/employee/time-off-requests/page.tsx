@@ -754,7 +754,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex-shrink-0 border-b px-6 py-4">
               <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
@@ -915,7 +915,7 @@ export default function EmployeeTimeOffRequestsPage() {
         </div>
       )}      {/* Cancel Modal */}
       {showCancelModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
             <div className="mb-4 space-y-1">
@@ -952,7 +952,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
       {/* Status Update Modal (Approve/Reject/Cancel) */}
       {showStatusModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>
