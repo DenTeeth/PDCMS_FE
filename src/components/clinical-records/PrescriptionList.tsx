@@ -19,6 +19,7 @@ import { vi } from 'date-fns/locale';
 interface PrescriptionListProps {
   prescriptions: PrescriptionDTO[];
   canEdit?: boolean;
+  appointmentStatus?: string; // To disable edit when COMPLETED
   onEdit?: (prescription: PrescriptionDTO) => void;
   onCreate?: () => void;
 }
@@ -26,6 +27,7 @@ interface PrescriptionListProps {
 export default function PrescriptionList({
   prescriptions,
   canEdit = false,
+  appointmentStatus,
   onEdit,
   onCreate,
 }: PrescriptionListProps) {
@@ -46,7 +48,7 @@ export default function PrescriptionList({
             <Pill className="h-5 w-5" />
             <h3 className="text-lg font-semibold">Đơn thuốc</h3>
           </div>
-          {canEdit && onCreate && (
+          {canEdit && appointmentStatus !== 'COMPLETED' && onCreate && (
             <Button onClick={onCreate} variant="outline" size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Kê đơn thuốc
@@ -56,7 +58,7 @@ export default function PrescriptionList({
         <div className="text-center py-8 text-muted-foreground">
           <Pill className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p>Chưa có đơn thuốc nào được kê</p>
-          {canEdit && onCreate && (
+          {canEdit && appointmentStatus !== 'COMPLETED' && onCreate && (
             <Button
               onClick={onCreate}
               variant="outline"
@@ -111,7 +113,7 @@ export default function PrescriptionList({
                     </div>
                   )}
                 </div>
-                {canEdit && onEdit && (
+                {canEdit && appointmentStatus !== 'COMPLETED' && onEdit && (
                   <Button
                     onClick={() => onEdit(prescription)}
                     variant="outline"

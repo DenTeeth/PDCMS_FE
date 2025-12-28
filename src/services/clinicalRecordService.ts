@@ -10,6 +10,8 @@
  * - API 8.5: POST /api/v1/appointments/clinical-records/{recordId}/procedures
  * - API 8.6: PUT /api/v1/appointments/clinical-records/{recordId}/procedures/{procedureId}
  * - API 8.7: DELETE /api/v1/appointments/clinical-records/{recordId}/procedures/{procedureId}
+ * - API 8.7: GET /api/v1/clinical-records/procedures/{procedureId}/materials
+ * - API 8.8: PUT /api/v1/clinical-records/procedures/{procedureId}/materials
  */
 
 import { apiClient } from '@/lib/api';
@@ -26,6 +28,11 @@ import {
   AttachmentResponse,
   AttachmentType,
   UploadAttachmentResponse,
+  ProcedureMaterialsResponse,
+  UpdateProcedureMaterialsRequest,
+  UpdateProcedureMaterialsResponse,
+  UpdateMaterialQuantityRequest,
+  UpdateMaterialQuantityResponse,
 } from '@/types/clinicalRecord';
 
 const api = apiClient.getAxiosInstance();
@@ -690,6 +697,152 @@ export const clinicalRecordService = {
         attachmentId,
         message: enhancedError.message,
         status: enhancedError.status,
+      });
+      
+      throw enhancedError;
+    }
+  },
+
+  // ============================================================================
+  // Procedure Materials APIs (API 8.7, 8.8)
+  // ============================================================================
+
+  /**
+   * API 8.7: GET /api/v1/clinical-records/procedures/{procedureId}/materials
+   * Get all materials used in a specific procedure with planned/actual/variance quantities
+   * 
+   * Authorization: VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN, or WRITE_CLINICAL_RECORD
+   * Note: VIEW_CLINICAL_RECORD permission does not exist in seed data.
+   * BE should use VIEW_APPOINTMENT_* permissions (consistent with other clinical record APIs).
+   * Cost data: Only visible if user has VIEW_WAREHOUSE_COST permission
+   * 
+   * Returns:
+   * - 200 OK: Procedure materials with all details
+   * - 404 NOT_FOUND: Procedure not found
+   * - 403 FORBIDDEN: Access denied
+   */
+  getProcedureMaterials: async (procedureId: number): Promise<ProcedureMaterialsResponse> => {
+    try {
+      const response = await api.get<ProcedureMaterialsResponse>(
+        `/clinical-records/procedures/${procedureId}/materials`
+      );
+      
+      console.log(' [PROCEDURE MATERIALS] Get materials:', {
+        procedureId,
+        materialsCount: response.data?.materials?.length || 0,
+        materialsDeducted: response.data?.materialsDeducted,
+      });
+      
+      return extractApiResponse(response) || response.data;
+    } catch (error: any) {
+      const enhancedError = createApiError(error, {
+        endpoint: `/clinical-records/procedures/${procedureId}/materials`,
+        method: 'GET',
+      });
+      
+      console.error(' [PROCEDURE MATERIALS] Error fetching materials:', {
+        procedureId,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        errorCode: error.response?.data?.errorCode,
+      });
+      
+      throw enhancedError;
+    }
+  },
+
+  /**
+   * API 8.8: PUT /api/v1/clinical-records/procedures/{procedureId}/materials
+   * Update actual material quantities used during procedure
+   * 
+   * Authorization: WRITE_CLINICAL_RECORD
+   * Business Rule: Adjusts warehouse stock if actual differs from planned
+   * 
+   * Returns:
+   * - 200 OK: Materials updated successfully with stock adjustments
+   * - 404 NOT_FOUND: Procedure not found
+   * - 400 BAD_REQUEST: Validation error (invalid quantity, etc.)
+   * - 403 FORBIDDEN: Access denied
+   */
+  updateProcedureMaterials: async (
+    procedureId: number,
+    request: UpdateProcedureMaterialsRequest
+  ): Promise<UpdateProcedureMaterialsResponse> => {
+    try {
+      const response = await api.put<UpdateProcedureMaterialsResponse>(
+        `/clinical-records/procedures/${procedureId}/materials`,
+        request
+      );
+      
+      console.log(' [PROCEDURE MATERIALS] Updated materials:', {
+        procedureId,
+        materialsUpdated: response.data?.materialsUpdated,
+        stockAdjustmentsCount: response.data?.stockAdjustments?.length || 0,
+      });
+      
+      return extractApiResponse(response) || response.data;
+    } catch (error: any) {
+      const enhancedError = createApiError(error, {
+        endpoint: `/clinical-records/procedures/${procedureId}/materials`,
+        method: 'PUT',
+      });
+      
+      console.error(' [PROCEDURE MATERIALS] Error updating materials:', {
+        procedureId,
+        materialsCount: request.materials.length,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        errorCode: error.response?.data?.errorCode,
+      });
+      
+      throw enhancedError;
+    }
+  },
+
+  /**
+   * API 8.9: PATCH /api/v1/clinical-records/procedures/{procedureId}/materials/{usageId}/quantity
+   * Update editable quantity BEFORE warehouse deduction
+   * 
+   * Authorization: WRITE_CLINICAL_RECORD
+   * Business Rule: Can only edit quantity before materials are deducted (materialsDeducted = false)
+   * 
+   * Returns:
+   * - 200 OK: Material quantity updated successfully
+   * - 400 BAD_REQUEST: Cannot update after deduction or invalid quantity
+   * - 404 NOT_FOUND: Procedure or usage record not found
+   * - 403 FORBIDDEN: Access denied
+   */
+  updateMaterialQuantity: async (
+    procedureId: number,
+    usageId: number,
+    request: { usageId: number; quantity: number }
+  ): Promise<ProcedureMaterialItem> => {
+    try {
+      const response = await api.patch<ProcedureMaterialItem>(
+        `/clinical-records/procedures/${procedureId}/materials/${usageId}/quantity`,
+        request
+      );
+      
+      console.log(' [PROCEDURE MATERIALS] Updated quantity:', {
+        procedureId,
+        usageId,
+        newQuantity: request.quantity,
+      });
+      
+      return extractApiResponse(response) || response.data;
+    } catch (error: any) {
+      const enhancedError = createApiError(error, {
+        endpoint: `/clinical-records/procedures/${procedureId}/materials/${usageId}/quantity`,
+        method: 'PATCH',
+      });
+      
+      console.error(' [PROCEDURE MATERIALS] Error updating quantity:', {
+        procedureId,
+        usageId,
+        quantity: request.quantity,
+        message: enhancedError.message,
+        status: enhancedError.status,
+        errorCode: error.response?.data?.errorCode,
       });
       
       throw enhancedError;
