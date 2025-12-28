@@ -401,44 +401,54 @@ export default function PatientAppointmentDetailPage() {
       requiredPermissions={['VIEW_APPOINTMENT_OWN']}
       requireAll={false}
     >
-      <div className="space-y-6">
+      <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => router.push('/patient/appointments')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Chi Tiết Lịch Hẹn</h1>
-              <p className="text-gray-600 mt-1">Mã lịch hẹn: {appointment.appointmentCode}</p>
+              <h1 className="text-3xl font-bold">Chi tiết lịch hẹn</h1>
+              <p className="text-muted-foreground mt-1">
+                Code: {appointment.appointmentCode}
+              </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(appointment.status)}
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="details">
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-muted/20 rounded-full h-auto p-1 w-full md:w-auto">
+            <TabsTrigger
+              value="details"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <FileText className="h-4 w-4 mr-2" />
-              Chi Tiết
+              Chi tiết lịch hẹn
             </TabsTrigger>
-            <TabsTrigger value="patient">
+            <TabsTrigger
+              value="patient"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <User className="h-4 w-4 mr-2" />
-              Thông Tin Bệnh Nhân
+              Thông tin bệnh nhân
             </TabsTrigger>
-            <TabsTrigger value="clinical-record">
+            <TabsTrigger
+              value="clinical-record"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              disabled={!appointment}
+            >
               <Stethoscope className="h-4 w-4 mr-2" />
-              Clinical Record
+              Bệnh án
             </TabsTrigger>
             <TabsTrigger
               value="treatment-plan"
+              className="rounded-full px-4 py-2"
               disabled={!appointment?.linkedTreatmentPlanCode && hasTriedLoadingTreatmentPlan && !treatmentPlan}
             >
               <ClipboardList className="h-4 w-4 mr-2" />
@@ -451,69 +461,72 @@ export default function PatientAppointmentDetailPage() {
             <section className="bg-card rounded-lg border p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b">
                 {/* Appointment Info */}
-                <div>
+                <div className="pr-6 border-r border-gray-200">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
-                    Thông Tin Lịch Hẹn
+                    Thông tin lịch hẹn
                   </h3>
                   <div className="space-y-4">
-                    {/* Mã Lịch Hẹn và Trạng Thái cùng dòng */}
+                    {/* Appointment Code và Status cùng dòng */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Mã Lịch Hẹn</label>
+                        <label className="text-sm font-medium text-muted-foreground">Mã lịch hẹn</label>
                         <p className="text-base font-semibold mt-1">{appointment.appointmentCode}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Trạng Thái</label>
+                        <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
                         <div className="mt-1 flex items-center">{getStatusBadge(appointment.status)}</div>
                       </div>
                     </div>
 
-                    {/* Thời Lượng Dự Kiến và Ngày Tạo cùng dòng */}
+                    {/* Expected Duration và Created At cùng dòng */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Thời Lượng Dự Kiến</label>
+                        <label className="text-sm font-medium text-muted-foreground">Thời lượng dự kiến</label>
                         <p className="text-base mt-1">{appointment.expectedDurationMinutes} phút</p>
                       </div>
                       {appointment.createdAt && (
                         <div>
-                          <label className="text-sm font-medium text-muted-foreground">Ngày Tạo</label>
+                          <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
                           <p className="text-base mt-1">{formatDateTime(appointment.createdAt)}</p>
                         </div>
                       )}
                     </div>
 
-                    {/* Thời Gian Bắt Đầu và Thời Gian Kết Thúc cùng dòng */}
+                    {/* Start Time và End Time cùng dòng */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                           <Clock className="h-4 w-4" />
-                          Thời Gian Bắt Đầu
+                          Giờ bắt đầu
                         </label>
                         <p className="text-base mt-1">{formatDateTime(appointment.appointmentStartTime)}</p>
                         {appointment.actualStartTime && (
                           <>
-                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Bắt Đầu Thực Tế</label>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ bắt đầu thực tế</label>
                             <p className="text-base mt-1">{formatDateTime(appointment.actualStartTime)}</p>
                           </>
                         )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Thời Gian Kết Thúc</label>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Giờ kết thúc
+                        </label>
                         <p className="text-base mt-1">{formatDateTime(appointment.appointmentEndTime)}</p>
                         {appointment.actualEndTime && (
                           <>
-                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Thời Gian Kết Thúc Thực Tế</label>
+                            <label className="text-sm font-medium text-muted-foreground mt-2 block">Giờ kết thúc thực tế</label>
                             <p className="text-base mt-1">{formatDateTime(appointment.actualEndTime)}</p>
                           </>
                         )}
                       </div>
                     </div>
 
-                    {/* Ghi Chú để riêng vì có thể dài */}
+                    {/* Notes để riêng vì có thể dài */}
                     {appointment.notes && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Ghi Chú</label>
+                        <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
                         <p className="text-base mt-1">{appointment.notes}</p>
                       </div>
                     )}
@@ -524,13 +537,16 @@ export default function PatientAppointmentDetailPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <UserCog className="h-5 w-5" />
-                    Bác Sĩ & Phòng
+                    Bác sĩ & Phòng
                   </h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {appointment.doctor ? (
                         <div>
-                          <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
+                          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <UserCog className="h-4 w-4" />
+                            Bác sĩ
+                          </label>
                           <div className="mt-1">
                             <p className="text-base font-semibold">{appointment.doctor.fullName}</p>
                             <p className="text-sm text-muted-foreground">{appointment.doctor.employeeCode}</p>
@@ -538,7 +554,7 @@ export default function PatientAppointmentDetailPage() {
                         </div>
                       ) : (
                         <div>
-                          <label className="text-sm font-medium text-muted-foreground">Bác Sĩ</label>
+                          <label className="text-sm font-medium text-muted-foreground">Bác sĩ</label>
                           <p className="text-base text-muted-foreground mt-1">N/A</p>
                         </div>
                       )}
@@ -564,7 +580,7 @@ export default function PatientAppointmentDetailPage() {
                     {/* Participants */}
                     {appointment.participants && appointment.participants.length > 0 && (
                       <div className="pt-4 border-t">
-                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Người Tham Gia</label>
+                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Người tham gia</label>
                         <div className="space-y-1.5">
                           {appointment.participants.map((participant, index) => (
                             <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
@@ -586,7 +602,7 @@ export default function PatientAppointmentDetailPage() {
 
               {/* Services */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Dịch Vụ</h3>
+                <h3 className="text-lg font-semibold mb-4">Dịch vụ</h3>
                 <div className="flex flex-wrap gap-2">
                   {appointment.services.length > 0 ? (
                     appointment.services.map((service) => (
@@ -727,6 +743,7 @@ export default function PatientAppointmentDetailPage() {
               <ClinicalRecordView
                 record={clinicalRecord}
                 canEdit={false}
+                appointmentStatus={appointment?.status}
               />
             ) : (
               <section className="bg-card rounded-lg border p-6">

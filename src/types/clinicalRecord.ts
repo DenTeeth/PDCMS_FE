@@ -233,3 +233,115 @@ export interface UploadAttachmentResponse {
   message?: string;
 }
 
+// ============================================================================
+// Procedure Materials Types (API 8.7, 8.8)
+// ============================================================================
+
+/**
+ * API 8.7: GET Procedure Materials Response
+ * Response from GET /api/v1/clinical-records/procedures/{procedureId}/materials
+ */
+export interface ProcedureMaterialsResponse {
+  procedureId: number;
+  serviceName?: string;
+  serviceCode?: string;
+  toothNumber?: string;
+  
+  // Empty state detection
+  hasConsumables?: boolean; // NEW: Explicitly indicates if procedure uses materials
+  
+  // Material deduction status
+  materialsDeducted?: boolean;
+  deductedAt?: string;
+  deductedBy?: string;
+  storageTransactionId?: number;
+  
+  // Material items
+  materials: ProcedureMaterialItem[];
+  
+  // Cost summary (only if user has VIEW_WAREHOUSE_COST permission)
+  totalPlannedCost?: number | null;
+  totalActualCost?: number | null;
+  costVariance?: number | null; // BE returns as costVariance
+}
+
+/**
+ * Material item in procedure materials response
+ */
+export interface ProcedureMaterialItem {
+  usageId: number;
+  itemMasterId: number;
+  itemCode: string;
+  itemName: string;
+  categoryName?: string;
+  unitName: string;
+  
+  // Quantities
+  plannedQuantity: number; // BOM reference (read-only)
+  quantity: number; // NEW: Editable before deduction, defaults to plannedQuantity
+  actualQuantity: number; // Editable after deduction
+  varianceQuantity: number; // Computed: actualQuantity - quantity (CHANGED from actual - planned)
+  varianceReason?: string | null;
+  
+  // Cost (only if user has VIEW_WAREHOUSE_COST permission, null otherwise)
+  unitPrice?: number | null; // BE returns as unitPrice
+  totalPlannedCost?: number | null;
+  totalActualCost?: number | null;
+  
+  // Stock status
+  stockStatus: 'OK' | 'LOW' | 'OUT_OF_STOCK';
+  currentStock: number;
+  
+  // Audit
+  recordedAt?: string;
+  recordedBy?: string;
+  notes?: string | null;
+}
+
+/**
+ * API 8.8: Update Procedure Materials Request
+ * Request body for PUT /api/v1/clinical-records/procedures/{procedureId}/materials
+ */
+export interface UpdateProcedureMaterialsRequest {
+  materials: MaterialUpdateItem[];
+}
+
+export interface MaterialUpdateItem {
+  usageId: number;
+  actualQuantity: number;
+  varianceReason?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * API 8.9: Update Material Quantity Request
+ * Request body for PATCH /api/v1/clinical-records/procedures/{procedureId}/materials/{usageId}/quantity
+ */
+export interface UpdateMaterialQuantityRequest {
+  usageId: number;
+  quantity: number; // Must be > 0
+}
+
+/**
+ * API 8.9: Update Material Quantity Response
+ * Response from PATCH /api/v1/clinical-records/procedures/{procedureId}/materials/{usageId}/quantity
+ */
+export interface UpdateMaterialQuantityResponse extends ProcedureMaterialItem {}
+
+/**
+ * API 8.8: Update Procedure Materials Response
+ * Response from PUT /api/v1/clinical-records/procedures/{procedureId}/materials
+ */
+export interface UpdateProcedureMaterialsResponse {
+  message: string;
+  procedureId: number;
+  materialsUpdated: number;
+  stockAdjustments: StockAdjustment[];
+}
+
+export interface StockAdjustment {
+  itemName: string;
+  adjustment: number; // Positive = additional deduction, Negative = return to warehouse
+  reason: string;
+}
+

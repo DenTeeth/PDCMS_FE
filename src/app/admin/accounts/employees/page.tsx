@@ -178,24 +178,27 @@ export default function EmployeesPage() {
       // Build query params - BE supports pagination and filters
       const params: any = {
         page,
-        size: 12, // Items per page (BE handles filtering, so this is exact)
+        size: 12, // Items per page
         sortBy: 'employeeCode' as const,
         sortDirection: 'ASC' as const,
       };
 
-      // Add search if present (use debounced value) - BE filter
+      // Add search if present (use debounced value)
       if (debouncedSearchTerm) {
         params.search = debouncedSearchTerm;
       }
 
-      // Add role filter if not 'all' - BE filter
+      // Add role filter if not 'all'
       if (filterRole && filterRole !== 'all') {
         params.roleId = filterRole;
       }
 
-      // Note: BE endpoint /employees only returns active employees by default
-      // isActive filter is not needed for this endpoint (always active=true)
-      // If we need to show inactive employees, use /employees/admin/all endpoint
+      // Add status filter
+      if (filterStatus === 'active') {
+        params.isActive = true;
+      } else if (filterStatus === 'inactive') {
+        params.isActive = false;
+      }
 
       console.log('Fetching employees with params:', params);
       const response = await employeeService.getEmployees(params);
@@ -205,18 +208,29 @@ export default function EmployeesPage() {
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
 
-      // Fetch stats for all employees (without pagination) to get accurate counts
-      const statsResponse = await employeeService.getEmployees({
+      // Fetch ALL employees (no filter) to calculate accurate stats
+      const allEmployeesResponse = await employeeService.getEmployees({
         page: 0,
-        size: 10000, // Large number to get all employees
+        size: 10000, // Get all
         sortBy: 'employeeCode' as const,
         sortDirection: 'ASC' as const,
+        // No isActive filter - get both active and inactive
       });
 
-      // Count active and inactive from all employees
-      const allEmployees = statsResponse.content;
-      setTotalActive(allEmployees.filter(e => e.isActive).length);
-      setTotalInactive(allEmployees.filter(e => !e.isActive).length);
+      const allEmployees = allEmployeesResponse.content || [];
+      const activeCount = allEmployees.filter(e => e.isActive === true).length;
+      const inactiveCount = allEmployees.filter(e => e.isActive === false || e.isActive === null || e.isActive === undefined).length;
+
+      console.log('📊 Stats calculated:', {
+        total: allEmployees.length,
+        active: activeCount,
+        inactive: inactiveCount,
+        nullOrUndefined: allEmployees.filter(e => e.isActive === null || e.isActive === undefined).length,
+        sample: allEmployees.slice(0, 3).map(e => ({ code: e.employeeCode, isActive: e.isActive }))
+      });
+
+      setTotalActive(activeCount);
+      setTotalInactive(inactiveCount);
 
     } catch (error: any) {
       console.error('Failed to fetch employees:', error);
@@ -780,7 +794,7 @@ export default function EmployeesPage() {
 
         {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <Card className="w-full max-w-5xl my-8 max-h-[90vh] flex flex-col">
               <CardHeader className="border-b flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -1134,7 +1148,7 @@ export default function EmployeesPage() {
 
         {/* Edit Employee Modal */}
         {showEditModal && editingEmployee && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Chỉnh sửa nhân viên</CardTitle>

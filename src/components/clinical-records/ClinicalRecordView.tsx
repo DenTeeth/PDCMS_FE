@@ -46,12 +46,14 @@ interface ClinicalRecordViewProps {
   record: ClinicalRecordResponse;
   onEdit?: () => void;
   canEdit?: boolean;
+  appointmentStatus?: string; // Appointment status to determine if materials can be viewed
 }
 
 export default function ClinicalRecordView({
   record,
   onEdit,
   canEdit = false,
+  appointmentStatus,
 }: ClinicalRecordViewProps) {
   const [toothStatuses, setToothStatuses] = useState<ToothStatusResponse[]>([]);
   const [loadingToothStatuses, setLoadingToothStatuses] = useState(false);
@@ -275,22 +277,21 @@ export default function ClinicalRecordView({
             )}
 
             {/* Follow-up Date */}
-            {record.followUpDate ? (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Ngày tái khám</Label>
-                </div>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-semibold">Ngày tái khám</Label>
+              </div>
+              {record.followUpDate && record.followUpDate.trim() !== '' ? (
                 <div className="pl-6 p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
                   {formatDate(record.followUpDate)}
                 </div>
-              </div>
-            ) : (
-              // Debug: Show if field exists but is empty
-              <div className="text-xs text-muted-foreground italic">
-                {/* Debug: followUpDate = {String(record.followUpDate)} */}
-              </div>
-            )}
+              ) : (
+                <div className="pl-6 p-3 bg-muted rounded-md text-sm text-muted-foreground italic">
+                  Chưa có ngày tái khám
+                </div>
+              )}
+            </div>
 
             {/* Vital Signs - Enhanced with assessment status */}
             {(record.vitalSigns && Object.keys(record.vitalSigns).length > 0) || 
@@ -428,6 +429,7 @@ export default function ClinicalRecordView({
             <PrescriptionList
               prescriptions={prescription ? [prescription] : (record.prescriptions || [])}
               canEdit={canEdit}
+              appointmentStatus={appointmentStatus || record.appointment?.status}
               onEdit={handleEditPrescription}
               onCreate={handleCreatePrescription}
             />
@@ -439,6 +441,7 @@ export default function ClinicalRecordView({
           <ProcedureList
             recordId={record.clinicalRecordId}
             canEdit={canEdit}
+            appointmentStatus={appointmentStatus || record.appointment?.status}
           />
         </div>
       </div>

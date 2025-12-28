@@ -147,7 +147,7 @@ export default function AdminTimeOffRequestsPage() {
     try {
       const response = await TimeOffRequestService.getTimeOffRequests({
         page: 0,
-        size: 20, // ⚡ Giảm từ 50 → 20 để load nhanh hơn
+        size: 100, // Load nhiều hơn để hiển thị đầy đủ
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
 
@@ -486,9 +486,9 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  // ⚡ Memoize filtered requests để tránh re-calculate mỗi lần render
+  // ⚡ Memoize filtered requests - Sort by createdAt DESC (newest first)
   const filteredRequests = useMemo(() => {
-    return timeOffRequests.filter((request) => {
+    const filtered = timeOffRequests.filter((request) => {
       const matchesSearch =
         request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.employee?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -502,6 +502,13 @@ export default function AdminTimeOffRequestsPage() {
       const matchesDateTo = !dateTo || request.endDate <= dateTo;
 
       return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
+    });
+
+    // Sort by createdAt DESC (newest first) - client-side to ensure correct order
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.startDate).getTime();
+      const dateB = new Date(b.createdAt || b.startDate).getTime();
+      return dateB - dateA; // DESC: newest first
     });
   }, [timeOffRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
@@ -629,11 +636,10 @@ export default function AdminTimeOffRequestsPage() {
               </div>
             </div>
 
-            {/* Filters */}
             {/* Filters - Bỏ Card */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="search">Tìm kiếm</Label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -651,7 +657,7 @@ export default function AdminTimeOffRequestsPage() {
                 </div>
 
                 {canViewAll && (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <CustomSelect
                       label="Nhân viên"
                       value={employeeFilter}
@@ -667,7 +673,7 @@ export default function AdminTimeOffRequestsPage() {
                   </div>
                 )}
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <CustomSelect
                     label="Trạng thái"
                     value={statusFilter}
@@ -682,7 +688,7 @@ export default function AdminTimeOffRequestsPage() {
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <Label htmlFor="dateFrom">Từ ngày</Label>
                   <Input
                     id="dateFrom"
@@ -692,7 +698,7 @@ export default function AdminTimeOffRequestsPage() {
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <Label htmlFor="dateTo">Đến ngày</Label>
                   <Input
                     id="dateTo"
@@ -701,146 +707,116 @@ export default function AdminTimeOffRequestsPage() {
                     onChange={(e) => setDateTo(e.target.value)}
                   />
                 </div>
+
+                {/* Nút xóa bộ lọc */}
+                <div className="space-y-2 flex flex-col justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('ALL');
+                      setEmployeeFilter('ALL');
+                      setDateFrom('');
+                      setDateTo('');
+                    }}
+                    className="w-full"
+                  >
+                    <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                    Xóa bộ lọc
+                  </Button>
+                </div>
               </div>
             </div>
 
             {/* Time Off Requests List */}
-            <div className="grid gap-4">
-              {filteredRequests.map((request) => {
-                const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
-                const canManage = request.status === TimeOffStatus.PENDING;
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Danh sách yêu cầu nghỉ phép</h3>
+              </div>
 
-                return (
-                  <Card key={request.requestId} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-3">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {request.requestId}
-                            </h3>
-                            <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                              {statusConfig.label}
-                            </Badge>
-                          </div>
+              {filteredRequests.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Mã yêu cầu</th>
+                        <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Trạng thái</th>
+                        <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Nhân viên</th>
+                        <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Ngày nghỉ</th>
+                        <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Loại nghỉ</th>
+                        <th className="text-right px-6 py-3 text-sm font-medium text-gray-700">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredRequests.map((request) => {
+                        const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
 
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div className="flex items-center space-x-2">
-                              <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {request.employee?.fullName || `Nhân viên ID: ${request.employee?.employeeId || 'N/A'}`}
+                        return (
+                          <tr key={request.requestId} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="font-semibold text-gray-900">{request.requestId}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor} whitespace-nowrap`}>
+                                {statusConfig.label}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <FontAwesomeIcon icon={faUser} className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900">
+                                  {request.employee?.fullName || `ID: ${request.employee?.employeeId || 'N/A'}`}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4 text-gray-400" />
+                                <div>
+                                  <div className="text-gray-900">
+                                    {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} - {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
+                                  </div>
+                                  <div className="text-xs text-gray-500">{request.totalDays || 0} ngày</div>
                                 </div>
-                                <div className="text-xs text-gray-500">Người nghỉ</div>
                               </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
-                              <span>
-                                {format(new Date(request.startDate), 'dd/MM/yyyy', { locale: vi })} -
-                                {format(new Date(request.endDate), 'dd/MM/yyyy', { locale: vi })}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
+                            </td>
+                            <td className="px-6 py-4">
                               <div>
-                                <div className="font-medium text-gray-900">{request.timeOffTypeName || request.timeOffTypeId}</div>
-                                <div className="text-xs text-gray-500">Loại nghỉ</div>
+                                <div className="text-gray-900 font-medium">{request.timeOffTypeName || request.timeOffTypeId}</div>
+                                {request.workShiftName && (
+                                  <div className="text-xs text-gray-500">{request.workShiftName}</div>
+                                )}
                               </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <span className="font-semibold">{request.totalDays || 0} ngày</span>
-                              {request.workShiftName && (
-                                <Badge variant="outline">{request.workShiftName}</Badge>
-                              )}
-                              {!request.workShiftName && request.workShiftId && (
-                                <Badge variant="outline" className="text-xs text-gray-500">
-                                  {request.workShiftId}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                            <div className="flex items-start space-x-2">
-                              <span className="text-gray-500 font-medium">Người tạo:</span>
-                              <span className="text-gray-900">
-                                {request.requestedBy?.fullName || `User ID: ${request.requestedBy?.employeeId || 'N/A'}`}
-                              </span>
-                              <span className="text-gray-400">
-                                • {format(new Date(request.requestedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                              </span>
-                            </div>
-                            <div className="flex items-start space-x-2">
-                              <span className="text-gray-500 font-medium">Lý do:</span>
-                              <span className="text-gray-700">{request.reason || 'Không có lý do'}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 justify-end ml-auto">
-                          {request.status === TimeOffStatus.PENDING ? (
-                            <>
-                              {canApprove && (
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-end gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openApproveModal(request)}
-                                  className="text-green-800 hover:bg-green-50 border-green-200"
+                                  onClick={() => openViewModal(request)}
+                                  title="Xem chi tiết"
                                 >
-                                  <FontAwesomeIcon icon={faCheck} className="h-4 w-4 mr-1" />
-                                  Duyệt
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Xem
                                 </Button>
-                              )}
-
-                              {canReject && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openRejectModal(request)}
-                                  className="text-red-800 hover:bg-red-50 border-red-200"
-                                >
-                                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-1" />
-                                  Từ chối
-                                </Button>
-                              )}
-
-                              {canCancelRequest(request) && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openCancelModal(request)}
-                                  className="text-orange-800 hover:bg-orange-50 border-orange-200"
-                                >
-                                  <FontAwesomeIcon icon={faBan} className="h-4 w-4 mr-1" />
-                                  Hủy
-                                </Button>
-                              )}
-                            </>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openViewModal(request)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Xem
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-12 text-center text-gray-500">
+                  <p>Không có yêu cầu nghỉ phép nào.</p>
+                </div>
+              )}
             </div>
 
             {/* Create Modal */}
             {showCreateModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
                   <div className="flex-shrink-0 border-b px-6 py-4">
                     <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
@@ -1009,7 +985,7 @@ export default function AdminTimeOffRequestsPage() {
               </div>
             )}      {/* Approve Modal */}
             {showApproveModal && selectedRequest && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 w-full max-w-lg">
                   <h2 className="text-xl font-bold mb-4 text-green-600">Xác nhận duyệt yêu cầu nghỉ phép</h2>
 
@@ -1089,7 +1065,7 @@ export default function AdminTimeOffRequestsPage() {
               </div>
             )}      {/* Reject Modal */}
             {showRejectModal && selectedRequest && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 w-full max-w-lg">
                   <h2 className="text-xl font-bold mb-4 text-red-600">Từ chối yêu cầu nghỉ phép</h2>
 
@@ -1148,7 +1124,7 @@ export default function AdminTimeOffRequestsPage() {
               </div>
             )}      {/* Cancel Modal */}
             {showCancelModal && selectedRequest && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 w-full max-w-md">
                   <h2 className="text-xl font-bold mb-4">Hủy yêu cầu</h2>
                   <div className="mb-4">
@@ -1181,7 +1157,7 @@ export default function AdminTimeOffRequestsPage() {
               </div>
             )}      {/* View Details Modal */}
             {showViewModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col">
                   <div className="flex justify-between items-center border-b px-6 py-4 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-gray-900">Chi tiết Yêu cầu Nghỉ phép</h2>

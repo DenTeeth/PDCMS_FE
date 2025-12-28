@@ -30,20 +30,23 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Edit, Trash2, ClipboardList, Plus, Loader2 } from 'lucide-react';
+import { Edit, Trash2, ClipboardList, Plus, Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import ProcedureForm from './ProcedureForm';
+import ProcedureMaterialsView from './ProcedureMaterialsView';
 
 interface ProcedureListProps {
   recordId: number;
   canEdit?: boolean;
+  appointmentStatus?: string; // Only show materials if COMPLETED
   onRefresh?: () => void; // Optional callback for parent to refresh
 }
 
 export default function ProcedureList({
   recordId,
   canEdit = false,
+  appointmentStatus,
   onRefresh,
 }: ProcedureListProps) {
   const [procedures, setProcedures] = useState<ProcedureDTO[]>([]);
@@ -51,6 +54,10 @@ export default function ProcedureList({
   const [editingProcedure, setEditingProcedure] = useState<ProcedureDTO | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [deletingProcedure, setDeletingProcedure] = useState<ProcedureDTO | null>(null);
+  const [viewingMaterialsFor, setViewingMaterialsFor] = useState<number | null>(null);
+  // Materials count cache: procedureId -> materials count
+  const [materialsCount, setMaterialsCount] = useState<Record<number, number>>({});
+  const [loadingMaterialsCount, setLoadingMaterialsCount] = useState<Record<number, boolean>>({});
 
   // Load procedures
   const loadProcedures = async () => {
@@ -73,6 +80,57 @@ export default function ProcedureList({
   useEffect(() => {
     loadProcedures();
   }, [recordId]);
+
+  // Load materials count for all procedures when appointment status allows
+  useEffect(() => {
+    const canViewMaterials = appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED';
+    console.log('[ProcedureList] Materials count effect:', {
+      appointmentStatus,
+      canViewMaterials,
+      proceduresCount: procedures.length,
+    });
+    if (!canViewMaterials || procedures.length === 0) {
+      console.log('[ProcedureList] Skipping materials count load:', {
+        canViewMaterials,
+        proceduresCount: procedures.length,
+      });
+      return;
+    }
+
+    const loadMaterialsCounts = async () => {
+      const counts: Record<number, number> = {};
+      const loading: Record<number, boolean> = {};
+
+      // Set loading state for all procedures
+      procedures.forEach((p) => {
+        loading[p.procedureId] = true;
+      });
+      setLoadingMaterialsCount(loading);
+
+      // Load materials count for each procedure in parallel
+      const promises = procedures.map(async (procedure) => {
+        try {
+          const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
+          // Count only if hasConsumables is true or materials array exists
+          if (materials.hasConsumables === false) {
+            counts[procedure.procedureId] = 0; // No consumables
+          } else {
+            counts[procedure.procedureId] = materials.materials?.length || 0;
+          }
+        } catch (error: any) {
+          // If 404 or error, assume no materials or can't load
+          console.warn(`Could not load materials for procedure ${procedure.procedureId}:`, error);
+          counts[procedure.procedureId] = -1; // -1 means unknown/error
+        }
+      });
+
+      await Promise.all(promises);
+      setMaterialsCount(counts);
+      setLoadingMaterialsCount({});
+    };
+
+    loadMaterialsCounts();
+  }, [procedures, appointmentStatus]);
 
   const formatDateTime = (dateTime: string) => {
     try {
@@ -125,10 +183,10 @@ export default function ProcedureList({
           <div className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5" />
             <h3 className="text-lg font-semibold">
-              Thủ thuật đã thực hiện ({procedures.length})
+              Thủ thuật thực hiện ({procedures.length})
             </h3>
           </div>
-          {canEdit && (
+          {canEdit && appointmentStatus !== 'COMPLETED' && (
             <Button
               size="sm"
               onClick={() => setShowAddForm(true)}
@@ -149,7 +207,7 @@ export default function ProcedureList({
           <div className="text-center py-8 text-muted-foreground">
             <ClipboardList className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>Chưa có thủ thuật nào được ghi nhận</p>
-            {canEdit && (
+            {canEdit && appointmentStatus !== 'COMPLETED' && (
               <Button
                 variant="outline"
                 size="sm"
@@ -168,9 +226,7 @@ export default function ProcedureList({
                 <TableRow>
                   <TableHead className="w-[300px]">Tên</TableHead>
                   <TableHead>Mô tả</TableHead>
-                  {canEdit && (
-                    <TableHead className="w-[100px] text-right">Thao tác</TableHead>
-                  )}
+                  <TableHead className="w-[150px] text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -215,28 +271,44 @@ export default function ProcedureList({
                         )}
                       </div>
                     </TableCell>
-                    {canEdit && (
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* View Details Button - Show if appointment is IN_PROGRESS or COMPLETED */}
+                        {(appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED') && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEdit(procedure)}
+                            onClick={() => setViewingMaterialsFor(procedure.procedureId)}
                             className="h-8 w-8 p-0"
+                            title="Xem chi tiết"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(procedure)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
+                        )}
+                        {canEdit && appointmentStatus !== 'COMPLETED' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(procedure)}
+                              className="h-8 w-8 p-0"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(procedure)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              title="Xóa"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -250,6 +322,7 @@ export default function ProcedureList({
         <ProcedureForm
           recordId={recordId}
           procedure={editingProcedure || undefined}
+          appointmentStatus={appointmentStatus}
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
         />
@@ -295,6 +368,73 @@ export default function ProcedureList({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Details Dialog */}
+      {viewingMaterialsFor && (
+        <Dialog
+          open={!!viewingMaterialsFor}
+          onOpenChange={(open) => !open && setViewingMaterialsFor(null)}
+        >
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Chi tiết thủ thuật</DialogTitle>
+              <DialogDescription>
+                {(() => {
+                  const procedure = procedures.find((p) => p.procedureId === viewingMaterialsFor);
+                  return procedure?.serviceName || 'Thủ thuật';
+                })()}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Procedure Info */}
+              {(() => {
+                const procedure = procedures.find((p) => p.procedureId === viewingMaterialsFor);
+                if (!procedure) return null;
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">Tên thủ thuật</h4>
+                      <p className="text-sm">{procedure.serviceName || procedure.serviceCode || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">Mô tả</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {procedure.procedureDescription || '-'}
+                      </p>
+                      {procedure.notes && (
+                        <p className="text-sm text-muted-foreground mt-1 italic">
+                          Ghi chú: {procedure.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <Separator />
+
+              {/* Materials */}
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Vật tư tiêu hao</h4>
+                <ProcedureMaterialsView
+                  procedureId={viewingMaterialsFor}
+                  procedureName={
+                    procedures.find((p) => p.procedureId === viewingMaterialsFor)?.serviceName
+                  }
+                  toothNumber={
+                    procedures.find((p) => p.procedureId === viewingMaterialsFor)?.toothNumber
+                  }
+                  appointmentStatus={appointmentStatus}
+                  onMaterialsUpdated={() => {
+                    loadProcedures();
+                    onRefresh?.();
+                  }}
+                />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

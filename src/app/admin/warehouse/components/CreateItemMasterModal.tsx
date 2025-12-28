@@ -651,7 +651,7 @@ export default function CreateItemMasterModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-violet-600" />
-            {item ? 'Chỉnh sửa Vật Tư' : 'Thêm Vật Tư Mới'}
+            {item ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới'}
           </DialogTitle>
           <DialogDescription className="sr-only">
             {item ? 'Form chỉnh sửa thông tin vật tư' : 'Form thêm vật tư mới vào hệ thống'}
@@ -935,7 +935,7 @@ export default function CreateItemMasterModal({
               className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
             />
             <Label htmlFor="is_tool" className="cursor-pointer text-sm text-amber-900">
-              ✓ Đây là <strong>dụng cụ</strong> (không cần HSD khi nhập kho lạnh)
+              Đây là <strong>dụng cụ</strong> (không cần HSD khi nhập kho lạnh)
             </Label>
           </div>
 
@@ -956,7 +956,7 @@ export default function CreateItemMasterModal({
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Button type="submit" className="flex-1" disabled={mutation.isPending || loadingUnits}>
-              {mutation.isPending ? 'Đang lưu...' : item ? 'Cập Nhật' : 'Thêm Mới'}
+              {mutation.isPending ? 'Đang lưu...' : item ? 'Cập nhật' : 'Thêm mới'}
             </Button>
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Hủy

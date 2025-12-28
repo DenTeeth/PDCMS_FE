@@ -33,11 +33,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, Save, X } from 'lucide-react';
+import { Loader2, Save, X, Package, Info, AlertTriangle, CheckCircle2, Edit } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import ServiceBOMView from './ServiceBOMView';
+import { serviceConsumableService } from '@/services/serviceConsumableService';
+import { ServiceConsumablesResponse } from '@/types/serviceConsumable';
+import { ProcedureMaterialsResponse, ProcedureMaterialItem } from '@/types/clinicalRecord';
+import EditMaterialQuantityDialog from './EditMaterialQuantityDialog';
 
 interface ProcedureFormProps {
   recordId: number;
   procedure?: ProcedureDTO;
+  appointmentStatus?: string; // To determine if materials can be edited
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -52,12 +59,21 @@ interface FormData {
 export default function ProcedureForm({
   recordId,
   procedure,
+  appointmentStatus,
   onSuccess,
   onCancel,
 }: ProcedureFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
+  const [showBOMView, setShowBOMView] = useState(false);
+  const [bom, setBom] = useState<ServiceConsumablesResponse | null>(null);
+  const [loadingBOM, setLoadingBOM] = useState(false);
+  const [bomError, setBomError] = useState<string | null>(null);
+  // Materials for editing procedure
+  const [procedureMaterials, setProcedureMaterials] = useState<ProcedureMaterialsResponse | null>(null);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+  const [editingMaterialQuantity, setEditingMaterialQuantity] = useState<ProcedureMaterialItem | null>(null);
 
   const {
     register,
@@ -75,6 +91,7 @@ export default function ProcedureForm({
   });
 
   const selectedServiceId = watch('serviceId');
+  const selectedService = services.find(s => String(s.serviceId) === selectedServiceId);
 
   // Load services
   useEffect(() => {
@@ -111,6 +128,115 @@ export default function ProcedureForm({
     }
   }, [procedure, services, setValue]);
 
+  // Auto-load BOM when service is selected
+  useEffect(() => {
+    const loadBOM = async () => {
+      if (!selectedServiceId) {
+        setBom(null);
+        setBomError(null);
+        return;
+      }
+
+      const serviceIdNum = Number(selectedServiceId);
+      if (isNaN(serviceIdNum)) {
+        console.warn('Invalid serviceId:', selectedServiceId);
+        return;
+      }
+
+      try {
+        setLoadingBOM(true);
+        setBomError(null);
+        console.log('[ProcedureForm] Loading BOM for serviceId:', serviceIdNum);
+        const data = await serviceConsumableService.getServiceConsumables(serviceIdNum);
+        console.log('[ProcedureForm] BOM loaded:', data);
+        setBom(data);
+      } catch (error: any) {
+        console.error('[ProcedureForm] Error loading service BOM:', {
+          error,
+          status: error.status || error.response?.status,
+          message: error.message,
+          serviceId: serviceIdNum,
+        });
+        setBom(null);
+        // 404 means service has no BOM (doesn't consume materials) - this is OK
+        const status = error.status || error.response?.status;
+        if (status === 404) {
+          console.log('[ProcedureForm] Service has no BOM (404) - this is OK');
+          setBomError('NO_BOM'); // Special flag for "no consumables"
+        } else {
+          console.error('[ProcedureForm] BOM load error:', error);
+          setBomError(error.message || error.response?.data?.message || 'Không thể tải danh sách vật tư');
+        }
+      } finally {
+        setLoadingBOM(false);
+      }
+    };
+
+    loadBOM();
+  }, [selectedServiceId]);
+
+  // Load procedure materials when editing and appointment status allows
+  useEffect(() => {
+    const canViewMaterials = appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED';
+    console.log('[ProcedureForm] Materials load effect:', {
+      isEditMode,
+      procedureId: procedure?.procedureId,
+      appointmentStatus,
+      canViewMaterials,
+    });
+    if (!procedure?.procedureId || !canViewMaterials) {
+      console.log('[ProcedureForm] Skipping materials load:', {
+        hasProcedureId: !!procedure?.procedureId,
+        canViewMaterials,
+      });
+      setProcedureMaterials(null);
+      return;
+    }
+
+    const loadMaterials = async () => {
+      try {
+        setLoadingMaterials(true);
+        const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
+        console.log('[ProcedureForm] Materials loaded:', {
+          hasConsumables: materials.hasConsumables,
+          materialsCount: materials.materials?.length || 0,
+          materialsDeducted: materials.materialsDeducted,
+        });
+        setProcedureMaterials(materials);
+      } catch (error: any) {
+        console.error('[ProcedureForm] Error loading procedure materials:', error);
+        // Don't show error if 404 (no materials yet) or hasConsumables === false
+        if (error.status !== 404 && error.response?.status !== 404) {
+          // Only show error if it's not a "no consumables" case
+          if (error.status !== 400) {
+            console.warn('[ProcedureForm] Could not load materials:', error);
+          }
+        }
+        setProcedureMaterials(null);
+      } finally {
+        setLoadingMaterials(false);
+      }
+    };
+
+    loadMaterials();
+  }, [procedure?.procedureId, appointmentStatus]);
+
+  const handleMaterialQuantityUpdated = (updatedMaterial: ProcedureMaterialItem) => {
+    if (!procedureMaterials) return;
+    
+    // Update the material in the list
+    const updatedMaterials = procedureMaterials.materials.map((m) =>
+      m.usageId === updatedMaterial.usageId ? updatedMaterial : m
+    );
+    
+    setProcedureMaterials({
+      ...procedureMaterials,
+      materials: updatedMaterials,
+    });
+    
+    toast.success('Đã cập nhật số lượng vật tư thành công');
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
@@ -136,6 +262,16 @@ export default function ProcedureForm({
           updateRequest
         );
         toast.success('Đã cập nhật thủ thuật thành công');
+        
+        // Reload materials after update (BE may create materials if service changed)
+        if (procedure.procedureId && (appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED')) {
+          try {
+            const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
+            setProcedureMaterials(materials);
+          } catch (error: any) {
+            console.warn('[ProcedureForm] Could not reload materials after update:', error);
+          }
+        }
       } else {
         // Create new procedure
         const createRequest: AddProcedureRequest = {
@@ -145,8 +281,21 @@ export default function ProcedureForm({
           notes: data.notes?.trim() || undefined,
         };
 
-        await clinicalRecordService.addProcedure(recordId, createRequest);
+        const response = await clinicalRecordService.addProcedure(recordId, createRequest);
         toast.success('Đã thêm thủ thuật thành công');
+        
+        // Reload materials after create (BE automatically creates materials from BOM)
+        // Note: We need to wait a bit for BE to create materials
+        if (response.procedureId && (appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED')) {
+          setTimeout(async () => {
+            try {
+              const materials = await clinicalRecordService.getProcedureMaterials(response.procedureId);
+              setProcedureMaterials(materials);
+            } catch (error: any) {
+              console.warn('[ProcedureForm] Could not load materials after create:', error);
+            }
+          }, 500); // Wait 500ms for BE to create materials
+        }
       }
 
       onSuccess();
@@ -188,7 +337,10 @@ export default function ProcedureForm({
             ) : (
               <Select
                 value={selectedServiceId}
-                onValueChange={(value) => setValue('serviceId', value)}
+                onValueChange={(value) => {
+                  setValue('serviceId', value);
+                  console.log('Service selected:', value); // Debug log
+                }}
               >
                 <SelectTrigger id="serviceId" className={`w-full ${errors.serviceId ? 'border-destructive' : ''}`}>
                   <SelectValue placeholder="Chọn dịch vụ" />
@@ -231,7 +383,162 @@ export default function ProcedureForm({
             {!selectedServiceId && !loadingServices && (
               <p className="text-sm text-destructive">Vui lòng chọn dịch vụ</p>
             )}
+            {/* Auto-display BOM when service is selected */}
+            {selectedServiceId && (
+              <div className="mt-3 space-y-2">
+                {loadingBOM ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Đang tải vật tư...</span>
+                  </div>
+                ) : bomError === 'NO_BOM' ? (
+                  <div className="border rounded-lg p-3 bg-muted/50">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Package className="h-4 w-4 opacity-50" />
+                      <span>Thủ thuật này không tiêu hao vật tư</span>
+                    </div>
+                  </div>
+                ) : bomError ? (
+                  <div className="border rounded-lg p-3 bg-destructive/10 border-destructive/20">
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>{bomError}</span>
+                    </div>
+                  </div>
+                ) : bom && bom.consumables && bom.consumables.length > 0 ? (
+                  <div className="border rounded-lg p-3 bg-blue-50/50 border-blue-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-900">
+                          Vật tư dự kiến từ BOM ({bom.consumables.length} loại)
+                        </span>
+                        <span title="Đây là vật tư từ BOM của service. Để chỉnh sửa số lượng, vui lòng xem phần 'Vật tư đã ghi nhận' bên dưới.">
+                          <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                        </span>
+                      </div>
+                      {bom.hasInsufficientStock && (
+                        <span className="text-xs text-orange-600 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Có vật tư thiếu
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {bom.consumables.map((item, index) => (
+                        <div key={index} className="text-xs flex items-center justify-between py-1">
+                          <span className="text-blue-800">
+                            {item.itemName}
+                            {item.itemCode && (
+                              <span className="text-muted-foreground ml-1">({item.itemCode})</span>
+                            )}
+                          </span>
+                          <span className="text-blue-900 font-medium">
+                            {item.quantity} {item.unitName}
+                            {item.stockStatus === 'OUT_OF_STOCK' && (
+                              <span className="text-destructive ml-1">(Hết hàng)</span>
+                            )}
+                            {item.stockStatus === 'LOW' && (
+                              <span className="text-orange-600 ml-1">(Thấp)</span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowBOMView(true)}
+                        className="flex-1 text-xs h-7"
+                      >
+                        Xem chi tiết
+                      </Button>
+                      {isEditMode && procedure?.procedureId && (appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED') && !loadingMaterials && procedureMaterials && procedureMaterials.hasConsumables && procedureMaterials.materials && procedureMaterials.materials.length > 0 && !procedureMaterials.materialsDeducted && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Show first material for editing quantity
+                            const firstMaterial = procedureMaterials.materials[0];
+                            if (firstMaterial) {
+                              setEditingMaterialQuantity(firstMaterial);
+                            }
+                          }}
+                          className="flex-1 text-xs h-7"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Chỉnh sửa số lượng
+                        </Button>
+                      )}
+                    </div>
+                    {/* Show procedure materials if available and in edit mode */}
+                    {isEditMode && procedure?.procedureId && (appointmentStatus === 'IN_PROGRESS' || appointmentStatus === 'COMPLETED') && (
+                      loadingMaterials ? (
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 inline animate-spin mr-1" />
+                          Đang tải vật tư đã ghi nhận...
+                        </div>
+                      ) : procedureMaterials && procedureMaterials.hasConsumables && procedureMaterials.materials && procedureMaterials.materials.length > 0 ? (
+                        <div className="mt-3 space-y-2 border-t pt-3">
+                          <div className="text-xs font-semibold text-blue-900 mb-2">
+                            Vật tư đã ghi nhận ({procedureMaterials.materials.length} loại)
+                            {procedureMaterials.materialsDeducted && (
+                              <span className="text-xs text-muted-foreground ml-2">(Đã trừ kho)</span>
+                            )}
+                          </div>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {procedureMaterials.materials.map((material) => (
+                              <div
+                                key={material.usageId}
+                                className="flex items-center justify-between p-2 bg-white rounded border border-blue-100 text-xs"
+                              >
+                                <span className="text-blue-800">
+                                  {material.itemName}
+                                  {material.itemCode && (
+                                    <span className="text-muted-foreground ml-1">({material.itemCode})</span>
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-blue-900 font-medium">
+                                    {material.quantity} {material.unitName}
+                                  </span>
+                                  {!procedureMaterials.materialsDeducted && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setEditingMaterialQuantity(material)}
+                                      className="h-6 w-6 p-0"
+                                      title="Chỉnh sửa số lượng dự kiến"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : procedureMaterials && !procedureMaterials.hasConsumables ? (
+                        <div className="mt-3 text-xs text-muted-foreground italic">
+                          Thủ thuật này không tiêu hao vật tư
+                        </div>
+                      ) : procedureMaterials && procedureMaterials.hasConsumables && (!procedureMaterials.materials || procedureMaterials.materials.length === 0) ? (
+                        <div className="mt-3 text-xs text-orange-600">
+                          <AlertTriangle className="h-3 w-3 inline mr-1" />
+                          Vật tư chưa được tạo. Vui lòng đợi vài giây hoặc refresh trang.
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
+
 
           {/* Procedure Description */}
           <div className="space-y-2">
@@ -299,6 +606,7 @@ export default function ProcedureForm({
             )}
           </div>
 
+
           {/* Actions */}
           <DialogFooter>
             <Button
@@ -328,6 +636,27 @@ export default function ProcedureForm({
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Service BOM View Dialog */}
+        {selectedServiceId && (
+          <ServiceBOMView
+            serviceId={parseInt(selectedServiceId)}
+            serviceName={selectedService?.serviceName}
+            open={showBOMView}
+            onOpenChange={setShowBOMView}
+          />
+        )}
+
+        {/* Edit Material Quantity Dialog */}
+        {editingMaterialQuantity && procedure?.procedureId && (
+          <EditMaterialQuantityDialog
+            open={!!editingMaterialQuantity}
+            onOpenChange={(open) => !open && setEditingMaterialQuantity(null)}
+            procedureId={procedure.procedureId}
+            material={editingMaterialQuantity}
+            onSuccess={handleMaterialQuantityUpdated}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

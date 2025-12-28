@@ -372,23 +372,23 @@ export default function StorageInOutPage() {
           <div className="flex items-center gap-4">
             {/* View Mode Toggle */}
             <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'transactions' ? 'default' : 'outline'}
-              onClick={() => setViewMode('transactions')}
-              className="gap-2"
-            >
-              <FontAwesomeIcon icon={faBoxes} />
-              Giao dịch
-            </Button>
-            <Button
-              variant={viewMode === 'reports' ? 'default' : 'outline'}
-              onClick={() => setViewMode('reports')}
-              className="gap-2"
-            >
-              <FontAwesomeIcon icon={faChartLine} />
-              Báo cáo
-            </Button>
-          </div>
+              <Button
+                variant={viewMode === 'transactions' ? 'default' : 'outline'}
+                onClick={() => setViewMode('transactions')}
+                className="gap-2"
+              >
+                <FontAwesomeIcon icon={faBoxes} />
+                Giao dịch
+              </Button>
+              <Button
+                variant={viewMode === 'reports' ? 'default' : 'outline'}
+                onClick={() => setViewMode('reports')}
+                className="gap-2"
+              >
+                <FontAwesomeIcon icon={faChartLine} />
+                Báo cáo
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -413,35 +413,35 @@ export default function StorageInOutPage() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {/* Phiếu nhập kho */}
-              <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-                <p className="text-sm font-semibold text-green-800 mb-2">Phiếu nhập kho</p>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Phiếu nhập kho</p>
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FontAwesomeIcon icon={faDownload} className="text-green-700 text-xl" />
+                    <FontAwesomeIcon icon={faDownload} className="text-green-600 text-xl" />
                   </div>
-                  <p className="text-3xl font-bold text-green-800">{filterStats.IMPORT}</p>
+                  <p className="text-3xl font-bold text-gray-900">{filterStats.IMPORT}</p>
                 </div>
               </div>
 
               {/* Phiếu xuất kho */}
-              <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
-                <p className="text-sm font-semibold text-red-800 mb-2">Phiếu xuất kho</p>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Phiếu xuất kho</p>
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FontAwesomeIcon icon={faUpload} className="text-red-700 text-xl" />
+                    <FontAwesomeIcon icon={faUpload} className="text-red-600 text-xl" />
                   </div>
-                  <p className="text-3xl font-bold text-red-800">{filterStats.EXPORT}</p>
+                  <p className="text-3xl font-bold text-gray-900">{filterStats.EXPORT}</p>
                 </div>
               </div>
 
               {/* Tổng giao dịch */}
-              <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-                <p className="text-sm font-semibold text-green-800 mb-2">Tổng giao dịch</p>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Tổng giao dịch</p>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FontAwesomeIcon icon={faBoxes} className="text-green-700 text-xl" />
+                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faBoxes} className="text-blue-600 text-xl" />
                   </div>
-                  <p className="text-3xl font-bold text-green-800">{filterStats.ALL}</p>
+                  <p className="text-3xl font-bold text-gray-900">{filterStats.ALL}</p>
                 </div>
               </div>
 
@@ -449,27 +449,27 @@ export default function StorageInOutPage() {
               {transactionStats && (
                 <>
                   {transactionStats.pendingApprovalCount !== undefined && (
-                    <div className="bg-orange-50 rounded-xl border border-orange-200 shadow-sm p-4">
-                      <p className="text-sm font-semibold text-orange-800 mb-2">Chờ duyệt</p>
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Chờ duyệt</p>
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-700 text-xl" />
+                          <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600 text-xl" />
                         </div>
-                        <p className="text-3xl font-bold text-orange-800">{transactionStats.pendingApprovalCount}</p>
+                        <p className="text-3xl font-bold text-gray-900">{transactionStats.pendingApprovalCount}</p>
                       </div>
                     </div>
                   )}
 
                   {hasViewCost && transactionStats.totalImportValue !== undefined && (
-                    <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-4">
-                      <p className="text-sm font-semibold text-blue-800 mb-2">Tổng giá trị nhập</p>
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Tổng giá trị nhập</p>
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FontAwesomeIcon icon={faChartLine} className="text-blue-700 text-xl" />
+                          <FontAwesomeIcon icon={faChartLine} className="text-blue-600 text-xl" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-blue-800">{transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫</p>
-                          <p className="text-xs text-blue-600 mt-1">
+                          <p className="text-2xl font-bold text-gray-900">{transactionStats.totalImportValue?.toLocaleString('vi-VN')} ₫</p>
+                          <p className="text-xs text-gray-500 mt-1">
                             {transactionStats.periodStart && transactionStats.periodEnd
                               ? `${new Date(transactionStats.periodStart).toLocaleDateString('vi-VN')} - ${new Date(transactionStats.periodEnd).toLocaleDateString('vi-VN')}`
                               : 'Trong kỳ'}
@@ -682,29 +682,29 @@ export default function StorageInOutPage() {
                       <table className="w-full min-w-max">
                         <thead>
                           <tr className="border-b bg-gray-50">
-                            <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionCode')}>
+                            <th className="text-left px-6 py-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionCode')}>
                               <div className="flex items-center gap-2 font-semibold text-sm">
                                 Mã phiếu
                                 <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                               </div>
                             </th>
-                            <th className="text-left p-3 font-semibold text-sm">Loại</th>
-                            <th className="text-left p-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionDate')}>
+                            <th className="text-left px-6 py-3 font-semibold text-sm">Loại</th>
+                            <th className="text-left px-6 py-3 cursor-pointer hover:bg-gray-100 transition" onClick={() => handleSort('transactionDate')}>
                               <div className="flex items-center gap-2 font-semibold text-sm">
                                 Ngày
                                 <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                               </div>
                             </th>
-                            <th className="text-left p-3 font-semibold text-sm">Trạng thái</th>
-                            <th className="text-left p-3 font-semibold text-sm">Nhà cung cấp</th>
+                            <th className="text-left px-6 py-3 font-semibold text-sm">Trạng thái</th>
+                            <th className="text-left px-6 py-3 font-semibold text-sm">Nhà cung cấp</th>
                             {hasViewCost && (
-                              <th className="text-right p-3 font-semibold text-sm">Giá trị</th>
+                              <th className="text-right px-6 py-3 font-semibold text-sm">Giá trị</th>
                             )}
                             {activeFilter === 'IMPORT' && (
-                              <th className="text-left p-3 font-semibold text-sm">Thanh toán</th>
+                              <th className="text-left px-6 py-3 font-semibold text-sm">Thanh toán</th>
                             )}
-                            <th className="text-left p-3 font-semibold text-sm">Ghi chú</th>
-                            <th className="text-center p-3 font-semibold text-sm w-36">Thao tác</th>
+                            <th className="text-left px-6 py-3 font-semibold text-sm">Ghi chú</th>
+                            <th className="text-right px-6 py-3 font-semibold text-sm">Thao tác</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -738,26 +738,26 @@ export default function StorageInOutPage() {
 
                             return (
                               <tr key={txn.transactionId} className="border-b hover:bg-gray-50 transition">
-                                <td className="p-3 font-mono text-sm font-medium">{txn.transactionCode}</td>
-                                <td className="p-3">
+                                <td className="px-6 py-4 font-mono text-sm font-medium">{txn.transactionCode}</td>
+                                <td className="px-6 py-4">
                                   <Badge className={getTypeColor(txn.transactionType)}>
                                     {getTypeLabel(txn.transactionType)}
                                   </Badge>
                                 </td>
-                                <td className="p-3">{formatDate(txn.transactionDate)}</td>
-                                <td className="p-3">
+                                <td className="px-6 py-4">{formatDate(txn.transactionDate)}</td>
+                                <td className="px-6 py-4">
                                   {getStatusBadge(txn.status)}
                                 </td>
-                                <td className="p-3">{txn.supplierName || '-'}</td>
+                                <td className="px-6 py-4">{txn.supplierName || '-'}</td>
                                 {hasViewCost && (
-                                  <td className="p-3 text-right text-sm font-medium">
+                                  <td className="px-6 py-4 text-right text-sm font-medium">
                                     {txn.totalValue !== null && txn.totalValue !== undefined
                                       ? `${txn.totalValue.toLocaleString('vi-VN')} ₫`
                                       : <span className="text-gray-400">-</span>}
                                   </td>
                                 )}
                                 {activeFilter === 'IMPORT' && (
-                                  <td className="p-3 text-sm">
+                                  <td className="px-6 py-4 text-sm">
                                     {getPaymentStatusBadge(txn.paymentStatus)}
                                     {hasViewCost && txn.paymentStatus === 'PARTIAL' && txn.remainingDebt !== null && txn.remainingDebt !== undefined && (
                                       <div className="text-xs text-gray-500 mt-1">
@@ -766,9 +766,9 @@ export default function StorageInOutPage() {
                                     )}
                                   </td>
                                 )}
-                                <td className="p-3 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
-                                <td className="p-3">
-                                  <div className="flex items-center justify-center gap-1">
+                                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{txn.notes || '-'}</td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-1">
                                     <Button
                                       size="sm"
                                       variant="ghost"

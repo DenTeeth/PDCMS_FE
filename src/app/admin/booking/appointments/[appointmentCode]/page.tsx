@@ -744,12 +744,64 @@ export default function AdminAppointmentDetailPage() {
       setClinicalRecord(null);
       setClinicalRecordError(null);
 
-      // If currently on clinical record tab, reload it
-      if (activeTab === 'clinical-record' && updated.appointmentId) {
-        // Small delay to ensure state is updated
-        setTimeout(() => {
-          loadClinicalRecord();
-        }, 100);
+      // If status changed to COMPLETED, check materials deduction
+      if (selectedStatus === 'COMPLETED' && updated.appointmentId) {
+        // Wait for BE to process materials deduction (1-2 seconds)
+        setTimeout(async () => {
+          try {
+            // Reload clinical record to get updated procedures
+            const record = await clinicalRecordService.getByAppointmentId(updated.appointmentId);
+            if (record && record.procedures && record.procedures.length > 0) {
+              // Check if any procedure has materials that should be deducted
+              let allDeducted = true;
+              let hasProcedures = false;
+              
+              for (const procedure of record.procedures) {
+                hasProcedures = true;
+                try {
+                  const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
+                  if (!materials.materialsDeducted) {
+                    allDeducted = false;
+                    break;
+                  }
+                } catch (error) {
+                  // If can't load materials, skip this procedure
+                  console.warn('Could not check materials for procedure:', procedure.procedureId);
+                }
+              }
+              
+              if (hasProcedures) {
+                if (allDeducted) {
+                  toast.success('Vật tư đã được trừ khỏi kho', {
+                    description: 'Tất cả vật tư đã được tự động trừ khỏi kho theo BOM của dịch vụ',
+                    duration: 5000,
+                  });
+                } else {
+                  toast.warning('Một số vật tư chưa được trừ khỏi kho', {
+                    description: 'Có thể do thiếu hàng trong kho. Vui lòng kiểm tra và xử lý thủ công nếu cần.',
+                    duration: 7000,
+                  });
+                }
+              }
+            }
+            
+            // Reload clinical record in UI if on that tab
+            if (activeTab === 'clinical-record') {
+              loadClinicalRecord();
+            }
+          } catch (error) {
+            console.error('Error checking materials deduction:', error);
+            // Don't show error to user, just log it
+          }
+        }, 2000); // Wait 2 seconds for BE to process
+      } else {
+        // If currently on clinical record tab, reload it
+        if (activeTab === 'clinical-record' && updated.appointmentId) {
+          // Small delay to ensure state is updated
+          setTimeout(() => {
+            loadClinicalRecord();
+          }, 100);
+        }
       }
 
       // Reset form
@@ -1334,6 +1386,7 @@ export default function AdminAppointmentDetailPage() {
                 record={clinicalRecord}
                 onEdit={() => setIsEditingClinicalRecord(true)}
                 canEdit={canWriteClinicalRecord}
+                appointmentStatus={appointment?.status}
               />
             )}
           </TabsContent>
