@@ -146,7 +146,6 @@ export default function AutoScheduleConfigModal({
             Cấu hình gợi ý lịch hẹn
           </DialogTitle>
           <DialogDescription>
-            Cấu hình các tham số để hệ thống tự động đề xuất lịch hẹn cho lộ trình điều trị.
             Tất cả các trường đều tùy chọn - hệ thống sẽ tự động đề xuất nếu không chỉ định.
           </DialogDescription>
         </DialogHeader>
@@ -177,20 +176,17 @@ export default function AutoScheduleConfigModal({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Nếu không chọn, hệ thống sẽ đề xuất bác sĩ có sẵn
-              </p>
             </div>
 
             {/* Preferred Room */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Building className="h-4 w-4" />
-                Phòng khám ưu tiên (tùy chọn)
+                Phòng khám ưu tiên
               </Label>
               <Select value={roomCode || '__none__'} onValueChange={setRoomCode}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn phòng (để trống để hệ thống tự đề xuất)" />
+                  <SelectValue placeholder="Không chỉ định (tự động)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Không chỉ định (tự động)</SelectItem>
@@ -201,16 +197,13 @@ export default function AutoScheduleConfigModal({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Nếu không chọn, hệ thống sẽ đề xuất phòng có sẵn
-              </p>
             </div>
 
             {/* Preferred Time Slots */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Khung giờ ưu tiên (tùy chọn)
+                Khung giờ ưu tiên
               </Label>
               <div className="space-y-2">
                 {(['MORNING', 'AFTERNOON', 'EVENING'] as const).map((slot) => (
@@ -229,9 +222,6 @@ export default function AutoScheduleConfigModal({
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Nếu không chọn, hệ thống sẽ đề xuất tất cả khung giờ có sẵn
-              </p>
             </div>
 
             {/* Look Ahead Days */}
@@ -250,9 +240,6 @@ export default function AutoScheduleConfigModal({
                   }
                 }}
               />
-              <p className="text-xs text-muted-foreground">
-                Số ngày tối đa để tìm slot trống (1-90 ngày, mặc định: 90)
-              </p>
             </div>
 
             {/* Force Schedule */}
@@ -270,9 +257,6 @@ export default function AutoScheduleConfigModal({
                   Bỏ qua quy tắc giãn cách (chỉ dùng cho trường hợp khẩn cấp)
                 </label>
               </div>
-              <p className="text-xs text-muted-foreground ml-6">
-                Nếu bật, hệ thống sẽ bỏ qua spacing rules và daily limits. Chỉ dùng khi thực sự cần thiết.
-              </p>
             </div>
           </div>
         )}

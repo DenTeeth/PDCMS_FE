@@ -72,7 +72,6 @@ type SortField = 'holidayName' | 'holidayType' | 'totalDates' | null;
 type SortOrder = 'asc' | 'desc';
 
 interface DefinitionFormData {
-  definitionId: string;
   holidayName: string;
   holidayType: 'NATIONAL' | 'COMPANY';
   description: string;
@@ -121,7 +120,6 @@ export default function AdminHolidaysPage() {
 
   // Form state
   const [definitionFormData, setDefinitionFormData] = useState<DefinitionFormData>({
-    definitionId: '',
     holidayName: '',
     holidayType: 'NATIONAL',
     description: '',
@@ -211,7 +209,6 @@ export default function AdminHolidaysPage() {
       setSelectedDefinition(definition);
       setIsEditing(true);
       setDefinitionFormData({
-        definitionId: definition.definitionId,
         holidayName: definition.holidayName,
         holidayType: definition.holidayType,
         description: definition.description || '',
@@ -220,7 +217,6 @@ export default function AdminHolidaysPage() {
       setSelectedDefinition(null);
       setIsEditing(false);
       setDefinitionFormData({
-        definitionId: '',
         holidayName: '',
         holidayType: 'NATIONAL',
         description: '',
@@ -256,9 +252,6 @@ export default function AdminHolidaysPage() {
   const handleSubmitDefinition = async () => {
     // Validation
     const errors: Record<string, string> = {};
-    if (!definitionFormData.definitionId.trim()) {
-      errors.definitionId = 'ID định nghĩa là bắt buộc';
-    }
     if (!definitionFormData.holidayName.trim()) {
       errors.holidayName = 'Tên ngày lễ là bắt buộc';
     }
@@ -277,7 +270,7 @@ export default function AdminHolidaysPage() {
 
       if (isEditing && selectedDefinition) {
         const updateData: UpdateHolidayDefinitionRequest = {
-          holidayName: definitionFormData.holidayName,
+          holidayName: definitionFormData.holidayName.trim(),
           holidayType: definitionFormData.holidayType,
           description: definitionFormData.description || undefined,
         };
@@ -285,13 +278,14 @@ export default function AdminHolidaysPage() {
         toast.success('Cập nhật định nghĩa ngày lễ thành công');
       } else {
         const createData: CreateHolidayDefinitionRequest = {
-          definitionId: definitionFormData.definitionId.trim(),
           holidayName: definitionFormData.holidayName.trim(),
           holidayType: definitionFormData.holidayType,
           description: definitionFormData.description || undefined,
         };
-        await holidayService.createDefinition(createData);
-        toast.success('Tạo định nghĩa ngày lễ thành công');
+        const createdDefinition = await holidayService.createDefinition(createData);
+        toast.success('Tạo định nghĩa ngày lễ thành công', {
+          description: `ID được tạo: ${createdDefinition.definitionId}`,
+        });
       }
 
       setShowDefinitionModal(false);
@@ -304,11 +298,6 @@ export default function AdminHolidaysPage() {
       toast.error('Lỗi khi lưu định nghĩa', {
         description: parsedError.userMessage,
       });
-
-      // Set field-specific errors if available
-      if (parsedError.details?.definitionId) {
-        setFormErrors({ definitionId: 'ID này đã tồn tại' });
-      }
       console.error('Failed to save definition:', error);
     } finally {
       setSubmitting(false);
@@ -738,30 +727,6 @@ export default function AdminHolidaysPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="definitionId">
-                  ID định nghĩa <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="definitionId"
-                  value={definitionFormData.definitionId}
-                  onChange={(e) =>
-                    setDefinitionFormData({ ...definitionFormData, definitionId: e.target.value })
-                  }
-                  disabled={isEditing}
-                  placeholder="VD: TET_2025, NEW_YEAR"
-                  className={formErrors.definitionId ? 'border-red-500' : ''}
-                />
-                {formErrors.definitionId && (
-                  <p className="text-sm text-red-500">{formErrors.definitionId}</p>
-                )}
-                {!isEditing && (
-                  <p className="text-xs text-gray-500">
-                    ID duy nhất để định danh (không thể thay đổi sau khi tạo)
-                  </p>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="holidayName">
                   Tên ngày lễ <span className="text-red-500">*</span>

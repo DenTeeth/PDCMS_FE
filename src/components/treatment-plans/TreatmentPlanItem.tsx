@@ -5,12 +5,16 @@
  * Displays a single item in a phase
  */
 
-import { ItemDetailDTO, PLAN_ITEM_STATUS_COLORS, PlanItemStatus } from '@/types/treatmentPlan';
+import { ItemDetailDTO, PLAN_ITEM_STATUS_COLORS, PlanItemStatus, AppointmentSuggestion, TimeSlot } from '@/types/treatmentPlan';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, DollarSign, Eye, Lock } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Eye, Lock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 interface TreatmentPlanItemProps {
   item: ItemDetailDTO;
@@ -20,6 +24,8 @@ interface TreatmentPlanItemProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (item: ItemDetailDTO) => void;
+  suggestion?: AppointmentSuggestion | null; // Auto-schedule suggestion for this item
+  onSelectSlot?: (suggestion: AppointmentSuggestion, slot: TimeSlot) => void; // Handle slot selection
 }
 
 export default function TreatmentPlanItem({
@@ -30,6 +36,8 @@ export default function TreatmentPlanItem({
   selectable = false,
   selected = false,
   onToggleSelect,
+  suggestion,
+  onSelectSlot,
 }: TreatmentPlanItemProps) {
   // Get status info with fallback for unknown statuses
   // Log warning if status is not recognized or missing
@@ -195,6 +203,103 @@ export default function TreatmentPlanItem({
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Auto-Schedule Suggestions - Integrated into item */}
+            {suggestion && suggestion.itemId === item.itemId && (
+              <div className="mt-4 pt-4 border-t border-blue-200 bg-blue-50/30 rounded-lg p-4">
+                <div className="space-y-3">
+                  {/* Suggestion Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">Gợi ý lịch hẹn tự động</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {suggestion.holidayAdjusted && (
+                        <Badge variant="outline" className="bg-orange-100 text-orange-700 text-xs">
+                          Ngày lễ
+                        </Badge>
+                      )}
+                      {suggestion.spacingAdjusted && (
+                        <Badge variant="outline" className="bg-blue-100 text-blue-700 text-xs">
+                          Giãn cách
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Suggested Date */}
+                  {suggestion.success && suggestion.suggestedDate && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <span className="font-medium">
+                        Ngày gợi ý: {format(new Date(suggestion.suggestedDate), 'dd/MM/yyyy', { locale: vi })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Warning */}
+                  {suggestion.warning && (
+                    <Alert variant="destructive" className="py-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">{suggestion.warning}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Adjustment Reason */}
+                  {suggestion.adjustmentReason && !suggestion.warning && (
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <AlertDescription className="text-xs text-blue-800">
+                        {suggestion.adjustmentReason}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Available Time Slots */}
+                  {suggestion.availableSlots && suggestion.availableSlots.length > 0 && (
+                    <div>
+                      <Separator className="my-3" />
+                      <h5 className="font-semibold mb-2 text-sm flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        Khung giờ trống:
+                      </h5>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {suggestion.availableSlots.map((slot, idx) => (
+                          <Button
+                            key={idx}
+                            variant={slot.available ? 'outline' : 'ghost'}
+                            disabled={!slot.available || suggestion.requiresReassign}
+                            size="sm"
+                            className={cn(
+                              'justify-start text-xs h-8',
+                              slot.available && 'hover:bg-primary hover:text-primary-foreground border-primary/30',
+                              !slot.available && 'opacity-50 cursor-not-allowed'
+                            )}
+                            onClick={() => slot.available && onSelectSlot?.(suggestion, slot)}
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            {slot.startTime} - {slot.endTime}
+                          </Button>
+                        ))}
+                      </div>
+                      {suggestion.requiresReassign && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          ⚠️ Vui lòng chọn bác sĩ mới trước khi đặt lịch
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {!suggestion.success && suggestion.errorMessage && (
+                    <Alert variant="destructive" className="py-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">{suggestion.errorMessage}</AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               </div>
             )}

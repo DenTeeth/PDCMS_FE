@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { GripVertical } from 'lucide-react';
 
+import { AppointmentSuggestion, TimeSlot } from '@/types/treatmentPlan';
+
 interface TreatmentPlanPhaseProps {
   phase: PhaseDetailDTO;
   onViewAppointment?: (appointmentCode: string) => void;
@@ -35,6 +37,8 @@ interface TreatmentPlanPhaseProps {
   selectedItemIds?: number[];
   onToggleItemSelection?: (item: ItemDetailDTO) => void;
   canBookItems?: boolean;
+  suggestionsMap?: Map<number, AppointmentSuggestion>; // Map itemId -> suggestion
+  onSelectSlot?: (suggestion: AppointmentSuggestion, slot: TimeSlot) => void; // Handle slot selection
 }
 
 export default function TreatmentPlanPhase({
@@ -49,6 +53,8 @@ export default function TreatmentPlanPhase({
   selectedItemIds = [],
   onToggleItemSelection,
   canBookItems = true,
+  suggestionsMap,
+  onSelectSlot,
 }: TreatmentPlanPhaseProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -288,6 +294,8 @@ export default function TreatmentPlanPhase({
                         }
                         selected={selectedItemIds.includes(item.itemId)}
                         onToggleSelect={onToggleItemSelection}
+                        suggestion={suggestionsMap?.get(item.itemId) || null}
+                        onSelectSlot={onSelectSlot}
                       />
                     ))
                   )}

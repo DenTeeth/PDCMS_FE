@@ -42,6 +42,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { GroupedPermissions } from '@/types/auth';
+import { checkPermission } from '@/constants/permissions';
 
 export interface NavigationItem {
   name: string;
@@ -306,14 +307,77 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       href: '/employee',
       icon: faTachometerAlt,
     },
+    {
+      name: 'Quản lý tài khoản',
+      icon: faUsers,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'ACCOUNT',
+      submenu: [
+        {
+          name: 'Tài khoản bệnh nhân',
+          href: '/employee/accounts/users',
+          icon: faUser,
+          requiredPermissions: ['VIEW_ACCOUNT'],
+        },
+        {
+          name: 'Tài khoản nhân viên',
+          href: '/employee/accounts/employees',
+          icon: faUserTie,
+          requiredPermissionGroup: 'EMPLOYEE',
+        },
+      ],
+    },
+    {
+      name: 'Quản lý blog',
+      href: '/employee/blogs',
+      icon: faFileAlt,
+    },
+    {
+      name: 'Cấu hình hệ thống',
+      icon: faCog,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'SYSTEM_CONFIGURATION',
+      submenu: [
+        {
+          name: 'Quản lý vai trò',
+          href: '/employee/roles',
+          icon: faShieldAlt,
+          requiredPermissions: ['VIEW_ROLE'],
+        },
+        {
+          name: 'Quản lý quyền',
+          href: '/employee/permissions',
+          icon: faKey,
+          requiredPermissions: ['VIEW_PERMISSION'],
+        },
+        {
+          name: 'Chuyên khoa',
+          href: '/employee/specializations',
+          icon: faStethoscope,
+          requiredPermissions: ['VIEW_SPECIALIZATION'],
+        },
+      ],
+    },
     // Booking Management
     {
       name: 'Quản lý lịch',
       icon: faClipboardList,
       hasSubmenu: true,
-      requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
-      requireAll: false,
+      // Parent menu visibility is determined by submenu items - if user has permission for any submenu item, show parent
+      // No requiredPermissions on parent - logic handled in filterNavigationItems
       submenu: [
+        {
+          name: 'Phòng khám',
+          href: '/employee/booking/rooms',
+          icon: faHospitalUser,
+          requiredPermissionGroup: 'ROOM_MANAGEMENT',
+        },
+        {
+          name: 'Dịch vụ',
+          href: '/employee/booking/services',
+          icon: faTeeth,
+          requiredPermissionGroup: 'SERVICE_MANAGEMENT',
+        },
         {
           name: 'Lịch hẹn',
           href: '/employee/appointments',
@@ -336,14 +400,25 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Quản lý lịch làm việc',
       icon: faCalendarCheck,
       hasSubmenu: true,
-      requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
-      requireAll: false,
+      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
       submenu: [
+        {
+          name: 'Ca làm việc',
+          href: '/employee/work-shifts',
+          icon: faBusinessTime,
+          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
+        },
+        {
+          name: 'Khung giờ làm việc',
+          href: '/employee/work-slots',
+          icon: faClock,
+          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
+        },
         {
           name: 'Đăng ký ca của tôi',
           href: '/employee/registrations',
           icon: faCalendarCheck,
-          requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN'],
+          requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_SCHEDULE_OWN'],
           requireAll: false,
           // Show for all employment types (has tabs inside)
         },
@@ -351,7 +426,8 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Lịch ca làm việc',
           href: '/employee/shift-calendar',
           icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_SCHEDULE_OWN'],
+          requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_ALL'],
+          requireAll: false,
           // Show for all employment types - everyone can view their own schedule
         },
         {
@@ -366,8 +442,14 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Đăng ký cố định',
           href: '/employee/fixed-registrations',
           icon: faListCheck,
-          requiredPermissions: ['VIEW_FIXED_REGISTRATIONS_OWN'],
+          requiredPermissions: ['VIEW_SCHEDULE_OWN'],
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
+        },
+        {
+          name: 'Ngày lễ',
+          href: '/employee/holidays',
+          icon: faCalendarDays,
+          requiredPermissions: ['VIEW_HOLIDAY'],
         },
         {
           name: 'Gia hạn ca',
@@ -389,15 +471,36 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Yêu cầu làm thêm giờ',
           href: '/employee/overtime-requests',
           icon: faClockFour,
-          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          requiredPermissions: ['VIEW_OT_ALL'], // ✅ BE permission (mapped from old VIEW_OVERTIME_ALL)
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
           name: 'Yêu cầu nghỉ phép',
           href: '/employee/time-off-requests',
           icon: faUmbrellaBeach,
-          requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+          requiredPermissions: ['VIEW_LEAVE_ALL'], // ✅ BE permission (mapped from old VIEW_TIMEOFF_ALL)
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
+        },
+        {
+          name: 'Yêu cầu đăng ký ca',
+          href: '/employee/registration-requests',
+          icon: faClipboard,
+          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'], // ✅ BE permission (mapped from old VIEW_REGISTRATION_ALL)
+        },
+      ],
+    },
+    {
+      name: 'Quản lý nghỉ phép',
+      icon: faListAlt,
+      hasSubmenu: true,
+      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+      submenu: [
+        {
+          name: 'Loại nghỉ phép',
+          href: '/employee/time-off-types',
+          icon: faListAlt,
+          requiredPermissions: ['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF'], // BE uses these permissions (not VIEW_LEAVE_TYPE)
+          requireAll: false, // Only need one permission
         },
       ],
     },
@@ -475,7 +578,8 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
       name: 'Phân tích',
       href: '/employee/analytics',
       icon: faChartLine,
-      requiredPermissionGroup: 'ANALYTICS', // Adjust based on actual permission group
+      // Note: ANALYTICS permission group may not exist in BE - remove or adjust based on actual BE permissions
+      // requiredPermissionGroup: 'ANALYTICS',
     },
     // NII Image Viewer
     {
@@ -659,16 +763,19 @@ export const hasPermissionGroup = (
 
 /**
  * Helper function: Check if user has specific permissions
+ * ✅ Uses checkPermission for backward compatibility with permission mapping
  */
 export const hasPermissions = (
   userPermissions: string[],
   requiredPermissions: string[],
   requireAll: boolean = false
 ): boolean => {
+  if (!userPermissions || userPermissions.length === 0) return false;
+  
   if (requireAll) {
-    return requiredPermissions.every(permission => userPermissions.includes(permission));
+    return requiredPermissions.every(permission => checkPermission(userPermissions, permission));
   } else {
-    return requiredPermissions.some(permission => userPermissions.includes(permission));
+    return requiredPermissions.some(permission => checkPermission(userPermissions, permission));
   }
 };
 

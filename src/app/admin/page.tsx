@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     {
       title: 'Kế hoạch điều trị',
       description: 'Quản lý các kế hoạch điều trị',
-      href: '/admin/booking/treatment-plans',
+      href: '/admin/treatment-plans',
       icon: ClipboardList,
       gradient: 'from-rose-500 to-pink-600',
     },
