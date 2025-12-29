@@ -619,7 +619,7 @@ export default function SlotRegistrationPage() {
                   </select>
                   {registerFormData.effectiveFrom && registerFormData.effectiveTo && (
                     <p className="text-sm text-blue-600 font-medium mt-2">
-                      📅 Đăng ký từ {formatDate(registerFormData.effectiveFrom)} đến {formatDate(registerFormData.effectiveTo)}
+                      Đăng ký từ {formatDate(registerFormData.effectiveFrom)} đến {formatDate(registerFormData.effectiveTo)}
                       {' '}({selectedWeekDuration} tuần)
                     </p>
                   )}

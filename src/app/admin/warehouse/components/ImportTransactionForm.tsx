@@ -37,6 +37,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DateInput } from '@/components/ui/date-input';
 import type { SupplierSummaryResponse } from '@/types/supplier';
 import { CreateImportTransactionDto, CreateImportItemDto, ItemUnitResponse } from '@/types/warehouse';
 import inventoryService, { type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
@@ -622,17 +623,12 @@ export default function ImportTransactionForm({
                 <Label htmlFor="transactionDate" className="text-sm font-medium mb-2 block">
                   Ngày nhập <span className="text-red-500">*</span>
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="transactionDate"
-                    type="date"
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
+                <DateInput
+                  id="transactionDate"
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -652,16 +648,11 @@ export default function ImportTransactionForm({
                 <Label htmlFor="expectedDeliveryDate" className="text-sm font-medium mb-2 block">
                   Ngày dự kiến giao
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="expectedDeliveryDate"
-                    type="date"
-                    value={expectedDeliveryDate}
-                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                    className="pl-10"
-                  />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
+                <DateInput
+                  id="expectedDeliveryDate"
+                  value={expectedDeliveryDate}
+                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                />
               </div>
             </div>
 
@@ -834,15 +825,10 @@ export default function ImportTransactionForm({
                               />
                             </td>
                             <td className="p-3">
-                              <div className="relative">
-                                <Input
-                                  type="date"
-                                  value={item.expiryDate}
-                                  onChange={(e) => updateItemField(index, 'expiryDate', e.target.value)}
-                                  className="pl-10"
-                                />
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                              </div>
+                              <DateInput
+                                value={item.expiryDate}
+                                onChange={(e) => updateItemField(index, 'expiryDate', e.target.value)}
+                              />
                             </td>
                             <td className="p-3">
                               <Button

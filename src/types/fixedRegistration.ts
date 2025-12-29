@@ -37,7 +37,7 @@ export interface CreateFixedRegistrationRequest {
 }
 
 /**
- * Request payload for updating a fixed shift registration (PUT - all fields optional)
+ * Request payload for updating a fixed shift registration (PATCH - all fields optional)
  */
 export interface UpdateFixedRegistrationRequest {
   workShiftId?: string;

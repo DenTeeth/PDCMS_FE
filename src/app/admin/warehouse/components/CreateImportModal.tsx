@@ -31,6 +31,7 @@ import itemUnitService from '@/services/itemUnitService';
 import { Plus, Trash2, Package } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
+import { DateInput } from '@/components/ui/date-input';
 
 interface CreateImportModalProps {
   isOpen: boolean;
@@ -332,7 +333,11 @@ export default function CreateImportModal({
               <Label className="text-sm font-medium">
                 Ngày nhập <span className="text-red-500">*</span>
               </Label>
-              <Input type="date" {...register('transactionDate')} required />
+              <DateInput
+                value={watch('transactionDate')}
+                onChange={(e) => setValue('transactionDate', e.target.value, { shouldValidate: true })}
+                required
+              />
             </div>
 
             <div>
@@ -349,9 +354,9 @@ export default function CreateImportModal({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label className="text-sm font-medium">Ngày dự kiến giao</Label>
-              <Input
-                type="date"
-                {...register('expectedDeliveryDate')}
+              <DateInput
+                value={watch('expectedDeliveryDate') || ''}
+                onChange={(e) => setValue('expectedDeliveryDate', e.target.value || undefined)}
               />
             </div>
           </div>
@@ -534,11 +539,10 @@ export default function CreateImportModal({
                             />
                           </td>
                           <td className="p-3">
-                            <Input
-                              type="date"
-                              {...register(`items.${index}.expiryDate`)}
+                            <DateInput
+                              value={watch(`items.${index}.expiryDate`) || ''}
+                              onChange={(e) => setValue(`items.${index}.expiryDate`, e.target.value, { shouldValidate: true })}
                               required={isExpiryRequired}
-                              className={isExpiryRequired ? 'border-amber-300' : undefined}
                             />
                             {isExpiryRequired && (
                               <p className="text-xs text-amber-600 mt-1">* Bắt buộc (kho lạnh)</p>

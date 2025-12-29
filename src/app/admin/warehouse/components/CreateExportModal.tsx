@@ -27,6 +27,7 @@ import { Plus, Trash2, TruckIcon, AlertCircle } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSnowflake } from '@fortawesome/free-solid-svg-icons';
 import BatchSelectorModal, { type SelectedBatchPayload } from './BatchSelectorModal';
+import { DateInput } from '@/components/ui/date-input';
 
 interface CreateExportModalProps {
   isOpen: boolean;
@@ -273,11 +274,11 @@ export default function CreateExportModal({
                 <Label className="text-sm font-medium">
                   Ngày xuất <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  type="date"
+                <DateInput
                   value={transactionDate}
                   onChange={(e) => setTransactionDate(e.target.value)}
                   required
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
 
