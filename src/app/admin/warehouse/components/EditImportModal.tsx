@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
+import { DateInput } from '@/components/ui/date-input';
 import storageService from '@/services/storageService';
 import supplierService from '@/services/supplierService';
 import inventoryService, { type InventorySummary } from '@/services/inventoryService';
@@ -72,7 +73,7 @@ export default function EditImportModal({
 
   const items: InventorySummary[] = itemSummaryPage?.content || [];
 
-  const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<EditImportFormData>({
+  const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<EditImportFormData>({
     defaultValues: {
       supplierId: 0,
       transactionDate: '',
@@ -246,18 +247,12 @@ export default function EditImportModal({
 
               <div>
                 <Label htmlFor="transactionDate" className="mb-2 block">Ngày nhập *</Label>
-                <div className="relative">
-                  <Input
-                    id="transactionDate"
-                    type="date"
-                    {...register('transactionDate', { required: true })}
-                    className="pl-10"
-                  />
-                  <FontAwesomeIcon
-                    icon={faCalendar}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"
-                  />
-                </div>
+                <DateInput
+                  id="transactionDate"
+                  value={watch('transactionDate')}
+                  onChange={(e) => setValue('transactionDate', e.target.value, { shouldValidate: true })}
+                  required
+                />
                 {errors.transactionDate && (
                   <p className="text-sm text-red-600 mt-1">Vui lòng chọn ngày nhập</p>
                 )}
@@ -317,9 +312,9 @@ export default function EditImportModal({
                           />
                         </td>
                         <td className="px-4 py-2">
-                          <Input
-                            type="date"
-                            {...register(`items.${index}.expiryDate`)}
+                          <DateInput
+                            value={watch(`items.${index}.expiryDate`) || ''}
+                            onChange={(e) => setValue(`items.${index}.expiryDate`, e.target.value)}
                             className="text-sm"
                           />
                         </td>

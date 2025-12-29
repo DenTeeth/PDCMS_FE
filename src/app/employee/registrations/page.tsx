@@ -1289,7 +1289,7 @@ export default function EmployeeRegistrationsPage() {
                                         <td colSpan={6} className="px-4 py-4 bg-gradient-to-br from-purple-50 to-blue-50">
                                           <div className="space-y-3">
                                             <div className="flex items-center gap-2">
-                                              <span className="text-sm font-bold text-purple-900">📅 Lượt đăng ký khả dụng theo tháng</span>
+                                              <span className="text-sm font-bold text-purple-900">Lượt đăng ký khả dụng theo tháng</span>
                                               <span className="text-xs text-gray-600">(Quota: {slotDetails.quota} lượt/tuần)</span>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1793,7 +1793,7 @@ export default function EmployeeRegistrationsPage() {
                         const firstDay = selectedSlot?.dayOfWeek.split(',')[0].trim() as DayOfWeek;
                         return (
                           <p className="text-sm text-blue-600 mt-1">
-                            📅 Tuần bắt đầu từ {getDayName(firstDay)} {format(selectedWeekStart, 'dd/MM/yyyy')}
+                            Tuần bắt đầu từ {getDayName(firstDay)} {format(selectedWeekStart, 'dd/MM/yyyy')}
                           </p>
                         );
                       })()}
@@ -1852,7 +1852,7 @@ export default function EmployeeRegistrationsPage() {
                       </select>
                       {selectedWeekStart && numberOfWeeks > 0 && (
                         <p className="text-sm text-blue-600 font-medium mt-2">
-                          📅 Đăng ký {numberOfWeeks} tuần • {format(selectedWeekStart, 'dd/MM/yyyy')} - {partTimeCreateFormData.effectiveTo ? format(parseISO(partTimeCreateFormData.effectiveTo), 'dd/MM/yyyy') : '...'}
+                          Đăng ký {numberOfWeeks} tuần • {format(selectedWeekStart, 'dd/MM/yyyy')} - {partTimeCreateFormData.effectiveTo ? format(parseISO(partTimeCreateFormData.effectiveTo), 'dd/MM/yyyy') : '...'}
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-1">

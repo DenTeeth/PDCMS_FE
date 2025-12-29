@@ -37,6 +37,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSnowflake, faBoxes } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DateInput } from '@/components/ui/date-input';
 import { CreateExportTransactionDto, CreateExportItemDto, ExportType, ItemUnitResponse } from '@/types/warehouse';
 import inventoryService, { type ItemMasterV1, type InventorySummary } from '@/services/inventoryService';
 import itemUnitService from '@/services/itemUnitService';
@@ -593,18 +594,13 @@ export default function ExportTransactionForm({
               <Label htmlFor="transactionDate" className="text-sm font-medium mb-2 block">
                 Ngày xuất kho <span className="text-red-500">*</span>
               </Label>
-              <div className="relative">
-                <Input
-                  id="transactionDate"
-                  type="date"
-                  value={transactionDate}
-                  onChange={(e) => setTransactionDate(e.target.value)}
-                  className="pl-10"
-                  required
-                  max={new Date().toISOString().split('T')[0]}
-                />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
+              <DateInput
+                id="transactionDate"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+                required
+                max={new Date().toISOString().split('T')[0]}
+              />
             </div>
 
             <div className="space-y-2">

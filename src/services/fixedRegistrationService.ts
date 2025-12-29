@@ -111,7 +111,7 @@ class FixedRegistrationService {
   }
 
   /**
-   * Update a fixed shift registration (PUT - all fields optional)
+   * Update a fixed shift registration (PATCH - all fields optional)
    * @param registrationId Registration ID to update
    * @param data Partial update data (all fields optional)
    * @returns Updated fixed shift registration
@@ -120,7 +120,7 @@ class FixedRegistrationService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.put<FixedRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
+      const response = await axiosInstance.patch<FixedRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
       
       // Handle both response structures
       if (response.data?.data) {
@@ -136,11 +136,16 @@ class FixedRegistrationService {
         (customError as any).status = error.response.status;
         throw customError;
       } else if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
+        const message = error.response.data.message || 'Failed to update fixed shift registration';
+        throw new Error(message);
       } else if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
+        const detail = error.response.data.detail || 'Failed to update fixed shift registration';
+        throw new Error(detail);
       } else if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
+        const errorMsg = error.response.data.error || 'Failed to update fixed shift registration';
+        throw new Error(errorMsg);
+      } else if (error.message) {
+        throw new Error(error.message);
       } else {
         throw new Error('Không thể cập nhật đăng ký ca cố định');
       }

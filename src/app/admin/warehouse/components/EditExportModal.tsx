@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faCalendar, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
+import { DateInput } from '@/components/ui/date-input';
 import storageService, { StorageTransaction } from '@/services/storageService';
 
 interface EditExportModalProps {
@@ -179,19 +180,12 @@ export default function EditExportModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="transaction_date" className="mb-2 block">Ngày xuất</Label>
-                <div className="relative">
-                  <Input
-                    id="transaction_date"
-                    type="date"
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                    className="pl-10"
-                  />
-                  <FontAwesomeIcon
-                    icon={faCalendar}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"
-                  />
-                </div>
+                <DateInput
+                  id="transaction_date"
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                />
               </div>
             </div>
 
