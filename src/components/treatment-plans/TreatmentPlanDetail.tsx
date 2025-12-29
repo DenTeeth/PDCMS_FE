@@ -28,7 +28,6 @@ import ApproveRejectSection from './ApproveRejectSection';
 import UpdatePricesModal from './UpdatePricesModal';
 import TreatmentPlanScheduleTimeline from './TreatmentPlanScheduleTimeline';
 import AutoScheduleConfigModal from './AutoScheduleConfigModal';
-import AutoScheduleSuggestions from './AutoScheduleSuggestions';
 import { useAutoSchedule } from '@/hooks/useAutoSchedule';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -324,12 +323,78 @@ export default function TreatmentPlanDetail({
     }
   };
 
+  // Map suggestions by itemId for easy lookup
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<number, AppointmentSuggestion>();
+    suggestions.forEach((suggestion) => {
+      if (suggestion.itemId) {
+        map.set(suggestion.itemId, suggestion);
+      }
+    });
+    return map;
+  }, [suggestions]);
+
   const handleSelectSlot = (suggestion: AppointmentSuggestion, slot: TimeSlot) => {
-    // TODO: Integrate with appointment booking
-    toast.info(
-      `Đặt lịch cho ${suggestion.serviceName} vào ${slot.startTime} - ${slot.endTime}`
-    );
-    console.log('Select slot:', { suggestion, slot });
+    if (!slot.available || suggestion.requiresReassign) {
+      return;
+    }
+
+    // Find the item in plan
+    const item = allPlanItems.find(i => i.itemId === suggestion.itemId);
+    if (!item) {
+      toast.error('Không tìm thấy hạng mục');
+      return;
+    }
+
+    // Validate item status
+    if (item.status !== PlanItemStatus.READY_FOR_BOOKING) {
+      toast.error('Hạng mục này chưa sẵn sàng để đặt lịch');
+      return;
+    }
+
+    // Validate plan approval status
+    if (normalizedApprovalStatus !== ApprovalStatus.APPROVED) {
+      toast.error('Lộ trình chưa được duyệt', {
+        description: 'Chỉ có thể đặt lịch cho lộ trình đã được duyệt (APPROVED).',
+      });
+      return;
+    }
+
+    // Format date from suggestion (YYYY-MM-DD)
+    let formattedDate = '';
+    if (suggestion.suggestedDate) {
+      // suggestedDate is already in YYYY-MM-DD format from BE
+      formattedDate = suggestion.suggestedDate;
+    }
+
+    // Format start time from slot (combine date + time to ISO format)
+    let formattedStartTime = '';
+    if (formattedDate && slot.startTime) {
+      // slot.startTime is in format "HH:mm" or "HH:mm:ss"
+      // Extract HH:mm part
+      const timeMatch = slot.startTime.match(/^(\d{2}:\d{2})/);
+      const timePart = timeMatch ? timeMatch[1] : slot.startTime.split(':').slice(0, 2).join(':');
+      // Create ISO format: YYYY-MM-DDTHH:mm:00
+      formattedStartTime = `${formattedDate}T${timePart}:00`;
+    }
+
+    // Get room code from slot if available
+    const roomCode = slot.availableCompatibleRoomCodes && slot.availableCompatibleRoomCodes.length > 0
+      ? slot.availableCompatibleRoomCodes[0]
+      : undefined;
+
+    // Store booking data and open modal via onBookPlanItems
+    if (onBookPlanItems) {
+      // Open booking modal with prefilled slot data
+      onBookPlanItems([item], {
+        date: formattedDate,
+        startTime: formattedStartTime,
+        roomCode,
+      });
+    } else if (onBookAppointment) {
+      // Fallback to single item booking
+      onBookAppointment(suggestion.itemId);
+    }
   };
 
   const handleReassignDoctor = (suggestion: AppointmentSuggestion) => {
@@ -1141,6 +1206,8 @@ export default function TreatmentPlanDetail({
                             selectedItemIds={selectedPlanItemIds}
                             onToggleItemSelection={handleTogglePlanItemSelection}
                             canBookItems={canCreateAppointment}
+                            suggestionsMap={suggestionsMap}
+                            onSelectSlot={handleSelectSlot}
                             onPhaseUpdated={() => {
                               // Phase 3.5: Phase updated - refresh plan data
                               if (onPlanUpdated) {
@@ -1179,48 +1246,34 @@ export default function TreatmentPlanDetail({
           />
         )}
 
-      {/* Auto-Schedule Suggestions */}
-      {suggestions.length > 0 && (
+      {/* Summary Card - Show only if there are suggestions */}
+      {suggestions.length > 0 && summary && (
         <Card className="border-blue-200 bg-blue-50/50">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarCheck className="h-5 w-5 text-blue-600" />
-                Gợi ý lịch hẹn tự động
-              </CardTitle>
-              <div className="flex gap-2">
-                {hasWarnings && (
-                  <Badge variant="outline" className="bg-yellow-100 text-yellow-700">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Có cảnh báo
-                  </Badge>
-                )}
-                {hasReassignRequired && (
-                  <Badge variant="destructive">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Cần đổi bác sĩ
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSuggestions}
-                >
-                  Đóng
-                </Button>
-              </div>
-            </div>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <CalendarCheck className="h-4 w-4 text-blue-600" />
+              Tổng quan điều chỉnh
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <AutoScheduleSuggestions
-              suggestions={suggestions}
-              summary={summary}
-              isLoading={isAutoScheduling}
-              error={autoScheduleError}
-              onSelectSlot={handleSelectSlot}
-              onReassignDoctor={handleReassignDoctor}
-              onRetry={retryAutoSchedule}
-            />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-orange-600">{summary.holidayAdjustments}</div>
+                <div className="text-xs text-muted-foreground">Điều chỉnh ngày lễ</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-blue-600">{summary.spacingAdjustments}</div>
+                <div className="text-xs text-muted-foreground">Điều chỉnh giãn cách</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-purple-600">{summary.dailyLimitAdjustments}</div>
+                <div className="text-xs text-muted-foreground">Giới hạn ngày</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-600">{summary.totalDaysShifted}</div>
+                <div className="text-xs text-muted-foreground">Tổng ngày đã dời</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

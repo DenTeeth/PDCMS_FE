@@ -71,6 +71,9 @@ interface BookAppointmentFromPlanModalProps {
   onSuccess: () => void;
   plan: TreatmentPlanDetailResponse;
   planItemIds: number[]; // Item IDs to book
+  initialDate?: string; // Pre-filled appointment date (YYYY-MM-DD)
+  initialStartTime?: string; // Pre-filled appointment start time (ISO format)
+  initialRoomCode?: string; // Pre-filled room code
 }
 
 type Step = 1 | 2 | 3;
@@ -81,6 +84,9 @@ export default function BookAppointmentFromPlanModal({
   onSuccess,
   plan,
   planItemIds,
+  initialDate,
+  initialStartTime,
+  initialRoomCode,
 }: BookAppointmentFromPlanModalProps) {
   const { user } = useAuth();
 
@@ -228,6 +234,28 @@ export default function BookAppointmentFromPlanModal({
       loadInitialData();
     }
   }, [open]);
+
+  // Set initial values when modal opens with prefilled data
+  useEffect(() => {
+    if (open && (initialDate || initialStartTime || initialRoomCode)) {
+      if (initialDate) {
+        setAppointmentDate(initialDate);
+        // Set selected month to the initial date
+        const date = new Date(initialDate);
+        setSelectedMonth(startOfMonth(date));
+      }
+      if (initialStartTime) {
+        setAppointmentStartTime(initialStartTime);
+      }
+      if (initialRoomCode) {
+        setRoomCode(initialRoomCode);
+      }
+      // Auto-advance to step 2 if date and time are provided
+      if (initialDate && initialStartTime) {
+        setCurrentStep(2);
+      }
+    }
+  }, [open, initialDate, initialStartTime, initialRoomCode]);
 
   const loadInitialData = async () => {
     setLoadingData(true);

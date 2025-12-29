@@ -46,6 +46,12 @@ export default function AdminTreatmentPlanDetailPage() {
     serviceCodes?: string[];
     planItemIds?: number[];
   }>({});
+  // Slot booking data from auto-schedule suggestions
+  const [slotBookingData, setSlotBookingData] = useState<{
+    date?: string;
+    startTime?: string;
+    roomCode?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Permissions
@@ -216,7 +222,11 @@ export default function AdminTreatmentPlanDetailPage() {
     setShowBookFromPlanModal(true);
   };
 
-  const handleBookSelectedPlanItems = (items: ItemDetailDTO[]) => {
+  const handleBookSelectedPlanItems = (items: ItemDetailDTO[], slotData?: {
+    date?: string;
+    startTime?: string;
+    roomCode?: string;
+  }) => {
     if (!plan) {
       toast.error('Không tìm thấy lộ trình điều trị');
       return;
@@ -228,6 +238,7 @@ export default function AdminTreatmentPlanDetailPage() {
 
     // Use new modal for booking from plan
     setSelectedPlanItemIds(items.map((item) => item.itemId));
+    setSlotBookingData(slotData || null);
     setShowBookFromPlanModal(true);
   };
 
@@ -357,14 +368,19 @@ export default function AdminTreatmentPlanDetailPage() {
             onClose={() => {
               setShowBookFromPlanModal(false);
               setSelectedPlanItemIds([]);
+              setSlotBookingData(null);
             }}
             onSuccess={() => {
               setShowBookFromPlanModal(false);
               setSelectedPlanItemIds([]);
+              setSlotBookingData(null);
               handlePlanUpdated();
             }}
             plan={plan}
             planItemIds={selectedPlanItemIds}
+            initialDate={slotBookingData?.date}
+            initialStartTime={slotBookingData?.startTime}
+            initialRoomCode={slotBookingData?.roomCode}
           />
         )}
       </div>

@@ -57,7 +57,7 @@ function getHolidayErrorMessage(error: HolidayErrorResponse): string {
   
   switch (errorCode) {
     case 'DUPLICATE_HOLIDAY_DEFINITION':
-      return `Định nghĩa ngày lễ "${data?.definitionId || ''}" đã tồn tại. Vui lòng chọn ID khác.`;
+      return `Định nghĩa ngày lễ "${data?.definitionId || ''}" đã tồn tại.`;
     
     case 'DUPLICATE_HOLIDAY_DATE':
       return `Ngày nghỉ "${data?.holidayDate || ''}" đã tồn tại cho định nghĩa "${data?.definitionId || ''}".`;
