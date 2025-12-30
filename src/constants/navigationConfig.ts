@@ -471,14 +471,16 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           name: 'Yêu cầu làm thêm giờ',
           href: '/employee/overtime-requests',
           icon: faClockFour,
-          requiredPermissions: ['VIEW_OT_ALL'], // ✅ BE permission (mapped from old VIEW_OVERTIME_ALL)
+          requiredPermissions: ['CREATE_OVERTIME', 'VIEW_OT_OWN', 'VIEW_OT_ALL'], // ✅ BE permissions: Create/view own (employees) OR view all (managers)
+          requireAll: false, // Show if user has CREATE_OVERTIME OR VIEW_OT_OWN OR VIEW_OT_ALL
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {
           name: 'Yêu cầu nghỉ phép',
           href: '/employee/time-off-requests',
           icon: faUmbrellaBeach,
-          requiredPermissions: ['VIEW_LEAVE_ALL'], // ✅ BE permission (mapped from old VIEW_TIMEOFF_ALL)
+          requiredPermissions: ['CREATE_TIME_OFF', 'VIEW_LEAVE_OWN', 'VIEW_LEAVE_ALL'], // ✅ BE permissions: Create/view own (employees) OR view all (managers)
+          requireAll: false, // Show if user has CREATE_TIME_OFF OR VIEW_LEAVE_OWN OR VIEW_LEAVE_ALL
           employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
         },
         {

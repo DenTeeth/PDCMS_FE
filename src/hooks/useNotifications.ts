@@ -188,23 +188,33 @@ export const useNotifications = (): UseNotificationsReturn => {
 
     switch (notification.relatedEntityType) {
       case 'TIME_OFF_REQUEST':
-        // Only admin can view time-off requests
+        // Admin và Manager (employee) có thể xem time-off requests
         if (baseRole === 'admin') {
           return `/admin/time-off-requests/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          // Manager có baseRole = 'employee' nhưng có quyền approve
+          return `/employee/time-off-requests/${notification.relatedEntityId}`;
         }
         return null;
       
       case 'OVERTIME_REQUEST':
-        // Only admin can view overtime requests
+        // Admin và Manager (employee) có thể xem overtime requests
         if (baseRole === 'admin') {
           return `/admin/overtime-requests/${notification.relatedEntityId}`;
+        } else if (baseRole === 'employee') {
+          // Manager có baseRole = 'employee' nhưng có quyền approve
+          return `/employee/overtime-requests/${notification.relatedEntityId}`;
         }
         return null;
       
       case 'PART_TIME_REGISTRATION':
-        // Only admin can view part-time registrations
+        // Admin và Manager (employee) có thể xem part-time registrations
         if (baseRole === 'admin') {
           return `/admin/registration-requests`;
+        } else if (baseRole === 'employee') {
+          // Manager có baseRole = 'employee' nhưng có quyền approve
+          // Note: Employee portal có thể không có trang này, cần verify
+          return `/admin/registration-requests`; // Tạm thời dùng admin route
         }
         return null;
       

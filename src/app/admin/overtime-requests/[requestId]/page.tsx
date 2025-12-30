@@ -226,45 +226,30 @@ export default function AdminOvertimeRequestDetailPage() {
           </Card>
         </div>
 
-        {/* Reason and Additional Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Reason */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FontAwesomeIcon icon={faFileText} className="mr-2" />
-                Lý do làm thêm giờ
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 whitespace-pre-wrap">{request.reason}</p>
-            </CardContent>
-          </Card>
-
-          {/* Additional Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FontAwesomeIcon icon={faClock} className="mr-2" />
-                Thông tin bổ sung
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {request.rejectedReason && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Lý do từ chối</label>
-                  <p className="text-gray-700 whitespace-pre-wrap">{request.rejectedReason}</p>
-                </div>
-              )}
-              {request.cancellationReason && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Lý do hủy</label>
-                  <p className="text-gray-700 whitespace-pre-wrap">{request.cancellationReason}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Reason */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FontAwesomeIcon icon={faFileText} className="mr-2" />
+              Lý do làm thêm giờ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-700 whitespace-pre-wrap">{request.reason}</p>
+            {request.rejectedReason && (
+              <div className="mt-4 pt-4 border-t">
+                <label className="text-sm font-medium text-gray-500">Lý do từ chối</label>
+                <p className="text-gray-700 whitespace-pre-wrap mt-1">{request.rejectedReason}</p>
+              </div>
+            )}
+            {request.cancellationReason && (
+              <div className="mt-4 pt-4 border-t">
+                <label className="text-sm font-medium text-gray-500">Lý do hủy</label>
+                <p className="text-gray-700 whitespace-pre-wrap mt-1">{request.cancellationReason}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </ProtectedRoute>
   );

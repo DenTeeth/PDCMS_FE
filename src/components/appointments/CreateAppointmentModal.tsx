@@ -520,7 +520,8 @@ export default function CreateAppointmentModal({
         }
       }
 
-      // Load rooms (active only)
+      // Load rooms - will be filtered by services later if serviceCodes are available
+      // Initial load shows all active rooms
       const roomsData = await RoomService.getActiveRooms();
       setRooms(roomsData);
     } catch (error: any) {

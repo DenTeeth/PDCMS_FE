@@ -312,7 +312,7 @@ export default function TreatmentPlanDetail({
     setSelectedPlanItemIds([]);
   };
 
-  // Handle auto-schedule
+  // Handle auto-schedule (Plan-Level)
   const handleAutoSchedule = async (config: AutoScheduleRequest) => {
     try {
       await generateSchedule(plan.planId, config);
@@ -320,6 +320,16 @@ export default function TreatmentPlanDetail({
     } catch (error) {
       // Error is already handled in useAutoSchedule hook
       console.error('[TreatmentPlanDetail] Auto-schedule error:', error);
+    }
+  };
+
+  // Handle phase-level auto-schedule (NEW)
+  const handlePhaseAutoSchedule = async (phaseId: number, config: AutoScheduleRequest) => {
+    try {
+      await generatePhaseSchedule(phaseId, config);
+    } catch (error) {
+      // Error is already handled in useAutoSchedule hook
+      console.error('[TreatmentPlanDetail] Phase auto-schedule error:', error);
     }
   };
 
@@ -379,7 +389,10 @@ export default function TreatmentPlanDetail({
     }
 
     // Get room code from slot if available
-    const roomCode = slot.availableCompatibleRoomCodes && slot.availableCompatibleRoomCodes.length > 0
+    // Phase-level API returns availableRoomCodes, plan-level API returns availableCompatibleRoomCodes
+    const roomCode = (slot.availableRoomCodes && slot.availableRoomCodes.length > 0)
+      ? slot.availableRoomCodes[0]
+      : (slot.availableCompatibleRoomCodes && slot.availableCompatibleRoomCodes.length > 0)
       ? slot.availableCompatibleRoomCodes[0]
       : undefined;
 
@@ -1208,6 +1221,7 @@ export default function TreatmentPlanDetail({
                             canBookItems={canCreateAppointment}
                             suggestionsMap={suggestionsMap}
                             onSelectSlot={handleSelectSlot}
+                            onPhaseAutoSchedule={handlePhaseAutoSchedule}
                             onPhaseUpdated={() => {
                               // Phase 3.5: Phase updated - refresh plan data
                               if (onPlanUpdated) {

@@ -192,4 +192,42 @@ export class RoomService {
     
     return response.data;
   }
+
+  /**
+   * Get Rooms by Services (NEW - Phase Scheduling)
+   * GET /api/v1/rooms/by-services?serviceCodes={codes}
+   * 
+   * Returns only rooms that support ALL specified services (AND logic).
+   * - Normal services (e.g., GEN_EXAM) → returns all rooms
+   * - Specialized services (e.g., IMPL_SURGERY_KR) → returns only compatible rooms
+   * - Mixed services → returns rooms that support ALL services
+   * 
+   * @param serviceCodes Array of service codes (e.g., ["GEN_EXAM", "IMPL_CONSULT"])
+   * @returns Array of compatible rooms
+   * 
+   * @example
+   * // Normal services - returns all 4 rooms
+   * const rooms = await RoomService.getRoomsByServices(["GEN_EXAM", "SCALING_L1"]);
+   * 
+   * // Specialized services - returns only implant room
+   * const rooms = await RoomService.getRoomsByServices(["IMPL_SURGERY_KR"]);
+   * 
+   * // Mixed services - returns only rooms supporting both
+   * const rooms = await RoomService.getRoomsByServices(["GEN_EXAM", "IMPL_CONSULT"]);
+   */
+  static async getRoomsByServices(serviceCodes: string[]): Promise<Room[]> {
+    if (!serviceCodes || serviceCodes.length === 0) {
+      // If no services, return all active rooms (backward compatibility)
+      return this.getActiveRooms();
+    }
+
+    const axios = apiClient.getAxiosInstance();
+    const queryParams = new URLSearchParams();
+    queryParams.append('serviceCodes', serviceCodes.join(','));
+    
+    const url = `${this.BASE_URL}/by-services?${queryParams.toString()}`;
+    const response = await axios.get<Room[]>(url);
+    
+    return response.data;
+  }
 }

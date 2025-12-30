@@ -284,9 +284,22 @@ export default function BookAppointmentFromPlanModal({
       // Load all employees (doctors, assistants, nurses) - we need assistants/nurses for participants
       setEmployees(employeesResponse.content);
 
-      // Load rooms
-      const roomsData = await RoomService.getActiveRooms();
-      setRooms(roomsData);
+      // Load rooms - use room filtering API if service codes are available
+      if (serviceCodes.length > 0) {
+        try {
+          const filteredRooms = await RoomService.getRoomsByServices(serviceCodes);
+          setRooms(filteredRooms);
+        } catch (error: any) {
+          console.warn('Failed to load filtered rooms, falling back to all active rooms:', error);
+          // Fallback to all active rooms if filtering fails
+          const roomsData = await RoomService.getActiveRooms();
+          setRooms(roomsData);
+        }
+      } else {
+        // No services selected, show all active rooms
+        const roomsData = await RoomService.getActiveRooms();
+        setRooms(roomsData);
+      }
 
       // Note: No need to load services for participant filtering
       // Participants are filtered by role (ASSISTANT/NURSE) and shifts only
@@ -1059,8 +1072,10 @@ export default function BookAppointmentFromPlanModal({
                                   size="sm"
                                   onClick={() => {
                                     setAppointmentStartTime(slot.startTime);
-                                    if (slot.availableCompatibleRoomCodes.length > 0) {
-                                      setRoomCode(slot.availableCompatibleRoomCodes[0]);
+                                    // Support both phase-level (availableRoomCodes) and plan-level (availableCompatibleRoomCodes) APIs
+                                    const roomCodes = slot.availableRoomCodes || slot.availableCompatibleRoomCodes || [];
+                                    if (roomCodes.length > 0) {
+                                      setRoomCode(roomCodes[0]);
                                     }
                                   }}
                                   className="text-xs"
@@ -1094,8 +1109,10 @@ export default function BookAppointmentFromPlanModal({
                                   size="sm"
                                   onClick={() => {
                                     setAppointmentStartTime(slot.startTime);
-                                    if (slot.availableCompatibleRoomCodes.length > 0) {
-                                      setRoomCode(slot.availableCompatibleRoomCodes[0]);
+                                    // Support both phase-level (availableRoomCodes) and plan-level (availableCompatibleRoomCodes) APIs
+                                    const roomCodes = slot.availableRoomCodes || slot.availableCompatibleRoomCodes || [];
+                                    if (roomCodes.length > 0) {
+                                      setRoomCode(roomCodes[0]);
                                     }
                                   }}
                                   className="text-xs"
@@ -1129,8 +1146,10 @@ export default function BookAppointmentFromPlanModal({
                                   size="sm"
                                   onClick={() => {
                                     setAppointmentStartTime(slot.startTime);
-                                    if (slot.availableCompatibleRoomCodes.length > 0) {
-                                      setRoomCode(slot.availableCompatibleRoomCodes[0]);
+                                    // Support both phase-level (availableRoomCodes) and plan-level (availableCompatibleRoomCodes) APIs
+                                    const roomCodes = slot.availableRoomCodes || slot.availableCompatibleRoomCodes || [];
+                                    if (roomCodes.length > 0) {
+                                      setRoomCode(roomCodes[0]);
                                     }
                                   }}
                                   className="text-xs"
@@ -1162,7 +1181,7 @@ export default function BookAppointmentFromPlanModal({
                       <SelectValue placeholder={loadingData ? 'Đang tải...' : 'Chọn phòng'} />
                     </SelectTrigger>
                     <SelectContent align="start">
-                      {selectedSlot?.availableCompatibleRoomCodes.map((code) => {
+                      {(selectedSlot?.availableRoomCodes || selectedSlot?.availableCompatibleRoomCodes || []).map((code) => {
                         const room = rooms.find((r) => r.roomCode === code);
                         return (
                           <SelectItem key={code} value={code}>
