@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Calendar, Clock, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Calendar, Clock, Plus, CalendarCheck } from 'lucide-react';
 import { useState } from 'react';
 import TreatmentPlanItem from './TreatmentPlanItem';
 import AddItemsToPhaseModal from './AddItemsToPhaseModal';
@@ -22,6 +22,8 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { GripVertical } from 'lucide-react';
+import AutoScheduleConfigModal from './AutoScheduleConfigModal';
+import { AutoScheduleRequest } from '@/types/treatmentPlan';
 
 import { AppointmentSuggestion, TimeSlot } from '@/types/treatmentPlan';
 
@@ -39,6 +41,7 @@ interface TreatmentPlanPhaseProps {
   canBookItems?: boolean;
   suggestionsMap?: Map<number, AppointmentSuggestion>; // Map itemId -> suggestion
   onSelectSlot?: (suggestion: AppointmentSuggestion, slot: TimeSlot) => void; // Handle slot selection
+  onPhaseAutoSchedule?: (phaseId: number, config: AutoScheduleRequest) => Promise<void>; // Handle phase-level auto-schedule
 }
 
 export default function TreatmentPlanPhase({
@@ -55,11 +58,13 @@ export default function TreatmentPlanPhase({
   canBookItems = true,
   suggestionsMap,
   onSelectSlot,
+  onPhaseAutoSchedule,
 }: TreatmentPlanPhaseProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
+  const [showAutoScheduleModal, setShowAutoScheduleModal] = useState(false);
 
   // Phase 3.5: Check permission
   const canUpdate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
@@ -117,6 +122,27 @@ export default function TreatmentPlanPhase({
   // Use calculated status for display logic
   const isCompleted = effectivePhaseStatus === 'COMPLETED';
   const isInProgress = effectivePhaseStatus === 'IN_PROGRESS';
+
+  // Check if phase can use auto-schedule
+  const readyForBookingItems = phase.items?.filter(
+    (item) => item.status === PlanItemStatus.READY_FOR_BOOKING
+  ) || [];
+  const canAutoSchedulePhase =
+    canBookItems &&
+    planApprovalStatus === ApprovalStatus.APPROVED &&
+    readyForBookingItems.length > 0 &&
+    !!onPhaseAutoSchedule;
+
+  // Handle phase auto-schedule
+  const handlePhaseAutoSchedule = async (config: AutoScheduleRequest) => {
+    if (!onPhaseAutoSchedule) return;
+    try {
+      await onPhaseAutoSchedule(phase.phaseId, config);
+      setShowAutoScheduleModal(false);
+    } catch (error) {
+      console.error('[TreatmentPlanPhase] Auto-schedule error:', error);
+    }
+  };
 
   return (
     <Card className={cn(
@@ -228,6 +254,18 @@ export default function TreatmentPlanPhase({
                     {showActions && canUpdate && (
                     <div className="flex flex-col items-end gap-2 text-right">
                       <div className="flex gap-2">
+                        {/* Phase-Level Auto-Schedule Button (NEW) - TEMPORARILY DISABLED */}
+                        {/* {canAutoSchedulePhase && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => setShowAutoScheduleModal(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <CalendarCheck className="h-3 w-3 mr-1" />
+                            Gợi ý lịch hẹn
+                          </Button>
+                        )} */}
                         {/* V21.5: API 5.14 - Reorder Items Button */}
                         {phase.items.length > 1 && (
                           <Button
@@ -338,6 +376,15 @@ export default function TreatmentPlanPhase({
             onPhaseUpdated();
           }
         }}
+      />
+
+      {/* Phase-Level Auto-Schedule Config Modal (NEW) */}
+      <AutoScheduleConfigModal
+        open={showAutoScheduleModal}
+        onClose={() => setShowAutoScheduleModal(false)}
+        onConfirm={handlePhaseAutoSchedule}
+        defaultDoctorCode={undefined} // Phase doesn't have default doctor
+        isLoading={false}
       />
     </Card>
   );

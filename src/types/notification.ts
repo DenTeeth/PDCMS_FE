@@ -102,9 +102,9 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   TREATMENT_PLAN_UPDATED: 'Cập nhật kế hoạch điều trị',
   PAYMENT_RECEIVED: 'Thanh toán thành công',
   SYSTEM_ANNOUNCEMENT: 'Thông báo hệ thống',
-  REQUEST_TIME_OFF_PENDING: 'Yêu cầu nghỉ phép',
-  REQUEST_OVERTIME_PENDING: 'Yêu cầu tăng ca',
-  REQUEST_PART_TIME_PENDING: 'Yêu cầu đăng ký part-time',
+  REQUEST_TIME_OFF_PENDING: 'Nhắc nhở: Phê duyệt yêu cầu nghỉ phép',
+  REQUEST_OVERTIME_PENDING: 'Nhắc nhở: Phê duyệt yêu cầu tăng ca',
+  REQUEST_PART_TIME_PENDING: 'Nhắc nhở: Phê duyệt yêu cầu đăng ký ca',
 };
 
 

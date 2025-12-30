@@ -873,6 +873,12 @@ export interface TimeSlot {
    * Lý do nếu không available (doctor busy, room occupied, etc.)
    */
   unavailableReason?: string;
+
+  /**
+   * Danh sách mã phòng khả dụng cho slot này (NEW - Phase Scheduling)
+   * Phase-level auto-schedule API returns this field
+   */
+  availableRoomCodes?: string[];
 }
 
 /**

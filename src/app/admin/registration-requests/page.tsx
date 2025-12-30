@@ -56,7 +56,7 @@ export default function RegistrationRequestsPage() {
   const [totalElements, setTotalElements] = useState(0);
 
   // Filter states
-  const [filterStatus, setFilterStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'ALL'>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Modals
@@ -276,6 +276,13 @@ export default function RegistrationRequestsPage() {
             Đã từ chối
           </Badge>
         );
+      case 'CANCELLED':
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">
+            <XCircle className="h-3 w-3 mr-1" />
+            Đã hủy
+          </Badge>
+        );
       default:
         return <Badge variant="outline" className="whitespace-nowrap">{status}</Badge>;
     }
@@ -408,6 +415,7 @@ export default function RegistrationRequestsPage() {
                   <option value="PENDING">Đang chờ</option>
                   <option value="APPROVED">Đã duyệt</option>
                   <option value="REJECTED">Đã từ chối</option>
+                  <option value="CANCELLED">Đã hủy</option>
                 </select>
               </div>
 
@@ -765,16 +773,32 @@ export default function RegistrationRequestsPage() {
                   </div>
                 )}
 
-                {selectedRegistration.processedBy && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium mb-2">Thông tin xử lý</p>
+                {/* Processing Information - Show if processed or has reason (for auto-cancelled) */}
+                {(selectedRegistration.processedBy || selectedRegistration.reason || selectedRegistration.processedAt) && (
+                  <div className={`p-4 rounded-lg ${
+                    selectedRegistration.status === 'CANCELLED' 
+                      ? 'bg-orange-50 border border-orange-200' 
+                      : selectedRegistration.status === 'REJECTED'
+                      ? 'bg-red-50 border border-red-200'
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}>
+                    <p className="text-sm font-medium mb-2">
+                      {selectedRegistration.status === 'CANCELLED' && 'Lý do Hủy'}
+                      {selectedRegistration.status === 'REJECTED' && 'Lý do Từ chối'}
+                      {selectedRegistration.status === 'APPROVED' && 'Thông tin xử lý'}
+                      {!['CANCELLED', 'REJECTED', 'APPROVED'].includes(selectedRegistration.status) && 'Thông tin xử lý'}
+                    </p>
                     <div className="space-y-1 text-sm">
-                      <p>Processed by: <span className="font-medium">{selectedRegistration.processedBy}</span></p>
+                      {selectedRegistration.processedBy && (
+                        <p>Xử lý bởi: <span className="font-medium">{selectedRegistration.processedBy}</span></p>
+                      )}
                       {selectedRegistration.processedAt && (
-                        <p>Processed at: <span className="font-medium">{formatDateTime(selectedRegistration.processedAt)}</span></p>
+                        <p>Thời gian xử lý: <span className="font-medium">{formatDateTime(selectedRegistration.processedAt)}</span></p>
                       )}
                       {selectedRegistration.reason && (
-                        <p>Reason: <span className="font-medium text-red-600">{selectedRegistration.reason}</span></p>
+                        <p className={`${selectedRegistration.status === 'CANCELLED' ? 'text-orange-900' : selectedRegistration.status === 'REJECTED' ? 'text-red-900' : 'text-gray-700'} italic`}>
+                          "{selectedRegistration.reason}"
+                        </p>
                       )}
                     </div>
                   </div>

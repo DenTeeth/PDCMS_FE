@@ -31,13 +31,14 @@ interface UseAutoScheduleReturn {
   failedItems: number;
   // Actions
   generateSchedule: (planId: number, request: AutoScheduleRequest) => Promise<void>;
+  generatePhaseSchedule: (phaseId: number, request: AutoScheduleRequest) => Promise<void>; // NEW: Phase-level scheduling
   clearSuggestions: () => void;
   retry: () => Promise<void>;
   // Helpers
   hasWarnings: boolean;
   hasReassignRequired: boolean;
   // Last request for retry
-  lastRequest: { planId: number; request: AutoScheduleRequest } | null;
+  lastRequest: { planId?: number; phaseId?: number; request: AutoScheduleRequest; isPhase?: boolean } | null;
 }
 
 export const useAutoSchedule = (): UseAutoScheduleReturn => {
@@ -48,10 +49,10 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
   const [totalItemsProcessed, setTotalItemsProcessed] = useState(0);
   const [successfulSuggestions, setSuccessfulSuggestions] = useState(0);
   const [failedItems, setFailedItems] = useState(0);
-  const [lastRequest, setLastRequest] = useState<{ planId: number; request: AutoScheduleRequest } | null>(null);
+  const [lastRequest, setLastRequest] = useState<{ planId?: number; phaseId?: number; request: AutoScheduleRequest; isPhase?: boolean } | null>(null);
 
   /**
-   * Generate automatic appointment suggestions for a treatment plan
+   * Generate automatic appointment suggestions for a treatment plan (Plan-Level)
    */
   const generateSchedule = useCallback(
     async (planId: number, request: AutoScheduleRequest) => {
@@ -59,7 +60,7 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
       setError(null);
       
       // Store last request for retry
-      setLastRequest({ planId, request });
+      setLastRequest({ planId, request, isPhase: false });
 
       try {
         const response = await TreatmentPlanService.autoSchedule(planId, request);
@@ -118,6 +119,74 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
   );
 
   /**
+   * Generate automatic appointment suggestions for a treatment plan phase (Phase-Level)
+   * NEW: Phase-level scheduling is more practical than whole-plan scheduling
+   */
+  const generatePhaseSchedule = useCallback(
+    async (phaseId: number, request: AutoScheduleRequest) => {
+      setIsLoading(true);
+      setError(null);
+      
+      // Store last request for retry
+      setLastRequest({ phaseId, request, isPhase: true });
+
+      try {
+        const response = await TreatmentPlanService.autoSchedulePhase(phaseId, request);
+
+        setSuggestions(response.suggestions);
+        setSummary(response.summary);
+        setTotalItemsProcessed(response.totalItemsProcessed);
+        setSuccessfulSuggestions(response.successfulSuggestions);
+        setFailedItems(response.failedItems);
+
+        // Show success message with summary
+        if (response.successfulSuggestions > 0) {
+          toast.success(
+            `Đã tạo ${response.successfulSuggestions} gợi ý lịch hẹn cho giai đoạn`,
+            {
+              description: `Tổng cộng ${response.totalItemsProcessed} item đã được xử lý`,
+            }
+          );
+        }
+
+        // Show warnings if any
+        const warningsCount = response.suggestions.filter((s) => s.warning).length;
+        if (warningsCount > 0) {
+          toast.warning(
+            `Có ${warningsCount} gợi ý cần chú ý`,
+            {
+              description: 'Vui lòng xem chi tiết các cảnh báo về bác sĩ hoặc ngày lễ',
+            }
+          );
+        }
+
+        // Show errors if any
+        if (response.failedItems > 0) {
+          toast.error(
+            `${response.failedItems} item không thể tạo gợi ý`,
+            {
+              description: 'Vui lòng kiểm tra lại thông tin dịch vụ hoặc conflicts',
+            }
+          );
+        }
+      } catch (err: any) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          'Không thể tạo gợi ý lịch hẹn tự động';
+        setError(errorMessage);
+        console.error('[AutoSchedule Phase] Error:', err);
+        toast.error('Lỗi khi tạo gợi ý lịch hẹn', {
+          description: errorMessage,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  /**
    * Clear all suggestions
    */
   const clearSuggestions = useCallback(() => {
@@ -139,8 +208,12 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
       return;
     }
     
-    await generateSchedule(lastRequest.planId, lastRequest.request);
-  }, [lastRequest, generateSchedule]);
+    if (lastRequest.isPhase && lastRequest.phaseId) {
+      await generatePhaseSchedule(lastRequest.phaseId, lastRequest.request);
+    } else if (lastRequest.planId) {
+      await generateSchedule(lastRequest.planId, lastRequest.request);
+    }
+  }, [lastRequest, generateSchedule, generatePhaseSchedule]);
 
   /**
    * Check if any suggestions have warnings
@@ -161,6 +234,7 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
     successfulSuggestions,
     failedItems,
     generateSchedule,
+    generatePhaseSchedule,
     clearSuggestions,
     retry,
     hasWarnings,

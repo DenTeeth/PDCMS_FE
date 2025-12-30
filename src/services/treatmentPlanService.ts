@@ -763,8 +763,10 @@ export class TreatmentPlanService {
   }
 
   /**
-   * Auto-Schedule Treatment Plan Appointments
+   * Auto-Schedule Treatment Plan Appointments (Plan-Level)
    * POST /api/v1/treatment-plans/{planId}/auto-schedule
+   * 
+   * @deprecated Consider using autoSchedulePhase() for phase-level scheduling (more practical)
    * 
    * Issue: ISSUE_BE_AUTO_SCHEDULE_TREATMENT_PLANS_WITH_HOLIDAYS
    * Issue: ISSUE_BE_EMPLOYEE_CONTRACT_END_DATE_VALIDATION
@@ -781,22 +783,6 @@ export class TreatmentPlanService {
    * @param planId ID của treatment plan
    * @param request Auto-schedule request với preferences
    * @returns Response với danh sách appointment suggestions
-   * 
-   * @example
-   * const suggestions = await TreatmentPlanService.autoSchedule(123, {
-   *   employeeCode: 'EMP-2001',
-   *   roomCode: 'ROOM-01',
-   *   preferredTimeSlots: ['MORNING', 'AFTERNOON'],
-   *   lookAheadDays: 90,
-   *   forceSchedule: false
-   * });
-   * 
-   * suggestions.suggestions.forEach(s => {
-   *   console.log(`${s.serviceName}: ${s.suggestedDate}`);
-   *   if (s.warning) {
-   *     console.warn(`⚠️ ${s.warning}`);
-   *   }
-   * });
    */
   static async autoSchedule(
     planId: number,
@@ -805,6 +791,47 @@ export class TreatmentPlanService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.post<AutoScheduleResponse>(
       `/treatment-plans/${planId}/auto-schedule`,
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Auto-Schedule Treatment Plan Phase Appointments (Phase-Level)
+   * POST /api/v1/treatment-plan-phases/{phaseId}/auto-schedule
+   * 
+   * NEW API (2024-12-29): Phase-level scheduling is more practical than whole-plan scheduling.
+   * More realistic approach - schedule one phase at a time instead of entire plan.
+   * 
+   * Features:
+   * - Uses estimated dates from plan items IN THIS PHASE ONLY
+   * - Automatically skips holidays and weekends
+   * - Applies service spacing rules (preparation, recovery, intervals)
+   * - Enforces daily appointment limits
+   * - Returns suggestions (does NOT create actual appointments)
+   * 
+   * @param phaseId Phase ID to schedule
+   * @param request Auto-schedule request with preferences
+   * @returns Response with appointment suggestions for this phase only
+   * 
+   * @example
+   * const response = await TreatmentPlanService.autoSchedulePhase(3, {
+   *   preferredTimeSlots: ['MORNING'],
+   *   lookAheadDays: 90
+   * });
+   * 
+   * // Response contains suggestions for phase items only
+   * response.suggestions.forEach(s => {
+   *   console.log(`${s.serviceName}: ${s.suggestedDate}`);
+   * });
+   */
+  static async autoSchedulePhase(
+    phaseId: number,
+    request: AutoScheduleRequest
+  ): Promise<AutoScheduleResponse> {
+    const axios = apiClient.getAxiosInstance();
+    const response = await axios.post<AutoScheduleResponse>(
+      `/treatment-plan-phases/${phaseId}/auto-schedule`,
       request
     );
     return response.data;
