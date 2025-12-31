@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { invoiceService, InvoiceResponse, InvoiceStatus } from '@/services/invoiceService';
+import { invoiceService, InvoiceResponse, InvoicePaymentStatus } from '@/services/invoiceService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PaymentQRCodeProps {
-  invoiceId: number;
+  invoiceCode: string; // Changed from invoiceId to invoiceCode
   onPaymentSuccess?: () => void;
   onClose?: () => void;
 }
@@ -23,7 +23,7 @@ interface PaymentQRCodeProps {
  * - Stops polling after 5 minutes or when payment confirmed
  * - Shows payment success/failure messages
  */
-export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: PaymentQRCodeProps) {
+export default function PaymentQRCode({ invoiceCode, onPaymentSuccess, onClose }: PaymentQRCodeProps) {
   const [invoice, setInvoice] = useState<InvoiceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
@@ -37,7 +37,7 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
   // Load invoice on mount
   useEffect(() => {
     loadInvoice();
-  }, [invoiceId]);
+  }, [invoiceCode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -55,13 +55,13 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
     try {
       setLoading(true);
       setError(null);
-      const data = await invoiceService.getInvoice(invoiceId);
+      const data = await invoiceService.getInvoiceByCode(invoiceCode);
       setInvoice(data);
       
       // Start polling if invoice is not paid
-      if (data.status !== 'PAID') {
+      if (data.paymentStatus !== 'PAID' && data.paymentStatus !== 'CANCELLED') {
         startPolling();
-      } else {
+      } else if (data.paymentStatus === 'PAID') {
         // Already paid
         onPaymentSuccess?.();
       }
@@ -92,11 +92,11 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
     // Poll every 5 seconds
     pollingIntervalRef.current = setInterval(async () => {
       try {
-        const updated = await invoiceService.getInvoice(invoiceId);
+        const updated = await invoiceService.getInvoiceByCode(invoiceCode);
         setInvoice(updated);
 
         // Check if payment is confirmed
-        if (updated.status === 'PAID' || updated.status === 'PARTIALLY_PAID') {
+        if (updated.paymentStatus === 'PAID' || updated.paymentStatus === 'PARTIAL_PAID') {
           stopPolling();
           toast.success('Thanh toán thành công!');
           onPaymentSuccess?.();
@@ -126,27 +126,31 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
     loadInvoice();
   };
 
-  const getStatusColor = (status: InvoiceStatus) => {
+  const getStatusColor = (status: InvoicePaymentStatus) => {
     switch (status) {
       case 'PAID':
         return 'text-green-600';
-      case 'PARTIALLY_PAID':
+      case 'PARTIAL_PAID':
         return 'text-yellow-600';
-      case 'UNPAID':
+      case 'PENDING_PAYMENT':
         return 'text-red-600';
+      case 'CANCELLED':
+        return 'text-gray-600';
       default:
         return 'text-gray-600';
     }
   };
 
-  const getStatusText = (status: InvoiceStatus) => {
+  const getStatusText = (status: InvoicePaymentStatus) => {
     switch (status) {
       case 'PAID':
         return 'Đã thanh toán';
-      case 'PARTIALLY_PAID':
+      case 'PARTIAL_PAID':
         return 'Thanh toán một phần';
-      case 'UNPAID':
+      case 'PENDING_PAYMENT':
         return 'Chưa thanh toán';
+      case 'CANCELLED':
+        return 'Đã hủy';
       default:
         return status;
     }
@@ -182,7 +186,7 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
     return null;
   }
 
-  const isPaid = invoice.status === 'PAID' || invoice.status === 'PARTIALLY_PAID';
+  const isPaid = invoice.paymentStatus === 'PAID' || invoice.paymentStatus === 'PARTIAL_PAID';
 
   return (
     <Card>
@@ -219,7 +223,7 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Còn lại:</span>
-            <span className={`font-semibold ${getStatusColor(invoice.status)}`}>
+            <span className={`font-semibold ${getStatusColor(invoice.paymentStatus)}`}>
               {new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND',
@@ -228,8 +232,8 @@ export default function PaymentQRCode({ invoiceId, onPaymentSuccess, onClose }: 
           </div>
           <div className="flex justify-between items-center pt-2 border-t">
             <span className="text-sm text-gray-600">Trạng thái:</span>
-            <span className={`font-semibold ${getStatusColor(invoice.status)}`}>
-              {getStatusText(invoice.status)}
+            <span className={`font-semibold ${getStatusColor(invoice.paymentStatus)}`}>
+              {getStatusText(invoice.paymentStatus)}
             </span>
           </div>
         </div>

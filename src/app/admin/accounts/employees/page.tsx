@@ -795,7 +795,7 @@ export default function EmployeesPage() {
         {/* ==================== CREATE EMPLOYEE MODAL ==================== */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <Card className="w-full max-w-5xl my-8 max-h-[90vh] flex flex-col">
+            <Card className={`w-full my-8 max-h-[90vh] flex flex-col ${requiresSpecialization ? 'max-w-5xl' : 'max-w-2xl'}`}>
               <CardHeader className="border-b flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -863,9 +863,9 @@ export default function EmployeesPage() {
 
                   {/* Conditional Fields based on Role */}
                   {formData.roleId && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-5 mt-5">
+                    <div className={`grid gap-6 border-t pt-5 mt-5 ${requiresSpecialization ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
                       {/* LEFT COLUMN: Account & Personal Information */}
-                      <div className="space-y-5">
+                      <div className={`space-y-5 ${!requiresSpecialization ? 'lg:max-w-2xl' : ''}`}>
                         {/* Account Information - Always shown */}
                         <div>
                           <h3 className="font-semibold mb-3 text-base">Thông tin tài khoản</h3>
@@ -992,9 +992,10 @@ export default function EmployeesPage() {
 
                       {/* RIGHT COLUMN: Specialization (Only for roles that require specialization) */}
                       {requiresSpecialization && (
-                        <div className="lg:border-l lg:pl-6">
-                          <h3 className="font-semibold mb-3 text-base">Chuyên khoa</h3>
-                          {loadingSpecializations ? (
+                        <div className="lg:border-l lg:pl-6 space-y-5">
+                          <div>
+                            <h3 className="font-semibold mb-3 text-base">Chuyên khoa</h3>
+                            {loadingSpecializations ? (
                             <div className="flex items-center gap-2 text-gray-500">
                               <Loader2 className="h-4 w-4 animate-spin" />
                               <span className="text-sm">Đang tải chuyên khoa...</span>
@@ -1096,6 +1097,7 @@ export default function EmployeesPage() {
                               )}
                             </div>
                           )}
+                          </div>
                         </div>
                       )}
                     </div>

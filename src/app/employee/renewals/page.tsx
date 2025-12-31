@@ -271,10 +271,9 @@ export default function EmployeeRenewalsPage() {
 
   // ==================== PERMISSION CHECK ====================
 
-  // Kiểm tra permission: Nhân viên cần VIEW_RENEWAL_OWN để xem renewals
-  // Note: Nếu không có permission này, có thể sử dụng permission khác
-  // hoặc chỉ cần đăng nhập là có thể xem (tùy backend config)
-  const canViewRenewals = hasPermission(Permission.VIEW_RENEWAL_OWN) || true; // Fallback: true
+  // ✅ BE đã thêm VIEW_RENEWAL_OWN và RESPOND_RENEWAL_OWN permissions (2025-12-30)
+  const canViewRenewals = hasPermission(Permission.VIEW_RENEWAL_OWN);
+  const canRespondToRenewals = hasPermission(Permission.RESPOND_RENEWAL_OWN);
 
   // ==================== RENDER ====================
 
@@ -410,24 +409,32 @@ export default function EmployeeRenewalsPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t">
-                      <Button
-                        variant="default"
-                        className="flex-1 flex items-center gap-2"
-                        onClick={() => handleOpenResponseModal(renewal, 'CONFIRMED')}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        Đồng ý gia hạn
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1 flex items-center gap-2"
-                        onClick={() => handleOpenResponseModal(renewal, 'DECLINED')}
-                      >
-                        <XCircle className="h-4 w-4" />
-                        Từ chối
-                      </Button>
-                    </div>
+                    {canRespondToRenewals ? (
+                      <div className="flex gap-3 pt-4 border-t">
+                        <Button
+                          variant="default"
+                          className="flex-1 flex items-center gap-2"
+                          onClick={() => handleOpenResponseModal(renewal, 'CONFIRMED')}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Đồng ý gia hạn
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1 flex items-center gap-2"
+                          onClick={() => handleOpenResponseModal(renewal, 'DECLINED')}
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Từ chối
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-gray-500 text-center">
+                          Bạn không có quyền phản hồi yêu cầu gia hạn này
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
