@@ -9,14 +9,12 @@ import {
   faTimes,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { LogoutButton } from '@/components/auth/LogoutButton';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   generateNavigationConfig,
   filterNavigationItems,
   NavigationItem
 } from '@/constants/navigationConfig';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface ModernSidebarProps {
   title?: string;
@@ -176,7 +174,7 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
         user.permissions,
         user.groupedPermissions,
         user.roles, // Pass user roles to check ROLE_ADMIN
-        user.employmentType // Pass employment type for filtering
+        user.employmentType || undefined // Pass employment type for filtering
       ) : [];
   }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles, user?.employmentType]);
 
@@ -286,53 +284,6 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
               />
             ))}
           </nav>
-
-          {/* User info - Financial Dashboard style */}
-          <div className="p-4 border-t border-gray-100">
-            {isCollapsed ? (
-              /* Collapsed user display - just avatar */
-              <div className="flex flex-col items-center gap-3">
-                <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#8b5fbf] to-[#7a4fb0] rounded-xl flex items-center justify-center shadow-md">
-                    <span className="text-white text-sm font-bold">
-                      {user?.username?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-                </div>
-                <LogoutButton variant="button" className="w-full justify-center text-xs p-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border-0" />
-              </div>
-            ) : (
-              /* Full user display */
-              <>
-                <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer group">
-                  <div className="relative flex-shrink-0">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#8b5fbf] to-[#7a4fb0] rounded-xl flex items-center justify-center shadow-md">
-                      <span className="text-white text-sm font-bold">
-                        {user?.username?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {user?.username || 'User'}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user?.baseRole?.charAt(0).toUpperCase() + user?.baseRole?.slice(1) || 'User'}
-                    </p>
-                  </div>
-
-                  <NotificationBell />
-                </div>
-
-                <div className="mt-2">
-                  <LogoutButton variant="button" className="w-full justify-center text-sm py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border-0" />
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </aside>
 

@@ -31,20 +31,18 @@ export default function ResetPasswordPage() {
   }, [searchParams]);
 
   const validatePassword = (password: string): string | null => {
-    if (password.length < 8) {
-      return "Mật khẩu phải có ít nhất 8 ký tự";
+    // BE Requirements: 6-50 characters, must contain at least 1 letter AND 1 number
+    if (password.length < 6) {
+      return "Mật khẩu phải có ít nhất 6 ký tự";
     }
-    if (!/(?=.*[a-z])/.test(password)) {
-      return "Mật khẩu phải có ít nhất 1 chữ thường";
+    if (password.length > 50) {
+      return "Mật khẩu không được vượt quá 50 ký tự";
     }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return "Mật khẩu phải có ít nhất 1 chữ hoa";
+    if (!/(?=.*[a-zA-Z])/.test(password)) {
+      return "Mật khẩu phải có ít nhất 1 chữ cái";
     }
     if (!/(?=.*[0-9])/.test(password)) {
       return "Mật khẩu phải có ít nhất 1 số";
-    }
-    if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)) {
-      return "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
     }
     return null;
   };

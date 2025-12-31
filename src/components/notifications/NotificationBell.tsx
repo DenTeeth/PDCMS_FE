@@ -100,7 +100,7 @@ export const NotificationBell: React.FC = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute left-0 bottom-full mb-2 w-96 bg-background border rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-96 bg-background border rounded-lg shadow-lg z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
             <div className="flex items-center gap-2">
