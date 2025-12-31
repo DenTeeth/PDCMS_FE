@@ -6,6 +6,7 @@
  */
 
 import { apiClient } from '@/lib/api';
+import { UserProfileResponse } from '@/types/account';
 
 /**
  * Authentication Service Class
@@ -129,6 +130,34 @@ class AuthenticationService {
       return response.data || { message: 'Password reset successfully' };
     } catch (error: any) {
       console.error(' Reset password error:', {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get current user account profile
+   * GET /api/v1/account/profile
+   * Returns personal profile information of the currently authenticated user
+   * 
+   * @returns UserProfileResponse with account and personal information
+   * @throws Error if account not found or unauthorized
+   */
+  async getAccountProfile(): Promise<UserProfileResponse> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.get('/account/profile');
+      
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data;
+    } catch (error: any) {
+      console.error(' Get account profile error:', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,

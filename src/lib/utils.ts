@@ -17,6 +17,28 @@ export function canUseFixedRegistration(employeeType: EmploymentType): boolean {
 }
 
 /**
+ * Decode base64 string to UTF-8 string properly
+ * Handles Vietnamese and other UTF-8 characters correctly
+ * @param base64 Base64 encoded string
+ * @returns UTF-8 decoded string
+ */
+function base64ToUtf8(base64: string): string {
+  // Decode base64 to binary string
+  const binaryString = atob(base64);
+  
+  // Convert binary string to Uint8Array
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  // Decode UTF-8 bytes to string using TextDecoder
+  // This properly handles multi-byte UTF-8 characters (Vietnamese, Chinese, etc.)
+  const decoder = new TextDecoder('utf-8');
+  return decoder.decode(bytes);
+}
+
+/**
  * Decode JWT token to get payload
  * @param token JWT token string
  * @returns Decoded payload or null if invalid
@@ -37,7 +59,11 @@ export function decodeJWT(token: string): any | null {
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
 
-    const decoded = JSON.parse(atob(padded));
+    // Decode base64 to UTF-8 string properly
+    // This handles Vietnamese characters correctly
+    const utf8String = base64ToUtf8(padded);
+    
+    const decoded = JSON.parse(utf8String);
     console.log(' [decodeJWT] Decoded payload:', decoded);
     return decoded;
   } catch (error) {

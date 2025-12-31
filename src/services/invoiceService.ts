@@ -2,42 +2,105 @@
  * Invoice Service
  * 
  * Handles invoice-related API operations including SePay payment integration
- * Last updated: 2025-12-30
+ * Last updated: 2025-01-26
+ * Based on: docs/files/payment/controller/InvoiceController.java
  */
 
 import { apiClient } from '@/lib/api';
 
 /**
- * Invoice Status
+ * Invoice Type Enum
  */
-export type InvoiceStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
+export type InvoiceType = 'APPOINTMENT' | 'TREATMENT_PLAN' | 'SUPPLEMENTAL';
+
+/**
+ * Invoice Payment Status Enum
+ */
+export type InvoicePaymentStatus = 'PENDING_PAYMENT' | 'PARTIAL_PAID' | 'PAID' | 'CANCELLED';
+
+/**
+ * Invoice Item DTO
+ */
+export interface InvoiceItemDto {
+  serviceId: number;
+  serviceCode?: string;
+  serviceName: string;
+  quantity: number;
+  unitPrice: number;
+  notes?: string;
+}
+
+/**
+ * Invoice Item Response
+ */
+export interface InvoiceItemResponse {
+  itemId: number;
+  serviceId: number;
+  serviceCode?: string;
+  serviceName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  notes?: string;
+}
+
+/**
+ * Payment Summary
+ */
+export interface PaymentSummary {
+  paymentId: number;
+  paymentCode: string;
+  amount: number;
+  paymentMethod: string;
+  paymentDate: string;
+}
 
 /**
  * Invoice Response from BE
+ * Based on: docs/files/payment/dto/InvoiceResponse.java
  */
 export interface InvoiceResponse {
   invoiceId: number;
-  paymentCode: string; // Format: PDCMSyymmddxy
-  qrCodeUrl: string; // VietQR image URL
+  invoiceCode: string; // Invoice code (e.g., "INV_20250126_001")
+  invoiceType: InvoiceType;
+  patientId: number;
+  patientName?: string;
+  appointmentId?: number;
+  appointmentCode?: string;
+  treatmentPlanId?: number;
+  treatmentPlanCode?: string;
+  phaseNumber?: number;
+  installmentNumber?: number;
   totalAmount: number;
   paidAmount: number;
   remainingDebt: number;
-  status: InvoiceStatus;
+  paymentStatus: InvoicePaymentStatus;
+  dueDate?: string;
+  notes?: string;
+  paymentCode?: string; // SePay payment code (Format: PDCMSyymmddxy)
+  qrCodeUrl?: string; // VietQR image URL
+  createdBy?: number;
+  createdByName?: string;
   createdAt?: string;
   updatedAt?: string;
+  items?: InvoiceItemResponse[];
+  payments?: PaymentSummary[];
 }
 
 /**
  * Create Invoice Request
+ * Based on: docs/files/payment/dto/CreateInvoiceRequest.java
  */
 export interface CreateInvoiceRequest {
-  patient: {
-    patientId: number;
-  };
-  appointment?: {
-    appointmentId: number;
-  };
-  discount?: number;
+  invoiceType: InvoiceType;
+  patientId: number;
+  appointmentId?: number;
+  treatmentPlanId?: number;
+  phaseNumber?: number;
+  installmentNumber?: number;
+  items: InvoiceItemDto[];
+  dueDate?: string;
+  notes?: string;
 }
 
 /**
@@ -51,8 +114,9 @@ class InvoiceService {
    * Create invoice with SePay payment code
    * BE Requirements:
    * - Endpoint: POST /api/v1/invoices
-   * - Request body: { patient: { patientId }, appointment?: { appointmentId }, discount?: number }
-   * - Returns invoice with paymentCode and qrCodeUrl
+   * - Permission: CREATE_INVOICE
+   * - Request body: CreateInvoiceRequest (invoiceType, patientId, items, etc.)
+   * - Returns InvoiceResponse with paymentCode and qrCodeUrl
    * 
    * @param request Invoice creation request
    * @returns Invoice response with payment code and QR code URL
@@ -61,21 +125,13 @@ class InvoiceService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.post<{
-        success: boolean;
-        statusCode: number;
-        message: string;
-        data: InvoiceResponse;
-      }>(this.endpoint, request);
+      const response = await axiosInstance.post<InvoiceResponse>(this.endpoint, request);
       
-      console.log(' Create invoice success:', response.data);
+      console.log('✅ Create invoice success:', response.data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      throw new Error('Invalid response format from server');
+      return response.data;
     } catch (error: any) {
-      console.error(' Create invoice error:', {
+      console.error('❌ Create invoice error:', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
@@ -85,35 +141,93 @@ class InvoiceService {
   }
 
   /**
-   * Get invoice by ID
+   * Get invoice by code
    * BE Requirements:
-   * - Endpoint: GET /api/v1/invoices/{invoiceId}
+   * - Endpoint: GET /api/v1/invoices/{invoiceCode}
+   * - Permission: VIEW_INVOICE_ALL or VIEW_INVOICE_OWN
    * - Returns invoice with current payment status
    * 
-   * @param invoiceId Invoice ID
+   * @param invoiceCode Invoice code (e.g., "INV_20250126_001")
    * @returns Invoice response
    */
-  async getInvoice(invoiceId: number): Promise<InvoiceResponse> {
+  async getInvoiceByCode(invoiceCode: string): Promise<InvoiceResponse> {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.get<{
-        success: boolean;
-        data: InvoiceResponse;
-      }>(`${this.endpoint}/${invoiceId}`);
+      const response = await axiosInstance.get<InvoiceResponse>(`${this.endpoint}/${invoiceCode}`);
       
-      console.log(' Get invoice success:', response.data);
+      console.log('✅ Get invoice success:', response.data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      throw new Error('Invalid response format from server');
+      return response.data;
     } catch (error: any) {
-      console.error(' Get invoice error:', {
+      console.error('❌ Get invoice error:', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
       });
+      throw error;
+    }
+  }
+
+  /**
+   * Get invoices by patient
+   * BE Requirements:
+   * - Endpoint: GET /api/v1/invoices/patient/{patientId}
+   * - Permission: VIEW_INVOICE_ALL or VIEW_INVOICE_OWN
+   * 
+   * @param patientId Patient ID
+   * @returns List of invoices
+   */
+  async getInvoicesByPatient(patientId: number): Promise<InvoiceResponse[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/patient/${patientId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Get invoices by patient error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get unpaid invoices by patient
+   * BE Requirements:
+   * - Endpoint: GET /api/v1/invoices/patient/{patientId}/unpaid
+   * - Permission: VIEW_INVOICE_ALL or VIEW_INVOICE_OWN
+   * 
+   * @param patientId Patient ID
+   * @returns List of unpaid invoices
+   */
+  async getUnpaidInvoicesByPatient(patientId: number): Promise<InvoiceResponse[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/patient/${patientId}/unpaid`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Get unpaid invoices error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check payment status
+   * BE Requirements:
+   * - Endpoint: GET /api/v1/invoices/{invoiceCode}/payment-status
+   * - Permission: VIEW_INVOICE_ALL or VIEW_INVOICE_OWN or VIEW_PAYMENT_ALL
+   * 
+   * @param invoiceCode Invoice code
+   * @returns Invoice with current payment status
+   */
+  async checkPaymentStatus(invoiceCode: string): Promise<InvoiceResponse> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.get<InvoiceResponse>(`${this.endpoint}/${invoiceCode}/payment-status`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Check payment status error:', error);
       throw error;
     }
   }

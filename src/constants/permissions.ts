@@ -80,6 +80,11 @@ export const BE_PERMISSIONS = {
     MANAGE_PART_TIME_REGISTRATIONS: 'MANAGE_PART_TIME_REGISTRATIONS', // Manage part-time registrations
     MANAGE_FIXED_REGISTRATIONS: 'MANAGE_FIXED_REGISTRATIONS', // Manage fixed registrations
 
+    // ==================== MODULE 12.1: SHIFT_RENEWAL (3) - MỚI THÊM ====================
+    VIEW_RENEWAL_OWN: 'VIEW_RENEWAL_OWN', // View own renewal requests (Employee)
+    RESPOND_RENEWAL_OWN: 'RESPOND_RENEWAL_OWN', // Respond to own renewal requests (Employee)
+    VIEW_RENEWAL_ALL: 'VIEW_RENEWAL_ALL', // View all renewal requests (Admin/Manager)
+
     // ==================== MODULE 13: LEAVE_MANAGEMENT (8) - GIẢM TỪ 35! ====================
     VIEW_LEAVE_ALL: 'VIEW_LEAVE_ALL', // ✅ BE: View all leave/time-off requests (BE controller line 52, 87)
     VIEW_LEAVE_OWN: 'VIEW_LEAVE_OWN', // ✅ BE: View own leave/time-off requests
@@ -212,9 +217,10 @@ export const PERMISSION_MAPPING: Record<string, string | null> = {
     'VIEW_EMPLOYEE_SHIFT_ALL': 'VIEW_SCHEDULE_ALL',
     'VIEW_EMPLOYEE_SHIFT_OWN': 'VIEW_SCHEDULE_OWN',
 
-    // Renewal - KHÔNG CÒN TRONG BE (removed module)
-    'VIEW_RENEWAL_OWN': null,
-    'RESPOND_RENEWAL_OWN': null,
+    // Renewal - ✅ BE ĐÃ THÊM LẠI (2025-12-30)
+    'VIEW_RENEWAL_OWN': 'VIEW_RENEWAL_OWN', // ✅ BE: View own renewal requests
+    'RESPOND_RENEWAL_OWN': 'RESPOND_RENEWAL_OWN', // ✅ BE: Respond to own renewal requests
+    'VIEW_RENEWAL_ALL': 'VIEW_RENEWAL_ALL', // ✅ BE: View all renewal requests (Admin/Manager)
 
     // ==================== LEAVE_MANAGEMENT ====================
     // Time-off - ✅ BE dùng VIEW_LEAVE_ALL/OWN, CREATE_TIME_OFF, APPROVE_TIME_OFF

@@ -52,9 +52,9 @@ export default function Navbar({ className }: NavbarProps) {
   const handleAccountDetails = () => {
     // Navigate to account details page based on baseRole
     if (user?.baseRole === 'admin') {
-      router.push('/admin/accounts');
+      router.push('/admin/account');
     } else if (user?.baseRole === 'employee') {
-      router.push('/employee');
+      router.push('/employee/account');
     } else if (user?.baseRole === 'patient') {
       router.push('/patient/profile');
     }

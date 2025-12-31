@@ -456,7 +456,7 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           href: '/employee/renewals',
           icon: faClockRotateLeft,
           requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-          employmentTypes: ['PART_TIME_FLEX'], // Only for Part-time Flex
+          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed (Fixed Schedule)
         },
       ],
     },

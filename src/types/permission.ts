@@ -145,6 +145,7 @@ export enum Permission {
   // ==================== RENEWAL ====================
   VIEW_RENEWAL_OWN = 'VIEW_RENEWAL_OWN',
   RESPOND_RENEWAL_OWN = 'RESPOND_RENEWAL_OWN',
+  VIEW_RENEWAL_ALL = 'VIEW_RENEWAL_ALL', // BE: View all renewal requests (Admin/Manager)
 
   // ==================== LEAVE/TIME-OFF MANAGEMENT ====================
   // ✅ BE naming (use these)
