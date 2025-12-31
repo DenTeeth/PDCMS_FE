@@ -201,6 +201,37 @@ export function getUserIdFromToken(token: string): number | null {
 }
 
 /**
+ * Extract full name from JWT token
+ * Backend includes full_name in token claims
+ * @param token JWT token string
+ * @returns Full name as string or null if not found
+ */
+export function getFullNameFromToken(token: string): string | null {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload) {
+      console.warn(' [getFullNameFromToken] Failed to decode token payload');
+      return null;
+    }
+
+    // Try different possible field names for full name
+    const fullName = payload.full_name || payload.fullName || payload.name || null;
+
+    if (fullName) {
+      const fullNameStr = String(fullName).trim();
+      console.log(' [getFullNameFromToken] Found fullName:', fullNameStr);
+      return fullNameStr;
+    } else {
+      console.warn(' [getFullNameFromToken] full_name not found in JWT token');
+      return null;
+    }
+  } catch (error) {
+    console.error(' [getFullNameFromToken] Failed to extract fullName:', error);
+    return null;
+  }
+}
+
+/**
  * Format time string to HH:mm (remove seconds)
  * @param time Time string in HH:mm:ss or HH:mm format
  * @returns Formatted time string HH:mm

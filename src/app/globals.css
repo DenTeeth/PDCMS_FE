@@ -48,7 +48,7 @@
 :root {
   --radius: 0.75rem;
   /* Softer, warmer background colors */
-  --background: #fdfcff;
+  --background: #f7f9fc;
   --foreground: #1e1928;
   --card: #ffffff;
   --card-foreground: #1e1928;

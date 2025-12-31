@@ -15,6 +15,42 @@ class AuthenticationService {
   private readonly endpoint = '/auth';
 
   /**
+   * Forgot password - Send password reset email
+   * BE Requirements:
+   * - Endpoint: POST /api/v1/auth/forgot-password (public, no auth required)
+   * - Request body: { email: string }
+   * - Returns 200 OK if email exists and reset email sent
+   * - Returns 404 if email not found
+   * 
+   * @param email User email address
+   * @returns Success message
+   * @throws Error if email not found
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.post(`${this.endpoint}/forgot-password`, {
+        email,
+      });
+      
+      console.log(' Forgot password success:', response.data);
+      
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data || { message: 'Đã gửi email đặt lại mật khẩu' };
+    } catch (error: any) {
+      console.error(' Forgot password error:', {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Resend password setup email for patient with PENDING_VERIFICATION status
    * Uses forgot-password endpoint which works for accounts that need password setup
    * 
@@ -22,15 +58,7 @@ class AuthenticationService {
    * @returns Success message
    */
   async resendPasswordSetupEmail(email: string): Promise<{ message: string }> {
-    const axiosInstance = apiClient.getAxiosInstance();
-    const response = await axiosInstance.post(`${this.endpoint}/forgot-password`, {
-      email,
-    });
-    
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data || { message: 'Password setup email sent successfully' };
+    return this.forgotPassword(email);
   }
 
   /**
