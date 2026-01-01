@@ -403,12 +403,12 @@ export default function CreateAppointmentModal({
     return () => clearTimeout(delayDebounceFn);
   }, [patientSearch]);
 
-  // Step 2: Load all doctor shifts when entering Step 2 (load immediately, no need to wait for services)
+  // Step 2: Load all doctor shifts when entering Step 2 or when month changes
   useEffect(() => {
     if (currentStep === 2 && employees.length > 0) {
       loadAllDoctorShiftsForStep2();
     }
-  }, [currentStep, employees]);
+  }, [currentStep, employees, selectedMonth]);
 
   // Step 2: Load date suggestions when date is selected
   useEffect(() => {
@@ -428,20 +428,20 @@ export default function CreateAppointmentModal({
     }
   }, [employeeCode, appointmentDate, serviceCodes, participantCodes]);
 
-  // Step 4: Load shifts for all eligible participants when date is selected (for filtering)
+  // Step 4: Load shifts for all eligible participants when date is selected or month changes (for filtering)
   useEffect(() => {
     if (currentStep === 4 && appointmentDate) {
       loadAllParticipantShifts();
     }
-  }, [currentStep, appointmentDate, employees, employeeCode]);
+  }, [currentStep, appointmentDate, employees, employeeCode, selectedMonth]);
 
 
-  // Step 4: Load employee shifts for all doctors when date and services are selected
+  // Step 4: Load employee shifts for all doctors when date and services are selected or month changes
   useEffect(() => {
     if (currentStep === 4 && appointmentDate && serviceCodes.length > 0) {
       loadAllDoctorShifts();
     }
-  }, [currentStep, appointmentDate, serviceCodes, employees]);
+  }, [currentStep, appointmentDate, serviceCodes, employees, selectedMonth]);
 
   const resetForm = () => {
     setCurrentStep(1);
@@ -647,17 +647,18 @@ export default function CreateAppointmentModal({
 
       const shiftsMap = new Map<string, EmployeeShift[]>();
 
-      // Load shifts for each doctor in parallel (from today to 3 months)
+      // Load shifts for each doctor in parallel
+      // Load shifts for the selected month and surrounding months (1 month before, 1 month after)
+      const monthStart = startOfMonth(selectedMonth);
+      const monthEnd = endOfMonth(selectedMonth);
+      const startDate = subMonths(monthStart, 1); // 1 month before
+      const endDate = addMonths(monthEnd, 1); // 1 month after
+
       await Promise.all(
         allDoctors.map(async (doctor) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endDate = new Date(today);
-          endDate.setMonth(endDate.getMonth() + 3);
-
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
-          const startDateStr = format(today, 'yyyy-MM-dd');
+          const startDateStr = format(startDate, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
 
           const employeeId = parseInt(doctor.employeeId, 10);
@@ -697,16 +698,17 @@ export default function CreateAppointmentModal({
       const shiftsMap = new Map<string, EmployeeShift[]>();
 
       // Load shifts for each doctor in parallel
+      // Load shifts for the selected month and surrounding months (1 month before, 1 month after)
+      const monthStart = startOfMonth(selectedMonth);
+      const monthEnd = endOfMonth(selectedMonth);
+      const startDate = subMonths(monthStart, 1); // 1 month before
+      const endDate = addMonths(monthEnd, 1); // 1 month after
+
       await Promise.all(
         compatibleDoctors.map(async (doctor) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endDate = new Date(today);
-          endDate.setMonth(endDate.getMonth() + 3);
-
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
-          const startDateStr = format(today, 'yyyy-MM-dd');
+          const startDateStr = format(startDate, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
 
           const employeeId = parseInt(doctor.employeeId, 10);
@@ -934,16 +936,17 @@ export default function CreateAppointmentModal({
 
       const shiftsMap = new Map<string, EmployeeShift[]>();
 
+      // Load shifts for the selected month and surrounding months (1 month before, 1 month after)
+      const monthStart = startOfMonth(selectedMonth);
+      const monthEnd = endOfMonth(selectedMonth);
+      const startDate = subMonths(monthStart, 1); // 1 month before
+      const endDate = addMonths(monthEnd, 1); // 1 month after
+
       await Promise.all(
         eligibleParticipants.map(async (participant) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endDate = new Date(today);
-          endDate.setMonth(endDate.getMonth() + 3);
-
           // Use format from date-fns to get local date string (YYYY-MM-DD)
           // This avoids timezone issues with toISOString()
-          const startDateStr = format(today, 'yyyy-MM-dd');
+          const startDateStr = format(startDate, 'yyyy-MM-dd');
           const endDateStr = format(endDate, 'yyyy-MM-dd');
 
           const employeeId = parseInt(participant.employeeId, 10);

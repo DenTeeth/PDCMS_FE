@@ -33,6 +33,7 @@ import {
   CheckCircle2,
   XCircle,
   Ban,
+  HelpCircle,
 } from 'lucide-react';
 import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
@@ -764,7 +765,7 @@ export default function PatientsPage() {
                           </Badge>
                         ) : (
                           <Badge className="bg-red-600 text-white">
-                            Chặn vĩnh viễn
+                            Chặn
                           </Badge>
                         )
                       ) : (
@@ -837,7 +838,7 @@ export default function PatientsPage() {
                     onClick={() => setPage(0)}
                     disabled={page === 0 || loading}
                     className="h-9 w-9 p-0"
-                    title="First page"
+                    title="Trang đầu"
                   >
                     <ChevronsLeft className="h-4 w-4" />
                   </Button>
@@ -851,7 +852,7 @@ export default function PatientsPage() {
                     className="h-9 px-3"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
+                    Trước
                   </Button>
 
                   {/* Page numbers */}
@@ -895,7 +896,7 @@ export default function PatientsPage() {
                     disabled={page >= totalPages - 1 || loading}
                     className="h-9 px-3"
                   >
-                    Next
+                    Sau
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
 
@@ -906,7 +907,7 @@ export default function PatientsPage() {
                     onClick={() => setPage(totalPages - 1)}
                     disabled={page >= totalPages - 1 || loading}
                     className="h-9 w-9 p-0"
-                    title="Last page"
+                    title="Trang cuối"
                   >
                     <ChevronsRight className="h-4 w-4" />
                   </Button>
@@ -1089,6 +1090,12 @@ export default function PatientsPage() {
                     <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-gray-900">
                       <Phone className="h-4 w-4 text-blue-600" />
                       Liên hệ khẩn cấp
+                      <div className="group relative">
+                        <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Bệnh nhân dưới 16 tuổi bắt buộc phải có thông tin người giám hộ
+                        </div>
+                      </div>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -1341,7 +1348,15 @@ export default function PatientsPage() {
 
                   {/* Emergency Contact */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Liên hệ khẩn cấp</h3>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      Liên hệ khẩn cấp
+                      <div className="group relative">
+                        <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Bệnh nhân dưới 16 tuổi bắt buộc phải có thông tin người giám hộ
+                        </div>
+                      </div>
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label htmlFor="edit-emergencyContactName">Tên người liên hệ khẩn cấp</Label>

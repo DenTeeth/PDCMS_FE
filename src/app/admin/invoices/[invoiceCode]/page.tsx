@@ -27,7 +27,6 @@ import { paymentService, PaymentResponse } from '@/services/paymentService';
 import { formatCurrency } from '@/utils/formatters';
 import { format } from 'date-fns';
 import PaymentQRCode from '@/components/payment/PaymentQRCode';
-import Image from 'next/image';
 
 // ==================== MAIN COMPONENT ====================
 export default function InvoiceDetailPage() {
@@ -366,7 +365,7 @@ export default function InvoiceDetailPage() {
 
                     {invoice.qrCodeUrl && (
                       <div className="flex flex-col items-center gap-2">
-                        <Image
+                        <img
                           src={invoice.qrCodeUrl}
                           alt="QR Code"
                           width={200}

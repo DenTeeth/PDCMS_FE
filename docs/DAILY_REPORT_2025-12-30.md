@@ -3,9 +3,25 @@
 ## 🎯 Tổng Quan
 
 **Date**: 2025-12-30  
-**Commit**: `b3d6232`  
+**Commits**: 
+- `b3d6232` - Initial changes (Renewal permissions, Employee form, Account pages, SePay, UTF-8 fix)
+- `ef5df69` - Daily report document
+- `eb858f9` - Payment & Invoice pages, Payment Service, CANCELLED_LATE status
+- `de67db1` - Fix formatCurrency import path  
 **Branch**: `main`  
-**Status**: ✅ Pushed to GitHub
+**Status**: ✅ All changes pushed to GitHub
+
+### 📈 Tiến Độ Tổng Thể
+
+| Module | Status | Progress |
+|--------|--------|----------|
+| Renewal Permissions | ✅ Complete | 100% |
+| Employee Form UI | ✅ Complete | 100% |
+| Account Pages | ✅ Complete | 100% |
+| SePay Integration | ✅ Complete | 100% |
+| UTF-8 Encoding Fix | ✅ Complete | 100% |
+| CANCELLED_LATE Status | ✅ Complete | 100% |
+| Payment & Invoice Pages | ✅ Complete | 100% |
 
 ---
 
@@ -143,14 +159,18 @@ const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 ## 📊 Thống Kê
 
 ### Files Changed
-- **Modified**: 10 files
-- **Created**: 3 files
-- **Total changes**: 827 insertions(+), 95 deletions(-)
+- **Modified**: 17 files (10 initial + 4 for CANCELLED_LATE + 3 for Payment/Invoice)
+- **Created**: 7 files (3 initial + 1 Payment Service + 3 UI pages)
+- **Total changes**: ~3000+ insertions(+), ~150 deletions(-)
 
 ### New Files
 1. `src/app/admin/account/page.tsx`
 2. `src/app/employee/account/page.tsx`
 3. `src/types/account.ts`
+4. `src/services/paymentService.ts` (Payment Service)
+5. `src/app/admin/invoices/page.tsx` (Invoices list page)
+6. `src/app/admin/invoices/[invoiceCode]/page.tsx` (Invoice detail page)
+7. `src/app/admin/payments/page.tsx` (Payments list page)
 
 ### Modified Files
 1. `src/app/admin/accounts/employees/page.tsx`
@@ -163,6 +183,11 @@ const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 8. `src/services/authenticationService.ts`
 9. `src/services/invoiceService.ts`
 10. `src/types/permission.ts`
+11. `src/types/appointment.ts` (CANCELLED_LATE)
+12. `src/components/appointments/AppointmentFilters.tsx` (CANCELLED_LATE)
+13. `src/app/employee/booking/appointments/[appointmentCode]/page.tsx` (CANCELLED_LATE)
+14. `src/app/admin/booking/appointments/[appointmentCode]/page.tsx` (CANCELLED_LATE)
+15. `src/services/invoiceService.ts` (Added getInvoicesByAppointment method)
 
 ---
 
@@ -189,10 +214,16 @@ const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 - ✅ `getAccountProfile()`: `GET /api/v1/account/profile`
 
 **Invoice Service**:
-- ✅ `getInvoiceByCode(invoiceCode: string)`: `GET /api/v1/invoices/code/{invoiceCode}`
-- ✅ `getInvoicesByPatient()`: `GET /api/v1/invoices/patient`
-- ✅ `getUnpaidInvoicesByPatient()`: `GET /api/v1/invoices/patient/unpaid`
-- ✅ `checkPaymentStatus(invoiceCode: string)`: `GET /api/v1/invoices/code/{invoiceCode}/payment-status`
+- ✅ `getInvoiceByCode(invoiceCode: string)`: `GET /api/v1/invoices/{invoiceCode}`
+- ✅ `getInvoicesByPatient(patientId: number)`: `GET /api/v1/invoices/patient/{patientId}`
+- ✅ `getInvoicesByAppointment(appointmentId: number)`: `GET /api/v1/invoices/appointment/{appointmentId}` (NEW)
+- ✅ `getUnpaidInvoicesByPatient(patientId: number)`: `GET /api/v1/invoices/patient/{patientId}/unpaid`
+- ✅ `checkPaymentStatus(invoiceCode: string)`: `GET /api/v1/invoices/{invoiceCode}/payment-status`
+
+**Payment Service** (NEW):
+- ✅ `createPayment(request: CreatePaymentRequest)`: `POST /api/v1/payments`
+- ✅ `getPaymentsByInvoice(invoiceId: number)`: `GET /api/v1/payments/invoice/{invoiceId}`
+- ✅ `getPaymentByCode(paymentCode: string)`: `GET /api/v1/payments/{paymentCode}`
 
 ---
 
@@ -252,6 +283,22 @@ const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 - [ ] JWT payload với tiếng Việt hiển thị đúng
 - [ ] Full name từ JWT hiển thị đúng trong Navbar
 
+### CANCELLED_LATE Status
+- [ ] Status `CANCELLED_LATE` hiển thị đúng với màu warning/orange
+- [ ] Filter dropdown có option "Hủy muộn"
+- [ ] Validation yêu cầu reasonCode và notes khi chọn CANCELLED_LATE
+- [ ] Tooltip hiển thị đúng thông tin về ảnh hưởng đến consecutiveNoShows
+- [ ] Treatment plan items được update khi status = CANCELLED_LATE
+
+### Payment & Invoice Pages
+- [ ] Trang invoices hiển thị đúng danh sách khi có Patient ID
+- [ ] Trang invoice detail hiển thị đầy đủ thông tin
+- [ ] QR Code hiển thị và hoạt động đúng
+- [ ] Payment history hiển thị đúng
+- [ ] Trang payments hiển thị đúng khi có Invoice ID
+- [ ] Filters hoạt động đúng
+- [ ] Permission checks hoạt động đúng
+
 ---
 
 ## 🚀 Next Steps
@@ -261,19 +308,110 @@ const payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 3. **Test Account Pages** với real data
 4. **Test SePay Integration** với production webhook
 5. **Monitor** UTF-8 encoding với JWT mới từ BE
+6. **Test CANCELLED_LATE Status** - Verify UI, validation, và treatment plan updates
+7. **Test Payment & Invoice Pages** - Verify UI, filters, QR code, payment history
+8. **Request BE APIs** - Yêu cầu BE thêm endpoint "get all invoices" và "get all payments" với pagination
 
 ---
 
 ## 📝 Notes
 
 - Trang `admin/test-sepay` **KHÔNG được commit** (local testing only)
-- Tất cả changes đã được push lên `main` branch
+- Tất cả changes đã được push lên `main` branch (commit `b3d6232`)
 - Permissions đã đồng bộ hoàn toàn với BE
 - UI improvements đã được implement theo yêu cầu
+- **CANCELLED_LATE status** đã được thêm vào tất cả các components liên quan
+- Status mới phân biệt rõ ràng giữa hủy thông thường (>24h) và hủy muộn (≤24h)
+- **Payment & Invoice pages** đã được tạo với đầy đủ features
+- **Payment Service** đã được tạo với 3 methods cần thiết
+- **Import fix**: Đã sửa import `formatCurrency` từ `@/lib/utils` → `@/utils/formatters`
+
+---
+
+## 🔄 Cập Nhật Bổ Sung
+
+### 7. ✅ Thêm Appointment Status `CANCELLED_LATE`
+
+**Vấn đề**: BE đã thêm status mới `CANCELLED_LATE` để phân biệt giữa hủy thông thường (>24h trước) và hủy muộn (≤24h trước giờ hẹn).
+
+**Giải pháp**:
+- ✅ Thêm `'CANCELLED_LATE'` vào `AppointmentStatus` type
+- ✅ Cập nhật `APPOINTMENT_STATUS_COLORS` với màu warning/orange
+- ✅ Cập nhật `resolveAppointmentStatus()` để handle `CANCELLED_LATE`
+- ✅ Cập nhật `APPOINTMENT_STATUS_TRANSITIONS` với transitions mới
+- ✅ Cập nhật status filters trong `AppointmentFilters` component
+- ✅ Cập nhật validation và UI trong appointment detail pages
+
+**Files changed**:
+- `src/types/appointment.ts` - Thêm type và colors
+- `src/components/appointments/AppointmentFilters.tsx` - Thêm filter option
+- `src/app/employee/booking/appointments/[appointmentCode]/page.tsx` - Cập nhật validation và UI
+- `src/app/admin/booking/appointments/[appointmentCode]/page.tsx` - Cập nhật validation và UI
+
+**Status Display**:
+- **Label**: "Hủy muộn"
+- **Color**: Orange/Warning (`#f97316` / `#ea580c`)
+- **Tooltip**: "Lịch hẹn bị hủy trong vòng 24 giờ trước giờ hẹn sẽ ảnh hưởng đến số lần không đến liên tiếp của bệnh nhân."
+
+**Validation**:
+- Yêu cầu `reasonCode` và `notes` (giống `CANCELLED`)
+- Treatment plan items được update khi status = `CANCELLED_LATE`
+
+**Status Transitions**:
+- `SCHEDULED` → `CANCELLED_LATE` ✅
+- `CHECKED_IN` → `CANCELLED_LATE` ✅
+- `IN_PROGRESS` → `CANCELLED_LATE` ✅
+- `CANCELLED_LATE` → Terminal state ✅
+
+---
+
+### 8. ✅ Payment & Invoice Management Pages
+
+**Vấn đề**: Thiếu UI pages để quản lý hóa đơn và thanh toán.
+
+**Giải pháp**:
+- ✅ Tạo Payment Service (`src/services/paymentService.ts`) với 3 methods
+- ✅ Bổ sung Invoice Service method `getInvoicesByAppointment()`
+- ✅ Tạo trang danh sách invoices: `/admin/invoices`
+- ✅ Tạo trang chi tiết invoice: `/admin/invoices/[invoiceCode]`
+- ✅ Tạo trang danh sách payments: `/admin/payments`
+- ✅ Fix import `formatCurrency` từ `@/utils/formatters`
+
+**Files changed**:
+- `src/services/paymentService.ts` (NEW) - Payment service với createPayment, getPaymentsByInvoice, getPaymentByCode
+- `src/services/invoiceService.ts` - Thêm method `getInvoicesByAppointment()`
+- `src/app/admin/invoices/page.tsx` (NEW) - Trang danh sách invoices
+- `src/app/admin/invoices/[invoiceCode]/page.tsx` (NEW) - Trang chi tiết invoice
+- `src/app/admin/payments/page.tsx` (NEW) - Trang danh sách payments
+
+**Features**:
+- ✅ Filters: Patient ID, Search, Status, Type (invoices)
+- ✅ Filters: Invoice ID, Search, Payment Method (payments)
+- ✅ Status badges với màu sắc phù hợp
+- ✅ QR Code integration với PaymentQRCode component
+- ✅ Payment history display
+- ✅ Invoice items detail
+- ✅ Permission checks (`VIEW_INVOICE_ALL`, `VIEW_PAYMENT_ALL`)
+- ✅ Responsive design
+- ✅ Error handling với toast notifications
+
+**Payment Service Methods**:
+- `createPayment()` - Tạo thanh toán mới
+- `getPaymentsByInvoice()` - Lấy danh sách thanh toán theo invoice
+- `getPaymentByCode()` - Lấy chi tiết thanh toán theo code
+
+**Invoice Service Updates**:
+- `getInvoicesByAppointment()` - Lấy danh sách invoices theo appointment
+
+**Note**: 
+- Trang invoices cần Patient ID để xem (BE không có endpoint "get all invoices")
+- Trang payments cần Invoice ID để xem (BE chỉ có endpoint get payments by invoice)
+- QR Code chỉ hiển thị khi invoice chưa thanh toán và chưa bị hủy
 
 ---
 
 **Report Generated**: 2025-12-30  
+**Last Updated**: 2025-12-30 (Added Payment & Invoice pages, fixed imports)  
 **Author**: AI Assistant  
 **Status**: ✅ Complete
 

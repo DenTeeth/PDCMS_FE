@@ -309,7 +309,7 @@ export default function PatientImageUpload({
             <div className="space-y-2">
               <Label htmlFor="imageType">
                 <FileType className="inline h-4 w-4 mr-1" />
-                Loại hình ảnh *
+                Loại hình ảnh <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={imageType}

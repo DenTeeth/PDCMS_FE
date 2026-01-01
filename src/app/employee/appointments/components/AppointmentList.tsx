@@ -69,7 +69,7 @@ export default function AppointmentList({
                     break;
                 case 'cancelled':
                     data = await appointmentService.getAppointments({
-                        status: ['CANCELLED'],
+                        status: ['CANCELLED', 'CANCELLED_LATE'],
                     });
                     break;
             }

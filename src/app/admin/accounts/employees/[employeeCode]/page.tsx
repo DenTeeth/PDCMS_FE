@@ -83,7 +83,7 @@ export default function EmployeeDetailPage() {
       setEmployee(data);
     } catch (error: any) {
       console.error('Failed to fetch employee details:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch employee details');
+      toast.error(error.response?.data?.message || 'Không thể tải thông tin nhân viên');
       router.push('/admin/accounts/employees');
     } finally {
       setLoading(false);

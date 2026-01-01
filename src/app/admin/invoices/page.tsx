@@ -56,6 +56,23 @@ export default function InvoicesPage() {
     try {
       setLoading(true);
 
+      // If search term looks like an invoice code, try to fetch by code
+      if (searchTerm && searchTerm.trim().length > 0) {
+        const trimmedSearch = searchTerm.trim();
+        
+        // Check if search term looks like an invoice code (starts with INV-)
+        if (trimmedSearch.toUpperCase().startsWith('INV-')) {
+          try {
+            const invoice = await invoiceService.getInvoiceByCode(trimmedSearch);
+            setInvoices([invoice]);
+            return;
+          } catch (error: any) {
+            // If invoice not found, continue with other search methods
+            console.log('Invoice not found by code, trying other methods...');
+          }
+        }
+      }
+
       // If patientId filter is set, fetch by patient
       if (patientIdFilter) {
         const patientId = parseInt(patientIdFilter);
@@ -68,9 +85,11 @@ export default function InvoicesPage() {
 
       // Otherwise, we need a way to get all invoices
       // Since BE doesn't have a "get all invoices" endpoint,
-      // we'll show a message to filter by patient
+      // we'll show a message to filter by patient or search by invoice code
       setInvoices([]);
-      toast.info('Vui lòng nhập Patient ID để xem hóa đơn');
+      if (!searchTerm && !patientIdFilter) {
+        toast.info('Vui lòng nhập Invoice Code hoặc Patient ID để tìm kiếm hóa đơn');
+      }
     } catch (error: any) {
       console.error('Error fetching invoices:', error);
       toast.error(error.response?.data?.message || 'Không thể tải danh sách hóa đơn');
@@ -338,18 +357,26 @@ export default function InvoicesPage() {
                             </div>
                           </div>
 
-                          {invoice.appointmentCode && (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <Calendar className="h-4 w-4 inline mr-1" />
-                              Lịch hẹn: {invoice.appointmentCode}
-                            </div>
-                          )}
-
-                          {invoice.createdAt && (
-                            <div className="mt-2 text-sm text-gray-500">
-                              Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
-                            </div>
-                          )}
+                          <div className="mt-2 space-y-1">
+                            {invoice.appointmentCode && (
+                              <div className="text-sm text-gray-600">
+                                <Calendar className="h-4 w-4 inline mr-1" />
+                                Lịch hẹn: {invoice.appointmentCode}
+                              </div>
+                            )}
+                            {invoice.treatmentPlanCode && (
+                              <div className="text-sm text-gray-600">
+                                <FileText className="h-4 w-4 inline mr-1" />
+                                Kế hoạch điều trị: {invoice.treatmentPlanCode}
+                              </div>
+                            )}
+                            {invoice.createdAt && (
+                              <div className="text-sm text-gray-500">
+                                Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                                {invoice.createdByName && ` bởi ${invoice.createdByName}`}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <Button
