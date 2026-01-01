@@ -24,7 +24,7 @@ import {
 import { toast } from 'sonner';
 import { invoiceService, InvoiceResponse, InvoicePaymentStatus } from '@/services/invoiceService';
 import { paymentService, PaymentResponse } from '@/services/paymentService';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formatters';
 import { format } from 'date-fns';
 import PaymentQRCode from '@/components/payment/PaymentQRCode';
 import Image from 'next/image';
