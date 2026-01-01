@@ -191,6 +191,27 @@ class InvoiceService {
   }
 
   /**
+   * Get invoices by appointment
+   * BE Requirements:
+   * - Endpoint: GET /api/v1/invoices/appointment/{appointmentId}
+   * - Permission: VIEW_INVOICE_ALL or VIEW_APPOINTMENT_ALL
+   * 
+   * @param appointmentId Appointment ID
+   * @returns List of invoices for the appointment
+   */
+  async getInvoicesByAppointment(appointmentId: number): Promise<InvoiceResponse[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/appointment/${appointmentId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Get invoices by appointment error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get unpaid invoices by patient
    * BE Requirements:
    * - Endpoint: GET /api/v1/invoices/patient/{patientId}/unpaid
