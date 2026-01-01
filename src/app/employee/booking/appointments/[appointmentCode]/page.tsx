@@ -82,6 +82,7 @@ import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTim
 import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
 import ClinicalRecordForm from '@/components/clinical-records/ClinicalRecordForm';
 import PatientImageFolderView from '@/components/clinical-records/PatientImageFolderView';
+import PaymentTab from '@/components/appointments/PaymentTab';
 // Employees do not have reschedule functionality
 // import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
 import {
@@ -99,6 +100,7 @@ import {
   AlertCircle,
   Menu,
   ChevronDown,
+  CreditCard,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -1046,6 +1048,13 @@ export default function EmployeeAppointmentDetailPage() {
               <ClipboardList className="h-4 w-4 mr-2" />
               Lộ trình điều trị
             </TabsTrigger>
+            <TabsTrigger
+              value="payment"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Thanh toán
+            </TabsTrigger>
           </TabsList>
 
           {/* Appointment Details Tab */}
@@ -1521,6 +1530,27 @@ export default function EmployeeAppointmentDetailPage() {
                   <p className="text-muted-foreground mb-4">
                     Lịch hẹn này chưa được liên kết với lộ trình điều trị nào.
                   </p>
+                </div>
+              </section>
+            )}
+          </TabsContent>
+
+          {/* Payment Tab */}
+          <TabsContent value="payment">
+            {appointment ? (
+              <PaymentTab
+                appointmentId={appointment.appointmentId || 0}
+                appointmentCode={appointment.appointmentCode}
+                patientCode={appointment.patient?.patientCode}
+                treatmentPlanId={undefined} // AppointmentDetailDTO doesn't have treatmentPlanId
+                treatmentPlanCode={appointment.linkedTreatmentPlanCode || undefined}
+                appointmentServices={appointment.services || []}
+              />
+            ) : (
+              <section className="bg-card rounded-lg border p-6">
+                <div className="text-center py-12">
+                  <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Đang tải thông tin lịch hẹn...</p>
                 </div>
               </section>
             )}

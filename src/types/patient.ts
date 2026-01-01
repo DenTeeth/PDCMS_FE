@@ -63,6 +63,7 @@ export interface CreatePatientWithAccountRequest {
   allergies?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
 }
 
 /**

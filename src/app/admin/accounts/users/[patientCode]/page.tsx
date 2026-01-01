@@ -161,11 +161,11 @@ export default function PatientDetailPage() {
     try {
       setDeleting(true);
       await patientService.deletePatient(patientCode);
-      toast.success('Patient deleted successfully');
+      toast.success('Xóa bệnh nhân thành công');
       router.push('/admin/accounts/users');
     } catch (error: any) {
       console.error('Failed to delete patient:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete patient');
+      toast.error(error.response?.data?.message || 'Không thể xóa bệnh nhân');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -255,18 +255,18 @@ export default function PatientDetailPage() {
 
       // Only update if there are changes
       if (Object.keys(payload).length === 0) {
-        toast.info('No changes to update');
+        toast.info('Không có thay đổi để cập nhật');
         setShowEditModal(false);
         return;
       }
 
       await patientService.updatePatient(patientCode, payload);
-      toast.success('Patient updated successfully');
+      toast.success('Cập nhật bệnh nhân thành công');
       setShowEditModal(false);
       fetchPatientDetails(); // Refresh patient details
     } catch (error: any) {
       console.error('Failed to update patient:', error);
-      toast.error(error.response?.data?.message || 'Failed to update patient');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật bệnh nhân');
     } finally {
       setUpdating(false);
     }
@@ -281,11 +281,11 @@ export default function PatientDetailPage() {
   const getGenderLabel = (gender?: string) => {
     switch (gender) {
       case 'MALE':
-        return 'Male';
+        return 'Nam';
       case 'FEMALE':
-        return 'Female';
+        return 'Nữ';
       case 'OTHER':
-        return 'Other';
+        return 'Khác';
       default:
         return gender || 'N/A';
     }
@@ -296,7 +296,7 @@ export default function PatientDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading patient details...</p>
+          <p className="text-gray-600">Đang tải thông tin bệnh nhân...</p>
         </div>
       </div>
     );
@@ -307,9 +307,9 @@ export default function PatientDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-          <p className="text-gray-600">Patient not found</p>
+          <p className="text-gray-600">Không tìm thấy bệnh nhân</p>
           <Button onClick={() => router.push('/admin/accounts/users')} className="mt-4">
-            Back to Patients
+            Quay lại danh sách bệnh nhân
           </Button>
         </div>
       </div>
@@ -337,7 +337,7 @@ export default function PatientDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={openEditModal}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            Chỉnh sửa
           </Button>
           <Button
             variant="destructive"
@@ -345,7 +345,7 @@ export default function PatientDetailPage() {
             disabled={deleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            Xóa
           </Button>
         </div>
       </div>
@@ -847,15 +847,15 @@ export default function PatientDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Delete Patient
+                Xóa bệnh nhân
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 mb-4">
-                Are you sure you want to delete patient <strong>{patient.fullName}</strong> ({patient.patientCode})?
+                Bạn có chắc chắn muốn xóa bệnh nhân <strong>{patient.fullName}</strong> ({patient.patientCode})?
               </p>
               <p className="text-sm text-gray-600 mb-6">
-                This will set the patient status to inactive. This action can be reversed later.
+                Hành động này sẽ đặt trạng thái bệnh nhân thành không hoạt động. Hành động này có thể được hoàn tác sau.
               </p>
               <div className="flex gap-3 justify-end">
                 <Button
@@ -863,7 +863,7 @@ export default function PatientDetailPage() {
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
                   variant="destructive"
@@ -878,7 +878,7 @@ export default function PatientDetailPage() {
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      Xóa
                     </>
                   )}
                 </Button>

@@ -39,6 +39,7 @@ import { Specialization } from '@/types/specialization';
 import { specializationService } from '@/services/specializationService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRoleDisplayName } from '@/utils/roleFormatter';
+import { calculateAge } from '@/utils/vitalSignsAssessment';
 
 // ==================== MAIN COMPONENT ====================
 export default function EmployeesPage() {
@@ -80,6 +81,12 @@ export default function EmployeesPage() {
   // Specializations list
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [loadingSpecializations, setLoadingSpecializations] = useState(false);
+
+  // Age validation state
+  const [employeeAge, setEmployeeAge] = useState<number | null>(null);
+  const [employeeAgeError, setEmployeeAgeError] = useState<string | null>(null);
+  const [editEmployeeAge, setEditEmployeeAge] = useState<number | null>(null);
+  const [editEmployeeAgeError, setEditEmployeeAgeError] = useState<string | null>(null);
 
   // Create employee modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -219,14 +226,20 @@ export default function EmployeesPage() {
 
       const allEmployees = allEmployeesResponse.content || [];
       const activeCount = allEmployees.filter(e => e.isActive === true).length;
-      const inactiveCount = allEmployees.filter(e => e.isActive === false || e.isActive === null || e.isActive === undefined).length;
+      // Inactive = false, null, or undefined (anything that is not explicitly true)
+      const inactiveCount = allEmployees.filter(e => e.isActive !== true).length;
 
       console.log('📊 Stats calculated:', {
         total: allEmployees.length,
         active: activeCount,
         inactive: inactiveCount,
-        nullOrUndefined: allEmployees.filter(e => e.isActive === null || e.isActive === undefined).length,
-        sample: allEmployees.slice(0, 3).map(e => ({ code: e.employeeCode, isActive: e.isActive }))
+        breakdown: {
+          true: allEmployees.filter(e => e.isActive === true).length,
+          false: allEmployees.filter(e => e.isActive === false).length,
+          null: allEmployees.filter(e => e.isActive === null).length,
+          undefined: allEmployees.filter(e => e.isActive === undefined).length,
+        },
+        sample: allEmployees.slice(0, 5).map(e => ({ code: e.employeeCode, isActive: e.isActive, fullName: e.fullName }))
       });
 
       setTotalActive(activeCount);
@@ -240,6 +253,48 @@ export default function EmployeesPage() {
     }
   };
 
+  // Calculate age when dateOfBirth changes (create form)
+  useEffect(() => {
+    if (formData.dateOfBirth) {
+      try {
+        const age = calculateAge(formData.dateOfBirth);
+        setEmployeeAge(age);
+        if (age < 18) {
+          setEmployeeAgeError('Nhân viên phải đủ 18 tuổi trở lên');
+        } else {
+          setEmployeeAgeError(null);
+        }
+      } catch (error) {
+        setEmployeeAge(null);
+        setEmployeeAgeError(null);
+      }
+    } else {
+      setEmployeeAge(null);
+      setEmployeeAgeError(null);
+    }
+  }, [formData.dateOfBirth]);
+
+  // Calculate age when dateOfBirth changes (edit form)
+  useEffect(() => {
+    if (editFormData.dateOfBirth) {
+      try {
+        const age = calculateAge(editFormData.dateOfBirth);
+        setEditEmployeeAge(age);
+        if (age < 18) {
+          setEditEmployeeAgeError('Nhân viên phải đủ 18 tuổi trở lên');
+        } else {
+          setEditEmployeeAgeError(null);
+        }
+      } catch (error) {
+        setEditEmployeeAge(null);
+        setEditEmployeeAgeError(null);
+      }
+    } else {
+      setEditEmployeeAge(null);
+      setEditEmployeeAgeError(null);
+    }
+  }, [editFormData.dateOfBirth]);
+
   // ==================== CREATE EMPLOYEE ====================
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,11 +307,17 @@ export default function EmployeesPage() {
     console.log('👔 Selected role:', selectedRoleForValidation);
     console.log('🔧 Requires specialization:', requiresSpecializationForValidation);
 
+    // Age validation
+    if (employeeAge !== null && employeeAge < 18) {
+      toast.error('Nhân viên phải đủ 18 tuổi trở lên');
+      return;
+    }
+
     // Validation - All roles need basic fields + account credentials
     if (!formData.roleId || !formData.firstName || !formData.lastName ||
       !formData.username || !formData.email || !formData.password) {
       console.error('❌ Validation failed: Missing required fields');
-      toast.error('Please fill in all required fields');
+      toast.error('Vui lòng điền đầy đủ các trường bắt buộc');
       return;
     }
 
@@ -330,7 +391,15 @@ export default function EmployeesPage() {
       console.error('❌ Failed to create employee:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
-      toast.error(error.response?.data?.message || 'Failed to create employee');
+      
+      // Handle age validation error from BE
+      if (error.response?.data?.errorCode === 'agebelow18' || 
+          error.response?.data?.message?.includes('18 tuổi') ||
+          error.response?.data?.message?.includes('underage')) {
+        toast.error('Nhân viên phải đủ 18 tuổi trở lên');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể tạo nhân viên');
+      }
     } finally {
       setCreating(false);
     }
@@ -388,7 +457,15 @@ export default function EmployeesPage() {
       fetchEmployees(); // Refresh list
     } catch (error: any) {
       console.error('Failed to update employee:', error);
-      toast.error(error.response?.data?.message || 'Failed to update employee');
+      
+      // Handle age validation error from BE
+      if (error.response?.data?.errorCode === 'agebelow18' || 
+          error.response?.data?.message?.includes('18 tuổi') ||
+          error.response?.data?.message?.includes('underage')) {
+        toast.error('Nhân viên phải đủ 18 tuổi trở lên');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể cập nhật nhân viên');
+      }
     } finally {
       setUpdating(false);
     }
@@ -589,7 +666,7 @@ export default function EmployeesPage() {
           /* Table View */
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-visible">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">
                     <tr>
@@ -618,12 +695,7 @@ export default function EmployeesPage() {
                       <tr key={employee.employeeCode} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-blue-600" />
-                              </div>
-                            </div>
-                            <div className="ml-4">
+                            <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {employee.fullName}
                               </div>
@@ -965,14 +1037,26 @@ export default function EmployeesPage() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="dateOfBirth" className="mb-1.5 block text-sm">Ngày tháng năm sinh</Label>
+                              <Label htmlFor="dateOfBirth" className="mb-1.5 block text-sm">
+                                Ngày tháng năm sinh {employeeAge !== null && employeeAge < 18 && <span className="text-red-500">*</span>}
+                              </Label>
                               <Input
                                 id="dateOfBirth"
                                 type="date"
                                 value={formData.dateOfBirth}
                                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                                 disabled={creating}
+                                className={employeeAgeError ? 'border-red-500' : ''}
                               />
+                              {employeeAgeError && (
+                                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  {employeeAgeError}
+                                </p>
+                              )}
+                              {employeeAge !== null && employeeAge >= 18 && (
+                                <p className="text-sm text-green-600 mt-1">✓ Tuổi hợp lệ ({employeeAge} tuổi)</p>
+                              )}
                             </div>
                             <div>
                               <Label htmlFor="address" className="mb-1.5 block text-sm">Địa chỉ</Label>
@@ -1128,7 +1212,11 @@ export default function EmployeesPage() {
                     >
                       Hủy
                     </Button>
-                    <Button type="submit" disabled={creating || !formData.roleId}>
+                    <Button 
+                      type="submit" 
+                      disabled={creating || !formData.roleId || (employeeAge !== null && employeeAge < 18)}
+                      title={employeeAge !== null && employeeAge < 18 ? 'Nhân viên phải đủ 18 tuổi trở lên' : ''}
+                    >
                       {creating ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1173,7 +1261,7 @@ export default function EmployeesPage() {
 
                   {/* Role Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="edit-role">Change Role</Label>
+                    <Label htmlFor="edit-role">Thay đổi vai trò</Label>
                     <CustomSelect
                       options={roles.map((role) => ({
                         value: role.roleId,
@@ -1182,7 +1270,7 @@ export default function EmployeesPage() {
                       }))}
                       value={editFormData.roleId}
                       onChange={(value: string) => setEditFormData({ ...editFormData, roleId: value })}
-                      placeholder="Select a role"
+                      placeholder="Chọn vai trò"
                     />
                     <p className="text-sm text-muted-foreground">
                       Cập nhật vai trò nhân viên nếu cần
@@ -1247,13 +1335,25 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="edit-dateOfBirth">Ngày tháng năm sinh</Label>
+                        <Label htmlFor="edit-dateOfBirth" className="mb-1.5 block text-sm">
+                          Ngày tháng năm sinh {editEmployeeAge !== null && editEmployeeAge < 18 && <span className="text-red-500">*</span>}
+                        </Label>
                         <Input
                           id="edit-dateOfBirth"
                           type="date"
                           value={editFormData.dateOfBirth}
                           onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })}
+                          className={editEmployeeAgeError ? 'border-red-500' : ''}
                         />
+                        {editEmployeeAgeError && (
+                          <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            {editEmployeeAgeError}
+                          </p>
+                        )}
+                        {editEmployeeAge !== null && editEmployeeAge >= 18 && (
+                          <p className="text-sm text-green-600 mt-1">✓ Tuổi hợp lệ ({editEmployeeAge} tuổi)</p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
@@ -1396,8 +1496,14 @@ export default function EmployeesPage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={updating || !canUpdate}
-                      title={!canUpdate ? "Bạn không có quyền cập nhật nhân viên" : ""}
+                      disabled={updating || !canUpdate || (editEmployeeAge !== null && editEmployeeAge < 18)}
+                      title={
+                        !canUpdate 
+                          ? "Bạn không có quyền cập nhật nhân viên" 
+                          : (editEmployeeAge !== null && editEmployeeAge < 18)
+                            ? 'Nhân viên phải đủ 18 tuổi trở lên'
+                            : ""
+                      }
                     >
                       {updating ? (
                         <>
