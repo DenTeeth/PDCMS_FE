@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { paymentService, PaymentResponse, PaymentMethod } from '@/services/paymentService';
 import { invoiceService } from '@/services/invoiceService';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formatters';
 import { format } from 'date-fns';
 
 // ==================== MAIN COMPONENT ====================
