@@ -166,6 +166,7 @@ export default function AppointmentFilters({
     IN_PROGRESS: 'Đang điều trị',
     COMPLETED: 'Hoàn thành',
     CANCELLED: 'Đã hủy',
+    CANCELLED_LATE: 'Hủy muộn',
     NO_SHOW: 'Không đến',
   };
 

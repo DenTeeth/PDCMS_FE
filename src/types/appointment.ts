@@ -24,7 +24,8 @@ export type AppointmentStatus =
     | 'CHECKED_IN'  // Đã check-in
     | 'IN_PROGRESS' // Đang điều trị
     | 'COMPLETED'   // Hoàn thành
-    | 'CANCELLED'   // Đã hủy
+    | 'CANCELLED'   // Đã hủy (>24h trước giờ hẹn)
+    | 'CANCELLED_LATE' // Hủy muộn (≤24h trước giờ hẹn)
     | 'NO_SHOW';    // Không đến
 
 // Legacy AppointmentFilter (deprecated - use AppointmentFilterCriteria)
@@ -173,18 +174,20 @@ export interface AppointmentConflict {
  * - CHECKED_IN: Orange/Amber (patient has arrived, waiting)
  * - IN_PROGRESS: Purple (actively being treated)
  * - COMPLETED: Green (successfully completed)
- * - CANCELLED: Red (cancelled appointments)
+ * - CANCELLED: Red (cancelled appointments >24h before)
+ * - CANCELLED_LATE: Orange/Warning (cancelled within 24h - affects consecutiveNoShows)
  * - NO_SHOW: Gray (patient didn't show up)
  * 
  * Matches BE AppointmentStatus enum:
- * - SCHEDULED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+ * - SCHEDULED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, CANCELLED_LATE, NO_SHOW
  */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; text: string }> = {
     SCHEDULED: { bg: '#3b82f6', border: '#2563eb', text: 'Đã đặt lịch' },      // Blue - upcoming
     CHECKED_IN: { bg: '#f59e0b', border: '#d97706', text: 'Đã check-in' },      // Orange - arrived
     IN_PROGRESS: { bg: '#8b5cf6', border: '#7c3aed', text: 'Đang điều trị' },   // Purple - active
     COMPLETED: { bg: '#22c55e', border: '#16a34a', text: 'Hoàn thành' },       // Green - success
-    CANCELLED: { bg: '#ef4444', border: '#dc2626', text: 'Đã hủy' },            // Red - cancelled
+    CANCELLED: { bg: '#ef4444', border: '#dc2626', text: 'Đã hủy' },            // Red - cancelled (>24h)
+    CANCELLED_LATE: { bg: '#f97316', border: '#ea580c', text: 'Hủy muộn' },    // Orange/Warning - cancelled (≤24h)
     NO_SHOW: { bg: '#6b7280', border: '#4b5563', text: 'Không đến' },           // Gray - no-show
 };
 
@@ -278,7 +281,7 @@ export function resolveAppointmentStatus(
             return 'SCHEDULED';
         }
         // Other computedStatus values map directly to AppointmentStatus
-        if (['CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(computedStatus)) {
+        if (['CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_LATE', 'NO_SHOW'].includes(computedStatus)) {
             return computedStatus as AppointmentStatus;
         }
     }
@@ -440,11 +443,12 @@ export const APPOINTMENT_REASON_CODE_LABELS: Record<AppointmentReasonCode, strin
 
 // State Machine: Valid next statuses for each current status
 export const APPOINTMENT_STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
-    SCHEDULED: ['CHECKED_IN', 'CANCELLED', 'NO_SHOW'],
-    CHECKED_IN: ['IN_PROGRESS', 'CANCELLED'],
-    IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+    SCHEDULED: ['CHECKED_IN', 'CANCELLED', 'CANCELLED_LATE', 'NO_SHOW'],
+    CHECKED_IN: ['IN_PROGRESS', 'CANCELLED', 'CANCELLED_LATE'],
+    IN_PROGRESS: ['COMPLETED', 'CANCELLED', 'CANCELLED_LATE'],
     COMPLETED: [], // Terminal state
     CANCELLED: [], // Terminal state
+    CANCELLED_LATE: [], // Terminal state
     NO_SHOW: [], // Terminal state
 };
 

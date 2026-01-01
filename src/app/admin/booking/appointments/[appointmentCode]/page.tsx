@@ -664,8 +664,8 @@ export default function AdminAppointmentDetailPage() {
       return;
     }
 
-    // Validate: Require reasonCode and notes for CANCELLED status
-    if (selectedStatus === 'CANCELLED') {
+    // Validate: Require reasonCode and notes for CANCELLED and CANCELLED_LATE status
+    if (selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') {
       if (!statusUpdateReason) {
         toast.error('Lý do hủy bắt buộc', {
           description: 'Vui lòng chọn lý do hủy lịch hẹn',
@@ -685,7 +685,7 @@ export default function AdminAppointmentDetailPage() {
 
       const request: UpdateAppointmentStatusRequest = {
         status: selectedStatus,
-        reasonCode: selectedStatus === 'CANCELLED' ? (statusUpdateReason as AppointmentReasonCode) : undefined,
+        reasonCode: (selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') ? (statusUpdateReason as AppointmentReasonCode) : undefined,
         notes: statusUpdateNotes || null,
       };
 
@@ -722,7 +722,7 @@ export default function AdminAppointmentDetailPage() {
       // Check if appointment might be linked to treatment plan items
       // (BE auto-updates plan items when appointment status changes)
       const isPlanRelated = updated.services && updated.services.length > 0;
-      const statusChangesPlanItems = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(selectedStatus);
+      const statusChangesPlanItems = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_LATE'].includes(selectedStatus);
 
       if (isPlanRelated && statusChangesPlanItems) {
         toast.success('Cập nhật trạng thái thành công', {
@@ -1488,12 +1488,12 @@ export default function AdminAppointmentDetailPage() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
-                {selectedStatus === 'CANCELLED' ? 'Hủy Lịch Hẹn' : 'Cập Nhật Trạng Thái'}
+                {selectedStatus === 'CANCELLED' ? 'Hủy Lịch Hẹn' : selectedStatus === 'CANCELLED_LATE' ? 'Hủy Muộn Lịch Hẹn' : 'Cập Nhật Trạng Thái'}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              {/* Reason Code - Required for CANCELLED */}
-              {selectedStatus === 'CANCELLED' && (
+              {/* Reason Code - Required for CANCELLED and CANCELLED_LATE */}
+              {(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') && (
                 <div className="space-y-1">
                   <Label htmlFor="reasonCode">
                     Lý do hủy <span className="text-red-500">*</span>
@@ -1522,19 +1522,21 @@ export default function AdminAppointmentDetailPage() {
               {/* Notes */}
               <div className="space-y-1">
                 <Label htmlFor="statusNotes">
-                  Ghi chú {selectedStatus === 'CANCELLED' ? '(Bắt buộc)' : '(Tùy chọn)'}
+                  Ghi chú {(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') ? '(Bắt buộc)' : '(Tùy chọn)'}
                 </Label>
                 <Textarea
                   id="statusNotes"
                   value={statusUpdateNotes}
                   onChange={(e) => setStatusUpdateNotes(e.target.value)}
-                  placeholder={selectedStatus === 'CANCELLED' ? 'Nhập ghi chú về lý do hủy...' : 'Thêm ghi chú (nếu có)...'}
+                  placeholder={(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') ? 'Nhập ghi chú về lý do hủy...' : 'Thêm ghi chú (nếu có)...'}
                   className="resize-none"
-                  rows={selectedStatus === 'CANCELLED' ? 4 : 3}
+                  rows={(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') ? 4 : 3}
                 />
-                {selectedStatus === 'CANCELLED' && (
+                {(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Vui lòng cung cấp thông tin chi tiết về lý do hủy
+                    {selectedStatus === 'CANCELLED_LATE' 
+                      ? 'Lịch hẹn bị hủy trong vòng 24 giờ trước giờ hẹn sẽ ảnh hưởng đến số lần không đến liên tiếp của bệnh nhân.'
+                      : 'Vui lòng cung cấp thông tin chi tiết về lý do hủy'}
                   </p>
                 )}
               </div>
@@ -1558,10 +1560,10 @@ export default function AdminAppointmentDetailPage() {
                   updating ||
                   !selectedStatus ||
                   selectedStatus === appointment.status ||
-                  (selectedStatus === 'CANCELLED' && (!statusUpdateReason || !statusUpdateNotes.trim())) ||
+                  ((selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') && (!statusUpdateReason || !statusUpdateNotes.trim())) ||
                   (selectedStatus && !getValidNextStatuses(appointment.status).includes(selectedStatus))
                 }
-                variant={selectedStatus === 'CANCELLED' ? 'destructive' : 'default'}
+                variant={(selectedStatus === 'CANCELLED' || selectedStatus === 'CANCELLED_LATE') ? 'destructive' : 'default'}
               >
                 {updating ? (
                   <>
@@ -1571,7 +1573,7 @@ export default function AdminAppointmentDetailPage() {
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    {selectedStatus === 'CANCELLED' ? 'Xác nhận hủy' : 'Cập nhật trạng thái'}
+                    {selectedStatus === 'CANCELLED' ? 'Xác nhận hủy' : selectedStatus === 'CANCELLED_LATE' ? 'Xác nhận hủy muộn' : 'Cập nhật trạng thái'}
                   </>
                 )}
               </Button>
