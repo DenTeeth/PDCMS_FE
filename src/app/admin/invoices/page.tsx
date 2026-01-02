@@ -50,7 +50,7 @@ export default function InvoicesPage() {
     if (canView) {
       fetchInvoices();
     }
-  }, [canView, patientIdFilter]);
+  }, [canView, patientIdFilter, searchTerm]);
 
   const fetchInvoices = async () => {
     try {
@@ -83,12 +83,17 @@ export default function InvoicesPage() {
         }
       }
 
-      // Otherwise, we need a way to get all invoices
-      // Since BE doesn't have a "get all invoices" endpoint,
-      // we'll show a message to filter by patient or search by invoice code
-      setInvoices([]);
-      if (!searchTerm && !patientIdFilter) {
-        toast.info('Vui lòng nhập Invoice Code hoặc Patient ID để tìm kiếm hóa đơn');
+      // Otherwise, fetch all invoices
+      try {
+        const data = await invoiceService.getAllInvoices();
+        setInvoices(data);
+      } catch (error: any) {
+        // If getAllInvoices fails, show empty list with message
+        console.warn('Could not fetch all invoices, showing empty list');
+        setInvoices([]);
+        if (!searchTerm && !patientIdFilter) {
+          toast.info('Không thể tải danh sách hóa đơn. Vui lòng thử tìm kiếm theo Invoice Code hoặc Patient ID');
+        }
       }
     } catch (error: any) {
       console.error('Error fetching invoices:', error);

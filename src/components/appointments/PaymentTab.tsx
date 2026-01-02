@@ -107,94 +107,39 @@ export default function PaymentTab({
       setLoading(true);
       const data = await invoiceService.getInvoicesByAppointment(appointmentId);
       
-      console.log('📋 Fetched invoices from BE:', {
-        appointmentId,
-        appointmentCode,
-        appointmentServices: appointmentServices.map(s => s.serviceCode),
-        totalInvoices: data.length,
-        invoices: data.map(inv => ({
-          invoiceCode: inv.invoiceCode,
-          invoiceType: inv.invoiceType,
-          appointmentId: inv.appointmentId,
-          appointmentCode: inv.appointmentCode,
-          itemsCount: inv.items?.length || 0,
-          items: inv.items?.map(item => ({
-            serviceCode: item.serviceCode,
-            serviceName: item.serviceName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })),
-        })),
-      });
+      // BE has fixed the invoice data mismatch issue (2026-01-02):
+      // - API only returns invoices for the correct appointment (appointment_id + invoice_type = APPOINTMENT)
+      // - Invoice items match appointment services
+      // - Invoice creator is bound to appointment's doctor
+      // We still keep basic safety checks for data integrity
       
-      // Filter invoices: Only show APPOINTMENT type invoices that match this appointment
-      // CRITICAL: BE must ensure data integrity - appointmentCode, patientId, and items must match
+      // Filter invoices: Basic safety checks (BE should already ensure correctness)
       const filteredInvoices = data.filter((invoice) => {
-        // Only show APPOINTMENT type invoices
+        // Only show APPOINTMENT type invoices (BE should already filter this, but keep as safety check)
         if (invoice.invoiceType !== 'APPOINTMENT') {
-          console.log(`❌ Filtered out invoice ${invoice.invoiceCode}: type is ${invoice.invoiceType}, not APPOINTMENT`);
+          console.warn(`⚠️ Invoice ${invoice.invoiceCode} has type ${invoice.invoiceType}, expected APPOINTMENT`);
           return false;
         }
         
-        // CRITICAL: Validate appointmentId matches (primary check)
+        // Safety check: Validate appointmentId matches (should always match after BE fix)
         if (invoice.appointmentId !== appointmentId) {
-          console.error(`🚨 CRITICAL: Invoice ${invoice.invoiceCode} has different appointmentId: ${invoice.appointmentId} vs ${appointmentId}`);
+          console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has appointmentId ${invoice.appointmentId} but expected ${appointmentId}`);
           return false;
         }
         
-        // Validate appointmentCode matches (BE should populate this correctly)
+        // Safety check: Validate appointmentCode matches if provided
         if (invoice.appointmentCode && invoice.appointmentCode !== appointmentCode) {
-          console.error(`🚨 CRITICAL: Invoice ${invoice.invoiceCode} has different appointmentCode: ${invoice.appointmentCode} vs ${appointmentCode}`);
+          console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has appointmentCode ${invoice.appointmentCode} but expected ${appointmentCode}`);
           return false;
         }
         
-        // CRITICAL: Validate patientId matches appointment patientId
-        // This is a data integrity check - invoice patient must match appointment patient
+        // Safety check: Validate patientId matches if provided
         if (patientId && invoice.patientId !== patientId) {
-          console.error(`🚨 CRITICAL DATA MISMATCH: Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}`);
-          console.error(`   Invoice patientName: ${invoice.patientName}`);
-          console.error(`   This indicates BE data integrity issue - invoice should be filtered out or fixed`);
-          // Still show invoice but log error for BE team to investigate
-          // TODO: After BE fix, we can filter this out
+          console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}`);
+          // Still show invoice but log error (should not happen after BE fix)
         }
         
-        // Validate services if available (extra safety check)
-        // Note: Invoice might have additional services added manually, so we only warn, not filter
-        if (appointmentServices.length > 0 && invoice.items && invoice.items.length > 0) {
-          const appointmentServiceCodes = new Set(appointmentServices.map(s => s.serviceCode));
-          const invoiceServiceCodes = invoice.items
-            .map(item => item.serviceCode)
-            .filter(Boolean) as string[];
-          
-          // Check if invoice has services NOT in appointment
-          const invalidServices = invoiceServiceCodes.filter(
-            code => !appointmentServiceCodes.has(code)
-          );
-          
-          if (invalidServices.length > 0) {
-            console.warn(`⚠️ Invoice ${invoice.invoiceCode} has services not in appointment:`, {
-              invalidServices,
-              invoiceServices: invoiceServiceCodes,
-              appointmentServices: Array.from(appointmentServiceCodes),
-            });
-            // Don't filter out - might be valid if admin added extra services manually
-            // But log warning for BE team to investigate data integrity
-          }
-        }
-        
-        console.log(`✅ Invoice ${invoice.invoiceCode} passed filters`, {
-          appointmentId: invoice.appointmentId,
-          appointmentCode: invoice.appointmentCode,
-          patientId: invoice.patientId,
-          patientName: invoice.patientName,
-        });
         return true;
-      });
-      
-      console.log('📊 Filtered invoices result:', {
-        before: data.length,
-        after: filteredInvoices.length,
-        filtered: filteredInvoices.map(inv => inv.invoiceCode),
       });
       
       setInvoices(filteredInvoices);

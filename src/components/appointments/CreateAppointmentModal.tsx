@@ -645,6 +645,12 @@ export default function CreateAppointmentModal({
         return true;
       });
 
+      console.log('📅 loadAllDoctorShiftsForStep2 - Starting:', {
+        selectedMonth: format(selectedMonth, 'yyyy-MM'),
+        totalDoctors: allDoctors.length,
+        doctors: allDoctors.map(d => ({ code: d.employeeCode, id: d.employeeId, name: d.fullName })),
+      });
+
       const shiftsMap = new Map<string, EmployeeShift[]>();
 
       // Load shifts for each doctor in parallel
@@ -654,34 +660,70 @@ export default function CreateAppointmentModal({
       const startDate = subMonths(monthStart, 1); // 1 month before
       const endDate = addMonths(monthEnd, 1); // 1 month after
 
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+
+      console.log('📅 loadAllDoctorShiftsForStep2 - Date range:', {
+        selectedMonth: format(selectedMonth, 'yyyy-MM'),
+        monthStart: format(monthStart, 'yyyy-MM-dd'),
+        monthEnd: format(monthEnd, 'yyyy-MM-dd'),
+        startDate: startDateStr,
+        endDate: endDateStr,
+        rangeDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+      });
+
       await Promise.all(
         allDoctors.map(async (doctor) => {
-          // Use format from date-fns to get local date string (YYYY-MM-DD)
-          // This avoids timezone issues with toISOString()
-          const startDateStr = format(startDate, 'yyyy-MM-dd');
-          const endDateStr = format(endDate, 'yyyy-MM-dd');
-
           const employeeId = parseInt(doctor.employeeId, 10);
           if (!isNaN(employeeId)) {
             try {
+              console.log(`📅 Loading shifts for doctor ${doctor.employeeCode} (ID: ${employeeId}):`, {
+                startDate: startDateStr,
+                endDate: endDateStr,
+                status: ShiftStatus.SCHEDULED,
+              });
+
               const shifts = await EmployeeShiftService.getShifts({
                 start_date: startDateStr,
                 end_date: endDateStr,
                 employee_id: employeeId,
                 status: ShiftStatus.SCHEDULED,
               });
+
+              console.log(`✅ Loaded shifts for doctor ${doctor.employeeCode}:`, {
+                count: shifts.length,
+                shifts: shifts.map(s => ({
+                  date: s.workDate,
+                  shiftName: s.workShift?.shiftName,
+                  status: s.status,
+                })),
+              });
+
               shiftsMap.set(doctor.employeeCode, shifts);
             } catch (error) {
-              console.error(`Failed to load shifts for doctor ${doctor.employeeCode}:`, error);
+              console.error(`❌ Failed to load shifts for doctor ${doctor.employeeCode}:`, error);
               shiftsMap.set(doctor.employeeCode, []);
             }
+          } else {
+            console.warn(`⚠️ Invalid employeeId for doctor ${doctor.employeeCode}:`, doctor.employeeId);
+            shiftsMap.set(doctor.employeeCode, []);
           }
         })
       );
 
+      console.log('📅 loadAllDoctorShiftsForStep2 - Final result:', {
+        totalDoctors: allDoctors.length,
+        shiftsMapSize: shiftsMap.size,
+        shiftsByDoctor: Array.from(shiftsMap.entries()).map(([code, shifts]) => ({
+          doctorCode: code,
+          shiftCount: shifts.length,
+          dates: [...new Set(shifts.map(s => format(new Date(s.workDate), 'yyyy-MM-dd')))],
+        })),
+      });
+
       setAllEmployeeShifts(shiftsMap);
     } catch (error: any) {
-      console.error('Failed to load doctor shifts:', error);
+      console.error('❌ Failed to load doctor shifts:', error);
       setAllEmployeeShifts(new Map());
     } finally {
       setLoadingShifts(false);
@@ -785,10 +827,34 @@ export default function CreateAppointmentModal({
   // Check if a date has any doctors with shifts (for Step 2 - all doctors)
   const hasDoctorsWithShifts = (dateString: string): boolean => {
     const allDoctors = getAllDoctors();
-    return allDoctors.some((doctor) => {
+    const hasShifts = allDoctors.some((doctor) => {
       const shifts = getShiftsForDoctorAndDate(doctor.employeeCode, dateString);
+      if (shifts.length > 0) {
+        console.log(`✅ Date ${dateString} has shifts for doctor ${doctor.employeeCode}:`, {
+          shiftCount: shifts.length,
+          shifts: shifts.map(s => ({
+            date: s.workDate,
+            shiftName: s.workShift?.shiftName,
+          })),
+        });
+      }
       return shifts.length > 0;
     });
+
+    if (!hasShifts) {
+      // Debug: Check if shifts exist in map but not matching date
+      const allShiftsInMap = Array.from(allEmployeeShifts.entries()).flatMap(([code, shifts]) =>
+        shifts.map(s => ({ doctorCode: code, date: format(new Date(s.workDate), 'yyyy-MM-dd'), shift: s }))
+      );
+      const shiftsForDate = allShiftsInMap.filter(s => s.date === dateString);
+      if (shiftsForDate.length > 0) {
+        console.warn(`⚠️ Date ${dateString} has ${shiftsForDate.length} shifts in map but hasDoctorsWithShifts returned false:`, {
+          shifts: shiftsForDate,
+        });
+      }
+    }
+
+    return hasShifts;
   };
 
   // Get doctors with shifts for a specific date (for Step 2 - display doctor list)

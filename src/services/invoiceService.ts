@@ -212,6 +212,44 @@ class InvoiceService {
   }
 
   /**
+   * Get all invoices
+   * BE Requirements:
+   * - Endpoint: GET /api/v1/invoices
+   * - Permission: VIEW_INVOICE_ALL
+   * 
+   * @param params Optional query parameters (page, size, sort, etc.)
+   * @returns List of all invoices
+   */
+  async getAllInvoices(params?: {
+    page?: number;
+    size?: number;
+    sort?: string;
+    status?: InvoicePaymentStatus;
+    type?: InvoiceType;
+  }): Promise<InvoiceResponse[]> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.page !== undefined) queryParams.append('page', params.page.toString());
+      if (params?.size !== undefined) queryParams.append('size', params.size.toString());
+      if (params?.sort) queryParams.append('sort', params.sort);
+      if (params?.status) queryParams.append('status', params.status);
+      if (params?.type) queryParams.append('type', params.type);
+
+      const url = queryParams.toString() 
+        ? `${this.endpoint}?${queryParams.toString()}`
+        : this.endpoint;
+
+      const response = await axiosInstance.get<InvoiceResponse[]>(url);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Get all invoices error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get unpaid invoices by patient
    * BE Requirements:
    * - Endpoint: GET /api/v1/invoices/patient/{patientId}/unpaid
