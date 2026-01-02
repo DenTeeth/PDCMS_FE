@@ -284,6 +284,12 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           icon: faListCheck,
           requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL'],
         },
+        {
+          name: 'Hóa đơn',
+          href: '/admin/invoices',
+          icon: faReceipt,
+          requiredPermissions: ['VIEW_INVOICE_ALL'],
+        },
       ],
     },
     {

@@ -101,28 +101,67 @@ export class EmployeeShiftService {
     });
 
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<PaginatedResponse<EmployeeShiftApiResponse>>(url);
+    
+    // ⚠️ FIX: Handle pagination to load ALL shifts, not just first page
+    const allShifts: EmployeeShift[] = [];
+    let currentPage = params?.page ?? 0;
+    const pageSize = params?.size ?? 100; // Increase default to reduce API calls
+    let totalPages = 1;
+    let hasMore = true;
 
-    console.log(' EmployeeShiftService.getShifts - Response:', {
-      status: response.status,
-      totalElements: response.data.totalElements,
-      totalPages: response.data.totalPages,
-      contentLength: response.data.content?.length || 0,
-      firstShift: response.data.content?.[0] || null,
-      allContent: response.data.content // ⭐ Log full data để debug
-    });
+    while (hasMore && currentPage < totalPages) {
+      const pageQueryParams = new URLSearchParams();
+      if (params?.start_date) pageQueryParams.append('start_date', params.start_date);
+      if (params?.end_date) pageQueryParams.append('end_date', params.end_date);
+      if (params?.employee_id) pageQueryParams.append('employee_id', params.employee_id.toString());
+      if (params?.status) pageQueryParams.append('status', params.status);
+      pageQueryParams.append('page', currentPage.toString());
+      pageQueryParams.append('size', pageSize.toString());
+      if (params?.sort) pageQueryParams.append('sort', params.sort);
 
-    // Convert API response to frontend format
-    const convertedShifts = (response.data.content || []).map(apiShift =>
-      this.convertApiResponse(apiShift)
-    );
+      const pageUrl = `${this.BASE_URL}?${pageQueryParams.toString()}`;
+      
+      try {
+        const response = await axios.get<PaginatedResponse<EmployeeShiftApiResponse>>(pageUrl);
+
+        console.log(`📅 EmployeeShiftService.getShifts - Page ${currentPage} response:`, {
+          status: response.status,
+          totalElements: response.data.totalElements,
+          totalPages: response.data.totalPages,
+          currentPage: response.data.number,
+          contentLength: response.data.content?.length || 0,
+          hasMore: !response.data.last,
+        });
+
+        // Convert API response to frontend format
+        const convertedShifts = (response.data.content || []).map(apiShift =>
+          this.convertApiResponse(apiShift)
+        );
 
     console.log('� Converted shifts:', {
       count: convertedShifts.length,
       shifts: convertedShifts
     });
 
-    return convertedShifts;
+        allShifts.push(...convertedShifts);
+        totalPages = response.data.totalPages;
+        hasMore = !response.data.last;
+        currentPage++;
+
+        console.log(`✅ Loaded page ${currentPage - 1}: ${convertedShifts.length} shifts (Total: ${allShifts.length}/${response.data.totalElements})`);
+      } catch (error: any) {
+        console.error(`❌ Failed to load page ${currentPage}:`, error);
+        if (currentPage === (params?.page ?? 0)) throw error;
+        break;
+      }
+    }
+
+    console.log('✅ EmployeeShiftService.getShifts - Final result:', {
+      totalShifts: allShifts.length,
+      pagesLoaded: currentPage,
+    });
+
+    return allShifts;
   }
 
   /**
