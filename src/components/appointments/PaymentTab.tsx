@@ -103,40 +103,60 @@ export default function PaymentTab({
   }, [showCreateForm, appointmentServices, availableServices]);
 
   const fetchInvoices = async () => {
+    // Validate appointmentId before fetching
+    if (!appointmentId || appointmentId <= 0) {
+      console.warn('⚠️ PaymentTab: Invalid appointmentId, skipping invoice fetch:', appointmentId);
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      
+      console.log('🔍 PaymentTab: Fetching invoices for appointment:', {
+        appointmentId,
+        appointmentCode,
+        patientId,
+        patientCode,
+      });
+      
       const data = await invoiceService.getInvoicesByAppointment(appointmentId);
       
-      // BE has fixed the invoice data mismatch issue (2026-01-02):
-      // - API only returns invoices for the correct appointment (appointment_id + invoice_type = APPOINTMENT)
-      // - Invoice items match appointment services
-      // - Invoice creator is bound to appointment's doctor
-      // We still keep basic safety checks for data integrity
+      console.log('📦 PaymentTab: Received invoices from API:', {
+        count: data.length,
+        invoices: data.map(inv => ({
+          invoiceCode: inv.invoiceCode,
+          invoiceType: inv.invoiceType,
+          appointmentId: inv.appointmentId,
+          appointmentCode: inv.appointmentCode,
+          patientId: inv.patientId,
+        })),
+      });
       
-      // Filter invoices: Basic safety checks (BE should already ensure correctness)
+     
       const filteredInvoices = data.filter((invoice) => {
-        // Only show APPOINTMENT type invoices (BE should already filter this, but keep as safety check)
+        // Filter out non-APPOINTMENT invoices (temporary until BE fix is deployed)
         if (invoice.invoiceType !== 'APPOINTMENT') {
-          console.warn(`⚠️ Invoice ${invoice.invoiceCode} has type ${invoice.invoiceType}, expected APPOINTMENT`);
+          console.warn(`⚠️ Filtering out ${invoice.invoiceType} invoice: ${invoice.invoiceCode} (expected APPOINTMENT)`);
           return false;
         }
         
-        // Safety check: Validate appointmentId matches (should always match after BE fix)
+        // Validate appointmentId matches (should always match)
         if (invoice.appointmentId !== appointmentId) {
           console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has appointmentId ${invoice.appointmentId} but expected ${appointmentId}`);
           return false;
         }
         
-        // Safety check: Validate appointmentCode matches if provided
+        // Validate appointmentCode matches if provided
         if (invoice.appointmentCode && invoice.appointmentCode !== appointmentCode) {
           console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has appointmentCode ${invoice.appointmentCode} but expected ${appointmentCode}`);
           return false;
         }
         
-        // Safety check: Validate patientId matches if provided
+        // Log warning if patientId mismatch (but still show invoice)
         if (patientId && invoice.patientId !== patientId) {
-          console.error(`🚨 Data integrity issue: Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}`);
-          // Still show invoice but log error (should not happen after BE fix)
+          console.warn(`⚠️ Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}`);
         }
         
         return true;
@@ -219,8 +239,8 @@ export default function PaymentTab({
   const loadAvailableServices = async () => {
     try {
       setLoadingServices(true);
-      const services = await ServiceService.getAllServices();
-      setAvailableServices(services);
+      const response = await ServiceService.getServices({});
+      setAvailableServices(response.content || []);
     } catch (error: any) {
       console.error('Error loading services:', error);
       toast.error('Không thể tải danh sách dịch vụ');

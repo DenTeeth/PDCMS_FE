@@ -1487,6 +1487,7 @@ export default function AdminAppointmentDetailPage() {
                 appointmentId={appointment.appointmentId || 0}
                 appointmentCode={appointment.appointmentCode}
                 patientCode={appointment.patient?.patientCode}
+                patientId={appointment.patient?.patientId}
                 treatmentPlanId={undefined} // AppointmentDetailDTO doesn't have treatmentPlanId
                 treatmentPlanCode={appointment.linkedTreatmentPlanCode || undefined}
                 appointmentServices={appointment.services || []}
