@@ -327,7 +327,7 @@ export default function PatientDetailPage() {
             onClick={() => router.push('/admin/accounts/users')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Quay lại
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Chi tiết bệnh nhân</h1>
@@ -1160,7 +1160,7 @@ export default function PatientDetailPage() {
                     onClick={() => setShowEditModal(false)}
                     disabled={updating}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={updating}>
                     {updating ? (
