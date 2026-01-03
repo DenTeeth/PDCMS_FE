@@ -34,6 +34,7 @@ import {
   XCircle,
   Ban,
   HelpCircle,
+  Trash2,
 } from 'lucide-react';
 import { Patient, CreatePatientWithAccountRequest, UpdatePatientRequest } from '@/types/patient';
 import { patientService } from '@/services/patientService';
@@ -82,6 +83,11 @@ export default function PatientsPage() {
   // Create patient modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  // Delete patient states
+  const [deletingPatient, setDeletingPatient] = useState<Patient | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState<CreatePatientWithAccountRequest>({
     username: '', // Optional - BE auto-generates from email if not provided
     email: '', // Required - BE uses this to create account and send password setup email
@@ -387,6 +393,25 @@ export default function PatientsPage() {
       bookingBlockNotes: patient.bookingBlockNotes || '',
     });
     setShowEditModal(true);
+  };
+
+  // ==================== DELETE PATIENT ====================
+  const handleDeletePatient = async () => {
+    if (!deletingPatient) return;
+
+    try {
+      setDeleting(true);
+      await patientService.deletePatient(deletingPatient.patientCode);
+      toast.success('Xóa bệnh nhân thành công');
+      setShowDeleteConfirm(false);
+      setDeletingPatient(null);
+      fetchPatients(); // Refresh list
+    } catch (error: any) {
+      console.error('Failed to delete patient:', error);
+      toast.error(error.response?.data?.message || 'Không thể xóa bệnh nhân');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleUpdatePatient = async (e: React.FormEvent) => {
@@ -792,6 +817,20 @@ export default function PatientsPage() {
                             title={!canUpdate ? 'Bạn không có quyền chỉnh sửa bệnh nhân' : ''}
                           >
                             <Edit className="h-4 w-4 mr-1" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingPatient(patient);
+                              setShowDeleteConfirm(true);
+                            }}
+                            disabled={!canDelete}
+                            title={!canDelete ? "Bạn không có quyền xóa bệnh nhân" : ""}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
                           </Button>
                         </div>
                         {patient.hasAccount && patient.accountStatus === 'PENDING_VERIFICATION' && patient.email && (
@@ -1555,6 +1594,57 @@ export default function PatientsPage() {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && deletingPatient && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <Trash2 className="h-5 w-5" />
+                  Xóa bệnh nhân
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 mb-4">
+                  Bạn có chắc chắn muốn xóa bệnh nhân <strong>{deletingPatient.fullName}</strong> ({deletingPatient.patientCode})?
+                </p>
+                <p className="text-sm text-gray-600 mb-6">
+                  Hành động này sẽ đặt trạng thái bệnh nhân thành không hoạt động. Hành động này có thể được hoàn tác sau.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeletingPatient(null);
+                    }}
+                    disabled={deleting}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeletePatient}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang xóa...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Xóa
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
