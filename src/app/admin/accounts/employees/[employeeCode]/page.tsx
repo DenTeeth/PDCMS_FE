@@ -170,20 +170,20 @@ export default function EmployeeDetailPage() {
 
       // Only update if there are changes
       if (Object.keys(payload).length === 0) {
-        toast.info('No changes to update');
+        toast.info('Không có thay đổi để cập nhật');
         setShowEditModal(false);
         return;
       }
 
       await employeeService.updateEmployee(employee.employeeCode, payload);
-      toast.success('Employee updated successfully');
+      toast.success('Cập nhật nhân viên thành công');
       setShowEditModal(false);
 
       // Refresh employee details
       await fetchEmployeeDetails();
     } catch (error: any) {
       console.error('Failed to update employee:', error);
-      toast.error(error.response?.data?.message || 'Failed to update employee');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật nhân viên');
     } finally {
       setUpdating(false);
     }
@@ -197,7 +197,7 @@ export default function EmployeeDetailPage() {
       router.push('/admin/accounts/employees');
     } catch (error: any) {
       console.error('Failed to delete employee:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete employee');
+      toast.error(error.response?.data?.message || 'Không thể xóa nhân viên');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -226,9 +226,9 @@ export default function EmployeeDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-          <p className="text-gray-600">Employee not found</p>
+          <p className="text-gray-600">Không tìm thấy nhân viên</p>
           <Button onClick={() => router.push('/admin/accounts/employees')} className="mt-4">
-            Back to Employees
+            Quay lại danh sách nhân viên
           </Button>
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function EmployeeDetailPage() {
             onClick={() => router.push('/admin/accounts/employees')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Quay lại
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Chi tiết nhân viên</h1>
@@ -256,7 +256,7 @@ export default function EmployeeDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={openEditModal}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            Chỉnh sửa
           </Button>
           <Button
             variant="destructive"
@@ -264,7 +264,7 @@ export default function EmployeeDetailPage() {
             disabled={deleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            Xóa
           </Button>
         </div>
       </div>
@@ -301,12 +301,12 @@ export default function EmployeeDetailPage() {
               {employee.isActive ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Active
+                  Hoạt động
                 </>
               ) : (
                 <>
                   <XCircle className="h-4 w-4 mr-2" />
-                  Inactive
+                  Không hoạt động
                 </>
               )}
             </Badge>
@@ -432,16 +432,16 @@ export default function EmployeeDetailPage() {
                       <CheckCircle className="h-4 w-4 text-gray-400" />
                       <div className="flex-1">
                         <Label className="text-gray-600">Trạng thái tài khoản</Label>
-                        <Badge
-                          variant={employee.account.status === 'ACTIVE' ? 'default' : 'secondary'}
-                          className={
-                            employee.account.status === 'ACTIVE'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }
-                        >
-                          {employee.account.status}
-                        </Badge>
+                      <Badge
+                        variant={employee.account.status === 'ACTIVE' ? 'default' : 'secondary'}
+                        className={
+                          employee.account.status === 'ACTIVE'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }
+                      >
+                        {employee.account.status === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}
+                      </Badge>
                       </div>
                     </div>
                   </div>
@@ -510,7 +510,7 @@ export default function EmployeeDetailPage() {
                             : 'bg-red-100 text-red-700'
                         }
                       >
-                        {employee.isActive ? 'Active' : 'Inactive'}
+                        {employee.isActive ? 'Hoạt động' : 'Không hoạt động'}
                       </Badge>
                     </div>
                   </div>
@@ -551,11 +551,11 @@ export default function EmployeeDetailPage() {
                 <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Employee Code</p>
+                      <p className="text-sm text-muted-foreground">Mã nhân viên</p>
                       <p className="font-semibold">{employee.employeeCode}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Current Role</p>
+                      <p className="text-sm text-muted-foreground">Vai trò hiện tại</p>
                       <Badge>{getRoleDisplayName(employee.roleName)}</Badge>
                     </div>
                   </div>
@@ -590,22 +590,22 @@ export default function EmployeeDetailPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Label htmlFor="edit-firstName">Họ</Label>
                       <Input
                         id="edit-firstName"
                         value={editFormData.firstName}
                         onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        placeholder="Nhập tên"
+                        placeholder="Nhập họ"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Label htmlFor="edit-lastName">Tên</Label>
                       <Input
                         id="edit-lastName"
                         value={editFormData.lastName}
                         onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        placeholder="Nhập họ"
+                        placeholder="Nhập tên"
                       />
                     </div>
                   </div>
@@ -621,7 +621,7 @@ export default function EmployeeDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+                    <Label htmlFor="edit-dateOfBirth">Ngày tháng năm sinh</Label>
                     <Input
                       id="edit-dateOfBirth"
                       type="date"
@@ -631,7 +631,7 @@ export default function EmployeeDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-address">Address</Label>
+                    <Label htmlFor="edit-address">Địa chỉ</Label>
                     <Input
                       id="edit-address"
                       value={editFormData.address}
@@ -760,7 +760,7 @@ export default function EmployeeDetailPage() {
                       });
                     }}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button type="submit" disabled={updating}>
                     {updating ? (
@@ -789,15 +789,15 @@ export default function EmployeeDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Delete Employee
+                Xóa nhân viên
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 mb-4">
-                Are you sure you want to delete employee <strong>{employee.fullName}</strong> ({employee.employeeCode})?
+                Bạn có chắc chắn muốn xóa nhân viên <strong>{employee.fullName}</strong> ({employee.employeeCode})?
               </p>
               <p className="text-sm text-gray-600 mb-6">
-                This will set the employee status to inactive. This action can be reversed later.
+                Hành động này sẽ đặt trạng thái nhân viên thành không hoạt động. Hành động này có thể được hoàn tác sau.
               </p>
               <div className="flex gap-3 justify-end">
                 <Button
@@ -805,7 +805,7 @@ export default function EmployeeDetailPage() {
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
                   variant="destructive"
@@ -820,7 +820,7 @@ export default function EmployeeDetailPage() {
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      Xóa
                     </>
                   )}
                 </Button>

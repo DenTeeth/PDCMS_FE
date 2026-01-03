@@ -686,7 +686,6 @@ export default function RegistrationsPage() {
                       <table className="w-full border-collapse">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left p-3 font-medium">ID</th>
                             <th className="text-left p-3 font-medium">Nhân viên</th>
                             <th className="text-left p-3 font-medium">Ca làm việc</th>
                             <th className="text-left p-3 font-medium">Ngày</th>
@@ -698,7 +697,6 @@ export default function RegistrationsPage() {
                         <tbody>
                           {fixedRegistrations.map((registration) => (
                             <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
-                              <td className="p-3 font-mono text-sm">{registration.registrationId}</td>
                               <td className="p-3 whitespace-nowrap">
                                 <div className="font-medium">{registration.employeeName}</div>
                               </td>

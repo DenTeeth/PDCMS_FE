@@ -387,48 +387,6 @@ export default function PaymentTab({
 
   return (
     <div className="space-y-6">
-      {/* Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Thông Tin Thanh Toán
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-gray-600">Mã lịch hẹn</label>
-              <p className="font-semibold">{appointmentCode}</p>
-            </div>
-            {patientId && (
-              <div>
-                <label className="text-sm text-gray-600">Patient ID</label>
-                <p className="font-semibold">{patientId}</p>
-              </div>
-            )}
-            {patientCode && (
-              <div>
-                <label className="text-sm text-gray-600">Patient Code</label>
-                <p className="font-semibold">{patientCode}</p>
-              </div>
-            )}
-            {treatmentPlanCode && (
-              <>
-                <div>
-                  <label className="text-sm text-gray-600">Mã kế hoạch điều trị</label>
-                  <p className="font-semibold">{treatmentPlanCode}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Treatment Plan ID</label>
-                  <p className="font-semibold">{treatmentPlanId}</p>
-                </div>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Create Invoice Form */}
       {showCreateForm && canCreateInvoice && (
         <Card className="border-2 border-blue-200">
@@ -611,83 +569,76 @@ export default function PaymentTab({
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Invoice Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  {invoice.appointmentCode && (
-                    <div>
-                      <label className="text-gray-600">Mã lịch hẹn:</label>
-                      <p className="font-medium">{invoice.appointmentCode}</p>
-                    </div>
-                  )}
-                  {invoice.treatmentPlanCode && (
-                    <div>
-                      <label className="text-gray-600">Mã kế hoạch điều trị:</label>
-                      <p className="font-medium">{invoice.treatmentPlanCode}</p>
-                    </div>
-                  )}
-                  {invoice.patientName && (
-                    <div>
-                      <label className="text-gray-600">Bệnh nhân:</label>
-                      <p className="font-medium">{invoice.patientName}</p>
-                    </div>
-                  )}
-                  {invoice.createdByName && invoice.createdAt && (
-                    <div>
-                      <label className="text-gray-600">Tạo bởi:</label>
-                      <p className="font-medium">
-                        {invoice.createdByName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Financial Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <label className="text-sm text-gray-600">Tổng tiền</label>
-                    <p className="text-xl font-bold text-green-600">{formatCurrency(invoice.totalAmount)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Đã thanh toán</label>
-                    <p className="text-xl font-semibold">{formatCurrency(invoice.paidAmount)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Còn lại</label>
-                    <p className="text-xl font-semibold text-orange-600">{formatCurrency(invoice.remainingDebt)}</p>
-                  </div>
-                </div>
-
-                {/* Invoice Items */}
-                {invoice.items && invoice.items.length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Chi tiết dịch vụ</label>
-                    <div className="space-y-2">
-                      {invoice.items.map((item, index) => (
-                        <div key={item.itemId || index} className="flex items-center justify-between p-2 border rounded">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{item.serviceName}</p>
-                            {item.serviceCode && (
-                              <p className="text-xs text-gray-500">Mã: {item.serviceCode}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">
-                              {item.quantity} x {formatCurrency(item.unitPrice)}
-                            </p>
-                            <p className="font-semibold">{formatCurrency(item.subtotal)}</p>
-                          </div>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column: Invoice Information */}
+                  <div className="space-y-4">
+                    {/* Invoice Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      {invoice.appointmentCode && (
+                        <div>
+                          <label className="text-gray-600">Mã lịch hẹn:</label>
+                          <p className="font-medium">{invoice.appointmentCode}</p>
                         </div>
-                      ))}
+                      )}
+                      {invoice.treatmentPlanCode && (
+                        <div>
+                          <label className="text-gray-600">Mã kế hoạch điều trị:</label>
+                          <p className="font-medium">{invoice.treatmentPlanCode}</p>
+                        </div>
+                      )}
+                      {invoice.patientName && (
+                        <div>
+                          <label className="text-gray-600">Bệnh nhân:</label>
+                          <p className="font-medium">{invoice.patientName}</p>
+                        </div>
+                      )}
+                      {invoice.createdByName && invoice.createdAt && (
+                        <div>
+                          <label className="text-gray-600">Bác sĩ phụ trách:</label>
+                          <p className="font-medium">
+                            {invoice.createdByName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
 
-                {/* Payment Code & QR */}
-                {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && (
-                  <div className="border-t pt-4 space-y-4">
-                    {invoice.paymentCode && (
+                    {/* Financial Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                       <div>
+                        <label className="text-sm text-gray-600">Tổng tiền</label>
+                        <p className="text-xl font-bold text-green-600">{formatCurrency(invoice.totalAmount)}</p>
+                      </div>
+                    </div>
+
+                    {/* Invoice Items */}
+                    {invoice.items && invoice.items.length > 0 && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Chi tiết dịch vụ</label>
+                        <div className="space-y-2">
+                          {invoice.items.map((item, index) => (
+                            <div key={item.itemId || index} className="flex items-center justify-between p-2 border rounded">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{item.serviceName}</p>
+                                {item.serviceCode && (
+                                  <p className="text-xs text-gray-500">Mã: {item.serviceCode}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-600">
+                                  {item.quantity} x {formatCurrency(item.unitPrice)}
+                                </p>
+                                <p className="font-semibold">{formatCurrency(item.subtotal)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payment Code */}
+                    {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && invoice.paymentCode && (
+                      <div className="border-t pt-4">
                         <label className="text-sm font-medium mb-2 block">Mã thanh toán</label>
                         <div className="flex items-center gap-2">
                           <p className="font-mono font-semibold">{invoice.paymentCode}</p>
@@ -698,62 +649,50 @@ export default function PaymentTab({
                       </div>
                     )}
 
-                    {/* QR Code */}
-                    {invoice.invoiceCode && (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Mã QR Thanh Toán</label>
-                        <div className="flex flex-col items-center gap-4">
-                          <PaymentQRCode
-                            invoiceCode={invoice.invoiceCode}
-                            onPaymentSuccess={() => handlePaymentSuccess(invoice.invoiceCode)}
-                          />
-
-                          {invoice.qrCodeUrl && (
-                            <div className="flex flex-col items-center gap-2">
-                              <img
-                                src={invoice.qrCodeUrl}
-                                alt="QR Code"
-                                width={200}
-                                height={200}
-                                className="border rounded-lg"
-                              />
-                              <p className="text-sm text-gray-600 text-center">
-                                Quét mã QR để thanh toán
-                              </p>
+                    {/* Payment History */}
+                    {paymentsMap[invoice.invoiceId!] && paymentsMap[invoice.invoiceId!].length > 0 && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium mb-2 block">Lịch sử thanh toán</label>
+                        <div className="space-y-2">
+                          {paymentsMap[invoice.invoiceId!].map((payment) => (
+                            <div key={payment.paymentId} className="flex items-center justify-between p-2 border rounded">
+                              <div>
+                                <p className="text-sm font-medium">{payment.paymentCode}</p>
+                                <p className="text-xs text-gray-500">
+                                  {payment.paymentMethod} • {payment.paymentDate && format(new Date(payment.paymentDate), 'dd/MM/yyyy HH:mm')}
+                                </p>
+                              </div>
+                              <p className="font-semibold text-green-600">{formatCurrency(payment.amount)}</p>
                             </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Payment History */}
-                {paymentsMap[invoice.invoiceId!] && paymentsMap[invoice.invoiceId!].length > 0 && (
-                  <div className="border-t pt-4">
-                    <label className="text-sm font-medium mb-2 block">Lịch sử thanh toán</label>
-                    <div className="space-y-2">
-                      {paymentsMap[invoice.invoiceId!].map((payment) => (
-                        <div key={payment.paymentId} className="flex items-center justify-between p-2 border rounded">
+                    {/* Created Date */}
+                    {invoice.createdAt && (
+                      <div className="text-sm text-gray-500 border-t pt-2">
+                        Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: QR Code Payment */}
+                  {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && invoice.invoiceCode && (
+                    <div className="lg:border-l lg:pl-6">
+                      <div className="sticky top-4">
+                        <div className="space-y-4">
                           <div>
-                            <p className="text-sm font-medium">{payment.paymentCode}</p>
-                            <p className="text-xs text-gray-500">
-                              {payment.paymentMethod} • {payment.paymentDate && format(new Date(payment.paymentDate), 'dd/MM/yyyy HH:mm')}
-                            </p>
+                            <PaymentQRCode
+                              invoiceCode={invoice.invoiceCode}
+                              onPaymentSuccess={() => handlePaymentSuccess(invoice.invoiceCode)}
+                            />
                           </div>
-                          <p className="font-semibold text-green-600">{formatCurrency(payment.amount)}</p>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Created Date */}
-                {invoice.createdAt && (
-                  <div className="text-sm text-gray-500 border-t pt-2">
-                    Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

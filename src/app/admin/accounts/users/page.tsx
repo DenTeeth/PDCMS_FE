@@ -921,10 +921,10 @@ export default function PatientsPage() {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col">
-              <CardHeader className="pb-4">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-semibold">Tạo bệnh nhân mới</CardTitle>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Tạo tài khoản bệnh nhân. Nếu cung cấp email, tài khoản sẽ được tạo tự động và email thiết lập mật khẩu sẽ được gửi đến bệnh nhân.
+                  Hãy điền thông tin phía dưới để tạo bệnh nhân mới.
                 </p>
               </CardHeader>
               <CardContent className="overflow-y-auto flex-1 pt-6">
