@@ -28,6 +28,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -109,6 +110,11 @@ export default function EmployeesPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [updating, setUpdating] = useState(false);
+
+  // Delete employee states
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editFormData, setEditFormData] = useState<UpdateEmployeeRequest>({
     firstName: '',
     lastName: '',
@@ -325,7 +331,7 @@ export default function EmployeesPage() {
     if (requiresSpecializationForValidation) {
       if (!formData.specializationIds || formData.specializationIds.length === 0) {
         console.error('❌ Validation failed: Missing specialization for required role');
-        toast.error('Please select at least one specialization for this role');
+        toast.error('Vui lòng chọn ít nhất một chuyên khoa cho vai trò này');
         return;
       }
     }
@@ -370,7 +376,7 @@ export default function EmployeesPage() {
 
       await employeeService.createEmployee(payload);
       console.log('✅ Employee created successfully!');
-      toast.success('Employee created successfully');
+      toast.success('Tạo nhân viên thành công');
       setShowCreateModal(false);
       // Reset form
       setFormData({
@@ -429,6 +435,25 @@ export default function EmployeesPage() {
     setShowEditModal(true);
   };
 
+  // ==================== DELETE EMPLOYEE ====================
+  const handleDeleteEmployee = async () => {
+    if (!deletingEmployee) return;
+
+    try {
+      setDeleting(true);
+      await employeeService.deleteEmployee(deletingEmployee.employeeCode);
+      toast.success('Xóa nhân viên thành công');
+      setShowDeleteConfirm(false);
+      setDeletingEmployee(null);
+      fetchEmployees(); // Refresh list
+    } catch (error: any) {
+      console.error('Failed to delete employee:', error);
+      toast.error(error.response?.data?.message || 'Không thể xóa nhân viên');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleUpdateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -451,7 +476,7 @@ export default function EmployeesPage() {
       }
 
       await employeeService.updateEmployee(editingEmployee.employeeCode, payload);
-      toast.success('Employee updated successfully');
+      toast.success('Cập nhật nhân viên thành công');
       setShowEditModal(false);
       setEditingEmployee(null);
       fetchEmployees(); // Refresh list
@@ -760,6 +785,20 @@ export default function EmployeesPage() {
                             >
                               <Edit className="h-4 w-4 mr-1" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingEmployee(employee);
+                                setShowDeleteConfirm(true);
+                              }}
+                              disabled={!canDelete}
+                              title={!canDelete ? "Bạn không có quyền xóa nhân viên" : ""}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -785,7 +824,7 @@ export default function EmployeesPage() {
                     onClick={() => setPage(0)}
                     disabled={page === 0 || loading}
                     className="h-9 w-9 p-0"
-                    title="First page"
+                    title="Trang đầu"
                   >
                     <ChevronsLeft className="h-4 w-4" />
                   </Button>
@@ -854,7 +893,7 @@ export default function EmployeesPage() {
                     onClick={() => setPage(totalPages - 1)}
                     disabled={page >= totalPages - 1 || loading}
                     className="h-9 w-9 p-0"
-                    title="Last page"
+                    title="Trang cuối"
                   >
                     <ChevronsRight className="h-4 w-4" />
                   </Button>
@@ -948,7 +987,7 @@ export default function EmployeesPage() {
                               </Label>
                               <Input
                                 id="username"
-                                placeholder="e.g., john.doe"
+                                placeholder="Ví dụ: nguyen.van.a"
                                 value={formData.username}
                                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                 disabled={creating}
@@ -963,7 +1002,7 @@ export default function EmployeesPage() {
                               <Input
                                 id="email"
                                 type="email"
-                                placeholder="e.g., john@example.com"
+                                placeholder="Ví dụ: nguyen.van.a@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 disabled={creating}
@@ -978,7 +1017,7 @@ export default function EmployeesPage() {
                               <Input
                                 id="password"
                                 type="password"
-                                placeholder="Enter password"
+                                placeholder="Nhập mật khẩu"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 disabled={creating}
@@ -1000,36 +1039,36 @@ export default function EmployeesPage() {
                                 <Label htmlFor="firstName" className="mb-1.5 block text-sm">
                                   Họ <span className="text-red-500">*</span>
                                 </Label>
-                                <Input
-                                  id="firstName"
-                                  placeholder="e.g., John"
-                                  value={formData.firstName}
-                                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                  disabled={creating}
-                                  required
-                                  className="text-sm"
-                                />
+                              <Input
+                                id="firstName"
+                                placeholder="Ví dụ: Nguyễn"
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                disabled={creating}
+                                required
+                                className="text-sm"
+                              />
                               </div>
                               <div>
                                 <Label htmlFor="lastName" className="mb-1.5 block text-sm">
                                   Tên <span className="text-red-500">*</span>
                                 </Label>
-                                <Input
-                                  id="lastName"
-                                  placeholder="e.g., Doe"
-                                  value={formData.lastName}
-                                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                  disabled={creating}
-                                  required
-                                  className="text-sm"
-                                />
+                              <Input
+                                id="lastName"
+                                placeholder="Ví dụ: Văn A"
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                disabled={creating}
+                                required
+                                className="text-sm"
+                              />
                               </div>
                             </div>
                             <div>
                               <Label htmlFor="phone" className="mb-1.5 block text-sm">Số điện thoại</Label>
                               <Input
                                 id="phone"
-                                placeholder="e.g., 0123456789"
+                                placeholder="Ví dụ: 0901234567"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 disabled={creating}
@@ -1062,7 +1101,7 @@ export default function EmployeesPage() {
                               <Label htmlFor="address" className="mb-1.5 block text-sm">Địa chỉ</Label>
                               <textarea
                                 id="address"
-                                placeholder="Enter full address"
+                                placeholder="Nhập địa chỉ đầy đủ"
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                 disabled={creating}
@@ -1309,7 +1348,7 @@ export default function EmployeesPage() {
                             id="edit-firstName"
                             value={editFormData.firstName}
                             onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                            placeholder="Nhập tên"
+                            placeholder="Nhập họ"
                           />
                         </div>
 
@@ -1319,7 +1358,7 @@ export default function EmployeesPage() {
                             id="edit-lastName"
                             value={editFormData.lastName}
                             onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                            placeholder="Nhập họ"
+                            placeholder="Nhập tên"
                           />
                         </div>
                       </div>
@@ -1519,6 +1558,57 @@ export default function EmployeesPage() {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && deletingEmployee && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <Trash2 className="h-5 w-5" />
+                  Xóa nhân viên
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 mb-4">
+                  Bạn có chắc chắn muốn xóa nhân viên <strong>{deletingEmployee.fullName}</strong> ({deletingEmployee.employeeCode})?
+                </p>
+                <p className="text-sm text-gray-600 mb-6">
+                  Hành động này sẽ đặt trạng thái nhân viên thành không hoạt động. Hành động này có thể được hoàn tác sau.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeletingEmployee(null);
+                    }}
+                    disabled={deleting}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteEmployee}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang xóa...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Xóa
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

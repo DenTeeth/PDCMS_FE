@@ -65,6 +65,7 @@ import {
   AlertCircle,
   Info,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   XCircle,
   Users,
@@ -196,6 +197,7 @@ export default function RescheduleAppointmentModal({
 }: RescheduleAppointmentModalProps) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('info');
 
   // Form data
   const [newEmployeeCode, setNewEmployeeCode] = useState<string>('');
@@ -226,6 +228,7 @@ export default function RescheduleAppointmentModal({
   }, [open, appointment]);
 
   const resetForm = () => {
+    setActiveTab('info'); // Reset to first tab when form resets
     if (appointment) {
       // Pre-fill with current appointment values
       setNewEmployeeCode(appointment.doctor?.employeeCode || '');
@@ -566,7 +569,7 @@ export default function RescheduleAppointmentModal({
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto pr-2">
-            <Tabs defaultValue="info" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="info">Thông tin hiện tại</TabsTrigger>
                 <TabsTrigger value="new">Thông tin mới</TabsTrigger>
@@ -629,6 +632,16 @@ export default function RescheduleAppointmentModal({
                     )}
                   </CardContent>
                 </Card>
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setActiveTab('new')}
+                    className="flex items-center gap-2"
+                  >
+                    Bước tiếp theo
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Tab 2: New Appointment Details */}
@@ -859,6 +872,26 @@ export default function RescheduleAppointmentModal({
                     </div>
                   </CardContent>
                 </Card>
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab('info')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Quay lại
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setActiveTab('reason')}
+                    className="flex items-center gap-2"
+                    disabled={!newEmployeeCode || !newRoomCode || !newDate || !newTime}
+                  >
+                    Bước tiếp theo
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Tab 3: Reason */}
@@ -906,6 +939,17 @@ export default function RescheduleAppointmentModal({
                     )}
                   </CardContent>
                 </Card>
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab('new')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Quay lại
+                  </Button>
+                </div>
               </TabsContent>
             </Tabs >
           </div >
@@ -916,23 +960,41 @@ export default function RescheduleAppointmentModal({
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Hủy
           </Button>
-          <Button
-            onClick={handleReschedule}
-            disabled={loading || loadingData || !isFormValid}
-            className="min-w-[140px]"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              <>
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Xác nhận đổi lịch
-              </>
-            )}
-          </Button>
+          {activeTab === 'reason' ? (
+            <Button
+              onClick={handleReschedule}
+              disabled={loading || loadingData || !isFormValid}
+              className="min-w-[140px]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Xác nhận đổi lịch
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => {
+                if (activeTab === 'info') {
+                  setActiveTab('new');
+                } else if (activeTab === 'new') {
+                  setActiveTab('reason');
+                }
+              }}
+              disabled={activeTab === 'new' && (!newEmployeeCode || !newRoomCode || !newDate || !newTime)}
+              className="min-w-[140px]"
+            >
+              Bước tiếp theo
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent >
     </Dialog >

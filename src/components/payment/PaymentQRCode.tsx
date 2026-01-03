@@ -191,7 +191,7 @@ export default function PaymentQRCode({ invoiceCode, onPaymentSuccess, onClose }
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Thanh toán qua SePay</CardTitle>
+        <CardTitle>Thông tin thanh toán</CardTitle>
         <CardDescription>
           Quét mã QR bằng ứng dụng ngân hàng để thanh toán
         </CardDescription>
