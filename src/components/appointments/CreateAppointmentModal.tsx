@@ -57,6 +57,7 @@ import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { EmployeeShift, ShiftStatus } from '@/types/employeeShift';
 import { useHolidays } from '@/hooks/useHolidays';
 import { useAuth } from '@/contexts/AuthContext';
+import { invoiceService, CreateInvoiceRequest } from '@/services/invoiceService';
 import {
   CreateAppointmentRequest,
   AvailableTimesRequest,
@@ -264,7 +265,8 @@ export default function CreateAppointmentModal({
   initialServiceCodes,
   initialPlanItemIds,
 }: CreateAppointmentModalProps) {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+  const canCreateInvoice = hasPermission('CREATE_INVOICE');
 
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -1413,9 +1415,62 @@ export default function CreateAppointmentModal({
         };
       }
 
-      await appointmentService.createAppointment(request);
+      const appointmentResponse = await appointmentService.createAppointment(request);
 
-      toast.success(' Đặt lịch hẹn thành công!');
+      toast.success('Đặt lịch hẹn thành công!');
+
+      // Auto-create invoice after appointment is created (only if user has permission)
+      if (canCreateInvoice) {
+        try {
+        // Get appointment detail to get appointmentId
+        const appointmentDetail = await appointmentService.getAppointmentDetail(appointmentResponse.appointmentCode);
+        
+        if (!appointmentDetail.appointmentId || !selectedPatientData?.patientId) {
+          console.warn('⚠️ Cannot auto-create invoice: Missing appointmentId or patientId');
+          onSuccess();
+          onClose();
+          return;
+        }
+
+        // Get service details with prices
+        const selectedServicesWithPrices = services.filter(s => serviceCodes.includes(s.serviceCode));
+        
+        if (selectedServicesWithPrices.length === 0) {
+          console.warn('⚠️ Cannot auto-create invoice: No services found');
+          onSuccess();
+          onClose();
+          return;
+        }
+
+        // Create invoice items from selected services
+        const invoiceItems = selectedServicesWithPrices.map(service => ({
+          serviceId: service.serviceId,
+          serviceCode: service.serviceCode,
+          serviceName: service.serviceName,
+          quantity: 1,
+          unitPrice: service.price,
+          notes: `Dịch vụ từ lịch hẹn ${appointmentResponse.appointmentCode}`,
+        }));
+
+        const invoiceRequest: CreateInvoiceRequest = {
+          invoiceType: 'APPOINTMENT',
+          patientId: selectedPatientData.patientId,
+          appointmentId: appointmentDetail.appointmentId,
+          items: invoiceItems,
+          notes: `Hóa đơn tự động tạo cho lịch hẹn ${appointmentResponse.appointmentCode}`,
+        };
+
+          await invoiceService.createInvoice(invoiceRequest);
+          toast.success('Đã tự động tạo hóa đơn cho lịch hẹn!');
+        } catch (invoiceError: any) {
+          console.error('Failed to auto-create invoice:', invoiceError);
+          // Don't fail the appointment creation if invoice creation fails
+          toast.warning('Lịch hẹn đã được tạo, nhưng không thể tự động tạo hóa đơn. Vui lòng tạo hóa đơn thủ công.');
+        }
+      } else {
+        console.warn('User does not have CREATE_INVOICE permission, skipping auto-invoice creation');
+      }
+
       onSuccess();
       onClose();
     } catch (error: any) {

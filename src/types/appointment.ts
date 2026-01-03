@@ -375,6 +375,7 @@ export interface AppointmentDetailDTO {
     createdAt?: string | null; // ISO 8601 - when appointment was created
     // Patient info is more detailed in detail DTO (may include phone, DOB)
     patient: {
+        patientId?: number; // Patient ID (from BE PatientSummary)
         patientCode: string;
         fullName: string;
         phone?: string;
