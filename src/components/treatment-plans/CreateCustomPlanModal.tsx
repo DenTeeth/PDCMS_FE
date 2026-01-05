@@ -940,10 +940,9 @@ export default function CreateCustomPlanModal({
       //  FIX: BE requires @NotNull, so send 0 instead of undefined
       // For employee role, always send 0 (discount field is hidden)
       discountAmount: isEmployee ? 0 : (discountAmount === '' ? 0 : Number(discountAmount)),
-      // BE expects LocalDate (yyyy-MM-dd format) or null
-      // Send null if empty string, otherwise send the date string
-      startDate: startDate && startDate.trim() ? startDate.trim() : null,
-      expectedEndDate: expectedEndDate && expectedEndDate.trim() ? expectedEndDate.trim() : null,
+      // Temporarily disabled - BE will handle dates automatically
+      // startDate: startDate && startDate.trim() ? startDate.trim() : null,
+      // expectedEndDate: expectedEndDate && expectedEndDate.trim() ? expectedEndDate.trim() : null,
       phases: phases.map((phase) => {
         const phaseRequest: CreateCustomPlanPhaseRequest = {
           phaseNumber: phase.phaseNumber,
@@ -1516,7 +1515,8 @@ export default function CreateCustomPlanModal({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Temporarily hidden - BE will handle dates automatically */}
+            {/* <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="startDate" className="mb-2">Ngày bắt đầu (tùy chọn)</Label>
                 <Input
@@ -1540,7 +1540,7 @@ export default function CreateCustomPlanModal({
                   min={startDate || undefined}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         )}
 

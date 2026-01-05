@@ -33,6 +33,8 @@ import {
   Pill,
   Activity,
   AlertCircle,
+  CheckCircle2,
+  AlertTriangle,
   Loader2,
   Image as ImageIcon,
 } from 'lucide-react';
@@ -276,8 +278,8 @@ export default function ClinicalRecordView({
               </div>
             )}
 
-            {/* Follow-up Date */}
-            <div>
+            {/* Temporarily hidden - BE will handle follow-up date automatically */}
+            {/* <div>
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-sm font-semibold">Ngày tái khám</Label>
@@ -291,18 +293,18 @@ export default function ClinicalRecordView({
                   Chưa có ngày tái khám
                 </div>
               )}
-            </div>
+            </div> */}
 
-            {/* Vital Signs - Enhanced with assessment status */}
+            {/* Vital Signs - Enhanced UI with better layout and more indicators */}
             {(record.vitalSigns && Object.keys(record.vitalSigns).length > 0) || 
              (record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0) ? (
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Chỉ số sức khỏe</Label>
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="h-5 w-5 text-muted-foreground" />
+                  <Label className="text-base font-semibold">Chỉ số sức khỏe</Label>
                 </div>
                 <div className="pl-6">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Use assessment if available, otherwise fallback to vitalSigns */}
                     {record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0 ? (
                       record.vitalSignsAssessment.map((assessment) => {
@@ -321,29 +323,63 @@ export default function ClinicalRecordView({
                         const label = labelMap[assessment.vitalType] || assessment.vitalType;
                         
                         const statusConfig = {
-                          NORMAL: { color: 'bg-green-100 text-green-800 border-green-200', icon: '✓' },
-                          BELOW_NORMAL: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: '⚠' },
-                          ABOVE_NORMAL: { color: 'bg-red-100 text-red-800 border-red-200', icon: '⚠' },
-                          UNKNOWN: { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: '?' },
+                          NORMAL: { 
+                            color: 'bg-green-50 text-green-800 border-green-300', 
+                            badgeColor: 'bg-green-100 text-green-800 border-green-200',
+                            borderColor: '#10b981',
+                            icon: CheckCircle2,
+                            label: 'Bình thường'
+                          },
+                          BELOW_NORMAL: { 
+                            color: 'bg-yellow-50 text-yellow-800 border-yellow-300', 
+                            badgeColor: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                            borderColor: '#f59e0b',
+                            icon: AlertTriangle,
+                            label: 'Thấp'
+                          },
+                          ABOVE_NORMAL: { 
+                            color: 'bg-red-50 text-red-800 border-red-300', 
+                            badgeColor: 'bg-red-100 text-red-800 border-red-200',
+                            borderColor: '#ef4444',
+                            icon: AlertCircle,
+                            label: 'Cao'
+                          },
+                          UNKNOWN: { 
+                            color: 'bg-gray-50 text-gray-800 border-gray-300', 
+                            badgeColor: 'bg-gray-100 text-gray-800 border-gray-200',
+                            borderColor: '#6b7280',
+                            icon: AlertCircle,
+                            label: 'Không xác định'
+                          },
                         };
                         const config = statusConfig[assessment.status] || statusConfig.UNKNOWN;
+                        const StatusIcon = config.icon;
                         
                         return (
-                          <div key={assessment.vitalType} className="p-3 bg-muted rounded-md border-l-4" style={{
-                            borderLeftColor: assessment.status === 'NORMAL' ? '#10b981' : 
-                                           assessment.status === 'ABOVE_NORMAL' || assessment.status === 'BELOW_NORMAL' ? '#f59e0b' : '#6b7280'
-                          }}>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="text-xs text-muted-foreground">{label}</div>
-                              <Badge variant="outline" className={`text-xs ${config.color}`}>
-                                {config.icon} {assessment.status === 'NORMAL' ? 'Bình thường' : 
-                                 assessment.status === 'BELOW_NORMAL' ? 'Thấp' : 
-                                 assessment.status === 'ABOVE_NORMAL' ? 'Cao' : 'Không xác định'}
+                          <div 
+                            key={assessment.vitalType} 
+                            className={`p-4 rounded-lg border-l-4 shadow-sm transition-all hover:shadow-md ${config.color}`}
+                            style={{
+                              borderLeftColor: config.borderColor
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-sm font-medium text-gray-700">{label}</div>
+                              <Badge variant="outline" className={`text-xs flex items-center gap-1 ${config.badgeColor}`}>
+                                <StatusIcon className="h-3 w-3" />
+                                {config.label}
                               </Badge>
                             </div>
-                            <div className="text-sm font-medium">{assessment.value} {assessment.unit}</div>
+                            <div className="text-xl font-bold text-gray-900 mb-1">
+                              {assessment.value} <span className="text-sm font-normal text-gray-600">{assessment.unit}</span>
+                            </div>
                             {assessment.message && (
-                              <div className="text-xs text-muted-foreground mt-1">{assessment.message}</div>
+                              <div className="text-xs text-gray-600 mt-2 italic">{assessment.message}</div>
+                            )}
+                            {assessment.normalMin && assessment.normalMax && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Bình thường ({assessment.normalMin}-{assessment.normalMax} {assessment.unit})
+                              </div>
                             )}
                           </div>
                         );
@@ -359,12 +395,19 @@ export default function ClinicalRecordView({
                           temperature: 'Nhiệt độ',
                           oxygen_saturation: 'SpO2',
                           oxygenSaturation: 'SpO2',
+                          respiratory_rate: 'Nhịp thở',
+                          respiratoryRate: 'Nhịp thở',
+                          blood_glucose: 'Đường huyết',
+                          bloodGlucose: 'Đường huyết',
+                          weight: 'Cân nặng',
+                          height: 'Chiều cao',
+                          bmi: 'BMI',
                         };
                         const label = labelMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
                         return (
-                          <div key={key} className="p-3 bg-muted rounded-md">
-                            <div className="text-xs text-muted-foreground mb-1">{label}</div>
-                            <div className="text-sm font-medium">{String(value)}</div>
+                          <div key={key} className="p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                            <div className="text-sm font-medium text-gray-700 mb-1">{label}</div>
+                            <div className="text-lg font-bold text-gray-900">{String(value)}</div>
                           </div>
                         );
                       })

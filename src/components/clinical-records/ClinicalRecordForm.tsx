@@ -196,7 +196,8 @@ export default function ClinicalRecordForm({
         const updateRequest: UpdateClinicalRecordRequest = {
           examinationFindings: data.examinationFindings,
           treatmentNotes: data.treatmentNotes || undefined,
-          followUpDate: data.followUpDate || undefined,
+          // Temporarily disabled - BE will handle follow-up date automatically
+          // followUpDate: data.followUpDate || undefined,
           vitalSigns: Object.keys(vitalSigns).length > 0 ? vitalSigns : undefined,
         };
 
@@ -245,7 +246,8 @@ export default function ClinicalRecordForm({
           examinationFindings: data.examinationFindings,
           diagnosis: data.diagnosis,
           treatmentNotes: data.treatmentNotes || undefined,
-          followUpDate: data.followUpDate || undefined,
+          // Temporarily disabled - BE will handle follow-up date automatically
+          // followUpDate: data.followUpDate || undefined,
           vitalSigns: Object.keys(vitalSigns).length > 0 ? vitalSigns : undefined,
         };
 
@@ -400,8 +402,8 @@ export default function ClinicalRecordForm({
             oxygenSaturation={watch('oxygenSaturation')}
           />
 
-          {/* Follow-up Date */}
-          <div className="space-y-2">
+          {/* Temporarily hidden - BE will handle follow-up date automatically */}
+          {/* <div className="space-y-2">
             <Label htmlFor="followUpDate" className="text-sm font-semibold">
               Ngày Tái Khám
             </Label>
@@ -411,7 +413,7 @@ export default function ClinicalRecordForm({
               {...register('followUpDate')}
               disabled={!canEdit}
             />
-          </div>
+          </div> */}
         </div>
       </div>
 

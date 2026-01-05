@@ -1122,7 +1122,8 @@ export default function TreatmentPlanDetail({
             </div>
 
             {/* Dates */}
-            <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 shadow-sm">
+            {/* Temporarily hidden - BE will handle dates automatically */}
+            {/* <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="h-4 w-4 text-amber-600" />
                 <span className="text-xs font-medium text-amber-700">Thời gian</span>
@@ -1133,7 +1134,7 @@ export default function TreatmentPlanDetail({
               <div className="text-xs text-amber-600 mt-1">
                 Kết thúc: {formatDate(plan.expectedEndDate)}
               </div>
-            </div>
+            </div> */}
 
             {/* Financial */}
             {(plan.finalCost != null || plan.totalPrice != null) && (

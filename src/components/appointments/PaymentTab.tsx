@@ -154,9 +154,16 @@ export default function PaymentTab({
           return false;
         }
         
-        // Log warning if patientId mismatch (but still show invoice)
+        // CRITICAL: Filter out invoices with patientId mismatch (data integrity issue)
         if (patientId && invoice.patientId !== patientId) {
-          console.warn(`⚠️ Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}`);
+          console.error(`🚨 CRITICAL Data Integrity Issue: Invoice ${invoice.invoiceCode} has patientId ${invoice.patientId} but appointment has patientId ${patientId}. This invoice will be filtered out.`, {
+            invoiceCode: invoice.invoiceCode,
+            invoicePatientId: invoice.patientId,
+            appointmentPatientId: patientId,
+            appointmentId: appointmentId,
+            appointmentCode: appointmentCode,
+          });
+          return false; // Filter out invoices with patient mismatch
         }
         
         return true;
@@ -394,7 +401,7 @@ export default function PaymentTab({
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                Tạo Hóa Đơn Mới
+                Tạo hóa đơn mới
               </CardTitle>
               <Button
                 variant="ghost"

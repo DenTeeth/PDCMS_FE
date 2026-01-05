@@ -78,7 +78,10 @@ export default function PatientsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
+  const [totalElements, setTotalElements] = useState(0); // Total from filtered query (for pagination)
+  const [totalPatients, setTotalPatients] = useState(0); // Total actual patients (all, no filter)
+  const [totalActive, setTotalActive] = useState(0);
+  const [totalInactive, setTotalInactive] = useState(0);
 
   // Create patient modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -165,10 +168,9 @@ export default function PatientsPage() {
 
       // Build query params - BE only supports page, size, sortBy, sortDirection
       // Note: Search, status, gender filters will be applied on FE
-      // DEMO: size=1 to see pagination clearly
       const params: any = {
         page,
-        size: 10, // DEMO: 1 item per page to see BE pagination + FE filtering
+        size: 10, // Items per page
         sortBy: 'patientCode' as const,
         sortDirection: 'ASC' as const,
       };
@@ -178,9 +180,91 @@ export default function PatientsPage() {
       // if (filterStatus !== 'all') params.isActive = filterStatus === 'active';
       // if (filterGender !== 'all') params.gender = filterGender;
 
+      // Fetch ALL patients (NO FILTERS) to get complete data for stats calculation
+      // IMPORTANT: BE may have max size limit, so we need to fetch all pages
+      let allPatients: Patient[] = [];
+      let currentPage = 0;
+      let hasMorePages = true;
+      
+      while (hasMorePages) {
+        const pageResponse = await patientService.getPatients({
+          page: currentPage,
+          size: 100, // Use reasonable page size (BE may limit max size)
+          sortBy: 'patientCode' as const,
+          sortDirection: 'ASC' as const,
+          // IMPORTANT: Do NOT include any filters
+          // This ensures we get the true total count of all patients
+        });
+        
+        allPatients = [...allPatients, ...(pageResponse.content || [])];
+        
+        // Check if there are more pages
+        hasMorePages = !pageResponse.last && currentPage < pageResponse.totalPages - 1;
+        currentPage++;
+        
+        // Safety limit to prevent infinite loop
+        if (currentPage > 100) {
+          console.warn('⚠️ Reached safety limit while fetching all patients');
+          break;
+        }
+      }
+      
+      console.log('📊 Fetched all patients for stats:', {
+        totalPages: currentPage,
+        totalPatients: allPatients.length,
+        sample: allPatients.slice(0, 5).map(p => ({ code: p.patientCode, isActive: p.isActive, fullName: p.fullName }))
+      });
+      
+      // Calculate stats from ALL patients data returned from BE
+      // Step 1: Count total patients (all data from BE)
+      const totalCount = allPatients.length;
+      
+      // Step 2: Count active patients (isActive === true)
+      const activeCount = allPatients.filter(p => p.isActive === true).length;
+      
+      // Step 3: Count inactive patients (isActive === false, null, or undefined)
+      const inactiveCount = allPatients.filter(p => {
+        return p.isActive === false || p.isActive === null || p.isActive === undefined;
+      }).length;
+      
+      // Validation: total should equal active + inactive
+      if (totalCount !== activeCount + inactiveCount) {
+        console.warn('⚠️ Stats calculation mismatch:', {
+          total: totalCount,
+          active: activeCount,
+          inactive: inactiveCount,
+          sum: activeCount + inactiveCount,
+          difference: totalCount - (activeCount + inactiveCount)
+        });
+      }
+
+      console.log('📊 Stats calculated from ALL patients data:', {
+        total: totalCount,
+        active: activeCount,
+        inactive: inactiveCount,
+        breakdown: {
+          true: allPatients.filter(p => p.isActive === true).length,
+          false: allPatients.filter(p => p.isActive === false).length,
+          null: allPatients.filter(p => p.isActive === null).length,
+          undefined: allPatients.filter(p => p.isActive === undefined).length,
+        },
+        sample: allPatients.slice(0, 5).map(p => ({ code: p.patientCode, isActive: p.isActive, fullName: p.fullName }))
+      });
+
+      // Update stats states from ALL patients data
+      setTotalPatients(totalCount);
+      setTotalActive(activeCount);
+      setTotalInactive(inactiveCount);
+
+      // Now fetch filtered patients for display (with current filters applied)
       console.log('Fetching patients with params:', params);
       const response = await patientService.getPatients(params);
-      console.log('Received patients:', response.content.length, 'items, totalPages:', response.totalPages);
+      console.log('✅ Received filtered patients:', {
+        total: response.content.length,
+        active: response.content.filter(p => p.isActive === true).length,
+        inactive: response.content.filter(p => p.isActive !== true).length,
+        items: response.content.map(p => ({ code: p.patientCode, name: p.fullName, isActive: p.isActive }))
+      });
       console.log('🔍 First patient block status:', response.content[0] && {
         patientCode: response.content[0].patientCode,
         isBookingBlocked: response.content[0].isBookingBlocked,
@@ -189,7 +273,7 @@ export default function PatientsPage() {
 
       setPatients(response.content);
       setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
+      setTotalElements(response.totalElements); // Total from filtered query (for pagination)
     } catch (error) {
       console.error('Error fetching patients:', error);
       toast.error('Failed to fetch patients');
@@ -515,10 +599,12 @@ export default function PatientsPage() {
   });
 
   // ==================== STATS ====================
+  // Use totalPatients (from all patients query) instead of patients.length (from filtered query)
+  // This ensures stats show the true total count regardless of current filters
   const stats: PatientStats = {
-    total: patients.length, // Total patients from current data
-    active: patients.filter((p) => p.isActive).length, // Active accounts
-    inactive: patients.filter((p) => !p.isActive).length, // Inactive accounts
+    total: totalPatients, // Total actual patients (all, no filter)
+    active: totalActive,
+    inactive: totalInactive,
   };
 
   // ==================== HANDLERS ====================

@@ -114,6 +114,10 @@ export default function ApproveRejectSection({
 
       const response = await TreatmentPlanService.approveTreatmentPlan(plan.planCode, request);
 
+      // BE đã tự động tạo invoice khi approve plan (FULL/PHASED payment)
+      // Không cần tạo invoice thủ công trong FE nữa
+      // Reference: ISSUE_BE_TREATMENT_PLAN_PHASED_INVOICE_CREATION.md
+
       // Show success toast
       toast.success('Duyệt lộ trình thành công', {
         description: 'Lộ trình đã được duyệt và có thể kích hoạt',

@@ -34,11 +34,13 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { appointmentService } from '@/services/appointmentService';
 import { EmployeeService } from '@/services/employeeService';
 import { RoomService } from '@/services/roomService';
 import { EmployeeShiftService } from '@/services/employeeShiftService';
 import { ServiceService } from '@/services/serviceService';
+import { invoiceService, InvoiceResponse, InvoicePaymentStatus } from '@/services/invoiceService';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   CreateAppointmentRequest,
@@ -62,8 +64,11 @@ import {
   Sunset,
   Moon,
   FileText,
+  AlertTriangle,
+  Phone,
 } from 'lucide-react';
 import { format, addDays, startOfDay, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, isSameDay } from 'date-fns';
+import { formatCurrency } from '@/utils/formatters';
 
 interface BookAppointmentFromPlanModalProps {
   open: boolean;
@@ -116,6 +121,22 @@ export default function BookAppointmentFromPlanModal({
   const [allEmployeeShifts, setAllEmployeeShifts] = useState<Map<string, EmployeeShift[]>>(new Map());
   const [servicesMap, setServicesMap] = useState<Map<string, Service>>(new Map());
   const [loadingServices, setLoadingServices] = useState(false);
+  
+  // Payment validation state
+  const [paymentStatusChecked, setPaymentStatusChecked] = useState(false);
+  const [unpaidInvoices, setUnpaidInvoices] = useState<InvoiceResponse[]>([]);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+
+  // TEMPORARILY DISABLED: Auto-check payment status
+  // TODO: Re-enable after BE fixes invoice creation issue
+  /* DISABLED - Re-enable after BE fix
+  // Auto-check payment status when entering step 3
+  useEffect(() => {
+    if (currentStep === 3 && !paymentStatusChecked && plan?.planId && plan?.patient?.patientId) {
+      checkPaymentStatus();
+    }
+  }, [currentStep, plan?.planId, plan?.patient?.patientId]);
+  */
 
   // Extract plan items being booked
   const planItems = useMemo(() => {
@@ -222,6 +243,19 @@ export default function BookAppointmentFromPlanModal({
       setNotes('');
       setCurrentStep(1);
       setSelectedMonth(startOfMonth(new Date()));
+      
+      // Reset payment status check
+      setPaymentStatusChecked(false);
+      setUnpaidInvoices([]);
+      
+      // TEMPORARILY DISABLED: Auto-check payment status
+      // TODO: Re-enable after BE fixes invoice creation issue
+      /* DISABLED - Re-enable after BE fix
+      // Auto-check payment status when modal opens
+      if (plan.planId && plan.patient?.patientId) {
+        checkPaymentStatus();
+      }
+      */
     }
   }, [open, plan]);
 
@@ -507,13 +541,39 @@ export default function BookAppointmentFromPlanModal({
 
   const groupedSlots = useMemo(() => groupSlotsByTimeOfDay(availableSlots), [availableSlots]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1) {
       // Validate step 1: Check if items are valid
       if (planItems.length === 0) {
         toast.error('Không tìm thấy hạng mục để đặt lịch');
         return;
       }
+      
+      // TEMPORARILY DISABLED: Payment validation
+      // TODO: Re-enable after BE fixes invoice creation issue
+      /* DISABLED - Re-enable after BE fix
+      // Check payment status before proceeding to step 2
+      if (!paymentStatusChecked && plan?.planId && plan?.patient?.patientId) {
+        const canProceed = await checkPaymentStatus();
+        if (!canProceed) {
+          const unpaidPhases = unpaidInvoices
+            .filter(inv => inv.phaseNumber)
+            .map(inv => `Giai đoạn ${inv.phaseNumber}`)
+            .join(', ');
+          
+          const errorMessage = unpaidPhases
+            ? `Vui lòng thanh toán hóa đơn cho ${unpaidPhases} trước khi đặt lịch.`
+            : 'Vui lòng thanh toán hóa đơn trước khi đặt lịch.';
+          
+          toast.error('Chưa thanh toán hóa đơn', {
+            description: errorMessage + ' Nếu bạn đã thanh toán, vui lòng liên hệ kỹ thuật viên để được hỗ trợ.',
+            duration: 8000,
+          });
+          return;
+        }
+      }
+      */
+      
       setCurrentStep(2);
     } else if (currentStep === 2) {
       // Validate step 2
@@ -533,6 +593,32 @@ export default function BookAppointmentFromPlanModal({
         toast.error('Vui lòng chọn phòng');
         return;
       }
+      
+      // TEMPORARILY DISABLED: Payment validation
+      // TODO: Re-enable after BE fixes invoice creation issue
+      /* DISABLED - Re-enable after BE fix
+      // Re-check payment status before proceeding to step 3
+      if (plan?.planId && plan?.patient?.patientId) {
+        const canProceed = await checkPaymentStatus();
+        if (!canProceed) {
+          const unpaidPhases = unpaidInvoices
+            .filter(inv => inv.phaseNumber)
+            .map(inv => `Giai đoạn ${inv.phaseNumber}`)
+            .join(', ');
+          
+          const errorMessage = unpaidPhases
+            ? `Vui lòng thanh toán hóa đơn cho ${unpaidPhases} trước khi đặt lịch.`
+            : 'Vui lòng thanh toán hóa đơn trước khi đặt lịch.';
+          
+          toast.error('Chưa thanh toán hóa đơn', {
+            description: errorMessage + ' Nếu bạn đã thanh toán, vui lòng liên hệ kỹ thuật viên để được hỗ trợ.',
+            duration: 8000,
+          });
+          return;
+        }
+      }
+      */
+      
       setCurrentStep(3);
     }
   };
@@ -543,11 +629,98 @@ export default function BookAppointmentFromPlanModal({
     }
   };
 
+  // TEMPORARILY DISABLED: Payment validation
+  // TODO: Re-enable after BE fixes invoice creation issue
+  // Issue: BE creates invoice with wrong data (wrong doctor, wrong services, wrong price)
+  // Reference: ISSUE_BE_INVOICE_WRONG_DATA_FOR_APPOINTMENT.md
+  const checkPaymentStatus = async (): Promise<boolean> => {
+    // Temporarily allow all bookings until BE fixes invoice issue
+    return true;
+    
+    /* DISABLED - Re-enable after BE fix
+    if (!plan?.planId || !plan?.patient?.patientId) {
+      console.warn('Cannot check payment: missing planId or patientId');
+      return true; // Allow booking if cannot check
+    }
+
+    setCheckingPayment(true);
+    try {
+      // Fetch all invoices for this treatment plan
+      const allInvoices = await invoiceService.getInvoicesByPatient(plan.patient.patientId);
+      const planInvoices = allInvoices.filter(
+        (inv) => inv.invoiceType === 'TREATMENT_PLAN' && inv.treatmentPlanId === plan.planId
+      );
+
+      // Get phases of items being booked
+      const phasesBeingBooked = new Set<number>();
+      planItems.forEach(item => {
+        const phase = plan.phases.find(p => p.items.some(i => i.itemId === item.itemId));
+        if (phase) {
+          phasesBeingBooked.add(phase.phaseNumber);
+        }
+      });
+
+      // Check if any invoice for these phases is unpaid
+      const unpaid = planInvoices.filter(inv => {
+        // For PHASED payment: check invoice of the phase being booked
+        if (inv.phaseNumber && phasesBeingBooked.has(inv.phaseNumber)) {
+          return inv.paymentStatus === 'PENDING_PAYMENT' || inv.paymentStatus === 'PARTIAL_PAID';
+        }
+        // For FULL payment: check if any invoice is unpaid
+        if (!inv.phaseNumber) {
+          return inv.paymentStatus === 'PENDING_PAYMENT' || inv.paymentStatus === 'PARTIAL_PAID';
+        }
+        return false;
+      });
+
+      setUnpaidInvoices(unpaid);
+      setPaymentStatusChecked(true);
+      
+      if (unpaid.length > 0) {
+        return false; // Has unpaid invoices
+      }
+      return true; // All paid
+    } catch (error: any) {
+      console.error('Error checking payment status:', error);
+      // If error, allow booking (don't block due to technical issue)
+      return true;
+    } finally {
+      setCheckingPayment(false);
+    }
+    */
+  };
+
   const handleCreate = async () => {
     if (!appointmentDate || !plan?.doctor.employeeCode || !appointmentStartTime || !roomCode) {
       toast.error('Vui lòng điền đầy đủ thông tin');
       return;
     }
+
+    // TEMPORARILY DISABLED: Payment validation
+    // TODO: Re-enable after BE fixes invoice creation issue
+    // Issue: BE creates invoice with wrong data
+    // Reference: ISSUE_BE_INVOICE_WRONG_DATA_FOR_APPOINTMENT.md
+    /* DISABLED - Re-enable after BE fix
+    // Check payment status before creating appointment
+    const canProceed = await checkPaymentStatus();
+    if (!canProceed) {
+      // Show detailed error message
+      const unpaidPhases = unpaidInvoices
+        .filter(inv => inv.phaseNumber)
+        .map(inv => `Giai đoạn ${inv.phaseNumber}`)
+        .join(', ');
+      
+      const errorMessage = unpaidPhases
+        ? `Vui lòng thanh toán hóa đơn cho ${unpaidPhases} trước khi đặt lịch.`
+        : 'Vui lòng thanh toán hóa đơn trước khi đặt lịch.';
+      
+      toast.error('Chưa thanh toán hóa đơn', {
+        description: errorMessage + ' Nếu bạn đã thanh toán, vui lòng liên hệ kỹ thuật viên để được hỗ trợ.',
+        duration: 8000,
+      });
+      return;
+    }
+    */
 
     // Format start time
     let formattedStartTime = appointmentStartTime;
@@ -736,6 +909,34 @@ export default function BookAppointmentFromPlanModal({
           {/* Step 1: Review Plan Items */}
           {currentStep === 1 && (
             <div className="space-y-4">
+              {/* TEMPORARILY DISABLED: Payment Status Warning */}
+              {/* TODO: Re-enable after BE fixes invoice creation issue */}
+              {false && paymentStatusChecked && unpaidInvoices.length > 0 && (
+                <Alert variant="destructive" className="border-orange-500 bg-orange-50">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-900 font-semibold">Chưa thanh toán hóa đơn</AlertTitle>
+                  <AlertDescription className="text-orange-800 mt-2">
+                    <div className="space-y-2">
+                      <p>
+                        Bạn cần thanh toán hóa đơn trước khi đặt lịch hẹn:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        {unpaidInvoices.map((inv) => (
+                          <li key={inv.invoiceId}>
+                            {inv.phaseNumber 
+                              ? `Giai đoạn ${inv.phaseNumber}: ${inv.invoiceCode} - ${formatCurrency(inv.remainingDebt)}`
+                              : `Hóa đơn ${inv.invoiceCode}: ${formatCurrency(inv.remainingDebt)}`}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-sm">
+                        Vui lòng thanh toán hóa đơn trong tab "Thanh toán" hoặc liên hệ kỹ thuật viên để được hỗ trợ.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <Card className="p-4 bg-primary/5 border-primary">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="h-5 w-5 text-primary" />
@@ -813,6 +1014,34 @@ export default function BookAppointmentFromPlanModal({
           {/* Step 2: Select Date, Time, Room & Participants */}
           {currentStep === 2 && (
             <div className="space-y-4">
+              {/* TEMPORARILY DISABLED: Payment Status Warning */}
+              {/* TODO: Re-enable after BE fixes invoice creation issue */}
+              {false && paymentStatusChecked && unpaidInvoices.length > 0 && (
+                <Alert variant="destructive" className="border-orange-500 bg-orange-50">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-900 font-semibold">Chưa thanh toán hóa đơn</AlertTitle>
+                  <AlertDescription className="text-orange-800 mt-2">
+                    <div className="space-y-2">
+                      <p>
+                        Bạn cần thanh toán hóa đơn trước khi đặt lịch hẹn:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        {unpaidInvoices.map((inv) => (
+                          <li key={inv.invoiceId}>
+                            {inv.phaseNumber 
+                              ? `Giai đoạn ${inv.phaseNumber}: ${inv.invoiceCode} - ${formatCurrency(inv.remainingDebt)}`
+                              : `Hóa đơn ${inv.invoiceCode}: ${formatCurrency(inv.remainingDebt)}`}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-sm">
+                        Vui lòng thanh toán hóa đơn trong tab "Thanh toán" hoặc liên hệ kỹ thuật viên để được hỗ trợ.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {/* Doctor Info (Read-only, from plan) */}
               <Card className="p-4 bg-primary/5 border-primary">
                 <div className="flex items-center gap-2 mb-2">
@@ -1220,6 +1449,34 @@ export default function BookAppointmentFromPlanModal({
           {/* Step 3: Review & Confirm */}
           {currentStep === 3 && (
             <div className="space-y-4">
+              {/* TEMPORARILY DISABLED: Payment Status Warning */}
+              {/* TODO: Re-enable after BE fixes invoice creation issue */}
+              {false && paymentStatusChecked && unpaidInvoices.length > 0 && (
+                <Alert variant="destructive" className="border-orange-500 bg-orange-50">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-900 font-semibold">Chưa thanh toán hóa đơn</AlertTitle>
+                  <AlertDescription className="text-orange-800 mt-2">
+                    <div className="space-y-2">
+                      <p>
+                        Bạn cần thanh toán hóa đơn trước khi đặt lịch hẹn:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        {unpaidInvoices.map((inv) => (
+                          <li key={inv.invoiceId}>
+                            {inv.phaseNumber 
+                              ? `Giai đoạn ${inv.phaseNumber}: ${inv.invoiceCode} - ${formatCurrency(inv.remainingDebt)}`
+                              : `Hóa đơn ${inv.invoiceCode}: ${formatCurrency(inv.remainingDebt)}`}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-sm">
+                        Vui lòng thanh toán hóa đơn trong tab "Thanh toán" hoặc liên hệ kỹ thuật viên để được hỗ trợ.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <Card className="p-4 bg-primary/5 border-primary">
                 <h3 className="font-semibold mb-4">Xác nhận thông tin lịch hẹn</h3>
                 <div className="space-y-3 text-sm">
@@ -1321,7 +1578,10 @@ export default function BookAppointmentFromPlanModal({
             </Button>
           )}
           {currentStep < 3 ? (
-            <Button onClick={handleNext} disabled={loading}>
+            <Button 
+              onClick={handleNext} 
+              disabled={loading}
+            >
               Tiếp theo
             </Button>
           ) : (

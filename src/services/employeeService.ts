@@ -42,8 +42,17 @@ export class EmployeeService {
       size,
       sortBy,
       sortDirection,
-      ...filters
     };
+    
+    // Only include filters that have actual values (not null/undefined)
+    // This ensures that when isActive is not set, it won't be sent to BE
+    // BE will then return all employees (both active and inactive)
+    Object.keys(filters).forEach(key => {
+      const value = filters[key as keyof typeof filters];
+      if (value !== null && value !== undefined) {
+        queryParams[key] = value;
+      }
+    });
     
     if (employeeType) {
       queryParams.employmentType = employeeType; // Backend expects employmentType

@@ -949,7 +949,7 @@ export default function RegistrationsPage() {
                 <div>
                   <Label>Days of Week <span className="text-red-500">*</span></Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                    {[1, 2, 3, 4, 5, 6].map(day => (
                       <label key={day} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                         <input
                           type="checkbox"

@@ -183,7 +183,7 @@ export default function InvoiceDetailPage() {
             {/* Invoice Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Thông Tin Hóa Đơn</CardTitle>
+                <CardTitle>Thông tin hóa đơn</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -238,7 +238,7 @@ export default function InvoiceDetailPage() {
             {invoice.items && invoice.items.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Chi Tiết Dịch Vụ</CardTitle>
+                  <CardTitle>Chi tiết dịch vụ</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -269,7 +269,7 @@ export default function InvoiceDetailPage() {
             {/* Payment History */}
             <Card>
               <CardHeader>
-                <CardTitle>Lịch Sử Thanh Toán</CardTitle>
+                <CardTitle>Lịch sử thanh toán</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingPayments ? (
@@ -305,7 +305,7 @@ export default function InvoiceDetailPage() {
             {/* Payment Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Thông Tin Thanh Toán</CardTitle>
+                <CardTitle>Thông tin thanh toán</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>

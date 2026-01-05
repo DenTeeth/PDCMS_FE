@@ -487,7 +487,7 @@ export default function WorkSlotsManagementPage() {
                 <div>
                   <Label>Thứ trong tuần <span className="text-red-500">*</span></Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
-                    {Object.values(DayOfWeek).map((day) => (
+                    {Object.values(DayOfWeek).filter(day => day !== DayOfWeek.SUNDAY).map((day) => (
                       <label key={day} className="inline-flex items-center space-x-2">
                         <input
                           type="checkbox"

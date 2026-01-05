@@ -18,10 +18,12 @@ import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Loader2, FileText, CreditCard } from 'lucide-react';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { TreatmentPlanDetailResponse, PlanItemStatus, ItemDetailDTO } from '@/types/treatmentPlan';
 import TreatmentPlanDetail from '@/components/treatment-plans/TreatmentPlanDetail';
+import TreatmentPlanPaymentTab from '@/components/treatment-plans/TreatmentPlanPaymentTab';
 import CreateAppointmentModal from '@/components/appointments/CreateAppointmentModal';
 import BookAppointmentFromPlanModal from '@/components/treatment-plans/BookAppointmentFromPlanModal';
 
@@ -37,6 +39,7 @@ export default function AdminTreatmentPlanDetailPage() {
 
   // State
   const [plan, setPlan] = useState<TreatmentPlanDetailResponse | null>(null);
+  const [activeTab, setActiveTab] = useState('details');
   // Phase 5: Appointment booking from plan items
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showBookFromPlanModal, setShowBookFromPlanModal] = useState(false);
@@ -330,15 +333,49 @@ export default function AdminTreatmentPlanDetailPage() {
           </div>
         </div>
 
-        {/* Plan Detail */}
-        <TreatmentPlanDetail
-          plan={plan}
-          onViewAppointment={handleViewAppointment}
-          onBookAppointment={handleBookAppointment}
-          showActions={true}
-          onPlanUpdated={handlePlanUpdated}
-          onBookPlanItems={handleBookSelectedPlanItems}
-        />
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-muted/20 rounded-full h-auto p-1 w-full md:w-auto">
+            <TabsTrigger
+              value="details"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Thông tin
+            </TabsTrigger>
+            <TabsTrigger
+              value="payment"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Thanh toán
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Details Tab */}
+          <TabsContent value="details">
+            <TreatmentPlanDetail
+              plan={plan}
+              onViewAppointment={handleViewAppointment}
+              onBookAppointment={handleBookAppointment}
+              showActions={true}
+              onPlanUpdated={handlePlanUpdated}
+              onBookPlanItems={handleBookSelectedPlanItems}
+            />
+          </TabsContent>
+
+          {/* Payment Tab */}
+          <TabsContent value="payment">
+            {plan && plan.patient?.patientCode && (
+              <TreatmentPlanPaymentTab
+                treatmentPlanId={plan.planId}
+                treatmentPlanCode={plan.planCode}
+                patientCode={plan.patient.patientCode}
+                plan={plan}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Phase 5: Appointment Booking Modal */}
         <CreateAppointmentModal

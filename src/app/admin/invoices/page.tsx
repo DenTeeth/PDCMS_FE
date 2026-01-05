@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   Search,
@@ -21,12 +22,14 @@ import {
   Clock,
   AlertCircle,
   Receipt,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoiceService, InvoiceResponse, InvoicePaymentStatus, InvoiceType } from '@/services/invoiceService';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/utils/formatters';
 import { format } from 'date-fns';
+import CreateSupplementalInvoiceModal from '@/components/invoices/CreateSupplementalInvoiceModal';
 
 // ==================== MAIN COMPONENT ====================
 export default function InvoicesPage() {
@@ -36,13 +39,16 @@ export default function InvoicesPage() {
   // Permission checks
   const canView = user?.permissions?.includes('VIEW_INVOICE_ALL') || false;
   const canCreate = user?.permissions?.includes('CREATE_INVOICE') || false;
+  
+  // Modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // State management
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('all'); // Tabs: all, appointment, treatment_plan, supplemental
   const [patientIdFilter, setPatientIdFilter] = useState<string>('');
 
   // ==================== FETCH DATA ====================
@@ -124,11 +130,11 @@ export default function InvoicesPage() {
       if (filterStatus === 'cancelled' && invoice.paymentStatus !== 'CANCELLED') return false;
     }
 
-    // Type filter
-    if (filterType !== 'all') {
-      if (filterType === 'appointment' && invoice.invoiceType !== 'APPOINTMENT') return false;
-      if (filterType === 'treatment_plan' && invoice.invoiceType !== 'TREATMENT_PLAN') return false;
-      if (filterType === 'supplemental' && invoice.invoiceType !== 'SUPPLEMENTAL') return false;
+    // Type filter (from tabs)
+    if (activeTab !== 'all') {
+      if (activeTab === 'appointment' && invoice.invoiceType !== 'APPOINTMENT') return false;
+      if (activeTab === 'treatment_plan' && invoice.invoiceType !== 'TREATMENT_PLAN') return false;
+      if (activeTab === 'supplemental' && invoice.invoiceType !== 'SUPPLEMENTAL') return false;
     }
 
     return true;
@@ -188,9 +194,20 @@ export default function InvoicesPage() {
   const clearFilters = () => {
     setSearchTerm('');
     setFilterStatus('all');
-    setFilterType('all');
+    setActiveTab('all');
     setPatientIdFilter('');
   };
+
+  // Get invoice counts by type
+  const getInvoiceCounts = () => {
+    const all = invoices.length;
+    const appointment = invoices.filter(inv => inv.invoiceType === 'APPOINTMENT').length;
+    const treatmentPlan = invoices.filter(inv => inv.invoiceType === 'TREATMENT_PLAN').length;
+    const supplemental = invoices.filter(inv => inv.invoiceType === 'SUPPLEMENTAL').length;
+    return { all, appointment, treatmentPlan, supplemental };
+  };
+
+  const counts = getInvoiceCounts();
 
   if (!canView) {
     return (
@@ -208,10 +225,16 @@ export default function InvoicesPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Receipt className="h-8 w-8" />
-              Quản Lý Hóa Đơn
+              Quản lý hóa đơn
             </h1>
             <p className="text-gray-600 mt-1">Xem và quản lý tất cả hóa đơn trong hệ thống</p>
           </div>
+          {canCreate && (
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tạo hóa đơn bổ sung
+            </Button>
+          )}
         </div>
 
         {/* Filters */}
@@ -219,7 +242,7 @@ export default function InvoicesPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Bộ Lọc
+              Bộ lọc
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -269,20 +292,6 @@ export default function InvoicesPage() {
                 </select>
               </div>
 
-              {/* Type Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Loại hóa đơn</label>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
-                >
-                  <option value="all">Tất cả</option>
-                  <option value="appointment">Lịch hẹn</option>
-                  <option value="treatment_plan">Kế hoạch điều trị</option>
-                  <option value="supplemental">Bổ sung</option>
-                </select>
-              </div>
             </div>
 
             {/* Action Buttons */}
@@ -298,20 +307,142 @@ export default function InvoicesPage() {
           </CardContent>
         </Card>
 
-        {/* Invoices List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Danh Sách Hóa Đơn ({filteredInvoices.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-muted/20 rounded-full h-auto p-1 w-full md:w-auto">
+            <TabsTrigger
+              value="all"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Tổng ({counts.all})
+            </TabsTrigger>
+            <TabsTrigger
+              value="appointment"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Lịch hẹn ({counts.appointment})
+            </TabsTrigger>
+            <TabsTrigger
+              value="treatment_plan"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Kế hoạch điều trị ({counts.treatmentPlan})
+            </TabsTrigger>
+            <TabsTrigger
+              value="supplemental"
+              className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Bổ sung ({counts.supplemental})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* All Invoices Tab */}
+          <TabsContent value="all">
+            <InvoicesListContent
+              invoices={filteredInvoices}
+              loading={loading}
+              patientIdFilter={patientIdFilter}
+              router={router}
+              getStatusBadge={getStatusBadge}
+              getTypeLabel={getTypeLabel}
+              formatCurrency={formatCurrency}
+              format={format}
+            />
+          </TabsContent>
+
+          {/* Appointment Invoices Tab */}
+          <TabsContent value="appointment">
+            <InvoicesListContent
+              invoices={filteredInvoices}
+              loading={loading}
+              patientIdFilter={patientIdFilter}
+              router={router}
+              getStatusBadge={getStatusBadge}
+              getTypeLabel={getTypeLabel}
+              formatCurrency={formatCurrency}
+              format={format}
+            />
+          </TabsContent>
+
+          {/* Treatment Plan Invoices Tab */}
+          <TabsContent value="treatment_plan">
+            <InvoicesListContent
+              invoices={filteredInvoices}
+              loading={loading}
+              patientIdFilter={patientIdFilter}
+              router={router}
+              getStatusBadge={getStatusBadge}
+              getTypeLabel={getTypeLabel}
+              formatCurrency={formatCurrency}
+              format={format}
+            />
+          </TabsContent>
+
+          {/* Supplemental Invoices Tab */}
+          <TabsContent value="supplemental">
+            <InvoicesListContent
+              invoices={filteredInvoices}
+              loading={loading}
+              patientIdFilter={patientIdFilter}
+              router={router}
+              getStatusBadge={getStatusBadge}
+              getTypeLabel={getTypeLabel}
+              formatCurrency={formatCurrency}
+              format={format}
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Create Supplemental Invoice Modal */}
+        <CreateSupplementalInvoiceModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            fetchInvoices();
+          }}
+        />
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+// ==================== INVOICES LIST CONTENT COMPONENT ====================
+interface InvoicesListContentProps {
+  invoices: InvoiceResponse[];
+  loading: boolean;
+  patientIdFilter: string;
+  router: any;
+  getStatusBadge: (status: InvoicePaymentStatus) => JSX.Element;
+  getTypeLabel: (type: InvoiceType) => string;
+  formatCurrency: (amount: number) => string;
+  format: (date: Date, format: string) => string;
+}
+
+function InvoicesListContent({
+  invoices,
+  loading,
+  patientIdFilter,
+  router,
+  getStatusBadge,
+  getTypeLabel,
+  formatCurrency,
+  format,
+}: InvoicesListContentProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          Danh sách hóa đơn ({invoices.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 <span className="ml-2">Đang tải...</span>
               </div>
-            ) : filteredInvoices.length === 0 ? (
+            ) : invoices.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Không tìm thấy hóa đơn nào</p>
@@ -321,7 +452,7 @@ export default function InvoicesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredInvoices.map((invoice) => (
+                {invoices.map((invoice) => (
                   <Card
                     key={invoice.invoiceId}
                     className="hover:shadow-md transition-shadow cursor-pointer"
@@ -403,8 +534,6 @@ export default function InvoicesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </ProtectedRoute>
   );
 }
 
