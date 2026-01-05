@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faTwitter, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
@@ -8,18 +9,22 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="h-10 w-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">D</span>
-              </div>
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <Image
+                src="/denteeth-logo.png"
+                alt="DenTeeth Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-xl font-bold">DenTeeth</span>
-            </div>
+            </Link>
             <p className="text-gray-400 mb-4">
-              FPT University, District 9<br />
-              Ho Chi Minh City
+              Quận 9, TP.HCM<br />
+              
             </p>
-            <p className="text-gray-400 mb-4">contact@denteeth.com</p>
-            <p className="text-gray-400">0123 45678</p>
+            <p className="text-gray-400 mb-4">hellodenteeth@gmail.com</p>
+            <p className="text-gray-400">0909 726 700</p>
           </div>
           
           <div>
@@ -28,7 +33,6 @@ export default function Footer() {
               <li><Link href="/about" className="hover:text-white transition-colors">Về chúng tôi</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Liên hệ</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">Dịch vụ của chúng tôi</Link></li>
-              <li><Link href="/appointment" className="hover:text-white transition-colors">Đặt lịch hẹn</Link></li>
             </ul>
           </div>
           

@@ -41,6 +41,16 @@ const nextConfig: NextConfig = {
         hostname: 'img.vietqr.io',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ap-south-1.graphassets.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media.graphassets.com',
+        pathname: '/**',
+      },
     ],
   },
 

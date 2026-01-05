@@ -21,6 +21,7 @@ export default function Navigation() {
     { name: t('services'), path: "/Services" },
     { name: t('doctors'), path: "/Doctors" },
     { name: t('about'), path: "/About" },
+    { name: "Blog", path: "/blogs" },
     { name: t('contact'), path: "/Contact" },
   ];
 

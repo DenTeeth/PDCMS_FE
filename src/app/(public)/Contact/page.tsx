@@ -32,10 +32,10 @@ export default function ContactPage() {
                 <CardTitle>Thông tin liên hệ</CardTitle>
               </CardHeader>
               <CardContent className="text-gray-700 space-y-3">
-                <p><span className="font-medium">Địa chỉ:</span> FPT University, Quận 9, TP.HCM</p>
-                <p><span className="font-medium">Số điện thoại:</span> 01234 5678</p>
-                <p><span className="font-medium">Email:</span> contact@denteeth.com</p>
-                <p><span className="font-medium">Giờ làm việc:</span> 08:00 - 21:00 (Thứ 2 - Chủ nhật)</p>
+                <p><span className="font-medium">Địa chỉ:</span> Quận 9, TP.HCM</p>
+                <p><span className="font-medium">Số điện thoại:</span> 0909 726 700</p>
+                <p><span className="font-medium">Email:</span> hellodenteeth@gmail.com</p>
+                <p><span className="font-medium">Giờ làm việc:</span> 08:00 - 21:00 (Thứ 2 - Thứ 7)</p>
               </CardContent>
             </Card>
 
@@ -46,7 +46,7 @@ export default function ContactPage() {
               <CardContent>
                 <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200">
                   <iframe
-                    title="Bản đồ đến FPT University HCMC"
+                    title="Bản đồ đến Quận 9, TP.HCM"
                     src="https://www.google.com/maps?q=FPT%20University%20HCMC&output=embed"
                     className="h-full w-full border-0"
                     loading="lazy"
