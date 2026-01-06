@@ -62,6 +62,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [balanceData, setBalanceData] = useState<EmployeeLeaveBalancesResponse | null>(null);
   const [loadingBalances, setLoadingBalances] = useState(false);
+  const [viewMode, setViewMode] = useState<'single' | 'all'>('single'); // 'single' = xem 1 nhân viên, 'all' = xem tất cả
+  const [allBalancesData, setAllBalancesData] = useState<Map<number, EmployeeLeaveBalancesResponse>>(new Map());
+  const [loadingAllBalances, setLoadingAllBalances] = useState(false);
+  const [selectedTimeOffTypeFilter, setSelectedTimeOffTypeFilter] = useState<string>('ALL');
 
   // Search/Filter State
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
@@ -84,6 +88,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   });
   const [adjustFormErrors, setAdjustFormErrors] = useState<Partial<Record<keyof AdjustmentFormData, string>>>({});
   const [submittingAdjust, setSubmittingAdjust] = useState(false);
+  const [modalSelectedEmployeeId, setModalSelectedEmployeeId] = useState<string | null>(null);
 
   const [annualResetFormData, setAnnualResetFormData] = useState<AnnualResetFormData>({
     cycleYear: new Date().getFullYear() + 1,
@@ -107,10 +112,12 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
   // Load balances when employee or year changes
   useEffect(() => {
-    if (selectedEmployeeId && selectedYear) {
+    if (viewMode === 'single' && selectedEmployeeId && selectedYear) {
       loadBalances();
+    } else if (viewMode === 'all' && selectedYear) {
+      loadAllBalances();
     }
-  }, [selectedEmployeeId, selectedYear]);
+  }, [selectedEmployeeId, selectedYear, viewMode]);
 
   // Close year picker on outside click
   useEffect(() => {
@@ -154,13 +161,45 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
     }
   };
 
+  const loadAllBalances = async () => {
+    try {
+      setLoadingAllBalances(true);
+      const balancesMap = new Map<number, EmployeeLeaveBalancesResponse>();
+      
+      // Load balances for all employees in parallel (with limit to avoid overwhelming)
+      const loadPromises = employees.slice(0, 50).map(async (emp) => {
+        try {
+          const data = await LeaveBalanceService.getEmployeeBalances(
+            emp.employeeId,
+            selectedYear
+          );
+          balancesMap.set(emp.employeeId, data);
+        } catch (error: any) {
+          // Skip employees without balance data (404)
+          if (error?.response?.status !== 404) {
+            console.error(`Error loading balance for employee ${emp.employeeId}:`, error);
+          }
+        }
+      });
+
+      await Promise.all(loadPromises);
+      setAllBalancesData(balancesMap);
+    } catch (error) {
+      console.error('Error loading all balances:', error);
+      handleApiError(error as any, 'Không thể tải số dư ngày nghỉ cho tất cả nhân viên');
+    } finally {
+      setLoadingAllBalances(false);
+    }
+  };
+
   // ==================== MANUAL ADJUSTMENT ====================
 
-  const openAdjustModal = () => {
-    if (!selectedEmployeeId) {
-      alert('Vui lòng chọn nhân viên trước');
-      return;
-    }
+  const openAdjustModal = (employeeId?: number) => {
+    // If employeeId is provided (from header button), use it
+    // Otherwise, use selectedEmployeeId from state
+    const targetEmployeeId = employeeId ? employeeId.toString() : selectedEmployeeId;
+    
+    setModalSelectedEmployeeId(targetEmployeeId);
     setAdjustFormData({
       timeOffTypeId: '',
       cycleYear: selectedYear,
@@ -174,6 +213,9 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   const validateAdjustForm = (): boolean => {
     const errors: Record<string, string> = {};
 
+    if (!modalSelectedEmployeeId) {
+      errors.employeeId = 'Vui lòng chọn nhân viên';
+    }
     if (!adjustFormData.timeOffTypeId) errors.timeOffTypeId = 'Vui lòng chọn loại phép';
     if (!adjustFormData.cycleYear) errors.cycleYear = 'Vui lòng nhập năm';
     if (adjustFormData.changeAmount === null || adjustFormData.changeAmount === 0) {
@@ -186,13 +228,13 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   };
 
   const handleAdjust = async () => {
-    if (!validateAdjustForm() || !selectedEmployeeId) return;
+    if (!validateAdjustForm() || !modalSelectedEmployeeId) return;
 
     try {
       setSubmittingAdjust(true);
 
       await LeaveBalanceService.adjustBalance({
-        employee_id: Number(selectedEmployeeId),
+        employee_id: Number(modalSelectedEmployeeId),
         time_off_type_id: adjustFormData.timeOffTypeId,
         cycle_year: adjustFormData.cycleYear,
         change_amount: adjustFormData.changeAmount!,
@@ -201,7 +243,17 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
       alert('Điều chỉnh số dư ngày nghỉ thành công!');
       setShowAdjustModal(false);
-      loadBalances();
+      setModalSelectedEmployeeId(null);
+      
+      // If modal employee is same as selected, reload balances
+      if (modalSelectedEmployeeId === selectedEmployeeId) {
+        loadBalances();
+      } else {
+        // Update selected employee and reload
+        setSelectedEmployeeId(modalSelectedEmployeeId);
+        // Reload balances for the new selected employee
+        setTimeout(() => loadBalances(), 100);
+      }
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || '';
 
@@ -293,15 +345,24 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
   return (
     <>
       {/* Header Actions */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end gap-2 mb-4">
         {canAdjustBalances && (
-          <Button
-            onClick={openAnnualResetModal}
-            className="bg-orange-600 hover:bg-orange-700 text-white"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Công cụ admin
-          </Button>
+          <>
+            <Button
+              onClick={() => openAdjustModal()}
+              className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Điều chỉnh số dư ngày nghỉ
+            </Button>
+            <Button
+              onClick={openAnnualResetModal}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Công cụ admin
+            </Button>
+          </>
         )}
       </div>
 
@@ -314,39 +375,107 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-4 mb-4 pb-4 border-b">
+            <Label className="font-medium">Chế độ xem:</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'single' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('single');
+                  setSelectedEmployeeId(null);
+                  setSelectedTimeOffTypeFilter('ALL');
+                }}
+                className={viewMode === 'single' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+              >
+                Xem 1 nhân viên
+              </Button>
+              <Button
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('all');
+                  setSelectedEmployeeId(null);
+                  setSelectedTimeOffTypeFilter('ALL');
+                }}
+                className={viewMode === 'all' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+              >
+                Xem tất cả nhân viên
+              </Button>
+            </div>
+          </div>
+
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <Label>Chọn nhân viên</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Tìm theo tên, mã NV, hoặc ID..."
-                  value={employeeSearchTerm}
-                  onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {employeeSearchTerm && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Tìm thấy {filteredEmployees.length} nhân viên
-                </p>
-              )}
-              <div className="mt-2">
+            {viewMode === 'single' ? (
+              <>
+                <div className="md:col-span-1">
+                  <Label>Chọn nhân viên</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Tìm theo tên, mã NV, hoặc ID..."
+                      value={employeeSearchTerm}
+                      onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {employeeSearchTerm && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tìm thấy {filteredEmployees.length} nhân viên
+                    </p>
+                  )}
+                  <div className="mt-2">
+                    <CustomSelect
+                      label=""
+                      value={selectedEmployeeId?.toString() || ''}
+                      onChange={(value: string) => setSelectedEmployeeId(value || null)}
+                      options={[
+                        { value: '', label: '-- Chọn nhân viên --' },
+                        ...filteredEmployees.map(emp => ({
+                          value: emp.employeeId.toString(),
+                          label: `${emp.fullName} (${emp.employeeCode || 'ID: ' + emp.employeeId})`
+                        }))
+                      ]}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Loại ngày nghỉ</Label>
+                  <CustomSelect
+                    value={selectedTimeOffTypeFilter}
+                    onChange={(value: string) => setSelectedTimeOffTypeFilter(value)}
+                    options={[
+                      { value: 'ALL', label: 'Tất cả loại' },
+                      ...timeOffTypes
+                        .filter(type => type.isActive)
+                        .map(type => ({
+                          value: type.typeId,
+                          label: type.typeName || type.typeId
+                        }))
+                    ]}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="md:col-span-2">
+                <Label>Loại ngày nghỉ</Label>
                 <CustomSelect
-                  label="Chọn nhân viên"
-                  value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value: string) => setSelectedEmployeeId(value || null)}
+                  value={selectedTimeOffTypeFilter}
+                  onChange={(value: string) => setSelectedTimeOffTypeFilter(value)}
                   options={[
-                    { value: '', label: '-- Chọn nhân viên --' },
-                    ...filteredEmployees.map(emp => ({
-                      value: emp.employeeId.toString(),
-                      label: `${emp.fullName} (${emp.employeeCode || 'ID: ' + emp.employeeId})`
-                    }))
+                    { value: 'ALL', label: 'Tất cả loại' },
+                    ...timeOffTypes
+                      .filter(type => type.isActive)
+                      .map(type => ({
+                        value: type.typeId,
+                        label: type.typeName || type.typeId
+                      }))
                   ]}
                 />
               </div>
-            </div>
+            )}
 
             <div className="relative" ref={yearPickerRef}>
               <Label htmlFor="year">Năm</Label>
@@ -419,7 +548,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
           </div>
 
           {/* Loading Skeleton */}
-          {loadingBalances && (
+          {(loadingBalances || loadingAllBalances) && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
@@ -427,8 +556,8 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             </div>
           )}
 
-          {/* Balance Table */}
-          {!loadingBalances && balanceData && balanceData.balances.length > 0 && (
+          {/* Single Employee Balance Table */}
+          {viewMode === 'single' && !loadingBalances && balanceData && balanceData.balances.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
@@ -448,69 +577,169 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {balanceData.balances.map((balance) => {
-                    const typeInfo = timeOffTypes.find(t => t.typeId === balance.time_off_type.type_id);
+                  {balanceData.balances
+                    .filter(balance => selectedTimeOffTypeFilter === 'ALL' || balance.time_off_type.type_id === selectedTimeOffTypeFilter)
+                    .map((balance) => {
+                      const typeInfo = timeOffTypes.find(t => t.typeId === balance.time_off_type.type_id);
 
-                    return (
-                      <tr key={balance.balance_id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <div className="font-medium text-gray-900">{balance.time_off_type.type_name}</div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">
-                                {balance.time_off_type.type_id}
-                              </Badge>
-                              {balance.time_off_type.is_paid ? (
-                                <Badge className="bg-green-50 text-green-700 text-xs">
-                                  Có lương
+                      return (
+                        <tr key={balance.balance_id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <div className="font-medium text-gray-900">{balance.time_off_type.type_name}</div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">
+                                  {balance.time_off_type.type_id}
                                 </Badge>
-                              ) : (
-                                <Badge className="bg-gray-50 text-gray-700 text-xs">
-                                  Không lương
-                                </Badge>
-                              )}
-                              {typeInfo?.requiresBalance && (
-                                <Badge className="bg-blue-50 text-blue-700 text-xs">
-                                  Yêu cầu số dư
-                                </Badge>
+                                {balance.time_off_type.is_paid ? (
+                                  <Badge className="bg-green-50 text-green-700 text-xs">
+                                    Có lương
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gray-50 text-gray-700 text-xs">
+                                    Không lương
+                                  </Badge>
+                                )}
+                                {typeInfo?.requiresBalance && (
+                                  <Badge className="bg-blue-50 text-blue-700 text-xs">
+                                    Yêu cầu số dư
+                                  </Badge>
+                                )}
+                              </div>
+                              {typeInfo?.description && (
+                                <div className="text-xs text-gray-500 italic">
+                                  {typeInfo.description}
+                                </div>
                               )}
                             </div>
-                            {typeInfo?.description && (
-                              <div className="text-xs text-gray-500 italic">
-                                {typeInfo.description}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <Badge className="bg-blue-100 text-blue-800">
-                            {balance.total_days_allowed} ngày
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <Badge className="bg-orange-100 text-orange-800">
-                            {balance.days_taken} ngày
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <Badge className={
-                            balance.days_remaining > 0
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }>
-                            {balance.days_remaining} ngày
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <Badge className="bg-blue-100 text-blue-800">
+                              {balance.total_days_allowed} ngày
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <Badge className="bg-orange-100 text-orange-800">
+                              {balance.days_taken} ngày
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <Badge className={
+                              balance.days_remaining > 0
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }>
+                              {balance.days_remaining} ngày
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
           )}
 
-          {/* Empty State */}
-          {!loadingBalances && (!balanceData || balanceData.balances.length === 0) && selectedEmployeeId && (
+          {/* All Employees Balance Table */}
+          {viewMode === 'all' && !loadingAllBalances && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Nhân viên
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Loại Nghỉ Phép
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Tổng Ngày Phép
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Đã Nghỉ
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Còn Lại
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredEmployees
+                    .filter(emp => {
+                      const balances = allBalancesData.get(emp.employeeId);
+                      if (!balances) return false;
+                      if (selectedTimeOffTypeFilter === 'ALL') return true;
+                      return balances.balances.some(b => b.time_off_type.type_id === selectedTimeOffTypeFilter);
+                    })
+                    .map((emp) => {
+                      const balances = allBalancesData.get(emp.employeeId);
+                      if (!balances || balances.balances.length === 0) return null;
+
+                      const filteredBalances = balances.balances.filter(b =>
+                        selectedTimeOffTypeFilter === 'ALL' || b.time_off_type.type_id === selectedTimeOffTypeFilter
+                      );
+
+                      return filteredBalances.map((balance, idx) => {
+                        const typeInfo = timeOffTypes.find(t => t.typeId === balance.time_off_type.type_id);
+
+                        return (
+                          <tr key={`${emp.employeeId}-${balance.balance_id}`} className="hover:bg-gray-50">
+                            {idx === 0 && (
+                              <td rowSpan={filteredBalances.length} className="px-6 py-4 align-top">
+                                <div className="font-medium text-gray-900">{emp.fullName}</div>
+                                <div className="text-sm text-gray-500">{emp.employeeCode || `ID: ${emp.employeeId}`}</div>
+                              </td>
+                            )}
+                            <td className="px-6 py-4">
+                              <div className="space-y-1">
+                                <div className="font-medium text-gray-900">{balance.time_off_type.type_name}</div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-xs">
+                                    {balance.time_off_type.type_id}
+                                  </Badge>
+                                  {balance.time_off_type.is_paid ? (
+                                    <Badge className="bg-green-50 text-green-700 text-xs">
+                                      Có lương
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-gray-50 text-gray-700 text-xs">
+                                      Không lương
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <Badge className="bg-blue-100 text-blue-800">
+                                {balance.total_days_allowed} ngày
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <Badge className="bg-orange-100 text-orange-800">
+                                {balance.days_taken} ngày
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <Badge className={
+                                balance.days_remaining > 0
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }>
+                                {balance.days_remaining} ngày
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })
+                    .filter(Boolean)}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Empty State - Single */}
+          {viewMode === 'single' && !loadingBalances && (!balanceData || balanceData.balances.length === 0) && selectedEmployeeId && (
             <div className="text-center py-12">
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-lg font-medium text-gray-900">Không có dữ liệu số dư ngày nghỉ</p>
@@ -518,15 +747,25 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             </div>
           )}
 
-          {/* Action Button */}
-          {canAdjustBalances && selectedEmployeeId && (
-            <div className="flex justify-end pt-4 border-t">
+          {/* Empty State - All */}
+          {viewMode === 'all' && !loadingAllBalances && allBalancesData.size === 0 && (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg font-medium text-gray-900">Không có dữ liệu số dư ngày nghỉ</p>
+              <p className="text-sm text-gray-600">Chưa có dữ liệu số dư ngày nghỉ cho năm {selectedYear}</p>
+            </div>
+          )}
+
+          {/* Action Button - Show in single mode (button moved to header, but keep this for consistency) */}
+          {viewMode === 'single' && canAdjustBalances && selectedEmployeeId && (
+            <div className="flex justify-end pt-4 border-t border-gray-200">
               <Button
-                onClick={openAdjustModal}
+                onClick={() => openAdjustModal()}
                 className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
+                disabled={loadingBalances}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Điều chỉnh số dư ngày nghỉ
+                {loadingBalances ? 'Đang tải...' : 'Điều chỉnh số dư ngày nghỉ'}
               </Button>
             </div>
           )}
@@ -546,15 +785,40 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                <p className="text-sm text-blue-800">
-                  <strong>Nhân viên:</strong> {employees.find(e => e.employeeId === selectedEmployeeId)?.fullName}
-                </p>
+              {/* Employee Selector - Show if no employee selected or allow change */}
+              <div>
+                <Label htmlFor="modal-employee" className="mb-1">Nhân viên <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  value={modalSelectedEmployeeId || ''}
+                  onChange={(value: string) => {
+                    setModalSelectedEmployeeId(value || null);
+                    const newErrors = { ...adjustFormErrors };
+                    delete newErrors.employeeId;
+                    setAdjustFormErrors(newErrors);
+                  }}
+                  options={[
+                    { value: '', label: '-- Chọn nhân viên --' },
+                    ...employees.map(emp => ({
+                      value: emp.employeeId.toString(),
+                      label: `${emp.fullName} (${emp.employeeCode || 'ID: ' + emp.employeeId})`
+                    }))
+                  ]}
+                />
+                {adjustFormErrors.employeeId && (
+                  <p className="text-red-500 text-sm mt-1">{adjustFormErrors.employeeId}</p>
+                )}
+                {modalSelectedEmployeeId && (
+                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>Nhân viên đã chọn:</strong> {employees.find(e => e.employeeId.toString() === modalSelectedEmployeeId)?.fullName}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="adjust-type">Loại phép *</Label>
+                  <Label htmlFor="adjust-type" className="mb-1">Loại phép <span className="text-red-500">*</span></Label>
                   <select
                     id="adjust-type"
                     value={adjustFormData.timeOffTypeId}
@@ -580,7 +844,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 </div>
 
                 <div>
-                  <Label htmlFor="adjust-year">Năm *</Label>
+                  <Label htmlFor="adjust-year" className="mb-1">Năm <span className="text-red-500">*</span></Label>
                   <Input
                     id="adjust-year"
                     type="number"
@@ -600,7 +864,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="change-amount">Số lượng điều chỉnh *</Label>
+                <Label htmlFor="change-amount" className="mb-1">Số lượng điều chỉnh <span className="text-red-500">*</span></Label>
                 <Input
                   id="change-amount"
                   type="number"
@@ -621,7 +885,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="notes">Ghi chú *</Label>
+                <Label htmlFor="notes" className="mb-1">Ghi chú <span className="text-red-500">*</span></Label>
                 <textarea
                   id="notes"
                   placeholder="VD: Thưởng phép năm 2025, Sửa lỗi nhập liệu..."
@@ -644,7 +908,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setShowAdjustModal(false)}
+                  onClick={() => {
+                    setShowAdjustModal(false);
+                    setModalSelectedEmployeeId(null);
+                  }}
                   disabled={submittingAdjust}
                 >
                   Hủy
@@ -669,7 +936,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
-                Kích hoạt job cộng phép năm mới
+                Kích hoạt cộng phép năm mới
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -685,7 +952,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="reset-year">Năm áp dụng *</Label>
+                  <Label htmlFor="reset-year" className="mb-1">Năm áp dụng <span className="text-red-500">*</span></Label>
                   <Input
                     id="reset-year"
                     type="number"
@@ -705,7 +972,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 </div>
 
                 <div>
-                  <Label htmlFor="reset-allowance">Số ngày cộng mặc định *</Label>
+                  <Label htmlFor="reset-allowance" className="mb-1">Số ngày cộng mặc định <span className="text-red-500">*</span></Label>
                   <Input
                     id="reset-allowance"
                     type="number"
@@ -728,7 +995,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               </div>
 
               <div>
-                <Label htmlFor="reset-type">Loại phép *</Label>
+                <Label htmlFor="reset-type" className="mb-1">Loại phép <span className="text-red-500">*</span></Label>
                 <select
                   id="reset-type"
                   value={annualResetFormData.applyToTypeId}

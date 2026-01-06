@@ -220,83 +220,102 @@ export default function EmployeesPage() {
         isActiveSet: params.hasOwnProperty('isActive'),
       });
       
-      // Fetch ALL employees (NO FILTERS) to get complete data for stats calculation
-      // This ensures we get ALL employees (both active and inactive) regardless of current filters
-      // IMPORTANT: BE may have max size limit, so we need to fetch all pages
-      let allEmployees: Employee[] = [];
-      let currentPage = 0;
-      let hasMorePages = true;
+      // Strategy: Try stats API first (efficient), fallback to fetch all pages if API unavailable
+      let statsCalculated = false;
       
-      while (hasMorePages) {
-        const pageResponse = await employeeService.getEmployees({
-          page: currentPage,
-          size: 100, // Use reasonable page size (BE may limit max size)
-          sortBy: 'employeeCode' as const,
-          sortDirection: 'ASC' as const,
-          // IMPORTANT: Do NOT include any filters (search, roleId, isActive)
-          // This ensures we get the true total count of all employees
+      // Step 1: Try to use dedicated stats API endpoint (preferred - single API call)
+      try {
+        const stats = await employeeService.getEmployeeStats();
+        console.log('✅ Employee stats from API:', stats);
+        
+        // Update stats states from API response
+        setTotalEmployees(stats.totalEmployees);
+        setTotalActive(stats.activeEmployees);
+        setTotalInactive(stats.inactiveEmployees);
+        statsCalculated = true;
+      } catch (statsError: any) {
+        const status = statsError.response?.status;
+        const errorData = statsError.response?.data;
+        
+        console.warn('⚠️ Stats API unavailable, falling back to fetch all pages method:', {
+          status,
+          statusText: statsError.response?.statusText,
+          error: errorData,
+          message: statsError.message,
         });
         
-        allEmployees = [...allEmployees, ...(pageResponse.content || [])];
-        
-        // Check if there are more pages
-        hasMorePages = !pageResponse.last && currentPage < pageResponse.totalPages - 1;
-        currentPage++;
-        
-        // Safety limit to prevent infinite loop
-        if (currentPage > 100) {
-          console.warn('⚠️ Reached safety limit while fetching all employees');
-          break;
+        // Step 2: Fallback - Fetch all pages and calculate stats manually (less efficient but reliable)
+        try {
+          console.log('📊 Fetching all employees to calculate stats manually...');
+          let allEmployees: Employee[] = [];
+          let currentPage = 0;
+          let hasMorePages = true;
+          
+          while (hasMorePages) {
+            const pageResponse = await employeeService.getEmployees({
+              page: currentPage,
+              size: 100, // Use reasonable page size (BE may limit max size)
+              sortBy: 'employeeCode' as const,
+              sortDirection: 'ASC' as const,
+              // IMPORTANT: Do NOT include any filters (search, roleId, isActive)
+              // This ensures we get the true total count of all employees
+            });
+            
+            allEmployees = [...allEmployees, ...(pageResponse.content || [])];
+            
+            // Check if there are more pages
+            hasMorePages = !pageResponse.last && currentPage < pageResponse.totalPages - 1;
+            currentPage++;
+            
+            // Safety limit to prevent infinite loop
+            if (currentPage > 100) {
+              console.warn('⚠️ Reached safety limit while fetching all employees');
+              break;
+            }
+          }
+          
+          console.log('📊 Fetched all employees for stats (fallback):', {
+            totalPages: currentPage,
+            totalEmployees: allEmployees.length,
+          });
+          
+          // Calculate stats from ALL employees data
+          const totalCount = allEmployees.length;
+          const activeCount = allEmployees.filter(e => e.isActive === true).length;
+          const inactiveCount = allEmployees.filter(e => {
+            return e.isActive === false || e.isActive === null || e.isActive === undefined;
+          }).length;
+          
+          // Validation: total should equal active + inactive
+          if (totalCount !== activeCount + inactiveCount) {
+            console.warn('⚠️ Stats calculation mismatch:', {
+              total: totalCount,
+              active: activeCount,
+              inactive: inactiveCount,
+              sum: activeCount + inactiveCount,
+            });
+          }
+          
+          // Update stats states from calculated values
+          setTotalEmployees(totalCount);
+          setTotalActive(activeCount);
+          setTotalInactive(inactiveCount);
+          statsCalculated = true;
+          
+          console.log('✅ Stats calculated from all employees (fallback method):', {
+            total: totalCount,
+            active: activeCount,
+            inactive: inactiveCount,
+          });
+        } catch (fallbackError: any) {
+          console.error('❌ Fallback method also failed:', fallbackError);
+          // Last resort: Set default values
+          setTotalEmployees(0);
+          setTotalActive(0);
+          setTotalInactive(0);
+          toast.error('Không thể tải thống kê nhân viên. Vui lòng thử lại sau.');
         }
       }
-      
-      console.log('📊 Fetched all employees for stats:', {
-        totalPages: currentPage,
-        totalEmployees: allEmployees.length,
-        sample: allEmployees.slice(0, 5).map(e => ({ code: e.employeeCode, isActive: e.isActive, fullName: e.fullName }))
-      });
-      
-      // Calculate stats from ALL employees data returned from BE
-      // Step 1: Count total employees (all data from BE)
-      const totalCount = allEmployees.length;
-      
-      // Step 2: Count active employees (isActive === true)
-      const activeCount = allEmployees.filter(e => e.isActive === true).length;
-      
-      // Step 3: Count inactive employees (isActive === false, null, or undefined)
-      // Inactive = anything that is NOT explicitly true
-      const inactiveCount = allEmployees.filter(e => {
-        return e.isActive === false || e.isActive === null || e.isActive === undefined;
-      }).length;
-      
-      // Validation: total should equal active + inactive
-      if (totalCount !== activeCount + inactiveCount) {
-        console.warn('⚠️ Stats calculation mismatch:', {
-          total: totalCount,
-          active: activeCount,
-          inactive: inactiveCount,
-          sum: activeCount + inactiveCount,
-          difference: totalCount - (activeCount + inactiveCount)
-        });
-      }
-
-      console.log('📊 Stats calculated from ALL employees data:', {
-        total: totalCount,
-        active: activeCount,
-        inactive: inactiveCount,
-        breakdown: {
-          true: allEmployees.filter(e => e.isActive === true).length,
-          false: allEmployees.filter(e => e.isActive === false).length,
-          null: allEmployees.filter(e => e.isActive === null).length,
-          undefined: allEmployees.filter(e => e.isActive === undefined).length,
-        },
-        sample: allEmployees.slice(0, 5).map(e => ({ code: e.employeeCode, isActive: e.isActive, fullName: e.fullName }))
-      });
-
-      // Update stats states from ALL employees data
-      setTotalEmployees(totalCount);
-      setTotalActive(activeCount);
-      setTotalInactive(inactiveCount);
 
       // Now fetch filtered employees for display (with current filters applied)
       const response = await employeeService.getEmployees(params);

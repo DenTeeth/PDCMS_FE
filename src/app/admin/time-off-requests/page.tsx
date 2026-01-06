@@ -72,6 +72,7 @@ export default function AdminTimeOffRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
   const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
+  const [timeOffTypeFilter, setTimeOffTypeFilter] = useState<string>('ALL');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
 
@@ -299,53 +300,65 @@ export default function AdminTimeOffRequestsPage() {
       console.error(' Error details:', {
         status: error.response?.status,
         data: error.response?.data,
+        errorCode: error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error,
         message: error.response?.data?.message,
-        detail: error.response?.data?.detail
+        detail: error.response?.data?.detail,
+        title: error.response?.data?.title
       });
 
       const status = error.response?.status;
-      const errorCode = error.response?.data?.errorCode || error.response?.data?.code || error.response?.data?.error;
-      const errorMsg = error.response?.data?.message || error.message || '';
+      const errorData = error.response?.data || {};
+      // BE may use 'error', 'errorCode', or 'code' field for error code
+      const errorCode = errorData.errorCode || errorData.code || errorData.error;
+      const errorMsg = errorData.message || error.message || '';
       let displayMsg = '';
 
       // Handle specific errors with detailed messages
-      if (errorCode === 'DUPLICATE_BALANCE_RECORDS') {
+      // Priority: Always show 'detail' from BE response if available (BE provides detailed messages)
+      if (errorCode === 'TIME_OFF_SAME_DAY_NOT_ALLOWED') {
+        // Cannot request time-off for the same day (except emergency)
+        // BE should provide 'detail' field with detailed message, but if not, use fallback
+        displayMsg = errorData.detail || 
+          'Không thể xin nghỉ trong chính ngày hôm nay (2026-01-06). Vui lòng chọn từ ngày mai trở đi, hoặc chọn loại "Nghỉ khẩn cấp" nếu thực sự cần nghỉ hôm nay.';
+      } else if (errorCode === 'DUPLICATE_BALANCE_RECORDS') {
         // Data corruption - duplicate balance records in database
-        const backendMsg = error.response?.data?.message;
-        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
-          ? backendMsg
-          : 'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Phát hiện dữ liệu bị trùng lặp trong hệ thống. Vui lòng liên hệ quản trị viên để xử lý.';
       } else if (errorCode === 'BALANCE_NOT_FOUND') {
         // No balance record - needs HR to initialize
-        const backendMsg = error.response?.data?.message;
-        displayMsg = (backendMsg && backendMsg !== 'Invalid Request')
-          ? backendMsg
-          : 'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
       } else if (status === 409 || errorCode === 'DUPLICATE_TIMEOFF_REQUEST') {
-        displayMsg = error.response?.data?.detail || error.response?.data?.message ||
+        displayMsg = errorData.detail || errorData.message ||
           'Đã có yêu cầu nghỉ phép trong khoảng thời gian này. Vui lòng kiểm tra lại danh sách yêu cầu.';
       } else if (errorCode === 'INSUFFICIENT_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
-        displayMsg = 'Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư nghỉ phép của bạn hoặc chọn loại nghỉ phép khác.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Không đủ số ngày phép!\n\nBạn không có đủ số ngày phép cho loại nghỉ này. Vui lòng kiểm tra số dư nghỉ phép của bạn hoặc chọn loại nghỉ phép khác.';
       } else if (status === 400 || errorCode === 'INVALID_DATE_RANGE' || errorMsg?.includes('DATE_RANGE')) {
-        displayMsg = error.response?.data?.detail || error.response?.data?.message ||
+        displayMsg = errorData.detail || errorData.message ||
           'Khoảng thời gian không hợp lệ!\n\n- Ngày kết thúc phải sau hoặc bằng ngày bắt đầu\n- Khi chọn ca nghỉ (sáng/chiều), ngày bắt đầu và kết thúc phải giống nhau';
       } else if (errorCode === 'INVALID_SLOT_USAGE' || errorMsg?.includes('SLOT')) {
-        displayMsg = 'Sử dụng ca nghỉ không đúng!\n\nKhi chọn nghỉ theo ca (sáng hoặc chiều), ngày bắt đầu và ngày kết thúc phải giống nhau.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Sử dụng ca nghỉ không đúng!\n\nKhi chọn nghỉ theo ca (sáng hoặc chiều), ngày bắt đầu và ngày kết thúc phải giống nhau.';
       } else if (errorCode === 'TYPE_NOT_FOUND' || errorMsg?.includes('TYPE') || status === 404) {
-        displayMsg = 'Không tìm thấy loại nghỉ phép!\n\nLoại nghỉ phép bạn chọn không tồn tại hoặc đã bị vô hiệu hóa.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Không tìm thấy loại nghỉ phép!\n\nLoại nghỉ phép bạn chọn không tồn tại hoặc đã bị vô hiệu hóa.';
       } else if (status === 403) {
-        displayMsg = 'Không có quyền!\n\nBạn không có quyền tạo yêu cầu nghỉ phép.';
+        displayMsg = errorData.detail || errorData.message ||
+          'Không có quyền!\n\nBạn không có quyền tạo yêu cầu nghỉ phép.';
       } else if (status === 400) {
-        // Generic 400 errors - show validation errors if available
-        const validationErrors = error.response?.data?.errors || [];
-        if (validationErrors.length > 0) {
-          const errorMessages = validationErrors.map((e: any) => `• ${e.field}: ${e.message}`).join('\n');
+        // Generic 400 errors - prioritize 'detail' from BE, then validation errors, then message
+        if (errorData.detail) {
+          // BE provides detailed message in 'detail' field
+          displayMsg = errorData.detail;
+        } else if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          const errorMessages = errorData.errors.map((e: any) => `• ${e.field}: ${e.message}`).join('\n');
           displayMsg = `Lỗi validation:\n\n${errorMessages}`;
         } else {
-          displayMsg = error.response?.data?.detail || error.response?.data?.message || 'Dữ liệu không hợp lệ';
+          displayMsg = errorData.message || 'Dữ liệu không hợp lệ';
         }
       } else {
-        displayMsg = error.response?.data?.detail || error.response?.data?.message || 'Không thể tạo yêu cầu nghỉ phép';
+        displayMsg = errorData.detail || errorData.message || 'Không thể tạo yêu cầu nghỉ phép';
       }
 
       alert(` Lỗi (${status || 'Unknown'}): ${displayMsg}`);
@@ -498,10 +511,12 @@ export default function AdminTimeOffRequestsPage() {
 
       const matchesEmployee = employeeFilter === 'ALL' || request.employee?.employeeId.toString() === employeeFilter;
 
+      const matchesTimeOffType = timeOffTypeFilter === 'ALL' || request.timeOffTypeId === timeOffTypeFilter;
+
       const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
       const matchesDateTo = !dateTo || request.endDate <= dateTo;
 
-      return matchesSearch && matchesStatus && matchesEmployee && matchesDateFrom && matchesDateTo;
+      return matchesSearch && matchesStatus && matchesEmployee && matchesTimeOffType && matchesDateFrom && matchesDateTo;
     });
 
     // Sort by createdAt DESC (newest first) - client-side to ensure correct order
@@ -510,7 +525,7 @@ export default function AdminTimeOffRequestsPage() {
       const dateB = new Date(b.createdAt || b.startDate).getTime();
       return dateB - dateA; // DESC: newest first
     });
-  }, [timeOffRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
+  }, [timeOffRequests, searchTerm, statusFilter, employeeFilter, timeOffTypeFilter, dateFrom, dateTo]);
 
   // ⚡ Memoize stats calculation
   const stats = useMemo(() => ({
@@ -675,6 +690,23 @@ export default function AdminTimeOffRequestsPage() {
 
                 <div className="space-y-2">
                   <CustomSelect
+                    label="Loại ngày nghỉ"
+                    value={timeOffTypeFilter}
+                    onChange={(value: string) => setTimeOffTypeFilter(value)}
+                    options={[
+                      { value: 'ALL', label: 'Tất cả loại' },
+                      ...timeOffTypes
+                        .filter(type => type.isActive)
+                        .map(type => ({
+                          value: type.typeId,
+                          label: type.typeName || type.typeId
+                        }))
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <CustomSelect
                     label="Trạng thái"
                     value={statusFilter}
                     onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
@@ -716,6 +748,7 @@ export default function AdminTimeOffRequestsPage() {
                       setSearchTerm('');
                       setStatusFilter('ALL');
                       setEmployeeFilter('ALL');
+                      setTimeOffTypeFilter('ALL');
                       setDateFrom('');
                       setDateTo('');
                     }}

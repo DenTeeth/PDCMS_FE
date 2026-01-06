@@ -180,81 +180,102 @@ export default function PatientsPage() {
       // if (filterStatus !== 'all') params.isActive = filterStatus === 'active';
       // if (filterGender !== 'all') params.gender = filterGender;
 
-      // Fetch ALL patients (NO FILTERS) to get complete data for stats calculation
-      // IMPORTANT: BE may have max size limit, so we need to fetch all pages
-      let allPatients: Patient[] = [];
-      let currentPage = 0;
-      let hasMorePages = true;
+      // Strategy: Try stats API first (efficient), fallback to fetch all pages if API unavailable
+      let statsCalculated = false;
       
-      while (hasMorePages) {
-        const pageResponse = await patientService.getPatients({
-          page: currentPage,
-          size: 100, // Use reasonable page size (BE may limit max size)
-          sortBy: 'patientCode' as const,
-          sortDirection: 'ASC' as const,
-          // IMPORTANT: Do NOT include any filters
-          // This ensures we get the true total count of all patients
+      // Step 1: Try to use dedicated stats API endpoint (preferred - single API call)
+      try {
+        const stats = await patientService.getPatientStats();
+        console.log('✅ Patient stats from API:', stats);
+        
+        // Update stats states from API response
+        setTotalPatients(stats.totalPatients);
+        setTotalActive(stats.activePatients);
+        setTotalInactive(stats.inactivePatients);
+        statsCalculated = true;
+      } catch (statsError: any) {
+        const status = statsError.response?.status;
+        const errorData = statsError.response?.data;
+        
+        console.warn('⚠️ Stats API unavailable, falling back to fetch all pages method:', {
+          status,
+          statusText: statsError.response?.statusText,
+          error: errorData,
+          message: statsError.message,
         });
         
-        allPatients = [...allPatients, ...(pageResponse.content || [])];
-        
-        // Check if there are more pages
-        hasMorePages = !pageResponse.last && currentPage < pageResponse.totalPages - 1;
-        currentPage++;
-        
-        // Safety limit to prevent infinite loop
-        if (currentPage > 100) {
-          console.warn('⚠️ Reached safety limit while fetching all patients');
-          break;
+        // Step 2: Fallback - Fetch all pages and calculate stats manually (less efficient but reliable)
+        try {
+          console.log('📊 Fetching all patients to calculate stats manually...');
+          let allPatients: Patient[] = [];
+          let currentPage = 0;
+          let hasMorePages = true;
+          
+          while (hasMorePages) {
+            const pageResponse = await patientService.getPatients({
+              page: currentPage,
+              size: 100, // Use reasonable page size (BE may limit max size)
+              sortBy: 'patientCode' as const,
+              sortDirection: 'ASC' as const,
+              // IMPORTANT: Do NOT include any filters
+              // This ensures we get the true total count of all patients
+            });
+            
+            allPatients = [...allPatients, ...(pageResponse.content || [])];
+            
+            // Check if there are more pages
+            hasMorePages = !pageResponse.last && currentPage < pageResponse.totalPages - 1;
+            currentPage++;
+            
+            // Safety limit to prevent infinite loop
+            if (currentPage > 100) {
+              console.warn('⚠️ Reached safety limit while fetching all patients');
+              break;
+            }
+          }
+          
+          console.log('📊 Fetched all patients for stats (fallback):', {
+            totalPages: currentPage,
+            totalPatients: allPatients.length,
+          });
+          
+          // Calculate stats from ALL patients data
+          const totalCount = allPatients.length;
+          const activeCount = allPatients.filter(p => p.isActive === true).length;
+          const inactiveCount = allPatients.filter(p => {
+            return p.isActive === false || p.isActive === null || p.isActive === undefined;
+          }).length;
+          
+          // Validation: total should equal active + inactive
+          if (totalCount !== activeCount + inactiveCount) {
+            console.warn('⚠️ Stats calculation mismatch:', {
+              total: totalCount,
+              active: activeCount,
+              inactive: inactiveCount,
+              sum: activeCount + inactiveCount,
+            });
+          }
+          
+          // Update stats states from calculated values
+          setTotalPatients(totalCount);
+          setTotalActive(activeCount);
+          setTotalInactive(inactiveCount);
+          statsCalculated = true;
+          
+          console.log('✅ Stats calculated from all patients (fallback method):', {
+            total: totalCount,
+            active: activeCount,
+            inactive: inactiveCount,
+          });
+        } catch (fallbackError: any) {
+          console.error('❌ Fallback method also failed:', fallbackError);
+          // Last resort: Set default values
+          setTotalPatients(0);
+          setTotalActive(0);
+          setTotalInactive(0);
+          toast.error('Không thể tải thống kê bệnh nhân. Vui lòng thử lại sau.');
         }
       }
-      
-      console.log('📊 Fetched all patients for stats:', {
-        totalPages: currentPage,
-        totalPatients: allPatients.length,
-        sample: allPatients.slice(0, 5).map(p => ({ code: p.patientCode, isActive: p.isActive, fullName: p.fullName }))
-      });
-      
-      // Calculate stats from ALL patients data returned from BE
-      // Step 1: Count total patients (all data from BE)
-      const totalCount = allPatients.length;
-      
-      // Step 2: Count active patients (isActive === true)
-      const activeCount = allPatients.filter(p => p.isActive === true).length;
-      
-      // Step 3: Count inactive patients (isActive === false, null, or undefined)
-      const inactiveCount = allPatients.filter(p => {
-        return p.isActive === false || p.isActive === null || p.isActive === undefined;
-      }).length;
-      
-      // Validation: total should equal active + inactive
-      if (totalCount !== activeCount + inactiveCount) {
-        console.warn('⚠️ Stats calculation mismatch:', {
-          total: totalCount,
-          active: activeCount,
-          inactive: inactiveCount,
-          sum: activeCount + inactiveCount,
-          difference: totalCount - (activeCount + inactiveCount)
-        });
-      }
-
-      console.log('📊 Stats calculated from ALL patients data:', {
-        total: totalCount,
-        active: activeCount,
-        inactive: inactiveCount,
-        breakdown: {
-          true: allPatients.filter(p => p.isActive === true).length,
-          false: allPatients.filter(p => p.isActive === false).length,
-          null: allPatients.filter(p => p.isActive === null).length,
-          undefined: allPatients.filter(p => p.isActive === undefined).length,
-        },
-        sample: allPatients.slice(0, 5).map(p => ({ code: p.patientCode, isActive: p.isActive, fullName: p.fullName }))
-      });
-
-      // Update stats states from ALL patients data
-      setTotalPatients(totalCount);
-      setTotalActive(activeCount);
-      setTotalInactive(inactiveCount);
 
       // Now fetch filtered patients for display (with current filters applied)
       console.log('Fetching patients with params:', params);

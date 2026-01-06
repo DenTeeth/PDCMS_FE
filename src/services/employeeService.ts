@@ -148,6 +148,50 @@ export class EmployeeService {
     }
     return response.data;
   }
+
+  /**
+   * Get employee statistics (total, active, inactive counts)
+   * GET /api/v1/employees/stats
+   * @returns Employee stats with totalEmployees, activeEmployees, inactiveEmployees
+   */
+  async getEmployeeStats(): Promise<{
+    totalEmployees: number;
+    activeEmployees: number;
+    inactiveEmployees: number;
+  }> {
+    try {
+      const axiosInstance = apiClient.getAxiosInstance();
+      const endpoint = `${this.endpoint}/stats`;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📊 Fetching employee stats from:', endpoint);
+      }
+      
+      const response = await axiosInstance.get(endpoint);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Employee stats response:', response.data);
+      }
+      
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      return response.data;
+    } catch (error: any) {
+      // Log detailed error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Failed to fetch employee stats:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          endpoint: `${this.endpoint}/stats`,
+          message: error.message,
+        });
+      }
+      // Re-throw to let caller handle (they have fallback logic)
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
