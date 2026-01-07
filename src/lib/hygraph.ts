@@ -15,9 +15,8 @@ export const GET_POSTS_QUERY = gql`
       id
       title
       slug
-      content {
-        html
-      }
+      updatedAt
+      author
       coverImage {
         url
       }
@@ -32,6 +31,8 @@ export const GET_POST_BY_SLUG_QUERY = gql`
       id
       title
       slug
+      updatedAt
+      author
       content {
         html
       }
@@ -47,10 +48,12 @@ export interface Post {
   id: string;
   title: string;
   slug: string;
-  content: {
+  updatedAt: string;
+  author?: string; // Author is a String field, not an object
+  content?: {
     html: string;
   };
-  coverImage: {
+  coverImage?: {
     url: string;
   };
 }

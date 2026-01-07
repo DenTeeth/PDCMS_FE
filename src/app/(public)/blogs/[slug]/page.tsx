@@ -65,11 +65,36 @@ export default async function BlogPostPage({ params }: PageProps) {
         )}
 
         {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
           {post.title}
         </h1>
 
+        {/* Author and Updated Date */}
+        {(post.author || post.updatedAt) && (
+          <div className="flex items-center gap-3 mb-6 text-gray-600">
+            {post.author && (
+              <>
+                <span className="font-medium">{post.author}</span>
+                <span>•</span>
+              </>
+            )}
+            {post.updatedAt && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Cập nhật: {new Date(post.updatedAt).toLocaleDateString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Content */}
+        {post.content && (
         <div
           className="blog-content text-gray-700 leading-relaxed
             [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4
@@ -87,6 +112,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-4"
           dangerouslySetInnerHTML={{ __html: post.content.html }}
         />
+        )}
       </article>
 
       {/* Back to Blogs */}

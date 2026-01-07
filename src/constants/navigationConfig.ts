@@ -17,6 +17,7 @@ import {
   faUserPlus,
   faUsersCog,
   faChartLine,
+  faChartBar,
   faBoxes,
   faWarehouse,
   faPlus,
@@ -74,6 +75,11 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faTachometerAlt,
     },
     {
+      name: 'Thống kê',
+      href: '/admin/statistics',
+      icon: faChartBar,
+    },
+    {
       name: 'Quản lý tài khoản',
       icon: faUsers,
       hasSubmenu: true,
@@ -92,11 +98,6 @@ export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissionGroup: 'EMPLOYEE',
         },
       ],
-    },
-    {
-      name: 'Quản lý blog',
-      href: '/admin/blogs',
-      icon: faFileAlt,
     },
     {
       name: 'Cấu hình hệ thống',
@@ -332,11 +333,6 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
           requiredPermissionGroup: 'EMPLOYEE',
         },
       ],
-    },
-    {
-      name: 'Quản lý blog',
-      href: '/employee/blogs',
-      icon: faFileAlt,
     },
     {
       name: 'Cấu hình hệ thống',

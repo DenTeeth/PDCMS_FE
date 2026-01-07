@@ -71,6 +71,7 @@ import {
   Users,
   Stethoscope,
   MapPin,
+  Search,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -213,6 +214,9 @@ export default function RescheduleAppointmentModal({
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  
+  // Search state for services
+  const [serviceSearchQuery, setServiceSearchQuery] = useState<string>('');
 
   // Shift states
   const [doctorShifts, setDoctorShifts] = useState<EmployeeShift[]>([]);
@@ -229,6 +233,7 @@ export default function RescheduleAppointmentModal({
 
   const resetForm = () => {
     setActiveTab('info'); // Reset to first tab when form resets
+    setServiceSearchQuery(''); // Reset service search
     if (appointment) {
       // Pre-fill with current appointment values
       setNewEmployeeCode(appointment.doctor?.employeeCode || '');
@@ -632,16 +637,6 @@ export default function RescheduleAppointmentModal({
                     )}
                   </CardContent>
                 </Card>
-                <div className="flex justify-end pt-4">
-                  <Button
-                    type="button"
-                    onClick={() => setActiveTab('new')}
-                    className="flex items-center gap-2"
-                  >
-                    Bước tiếp theo
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
               </TabsContent>
 
               {/* Tab 2: New Appointment Details */}
@@ -797,13 +792,42 @@ export default function RescheduleAppointmentModal({
                     <p className="text-xs text-muted-foreground mb-3">
                       Để trống để giữ nguyên dịch vụ hiện tại
                     </p>
+                    
+                    {/* Search Input for Services */}
+                    <div className="relative mb-3">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Tìm kiếm dịch vụ..."
+                        value={serviceSearchQuery}
+                        onChange={(e) => setServiceSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    
                     <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                      {services.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-2">
-                          Không có dịch vụ nào
-                        </p>
-                      ) : (
-                        services.map((service) => (
+                      {(() => {
+                        // Filter services based on search query
+                        const filteredServices = services.filter((service) => {
+                          if (!serviceSearchQuery.trim()) return true;
+                          const query = serviceSearchQuery.toLowerCase();
+                          return (
+                            service.serviceName.toLowerCase().includes(query) ||
+                            service.serviceCode.toLowerCase().includes(query)
+                          );
+                        });
+
+                        if (filteredServices.length === 0) {
+                          return (
+                            <p className="text-sm text-muted-foreground text-center py-2">
+                              {serviceSearchQuery.trim()
+                                ? 'Không tìm thấy dịch vụ nào'
+                                : 'Không có dịch vụ nào'}
+                            </p>
+                          );
+                        }
+
+                        return filteredServices.map((service) => (
                           <div key={service.serviceId} className="flex items-center space-x-2">
                             <Checkbox
                               id={`service-${service.serviceId}`}
@@ -820,8 +844,8 @@ export default function RescheduleAppointmentModal({
                               </span>
                             </label>
                           </div>
-                        ))
-                      )}
+                        ));
+                      })()}
                     </div>
                     {newServiceIds.length === 0 && (
                       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -872,26 +896,6 @@ export default function RescheduleAppointmentModal({
                     </div>
                   </CardContent>
                 </Card>
-                <div className="flex justify-between pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab('info')}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Quay lại
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setActiveTab('reason')}
-                    className="flex items-center gap-2"
-                    disabled={!newEmployeeCode || !newRoomCode || !newDate || !newTime}
-                  >
-                    Bước tiếp theo
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
               </TabsContent>
 
               {/* Tab 3: Reason */}
@@ -939,62 +943,74 @@ export default function RescheduleAppointmentModal({
                     )}
                   </CardContent>
                 </Card>
-                <div className="flex justify-end pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab('new')}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Quay lại
-                  </Button>
-                </div>
               </TabsContent>
             </Tabs >
           </div >
         )
         }
 
-        <DialogFooter className="border-t pt-4 mt-4">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Hủy
-          </Button>
-          {activeTab === 'reason' ? (
-            <Button
-              onClick={handleReschedule}
-              disabled={loading || loadingData || !isFormValid}
-              className="min-w-[140px]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                <>
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Xác nhận đổi lịch
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => {
-                if (activeTab === 'info') {
-                  setActiveTab('new');
-                } else if (activeTab === 'new') {
-                  setActiveTab('reason');
+        <DialogFooter className="border-t pt-4 mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {activeTab !== 'info' && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (activeTab === 'reason') {
+                    setActiveTab('new');
+                  } else if (activeTab === 'new') {
+                    setActiveTab('info');
+                  }
+                }}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Quay lại
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {activeTab === 'reason' ? (
+              <Button
+                onClick={handleReschedule}
+                disabled={loading || loadingData || !isFormValid}
+                className="min-w-[160px] flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    Xác nhận đổi lịch
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  if (activeTab === 'info') {
+                    setActiveTab('new');
+                  } else if (activeTab === 'new') {
+                    setActiveTab('reason');
+                  }
+                }}
+                disabled={
+                  loading ||
+                  (activeTab === 'new' && (!newEmployeeCode || !newRoomCode || !newDate || !newTime))
                 }
-              }}
-              disabled={activeTab === 'new' && (!newEmployeeCode || !newRoomCode || !newDate || !newTime)}
-              className="min-w-[140px]"
-            >
-              Bước tiếp theo
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+                className="min-w-[140px] flex items-center gap-2"
+              >
+                Bước tiếp theo
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent >
     </Dialog >

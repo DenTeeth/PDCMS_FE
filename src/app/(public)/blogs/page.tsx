@@ -90,15 +90,37 @@ export default async function BlogsPage() {
                       {post.title}
                     </h2>
                     
+                    {/* Author and Updated Date */}
+                    <div className="flex items-center gap-3 mb-3 text-gray-600 text-sm">
+                      {post.author && (
+                        <>
+                          <span>{post.author}</span>
+                          <span>•</span>
+                        </>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {new Date(post.updatedAt).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    
                     {/* Excerpt from HTML content */}
-                    <div
-                      className="text-gray-600 text-sm mb-4 line-clamp-3"
-                      dangerouslySetInnerHTML={{
-                        __html: post.content.html
-                          .replace(/<[^>]*>/g, '')
-                          .substring(0, 150) + '...'
-                      }}
-                    />
+                    {post.content?.html && (
+                      <div
+                        className="text-gray-600 text-sm mb-4 line-clamp-3"
+                        dangerouslySetInnerHTML={{
+                          __html: post.content.html
+                            .replace(/<[^>]*>/g, '')
+                            .substring(0, 150) + '...'
+                        }}
+                      />
+                    )}
                     
                     {/* Read More */}
                     <div className="flex items-center text-[#8b5fbf] font-medium text-sm group-hover:gap-2 transition-all">
