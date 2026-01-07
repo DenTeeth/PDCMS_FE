@@ -47,6 +47,7 @@ import { ClinicalRecordResponse } from '@/types/clinicalRecord';
 import { Patient } from '@/types/patient';
 import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
+import PaymentTab from '@/components/appointments/PaymentTab';
 import {
   ArrowLeft,
   Calendar,
@@ -58,6 +59,7 @@ import {
   Stethoscope,
   ClipboardList,
   AlertCircle,
+  CreditCard,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -96,6 +98,8 @@ export default function PatientAppointmentDetailPage() {
   const canView = canViewOwn;
   // Patients cannot write clinical records (read-only)
   const canWriteClinicalRecord = false;
+  // Patients can view their own invoices
+  const canViewInvoice = user?.permissions?.includes('VIEW_INVOICE_OWN') || false;
 
   // Request cancellation ref
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -454,6 +458,15 @@ export default function PatientAppointmentDetailPage() {
               <ClipboardList className="h-4 w-4 mr-2" />
               Lộ trình điều trị
             </TabsTrigger>
+            {canViewInvoice && (
+              <TabsTrigger
+                value="payment"
+                className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Thanh toán
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Appointment Details Tab */}
@@ -837,6 +850,30 @@ export default function PatientAppointmentDetailPage() {
               </section>
             )}
           </TabsContent>
+
+          {/* Payment Tab */}
+          {canViewInvoice && (
+            <TabsContent value="payment">
+              {appointment ? (
+                <PaymentTab
+                  appointmentId={appointment.appointmentId || 0}
+                  appointmentCode={appointment.appointmentCode}
+                  patientCode={appointment.patient?.patientCode}
+                  patientId={appointment.patient?.patientId}
+                  treatmentPlanId={undefined} // AppointmentDetailDTO doesn't have treatmentPlanId
+                  treatmentPlanCode={appointment.linkedTreatmentPlanCode || undefined}
+                  appointmentServices={appointment.services || []}
+                />
+              ) : (
+                <section className="bg-card rounded-lg border p-6">
+                  <div className="text-center py-12">
+                    <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Đang tải thông tin lịch hẹn...</p>
+                  </div>
+                </section>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </ProtectedRoute>
