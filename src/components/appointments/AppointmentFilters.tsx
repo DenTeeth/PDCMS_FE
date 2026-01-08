@@ -234,7 +234,7 @@ export default function AppointmentFilters({
               onClick={() => {
                 onFiltersChange({ ...filters, sortDirection: 'ASC' });
               }}
-              className={`p-1.5 rounded transition-all ${(filters.sortDirection || 'ASC') === 'ASC'
+              className={`p-1.5 rounded transition-all ${filters.sortDirection === 'ASC'
                 ? 'bg-[#8b5fbf] text-white shadow-sm'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
@@ -246,7 +246,7 @@ export default function AppointmentFilters({
               onClick={() => {
                 onFiltersChange({ ...filters, sortDirection: 'DESC' });
               }}
-              className={`p-1.5 rounded transition-all ${filters.sortDirection === 'DESC'
+              className={`p-1.5 rounded transition-all ${(filters.sortDirection || 'DESC') === 'DESC'
                 ? 'bg-[#8b5fbf] text-white shadow-sm'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}

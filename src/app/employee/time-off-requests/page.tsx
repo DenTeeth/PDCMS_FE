@@ -205,7 +205,7 @@ export default function EmployeeTimeOffRequestsPage() {
       const response = await employeeService.getEmployees({
         page: 0,
         size: 100,
-        sort: 'fullName,asc',
+        sort: 'createdAt,desc', // ✅ Newest employees first for better UX
       });
       setEmployees(response.content);
     } catch (error) {

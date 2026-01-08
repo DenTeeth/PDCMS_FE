@@ -171,8 +171,8 @@ export default function PatientsPage() {
       const params: any = {
         page,
         size: 10, // Items per page
-        sortBy: 'patientCode' as const,
-        sortDirection: 'ASC' as const,
+        sortBy: 'createdAt' as const, // ✅ Sort by creation date instead of code
+        sortDirection: 'DESC' as const, // ✅ Newest patients first
       };
 
       // Note: If your BE supports these filters, uncomment:

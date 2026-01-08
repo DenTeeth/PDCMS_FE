@@ -79,8 +79,12 @@ export interface InvoiceResponse {
   notes?: string;
   paymentCode?: string; // SePay payment code (Format: PDCMSyymmddxy)
   qrCodeUrl?: string; // VietQR image URL
+  // Bác sĩ phụ trách (from appointment.employeeId)
   createdBy?: number;
   createdByName?: string;
+  // ✅ NEW: Người thực sự tạo invoice (lễ tân/admin who clicked "Create")
+  invoiceCreatorId?: number;
+  invoiceCreatorName?: string;
   createdAt?: string;
   updatedAt?: string;
   items?: InvoiceItemResponse[];

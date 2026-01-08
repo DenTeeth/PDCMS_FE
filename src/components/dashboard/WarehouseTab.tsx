@@ -23,25 +23,29 @@ import {
 } from 'recharts';
 
 interface WarehouseTabProps {
-  month: string;
+  startDate: string;
+  endDate: string;
 }
 
 const COLORS = ['#8b5fbf', '#10b981', '#f59e0b', '#ef4444'];
 
-export function WarehouseTab({ month }: WarehouseTabProps) {
+export function WarehouseTab({ startDate, endDate }: WarehouseTabProps) {
   const [data, setData] = useState<WarehouseStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
-  }, [month]);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await dashboardService.getWarehouse(month);
+      const result = await dashboardService.getWarehouse({
+        startDate,
+        endDate,
+      });
       setData(result);
     } catch (err: any) {
       console.error('Error loading warehouse:', err);

@@ -50,9 +50,10 @@ export default function PaymentTab({
   treatmentPlanCode,
   appointmentServices = [],
 }: PaymentTabProps) {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const canCreateInvoice = hasPermission('CREATE_INVOICE');
   const canViewInvoice = hasPermission('VIEW_INVOICE_ALL') || hasPermission('VIEW_INVOICE_OWN');
+  const isPatient = user?.baseRole === 'patient';
 
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,15 @@ export default function PaymentTab({
 
   // Fetch invoices for this appointment
   useEffect(() => {
+    // ✅ Allow fetch if user can view OR create invoices
+    // This is needed to check if appointment already has APPOINTMENT invoice (to determine SUPPLEMENTAL type)
+    if (!canViewInvoice && !canCreateInvoice) {
+      console.warn('⚠️ PaymentTab: No permission to view or create invoices');
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
+
     if (appointmentId && appointmentId > 0) {
       fetchInvoices();
     } else {
@@ -74,7 +84,7 @@ export default function PaymentTab({
       setInvoices([]);
       setLoading(false);
     }
-  }, [appointmentId, appointmentCode, appointmentServices]);
+  }, [appointmentId, appointmentCode, appointmentServices, canViewInvoice, canCreateInvoice]);
 
   // Fetch payments for each invoice
   useEffect(() => {
@@ -103,6 +113,15 @@ export default function PaymentTab({
   }, [showCreateForm, appointmentServices, availableServices]);
 
   const fetchInvoices = async () => {
+    // ✅ Allow fetch if user can view OR create invoices
+    // This is needed to check if appointment already has APPOINTMENT invoice (to determine SUPPLEMENTAL type)
+    if (!canViewInvoice && !canCreateInvoice) {
+      console.warn('⚠️ PaymentTab: No permission to view or create invoices');
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
+
     // Validate appointmentId before fetching
     if (!appointmentId || appointmentId <= 0) {
       console.warn('⚠️ PaymentTab: Invalid appointmentId, skipping invoice fetch:', appointmentId);
@@ -119,9 +138,57 @@ export default function PaymentTab({
         appointmentCode,
         patientId,
         patientCode,
+        hasViewInvoiceAll: hasPermission('VIEW_INVOICE_ALL'),
+        hasViewInvoiceOwn: hasPermission('VIEW_INVOICE_OWN'),
       });
       
-      const data = await invoiceService.getInvoicesByAppointment(appointmentId);
+      let data: InvoiceResponse[];
+      
+      // ✅ Patient với VIEW_INVOICE_OWN: Dùng endpoint /patient/{patientId}
+      // ✅ Dentist/Employee với VIEW_INVOICE_OWN: Dùng endpoint /patient/{patientId} (nếu có patientId)
+      // ✅ Admin/Receptionist/Accountant với VIEW_INVOICE_ALL: Dùng endpoint /appointment/{appointmentId}
+      const hasViewInvoiceAll = hasPermission('VIEW_INVOICE_ALL');
+      const hasViewInvoiceOwn = hasPermission('VIEW_INVOICE_OWN');
+      
+      if (hasViewInvoiceOwn && !hasViewInvoiceAll) {
+        // Patient hoặc Dentist: Fetch all patient invoices, then filter by appointmentId
+        if (!patientId) {
+          console.warn('⚠️ PaymentTab: Need patientId to fetch invoices (VIEW_INVOICE_OWN requires patientId)');
+          setInvoices([]);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('📋 PaymentTab: Using patient endpoint (VIEW_INVOICE_OWN)', {
+          isPatient,
+          userRole: user?.baseRole,
+        });
+        data = await invoiceService.getInvoicesByPatient(patientId);
+        // Filter by appointmentId and invoiceType (APPOINTMENT or SUPPLEMENTAL)
+        data = data.filter(inv => 
+          inv.appointmentId === appointmentId && 
+          (inv.invoiceType === 'APPOINTMENT' || inv.invoiceType === 'SUPPLEMENTAL')
+        );
+      } else if (hasViewInvoiceAll) {
+        // Admin/Receptionist/Accountant: Use appointment endpoint
+        console.log('📋 PaymentTab: Using appointment endpoint (VIEW_INVOICE_ALL)');
+        data = await invoiceService.getInvoicesByAppointment(appointmentId);
+      } else if (canCreateInvoice) {
+        // ✅ Dentist với CREATE_INVOICE nhưng không có VIEW_INVOICE: Try appointment endpoint
+        // This might fail with 403, but we need to try to check if appointment has invoice
+        console.log('📋 PaymentTab: Using appointment endpoint (CREATE_INVOICE only, no VIEW_INVOICE)');
+        try {
+          data = await invoiceService.getInvoicesByAppointment(appointmentId);
+        } catch (error: any) {
+          // If 403, we can't fetch invoices, but we can still create invoice
+          // Assume no APPOINTMENT invoice exists (will create APPOINTMENT type)
+          console.warn('⚠️ PaymentTab: Cannot fetch invoices (no permission), will assume no existing invoice');
+          data = [];
+        }
+      } else {
+        // No permission at all
+        data = [];
+      }
       
       console.log('📦 PaymentTab: Received invoices from API:', {
         count: data.length,
@@ -136,9 +203,10 @@ export default function PaymentTab({
       
      
       const filteredInvoices = data.filter((invoice) => {
-        // Filter out non-APPOINTMENT invoices (temporary until BE fix is deployed)
-        if (invoice.invoiceType !== 'APPOINTMENT') {
-          console.warn(`⚠️ Filtering out ${invoice.invoiceType} invoice: ${invoice.invoiceCode} (expected APPOINTMENT)`);
+        // ✅ Show APPOINTMENT and SUPPLEMENTAL invoices for this appointment
+        // SUPPLEMENTAL invoices are additional invoices created after the main APPOINTMENT invoice
+        if (invoice.invoiceType !== 'APPOINTMENT' && invoice.invoiceType !== 'SUPPLEMENTAL') {
+          console.warn(`⚠️ Filtering out ${invoice.invoiceType} invoice: ${invoice.invoiceCode} (expected APPOINTMENT or SUPPLEMENTAL)`);
           return false;
         }
         
@@ -172,7 +240,12 @@ export default function PaymentTab({
       setInvoices(filteredInvoices);
     } catch (error: any) {
       console.error('Error fetching invoices:', error);
-      toast.error('Không thể tải danh sách hóa đơn');
+      // ✅ Better error message based on permission
+      if (error.response?.status === 403) {
+        toast.error('Bạn không có quyền xem hóa đơn. Vui lòng liên hệ admin.');
+      } else {
+        toast.error('Không thể tải danh sách hóa đơn');
+      }
       setInvoices([]);
     } finally {
       setLoading(false);
@@ -333,10 +406,18 @@ export default function PaymentTab({
     try {
       setCreatingInvoice(true);
 
+      // ✅ Determine invoice type:
+      // - If appointment already has APPOINTMENT invoice → Create SUPPLEMENTAL (bổ sung)
+      // - If appointment has no invoice → Create APPOINTMENT (hóa đơn chính)
+      const hasAppointmentInvoice = invoices.some(
+        inv => inv.invoiceType === 'APPOINTMENT' && inv.appointmentId === appointmentId
+      );
+      const invoiceType: 'APPOINTMENT' | 'SUPPLEMENTAL' = hasAppointmentInvoice ? 'SUPPLEMENTAL' : 'APPOINTMENT';
+
       const request: CreateInvoiceRequest = {
-        invoiceType: 'APPOINTMENT',
+        invoiceType,
         patientId,
-        appointmentId,
+        appointmentId: invoiceType === 'SUPPLEMENTAL' ? appointmentId : appointmentId, // Both types can have appointmentId
         items: validItems.map(item => ({
           serviceId: item.serviceId,
           serviceCode: item.serviceCode,
@@ -345,7 +426,9 @@ export default function PaymentTab({
           unitPrice: item.unitPrice,
           notes: item.notes,
         })),
-        notes: `Hóa đơn cho lịch hẹn ${appointmentCode}`,
+        notes: invoiceType === 'SUPPLEMENTAL' 
+          ? `Hóa đơn bổ sung cho lịch hẹn ${appointmentCode}`
+          : `Hóa đơn cho lịch hẹn ${appointmentCode}`,
       };
 
       const newInvoice = await invoiceService.createInvoice(request);
@@ -382,6 +465,19 @@ export default function PaymentTab({
       await fetchPayments(invoice.invoiceId);
     }
   };
+
+  // ✅ Show message if no permission to view OR create invoices
+  if (!canViewInvoice && !canCreateInvoice) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 mb-2">Bạn không có quyền xem hoặc tạo hóa đơn</p>
+          <p className="text-sm text-gray-500">Vui lòng liên hệ admin để được cấp quyền</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
@@ -600,11 +696,27 @@ export default function PaymentTab({
                           <p className="font-medium">{invoice.patientName}</p>
                         </div>
                       )}
-                      {invoice.createdByName && invoice.createdAt && (
+                      {/* ✅ FIX: Hiển thị cả Bác sĩ phụ trách và Người tạo hóa đơn */}
+                      {invoice.createdByName && (
                         <div>
                           <label className="text-gray-600">Bác sĩ phụ trách:</label>
+                          <p className="font-medium">{invoice.createdByName}</p>
+                        </div>
+                      )}
+                      {invoice.invoiceCreatorName && invoice.createdAt && (
+                        <div>
+                          <label className="text-gray-600">Người tạo hóa đơn:</label>
                           <p className="font-medium">
-                            {invoice.createdByName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                            {invoice.invoiceCreatorName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                          </p>
+                        </div>
+                      )}
+                      {/* Fallback: Nếu không có invoiceCreatorName, hiển thị createdByName với label "Tạo lúc" */}
+                      {!invoice.invoiceCreatorName && invoice.createdByName && invoice.createdAt && (
+                        <div>
+                          <label className="text-gray-600">Tạo lúc:</label>
+                          <p className="font-medium">
+                            {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')} bởi {invoice.createdByName}
                           </p>
                         </div>
                       )}

@@ -52,7 +52,7 @@ export default function AdminAppointmentsPage() {
     page: 0,
     size: 10,
     sortBy: 'appointmentStartTime',
-    sortDirection: 'ASC',
+    sortDirection: 'DESC', // ✅ Newest appointments first
   });
 
   // Search state - handled by AppointmentFilters component
@@ -100,7 +100,7 @@ export default function AdminAppointmentsPage() {
           page: currentPage,
           size: pageSize,
           sortBy: filters.sortBy || 'appointmentStartTime',
-          sortDirection: filters.sortDirection || 'ASC',
+          sortDirection: filters.sortDirection || 'DESC', // Default to DESC - newest first
         };
 
         // Search filters are already in filters object from AppointmentFilters component
@@ -160,7 +160,7 @@ export default function AdminAppointmentsPage() {
       page: 0,
       size: 10,
       sortBy: 'appointmentStartTime',
-      sortDirection: 'ASC',
+      sortDirection: 'DESC', // ✅ Newest appointments first
     });
     setCurrentPage(0);
   }, []);

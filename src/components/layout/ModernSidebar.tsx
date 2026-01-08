@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -173,7 +173,7 @@ export default function ModernSidebar({ title = "PDCMS" }: ModernSidebarProps) {
         navigationConfig.items,
         user.permissions,
         user.groupedPermissions,
-        user.roles, // Pass user roles to check ROLE_ADMIN
+        user.roles, // Pass user roles to check ROLE_ADMIN and requiredRoles (ROLE_DENTIST, ROLE_NURSE)
         user.employmentType || undefined // Pass employment type for filtering
       ) : [];
   }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles, user?.employmentType]);

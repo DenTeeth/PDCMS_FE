@@ -20,25 +20,30 @@ import {
 } from 'recharts';
 
 interface EmployeesTabProps {
-  month: string;
+  startDate: string;
+  endDate: string;
 }
 
 const COLORS = ['#8b5fbf', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
-export function EmployeesTab({ month }: EmployeesTabProps) {
+export function EmployeesTab({ startDate, endDate }: EmployeesTabProps) {
   const [data, setData] = useState<EmployeeStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
-  }, [month]);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await dashboardService.getEmployees(month, 10);
+      const result = await dashboardService.getEmployees({
+        startDate,
+        endDate,
+        topDoctors: 10,
+      });
       setData(result);
     } catch (err: any) {
       console.error('Error loading employees:', err);

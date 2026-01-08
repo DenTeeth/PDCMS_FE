@@ -91,7 +91,11 @@ export default function InvoicesPage() {
 
       // Otherwise, fetch all invoices
       try {
-        const data = await invoiceService.getAllInvoices();
+        const data = await invoiceService.getAllInvoices({
+          page: 0,
+          size: 100,
+          sort: 'createdAt,desc', // ✅ Explicit sort: newest invoices first
+        });
         setInvoices(data);
       } catch (error: any) {
         // If getAllInvoices fails, show empty list with message
@@ -506,10 +510,31 @@ function InvoicesListContent({
                                 Kế hoạch điều trị: {invoice.treatmentPlanCode}
                               </div>
                             )}
+                            {/* ✅ FIX: Hiển thị cả Người tạo hóa đơn và Bác sĩ phụ trách */}
                             {invoice.createdAt && (
-                              <div className="text-sm text-gray-500">
-                                Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
-                                {invoice.createdByName && ` bởi ${invoice.createdByName}`}
+                              <div className="text-sm text-gray-500 space-y-1">
+                                {/* Người tạo hóa đơn */}
+                                {invoice.invoiceCreatorName ? (
+                                  <div>
+                                    Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')} bởi {invoice.invoiceCreatorName}
+                                  </div>
+                                ) : invoice.createdByName ? (
+                                  <div>
+                                    Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')} bởi {invoice.createdByName}
+                                  </div>
+                                ) : (
+                                  <div>
+                                    Tạo lúc: {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                                  </div>
+                                )}
+                                {/* Bác sĩ phụ trách (nếu khác với người tạo) */}
+                                {invoice.createdByName && 
+                                 invoice.invoiceCreatorName && 
+                                 invoice.createdByName !== invoice.invoiceCreatorName && (
+                                  <div>
+                                    Bác sĩ phụ trách: {invoice.createdByName}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

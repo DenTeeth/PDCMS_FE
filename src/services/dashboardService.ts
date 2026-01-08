@@ -21,20 +21,43 @@ export class DashboardService {
 
   /**
    * Get overview statistics
-   * @param month Month in YYYY-MM format (e.g., "2026-01")
-   * @param compareWithPrevious Whether to include month-over-month comparison
+   * ✅ NEW: Support both date range and month for backward compatibility
+   * @param params - Can be either { month } or { startDate, endDate, comparisonMode }
    */
   async getOverview(
-    month: string,
-    compareWithPrevious: boolean = false
+    params: { 
+      month?: string; 
+      startDate?: string; 
+      endDate?: string;
+      compareWithPrevious?: boolean;
+      comparisonMode?: string;
+    }
   ): Promise<DashboardOverview> {
     const axios = apiClient.getAxiosInstance();
+    
+    // Build query params
+    const queryParams: any = {};
+    if (params.month) {
+      queryParams.month = params.month; // Backward compatible
+    }
+    if (params.startDate) {
+      queryParams.startDate = params.startDate;
+    }
+    if (params.endDate) {
+      queryParams.endDate = params.endDate;
+    }
+    if (params.compareWithPrevious !== undefined) {
+      queryParams.compareWithPrevious = params.compareWithPrevious;
+    }
+    if (params.comparisonMode && params.compareWithPrevious) {
+      queryParams.comparisonMode = params.comparisonMode;
+    }
+    
     const response = await axios.get(
       `${this.baseEndpoint}/overview`,
-      {
-        params: { month, compareWithPrevious },
-      }
+      { params: queryParams }
     );
+    
     // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
     if (response.data?.data) {
       return response.data.data;
@@ -44,21 +67,32 @@ export class DashboardService {
 
   /**
    * Get revenue and expenses statistics
-   * @param month Month in YYYY-MM format
-   * @param compareWithPrevious Whether to include comparison
+   * ✅ NEW: Support both date range and month
+   * @param params - Can be either { month } or { startDate, endDate, comparisonMode }
    */
   async getRevenueExpenses(
-    month: string,
-    compareWithPrevious: boolean = false
+    params: {
+      month?: string;
+      startDate?: string;
+      endDate?: string;
+      compareWithPrevious?: boolean;
+      comparisonMode?: string;
+    }
   ): Promise<RevenueExpenses> {
     const axios = apiClient.getAxiosInstance();
+    
+    const queryParams: any = {};
+    if (params.month) queryParams.month = params.month;
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    if (params.compareWithPrevious !== undefined) queryParams.compareWithPrevious = params.compareWithPrevious;
+    if (params.comparisonMode && params.compareWithPrevious) queryParams.comparisonMode = params.comparisonMode;
+    
     const response = await axios.get(
       `${this.baseEndpoint}/revenue-expenses`,
-      {
-        params: { month, compareWithPrevious },
-      }
+      { params: queryParams }
     );
-    // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
+    
     if (response.data?.data) {
       return response.data.data;
     }
@@ -67,21 +101,29 @@ export class DashboardService {
 
   /**
    * Get employee statistics
-   * @param month Month in YYYY-MM format
-   * @param topDoctors Number of top doctors to return (default: 10)
+   * ✅ NEW: Support both date range and month
+   * @param params - Date range params and topDoctors limit
    */
   async getEmployees(
-    month: string,
-    topDoctors: number = 10
+    params: {
+      month?: string;
+      startDate?: string;
+      endDate?: string;
+      topDoctors?: number;
+    }
   ): Promise<EmployeeStatistics> {
     const axios = apiClient.getAxiosInstance();
+    
+    const queryParams: any = { topDoctors: params.topDoctors || 10 };
+    if (params.month) queryParams.month = params.month;
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    
     const response = await axios.get(
       `${this.baseEndpoint}/employees`,
-      {
-        params: { month, topDoctors },
-      }
+      { params: queryParams }
     );
-    // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
+    
     if (response.data?.data) {
       return response.data.data;
     }
@@ -90,17 +132,25 @@ export class DashboardService {
 
   /**
    * Get warehouse statistics
-   * @param month Month in YYYY-MM format
+   * ✅ NEW: Support both date range and month
    */
-  async getWarehouse(month: string): Promise<WarehouseStatistics> {
+  async getWarehouse(params: {
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<WarehouseStatistics> {
     const axios = apiClient.getAxiosInstance();
+    
+    const queryParams: any = {};
+    if (params.month) queryParams.month = params.month;
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    
     const response = await axios.get(
       `${this.baseEndpoint}/warehouse`,
-      {
-        params: { month },
-      }
+      { params: queryParams }
     );
-    // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
+    
     if (response.data?.data) {
       return response.data.data;
     }
@@ -109,17 +159,25 @@ export class DashboardService {
 
   /**
    * Get transaction statistics
-   * @param month Month in YYYY-MM format
+   * ✅ NEW: Support both date range and month
    */
-  async getTransactions(month: string): Promise<TransactionStatistics> {
+  async getTransactions(params: {
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<TransactionStatistics> {
     const axios = apiClient.getAxiosInstance();
+    
+    const queryParams: any = {};
+    if (params.month) queryParams.month = params.month;
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    
     const response = await axios.get(
       `${this.baseEndpoint}/transactions`,
-      {
-        params: { month },
-      }
+      { params: queryParams }
     );
-    // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
+    
     if (response.data?.data) {
       return response.data.data;
     }

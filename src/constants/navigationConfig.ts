@@ -55,6 +55,7 @@ export interface NavigationItem {
   hasSubmenu?: boolean;
   submenu?: NavigationItem[];
   employmentTypes?: string[]; // Restrict to specific employment types (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)
+  requiredRoles?: string[]; // Require user to have specific roles (e.g., ROLE_DENTIST, ROLE_NURSE for CBCT viewer)
 }
 
 export interface NavigationConfig {
@@ -577,20 +578,13 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
         },
       ],
     },
-    // Analytics
-    {
-      name: 'Phân tích',
-      href: '/employee/analytics',
-      icon: faChartLine,
-      // Note: ANALYTICS permission group may not exist in BE - remove or adjust based on actual BE permissions
-      // requiredPermissionGroup: 'ANALYTICS',
-    },
-    // NII Image Viewer
+    // NII Image Viewer - Only for ROLE_DENTIST or ROLE_NURSE
     {
       name: 'Xem CBCT',
       href: '/employee/nii-viewer',
       icon: faImage,
       requiredPermissions: ['PATIENT_IMAGE_READ'],
+      requiredRoles: ['ROLE_DENTIST', 'ROLE_NURSE'], // ✅ Only show for dentists and nurses
     },
     // Settings
     {
@@ -811,13 +805,20 @@ export const filterNavigationItems = (
   items: NavigationItem[],
   userPermissions: string[] | undefined,
   groupedPermissions: GroupedPermissions | undefined,
-  userRoles?: string[], // Add userRoles parameter to check ROLE_ADMIN
+  userRoles?: string[], // Add userRoles parameter to check ROLE_ADMIN and requiredRoles
   employmentType?: string // Add employmentType for employment type filtering
 ): NavigationItem[] => {
   return items.filter(item => {
     // Check employment type restriction
     if (item.employmentTypes && item.employmentTypes.length > 0 && employmentType) {
       if (!item.employmentTypes.includes(employmentType)) {
+        return false;
+      }
+    }
+
+    // ✅ Check required roles (for CBCT viewer - ROLE_DENTIST or ROLE_NURSE)
+    if (item.requiredRoles && item.requiredRoles.length > 0) {
+      if (!userRoles || !item.requiredRoles.some(role => userRoles.includes(role))) {
         return false;
       }
     }

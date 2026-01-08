@@ -318,11 +318,27 @@ export default function TreatmentPlanPaymentTab({
                             <p className="font-medium">{invoice.patientName}</p>
                           </div>
                         )}
-                        {invoice.createdByName && invoice.createdAt && (
+                        {/* ✅ FIX: Hiển thị cả Bác sĩ phụ trách và Người tạo hóa đơn */}
+                        {invoice.createdByName && (
                           <div>
                             <label className="text-gray-600">Bác sĩ phụ trách:</label>
+                            <p className="font-medium">{invoice.createdByName}</p>
+                          </div>
+                        )}
+                        {invoice.invoiceCreatorName && invoice.createdAt && (
+                          <div>
+                            <label className="text-gray-600">Người tạo hóa đơn:</label>
                             <p className="font-medium">
-                              {invoice.createdByName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                              {invoice.invoiceCreatorName} - {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}
+                            </p>
+                          </div>
+                        )}
+                        {/* Fallback: Nếu không có invoiceCreatorName, hiển thị createdByName với label "Tạo lúc" */}
+                        {!invoice.invoiceCreatorName && invoice.createdByName && invoice.createdAt && (
+                          <div>
+                            <label className="text-gray-600">Tạo lúc:</label>
+                            <p className="font-medium">
+                              {format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')} bởi {invoice.createdByName}
                             </p>
                           </div>
                         )}

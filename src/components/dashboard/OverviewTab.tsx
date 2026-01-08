@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { StatCard } from './StatCard';
-import { Loader2, AlertCircle, DollarSign, TrendingDown, TrendingUp, Receipt, Calendar, Users, UserCheck, AlertTriangle } from 'lucide-react';
+import { AlertBadge } from './AlertBadge';
+import { HeatmapChart } from './HeatmapChart';
+import { Loader2, AlertCircle, DollarSign, TrendingDown, TrendingUp, Receipt, Calendar, Users, UserPlus, AlertTriangle, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 import { dashboardService } from '@/services/dashboardService';
 import { DashboardOverview } from '@/types/dashboard';
 import {
@@ -23,26 +26,36 @@ import {
 } from 'recharts';
 
 interface OverviewTabProps {
-  month: string;
+  startDate: string;
+  endDate: string;
   compareWithPrevious: boolean;
+  comparisonMode?: string;
 }
 
 const COLORS = ['#8b5fbf', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
-export function OverviewTab({ month, compareWithPrevious }: OverviewTabProps) {
+export function OverviewTab({ startDate, endDate, compareWithPrevious, comparisonMode }: OverviewTabProps) {
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // ✅ NEW: View mode toggle (table/chart)
+  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
   useEffect(() => {
     loadData();
-  }, [month, compareWithPrevious]);
+  }, [startDate, endDate, compareWithPrevious, comparisonMode]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await dashboardService.getOverview(month, compareWithPrevious);
+      const result = await dashboardService.getOverview({
+        startDate,
+        endDate,
+        compareWithPrevious,
+        comparisonMode: comparisonMode || 'PREVIOUS_MONTH',
+      });
       setData(result);
     } catch (err: any) {
       console.error('Error loading overview:', err);
@@ -110,22 +123,38 @@ export function OverviewTab({ month, compareWithPrevious }: OverviewTabProps) {
   const invoiceStatusData = [
     { name: 'Đã thanh toán', value: data.invoices.paid, color: '#10b981' },
     { name: 'Chờ thanh toán', value: data.invoices.pending, color: '#f59e0b' },
-    { name: 'Đã hủy', value: data.invoices.cancelled, color: '#ef4444' },
+    { name: 'Quá hạn', value: data.invoices.overdue || 0, color: '#ef4444' },
   ].filter((item) => item.value > 0);
 
   const appointmentStatusData = [
     { name: 'Đã đặt lịch', value: data.appointments.scheduled || 0, color: '#3b82f6' },
-    { name: 'Đã check-in', value: data.appointments.checkedIn || 0, color: '#8b5cf6' },
-    { name: 'Đang điều trị', value: data.appointments.inProgress || 0, color: '#f59e0b' },
     { name: 'Hoàn thành', value: data.appointments.completed || 0, color: '#10b981' },
     { name: 'Đã hủy', value: data.appointments.cancelled || 0, color: '#ef4444' },
-    { name: 'Hủy muộn', value: data.appointments.cancelledLate || 0, color: '#dc2626' },
-    { name: 'Không đến', value: data.appointments.noShow || 0, color: '#6b7280' },
+    // ❌ Removed: checkedIn, inProgress, cancelledLate, noShow
   ].filter((item) => item.value > 0);
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* ✅ NEW: Alerts Section */}
+      {data.alerts && data.alerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              Cảnh báo ({data.alerts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {data.alerts.map((alert, index) => (
+                <AlertBadge key={index} alert={alert} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Existing Summary Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Tổng doanh thu"
@@ -165,129 +194,290 @@ export function OverviewTab({ month, compareWithPrevious }: OverviewTabProps) {
           title="Tổng số invoice"
           value={data.summary.totalInvoices}
           icon={<Receipt className="h-6 w-6" />}
-          subtitle={`${data.invoices.paidPercent.toFixed(1)}% đã thanh toán`}
+          subtitle={`${data.invoices.paid}/${data.invoices.total} đã thanh toán`}
           color="purple"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Tổng số appointment"
           value={data.summary.totalAppointments}
           icon={<Calendar className="h-6 w-6" />}
-          subtitle={`${data.appointments.completionRate.toFixed(1)}% hoàn thành`}
+          subtitle={`${data.appointments.completed} hoàn thành`}
           color="orange"
         />
         <StatCard
-          title="Tổng số bệnh nhân"
+          title="Tổng bệnh nhân"
           value={data.summary.totalPatients}
           icon={<Users className="h-6 w-6" />}
-          color="pink"
-        />
-        <StatCard
-          title="Tổng số nhân viên"
-          value={data.summary.totalEmployees}
-          icon={<UserCheck className="h-6 w-6" />}
+          subtitle="Trong hệ thống"
           color="blue"
         />
         <StatCard
-          title="Công nợ"
-          value={data.invoices.debt}
-          icon={<AlertTriangle className="h-6 w-6" />}
-          color="red"
+          title="Bệnh nhân mới"
+          value={data.summary.newPatientsThisMonth}
+          icon={<UserPlus className="h-6 w-6" />}
+          subtitle="Tháng này"
+          color="green"
         />
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue & Expenses Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Doanh thu & chi phí</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueExpenseChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number) =>
-                    new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                    }).format(value)
-                  }
-                />
-                <Legend />
-                <Bar dataKey="DoanhThu" fill="#10b981" name="Doanh thu" />
-                <Bar dataKey="ChiPhi" fill="#ef4444" name="Chi phí" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* ✅ NEW: Charts Section with View Toggle */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Biểu đồ thống kê</h3>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={viewMode === 'chart' ? 'default' : 'outline'}
+              onClick={() => setViewMode('chart')}
+              className={viewMode === 'chart' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+            >
+              <PieChartIcon className="h-4 w-4 mr-2" />
+              Biểu đồ
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              onClick={() => setViewMode('table')}
+              className={viewMode === 'table' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Bảng
+            </Button>
+          </div>
+        </div>
 
-        {/* Invoice Status Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Trạng thái invoice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {invoiceStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={invoiceStatusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {invoiceStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-gray-500">
-                Không có dữ liệu
-              </div>
+        {viewMode === 'chart' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue & Expenses Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Doanh thu & chi phí</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={revenueExpenseChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND',
+                        }).format(value)
+                      }
+                    />
+                    <Legend />
+                    <Bar dataKey="DoanhThu" fill="#10b981" name="Doanh thu" />
+                    <Bar dataKey="ChiPhi" fill="#ef4444" name="Chi phí" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Status Pie Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Trạng thái invoice</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {invoiceStatusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={invoiceStatusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {invoiceStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) =>
+                          `${value} hóa đơn`
+                        }
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Không có dữ liệu hóa đơn
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Appointment Status Pie Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Trạng thái lịch hẹn</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {appointmentStatusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={appointmentStatusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {appointmentStatusData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) =>
+                          `${value} lịch hẹn`
+                        }
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Không có dữ liệu lịch hẹn
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ✅ NEW: Heatmap */}
+            {data.heatmapData && data.heatmapData.length > 0 && (
+              <Card className="lg:col-span-2">
+                <HeatmapChart data={data.heatmapData} />
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        ) : (
+          /* ✅ Table View */
+          <Card>
+            <CardHeader>
+              <CardTitle>Dữ liệu chi tiết</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Revenue & Expenses Table */}
+                <div>
+                  <h4 className="font-semibold mb-2">Doanh thu & Chi phí</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border p-2 text-left">Kỳ</th>
+                          <th className="border p-2 text-right">Doanh thu</th>
+                          <th className="border p-2 text-right">Chi phí</th>
+                          <th className="border p-2 text-right">Lợi nhuận</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {revenueExpenseChartData.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="border p-2">{row.name}</td>
+                            <td className="border p-2 text-right text-green-600">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.DoanhThu)}
+                            </td>
+                            <td className="border p-2 text-right text-red-600">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.ChiPhi)}
+                            </td>
+                            <td className="border p-2 text-right font-semibold">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.DoanhThu - row.ChiPhi)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-      {/* Appointment Status Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Trạng thái appointment</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {appointmentStatusData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={appointmentStatusData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" name="Số lượng" fill="#8b5fbf" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-500">
-              Không có dữ liệu
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {/* Invoice Status Table */}
+                <div>
+                  <h4 className="font-semibold mb-2">Trạng thái hóa đơn</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border p-2 text-left">Trạng thái</th>
+                          <th className="border p-2 text-right">Số lượng</th>
+                          <th className="border p-2 text-right">Tỷ lệ (%)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoiceStatusData.map((row, idx) => {
+                          const total = invoiceStatusData.reduce((sum, item) => sum + item.value, 0);
+                          const percent = ((row.value / total) * 100).toFixed(1);
+                          return (
+                            <tr key={idx}>
+                              <td className="border p-2 flex items-center gap-2">
+                                <div className="w-4 h-4 rounded" style={{ backgroundColor: row.color }}></div>
+                                {row.name}
+                              </td>
+                              <td className="border p-2 text-right">{row.value}</td>
+                              <td className="border p-2 text-right">{percent}%</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Appointment Status Table */}
+                <div>
+                  <h4 className="font-semibold mb-2">Trạng thái lịch hẹn</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border p-2 text-left">Trạng thái</th>
+                          <th className="border p-2 text-right">Số lượng</th>
+                          <th className="border p-2 text-right">Tỷ lệ (%)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {appointmentStatusData.map((row, idx) => {
+                          const total = appointmentStatusData.reduce((sum, item) => sum + item.value, 0);
+                          const percent = ((row.value / total) * 100).toFixed(1);
+                          return (
+                            <tr key={idx}>
+                              <td className="border p-2 flex items-center gap-2">
+                                <div className="w-4 h-4 rounded" style={{ backgroundColor: row.color }}></div>
+                                {row.name}
+                              </td>
+                              <td className="border p-2 text-right">{row.value}</td>
+                              <td className="border p-2 text-right">{percent}%</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

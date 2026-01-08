@@ -48,7 +48,7 @@ export default function EmployeeAppointmentsPage() {
     page: 0,
     size: 10,
     sortBy: 'appointmentStartTime',
-    sortDirection: 'ASC',
+    sortDirection: 'DESC', // ✅ Newest appointments first
   });
 
   // Pagination states
@@ -95,7 +95,7 @@ export default function EmployeeAppointmentsPage() {
           page: currentPage,
           size: pageSize,
           sortBy: filters.sortBy || 'appointmentStartTime',
-          sortDirection: filters.sortDirection || 'ASC',
+          sortDirection: filters.sortDirection || 'DESC', // Default to DESC - newest first
         };
 
         // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
@@ -164,7 +164,7 @@ export default function EmployeeAppointmentsPage() {
       page: 0,
       size: 10,
       sortBy: 'appointmentStartTime',
-      sortDirection: 'ASC',
+      sortDirection: 'DESC', // ✅ Newest appointments first
     });
     setCurrentPage(0);
   }, []);

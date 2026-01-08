@@ -10,6 +10,19 @@ export interface DashboardResponse<T> {
   message: string;
 }
 
+// ❌ KPIs REMOVED - BE đã xóa field này
+// export interface DashboardKPIs { ... }
+
+// ✅ Alerts
+export interface DashboardAlert {
+  type: 'warning' | 'error' | 'info';
+  severity: 'high' | 'medium' | 'low';
+  title: string;
+  message: string;
+  value?: number;
+  threshold?: number;
+}
+
 // Overview Statistics
 export interface DashboardOverview {
   month: string;
@@ -21,8 +34,13 @@ export interface DashboardOverview {
     totalInvoices: number;
     totalAppointments: number;
     totalPatients: number;
-    totalEmployees: number;
+    newPatientsThisMonth: number; // ✅ NEW - Bệnh nhân mới trong tháng
+    // totalEmployees: number; // ❌ REMOVED by BE
   };
+  // ❌ kpis field REMOVED by BE
+  // kpis?: DashboardKPIs;
+  // ✅ Alerts field
+  alerts?: DashboardAlert[];
   revenue: {
     current: number;
     previous: number;
@@ -39,20 +57,26 @@ export interface DashboardOverview {
     total: number;
     paid: number;
     pending: number;
-    cancelled: number;
-    paidPercent: number;
-    debt: number;
+    // ❌ REMOVED by BE
+    // cancelled: number;
+    // paidPercent: number;
+    // debt: number;
+    // ✅ NEW fields
+    overdue: number;        // Số hóa đơn quá hạn
+    totalAmount: number;    // Tổng giá trị hóa đơn
+    paidAmount: number;     // Tổng đã thanh toán
   };
   appointments: {
     total: number;
     scheduled: number;        // SCHEDULED - Đã đặt lịch
-    checkedIn: number;        // CHECKED_IN - Đã check-in
-    inProgress: number;       // IN_PROGRESS - Đang điều trị
     completed: number;        // COMPLETED - Hoàn thành
-    cancelled: number;        // CANCELLED - Đã hủy (>24h)
-    cancelledLate: number;    // CANCELLED_LATE - Hủy muộn (≤24h)
-    noShow: number;           // NO_SHOW - Không đến
-    completionRate: number;
+    cancelled: number;        // CANCELLED - Đã hủy
+    // ❌ REMOVED by BE - simplified to 4 fields only
+    // checkedIn: number;
+    // inProgress: number;
+    // cancelledLate: number;
+    // noShow: number;
+    // completionRate: number;
   };
 }
 
@@ -233,6 +257,66 @@ export interface TransactionStatistics {
 
 // Export tab types
 export type DashboardTab = 'overview' | 'revenue-expenses' | 'employees' | 'warehouse' | 'transactions';
+
+// ✅ NEW: Advanced Filters
+export interface DashboardFilters {
+  startDate?: string;
+  endDate?: string;
+  employeeIds?: number[];
+  patientIds?: number[];
+  serviceIds?: number[];
+  appointmentStatus?: string;
+  invoiceStatus?: string;
+  minRevenue?: number;
+  maxRevenue?: number;
+  compareWithPrevious?: boolean;
+  comparisonMode?: 'PREVIOUS_MONTH' | 'PREVIOUS_QUARTER' | 'PREVIOUS_YEAR' | 'SAME_PERIOD_LAST_YEAR';
+}
+
+// ✅ NEW: Appointment Heatmap
+export interface AppointmentHeatmapData {
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  hour: number; // 0-23
+  count: number; // Number of appointments
+}
+
+export interface AppointmentHeatmapResponse {
+  startDate: string;
+  endDate: string;
+  data: AppointmentHeatmapData[];
+}
+
+// ✅ NEW: Dashboard Preferences
+export interface DashboardPreferences {
+  id?: number;
+  userId: number;
+  defaultDateRange: 'TODAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR';
+  defaultComparisonMode: 'PREVIOUS_MONTH' | 'PREVIOUS_QUARTER' | 'PREVIOUS_YEAR' | 'SAME_PERIOD_LAST_YEAR';
+  autoRefresh: boolean;
+  refreshInterval: number; // seconds
+  defaultTab: DashboardTab;
+  visibleWidgets: string[]; // Widget IDs
+  chartType: 'LINE' | 'BAR' | 'AREA';
+}
+
+// ✅ NEW: Saved Views
+export interface DashboardSavedView {
+  id: number;
+  name: string;
+  description?: string;
+  filters: DashboardFilters;
+  dateRange: { startDate: string; endDate: string };
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ✅ NEW: WebSocket Message Types
+export interface DashboardWebSocketMessage {
+  type: 'REVENUE_UPDATE' | 'APPOINTMENT_UPDATE' | 'ALERT' | 'REFRESH';
+  data: any;
+  timestamp: string;
+}
 
 
 

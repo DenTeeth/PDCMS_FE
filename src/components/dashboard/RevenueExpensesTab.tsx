@@ -23,15 +23,19 @@ import {
 } from 'recharts';
 
 interface RevenueExpensesTabProps {
-  month: string;
+  startDate: string;
+  endDate: string;
   compareWithPrevious: boolean;
+  comparisonMode?: string;
 }
 
 const COLORS = ['#8b5fbf', '#10b981', '#f59e0b', '#ef4444'];
 
 export function RevenueExpensesTab({
-  month,
+  startDate,
+  endDate,
   compareWithPrevious,
+  comparisonMode,
 }: RevenueExpensesTabProps) {
   const [data, setData] = useState<RevenueExpenses | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,16 +43,18 @@ export function RevenueExpensesTab({
 
   useEffect(() => {
     loadData();
-  }, [month, compareWithPrevious]);
+  }, [startDate, endDate, compareWithPrevious, comparisonMode]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await dashboardService.getRevenueExpenses(
-        month,
-        compareWithPrevious
-      );
+      const result = await dashboardService.getRevenueExpenses({
+        startDate,
+        endDate,
+        compareWithPrevious,
+        comparisonMode: comparisonMode || 'PREVIOUS_MONTH',
+      });
       setData(result);
     } catch (err: any) {
       console.error('Error loading revenue/expenses:', err);

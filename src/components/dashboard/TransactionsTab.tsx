@@ -18,28 +18,33 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  PieLabelRenderProps,
 } from 'recharts';
 
 interface TransactionsTabProps {
-  month: string;
+  startDate: string;
+  endDate: string;
 }
 
 const COLORS = ['#8b5fbf', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
-export function TransactionsTab({ month }: TransactionsTabProps) {
+export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
   const [data, setData] = useState<TransactionStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
-  }, [month]);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await dashboardService.getTransactions(month);
+      const result = await dashboardService.getTransactions({
+        startDate,
+        endDate,
+      });
       setData(result);
     } catch (err: any) {
       console.error('Error loading transactions:', err);
@@ -121,9 +126,9 @@ export function TransactionsTab({ month }: TransactionsTabProps) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          title="Tổng ssố Invoice"
+          title="Tổng số Invoice"
           value={data.invoices.total}
           icon={<Receipt className="h-6 w-6" />}
           subtitle={`${data.invoices.paymentRate.toFixed(1)}% thanh toán`}
@@ -141,12 +146,7 @@ export function TransactionsTab({ month }: TransactionsTabProps) {
           icon={<CreditCard className="h-6 w-6" />}
           color="green"
         />
-        <StatCard
-          title="Công nợ"
-          value={data.invoices.debt}
-          icon={<AlertTriangle className="h-6 w-6" />}
-          color="red"
-        />
+        {/* ❌ Công nợ field removed by BE - use overdue count instead if needed */}
       </div>
 
       {/* Charts */}
@@ -165,9 +165,10 @@ export function TransactionsTab({ month }: TransactionsTabProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
+                    label={(props: PieLabelRenderProps) => {
+                      const percent = Number(props.percent || 0);
+                      return `${props.name}: ${(percent * 100).toFixed(0)}%`;
+                    }}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -201,9 +202,10 @@ export function TransactionsTab({ month }: TransactionsTabProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
+                    label={(props: PieLabelRenderProps) => {
+                      const percent = Number(props.percent || 0);
+                      return `${props.name}: ${(percent * 100).toFixed(0)}%`;
+                    }}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -240,9 +242,10 @@ export function TransactionsTab({ month }: TransactionsTabProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
+                    label={(props: PieLabelRenderProps) => {
+                      const percent = Number(props.percent || 0);
+                      return `${props.name}: ${(percent * 100).toFixed(0)}%`;
+                    }}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"

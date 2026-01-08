@@ -7,6 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { DateRangeInput } from '@/components/ui/date-range-input';
+import {
   BarChart3,
   DollarSign,
   Users,
@@ -16,40 +24,70 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subMonths, subQuarters, subYears } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { dashboardService } from '@/services/dashboardService';
-import { DashboardTab } from '@/types/dashboard';
+import { DashboardTab, DashboardFilters, DashboardSavedView } from '@/types/dashboard';
 import { OverviewTab } from '@/components/dashboard/OverviewTab';
 import { RevenueExpensesTab } from '@/components/dashboard/RevenueExpensesTab';
 import { EmployeesTab } from '@/components/dashboard/EmployeesTab';
 import { WarehouseTab } from '@/components/dashboard/WarehouseTab';
 import { TransactionsTab } from '@/components/dashboard/TransactionsTab';
+import { AdvancedFilters } from '@/components/dashboard/AdvancedFilters';
+import { SavedViewsManager } from '@/components/dashboard/SavedViewsManager';
 
-/**
- * Get current month in YYYY-MM format
- */
-function getCurrentMonth(): string {
-  return new Date().toISOString().substring(0, 7);
-}
-
-/**
- * Get previous month from given month
- */
-function getPreviousMonth(month: string): string {
-  const [year, monthNum] = month.split('-').map(Number);
-  const date = new Date(year, monthNum - 2, 1); // -2 because months are 0-indexed
-  return date.toISOString().substring(0, 7);
-}
+// Quick date range presets
+const getDateRangePreset = (preset: string) => {
+  const now = new Date();
+  switch (preset) {
+    case 'today':
+      return { from: format(now, 'yyyy-MM-dd'), to: format(now, 'yyyy-MM-dd') };
+    case 'week':
+      return { from: format(startOfWeek(now), 'yyyy-MM-dd'), to: format(endOfWeek(now), 'yyyy-MM-dd') };
+    case 'month':
+      return { from: format(startOfMonth(now), 'yyyy-MM-dd'), to: format(endOfMonth(now), 'yyyy-MM-dd') };
+    case 'lastMonth':
+      const lastMonth = subMonths(now, 1);
+      return { from: format(startOfMonth(lastMonth), 'yyyy-MM-dd'), to: format(endOfMonth(lastMonth), 'yyyy-MM-dd') };
+    case 'year':
+      return { from: format(startOfYear(now), 'yyyy-MM-dd'), to: format(endOfYear(now), 'yyyy-MM-dd') };
+    default:
+      return { from: format(startOfMonth(now), 'yyyy-MM-dd'), to: format(endOfMonth(now), 'yyyy-MM-dd') };
+  }
+};
 
 export default function StatisticsPage() {
   const { user } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  // ✅ NEW: Date range instead of month
+  const [dateRange, setDateRange] = useState(getDateRangePreset('month'));
+  const [datePreset, setDatePreset] = useState<string>('month');
+  
+  // ✅ NEW: Comparison mode
+  const [comparisonMode, setComparisonMode] = useState<string>('PREVIOUS_MONTH');
   const [compareWithPrevious, setCompareWithPrevious] = useState<boolean>(true);
+  
+  // ✅ NEW: Advanced filters
+  const [advancedFilters, setAdvancedFilters] = useState<DashboardFilters>({
+    employeeIds: [],
+    patientIds: [],
+    serviceIds: [],
+  });
+  
+  // ✅ NEW: Saved views
+  const [savedViews, setSavedViews] = useState<DashboardSavedView[]>([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showSavedViews, setShowSavedViews] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [exporting, setExporting] = useState<boolean>(false);
+  
+  // ✅ NEW: Auto-refresh
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Debug: Log user roles and permissions
   useEffect(() => {
@@ -72,8 +110,10 @@ export default function StatisticsPage() {
   const handleExport = async (tab: DashboardTab) => {
     try {
       setExporting(true);
-      await dashboardService.downloadExcel(tab, selectedMonth);
-      toast.success(`Đã xuất báo cáo ${formatMonthDisplay(selectedMonth)} thành công!`);
+      // Export với date range thay vì month
+      const monthFormat = format(new Date(dateRange.from), 'yyyy-MM');
+      await dashboardService.downloadExcel(tab, monthFormat);
+      toast.success(`Đã xuất báo cáo ${format(new Date(dateRange.from), 'MM/yyyy')} thành công!`);
     } catch (error: any) {
       console.error('Export error:', error);
       toast.error(
@@ -104,51 +144,233 @@ export default function StatisticsPage() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <Label htmlFor="month-selector" className="mb-2 block">
-                Chọn tháng
-              </Label>
-              <Input
-                id="month-selector"
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full"
-              />
+          <div className="space-y-4">
+            {/* Row 1: Quick filters and date range */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              {/* Quick date presets */}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={datePreset === 'today' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setDatePreset('today');
+                    setDateRange(getDateRangePreset('today'));
+                  }}
+                  className={datePreset === 'today' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+                >
+                  Hôm nay
+                </Button>
+                <Button
+                  size="sm"
+                  variant={datePreset === 'week' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setDatePreset('week');
+                    setDateRange(getDateRangePreset('week'));
+                  }}
+                  className={datePreset === 'week' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+                >
+                  Tuần này
+                </Button>
+                <Button
+                  size="sm"
+                  variant={datePreset === 'month' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setDatePreset('month');
+                    setDateRange(getDateRangePreset('month'));
+                  }}
+                  className={datePreset === 'month' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+                >
+                  Tháng này
+                </Button>
+                <Button
+                  size="sm"
+                  variant={datePreset === 'lastMonth' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setDatePreset('lastMonth');
+                    setDateRange(getDateRangePreset('lastMonth'));
+                  }}
+                  className={datePreset === 'lastMonth' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+                >
+                  Tháng trước
+                </Button>
+                <Button
+                  size="sm"
+                  variant={datePreset === 'year' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setDatePreset('year');
+                    setDateRange(getDateRangePreset('year'));
+                  }}
+                  className={datePreset === 'year' ? 'bg-[#8b5fbf] hover:bg-[#7a4fa8]' : ''}
+                >
+                  Năm nay
+                </Button>
+              </div>
+              
+              {/* Custom date range */}
+              <div className="flex-1">
+                <Label htmlFor="date-range" className="mb-2 block">
+                  Khoảng thời gian tùy chỉnh
+                </Label>
+                <DateRangeInput
+                  value={dateRange}
+                  onChange={(range) => {
+                    setDateRange(range);
+                    setDatePreset('custom');
+                  }}
+                  placeholder="Chọn khoảng ngày"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="compare-toggle"
-                checked={compareWithPrevious}
-                onChange={(e) => setCompareWithPrevious(e.target.checked)}
-                className="h-4 w-4 text-[#8b5fbf] focus:ring-[#8b5fbf] border-gray-300 rounded"
-              />
-              <Label htmlFor="compare-toggle" className="cursor-pointer">
-                So sánh với tháng trước
-              </Label>
-            </div>
-            <Button
-              onClick={() => handleExport(activeTab as DashboardTab)}
-              disabled={exporting}
-              className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
-            >
-              {exporting ? (
-                <>
+            
+            {/* Row 2: Comparison, refresh, export */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              {/* Comparison mode */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="compare-toggle"
+                    checked={compareWithPrevious}
+                    onChange={(e) => setCompareWithPrevious(e.target.checked)}
+                    className="h-4 w-4 text-[#8b5fbf] focus:ring-[#8b5fbf] border-gray-300 rounded"
+                  />
+                  <Label htmlFor="compare-toggle" className="cursor-pointer">
+                    So sánh với
+                  </Label>
+                </div>
+                {compareWithPrevious && (
+                  <Select 
+                    value={comparisonMode || 'PREVIOUS_MONTH'} 
+                    onValueChange={setComparisonMode}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn kiểu so sánh" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PREVIOUS_MONTH">Tháng trước</SelectItem>
+                      <SelectItem value="PREVIOUS_QUARTER">Quý trước</SelectItem>
+                      <SelectItem value="PREVIOUS_YEAR">Năm trước</SelectItem>
+                      <SelectItem value="SAME_PERIOD_LAST_YEAR">Cùng kỳ năm trước</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              
+              {/* Auto-refresh */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="auto-refresh"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                  className="h-4 w-4 text-[#8b5fbf] focus:ring-[#8b5fbf] border-gray-300 rounded"
+                />
+                <Label htmlFor="auto-refresh" className="cursor-pointer text-sm">
+                  Tự động làm mới (5 phút)
+                </Label>
+              </div>
+              
+              {/* Refresh button */}
+              <Button
+                onClick={() => window.location.reload()}
+                disabled={refreshing}
+                variant="outline"
+                size="sm"
+              >
+                {refreshing ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Đang xuất...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Xuất Excel
-                </>
-              )}
-            </Button>
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Làm mới
+              </Button>
+              
+              {/* Toggle Filters & Views */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                {showAdvancedFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSavedViews(!showSavedViews)}
+              >
+                {showSavedViews ? 'Ẩn chế độ xem' : 'Chế độ xem'}
+              </Button>
+              
+              {/* Export button */}
+              <Button
+                onClick={() => handleExport(activeTab as DashboardTab)}
+                disabled={exporting}
+                className="bg-[#8b5fbf] hover:bg-[#7a4fa8] text-white"
+                size="sm"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang xuất...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Xuất Excel
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* ✅ NEW: Advanced Filters */}
+      {showAdvancedFilters && (
+        <AdvancedFilters
+          filters={advancedFilters}
+          onFiltersChange={setAdvancedFilters}
+          employees={[]}
+          patients={[]}
+          services={[]}
+        />
+      )}
+
+      {/* ✅ NEW: Saved Views */}
+      {showSavedViews && (
+        <SavedViewsManager
+          views={savedViews}
+          onSaveView={(view) => {
+            const newView: DashboardSavedView = {
+              ...view,
+              id: Date.now(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            setSavedViews([...savedViews, newView]);
+            toast.success('Đã lưu chế độ xem!');
+          }}
+          onLoadView={(view) => {
+            setDateRange(view.dateRange);
+            setAdvancedFilters(view.filters);
+            toast.success(`Đã áp dụng chế độ xem "${view.name}"!`);
+          }}
+          onDeleteView={(viewId) => {
+            setSavedViews(savedViews.filter(v => v.id !== viewId));
+            toast.success('Đã xóa chế độ xem!');
+          }}
+          onSetDefaultView={(viewId) => {
+            setSavedViews(savedViews.map(v => ({
+              ...v,
+              isDefault: v.id === viewId,
+            })));
+            toast.success('Đã đặt làm chế độ xem mặc định!');
+          }}
+          currentFilters={advancedFilters}
+          currentDateRange={dateRange}
+        />
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -177,28 +399,41 @@ export default function StatisticsPage() {
 
         <TabsContent value="overview" className="mt-6">
           <OverviewTab
-            month={selectedMonth}
+            startDate={dateRange.from}
+            endDate={dateRange.to}
             compareWithPrevious={compareWithPrevious}
+            comparisonMode={comparisonMode}
           />
         </TabsContent>
 
         <TabsContent value="revenue-expenses" className="mt-6">
           <RevenueExpensesTab
-            month={selectedMonth}
+            startDate={dateRange.from}
+            endDate={dateRange.to}
             compareWithPrevious={compareWithPrevious}
+            comparisonMode={comparisonMode}
           />
         </TabsContent>
 
         <TabsContent value="employees" className="mt-6">
-          <EmployeesTab month={selectedMonth} />
+          <EmployeesTab 
+            startDate={dateRange.from}
+            endDate={dateRange.to}
+          />
         </TabsContent>
 
         <TabsContent value="warehouse" className="mt-6">
-          <WarehouseTab month={selectedMonth} />
+          <WarehouseTab 
+            startDate={dateRange.from}
+            endDate={dateRange.to}
+          />
         </TabsContent>
 
         <TabsContent value="transactions" className="mt-6">
-          <TransactionsTab month={selectedMonth} />
+          <TransactionsTab 
+            startDate={dateRange.from}
+            endDate={dateRange.to}
+          />
         </TabsContent>
       </Tabs>
       </div>

@@ -193,8 +193,8 @@ export default function EmployeesPage() {
       const params: any = {
         page,
         size: 12, // Items per page
-        sortBy: 'employeeCode' as const,
-        sortDirection: 'ASC' as const,
+        sortBy: 'createdAt' as const, // ✅ Sort by creation date instead of code
+        sortDirection: 'DESC' as const, // ✅ Newest employees first
       };
 
       // Add search if present (use debounced value)

@@ -130,7 +130,7 @@ export default function NewDynamicSidebar({ title = "PDCMS" }: NewDynamicSidebar
         navigationConfig.items,
         user.permissions,
         user.groupedPermissions,
-        user.roles, // Pass user roles to check ROLE_ADMIN
+        user.roles, // Pass user roles to check ROLE_ADMIN and requiredRoles (ROLE_DENTIST, ROLE_NURSE)
         user.employmentType // Pass employment type for filtering
       ) : [];
   }, [navigationConfig, user?.permissions, user?.groupedPermissions, user?.roles, user?.employmentType]);

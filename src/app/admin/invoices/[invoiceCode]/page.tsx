@@ -217,10 +217,17 @@ export default function InvoiceDetailPage() {
                       <p className="font-semibold">{format(new Date(invoice.createdAt), 'dd/MM/yyyy HH:mm')}</p>
                     </div>
                   )}
+                  {/* ✅ FIX: Hiển thị cả Bác sĩ phụ trách và Người tạo hóa đơn */}
                   {invoice.createdByName && (
                     <div>
-                      <label className="text-sm text-gray-600">Người tạo</label>
+                      <label className="text-sm text-gray-600">Bác sĩ phụ trách</label>
                       <p className="font-semibold">{invoice.createdByName}</p>
+                    </div>
+                  )}
+                  {invoice.invoiceCreatorName && (
+                    <div>
+                      <label className="text-sm text-gray-600">Người tạo hóa đơn</label>
+                      <p className="font-semibold">{invoice.invoiceCreatorName}</p>
                     </div>
                   )}
                 </div>
