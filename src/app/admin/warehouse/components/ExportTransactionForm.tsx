@@ -74,8 +74,8 @@ export default function ExportTransactionForm({
     new Date().toISOString().split('T')[0]
   );
   const [exportType, setExportType] = useState<ExportType>('USAGE');
-  const [referenceCode, setReferenceCode] = useState<string>('');
-  const [departmentName, setDepartmentName] = useState<string>('');
+  // referenceCode removed - no longer needed per BE API changes
+  // departmentName removed - no longer needed per BE API changes
   const [requestedBy, setRequestedBy] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [allowExpired, setAllowExpired] = useState<boolean>(false);
@@ -146,8 +146,7 @@ export default function ExportTransactionForm({
       setSelectedWarehouseType(initialWarehouseType || 'NORMAL');
       setTransactionDate(new Date().toISOString().split('T')[0]);
       setExportType('USAGE');
-      setReferenceCode('');
-      setDepartmentName('');
+      // referenceCode and departmentName removed
       setRequestedBy('');
       setNotes('');
       setAllowExpired(false);
@@ -505,8 +504,8 @@ export default function ExportTransactionForm({
     const payload: CreateExportTransactionDto = {
       transactionDate: transactionDateTime,
       exportType,
-      referenceCode: referenceCode.trim() || undefined,
-      departmentName: departmentName.trim() || undefined,
+      // referenceCode removed - no longer in BE API
+      // departmentName removed - no longer in BE API
       requestedBy: requestedBy.trim() || undefined,
       notes: notes.trim() || undefined,
       allowExpired: exportType === 'DISPOSAL' ? true : allowExpired,
@@ -619,29 +618,7 @@ export default function ExportTransactionForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="referenceCode" className="text-sm font-medium mb-2 block">
-                Mã tham chiếu
-              </Label>
-              <Input
-                id="referenceCode"
-                value={referenceCode}
-                onChange={(e) => setReferenceCode(e.target.value)}
-                placeholder="REQ-2025-001"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="departmentName" className="text-sm font-medium mb-2 block">
-                Phòng ban
-              </Label>
-              <Input
-                id="departmentName"
-                value={departmentName}
-                onChange={(e) => setDepartmentName(e.target.value)}
-                placeholder="Phòng khám tổng hợp"
-              />
-            </div>
+            {/* referenceCode and departmentName fields removed per BE API changes */}
 
             <div className="space-y-2">
               <Label htmlFor="requestedBy" className="text-sm font-medium mb-2 block">
