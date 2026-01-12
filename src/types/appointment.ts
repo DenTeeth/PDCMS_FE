@@ -320,6 +320,7 @@ export interface AppointmentSummaryDTO {
         role: 'ASSISTANT' | 'SECONDARY_DOCTOR' | 'OBSERVER';
     }>;
     notes?: string | null;
+    hasFeedback?: boolean; // Indicates if appointment has feedback (added for feedback feature)
 }
 
 // Pagination types (same as other entities)
@@ -406,6 +407,7 @@ export interface AppointmentDetailDTO {
      * Null if appointment is not linked to any treatment plan
      */
     linkedTreatmentPlanCode?: string | null;
+    hasFeedback?: boolean; // Indicates if appointment has feedback (added for feedback feature)
 }
 
 // P3.5 - Update Appointment Status Request

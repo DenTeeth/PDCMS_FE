@@ -57,6 +57,7 @@ import { appointmentService } from '@/services/appointmentService';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { clinicalRecordService } from '@/services/clinicalRecordService';
 import { patientService } from '@/services/patientService';
+import { getFeedbackByAppointmentCode } from '@/services/appointmentFeedbackService';
 import { getRoleDisplayName } from '@/utils/roleFormatter';
 import {
   AppointmentDetailDTO,
@@ -74,6 +75,7 @@ import {
 } from '@/types/treatmentPlan';
 import { ClinicalRecordResponse } from '@/types/clinicalRecord';
 import { Patient } from '@/types/patient';
+import { FeedbackResponse } from '@/types/appointmentFeedback';
 import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
 import DelayAppointmentModal from '@/components/appointments/DelayAppointmentModal';
@@ -81,6 +83,7 @@ import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView
 import ClinicalRecordForm from '@/components/clinical-records/ClinicalRecordForm';
 import PatientImageFolderView from '@/components/clinical-records/PatientImageFolderView';
 import PaymentTab from '@/components/appointments/PaymentTab';
+import { AppointmentFeedbackDisplay } from '@/components/appointments/AppointmentFeedbackDisplay';
 import {
   ArrowLeft,
   Calendar,
@@ -99,6 +102,7 @@ import {
   MoreHorizontal,
   ChevronDown,
   CreditCard,
+  Star,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -257,6 +261,11 @@ export default function AdminAppointmentDetailPage() {
   // Patient detail state
   const [patientDetail, setPatientDetail] = useState<Patient | null>(null);
   const [loadingPatientDetail, setLoadingPatientDetail] = useState(false);
+
+  // Feedback state (lazy loading)
+  const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [hasTriedLoadingFeedback, setHasTriedLoadingFeedback] = useState(false);
 
   // Permissions - ✅ Updated to use new BE permissions
   const canView = user?.permissions?.includes('VIEW_APPOINTMENT_ALL') || false;
@@ -489,6 +498,50 @@ export default function AdminAppointmentDetailPage() {
       loadClinicalRecord();
     }
   }, [activeTab, appointment?.appointmentId, hasTriedLoadingClinicalRecord]);
+
+  // Load feedback when Feedback tab is activated (lazy loading)
+  const loadFeedback = async () => {
+    if (!appointment?.appointmentCode) {
+      setHasTriedLoadingFeedback(true);
+      return;
+    }
+
+    // Prevent multiple simultaneous calls
+    if (loadingFeedback) {
+      return;
+    }
+
+    setLoadingFeedback(true);
+    setHasTriedLoadingFeedback(true);
+
+    try {
+      const feedbackData = await getFeedbackByAppointmentCode(appointment.appointmentCode);
+      setFeedback(feedbackData);
+    } catch (error: any) {
+      // 404 is expected if no feedback exists yet
+      if (error.response?.status === 404) {
+        console.log('[FEEDBACK] No feedback found for appointment');
+        setFeedback(null);
+      } else {
+        console.error('Error loading feedback:', error);
+        handleError(error);
+      }
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
+
+  // Load feedback when Feedback tab is activated
+  useEffect(() => {
+    if (
+      activeTab === 'feedback' &&
+      appointment?.appointmentCode &&
+      appointment?.status === 'COMPLETED' &&
+      !hasTriedLoadingFeedback
+    ) {
+      loadFeedback();
+    }
+  }, [activeTab, appointment?.appointmentCode, appointment?.status, hasTriedLoadingFeedback]);
 
   // Load treatment plan when Treatment Plan tab is activated (lazy loading)
   const loadTreatmentPlan = async () => {
@@ -986,6 +1039,20 @@ export default function AdminAppointmentDetailPage() {
               <Stethoscope className="h-4 w-4 mr-2" />
               Bệnh án
             </TabsTrigger>
+            {appointment?.status === 'COMPLETED' && (
+              <TabsTrigger
+                value="feedback"
+                className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                Đánh giá
+                {feedback && (
+                  <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                    ✓
+                  </span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="treatment-plan"
               className="rounded-full px-4 py-2"
@@ -1500,6 +1567,60 @@ export default function AdminAppointmentDetailPage() {
                 </div>
               </section>
             )}
+          </TabsContent>
+
+          {/* Feedback Tab */}
+          <TabsContent value="feedback">
+            <section className="bg-card rounded-lg border p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b mb-6">
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Star className="h-6 w-6 text-yellow-500" />
+                    Đánh giá lịch hẹn
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Phản hồi từ bệnh nhân về chất lượng dịch vụ
+                  </p>
+                </div>
+                {feedback && (
+                  <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-full font-medium">
+                    ✓ Đã đánh giá
+                  </span>
+                )}
+              </div>
+
+              {/* Loading State */}
+              {loadingFeedback ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Đang tải đánh giá...</p>
+                </div>
+              ) : feedback ? (
+                <div className="space-y-4">
+                  <AppointmentFeedbackDisplay feedback={feedback} showAppointmentInfo={true} />
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground text-center italic">
+                      Đánh giá này giúp chúng tôi cải thiện chất lượng dịch vụ 💙
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-gray-50 rounded-full">
+                      <Star className="h-12 w-12 text-gray-400" />
+                    </div>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">
+                    Chưa có đánh giá
+                  </h4>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Bệnh nhân chưa đánh giá lịch hẹn này. Đánh giá sẽ được gửi tự động sau khi lịch hẹn hoàn thành.
+                  </p>
+                </div>
+              )}
+            </section>
           </TabsContent>
         </Tabs>
 

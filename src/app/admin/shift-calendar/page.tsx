@@ -95,13 +95,18 @@ export default function AdminShiftCalendarPage() {
   });
 
   // Permissions - Updated to match BE naming
-  // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting employee shifts (EmployeeShiftController line 196, 229, 252)
-  // BE uses VIEW_SCHEDULE_ALL for viewing all schedules
+  // Admin/Manager có thể xem tất cả lịch làm việc
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
+  const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
+
+  // 🚨 Manual Shift Creation: For Manager/Admin ONLY
+  // Purpose: Tạo ca làm THỦ CÔNG cho nhân viên (trường hợp đặc biệt)
+  // This is NOT for employee self-registration (nhân viên dùng /registrations để tự đăng ký)
+  // BE requires MANAGE_FIXED_REGISTRATIONS permission (EmployeeShiftController line 196, 229, 252)
+  // ✅ BR-37 validation (48h/week limit) applies when creating manual shifts here
   const canCreate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
   const canUpdate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
   const canDelete = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
-  const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
   // Debug permissions
   console.log('Admin permissions:', user?.permissions);
@@ -438,6 +443,30 @@ export default function AdminShiftCalendarPage() {
   const handleCreateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
+    const errorTitle = error.response?.data?.title;
+    const errorProperties = error.response?.data?.properties;
+
+    // BR-37: Handle Weekly Working Hours Limit (48 hours/week)
+    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' || 
+        errorMessage?.includes('48 giờ/tuần') ||
+        errorMessage?.includes('giới hạn giờ làm việc tuần')) {
+      
+      if (errorProperties) {
+        const { existingHours, newShiftHours, weekStart, weekEnd, maxWeeklyHours } = errorProperties;
+        toast.error(
+          `Vượt giới hạn ${maxWeeklyHours || 48}h/tuần!\n` +
+          `Nhân viên đã có ${existingHours}h trong tuần (${weekStart} đến ${weekEnd}).\n` +
+          `Không thể thêm ca ${newShiftHours}h này.`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error(
+          errorMessage || "Không thể tạo ca làm: Vượt giới hạn 48 giờ làm việc/tuần.",
+          { duration: 5000 }
+        );
+      }
+      return;
+    }
 
     switch (errorCode) {
       case 'HOLIDAY_CONFLICT':

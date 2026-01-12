@@ -187,7 +187,25 @@ export default function RegistrationRequestsPage() {
       await fetchRegistrations();
     } catch (error: any) {
       console.error('Failed to approve registration:', error);
-      toast.error(error.response?.data?.message || error.response?.data?.detail || 'Failed to approve registration');
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to approve registration';
+      
+      // Check for specific error types
+      if (errorMsg.includes('đã có ca làm việc')) {
+        // Existing shift conflict - show detailed message
+        toast.error(errorMsg, { duration: 8000 });
+      } else if (errorMsg.includes('Vượt giới hạn') && errorMsg.includes('h/tuần')) {
+        // Weekly hours limit exceeded
+        toast.error(errorMsg, { duration: 6000 });
+      } else if (errorMsg.includes('tự phê duyệt')) {
+        // Self-approval not allowed (BR-41)
+        toast.error('❌ ' + errorMsg, { duration: 5000 });
+      } else if (errorMsg.includes('quota') || errorMsg.includes('Slot đã đầy')) {
+        // Quota exceeded
+        toast.error('⚠️ ' + errorMsg);
+      } else {
+        // Generic error
+        toast.error(errorMsg);
+      }
     } finally {
       setProcessing(false);
     }
@@ -230,7 +248,14 @@ export default function RegistrationRequestsPage() {
       await fetchRegistrations();
     } catch (error: any) {
       console.error('Failed to reject registration:', error);
-      toast.error(error.response?.data?.message || error.response?.data?.detail || 'Failed to reject registration');
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to reject registration';
+      
+      if (errorMsg.includes('tự phê duyệt')) {
+        // Self-approval related error
+        toast.error('❌ ' + errorMsg, { duration: 5000 });
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setProcessing(false);
     }

@@ -84,25 +84,25 @@ export default function ShiftCalendarPage() {
 
   // Permissions - Updated to match BE naming and add backward compatibility
   // Logic: User needs ONE of these permissions:
-  // - VIEW_SCHEDULE_ALL: Can view all employees' shifts
-  // - VIEW_SCHEDULE_OWN: Can only view own shifts
+  // - VIEW_SCHEDULE_ALL: Can view all employees' shifts (Manager/Admin)
+  // - VIEW_SCHEDULE_OWN: Can only view own shifts (Employee)
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
   const canViewOwn = user?.permissions?.includes('VIEW_SCHEDULE_OWN') || false;
   const canViewShifts = canViewAll || canViewOwn;
 
-  // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting shifts (EmployeeShiftController line 196, 229, 252)
-  // Support both old names (if roles have them) and new names
+  // 🚨 IMPORTANT: Manual shift creation is for Manager/Admin ONLY
+  // This is NOT for employee self-registration (use /registrations for that)
+  // BE uses MANAGE_FIXED_REGISTRATIONS for creating/updating/deleting shifts manually
+  // Purpose: Manager creates ad-hoc shifts for employees (special cases, replacements, etc.)
+  // Example: Employee sick, manager assigns replacement shift to another employee
   const canCreate =
-    user?.permissions?.includes('CREATE_SHIFTS') ||                    // Old name (backward compat)
-    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 196)
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
 
   const canUpdate =
-    user?.permissions?.includes('UPDATE_SHIFTS') ||                    // Old name
-    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 229)
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
 
   const canDelete =
-    user?.permissions?.includes('DELETE_SHIFTS') ||                     // Old name
-    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false; // BE standard (EmployeeShiftController line 252)
+    user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
 
   // Summary chỉ hiển thị cho user có VIEW_SCHEDULE_ALL (có thể xem tất cả)
   const canViewSummary = canViewAll;
@@ -484,6 +484,30 @@ export default function ShiftCalendarPage() {
   const handleCreateError = (error: any) => {
     const errorCode = error.response?.data?.error;
     const errorMessage = error.response?.data?.message;
+    const errorTitle = error.response?.data?.title;
+    const errorProperties = error.response?.data?.properties;
+
+    // BR-37: Handle Weekly Working Hours Limit (48 hours/week)
+    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' || 
+        errorMessage?.includes('48 giờ/tuần') ||
+        errorMessage?.includes('giới hạn giờ làm việc tuần')) {
+      
+      if (errorProperties) {
+        const { existingHours, newShiftHours, weekStart, weekEnd, maxWeeklyHours } = errorProperties;
+        toast.error(
+          `Vượt giới hạn ${maxWeeklyHours || 48}h/tuần!\n` +
+          `Nhân viên đã có ${existingHours}h trong tuần (${weekStart} đến ${weekEnd}).\n` +
+          `Không thể thêm ca ${newShiftHours}h này.`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error(
+          errorMessage || "Không thể tạo ca làm: Vượt giới hạn 48 giờ làm việc/tuần.",
+          { duration: 5000 }
+        );
+      }
+      return;
+    }
 
     switch (errorCode) {
       case 'HOLIDAY_CONFLICT':

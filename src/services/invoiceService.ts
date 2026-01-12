@@ -16,7 +16,7 @@ export type InvoiceType = 'APPOINTMENT' | 'TREATMENT_PLAN' | 'SUPPLEMENTAL';
 /**
  * Invoice Payment Status Enum
  */
-export type InvoicePaymentStatus = 'PENDING_PAYMENT' | 'PARTIAL_PAID' | 'PAID' | 'CANCELLED';
+export type InvoicePaymentStatus = 'PENDING_PAYMENT' | 'PARTIAL_PAID' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
 /**
  * Invoice Item DTO
@@ -56,38 +56,69 @@ export interface PaymentSummary {
 }
 
 /**
+ * Paginated Response from BE
+ * Based on Spring Data Page interface
+ */
+export interface PageResponse<T> {
+  content: T[];  // Array of items
+  totalElements: number;  // Total count across all pages
+  totalPages: number;  // Total number of pages
+  size: number;  // Items per page
+  number: number;  // Current page (0-based)
+  first: boolean;  // Is first page?
+  last: boolean;  // Is last page?
+  empty: boolean;  // Is result empty?
+}
+
+/**
  * Invoice Response from BE
- * Based on: docs/files/payment/dto/InvoiceResponse.java
+ * Based on: docs/api-guide/INVOICE_API_500_ERROR_COMPLETE_RESOLUTION.md
  */
 export interface InvoiceResponse {
   invoiceId: number;
-  invoiceCode: string; // Invoice code (e.g., "INV_20250126_001")
+  invoiceCode: string;
   invoiceType: InvoiceType;
+  
+  // Patient Info
   patientId: number;
-  patientName?: string;
-  appointmentId?: number;
-  appointmentCode?: string;
-  treatmentPlanId?: number;
-  treatmentPlanCode?: string;
-  phaseNumber?: number;
-  installmentNumber?: number;
+  patientName: string | null;  // ✅ Can be null if patient deleted
+  
+  // Appointment Info
+  appointmentId: number | null;
+  appointmentCode: string | null;  // ✅ Can be null if appointment deleted
+  
+  // Treatment Plan Info
+  treatmentPlanId: number | null;
+  treatmentPlanCode: string | null;  // ✅ Can be null if treatment plan deleted
+  phaseNumber: number | null;
+  installmentNumber: number | null;
+  
+  // Financial Info
   totalAmount: number;
   paidAmount: number;
   remainingDebt: number;
   paymentStatus: InvoicePaymentStatus;
-  dueDate?: string;
-  notes?: string;
-  paymentCode?: string; // SePay payment code (Format: PDCMSyymmddxy)
-  qrCodeUrl?: string; // VietQR image URL
-  // Bác sĩ phụ trách (from appointment.employeeId)
-  createdBy?: number;
-  createdByName?: string;
-  // ✅ NEW: Người thực sự tạo invoice (lễ tân/admin who clicked "Create")
-  invoiceCreatorId?: number;
-  invoiceCreatorName?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  items?: InvoiceItemResponse[];
+  dueDate: string | null;  // ISO date string
+  
+  // Payment Info
+  paymentCode: string | null;  // "PDCMS26011201"
+  qrCodeUrl: string | null;  // VietQR URL (null if service down)
+  notes: string | null;
+  
+  // Creator Info
+  createdBy: number;  // Doctor/Employee who handled appointment
+  createdByName: string | null;  // ✅ Doctor's name (null if deleted)
+  invoiceCreatorId: number | null;  // Who clicked "Create Invoice"
+  invoiceCreatorName: string | null;  // ✅ Creator's name (null if deleted)
+  
+  // Timestamps
+  createdAt: string;  // ISO datetime string
+  updatedAt: string;  // ISO datetime string
+  
+  // Line Items
+  items: InvoiceItemResponse[];
+  
+  // Payments (optional, might not be in list view)
   payments?: PaymentSummary[];
 }
 
@@ -216,13 +247,14 @@ class InvoiceService {
   }
 
   /**
-   * Get all invoices
+   * Get all invoices (PAGINATED)
    * BE Requirements:
    * - Endpoint: GET /api/v1/invoices
    * - Permission: VIEW_INVOICE_ALL
+   * - Returns: Page<InvoiceResponse> (paginated)
    * 
-   * @param params Optional query parameters (page, size, sort, etc.)
-   * @returns List of all invoices
+   * @param params Optional query parameters
+   * @returns Paginated invoice response
    */
   async getAllInvoices(params?: {
     page?: number;
@@ -230,7 +262,10 @@ class InvoiceService {
     sort?: string;
     status?: InvoicePaymentStatus;
     type?: InvoiceType;
-  }): Promise<InvoiceResponse[]> {
+    patientId?: number;
+    startDate?: string; // yyyy-MM-dd
+    endDate?: string; // yyyy-MM-dd
+  }): Promise<PageResponse<InvoiceResponse>> {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
@@ -240,12 +275,15 @@ class InvoiceService {
       if (params?.sort) queryParams.append('sort', params.sort);
       if (params?.status) queryParams.append('status', params.status);
       if (params?.type) queryParams.append('type', params.type);
+      if (params?.patientId !== undefined) queryParams.append('patientId', params.patientId.toString());
+      if (params?.startDate) queryParams.append('startDate', params.startDate);
+      if (params?.endDate) queryParams.append('endDate', params.endDate);
 
       const url = queryParams.toString() 
         ? `${this.endpoint}?${queryParams.toString()}`
         : this.endpoint;
 
-      const response = await axiosInstance.get<InvoiceResponse[]>(url);
+      const response = await axiosInstance.get<PageResponse<InvoiceResponse>>(url);
       return response.data;
     } catch (error: any) {
       console.error('❌ Get all invoices error:', error);

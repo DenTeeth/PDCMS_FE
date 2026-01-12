@@ -48,6 +48,10 @@ import { Patient } from '@/types/patient';
 import TreatmentPlanTimeline from '@/components/treatment-plans/TreatmentPlanTimeline';
 import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView';
 import PaymentTab from '@/components/appointments/PaymentTab';
+import { AppointmentFeedbackModal } from '@/components/appointments/AppointmentFeedbackModal';
+import { AppointmentFeedbackDisplay } from '@/components/appointments/AppointmentFeedbackDisplay';
+import { getFeedbackByAppointmentCode } from '@/services/appointmentFeedbackService';
+import { FeedbackResponse } from '@/types/appointmentFeedback';
 import {
   ArrowLeft,
   Calendar,
@@ -60,6 +64,7 @@ import {
   ClipboardList,
   AlertCircle,
   CreditCard,
+  Star,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -91,6 +96,11 @@ export default function PatientAppointmentDetailPage() {
   // Patient detail state
   const [patientDetail, setPatientDetail] = useState<Patient | null>(null);
   const [loadingPatientDetail, setLoadingPatientDetail] = useState(false);
+
+  // Feedback state
+  const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   // Permissions
   // Patients only have VIEW_APPOINTMENT_OWN - backend automatically filters by patientId
@@ -133,6 +143,33 @@ export default function PatientAppointmentDetailPage() {
 
     loadPatientDetail();
   }, [appointment?.patient?.patientCode]);
+
+  // Load feedback if appointment is COMPLETED
+  useEffect(() => {
+    if (!appointment || appointment.status !== 'COMPLETED') {
+      setFeedback(null);
+      return;
+    }
+
+    const loadFeedback = async () => {
+      try {
+        setLoadingFeedback(true);
+        const feedbackData = await getFeedbackByAppointmentCode(appointmentCode);
+        setFeedback(feedbackData);
+      } catch (error: any) {
+        // Feedback not found is OK (404) - patient hasn't submitted feedback yet
+        if (error?.response?.status === 404) {
+          setFeedback(null);
+        } else {
+          console.error('Error loading feedback:', error);
+        }
+      } finally {
+        setLoadingFeedback(false);
+      }
+    };
+
+    loadFeedback();
+  }, [appointment?.status, appointmentCode]);
 
   // Load appointment - only once on mount
   // NOTE: Backend automatically filters by patientId from JWT token for VIEW_APPOINTMENT_OWN
@@ -450,6 +487,21 @@ export default function PatientAppointmentDetailPage() {
               <Stethoscope className="h-4 w-4 mr-2" />
               Bệnh án
             </TabsTrigger>
+            {/* Feedback Tab - Only show for COMPLETED appointments */}
+            {appointment?.status === 'COMPLETED' && (
+              <TabsTrigger
+                value="feedback"
+                className="rounded-full px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                Đánh giá
+                {feedback && (
+                  <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                    ✓
+                  </span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="treatment-plan"
               className="rounded-full px-4 py-2"
@@ -771,6 +823,76 @@ export default function PatientAppointmentDetailPage() {
             )}
           </TabsContent>
 
+          {/* Feedback Tab - Dedicated tab for appointment feedback */}
+          {appointment?.status === 'COMPLETED' && (
+            <TabsContent value="feedback">
+              <section className="bg-card rounded-lg border p-6">
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-4 border-b">
+                    <div>
+                      <h3 className="text-xl font-bold flex items-center gap-2">
+                        <Star className="h-6 w-6 text-yellow-500" />
+                        Đánh giá lịch hẹn
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Chia sẻ trải nghiệm của bạn về lịch hẹn này
+                      </p>
+                    </div>
+                    {feedback && (
+                      <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-full font-medium">
+                        ✓ Đã đánh giá
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Feedback Content */}
+                  {loadingFeedback ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Đang tải đánh giá...</p>
+                    </div>
+                  ) : feedback ? (
+                    <div className="space-y-4">
+                      <AppointmentFeedbackDisplay feedback={feedback} />
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Cảm ơn bạn đã dành thời gian đánh giá! 💙
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-8">
+                      <div className="text-center space-y-6">
+                        <div className="flex justify-center">
+                          <div className="p-4 bg-yellow-50 rounded-full">
+                            <Star className="h-12 w-12 text-yellow-500" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="text-lg font-semibold">
+                            Bạn chưa đánh giá lịch hẹn này
+                          </h4>
+                          <p className="text-muted-foreground max-w-md mx-auto">
+                            Đánh giá của bạn giúp chúng tôi cải thiện chất lượng dịch vụ và mang đến trải nghiệm tốt hơn cho các bệnh nhân khác.
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setFeedbackModalOpen(true)}
+                          size="lg"
+                          className="gap-2"
+                        >
+                          <Star className="h-5 w-5" />
+                          Đánh giá ngay
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </TabsContent>
+          )}
+
           {/* Treatment Plan Tab */}
           <TabsContent value="treatment-plan">
             {loadingTreatmentPlan ? (
@@ -875,6 +997,22 @@ export default function PatientAppointmentDetailPage() {
             </TabsContent>
           )}
         </Tabs>
+
+        {/* Feedback Modal */}
+        {appointment && (
+          <AppointmentFeedbackModal
+            isOpen={feedbackModalOpen}
+            onClose={() => setFeedbackModalOpen(false)}
+            appointmentCode={appointment.appointmentCode}
+            doctorName={appointment.doctor?.fullName || 'N/A'}
+            onSuccess={() => {
+              // Reload feedback after successful submission
+              getFeedbackByAppointmentCode(appointmentCode)
+                .then(setFeedback)
+                .catch(() => setFeedback(null));
+            }}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

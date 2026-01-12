@@ -223,6 +223,48 @@ class PatientService {
   }
 
   /**
+   * Search patients by name or phone
+   * ⚠️ TEMPORARY WORKAROUND - BE endpoint /search does not exist yet
+   * Using /admin/all with client-side filtering until BE implements proper search
+   * TODO: Replace with direct /search call when BE adds endpoint
+   * See: docs/api-guide/PATIENT_SEARCH_API_MISSING.md
+   * 
+   * @param params Query parameters (query string, size)
+   * @returns Array of matching patients
+   */
+  async searchPatients(params: { query: string; size?: number }): Promise<Patient[]> {
+    try {
+      // ⚠️ WORKAROUND: Use /admin/all and filter client-side
+      const axiosInstance = apiClient.getAxiosInstance();
+      const response = await axiosInstance.get(`${this.endpoint}/admin/all`, {
+        params: {
+          page: 0,
+          size: 100, // Fetch more to allow client-side filtering
+          sortBy: 'patientCode',
+          sortDirection: 'DESC'
+        }
+      });
+      
+      // Extract patients from paginated response
+      const allPatients = response.data.content || response.data.data?.content || [];
+      const query = params.query.toLowerCase().trim();
+      
+      // Client-side filtering by name or phone
+      const filtered = allPatients.filter((p: Patient) => 
+        p.fullName?.toLowerCase().includes(query) ||
+        p.phone?.toLowerCase().includes(query)
+      );
+      
+      // Return up to specified size
+      return filtered.slice(0, params.size || 10);
+      
+    } catch (error) {
+      console.error('Patient search error (using workaround):', error);
+      return [];
+    }
+  }
+
+  /**
    * Get patient statistics (total, active, inactive counts)
    * GET /api/v1/patients/stats
    * @returns Patient stats with totalPatients, activePatients, inactivePatients

@@ -8,7 +8,8 @@ import {
   WorkShiftListResponse,
 } from '@/types/workShift';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://pdcms.duckdns.org/api/v1';
+// Use environment variable or fallback to production URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://dentalclinicbe-ajbphjf4a2d3h3f2.southeastasia-01.azurewebsites.net/api/v1';
 
 
 const api = axios.create({

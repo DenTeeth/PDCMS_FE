@@ -25,6 +25,7 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  MessageSquare,
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subMonths, subQuarters, subYears } from 'date-fns';
 import { toast } from 'sonner';
@@ -37,6 +38,7 @@ import { RevenueExpensesTab } from '@/components/dashboard/RevenueExpensesTab';
 import { EmployeesTab } from '@/components/dashboard/EmployeesTab';
 import { WarehouseTab } from '@/components/dashboard/WarehouseTab';
 import { TransactionsTab } from '@/components/dashboard/TransactionsTab';
+import { FeedbacksTab } from '@/components/dashboard/FeedbacksTab';
 import { AdvancedFilters } from '@/components/dashboard/AdvancedFilters';
 import { SavedViewsManager } from '@/components/dashboard/SavedViewsManager';
 
@@ -374,7 +376,7 @@ export default function StatisticsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Tổng Quan</span>
@@ -394,6 +396,10 @@ export default function StatisticsPage() {
           <TabsTrigger value="transactions" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
             <span className="hidden sm:inline">Giao Dịch</span>
+          </TabsTrigger>
+          <TabsTrigger value="feedbacks" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Góp ý</span>
           </TabsTrigger>
         </TabsList>
 
@@ -431,6 +437,13 @@ export default function StatisticsPage() {
 
         <TabsContent value="transactions" className="mt-6">
           <TransactionsTab 
+            startDate={dateRange.from}
+            endDate={dateRange.to}
+          />
+        </TabsContent>
+
+        <TabsContent value="feedbacks" className="mt-6">
+          <FeedbacksTab 
             startDate={dateRange.from}
             endDate={dateRange.to}
           />
