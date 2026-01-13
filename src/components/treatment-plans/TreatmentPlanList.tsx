@@ -107,22 +107,6 @@ export default function TreatmentPlanList({
       ),
     },
     {
-      key: 'dates',
-      header: 'Thời gian',
-      accessor: (plan) => (
-        <div>
-          <div className="text-sm">
-            <span className="text-muted-foreground">Bắt đầu: </span>
-            {formatDate(plan.startDate)}
-          </div>
-          <div className="text-sm">
-            <span className="text-muted-foreground">Dự kiến: </span>
-            {formatDate(plan.expectedEndDate)}
-          </div>
-        </div>
-      ),
-    },
-    {
       key: 'paymentType',
       header: 'Hình thức thanh toán',
       accessor: (plan) => (
