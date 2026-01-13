@@ -160,13 +160,35 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
         employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
       },
+    ],
+  },
+  {
+    name: 'Quản lý yêu cầu',
+    icon: faClipboardList,
+    hasSubmenu: true,
+    requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+    submenu: [
       {
-        name: 'Nghỉ phép',
+        name: 'Yêu cầu làm thêm giờ',
+        href: '/{baseRole}/overtime-requests',
+        icon: faClockFour,
+        requiredPermissions: ['VIEW_OVERTIME_OWN', 'VIEW_OVERTIME_ALL', 'APPROVE_OVERTIME'],
+        requireAll: false,
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'],
+      },
+      {
+        name: 'Yêu cầu nghỉ phép',
         href: '/{baseRole}/time-off-requests',
         icon: faUmbrellaBeach,
         requiredPermissions: ['VIEW_TIME_OFF_OWN', 'VIEW_TIME_OFF_ALL'],
         requireAll: false,
-        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'],
+      },
+      {
+        name: 'Yêu cầu đăng ký ca',
+        href: '/{baseRole}/registration-requests',
+        icon: faUserCheck,
+        requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'],
       },
     ],
   },
