@@ -185,7 +185,6 @@ export default function ResetPasswordPage() {
                 priority
               />
             </div>
-            <h2 className="mb-3 text-3xl font-bold tracking-tight text-[#1e3a5f]">DenTeeth</h2>
             <p className="mx-auto max-w-sm text-gray-700">
               Thiết lập mật khẩu mới để bảo vệ tài khoản của bạn. Mật khẩu mạnh giúp bảo vệ thông tin cá nhân.
             </p>

@@ -110,9 +110,17 @@ export const BE_PERMISSIONS = {
     // ==================== MODULE 17: TREATMENT (2) ====================
     VIEW_TREATMENT: 'VIEW_TREATMENT',
     MANAGE_TREATMENT: 'MANAGE_TREATMENT',
+
+    // ==================== MODULE 18: PAYMENT (5) ====================
+    CREATE_INVOICE: 'CREATE_INVOICE',
+    CREATE_PAYMENT: 'CREATE_PAYMENT',
+    VIEW_INVOICE_ALL: 'VIEW_INVOICE_ALL',
+    VIEW_INVOICE_OWN: 'VIEW_INVOICE_OWN',
+    VIEW_PAYMENT_ALL: 'VIEW_PAYMENT_ALL',
 } as const;
 
 /**
- * Total: 70 permissions (giảm từ 200+)
+ * Total: 75 permissions (70 + 5 PAYMENT module)
+ * Last updated: 2026-01-13 - Added PAYMENT module
  */
 export type BEPermission = typeof BE_PERMISSIONS[keyof typeof BE_PERMISSIONS];

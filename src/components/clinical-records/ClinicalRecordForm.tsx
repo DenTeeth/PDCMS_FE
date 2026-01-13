@@ -282,16 +282,16 @@ export default function ClinicalRecordForm({
             <>
               <div className="space-y-2">
                 <Label htmlFor="chiefComplaint" className="text-sm font-semibold">
-                  Triệu Chứng Chính <span className="text-destructive">*</span>
+                  Triệu chứng <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
                   id="chiefComplaint"
                   {...register('chiefComplaint', {
-                    required: 'Vui lòng nhập triệu chứng chính',
-                    minLength: { value: 1, message: 'Triệu chứng chính phải có ít nhất 1 ký tự' },
-                    maxLength: { value: 1000, message: 'Triệu chứng chính không được vượt quá 1000 ký tự' },
+                    required: 'Vui lòng nhập triệu chứng ',
+                    minLength: { value: 1, message: 'Triệu chứng  phải có ít nhất 1 ký tự' },
+                    maxLength: { value: 1000, message: 'Triệu chứng  không được vượt quá 1000 ký tự' },
                   })}
-                  placeholder="Mô tả triệu chứng chính của bệnh nhân..."
+                  placeholder="Mô tả triệu chứng của bệnh nhân..."
                   rows={3}
                   disabled={!canEdit}
                   className={errors.chiefComplaint ? 'border-destructive' : ''}
@@ -303,7 +303,7 @@ export default function ClinicalRecordForm({
 
               <div className="space-y-2">
                 <Label htmlFor="diagnosis" className="text-sm font-semibold">
-                  Chẩn Đoán <span className="text-destructive">*</span>
+                  Chẩn đoán <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
                   id="diagnosis"
@@ -328,14 +328,14 @@ export default function ClinicalRecordForm({
           {isEditMode && (
             <>
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Triệu Chứng Chính</Label>
+                <Label className="text-sm font-semibold">Triệu chứng</Label>
                 <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
                   {existingRecord.chiefComplaint}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Chẩn Đoán</Label>
+                <Label className="text-sm font-semibold">Chẩn đoán</Label>
                 <div className="p-3 bg-primary/10 border border-primary/20 rounded-md text-sm font-medium">
                   {existingRecord.diagnosis}
                 </div>
@@ -348,7 +348,7 @@ export default function ClinicalRecordForm({
           {/* Examination Findings */}
           <div className="space-y-2">
             <Label htmlFor="examinationFindings" className="text-sm font-semibold">
-              Kết Quả Khám <span className="text-destructive">*</span>
+              Kết quả khám <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="examinationFindings"
@@ -370,7 +370,7 @@ export default function ClinicalRecordForm({
           {/* Treatment Notes */}
           <div className="space-y-2">
             <Label htmlFor="treatmentNotes" className="text-sm font-semibold">
-              Ghi Chú Điều Trị
+              Ghi chú
             </Label>
             <Textarea
               id="treatmentNotes"

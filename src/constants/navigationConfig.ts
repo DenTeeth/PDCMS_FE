@@ -64,535 +64,242 @@ export interface NavigationConfig {
 }
 
 /**
- * ADMIN NAVIGATION CONFIG
- * Dựa trên groupedPermissions từ BE
+ * SHARED NAVIGATION ITEMS - Base structure used by both Admin and Employee
+ * Paths will be dynamically replaced based on baseRole (admin/employee)
+ * RBAC handles visibility - items shown/hidden based on user permissions
  */
-export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
-  title: 'DENTEETH',
-  items: [
-    {
-      name: 'Tổng quan',
-      href: '/admin',
-      icon: faTachometerAlt,
-    },
-    {
-      name: 'Thống kê',
-      href: '/admin/statistics',
-      icon: faChartBar,
-    },
-    {
-      name: 'Quản lý tài khoản',
-      icon: faUsers,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'ACCOUNT',
-      submenu: [
-        {
-          name: 'Tài khoản bệnh nhân',
-          href: '/admin/accounts/users',
-          icon: faUser,
-          requiredPermissions: ['VIEW_ACCOUNT'],
-        },
-        {
-          name: 'Tài khoản nhân viên',
-          href: '/admin/accounts/employees',
-          icon: faUserTie,
-          requiredPermissionGroup: 'EMPLOYEE',
-        },
-      ],
-    },
-    {
-      name: 'Cấu hình hệ thống',
-      icon: faCog,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'SYSTEM_CONFIGURATION',
-      submenu: [
-        {
-          name: 'Quản lý vai trò',
-          href: '/admin/roles',
-          icon: faShieldAlt,
-          requiredPermissions: ['VIEW_ROLE'],
-        },
-        {
-          name: 'Quản lý quyền',
-          href: '/admin/permissions',
-          icon: faKey,
-          requiredPermissions: ['VIEW_PERMISSION'],
-        },
-        {
-          name: 'Chuyên khoa',
-          href: '/admin/specializations',
-          icon: faStethoscope,
-          requiredPermissions: ['VIEW_SPECIALIZATION'],
-        },
-      ],
-    },
-    {
-      name: 'Quản lý lịch làm việc',
-      icon: faCalendarCheck,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Ca làm việc',
-          href: '/admin/work-shifts',
-          icon: faBusinessTime,
-          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        },
-        {
-          name: 'Khung giờ làm việc',
-          href: '/admin/work-slots',
-          icon: faClock,
-          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        },
-        {
-          name: 'Đăng ký ca làm',
-          href: '/admin/registrations',
-          icon: faCalendarCheck,
-          // BE permissions: MANAGE_PART_TIME_REGISTRATIONS (PartTimeRegistrationAdminController line 64)
-          // and MANAGE_FIXED_REGISTRATIONS (FixedShiftRegistrationController line 53, 79)
-          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS'],
-          requireAll: false, // User needs at least one permission to view the page
-        },
-        {
-          name: 'Lịch ca làm việc',
-          href: '/admin/shift-calendar',
-          icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        },
-        {
-          name: 'Ngày lễ',
-          href: '/admin/holidays',
-          icon: faCalendarDays,
-          requiredPermissions: ['VIEW_HOLIDAY'],
-        }
-      ],
-    },
-    {
-      name: 'Quản lý yêu cầu',
-      icon: faClipboardList,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Yêu cầu làm thêm giờ',
-          href: '/admin/overtime-requests',
-          icon: faClockFour,
-          requiredPermissions: ['VIEW_OT_ALL'], // ✅ BE permission (mapped from old VIEW_OVERTIME_ALL)
-        },
-        {
-          name: 'Yêu cầu nghỉ phép',
-          href: '/admin/time-off-requests',
-          icon: faUmbrellaBeach,
-          requiredPermissions: ['VIEW_LEAVE_ALL'], // ✅ BE permission (mapped from old VIEW_TIMEOFF_ALL)
-        },
-        {
-          name: 'Yêu cầu đăng ký ca',
-          href: '/admin/registration-requests',
-          icon: faClipboard,
-          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'], // ✅ BE permission (mapped from old VIEW_REGISTRATION_ALL)
-        },
-      ],
-    },
-    {
-      name: 'Quản lý nghỉ phép',
-      icon: faListAlt,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Loại nghỉ phép',
-          href: '/admin/time-off-types',
-          icon: faListAlt,
-          requiredPermissions: ['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF'], // BE uses these permissions (not VIEW_LEAVE_TYPE)
-          requireAll: false, // Only need one permission
-        },
-      ],
-    },
-    {
-      name: 'Quản lý kho',
-      icon: faWarehouse,
-      hasSubmenu: true,
-      // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
-      // Fallback: ROLE_ADMIN (has all permissions in seed data)
-      // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
-      // Logic is handled in filterNavigationItems function using canAccessWarehouse()
-      submenu: [
-        {
-          name: 'Tổng quan kho',
-          href: '/admin/warehouse',
-          icon: faTachometerAlt,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Quản lý vật tư',
-          href: '/admin/warehouse/inventory',
-          icon: faBoxes,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Nhập/Xuất kho',
-          href: '/admin/warehouse/storage',
-          icon: faClipboard,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Nhà cung cấp',
-          href: '/admin/warehouse/suppliers',
-          icon: faUsers,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Báo cáo & thống kê',
-          href: '/admin/warehouse/reports',
-          icon: faChartLine,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-      ],
-    },
-    {
-      name: 'Liên hệ khách hàng',
-      href: '/admin/customer-contacts',
-      icon: faPhone,
-      requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-    },
-    {
-      name: 'Quản lý lịch',
-      icon: faClipboardList,
-      hasSubmenu: true,
-      // Parent menu visibility is determined by submenu items - if user has permission for any submenu item, show parent
-      // No requiredPermissions on parent - logic handled in filterNavigationItems
-      submenu: [
-        {
-          name: 'Phòng khám',
-          href: '/admin/booking/rooms',
-          icon: faHospitalUser,
-          requiredPermissionGroup: 'ROOM_MANAGEMENT',
-        },
-        {
-          name: 'Dịch vụ',
-          href: '/admin/booking/services',
-          icon: faTeeth,
-          requiredPermissionGroup: 'SERVICE_MANAGEMENT',
-        },
-        {
-          name: 'Lịch hẹn',
-          href: '/admin/booking/appointments',
-          icon: faCalendarAlt,
-          requiredPermissionGroup: 'APPOINTMENT',
-        },
-        {
-          name: 'Kế hoạch điều trị',
-          href: '/admin/treatment-plans',
-          icon: faListCheck,
-          requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL'],
-        },
-        {
-          name: 'Hóa đơn',
-          href: '/admin/invoices',
-          icon: faReceipt,
-          requiredPermissions: ['VIEW_INVOICE_ALL'],
-        },
-      ],
-    },
-    {
-      name: 'Cài đặt',
-      href: '/admin/settings',
-      icon: faCog,
-    },
-  ],
+
+const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
+  {
+    name: 'Tổng quan',
+    href: '/{baseRole}',
+    icon: faTachometerAlt,
+  },
+  {
+    name: 'Thống kê',
+    href: '/{baseRole}/statistics',
+    icon: faChartBar,
+    requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'], // Only show for admin and managers
+    // No permission required - accessible to all authenticated users
+  },
+  {
+    name: 'Quản lý tài khoản',
+    icon: faUsers,
+    hasSubmenu: true,
+    requiredPermissionGroup: 'ACCOUNT',
+    submenu: [
+      {
+        name: 'Tài khoản bệnh nhân',
+        href: '/{baseRole}/accounts/users',
+        icon: faUser,
+        requiredPermissions: ['VIEW_ACCOUNT'],
+      },
+      {
+        name: 'Tài khoản nhân viên',
+        href: '/{baseRole}/accounts/employees',
+        icon: faUserTie,
+        requiredPermissions: ['VIEW_EMPLOYEE'],
+      },
+    ],
+  },
+  {
+    name: 'Cấu hình hệ thống',
+    icon: faCog,
+    hasSubmenu: true,
+    requiredPermissionGroup: 'SYSTEM_CONFIGURATION',
+    submenu: [
+      {
+        name: 'Quản lý vai trò',
+        href: '/{baseRole}/roles',
+        icon: faShieldAlt,
+        requiredPermissions: ['VIEW_ROLE'],
+      },
+      {
+        name: 'Quản lý quyền',
+        href: '/{baseRole}/permissions',
+        icon: faKey,
+        requiredPermissions: ['VIEW_PERMISSION'],
+      },
+      {
+        name: 'Chuyên khoa',
+        href: '/{baseRole}/specializations',
+        icon: faStethoscope,
+        requiredPermissions: ['VIEW_SPECIALIZATION'],
+      },
+    ],
+  },
+  {
+    name: 'Quản lý lịch làm việc',
+    icon: faCalendarCheck,
+    hasSubmenu: true,
+    requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
+    submenu: [
+      {
+        name: 'Ca làm việc',
+        href: '/{baseRole}/work-shifts',
+        icon: faBusinessTime,
+        requiredPermissions: ['MANAGE_WORK_SHIFTS'],
+      },
+      {
+        name: 'Khung giờ làm việc',
+        href: '/{baseRole}/work-slots',
+        icon: faClock,
+        requiredPermissions: ['MANAGE_WORK_SLOTS'],
+      },
+      {
+        name: 'Đăng ký ca làm',
+        href: '/{baseRole}/registrations',
+        icon: faCalendarCheck,
+        requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_ALL'],
+        requireAll: false,
+      },
+      {
+        name: 'Lịch làm việc của tôi',
+        href: '/{baseRole}/my-schedule',
+        icon: faCalendarDays,
+        requiredPermissions: ['VIEW_SCHEDULE_OWN'],
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+      },
+      {
+        name: 'Nghỉ phép',
+        href: '/{baseRole}/time-off-requests',
+        icon: faUmbrellaBeach,
+        requiredPermissions: ['VIEW_TIME_OFF_OWN', 'VIEW_TIME_OFF_ALL'],
+        requireAll: false,
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+      },
+    ],
+  },
+  {
+    name: 'Liên hệ khách hàng',
+    href: '/{baseRole}/customer-contacts',
+    icon: faPhone,
+    requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
+  },
+  {
+    name: 'Quản lý lịch',
+    icon: faClipboardList,
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: 'Phòng khám',
+        href: '/{baseRole}/booking/rooms',
+        icon: faHospitalUser,
+        requiredPermissionGroup: 'ROOM_MANAGEMENT',
+      },
+      {
+        name: 'Dịch vụ',
+        href: '/{baseRole}/booking/services',
+        icon: faTeeth,
+        requiredPermissionGroup: 'SERVICE_MANAGEMENT',
+      },
+      {
+        name: 'Lịch hẹn',
+        href: '/{baseRole}/appointments',
+        icon: faCalendarAlt,
+        requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
+        requireAll: false,
+      },
+      {
+        name: 'Kế hoạch điều trị',
+        href: '/{baseRole}/treatment-plans',
+        icon: faListCheck,
+        requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
+        requireAll: false,
+      },
+      {
+        name: 'Hóa đơn',
+        href: '/{baseRole}/invoices',
+        icon: faReceipt,
+        requiredPermissions: ['VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN'],
+        requireAll: false,
+      },
+    ],
+  },
+  {
+    name: 'Quản lý kho',
+    icon: faWarehouse,
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: 'Tổng quan kho',
+        href: '/{baseRole}/warehouse',
+        icon: faTachometerAlt,
+        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+      },
+      {
+        name: 'Quản lý vật tư',
+        href: '/{baseRole}/warehouse/inventory',
+        icon: faBoxes,
+        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+      },
+      {
+        name: 'Nhập/Xuất kho',
+        href: '/{baseRole}/warehouse/storage',
+        icon: faClipboard,
+        requiredPermissions: [ 'MANAGE_WAREHOUSE' ],
+      },
+      {
+        name: 'Nhà cung cấp',
+        href: '/{baseRole}/warehouse/suppliers',
+        icon: faUsers,
+        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+      },
+      {
+        name: 'Báo cáo & thống kê',
+        href: '/{baseRole}/warehouse/reports',
+        icon: faChartLine,
+        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+      },
+    ],
+  },
+  {
+    name: 'Xem CBCT',
+    href: '/{baseRole}/nii-viewer',
+    icon: faImage,
+    requiredPermissions: ['PATIENT_IMAGE_READ'],
+    requiredRoles: ['ROLE_DENTIST', 'ROLE_NURSE'], // ✅ Only show for dentists and nurses
+  },
+];
+
+/**
+ * Helper function to replace {baseRole} placeholder in navigation items
+ */
+const replaceBaseRolePlaceholder = (items: NavigationItem[], baseRole: string): NavigationItem[] => {
+  return items.map(item => {
+    const newItem = { ...item };
+    
+    // Replace href placeholder
+    if (newItem.href) {
+      newItem.href = newItem.href.replace('{baseRole}', baseRole);
+    }
+    
+    // Recursively replace in submenu
+    if (newItem.submenu) {
+      newItem.submenu = replaceBaseRolePlaceholder(newItem.submenu, baseRole);
+    }
+    
+    return newItem;
+  });
 };
 
 /**
- * EMPLOYEE NAVIGATION CONFIG
- * Dựa trên groupedPermissions từ BE
- * Tổ chức theo nhóm chức năng
+ * ADMIN NAVIGATION CONFIG
+ * Uses shared navigation items with admin paths
+ */
+export const ADMIN_NAVIGATION_CONFIG: NavigationConfig = {
+  title: 'DENTEETH',
+  items: replaceBaseRolePlaceholder(SHARED_NAVIGATION_ITEMS, 'admin'),
+};
+
+/**
+ * EMPLOYEE NAVIGATION CONFIG  
+ * Uses shared navigation items with employee paths
+ * 🔄 SYNCHRONIZED WITH ADMIN CONFIG - RBAC will handle visibility
  */
 export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
   title: 'DENTEETH',
-  items: [
-    {
-      name: 'Tổng quan',
-      href: '/employee',
-      icon: faTachometerAlt,
-    },
-    {
-      name: 'Quản lý tài khoản',
-      icon: faUsers,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'ACCOUNT',
-      submenu: [
-        {
-          name: 'Tài khoản bệnh nhân',
-          href: '/employee/accounts/users',
-          icon: faUser,
-          requiredPermissions: ['VIEW_ACCOUNT'],
-        },
-        {
-          name: 'Tài khoản nhân viên',
-          href: '/employee/accounts/employees',
-          icon: faUserTie,
-          requiredPermissionGroup: 'EMPLOYEE',
-        },
-      ],
-    },
-    {
-      name: 'Cấu hình hệ thống',
-      icon: faCog,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'SYSTEM_CONFIGURATION',
-      submenu: [
-        {
-          name: 'Quản lý vai trò',
-          href: '/employee/roles',
-          icon: faShieldAlt,
-          requiredPermissions: ['VIEW_ROLE'],
-        },
-        {
-          name: 'Quản lý quyền',
-          href: '/employee/permissions',
-          icon: faKey,
-          requiredPermissions: ['VIEW_PERMISSION'],
-        },
-        {
-          name: 'Chuyên khoa',
-          href: '/employee/specializations',
-          icon: faStethoscope,
-          requiredPermissions: ['VIEW_SPECIALIZATION'],
-        },
-      ],
-    },
-    // Booking Management
-    {
-      name: 'Quản lý lịch',
-      icon: faClipboardList,
-      hasSubmenu: true,
-      // Parent menu visibility is determined by submenu items - if user has permission for any submenu item, show parent
-      // No requiredPermissions on parent - logic handled in filterNavigationItems
-      submenu: [
-        {
-          name: 'Phòng khám',
-          href: '/employee/booking/rooms',
-          icon: faHospitalUser,
-          requiredPermissionGroup: 'ROOM_MANAGEMENT',
-        },
-        {
-          name: 'Dịch vụ',
-          href: '/employee/booking/services',
-          icon: faTeeth,
-          requiredPermissionGroup: 'SERVICE_MANAGEMENT',
-        },
-        {
-          name: 'Lịch hẹn',
-          href: '/employee/appointments',
-          icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
-          requireAll: false,
-        },
-      ],
-    },
-    // Treatment Plans (separate from Booking Management)
-    {
-      name: 'Kế hoạch điều trị',
-      href: '/employee/treatment-plans',
-      icon: faListCheck,
-      requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
-      requireAll: false, // Accept ANY permission (Employee can have VIEW_TREATMENT_PLAN_OWN)
-    },
-    // Schedule Management
-    {
-      name: 'Quản lý lịch làm việc',
-      icon: faCalendarCheck,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Ca làm việc',
-          href: '/employee/work-shifts',
-          icon: faBusinessTime,
-          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        },
-        {
-          name: 'Khung giờ làm việc',
-          href: '/employee/work-slots',
-          icon: faClock,
-          requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        },
-        {
-          name: 'Đăng ký ca của tôi',
-          href: '/employee/registrations',
-          icon: faCalendarCheck,
-          requiredPermissions: ['VIEW_REGISTRATION_OWN', 'VIEW_SCHEDULE_OWN'],
-          requireAll: false,
-          // Show for all employment types (has tabs inside)
-        },
-        {
-          name: 'Lịch ca làm việc',
-          href: '/employee/shift-calendar',
-          icon: faCalendarAlt,
-          requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_ALL'],
-          requireAll: false,
-          // Show for all employment types - everyone can view their own schedule
-        },
-        {
-          name: 'Lịch của tôi',
-          href: '/employee/my-calendar',
-          icon: faCalendarDays,
-          requiredPermissions: ['VIEW_SCHEDULE_OWN', 'VIEW_APPOINTMENT_OWN'],
-          requireAll: false,
-          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
-        },
-        {
-          name: 'Đăng ký cố định',
-          href: '/employee/fixed-registrations',
-          icon: faListCheck,
-          requiredPermissions: ['VIEW_SCHEDULE_OWN'],
-          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
-        },
-        {
-          name: 'Ngày lễ',
-          href: '/employee/holidays',
-          icon: faCalendarDays,
-          requiredPermissions: ['VIEW_HOLIDAY'],
-        },
-        {
-          name: 'Gia hạn ca',
-          href: '/employee/renewals',
-          icon: faClockRotateLeft,
-          requiredPermissionGroup: 'SCHEDULE_MANAGEMENT',
-          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed (Fixed Schedule)
-        },
-      ],
-    },
-    // Request Management
-    {
-      name: 'Quản lý yêu cầu',
-      icon: faClipboardList,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Yêu cầu làm thêm giờ',
-          href: '/employee/overtime-requests',
-          icon: faClockFour,
-          requiredPermissions: ['CREATE_OVERTIME', 'VIEW_OT_OWN', 'VIEW_OT_ALL'], // ✅ BE permissions: Create/view own (employees) OR view all (managers)
-          requireAll: false, // Show if user has CREATE_OVERTIME OR VIEW_OT_OWN OR VIEW_OT_ALL
-          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
-        },
-        {
-          name: 'Yêu cầu nghỉ phép',
-          href: '/employee/time-off-requests',
-          icon: faUmbrellaBeach,
-          requiredPermissions: ['CREATE_TIME_OFF', 'VIEW_LEAVE_OWN', 'VIEW_LEAVE_ALL'], // ✅ BE permissions: Create/view own (employees) OR view all (managers)
-          requireAll: false, // Show if user has CREATE_TIME_OFF OR VIEW_LEAVE_OWN OR VIEW_LEAVE_ALL
-          employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only for Full-time & Part-time Fixed
-        },
-        {
-          name: 'Yêu cầu đăng ký ca',
-          href: '/employee/registration-requests',
-          icon: faClipboard,
-          requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'], // ✅ BE permission (mapped from old VIEW_REGISTRATION_ALL)
-        },
-      ],
-    },
-    {
-      name: 'Quản lý nghỉ phép',
-      icon: faListAlt,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'LEAVE_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Loại nghỉ phép',
-          href: '/employee/time-off-types',
-          icon: faListAlt,
-          requiredPermissions: ['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF'], // BE uses these permissions (not VIEW_LEAVE_TYPE)
-          requireAll: false, // Only need one permission
-        },
-      ],
-    },
-    // Customer Management
-    {
-      name: 'Quản lý khách hàng',
-      icon: faUsers,
-      hasSubmenu: true,
-      requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-      submenu: [
-        {
-          name: 'Khách hàng',
-          href: '/employee/customers',
-          icon: faUsers,
-          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-        },
-        {
-          name: 'Liên hệ khách hàng',
-          href: '/employee/customer-contacts',
-          icon: faPhone,
-          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-        },
-        {
-          name: 'Phản hồi khách hàng',
-          href: '/employee/customers/feedback',
-          icon: faComments,
-          requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-        },
-      ],
-    },
-    // Warehouse Management (for employee roles with VIEW_WAREHOUSE permission)
-    {
-      name: 'Quản lý kho',
-      icon: faWarehouse,
-      hasSubmenu: true,
-      // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
-      // Fallback: ROLE_ADMIN (has all permissions in seed data)
-      // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
-      // Logic is handled in filterNavigationItems function using canAccessWarehouse()
-      submenu: [
-        {
-          name: 'Tổng quan kho',
-          href: '/employee/warehouse',
-          icon: faTachometerAlt,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Quản lý vật tư',
-          href: '/employee/warehouse/inventory',
-          icon: faBoxes,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Nhập/Xuất kho',
-          href: '/employee/warehouse/storage',
-          icon: faClipboard,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Nhà cung cấp',
-          href: '/employee/warehouse/suppliers',
-          icon: faUsers,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-        {
-          name: 'Báo cáo & thống kê',
-          href: '/employee/warehouse/reports',
-          icon: faChartLine,
-          requiredPermissions: ['VIEW_WAREHOUSE'],
-        },
-      ],
-    },
-    // NII Image Viewer - Only for ROLE_DENTIST or ROLE_NURSE
-    {
-      name: 'Xem CBCT',
-      href: '/employee/nii-viewer',
-      icon: faImage,
-      requiredPermissions: ['PATIENT_IMAGE_READ'],
-      requiredRoles: ['ROLE_DENTIST', 'ROLE_NURSE'], // ✅ Only show for dentists and nurses
-    },
-    // Settings
-    {
-      name: 'Cài đặt',
-      href: '/employee/settings',
-      icon: faCog,
-    },
-  ],
+  items: replaceBaseRolePlaceholder(SHARED_NAVIGATION_ITEMS, 'employee'),
 };
 
 /**
@@ -725,7 +432,7 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
     //   ],
     // },
     {
-      name: 'Xem cbct',
+      name: 'Xem CBCT',
       href: '/patient/nii-viewer',
       icon: faImage,
       requiredPermissions: ['PATIENT_IMAGE_READ'],

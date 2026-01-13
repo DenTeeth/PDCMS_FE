@@ -61,7 +61,7 @@ export default function TreatmentPlanPaymentTab({
       if (patientCode) {
         try {
           const patient = await patientService.getPatientByCode(patientCode);
-          setActualPatientId(patient.patientId);
+          setActualPatientId(Number(patient.patientId));
         } catch (error: any) {
           console.error('Error loading patient:', error);
           toast.error('Không thể tải thông tin bệnh nhân');
@@ -145,6 +145,12 @@ export default function TreatmentPlanPaymentTab({
       setPaymentsMap((prev) => ({ ...prev, [invoiceId]: data }));
     } catch (error: any) {
       console.error('Error fetching payments:', error);
+      
+      // Handle 403 gracefully - patient might not have VIEW_INVOICE permission
+      if (error.response?.status === 403) {
+        console.warn('Patient does not have permission to view invoice payments (403)');
+        setPaymentsMap((prev) => ({ ...prev, [invoiceId]: [] }));
+      }
     }
   };
 

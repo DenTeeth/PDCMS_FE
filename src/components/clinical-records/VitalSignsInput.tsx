@@ -170,7 +170,7 @@ export default function VitalSignsInput({
 
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-semibold">Dấu Hiệu Sinh Tồn</Label>
+      <Label className="text-sm font-semibold">Chỉ số lâm sàng</Label>
       <div className="grid grid-cols-2 gap-4">
         {/* Blood Pressure */}
         <div className="space-y-2">
