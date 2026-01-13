@@ -195,7 +195,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
       },
       {
         name: 'Lịch hẹn',
-        href: '/{baseRole}/appointments',
+        href: '/{baseRole}/booking/appointments',
         icon: faCalendarAlt,
         requiredPermissions: ['VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_ALL'],
         requireAll: false,

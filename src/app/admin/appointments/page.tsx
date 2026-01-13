@@ -196,7 +196,13 @@ export default function AppointmentsPage() {
                 Lịch
               </Button>
             </div>
-            <Button disabled={!canCreate}>
+            <Button 
+              disabled={!canCreate}
+              onClick={() => {
+                // TODO: Open create appointment modal
+                alert('Chức năng tạo lịch hẹn mới đang được phát triển');
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Lịch hẹn mới
             </Button>
@@ -218,41 +224,47 @@ export default function AppointmentsPage() {
             </CardContent>
           </Card>
           {/* Pending */}
-          <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-yellow-700" />
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-4 w-4 text-yellow-700" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-semibold text-yellow-800">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-800">{appointments.filter(a => a.status === 'pending').length}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-yellow-800">Pending</p>
-                <p className="text-2xl font-bold text-yellow-800">{appointments.filter(a => a.status === 'pending').length}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
           {/* Confirmed */}
-          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-green-700" />
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-4 w-4 text-green-700" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-semibold text-green-800">Confirmed</p>
+                  <p className="text-2xl font-bold text-green-800">{appointments.filter(a => a.status === 'confirmed').length}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-green-800">Confirmed</p>
-                <p className="text-2xl font-bold text-green-800">{appointments.filter(a => a.status === 'confirmed').length}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
           {/* Completed */}
-          <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-blue-700" />
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-4 w-4 text-blue-700" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-semibold text-blue-800">Completed</p>
+                  <p className="text-2xl font-bold text-blue-800">{appointments.filter(a => a.status === 'completed').length}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-blue-800">Completed</p>
-                <p className="text-2xl font-bold text-blue-800">{appointments.filter(a => a.status === 'completed').length}</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Combined Filters and Calendar Controls */}
