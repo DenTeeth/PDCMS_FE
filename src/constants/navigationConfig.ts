@@ -166,7 +166,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
     name: 'Quản lý yêu cầu',
     icon: faClipboardList,
     hasSubmenu: true,
-    requiredPermissionGroup: 'LEAVE_MANAGEMENT',
+    requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF'],
     submenu: [
       {
         name: 'Yêu cầu làm thêm giờ',
