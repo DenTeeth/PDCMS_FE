@@ -160,6 +160,13 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
         employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
       },
+      {
+        name: 'Lịch làm việc nhân viên',
+        href: '/{baseRole}/shift-calendar',
+        icon: faUsersCog,
+        requiredPermissions: ['VIEW_SCHEDULE_ALL'],
+        requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'], // Only show for admin and managers
+      }
     ],
   },
   {
