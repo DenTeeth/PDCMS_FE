@@ -284,12 +284,43 @@ export default function BookAppointmentFromPlanModal({
       if (initialRoomCode) {
         setRoomCode(initialRoomCode);
       }
-      // Auto-advance to step 2 if date and time are provided
-      if (initialDate && initialStartTime) {
-        setCurrentStep(2);
-      }
+      // Don't auto-skip to step 2 - let user see step 1 first
     }
   }, [open, initialDate, initialStartTime, initialRoomCode]);
+
+  // Load employee shifts when entering step 2 if date is already selected
+  useEffect(() => {
+    if (currentStep === 2 && appointmentDate && plan?.doctor?.employeeCode && plan?.doctor?.employeeId) {
+      // Load shifts for the selected doctor and date
+      const loadShifts = async () => {
+        try {
+          setLoadingShifts(true);
+          const date = new Date(appointmentDate);
+          const firstDay = startOfMonth(date);
+          const lastDay = endOfMonth(date);
+
+          const shiftsResponse = await EmployeeShiftService.getShiftsByDateRange(
+            format(firstDay, 'yyyy-MM-dd'),
+            format(lastDay, 'yyyy-MM-dd'),
+            plan.doctor.employeeId
+          );
+
+          // Update the allEmployeeShifts map with doctor's shifts
+          setAllEmployeeShifts(prev => {
+            const newMap = new Map(prev);
+            newMap.set(plan.doctor.employeeCode, shiftsResponse);
+            return newMap;
+          });
+        } catch (error: any) {
+          console.error('Error loading doctor shifts:', error);
+        } finally {
+          setLoadingShifts(false);
+        }
+      };
+
+      loadShifts();
+    }
+  }, [currentStep, appointmentDate, plan?.doctor?.employeeCode, plan?.doctor?.employeeId]);
 
   const loadInitialData = async () => {
     setLoadingData(true);

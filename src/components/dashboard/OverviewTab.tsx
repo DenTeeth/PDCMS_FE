@@ -191,7 +191,7 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
           color="blue"
         />
         <StatCard
-          title="Tổng số invoice"
+          title="Tổng số hóa đơn"
           value={data.summary.totalInvoices}
           icon={<Receipt className="h-6 w-6" />}
           subtitle={`${data.invoices.paid}/${data.invoices.total} đã thanh toán`}
@@ -201,7 +201,7 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          title="Tổng số appointment"
+          title="Tổng số buổi hẹn"
           value={data.summary.totalAppointments}
           icon={<Calendar className="h-6 w-6" />}
           subtitle={`${data.appointments.completed} hoàn thành`}
@@ -282,7 +282,7 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
             {/* Invoice Status Pie Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Trạng thái invoice</CardTitle>
+                <CardTitle>Trạng thái hóa đơn</CardTitle>
               </CardHeader>
               <CardContent>
                 {invoiceStatusData.length > 0 ? (
@@ -293,8 +293,9 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        // @ts-ignore - Recharts PieLabel type is incorrect
+                        label={(props: any) =>
+                          `${props.name}: ${(props.percent * 100).toFixed(0)}%`
                         }
                         outerRadius={80}
                         fill="#8884d8"
@@ -333,8 +334,9 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        // @ts-ignore - Recharts PieLabel type is incorrect
+                        label={(props: any) =>
+                          `${props.name}: ${(props.percent * 100).toFixed(0)}%`
                         }
                         outerRadius={80}
                         fill="#8884d8"
@@ -362,12 +364,7 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
               </CardContent>
             </Card>
 
-            {/* ✅ NEW: Heatmap */}
-            {data.heatmapData && data.heatmapData.length > 0 && (
-              <Card className="lg:col-span-2">
-                <HeatmapChart data={data.heatmapData} />
-              </Card>
-            )}
+            {/* Heatmap temporarily disabled - heatmapData not available in API */}
           </div>
         ) : (
           /* ✅ Table View */

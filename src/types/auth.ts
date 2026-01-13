@@ -58,6 +58,9 @@ export interface User {
   refreshTokenExpiresAt?: number;
   employeeId?: string; // Add employeeId for employee-specific operations
   employeeCode?: string; // Add employeeCode for employee-specific operations (extracted from token)
+  employeeName?: string; // Display name from API for employees
+  fullName?: string; // Full name from profile
+  patientName?: string; // Display name from API for patients
 }
 
 export interface UserProfile {

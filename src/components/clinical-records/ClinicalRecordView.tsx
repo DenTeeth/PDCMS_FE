@@ -376,11 +376,6 @@ export default function ClinicalRecordView({
                             {assessment.message && (
                               <div className="text-xs text-gray-600 mt-2 italic">{assessment.message}</div>
                             )}
-                            {assessment.normalMin && assessment.normalMax && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Bình thường ({assessment.normalMin}-{assessment.normalMax} {assessment.unit})
-                              </div>
-                            )}
                           </div>
                         );
                       })

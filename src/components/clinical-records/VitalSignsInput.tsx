@@ -147,11 +147,6 @@ export default function VitalSignsInput({
           <Icon className="h-3 w-3 mr-1" />
           {config.label}
         </Badge>
-        {assessment.normalMin && assessment.normalMax && (
-          <span className="text-xs text-muted-foreground">
-            ({assessment.normalMin}-{assessment.normalMax} {assessment.unit})
-          </span>
-        )}
       </div>
     );
   };
@@ -176,7 +171,7 @@ export default function VitalSignsInput({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="bloodPressure" className="text-xs text-muted-foreground">
-              Huyết Áp (mmHg)
+              Huyết Áp (mmHg) <div className="text-red-500">*</div>
             </Label>
             {bpRef && (
               <span className="text-xs text-muted-foreground">
@@ -202,7 +197,7 @@ export default function VitalSignsInput({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="heartRate" className="text-xs text-muted-foreground">
-              Nhịp Tim (bpm)
+              Nhịp Tim (bpm) <div className="text-red-500">*</div>
             </Label>
             {hrRef && (
               <span className="text-xs text-muted-foreground">
@@ -229,7 +224,7 @@ export default function VitalSignsInput({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="temperature" className="text-xs text-muted-foreground">
-              Nhiệt Độ (°C)
+              Nhiệt Độ (°C) <div className=" text-red-500">*</div>
             </Label>
             {tempRef && (
               <span className="text-xs text-muted-foreground">
@@ -257,7 +252,7 @@ export default function VitalSignsInput({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="oxygenSaturation" className="text-xs text-muted-foreground">
-              SpO2 (%)
+              SpO2 (%) <div className="text-red-500">*</div>
             </Label>
             {o2Ref && (
               <span className="text-xs text-muted-foreground">

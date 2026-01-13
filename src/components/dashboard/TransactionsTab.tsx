@@ -128,20 +128,20 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          title="Tổng số Invoice"
+          title="Tổng số hóa đơn"
           value={data.invoices.total}
           icon={<Receipt className="h-6 w-6" />}
           subtitle={`${data.invoices.paymentRate.toFixed(1)}% thanh toán`}
           color="purple"
         />
         <StatCard
-          title="Tổng giá trị Invoice"
+          title="Tổng giá trị hóa đơn"
           value={data.invoices.totalValue}
           icon={<Receipt className="h-6 w-6" />}
           color="blue"
         />
         <StatCard
-          title="Tổng số payment"
+          title="Tổng số thanh toán"
           value={data.payments.total}
           icon={<CreditCard className="h-6 w-6" />}
           color="green"
@@ -154,7 +154,7 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
         {/* Invoice by Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice theo trạng thái</CardTitle>
+            <CardTitle>Tỉ lệ hóa đơn theo trạng thái</CardTitle>
           </CardHeader>
           <CardContent>
             {invoiceByStatusData.length > 0 ? (
@@ -191,7 +191,7 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
         {/* Invoice by Type */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice theo loại</CardTitle>
+            <CardTitle>Hóa đơn theo loại</CardTitle> 
           </CardHeader>
           <CardContent>
             {invoiceByTypeData.length > 0 ? (
@@ -231,7 +231,7 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
         {/* Payment by Method */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment theo phương thức</CardTitle>
+            <CardTitle>Phương thức thanh toán</CardTitle>
           </CardHeader>
           <CardContent>
             {paymentByMethodData.length > 0 ? (
@@ -268,7 +268,7 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
         {/* Payment by Day */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment theo ngày</CardTitle>
+            <CardTitle>Thanh toán theo ngày</CardTitle>
           </CardHeader>
           <CardContent>
             {data.payments.byDay.length > 0 ? (

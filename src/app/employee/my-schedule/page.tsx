@@ -678,7 +678,7 @@ export default function ShiftCalendarPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lịch Ca Làm Việc</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lịch ca làm việc </h1>
             <p className="text-gray-600 mt-1">Quản lý và theo dõi lịch làm việc của nhân viên</p>
           </div>
           <div className="flex gap-2">

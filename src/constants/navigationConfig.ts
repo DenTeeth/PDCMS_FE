@@ -159,6 +159,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faCalendarDays,
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
         employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+        requiredRoles: ['ROLE_EMPLOYEE'], // Only show for employees
       },
       {
         name: 'Lịch làm việc nhân viên',
@@ -166,6 +167,12 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faUsersCog,
         requiredPermissions: ['VIEW_SCHEDULE_ALL'],
         requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'], // Only show for admin and managers
+      },
+      {
+        name: 'Ngày lễ',
+        href: '/{baseRole}/holidays',
+        icon: faFileAlt,
+        requiredPermissions: ['MANAGE_HOLIDAY', 'VIEW_HOLIDAY'],
       }
     ],
   },
@@ -173,7 +180,6 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
     name: 'Quản lý yêu cầu',
     icon: faClipboardList,
     hasSubmenu: true,
-    requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'],
     submenu: [
       {
         name: 'Yêu cầu làm thêm giờ',
@@ -200,13 +206,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
     ],
   },
   {
-    name: 'Liên hệ khách hàng',
-    href: '/{baseRole}/customer-contacts',
-    icon: faPhone,
-    requiredPermissionGroup: 'CUSTOMER_MANAGEMENT',
-  },
-  {
-    name: 'Quản lý lịch',
+    name: 'Quản lý điều trị',
     icon: faClipboardList,
     hasSubmenu: true,
     submenu: [

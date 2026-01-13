@@ -362,6 +362,13 @@ export default function CreateAppointmentModal({
   }, [open]);
 
   // Phase 5: Pre-fill data from treatment plan items when modal opens
+  // Load patients when modal opens
+  useEffect(() => {
+    if (open) {
+      searchPatients();
+    }
+  }, [open]);
+
   useEffect(() => {
     if (open && (initialPatientCode || initialServiceCodes || initialPlanItemIds)) {
       // Pre-fill patient code
@@ -395,11 +402,7 @@ export default function CreateAppointmentModal({
   // Search patients with debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (patientSearch.length >= 2) {
-        searchPatients();
-      } else {
-        setPatientSearchResults([]);
-      }
+      searchPatients();
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
@@ -535,17 +538,12 @@ export default function CreateAppointmentModal({
   };
 
   const searchPatients = async () => {
-    if (patientSearch.length < 2) {
-      setPatientSearchResults([]);
-      return;
-    }
-
     setSearchingPatients(true);
     try {
       const results = await patientService.getPatients({
         page: 0,
-        size: 20,
-        search: patientSearch,
+        size: 50,
+        search: patientSearch || undefined,
         isActive: true,
       });
       setPatientSearchResults(results.content);
@@ -562,6 +560,12 @@ export default function CreateAppointmentModal({
     setSelectedPatientData(patient);
     setPatientSearch('');
     setPatientSearchResults([]);
+  };
+
+  const highlightMatch = (text: string, search: string) => {
+    if (!search.trim()) return text;
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
   };
 
   // Step 2: Load date suggestions - check if selected date has doctors or enough slots
@@ -1448,13 +1452,13 @@ export default function CreateAppointmentModal({
           serviceCode: service.serviceCode,
           serviceName: service.serviceName,
           quantity: 1,
-          unitPrice: service.price,
+          unitPrice: Number(service.price),
           notes: `Dịch vụ từ lịch hẹn ${appointmentResponse.appointmentCode}`,
         }));
 
         const invoiceRequest: CreateInvoiceRequest = {
           invoiceType: 'APPOINTMENT',
-          patientId: selectedPatientData.patientId,
+          patientId: Number(selectedPatientData.patientId),
           appointmentId: appointmentDetail.appointmentId,
           items: invoiceItems,
           notes: `Hóa đơn tự động tạo cho lịch hẹn ${appointmentResponse.appointmentCode}`,
@@ -1601,8 +1605,8 @@ export default function CreateAppointmentModal({
                 )}
               </div>
 
-              {/* Show patients list only when there are search results */}
-              {patientSearch.length > 0 && patientSearchResults.length > 0 && (
+              {/* Show patients list */}
+              {!patientCode && patientSearchResults.length > 0 && (
                 <Card className="p-4">
                   <div className="space-y-2">
                     {patientSearchResults.map((patient) => (
@@ -1630,7 +1634,9 @@ export default function CreateAppointmentModal({
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{patient.fullName}</span>
+                            <span className="font-medium text-sm" dangerouslySetInnerHTML={{ 
+                              __html: highlightMatch(patient.fullName, patientSearch) 
+                            }} />
                             {patient.phone && <span className="text-xs text-muted-foreground">• {patient.phone}</span>}
                           </div>
                           {patient.isBookingBlocked && (
@@ -1647,7 +1653,7 @@ export default function CreateAppointmentModal({
                   </div>
                 </Card>
               )}
-              {patientSearch.length > 0 && patientSearchResults.length === 0 && (
+              {patientSearch.length > 0 && patientSearchResults.length === 0 && !searchingPatients && (
                 <Card className="p-4">
                   <p className="text-sm text-muted-foreground text-center py-4">
                     Không tìm thấy bệnh nhân
@@ -2111,22 +2117,21 @@ export default function CreateAppointmentModal({
                               ).join(', ')}
                             </div>
                           </div>
-                          <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
                             setEmployeeCode('');
                             setServiceCodes([]);
                             setServiceSearchTerm('');
                             setServiceGroupFilter('all');
                           }}
-                          className="text-xs"
+                          className="text-xs flex-shrink-0"
                         >
                           Đổi bác sĩ
                         </Button>
+                        </div>
                       </div>
                     )}
                   </>
@@ -2355,9 +2360,6 @@ export default function CreateAppointmentModal({
                           <CheckCircle className="h-5 w-5 text-primary" />
                         </div>
                       </Card>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Để thay đổi bác sĩ, vui lòng quay lại bước 3.
-                      </p>
                     </div>
                   )}
 
@@ -2617,10 +2619,7 @@ export default function CreateAppointmentModal({
                   {/* Participants Selection */}
                   <div>
                     <Label>Chọn người tham gia (Tùy chọn)</Label>
-                    <p className="text-xs text-muted-foreground mt-1 mb-2">
-                      Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn làm người tham gia.
-                    </p>
-                    <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto">
+                    <Card className="p-4 mt-1 max-h-[50vh] overflow-y-auto mt-2">
                       {(() => {
                         const eligibleParticipants = employees.filter((e) => {
                           if (e.employeeCode === employeeCode) return false;
@@ -2646,8 +2645,8 @@ export default function CreateAppointmentModal({
                           return (
                             <div className="text-center py-4 text-sm text-muted-foreground">
                               {appointmentDate
-                                ? 'Không tìm thấy người tham gia phù hợp có lịch làm việc vào ngày đã chọn. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) có ca làm việc vào ngày này mới có thể được chọn.'
-                                : 'Không tìm thấy người tham gia phù hợp. Chỉ nhân viên có chuyên khoa STANDARD (nhân viên y tế) mới có thể được chọn.'}
+                                ? 'Không tìm thấy người tham gia phù hợp có lịch làm việc vào ngày đã chọn.'
+                                : 'Không tìm thấy người tham gia phù hợp.'}
                             </div>
                           );
                         }

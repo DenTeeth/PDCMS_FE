@@ -47,6 +47,7 @@ import {
 } from '@/types/patientBlockReason';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { validatePatientDateOfBirth, requiresEmergencyContact, calculateAge } from '@/utils/patientValidation';
 
 // ==================== TYPES ====================
 
@@ -309,8 +310,22 @@ export default function PatientsPage() {
 
     // Validation - email, firstName, lastName are required
     if (!formData.email || !formData.firstName || !formData.lastName) {
-      toast.error('Please fill in all required fields (Email, First Name, Last Name)');
+      toast.error('Vui lòng điền đầy đủ các trường bắt buộc (Email, Họ, Tên)');
       return;
+    }
+
+    // Validate date of birth and emergency contact
+    if (formData.dateOfBirth) {
+      const dobError = validatePatientDateOfBirth(
+        formData.dateOfBirth,
+        formData.emergencyContactPhone
+      );
+      if (dobError) {
+        toast.error(dobError, {
+          duration: 5000,
+        });
+        return;
+      }
     }
 
     try {
@@ -1158,14 +1173,33 @@ export default function PatientsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="dateOfBirth" className="mb-2 block">Ngày sinh</Label>
+                        <Label htmlFor="dateOfBirth" className="mb-2 block">
+                          Ngày sinh
+                          {formData.dateOfBirth && requiresEmergencyContact(formData.dateOfBirth) && (
+                            <span className="ml-1 text-xs text-orange-600 font-medium">
+                              (Dưới 16 tuổi - cần SĐT người giám hộ)
+                            </span>
+                          )}
+                        </Label>
                         <Input
                           id="dateOfBirth"
                           type="date"
                           value={formData.dateOfBirth}
                           onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                           disabled={creating}
+                          max={new Date().toISOString().split('T')[0]}
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Bệnh nhân phải từ 6 tháng tuổi trở lên
+                        </p>
+                        {formData.dateOfBirth && (() => {
+                          const age = calculateAge(formData.dateOfBirth);
+                          return (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Tuổi hiện tại: {age} tuổi
+                            </p>
+                          );
+                        })()}
                       </div>
                       <div>
                         <Label htmlFor="gender" className="text-sm mb-2 block">Giới tính</Label>
@@ -1255,14 +1289,26 @@ export default function PatientsPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="emergencyContactPhone">Số điện thoại liên hệ khẩn cấp</Label>
+                        <Label htmlFor="emergencyContactPhone">
+                          SĐT liên hệ khẩn cấp
+                          {formData.dateOfBirth && requiresEmergencyContact(formData.dateOfBirth) && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
+                        </Label>
                         <Input
                           id="emergencyContactPhone"
                           placeholder="VD: 0987654321"
                           value={formData.emergencyContactPhone}
                           onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
                           disabled={creating}
+                          required={formData.dateOfBirth ? requiresEmergencyContact(formData.dateOfBirth) : false}
+                          className={formData.dateOfBirth && requiresEmergencyContact(formData.dateOfBirth) && !formData.emergencyContactPhone ? 'border-red-300' : ''}
                         />
+                        {formData.dateOfBirth && requiresEmergencyContact(formData.dateOfBirth) && !formData.emergencyContactPhone && (
+                          <p className="text-xs text-red-600 mt-1">
+                            Bắt buộc cho bệnh nhân dưới 16 tuổi
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <Label htmlFor="emergencyContactRelationship">Mối quan hệ với bệnh nhân</Label>

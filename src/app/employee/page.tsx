@@ -5,6 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, ArrowRight, Calendar, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationList } from '@/components/notifications/NotificationList';
+import { getFullNameFromToken } from '@/lib/utils';
+import { getToken } from '@/lib/cookies';
+import { useMemo } from 'react';
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
@@ -12,8 +15,17 @@ export default function EmployeeDashboard() {
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? 'Chào buổi sáng' : currentHour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
-  // Lấy tên hiển thị - ưu tiên fullName, rồi đến username
-  const displayName = user?.fullName || user?.username || 'Nhân viên';
+  // Lấy tên hiển thị từ JWT token (giống như Navbar)
+  const displayName = useMemo(() => {
+    const token = getToken();
+    if (token) {
+      const fullName = getFullNameFromToken(token);
+      if (fullName) {
+        return fullName;
+      }
+    }
+    return user?.username || 'Nhân viên';
+  }, [user?.username]);
 
   const quickLinks = [
     {

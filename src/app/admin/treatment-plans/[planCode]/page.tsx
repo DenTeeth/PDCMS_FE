@@ -241,7 +241,16 @@ export default function AdminTreatmentPlanDetailPage() {
 
     // Use new modal for booking from plan
     setSelectedPlanItemIds(items.map((item) => item.itemId));
-    setSlotBookingData(slotData || null);
+    // Set slot booking data if provided (from auto-schedule suggestions)
+    if (slotData) {
+      setSlotBookingData({
+        date: slotData.date,
+        startTime: slotData.startTime,
+        roomCode: slotData.roomCode,
+      });
+    } else {
+      setSlotBookingData(null);
+    }
     setShowBookFromPlanModal(true);
   };
 

@@ -130,7 +130,8 @@ export default function EmployeeOvertimeRequestsPage() {
       const response = await employeeService.getEmployees({
         page: 0,
         size: 100,
-        sort: 'fullName,asc',
+        sortBy: 'firstName',
+        sortDirection: 'ASC',
       });
       setEmployees(response.content);
     } catch (error) {
@@ -460,7 +461,12 @@ export default function EmployeeOvertimeRequestsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <FontAwesomeIcon icon={faClock} className="text-gray-400" />
-                          <span>{request.workShiftName || 'N/A'}</span>
+                          <span>
+                            {(() => {
+                              const shift = workShifts.find(s => s.workShiftId === request.workShiftId);
+                              return shift ? shift.shiftName : (request.workShiftName || 'N/A');
+                            })()}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">

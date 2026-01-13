@@ -64,7 +64,7 @@ interface TreatmentPlanDetailProps {
   onBookAppointment?: (itemId: number) => void;
   showActions?: boolean;
   onPlanUpdated?: () => void; // Phase 3.5: Callback to refresh plan data
-  onBookPlanItems?: (items: ItemDetailDTO[]) => void;
+  onBookPlanItems?: (items: ItemDetailDTO[], slotData?: { date: string; startTime: string; roomCode?: string }) => void;
 }
 
 export default function TreatmentPlanDetail({
@@ -323,16 +323,6 @@ export default function TreatmentPlanDetail({
     }
   };
 
-  // Handle phase-level auto-schedule (NEW)
-  const handlePhaseAutoSchedule = async (phaseId: number, config: AutoScheduleRequest) => {
-    try {
-      await generatePhaseSchedule(phaseId, config);
-    } catch (error) {
-      // Error is already handled in useAutoSchedule hook
-      console.error('[TreatmentPlanDetail] Phase auto-schedule error:', error);
-    }
-  };
-
   // Map suggestions by itemId for easy lookup
   const suggestionsMap = useMemo(() => {
     const map = new Map<number, AppointmentSuggestion>();
@@ -389,20 +379,18 @@ export default function TreatmentPlanDetail({
     }
 
     // Get room code from slot if available
-    // Phase-level API returns availableRoomCodes, plan-level API returns availableCompatibleRoomCodes
+    // Phase-level API returns availableRoomCodes
     const roomCode = (slot.availableRoomCodes && slot.availableRoomCodes.length > 0)
       ? slot.availableRoomCodes[0]
-      : (slot.availableCompatibleRoomCodes && slot.availableCompatibleRoomCodes.length > 0)
-      ? slot.availableCompatibleRoomCodes[0]
       : undefined;
 
     // Store booking data and open modal via onBookPlanItems
     if (onBookPlanItems) {
-      // Open booking modal with prefilled slot data
+      // Open booking modal with prefilled slot data from auto-schedule
       onBookPlanItems([item], {
         date: formattedDate,
         startTime: formattedStartTime,
-        roomCode,
+        roomCode: roomCode,
       });
     } else if (onBookAppointment) {
       // Fallback to single item booking
@@ -561,7 +549,7 @@ export default function TreatmentPlanDetail({
     },
     {
       key: 'approved',
-      title: 'Khóa & triển khai',
+      title: 'Đã duyệt',
       description: normalizedApprovalStatus === ApprovalStatus.APPROVED
         ? 'Lộ trình đã được duyệt và khóa. Có thể kích hoạt và đặt lịch.'
         : 'Sau khi duyệt, lộ trình được khóa và chờ kích hoạt.',
@@ -905,6 +893,7 @@ export default function TreatmentPlanDetail({
           )}
 
           {/* BE_4: Calculated Schedule Timeline - DISABLED (BE not implemented) */}
+          {/* 
           {false && showScheduleTimeline && calculatedSchedule && (
             <div className="mt-8">
               <Card className="border-blue-200 bg-blue-50/50">
@@ -934,25 +923,32 @@ export default function TreatmentPlanDetail({
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Thời gian điều trị: <strong>{calculatedSchedule.estimatedDurationDays} ngày</strong> 
-                    {' '}(từ {format(new Date(calculatedSchedule.startDate), 'dd/MM/yyyy')} 
-                    {' '}đến {format(new Date(calculatedSchedule.endDate), 'dd/MM/yyyy')})
-                    {' '}• Ngày làm việc: <strong>{calculatedSchedule.actualWorkingDays}</strong>
-                    {' '}• Ngày lễ bỏ qua: <strong>{calculatedSchedule.holidaysSkipped}</strong>
+                    Thời gian điều trị: <strong>{calculatedSchedule?.estimatedDurationDays || 0} ngày</strong>
+                    {(calculatedSchedule && calculatedSchedule.startDate && calculatedSchedule.endDate) ? (
+                      <>
+                        {' '}(từ {format(new Date(calculatedSchedule.startDate), 'dd/MM/yyyy')}
+                        {' '}đến {format(new Date(calculatedSchedule.endDate), 'dd/MM/yyyy')})
+                      </>
+                    ) : null}
+                    {' '}• Ngày làm việc: <strong>{calculatedSchedule?.actualWorkingDays || 0}</strong>
+                    {' '}• Ngày lễ bỏ qua: <strong>{calculatedSchedule?.holidaysSkipped || 0}</strong>
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <TreatmentPlanScheduleTimeline 
-                    schedule={calculatedSchedule}
-                    onBookService={(serviceId, serviceCode, scheduledDate) => {
-                      toast.info(`Đặt lịch cho ${serviceCode} vào ngày ${format(new Date(scheduledDate), 'dd/MM/yyyy')}`);
-                      // TODO: Integrate with appointment booking
-                    }}
-                  />
+                  {calculatedSchedule != null && (
+                    <TreatmentPlanScheduleTimeline 
+                      schedule={calculatedSchedule!}
+                      onBookService={(serviceId, serviceCode, scheduledDate) => {
+                        toast.info(`Đặt lịch cho ${serviceCode} vào ngày ${format(new Date(scheduledDate), 'dd/MM/yyyy')}`);
+                        // TODO: Integrate with appointment booking
+                      }}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
           )}
+          */}
 
           {false && !showScheduleTimeline && calculatedSchedule && (
             <div className="mt-8">
@@ -963,7 +959,7 @@ export default function TreatmentPlanDetail({
                 className="w-full"
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                Hiển thị lịch trình đề xuất ({calculatedSchedule.metadata.totalServices} dịch vụ, {calculatedSchedule.estimatedDurationDays} ngày)
+                Hẩn lịch trình đề xuất ({calculatedSchedule?.metadata?.totalServices || 0} dịch vụ, {calculatedSchedule?.estimatedDurationDays || 0} ngày)
               </Button>
             </div>
           )}
@@ -1222,7 +1218,6 @@ export default function TreatmentPlanDetail({
                             canBookItems={canCreateAppointment}
                             suggestionsMap={suggestionsMap}
                             onSelectSlot={handleSelectSlot}
-                            onPhaseAutoSchedule={handlePhaseAutoSchedule}
                             onPhaseUpdated={() => {
                               // Phase 3.5: Phase updated - refresh plan data
                               if (onPlanUpdated) {

@@ -417,7 +417,6 @@ export default function InventoryPage() {
                             <FontAwesomeIcon icon={faSort} className="h-3 w-3 text-gray-400" />
                           </div>
                         </th>
-                        <th className="text-left px-6 py-3 font-semibold text-sm">HSD</th>
                         <th className="text-left px-6 py-3 font-semibold text-sm">Trạng thái</th>
                         <th className="text-right px-6 py-3 font-semibold text-sm">Thao tác</th>
                       </tr>
@@ -436,14 +435,11 @@ export default function InventoryPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex flex-col items-end">
-                              <span className={`font-bold ${getQuantityColor(item)}`}>
+                              <span className="font-bold text-gray-900">
                                 {item.totalQuantity}
                               </span>
                               <span className="text-xs text-gray-500">Min: {item.minStockLevel}</span>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            {getExpiryDateDisplay(item)}
                           </td>
                           <td className="px-6 py-4">{getStockStatusBadge(item.stockStatus)}</td>
                           <td className="px-6 py-4 text-right">

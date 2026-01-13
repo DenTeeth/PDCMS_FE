@@ -800,7 +800,7 @@ export default function AdminShiftCalendarPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faCalendarAlt} />
-            Lịch Ca Làm Việc
+            Lịch ca làm việc
           </h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4 flex-wrap">

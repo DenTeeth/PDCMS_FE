@@ -216,7 +216,7 @@ export default function ItemDetailModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Tồn kho hiện tại</p>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold">
                       {totalBatchQuantity} {itemDetail.unitOfMeasure}
                     </p>
                   </div>
@@ -226,13 +226,13 @@ export default function ItemDetailModal({
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Tồn kho tối thiểu</p>
-                    <p className="font-semibold text-orange-600">
+                    <p className="font-semibold">
                       {itemDetail.minStockLevel} {itemDetail.unitOfMeasure}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Tồn kho tối đa</p>
-                    <p className="font-semibold text-green-600">
+                    <p className="font-semibold">
                       {itemDetail.maxStockLevel} {itemDetail.unitOfMeasure}
                     </p>
                   </div>
@@ -275,12 +275,6 @@ export default function ItemDetailModal({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                    <p className="font-medium text-blue-800">
-                       Danh sách lô hàng được sắp xếp theo nguyên tắc FEFO (First Expired, First Out)
-                    </p>
-                  </div>
-
                   <div className="overflow-x-auto">
                     <table className="w-full border">
                       <thead className="bg-slate-100">
@@ -336,11 +330,11 @@ export default function ItemDetailModal({
                     <div className="grid grid-cols-2 gap-4 text-center">
                       <div>
                         <p className="text-sm text-gray-600">Tổng số lô</p>
-                        <p className="text-2xl font-bold text-blue-600">{batches.length}</p>
+                        <p className="text-2xl font-bold">{batches.length}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Tổng tồn kho</p>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold">
                           {batches.reduce((sum: number, b: BatchResponse) => sum + b.quantityOnHand, 0)} {itemDetail.unitOfMeasure}
                         </p>
                       </div>
