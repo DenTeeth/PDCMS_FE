@@ -136,7 +136,7 @@ export default function StatisticsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard Thống Kê</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard thống kê</h1>
             <p className="text-gray-600 mt-1">
               Thống kê và phân tích hoạt động phòng khám
             </p>
@@ -216,7 +216,9 @@ export default function StatisticsPage() {
                 <DateRangeInput
                   value={dateRange}
                   onChange={(range) => {
-                    setDateRange(range);
+                    if (range.from && range.to) {
+                      setDateRange({ from: range.from, to: range.to });
+                    }
                     setDatePreset('custom');
                   }}
                   placeholder="Chọn khoảng ngày"
@@ -354,7 +356,7 @@ export default function StatisticsPage() {
             toast.success('Đã lưu chế độ xem!');
           }}
           onLoadView={(view) => {
-            setDateRange(view.dateRange);
+            setDateRange({ from: view.dateRange.startDate, to: view.dateRange.endDate });
             setAdvancedFilters(view.filters);
             toast.success(`Đã áp dụng chế độ xem "${view.name}"!`);
           }}
@@ -370,7 +372,7 @@ export default function StatisticsPage() {
             toast.success('Đã đặt làm chế độ xem mặc định!');
           }}
           currentFilters={advancedFilters}
-          currentDateRange={dateRange}
+          currentDateRange={{ startDate: dateRange.from, endDate: dateRange.to }}
         />
       )}
 
