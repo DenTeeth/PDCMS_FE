@@ -64,8 +64,14 @@ export const categoryService = {
       const response = await api.get<any[]>('/inventory/categories', {
         params: filter,
       });
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any[]>(response);
+      const categories = Array.isArray(data) ? data : [];
+      
       // Map BE response to FE type
-      const mapped: CategoryV1[] = (response.data || []).map((cat: any) => ({
+      const mapped: CategoryV1[] = categories.map((cat: any) => ({
         categoryId: cat.categoryId ?? cat.category_id,
         categoryCode: cat.categoryCode ?? cat.category_code,
         categoryName: cat.categoryName ?? cat.category_name,
@@ -93,7 +99,10 @@ export const categoryService = {
   getById: async (id: number): Promise<CategoryV1> => {
     try {
       const response = await api.get<any>(`/inventory/categories/${id}`);
-      const cat = response.data || {};
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const cat = extractApiResponse<any>(response) || {};
       // Map BE response to FE type
       const mapped: CategoryV1 = {
         categoryId: cat.categoryId ?? cat.category_id,
@@ -124,7 +133,8 @@ export const categoryService = {
     try {
       const response = await api.post<CategoryV1>('/inventory/categories', data);
       console.log(' Create category:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<CategoryV1 | CategoryStats>(response);
     } catch (error: any) {
       console.error(' Create category error:', error.response?.data || error.message);
       throw error;
@@ -138,7 +148,8 @@ export const categoryService = {
     try {
       const response = await api.put<CategoryV1>(`/inventory/categories/${id}`, data);
       console.log(' Update category:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<CategoryV1 | CategoryStats>(response);
     } catch (error: any) {
       console.error(' Update category error:', error.response?.data || error.message);
       throw error;
@@ -165,7 +176,8 @@ export const categoryService = {
     try {
       const response = await api.get<CategoryStats>('/inventory/categories/stats');
       console.log(' Get category stats:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<CategoryV1 | CategoryStats>(response);
     } catch (error: any) {
       console.error(' Get category stats error:', error.response?.data || error.message);
       // Return default stats if endpoint doesn't exist

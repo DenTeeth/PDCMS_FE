@@ -20,18 +20,13 @@ class SpecializationService {
     try {
       const response = await apiClient.getAxiosInstance().get(this.endpoint);
       
-      console.log('� Raw response:', response);
-      console.log('� response.data:', response.data);
+      console.log(' Raw response:', response);
+      console.log(' response.data:', response.data);
       
-      // BE có thể trả về wrapped hoặc trực tiếp
-      if (response.data?.data) {
-        console.log('� Using response.data.data');
-        return response.data.data;
-      }
-      
-      // Nếu BE trả về trực tiếp array
-      console.log('� Using response.data directly');
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<Specialization[]>(response);
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
       console.error('Failed to fetch specializations:', error);
       throw error;
@@ -45,10 +40,8 @@ class SpecializationService {
     try {
       const response = await apiClient.getAxiosInstance().get(`${this.endpoint}/${specializationId}`);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<Specialization>(response);
     } catch (error: any) {
       console.error(`Failed to fetch specialization ${specializationId}:`, error);
       throw error;
@@ -62,10 +55,8 @@ class SpecializationService {
     try {
       const response = await apiClient.getAxiosInstance().post(this.endpoint, data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<Specialization>(response);
     } catch (error: any) {
       console.error('Failed to create specialization:', error);
       throw error;
@@ -82,10 +73,8 @@ class SpecializationService {
     try {
       const response = await apiClient.getAxiosInstance().patch(`${this.endpoint}/${specializationId}`, data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<Specialization>(response);
     } catch (error: any) {
       console.error(`Failed to update specialization ${specializationId}:`, error);
       throw error;
@@ -107,4 +96,3 @@ class SpecializationService {
 }
 
 export const specializationService = new SpecializationService();
-

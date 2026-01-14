@@ -26,7 +26,8 @@ export const analyticsService = {
      */
     async getKPIData(): Promise<KPIData> {
         const response = await api.get('/analytics/kpi');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -34,7 +35,8 @@ export const analyticsService = {
      */
     async getRevenueTrend(): Promise<RevenueTrendData[]> {
         const response = await api.get('/analytics/revenue-trend');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -42,7 +44,8 @@ export const analyticsService = {
      */
     async getAppointmentsByStatus(): Promise<AppointmentStatusData[]> {
         const response = await api.get('/analytics/appointments-by-status');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -52,7 +55,8 @@ export const analyticsService = {
         const response = await api.get('/analytics/top-services', {
             params: { limit },
         });
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -60,7 +64,8 @@ export const analyticsService = {
      */
     async getPatientAcquisition(): Promise<PatientAcquisitionData[]> {
         const response = await api.get('/analytics/patient-acquisition');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -72,7 +77,8 @@ export const analyticsService = {
         const response = await api.get('/analytics/employee-performance', {
             params: filters,
         });
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -80,7 +86,8 @@ export const analyticsService = {
      */
     async getServiceAnalytics(): Promise<ServiceAnalytics[]> {
         const response = await api.get('/analytics/services');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -88,7 +95,8 @@ export const analyticsService = {
      */
     async getIncomeExpenses(): Promise<IncomeExpenseData[]> {
         const response = await api.get('/analytics/income-expenses');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -96,7 +104,8 @@ export const analyticsService = {
      */
     async getExpenseCategories(): Promise<ExpenseCategory[]> {
         const response = await api.get('/analytics/expense-categories');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -108,7 +117,8 @@ export const analyticsService = {
         const response = await api.get('/analytics/appointment-volume', {
             params: filters,
         });
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -116,7 +126,8 @@ export const analyticsService = {
      */
     async getPeakHours(): Promise<PeakHourData[]> {
         const response = await api.get('/analytics/peak-hours');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -124,7 +135,8 @@ export const analyticsService = {
      */
     async getAppointmentMetrics(): Promise<AppointmentMetrics> {
         const response = await api.get('/analytics/appointment-metrics');
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 
     /**
@@ -138,6 +150,7 @@ export const analyticsService = {
             params: filters,
             responseType: 'blob',
         });
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<any>(response);
     },
 };

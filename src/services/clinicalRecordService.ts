@@ -109,9 +109,9 @@ export const clinicalRecordService = {
         `/appointments/${appointmentId}/clinical-record`
       );
       
-      // Handle empty response (Content-Length: 0) or null data
-      // BE returns HTTP 200 with null/empty body when no record exists
-      const record = extractApiResponse(response) || response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const record = extractApiResponse<ClinicalRecordResponse | null>(response);
       
       // If response is null, undefined, or empty, return null (no record exists)
       if (!record) {
@@ -124,6 +124,8 @@ export const clinicalRecordService = {
         clinicalRecordId: record?.clinicalRecordId,
         hasFollowUpDate: !!record?.followUpDate,
         followUpDate: record?.followUpDate,
+        hasPatient: !!record?.patient,
+        patientId: record?.patient?.patientId,
       });
       
       return record;

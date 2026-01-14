@@ -47,11 +47,13 @@ export class ServiceService {
         console.log('ServiceService.getServices - Params:', Object.fromEntries(params));
 
         const axios = apiClient.getAxiosInstance();
-        const response = await axios.get<ServiceListResponse>(url);
+        const response = await axios.get<any>(url);
 
         console.log('ServiceService.getServices - Response:', response.data);
 
-        return response.data;
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<ServiceListResponse>(response);
     }
 
     // Get service by ID
@@ -64,7 +66,8 @@ export class ServiceService {
         const response = await axios.get<Service>(url);
         console.log('ServiceService.getServiceById - Response:', response.data);
 
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<Service>(response);
     }
 
     // Get service by code
@@ -80,7 +83,8 @@ export class ServiceService {
             console.log('ServiceService.getServiceByCode - URL:', url);
             const response = await axios.get<Service>(url);
             console.log('ServiceService.getServiceByCode - Response:', response.data);
-            return response.data;
+            const { extractApiResponse } = await import('@/utils/apiResponse');
+            return extractApiResponse<Service>(response);
         } catch (error: any) {
             // Fallback to /code/ path if standard path doesn't work
             if (error.response?.status === 404) {
@@ -88,7 +92,8 @@ export class ServiceService {
                 console.log('ServiceService.getServiceByCode - Fallback URL:', url);
                 const response = await axios.get<Service>(url);
                 console.log('ServiceService.getServiceByCode - Fallback Response:', response.data);
-                return response.data;
+                const { extractApiResponse } = await import('@/utils/apiResponse');
+                return extractApiResponse<Service>(response);
             }
             throw error;
         }
@@ -103,7 +108,8 @@ export class ServiceService {
         try {
             const response = await axios.post<Service>(this.BASE_URL, data);
             console.log('ServiceService.createService - Response:', response.data);
-            return response.data;
+            const { extractApiResponse } = await import('@/utils/apiResponse');
+            return extractApiResponse<Service>(response);
         } catch (error: any) {
             console.error('ServiceService.createService - Error:', error);
             console.error('ServiceService.createService - Error Response:', error.response?.data);
@@ -123,8 +129,8 @@ export class ServiceService {
         const axios = apiClient.getAxiosInstance();
         const response = await axios.put<Service>(url, data);
         console.log('ServiceService.updateService - Response:', response.data);
-
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<Service>(response);
     }
 
     // Soft delete service by ID (V2 - Recommended)
@@ -158,8 +164,8 @@ export class ServiceService {
         const axios = apiClient.getAxiosInstance();
         const response = await axios.patch<Service>(url);
         console.log('ServiceService.toggleServiceStatus - Response:', response.data);
-
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<Service>(response);
     }
 
     // Get services for current doctor (V21.4 - NEW)
@@ -196,14 +202,9 @@ export class ServiceService {
         const response = await axios.get<any>(url);
         console.log('ServiceService.getServicesForCurrentDoctor - Response:', response.data);
 
-        // BE returns response wrapped in { message, status, data: { content, pageable, ... } }
-        // Extract the actual Page data from response.data.data
-        const responseData = response.data;
-
-        // Check if response is wrapped in { data: ... } (from BE docs example)
-        if (responseData.data && Array.isArray(responseData.data.content)) {
-            return responseData.data as ServiceListResponse;
-        }
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<ServiceListResponse>(response);
 
         // If response.data is already the Page format (direct Spring Page response)
         if (Array.isArray(responseData.content)) {
@@ -224,8 +225,8 @@ export class ServiceService {
         const axios = apiClient.getAxiosInstance();
         const response = await axios.patch<Service>(url);
         console.log('ServiceService.activateService - Response:', response.data);
-
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<Service>(response);
     }
 }
 

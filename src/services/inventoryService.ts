@@ -179,7 +179,9 @@ export const inventoryService = {
         params: filter,
       });
       console.log(' Get all items:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<ItemMasterV1[]>(response);
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
       console.error(' Get all items error:', error.response?.data || error.message);
       throw error;
@@ -195,7 +197,10 @@ export const inventoryService = {
   getById: async (id: number): Promise<ItemMasterV1> => {
     try {
       const response = await api.get(`/inventory/${id}`);
-      const data = response.data || {};
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any>(response) || {};
       
       // Map ItemMasterSummaryResponse to ItemMasterV1
       const mapped: ItemMasterV1 = {
@@ -281,7 +286,10 @@ export const inventoryService = {
       // Note: /inventory/summary doesn't support search or categoryId filters
 
       const response = await api.get('/inventory/summary', { params });
-      const raw = response.data;
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const raw = extractApiResponse<any>(response);
 
       // Map ItemMasterSummaryResponse to InventorySummary
       // BE /inventory/summary returns: { content: ItemMasterSummaryResponse[], totalElements, totalPages, number, size }
@@ -406,7 +414,10 @@ export const inventoryService = {
   getStats: async (): Promise<InventoryStats> => {
     try {
       const response = await api.get('/inventory/stats');
-      const data = response.data || {};
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any>(response) || {};
       
       // Map WarehouseStatsResponse to InventoryStats
       const mapped: InventoryStats = {
@@ -459,8 +470,14 @@ export const inventoryService = {
   getCategories: async (): Promise<CategoryV1[]> => {
     try {
       const response = await api.get<any[]>('/inventory/categories');
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any[]>(response);
+      const categories = Array.isArray(data) ? data : [];
+      
       // Map BE response to FE type
-      const mapped: CategoryV1[] = (response.data || []).map((cat: any) => ({
+      const mapped: CategoryV1[] = categories.map((cat: any) => ({
         categoryId: cat.categoryId ?? cat.category_id,
         categoryCode: cat.categoryCode ?? cat.category_code,
         categoryName: cat.categoryName ?? cat.category_name,
@@ -494,7 +511,10 @@ export const inventoryService = {
   getBatchesByItemId: async (itemMasterId: number): Promise<BatchResponse[]> => {
     try {
       const response = await api.get(`/inventory/batches/${itemMasterId}`);
-      const data = response.data || [];
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any[]>(response) || [];
       
       // Map BatchResponse to ensure correct structure
       const mapped: BatchResponse[] = Array.isArray(data) ? data.map((batch: any) => ({
@@ -556,10 +576,10 @@ export const inventoryService = {
       if (filter?.statusFilter) params.statusFilter = filter.statusFilter;
 
       const response = await api.get('/warehouse/alerts/expiring', { params });
-      const raw = response.data;
-
-      // Handle BE response structure (may be wrapped in data field)
-      const payload = raw.data || raw;
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const payload = extractApiResponse<any>(response);
 
       // Map response to match ExpiringAlertsResponse type
       const mapped: ExpiringAlertsResponse = {
@@ -610,7 +630,8 @@ export const inventoryService = {
     try {
       const response = await api.post<ItemMasterV1>('/warehouse/items', data);
       console.log(' Create item:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ItemMasterV1>(response);
     } catch (error: any) {
       console.error(' Create item error:', error.response?.data || error.message);
       throw error;
@@ -637,22 +658,26 @@ export const inventoryService = {
     try {
       const response = await api.put<UpdateItemMasterResponse>(`/warehouse/items/${id}`, data);
       
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const responseData = extractApiResponse<UpdateItemMasterResponse>(response);
+      
       console.log(' [WAREHOUSE] Update Success');
       console.log('� Response Data:', JSON.stringify(response.data, null, 2));
       
       // Show warning if Safety Lock was applied
-      if (response.data.safetyLockApplied) {
+      if (responseData.safetyLockApplied) {
         console.warn(' [WAREHOUSE] Safety Lock was applied - some changes may have been blocked due to existing inventory');
         console.warn('� Safety Lock Details:', {
           itemId: id,
-          itemCode: data.itemCode || 'N/A',
-          safetyLockApplied: response.data.safetyLockApplied,
+          itemCode: responseData.itemCode || 'N/A',
+          safetyLockApplied: responseData.safetyLockApplied,
           timestamp: new Date().toISOString()
         });
       }
       
       console.groupEnd();
-      return response.data;
+      return responseData;
     } catch (error: any) {
       // Detailed error logging for BE debugging
       console.error(' [WAREHOUSE] Update Item Error');
@@ -682,7 +707,7 @@ export const inventoryService = {
         console.error(' [WAREHOUSE] Validation Error (400)');
         console.error('� Validation Details:', {
           itemId: id,
-          itemCode: data.itemCode || 'N/A',
+          itemName: data.itemName || 'N/A',
           status: 400,
           message: errorData.message || 'No message provided',
           errorCode: errorData.errorCode || 'NO_ERROR_CODE',
@@ -703,7 +728,7 @@ export const inventoryService = {
         console.error('� [WAREHOUSE] CONFLICT (409) - Safety Lock Violation');
         console.error('� Conflict Details:', {
           itemId: id,
-          itemCode: data.itemCode || 'N/A',
+          itemName: data.itemName || 'N/A',
           status: 409,
           message: conflictData.message || 'No message provided',
           errorCode: conflictData.errorCode || 'NO_ERROR_CODE',
@@ -751,7 +776,8 @@ export const inventoryService = {
     try {
       const response = await api.post<CategoryV1>('/inventory/categories', data);
       console.log(' Create category:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<CategoryV1>(response);
     } catch (error: any) {
       console.error(' Create category error:', error.response?.data || error.message);
       throw error;
@@ -765,7 +791,8 @@ export const inventoryService = {
     try {
       const response = await api.put<CategoryV1>(`/inventory/categories/${id}`, data);
       console.log(' Update category:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<CategoryV1>(response);
     } catch (error: any) {
       console.error(' Update category error:', error.response?.data || error.message);
       throw error;
@@ -794,7 +821,8 @@ export const inventoryService = {
     try {
       const response = await api.post<ImportTransactionResponse>('/warehouse/import', data);
       console.log(' Create import transaction:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ImportTransactionResponse>(response);
     } catch (error: any) {
       console.error(' Create import transaction error:', error.response?.data || error.message);
       throw error;
@@ -810,7 +838,10 @@ export const inventoryService = {
     try {
       const response = await api.post<ExportTransactionResponse>('/inventory/export', data);
       console.log(' Create export transaction:', response.data);
-      return response.data;
+      
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ExportTransactionResponse>(response);
     } catch (error: any) {
       const errorData = error.response?.data;
       const errorMessage = errorData?.message || errorData?.error || error.message;

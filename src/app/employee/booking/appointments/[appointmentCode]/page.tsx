@@ -1429,7 +1429,7 @@ export default function EmployeeAppointmentDetailPage() {
                 </h3>
                 <ClinicalRecordForm
                   appointmentId={appointment?.appointmentId || 0}
-                  patientId={clinicalRecord?.patient.patientId}
+                  patientId={clinicalRecord?.patient?.patientId || appointment?.patient?.patientId}
                   existingRecord={clinicalRecord || undefined}
                   onSuccess={(record) => {
                     setClinicalRecord(record);
@@ -1445,14 +1445,14 @@ export default function EmployeeAppointmentDetailPage() {
                   readOnly={!canWriteClinicalRecord}
                 />
               </section>
-            ) : (
+            ) : clinicalRecord ? (
               <ClinicalRecordView
                 record={clinicalRecord}
                 onEdit={() => setIsEditingClinicalRecord(true)}
                 canEdit={canWriteClinicalRecord}
                 appointmentStatus={appointment?.status}
               />
-            )}
+            ) : null}
           </TabsContent>
 
           {/* Treatment Plan Tab */}

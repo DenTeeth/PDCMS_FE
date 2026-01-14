@@ -64,10 +64,13 @@ export class TreatmentPlanService {
       params.append('sort', sort);
     }
     
-    const response = await axios.get<PageResponse<TreatmentPlanSummaryDTO>>(
+    const response = await axios.get<any>(
       `${BASE_URL}/${patientCode}/treatment-plans?${params.toString()}`
     );
-    return response.data;
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PageResponse<TreatmentPlanSummaryDTO>>(response);
   }
 
   /**
@@ -105,7 +108,8 @@ export class TreatmentPlanService {
     const response = await axios.get<TreatmentPlanDetailResponse>(
       `${BASE_URL}/${patientCode}/treatment-plans/${planCode}`
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TreatmentPlanDetailResponse>(response);
   }
 
   /**
@@ -173,10 +177,13 @@ export class TreatmentPlanService {
       params.append('specializationId', filters.specializationId.toString());
     }
     
-    const response = await axios.get<PageResponse<TreatmentPlanSummaryDTO>>(
+    const response = await axios.get<any>(
       `/treatment-plans?${params.toString()}`
     );
-    return response.data;
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PageResponse<TreatmentPlanSummaryDTO>>(response);
   }
 
   /**
@@ -250,10 +257,13 @@ export class TreatmentPlanService {
       params.append('searchTerm', filters.searchTerm);
     }
     
-    const response = await axios.get<PageResponse<TreatmentPlanSummaryDTO>>(
+    const response = await axios.get<any>(
       `${ALL_PLANS_BASE_URL}?${params.toString()}`
     );
-    return response.data;
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PageResponse<TreatmentPlanSummaryDTO>>(response);
   }
 
   /**
@@ -298,7 +308,8 @@ export class TreatmentPlanService {
       `${BASE_URL}/${patientCode}/treatment-plans`,
       request
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TreatmentPlanDetailResponse>(response);
   }
 
   /**

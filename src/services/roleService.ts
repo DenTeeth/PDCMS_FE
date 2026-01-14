@@ -21,11 +21,10 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/roles');
     
-    // BE có thể trả về wrapped hoặc trực tiếp
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<Role[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -36,11 +35,10 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/roles/employee-assignable');
     
-    // BE có thể trả về wrapped hoặc trực tiếp
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<Role[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -52,10 +50,9 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/roles/${roleId}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Role>(response);
   }
 
   /**
@@ -67,10 +64,10 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/roles/${roleId}/permissions`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const result = extractApiResponse<Permission[]>(response);
+    return Array.isArray(result) ? result : [];
   }
 
   /**
@@ -81,10 +78,10 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/permissions');
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const result = extractApiResponse<Permission[]>(response);
+    return Array.isArray(result) ? result : [];
   }
 
   /**
@@ -95,10 +92,10 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/specializations');
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const result = extractApiResponse<Specialization[]>(response);
+    return Array.isArray(result) ? result : [];
   }
 
   /**
@@ -110,10 +107,9 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/specializations/${specializationId}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Specialization>(response);
   }
 
   /**
@@ -125,10 +121,9 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post('/roles', data);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Role>(response);
   }
 
   /**
@@ -141,10 +136,9 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.put(`/roles/${roleId}`, data);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Role>(response);
   }
 
   /**
@@ -167,10 +161,9 @@ class RoleService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.delete(`/roles/${roleId}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<{ message: string }>(response);
   }
 }
 

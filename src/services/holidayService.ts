@@ -32,7 +32,8 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-dates/check/${date}`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDefinition[] | HolidayDefinition | HolidayDate[] | HolidayDate>(response);
   }
 
   /**
@@ -47,8 +48,8 @@ class HolidayService {
       params: { startDate, endDate },
     });
     
-    const data = response.data?.data || response.data;
-    // Convert to HolidayRangeResponse format for backward compatibility
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<HolidayDate[]>(response);
     return Array.isArray(data) ? data : [];
   }
 
@@ -61,7 +62,9 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-definitions`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<HolidayDefinition[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -74,7 +77,9 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-definitions/by-type/${holidayType}`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<HolidayDefinition[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -85,7 +90,8 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-definitions/${definitionId}`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDefinition>(response);
   }
 
   /**
@@ -97,7 +103,8 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post(`/holiday-definitions`, data);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDefinition>(response);
   }
 
   /**
@@ -112,7 +119,8 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.patch(`/holiday-definitions/${definitionId}`, data);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDefinition>(response);
   }
 
   /**
@@ -136,7 +144,9 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-dates`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<HolidayDate[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -147,7 +157,9 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`/holiday-dates/by-definition/${definitionId}`);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<HolidayDate[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -160,7 +172,8 @@ class HolidayService {
       `/holiday-dates/${holidayDate}/definition/${definitionId}`
     );
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDate>(response);
   }
 
   /**
@@ -172,7 +185,8 @@ class HolidayService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.post(`/holiday-dates`, data);
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDate>(response);
   }
 
   /**
@@ -193,7 +207,8 @@ class HolidayService {
       data
     );
     
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<HolidayDate>(response);
   }
 
   /**

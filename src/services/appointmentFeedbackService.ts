@@ -93,7 +93,8 @@ export interface PaginatedFeedbackResponse {
 export async function createFeedback(data: CreateFeedbackRequest): Promise<AppointmentFeedback> {
   const axiosInstance = apiClient.getAxiosInstance();
   const response = await axiosInstance.post(BASE_URL, data);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<AppointmentFeedback | PaginatedFeedbackResponse | FeedbackStatistics | DoctorFeedbackStatisticsResponse>(response);
 }
 
 /**
@@ -103,7 +104,8 @@ export async function getFeedbackByAppointmentCode(appointmentCode: string): Pro
   try {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`${BASE_URL}/appointment/${appointmentCode}`);
-    return response.data?.data || response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<AppointmentFeedback | PaginatedFeedbackResponse | FeedbackStatistics | DoctorFeedbackStatisticsResponse>(response);
   } catch (error: any) {
     if (error.response?.status === 404) {
       return null;
@@ -118,7 +120,8 @@ export async function getFeedbackByAppointmentCode(appointmentCode: string): Pro
 export async function getFeedbacksList(params: FeedbackListParams = {}): Promise<PaginatedFeedbackResponse> {
   const axiosInstance = apiClient.getAxiosInstance();
   const response = await axiosInstance.get(BASE_URL, { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<AppointmentFeedback | PaginatedFeedbackResponse | FeedbackStatistics | DoctorFeedbackStatisticsResponse>(response);
 }
 
 /**
@@ -130,7 +133,8 @@ export async function getFeedbackStatistics(params?: {
 }): Promise<FeedbackStatistics> {
   const axiosInstance = apiClient.getAxiosInstance();
   const response = await axiosInstance.get(`${BASE_URL}/statistics`, { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<AppointmentFeedback | PaginatedFeedbackResponse | FeedbackStatistics | DoctorFeedbackStatisticsResponse>(response);
 }
 
 /**
@@ -148,5 +152,6 @@ export async function getFeedbackStatisticsByDoctor(params?: {
 }): Promise<DoctorFeedbackStatisticsResponse> {
   const axiosInstance = apiClient.getAxiosInstance();
   const response = await axiosInstance.get(`${BASE_URL}/statistics/by-doctor`, { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<AppointmentFeedback | PaginatedFeedbackResponse | FeedbackStatistics | DoctorFeedbackStatisticsResponse>(response);
 }

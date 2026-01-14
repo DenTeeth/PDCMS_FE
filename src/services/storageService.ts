@@ -555,6 +555,7 @@ export const storageService = {
       });
 
       console.log(' Export transaction history - File downloaded');
+      // Blob response doesn't need unwrapping
       return response.data;
     } catch (error: any) {
       const enhancedError = createApiError(error, {

@@ -24,7 +24,9 @@ export const vitalSignsReferenceService = {
    */
   getAllActiveReferences: async (): Promise<VitalSignsReferenceResponse[]> => {
     const response = await api.get<VitalSignsReferenceResponse[]>(BASE_URL);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<VitalSignsReferenceResponse[]>(response);
+    return Array.isArray(data) ? data : [];
   },
 
   /**
@@ -38,7 +40,9 @@ export const vitalSignsReferenceService = {
    */
   getReferencesByAge: async (age: number): Promise<VitalSignsReferenceResponse[]> => {
     const response = await api.get<VitalSignsReferenceResponse[]>(`${BASE_URL}/by-age/${age}`);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<VitalSignsReferenceResponse[]>(response);
+    return Array.isArray(data) ? data : [];
   },
 };
 

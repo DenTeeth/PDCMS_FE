@@ -22,7 +22,8 @@ export class ServiceCategoryService {
   static async getCategories(): Promise<ServiceCategory[]> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<ServiceCategory[]>(`${this.BASE_URL}`);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ServiceCategory>(response);
   }
 
   /**
@@ -41,7 +42,8 @@ export class ServiceCategoryService {
   static async getCategoryById(categoryId: number): Promise<ServiceCategory> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<ServiceCategory>(`${this.BASE_URL}/${categoryId}`);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ServiceCategory>(response);
   }
 
   /**
@@ -52,7 +54,8 @@ export class ServiceCategoryService {
   static async createCategory(data: CreateServiceCategoryRequest): Promise<ServiceCategory> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.post<ServiceCategory>(`${this.BASE_URL}`, data);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ServiceCategory>(response);
   }
 
   /**
@@ -63,7 +66,8 @@ export class ServiceCategoryService {
   static async updateCategory(categoryId: number, data: UpdateServiceCategoryRequest): Promise<ServiceCategory> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.patch<ServiceCategory>(`${this.BASE_URL}/${categoryId}`, data);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ServiceCategory>(response);
   }
 
   /**

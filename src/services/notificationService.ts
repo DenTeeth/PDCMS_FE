@@ -86,7 +86,8 @@ export const notificationService = {
       BASE_URL,
       request
     );
-    return response.data.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Notification>(response);
   },
 
   /**

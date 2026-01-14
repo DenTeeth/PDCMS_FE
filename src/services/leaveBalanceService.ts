@@ -45,7 +45,8 @@ export class LeaveBalanceService {
           }
         }
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' LeaveBalanceService.getEmployeeBalances error:', {
@@ -84,7 +85,8 @@ export class LeaveBalanceService {
       `${this.BASE_URL}/leave-balances/adjust`,
       data
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<AdjustBalanceResponse>(response);
   }
 
   /**
@@ -115,7 +117,8 @@ export class LeaveBalanceService {
       );
 
       console.log(' Annual-reset response:', response.data);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error(' Annual-reset error:', {
         status: error.response?.status,
@@ -141,7 +144,9 @@ export class LeaveBalanceService {
   static async getTimeOffTypes(): Promise<TimeOffType[]> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<TimeOffType[]>('/time-off-types');
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<TimeOffType[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 }
 

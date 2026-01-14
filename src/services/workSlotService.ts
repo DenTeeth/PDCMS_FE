@@ -36,22 +36,20 @@ class WorkSlotService {
       params: params // API spec doesn't mention pagination params
     });
 
-    // Handle both response structures
-    // Case 1: Direct array response
-    if (Array.isArray(response.data)) {
-      return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    
+    // Handle array response
+    if (Array.isArray(data)) {
+      return data;
     }
-
-    // Case 2: Wrapped response { statusCode, data: [...] }
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
+    
+    // Handle paginated response
+    if (data?.content && Array.isArray(data.content)) {
+      return data.content;
     }
-
-    // Case 3: Paginated response (backward compatibility)
-    if (response.data?.content && Array.isArray(response.data.content)) {
-      return response.data.content;
-    }
-
+    
     // Fallback: return empty array
     return [];
   }
@@ -65,10 +63,9 @@ class WorkSlotService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<WorkSlotResponse>(`${this.endpoint}/${slotId}`);
 
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as PartTimeSlot;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PartTimeSlot>(response);
   }
 
   /**
@@ -82,10 +79,9 @@ class WorkSlotService {
     try {
       const response = await axiosInstance.post<WorkSlotResponse>(this.endpoint, data);
 
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as PartTimeSlot;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<PartTimeSlot>(response);
     } catch (error: any) {
       // Handle specific error codes from BE
       if (error.response?.data?.errorCode === 'SLOT_ALREADY_EXISTS') {
@@ -127,10 +123,9 @@ class WorkSlotService {
     try {
       const response = await axiosInstance.put<WorkSlotResponse>(`${this.endpoint}/${slotId}`, data);
 
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as PartTimeSlot;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<PartTimeSlot>(response);
     } catch (error: any) {
       // Handle specific error codes from BE
       if (error.response?.data?.errorCode === 'QUOTA_VIOLATION') {
@@ -184,12 +179,10 @@ class WorkSlotService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/registrations/available-slots');
 
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -209,12 +202,10 @@ class WorkSlotService {
       }
     });
 
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -227,12 +218,9 @@ class WorkSlotService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<{ statusCode: number; data: PartTimeSlotDetailResponse }>(`${this.endpoint}/${slotId}`);
 
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-
-    return response.data as unknown as PartTimeSlotDetailResponse;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PartTimeSlotDetailResponse>(response);
   }
 }
 

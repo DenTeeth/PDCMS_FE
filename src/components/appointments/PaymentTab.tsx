@@ -190,9 +190,14 @@ export default function PaymentTab({
         data = [];
       }
       
+      // Ensure data is always an array
+      const invoiceArray = Array.isArray(data) ? data : [];
+      
       console.log('📦 PaymentTab: Received invoices from API:', {
-        count: data.length,
-        invoices: data.map(inv => ({
+        count: invoiceArray.length,
+        rawData: data,
+        isArray: Array.isArray(data),
+        invoices: invoiceArray.map(inv => ({
           invoiceCode: inv.invoiceCode,
           invoiceType: inv.invoiceType,
           appointmentId: inv.appointmentId,
@@ -202,7 +207,7 @@ export default function PaymentTab({
       });
       
      
-      const filteredInvoices = data.filter((invoice) => {
+      const filteredInvoices = invoiceArray.filter((invoice) => {
         // ✅ Show APPOINTMENT and SUPPLEMENTAL invoices for this appointment
         // SUPPLEMENTAL invoices are additional invoices created after the main APPOINTMENT invoice
         if (invoice.invoiceType !== 'APPOINTMENT' && invoice.invoiceType !== 'SUPPLEMENTAL') {

@@ -58,11 +58,9 @@ export class DashboardService {
       { params: queryParams }
     );
     
-    // BE có thể trả về wrapped { success, data, message } hoặc trực tiếp
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<DashboardOverview>(response);
   }
 
   /**
@@ -93,10 +91,9 @@ export class DashboardService {
       { params: queryParams }
     );
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<any>(response);
   }
 
   /**
@@ -124,10 +121,9 @@ export class DashboardService {
       { params: queryParams }
     );
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<any>(response);
   }
 
   /**
@@ -151,10 +147,9 @@ export class DashboardService {
       { params: queryParams }
     );
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<any>(response);
   }
 
   /**
@@ -178,10 +173,9 @@ export class DashboardService {
       { params: queryParams }
     );
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<any>(response);
   }
 
   /**

@@ -21,12 +21,15 @@ export class RoomService {
     console.log('Active Rooms API URL:', url);
 
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<Room[]>(url);
+    const response = await axios.get<any>(url);
     
     console.log('Active Rooms API Response:', response.data);
     console.log('Response status:', response.status);
     
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: [...] }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<Room[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 
   /**
@@ -62,13 +65,14 @@ export class RoomService {
     console.log('Room API URL:', url);
 
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<RoomListResponse>(url);
+    const response = await axios.get<any>(url);
     
     console.log('Room API Response:', response.data);
     console.log('Response status:', response.status);
     
-    // Return the response directly - API returns the correct format
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<RoomListResponse>(response);
   }
 
   /**
@@ -93,7 +97,9 @@ export class RoomService {
     console.log('Test API Response:', response.data);
     console.log('Test Response status:', response.status);
     
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<RoomListResponse>(response);
   }
 
   /**
@@ -104,8 +110,9 @@ export class RoomService {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<Room>(`${this.BASE_URL}/${roomId}`);
     
-    // Return the room data directly
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Room>(response);
   }
 
   /**

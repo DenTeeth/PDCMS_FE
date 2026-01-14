@@ -23,7 +23,8 @@ class FeedbackService {
     async getRatingsOverview(): Promise<RatingsOverview> {
         const axiosInstance = apiClient.getAxiosInstance();
         const response = await axiosInstance.get(`${this.endpoint}/overview`);
-        return response.data?.data || response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<RatingsOverview | DentistRating[] | ServiceRating[] | PaginatedReviews | Review[] | FeedbackAnalytics | any>(response);
     }
 
     /**
@@ -32,7 +33,9 @@ class FeedbackService {
     async getDentistRatings(): Promise<DentistRating[]> {
         const axiosInstance = apiClient.getAxiosInstance();
         const response = await axiosInstance.get(`${this.endpoint}/dentists`);
-        return response.data?.data || response.data || [];
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const data = extractApiResponse<any>(response);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -41,7 +44,9 @@ class FeedbackService {
     async getServiceRatings(): Promise<ServiceRating[]> {
         const axiosInstance = apiClient.getAxiosInstance();
         const response = await axiosInstance.get(`${this.endpoint}/services`);
-        return response.data?.data || response.data || [];
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const data = extractApiResponse<any>(response);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -52,7 +57,8 @@ class FeedbackService {
         const response = await axiosInstance.get(`${this.endpoint}/reviews`, {
             params: filters,
         });
-        return response.data?.data || response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<RatingsOverview | DentistRating[] | ServiceRating[] | PaginatedReviews | Review[] | FeedbackAnalytics | any>(response);
     }
 
     /**
@@ -63,7 +69,9 @@ class FeedbackService {
         const response = await axiosInstance.get(
             `${this.endpoint}/dentists/${dentistCode}/reviews`
         );
-        return response.data?.data || response.data || [];
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const data = extractApiResponse<any>(response);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -74,7 +82,9 @@ class FeedbackService {
         const response = await axiosInstance.get(
             `${this.endpoint}/services/${serviceCode}/reviews`
         );
-        return response.data?.data || response.data || [];
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const data = extractApiResponse<any>(response);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -83,7 +93,8 @@ class FeedbackService {
     async getFeedbackAnalytics(): Promise<FeedbackAnalytics> {
         const axiosInstance = apiClient.getAxiosInstance();
         const response = await axiosInstance.get(`${this.endpoint}/analytics`);
-        return response.data?.data || response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<RatingsOverview | DentistRating[] | ServiceRating[] | PaginatedReviews | Review[] | FeedbackAnalytics | any>(response);
     }
 
     /**
@@ -96,7 +107,8 @@ class FeedbackService {
     }> {
         const axiosInstance = apiClient.getAxiosInstance();
         const response = await axiosInstance.get(`${this.endpoint}/ai-summary`);
-        return response.data?.data || response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<RatingsOverview | DentistRating[] | ServiceRating[] | PaginatedReviews | Review[] | FeedbackAnalytics | any>(response);
     }
 }
 

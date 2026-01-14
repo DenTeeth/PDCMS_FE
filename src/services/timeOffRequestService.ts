@@ -57,7 +57,8 @@ export class TimeOffRequestService {
         this.BASE_URL,
         requestBody
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<TimeOffRequestDetail>(response);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' TimeOffRequestService.createTimeOffRequest failed:');
@@ -99,7 +100,8 @@ export class TimeOffRequestService {
       this.BASE_URL,
       { params }
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 
   /**
@@ -118,7 +120,8 @@ export class TimeOffRequestService {
     const response = await axios.get<TimeOffRequestDetail>(
       `${this.BASE_URL}/${requestId}`
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 
   /**
@@ -140,7 +143,8 @@ export class TimeOffRequestService {
       `${this.BASE_URL}/${requestId}`,
       data
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 
   /**
@@ -161,7 +165,8 @@ export class TimeOffRequestService {
       `${this.BASE_URL}/${requestId}`,
       { status: 'APPROVED' }
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 
   /**
@@ -183,7 +188,8 @@ export class TimeOffRequestService {
       `${this.BASE_URL}/${requestId}`,
       { status: 'REJECTED', reason: data.rejectedReason }
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 
   /**
@@ -205,7 +211,8 @@ export class TimeOffRequestService {
       `${this.BASE_URL}/${requestId}`,
       { status: 'CANCELLED', reason: data.cancellationReason }
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<TimeOffRequestDetail>(response);
   }
 }
 

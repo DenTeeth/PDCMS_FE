@@ -160,16 +160,32 @@ class InvoiceService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
+      console.log('📝 Creating invoice with request:', {
+        invoiceType: request.invoiceType,
+        patientId: request.patientId,
+        appointmentId: request.appointmentId,
+        itemsCount: request.items.length,
+      });
+      
       const response = await axiosInstance.post<InvoiceResponse>(this.endpoint, request);
       
-      console.log('✅ Create invoice success:', response.data);
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const invoiceData = extractApiResponse<InvoiceResponse>(response);
       
-      return response.data;
+      console.log('✅ Create invoice success:', {
+        invoiceCode: invoiceData.invoiceCode,
+        invoiceId: invoiceData.invoiceId,
+        totalAmount: invoiceData.totalAmount,
+      });
+      
+      return invoiceData;
     } catch (error: any) {
       console.error('❌ Create invoice error:', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
+        request: request,
       });
       throw error;
     }
@@ -193,7 +209,8 @@ class InvoiceService {
       
       console.log('✅ Get invoice success:', response.data);
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error('❌ Get invoice error:', {
         status: error.response?.status,
@@ -218,7 +235,11 @@ class InvoiceService {
     
     try {
       const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/patient/${patientId}`);
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<InvoiceResponse[]>(response);
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
       console.error('❌ Get invoices by patient error:', error);
       throw error;
@@ -239,7 +260,11 @@ class InvoiceService {
     
     try {
       const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/appointment/${appointmentId}`);
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<InvoiceResponse[]>(response);
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
       console.error('❌ Get invoices by appointment error:', error);
       throw error;
@@ -284,7 +309,8 @@ class InvoiceService {
         : this.endpoint;
 
       const response = await axiosInstance.get<PageResponse<InvoiceResponse>>(url);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error('❌ Get all invoices error:', error);
       throw error;
@@ -305,7 +331,8 @@ class InvoiceService {
     
     try {
       const response = await axiosInstance.get<InvoiceResponse[]>(`${this.endpoint}/patient/${patientId}/unpaid`);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error('❌ Get unpaid invoices error:', error);
       throw error;
@@ -326,7 +353,8 @@ class InvoiceService {
     
     try {
       const response = await axiosInstance.get<InvoiceResponse>(`${this.endpoint}/${invoiceCode}/payment-status`);
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error('❌ Check payment status error:', error);
       throw error;
@@ -363,13 +391,13 @@ class InvoiceService {
       
       const response = await axiosInstance.get<any>(url);
       
-      // Handle wrapped response: { statusCode, message, data: {...} }
-      const paymentHistory = response.data.data || response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const paymentHistory = extractApiResponse<any>(response);
       
       console.log('📦 Payment history response structure:', {
-        hasDirectData: !!response.data.invoices,
-        hasWrappedData: !!response.data.data,
-        usingWrapped: !!response.data.data
+        hasData: !!paymentHistory,
+        type: typeof paymentHistory
       });
       
       return paymentHistory;

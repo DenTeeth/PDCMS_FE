@@ -63,13 +63,9 @@ export class EmployeeService {
       params: queryParams
     });
 
-    // BE có thể trả về trực tiếp hoặc wrapped trong { data }
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    
-    // Nếu BE trả về trực tiếp pagination object
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PaginatedResponse<Employee>>(response);
   }
 
   /**
@@ -81,10 +77,8 @@ export class EmployeeService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`${this.endpoint}/admin/${employeeCode}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Employee>(response);
   }
 
   /**
@@ -104,10 +98,8 @@ export class EmployeeService {
     
     const response = await axiosInstance.post(this.endpoint, payload);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Employee>(response);
   }
 
   /**
@@ -128,10 +120,8 @@ export class EmployeeService {
     
     const response = await axiosInstance.patch(`${this.endpoint}/${employeeCode}`, payload);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Employee>(response);
   }
 
   /**
@@ -143,10 +133,8 @@ export class EmployeeService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.delete(`${this.endpoint}/${employeeCode}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Employee>(response);
   }
 
   /**
@@ -173,10 +161,9 @@ export class EmployeeService {
         console.log('✅ Employee stats response:', response.data);
       }
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       // Log detailed error for debugging
       if (process.env.NODE_ENV === 'development') {

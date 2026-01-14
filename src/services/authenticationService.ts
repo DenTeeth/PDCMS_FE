@@ -37,10 +37,9 @@ class AuthenticationService {
       
       console.log(' Forgot password success:', response.data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data || { message: 'Đã gửi email đặt lại mật khẩu' };
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<{ message: string }>(response);
+      return data || { message: 'Đã gửi email đặt lại mật khẩu' };
     } catch (error: any) {
       console.error(' Forgot password error:', {
         status: error.response?.status,
@@ -74,10 +73,9 @@ class AuthenticationService {
       email,
     });
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data || { message: 'Verification email sent successfully' };
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<{ message: string }>(response);
+    return data || { message: 'Verification email sent successfully' };
   }
 
   /**
@@ -124,10 +122,9 @@ class AuthenticationService {
       
       console.log(' Reset password success:', response.data);
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data || { message: 'Password reset successfully' };
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<{ message: string }>(response);
+      return data || { message: 'Password reset successfully' };
     } catch (error: any) {
       console.error(' Reset password error:', {
         status: error.response?.status,
@@ -152,10 +149,8 @@ class AuthenticationService {
     try {
       const response = await axiosInstance.get('/account/profile');
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<UserProfileResponse>(response);
     } catch (error: any) {
       console.error(' Get account profile error:', {
         status: error.response?.status,

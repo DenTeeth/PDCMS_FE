@@ -101,21 +101,27 @@ export const appointmentService = {
         }
         
         const url = `${APPOINTMENT_BASE_URL}?${params.toString()}`;
-        const response = await api.get<PaginatedAppointmentResponse>(url);
-        return response.data;
+        const response = await api.get<any>(url);
+        
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<PaginatedAppointmentResponse>(response);
     },
     
     // Legacy get appointments (deprecated - for backward compatibility)
     // @deprecated Use getAppointmentsPage() instead
     getAppointments: async (filter?: AppointmentFilter): Promise<Appointment[]> => {
         const response = await api.get(APPOINTMENT_BASE_URL, { params: filter });
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const data = extractApiResponse<Appointment[]>(response);
+        return Array.isArray(data) ? data : [];
     },
 
     // Get appointment by ID
     getAppointmentById: async (id: number): Promise<Appointment> => {
         const response = await api.get(`${APPOINTMENT_BASE_URL}/${id}`);
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<Appointment>(response);
     },
 
     // P3.4 - Get Appointment Detail by Code
@@ -123,7 +129,9 @@ export const appointmentService = {
     // Returns AppointmentDetailDTO with additional fields (actualStartTime, actualEndTime, createdBy, createdAt)
     getAppointmentDetail: async (appointmentCode: string): Promise<AppointmentDetailDTO> => {
         const response = await api.get<AppointmentDetailDTO>(`${APPOINTMENT_BASE_URL}/${appointmentCode}`);
-        return response.data;
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<AppointmentDetailDTO>(response);
     },
 
     // Get appointment by code (using filter API - optimized to minimize API calls)
@@ -170,7 +178,9 @@ export const appointmentService = {
     // NEW API spec: Uses codes instead of IDs, roomCode, serviceCodes array, appointmentStartTime
     createAppointment: async (data: CreateAppointmentRequest): Promise<CreateAppointmentResponse> => {
         const response = await api.post<CreateAppointmentResponse>(APPOINTMENT_BASE_URL, data);
-        return response.data;
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<CreateAppointmentResponse>(response);
     },
 
     // Legacy create appointment (deprecated - for backward compatibility)
@@ -361,7 +371,10 @@ export const appointmentService = {
         
         const url = `${APPOINTMENT_BASE_URL}/available-times?${params.toString()}`;
         const response = await api.get<AvailableTimesResponse>(url);
-        return response.data;
+        
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        return extractApiResponse<AvailableTimesResponse>(response);
     },
     
     // Helper: Build appointment filter criteria from UI state

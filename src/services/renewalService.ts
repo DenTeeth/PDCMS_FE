@@ -54,15 +54,10 @@ class RenewalService {
       );
       
       // Handle both response structures
-      // Case 1: Direct array response
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
-      
-      // Case 2: Wrapped response { statusCode, data: [...] }
-      if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
-        return (response.data as any).data;
-      }
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any>(response);
+      return Array.isArray(data) ? data : [];
       
       // Fallback: return empty array
       return [];
@@ -140,7 +135,8 @@ class RenewalService {
         return (response.data as any).data;
       }
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error(' [renewalService.respondToRenewal] Failed:', error);
       
@@ -216,7 +212,8 @@ class RenewalService {
       
       // Handle both response structures
       if (Array.isArray(response.data)) {
-        return response.data;
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
       }
       
       if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
@@ -306,7 +303,8 @@ class RenewalService {
         return (response.data as any).data;
       }
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error(' [renewalService.finalizeRenewal] Failed:', error);
       

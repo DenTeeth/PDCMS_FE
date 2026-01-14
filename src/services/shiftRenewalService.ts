@@ -19,7 +19,8 @@ export class ShiftRenewalService {
   static async getPendingRenewals(): Promise<ShiftRenewalListResponse> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<ShiftRenewalListResponse>(`${this.BASE_URL}/pending`);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ShiftRenewalListResponse | ShiftRenewalRequest>(response);
   }
 
   /**
@@ -34,7 +35,8 @@ export class ShiftRenewalService {
       `${this.BASE_URL}/${renewalId}/respond`,
       data
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ShiftRenewalListResponse | ShiftRenewalRequest>(response);
   }
 
   /**

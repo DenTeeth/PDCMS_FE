@@ -47,14 +47,9 @@ class PatientService {
       }
     });
 
-    // BE có thể trả về trực tiếp hoặc wrapped trong { data }
-    // Check if response has nested structure
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    
-    // Nếu BE trả về trực tiếp pagination object
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<PaginatedResponse<Patient>>(response);
   }
 
   /**
@@ -66,10 +61,8 @@ class PatientService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`${this.endpoint}/admin/${patientCode}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -81,10 +74,8 @@ class PatientService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get(`${this.endpoint}/me/profile`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -108,10 +99,8 @@ class PatientService {
       note: 'Nếu hasAccount/accountStatus là undefined → BE chưa trả về các field này',
     });
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -124,10 +113,8 @@ class PatientService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.patch(`${this.endpoint}/${patientCode}`, data);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -139,10 +126,8 @@ class PatientService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.delete(`${this.endpoint}/${patientCode}`);
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -172,10 +157,8 @@ class PatientService {
     const patientIdNum = typeof patientId === 'string' ? parseInt(patientId, 10) : patientId;
     const response = await axiosInstance.post(`${this.endpoint}/${patientIdNum}/unban`, { reason });
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -216,10 +199,8 @@ class PatientService {
       },
     });
     
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<Patient>(response);
   }
 
   /**
@@ -245,8 +226,10 @@ class PatientService {
         }
       });
       
-      // Extract patients from paginated response
-      const allPatients = response.data.content || response.data.data?.content || [];
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const pageData = extractApiResponse<any>(response);
+      const allPatients = pageData?.content || [];
       const query = params.query.toLowerCase().trim();
       
       // Client-side filtering by name or phone
@@ -288,10 +271,9 @@ class PatientService {
         console.log('✅ Patient stats response:', response.data);
       }
       
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       // Log detailed error for debugging
       if (process.env.NODE_ENV === 'development') {

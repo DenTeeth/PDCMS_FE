@@ -58,7 +58,8 @@ export interface ConversionRate {
  */
 export const createContact = async (payload: ContactInput): Promise<Contact> => {
   const response = await axios.post('/customer-contacts', payload);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -75,7 +76,8 @@ export const getContacts = async (params?: {
   sortDirection?: 'ASC' | 'DESC';
 }) => {
   const response = await axios.get('/customer-contacts', { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -84,7 +86,8 @@ export const getContacts = async (params?: {
  */
 export const getContactById = async (contactId: string): Promise<Contact> => {
   const response = await axios.get(`/customer-contacts/${contactId}`);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -96,7 +99,8 @@ export const updateContact = async (
   payload: Partial<ContactInput>
 ): Promise<Contact> => {
   const response = await axios.put(`/customer-contacts/${contactId}`, payload);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -115,7 +119,8 @@ export const deleteContact = async (contactId: string): Promise<void> => {
  */
 export const getContactHistory = async (contactId: string): Promise<ContactHistory[]> => {
   const response = await axios.get(`/customer-contacts/${contactId}/history`);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -130,7 +135,8 @@ export const addContactHistory = async (
   }
 ): Promise<ContactHistory> => {
   const response = await axios.post(`/customer-contacts/${contactId}/history`, payload);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 // ==================== P3: Hành động nghiệp vụ APIs ====================
@@ -148,7 +154,8 @@ export const assignContact = async (
   const response = await axios.post(`/customer-contacts/${contactId}/assign`, {
     employeeId,
   });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -157,7 +164,8 @@ export const assignContact = async (
  */
 export const convertToPatient = async (contactId: string): Promise<Contact> => {
   const response = await axios.post(`/customer-contacts/${contactId}/convert`);
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 // ==================== (Optional) Thống kê APIs ====================
@@ -171,7 +179,8 @@ export const getContactStats = async (params?: {
   endDate?: string;
 }): Promise<ContactStats> => {
   const response = await axios.get('/customer-contacts/stats', { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 /**
@@ -183,7 +192,8 @@ export const getConversionRate = async (params?: {
   endDate?: string;
 }): Promise<ConversionRate> => {
   const response = await axios.get('/customer-contacts/conversion-rate', { params });
-  return response.data?.data || response.data;
+  const { extractApiResponse } = await import('@/utils/apiResponse');
+  return extractApiResponse<Contact | any>(response);
 };
 
 // ==================== Export default ====================

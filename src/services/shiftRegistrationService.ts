@@ -64,27 +64,20 @@ class ShiftRegistrationService {
       }
     });
 
-    // Handle both response structures
-    // Case 1: Direct array response (Employee view, Admin view)
-    if (Array.isArray(response.data)) {
-      return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    
+    // Handle array response
+    if (Array.isArray(data)) {
+      return data;
     }
-
-    // Case 2: Wrapped array response { statusCode, data: [...] }
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
+    
+    // Handle paginated response
+    if (data?.content && Array.isArray(data.content)) {
+      return data;
     }
-
-    // Case 3: Paginated response { content: [...], totalPages, ... }
-    if (response.data?.content && Array.isArray(response.data.content)) {
-      return response.data;
-    }
-
-    // Case 4: Wrapped paginated response { statusCode, data: { content: [...] } }
-    if (response.data?.data?.content && Array.isArray(response.data.data.content)) {
-      return response.data.data;
-    }
-
+    
     // Fallback: return empty array
     return [];
   }
@@ -106,7 +99,9 @@ class ShiftRegistrationService {
       `${this.endpoint}/part-time-flex/${registrationId}`
     );
 
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<ShiftRegistration>(response);
   }
 
   /**
@@ -121,11 +116,9 @@ class ShiftRegistrationService {
     try {
       const response = await axiosInstance.post<ShiftRegistrationResponse>('/registrations/part-time-flex', data);
 
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as ShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ShiftRegistration>(response);
     } catch (error: any) {
       // Handle specific error codes
       if (error.response?.data?.errorCode === RegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
@@ -183,11 +176,9 @@ class ShiftRegistrationService {
     try {
       const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
 
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as ShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ShiftRegistration>(response);
     } catch (error: any) {
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
@@ -213,11 +204,9 @@ class ShiftRegistrationService {
     try {
       const response = await axiosInstance.patch<ShiftRegistrationResponse>(`${this.endpoint}/${registrationId}/effective-to`, data);
 
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as ShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ShiftRegistration>(response);
     } catch (error: any) {
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
@@ -255,15 +244,14 @@ class ShiftRegistrationService {
         dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : 'N/A'
       });
 
-      // Handle both response structures
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<any>(response);
       let slots: AvailableSlot[] = [];
 
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        console.log(' [shiftRegistrationService.getAvailableSlots] Found wrapped array response.data.data');
-        slots = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        console.log(' [shiftRegistrationService.getAvailableSlots] Found direct array response.data');
-        slots = response.data;
+      if (Array.isArray(data)) {
+        console.log(' [shiftRegistrationService.getAvailableSlots] Found array response');
+        slots = data;
       } else {
         console.warn(' [shiftRegistrationService.getAvailableSlots] Unexpected response structure:', response.data);
         slots = [];
@@ -306,14 +294,12 @@ class ShiftRegistrationService {
         data: response.data
       });
 
-      // Handle both response structures
-      if (response.data?.data) {
-        console.log(' [shiftRegistrationService.getSlotDetails] Found wrapped response.data.data');
-        return response.data.data;
-      }
-
-      console.log(' [shiftRegistrationService.getSlotDetails] Using direct response.data');
-      return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const responseData = extractApiResponse<SlotDetailsResponse>(response);
+      
+      console.log(' [shiftRegistrationService.getSlotDetails] Using unwrapped response');
+      return responseData;
     } catch (error: any) {
       console.error(' [shiftRegistrationService.getSlotDetails] API Error:', {
         error,
@@ -481,11 +467,9 @@ class ShiftRegistrationService {
 
       console.log(' Registration status updated:', response.data);
 
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as ShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ShiftRegistration>(response);
     } catch (error: any) {
       console.error(' Update registration status error:', {
         status: error.response?.status,

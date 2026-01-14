@@ -94,10 +94,13 @@ export function OptimizedTable<T extends { [key: string]: any }>({
 }: OptimizedTableProps<T>) {
   // Memoize filtered/searched data
   const filteredData = useMemo(() => {
-    if (!searchValue || !onSearchChange) return data;
+    // Ensure data is always an array
+    const safeData = Array.isArray(data) ? data : [];
+    
+    if (!searchValue || !onSearchChange) return safeData;
     
     const searchLower = searchValue.toLowerCase();
-    return data.filter((row) => {
+    return safeData.filter((row) => {
       // Search across all string values in the row
       return Object.values(row).some((value) => {
         if (typeof value === 'string') {

@@ -236,9 +236,10 @@ export default function BookingServicesPage() {
 
       // Only update if request wasn't cancelled
       if (!abortController.signal.aborted) {
-        setServices(response.content);
-        setTotalElements(response.totalElements);
-        setTotalPages(response.totalPages);
+        // Ensure response.content is always an array
+        setServices(Array.isArray(response.content) ? response.content : []);
+        setTotalElements(response.totalElements ?? 0);
+        setTotalPages(response.totalPages ?? 0);
       }
     } catch (error: any) {
       // Don't show error if request was cancelled
@@ -844,7 +845,7 @@ export default function BookingServicesPage() {
                   ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
                   : 'text-xs bg-green-100 text-green-800'
               }>
-                {services.filter(s => s.isActive).length}
+                {Array.isArray(services) ? services.filter(s => s.isActive).length : 0}
               </Badge>
             </button>
 
@@ -871,7 +872,7 @@ export default function BookingServicesPage() {
                   ? 'text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30'
                   : 'text-xs bg-gray-200 text-gray-700'
               }>
-                {services.filter(s => !s.isActive).length}
+                {Array.isArray(services) ? services.filter(s => !s.isActive).length : 0}
               </Badge>
             </button>
           </div>

@@ -37,23 +37,19 @@ class FixedRegistrationService {
       params: params
     });
 
-    // Handle both response structures
-    // Case 1: Direct array response
-    if (Array.isArray(response.data)) {
-      return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    
+    if (Array.isArray(data)) {
+      return data;
     }
     
-    // Case 2: Wrapped response { statusCode, data: [...] }
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
+    // Single object wrapped - convert to array
+    if (data && typeof data === 'object') {
+      return [data];
     }
     
-    // Case 3: Single object wrapped
-    if (response.data?.data && !Array.isArray(response.data.data)) {
-      return [response.data.data];
-    }
-    
-    // Fallback: return empty array
     return [];
   }
 
@@ -66,11 +62,9 @@ class FixedRegistrationService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get<FixedRegistrationResponse>(`${this.endpoint}/${registrationId}`);
     
-    // Handle both response structures
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as FixedShiftRegistration;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<FixedShiftRegistration>(response);
   }
 
   /**
@@ -84,11 +78,9 @@ class FixedRegistrationService {
     try {
       const response = await axiosInstance.post<FixedRegistrationResponse>(this.endpoint, data);
       
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as FixedShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<FixedShiftRegistration>(response);
     } catch (error: any) {
       // Re-throw with more specific error message
       if (error.response?.data?.errorCode) {
@@ -122,11 +114,9 @@ class FixedRegistrationService {
     try {
       const response = await axiosInstance.patch<FixedRegistrationResponse>(`${this.endpoint}/${registrationId}`, data);
       
-      // Handle both response structures
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      return response.data as unknown as FixedShiftRegistration;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<FixedShiftRegistration>(response);
     } catch (error: any) {
       if (error.response?.data?.errorCode) {
         const errorCode = error.response.data.errorCode;

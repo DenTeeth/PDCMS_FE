@@ -87,7 +87,7 @@ export default function AdminOvertimeRequestsPage() {
         size: 100, // Load nhiều hơn để hiển thị đầy đủ
         sort: 'createdAt,desc', // Mới nhất ở đầu
       });
-      setOvertimeRequests(response.content);
+      setOvertimeRequests(Array.isArray(response.content) ? response.content : []);
     } catch (error) {
       console.error('Error loading overtime requests:', error);
     } finally {
@@ -229,7 +229,7 @@ export default function AdminOvertimeRequestsPage() {
 
   // ⚡ Memoize filtered requests - Sort by createdAt DESC (newest first)
   const filteredRequests = useMemo(() => {
-    const filtered = overtimeRequests.filter((request) => {
+    const filtered = (Array.isArray(overtimeRequests) ? overtimeRequests : []).filter((request) => {
       const matchesSearch =
         request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());

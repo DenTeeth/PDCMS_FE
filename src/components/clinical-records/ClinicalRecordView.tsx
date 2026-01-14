@@ -75,7 +75,11 @@ export default function ClinicalRecordView({
   // Load tooth statuses
   useEffect(() => {
     const loadToothStatuses = async () => {
-      if (!record.patient.patientId) return;
+      // Add defensive check for record.patient
+      if (!record?.patient?.patientId) {
+        console.warn('ClinicalRecordView: No patient ID available, skipping tooth status load');
+        return;
+      }
       
       setLoadingToothStatuses(true);
       try {
@@ -90,7 +94,7 @@ export default function ClinicalRecordView({
     };
 
     loadToothStatuses();
-  }, [record.patient.patientId]);
+  }, [record?.patient?.patientId]);
 
   // Load prescription (fallback if not in record response)
   useEffect(() => {
@@ -160,7 +164,11 @@ export default function ClinicalRecordView({
 
   // Handle tooth status update success
   const handleToothStatusUpdate = async () => {
-    if (!record.patient.patientId) return;
+    // Add defensive check for record.patient
+    if (!record?.patient?.patientId) {
+      console.warn('ClinicalRecordView: No patient ID available, skipping tooth status refresh');
+      return;
+    }
     
     try {
       const statuses = await toothStatusService.getToothStatus(record.patient.patientId);
@@ -415,7 +423,7 @@ export default function ClinicalRecordView({
         </div>
 
         {/* Right: Patient Images - Lazy loaded để tối ưu performance */}
-        {record.patient.patientId && (
+        {record?.patient?.patientId && (
           <div className="pl-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
@@ -432,8 +440,8 @@ export default function ClinicalRecordView({
               }
             >
               <PatientImageManager
-                patientId={record.patient.patientId}
-                clinicalRecordId={record.clinicalRecordId}
+                patientId={record?.patient?.patientId}
+                clinicalRecordId={record?.clinicalRecordId}
                 showFilters={true}
               />
             </Suspense>
@@ -442,15 +450,17 @@ export default function ClinicalRecordView({
       </div>
 
       {/* Odontogram - Full width */}
-      <div className="pb-6 border-b">
-        <Odontogram
-          patientId={record.patient.patientId}
-          toothStatuses={toothStatuses}
-          onToothClick={canEdit ? handleToothClick : undefined}
-          editable={canEdit}
-          readOnly={!canEdit}
-        />
-      </div>
+      {record?.patient?.patientId && (
+        <div className="pb-6 border-b">
+          <Odontogram
+            patientId={record.patient.patientId}
+            toothStatuses={toothStatuses}
+            onToothClick={canEdit ? handleToothClick : undefined}
+            editable={canEdit}
+            readOnly={!canEdit}
+          />
+        </div>
+      )}
 
       {/* Prescription & Procedures - 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -500,7 +510,7 @@ export default function ClinicalRecordView({
       )}
 
       {/* Tooth Status Dialog */}
-      {canEdit && selectedTooth && (
+      {canEdit && selectedTooth && record?.patient?.patientId && (
         <ToothStatusDialog
           open={toothDialogOpen}
           onOpenChange={setToothDialogOpen}

@@ -38,17 +38,19 @@ export const workShiftService = {
       const response = await api.get<WorkShiftListResponse | WorkShift[]>('/work-shifts', { params });
       console.log('✅ Work shifts response:', response.data);
 
-      // Handle both response structures
-      // Case 1: { statusCode, data: [...] }
-      // Case 2: [...]
-      if (Array.isArray(response.data)) {
-        console.log('📊 Returning array data:', response.data.length, 'items');
-        return response.data;
+      // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      const data = extractApiResponse<WorkShift[] | WorkShiftListResponse>(response);
+      
+      // Handle both array and paginated response
+      if (Array.isArray(data)) {
+        console.log('📊 Returning array data:', data.length, 'items');
+        return data;
       }
-
-      // @ts-ignore - Type assertion for wrapped response
-      const result = response.data.data || [];
-      console.log('📊 Returning wrapped data:', result.length, 'items');
+      
+      // If paginated response, return content array
+      const result = (data as any)?.content || [];
+      console.log('📊 Returning paginated data:', result.length, 'items');
       return result;
     } catch (error: any) {
       console.error('❌ Error fetching work shifts:', error);
@@ -61,31 +63,22 @@ export const workShiftService = {
   // Get work shift by ID
   getById: async (workShiftId: string): Promise<WorkShift> => {
     const response = await api.get<WorkShiftResponse>(`/work-shifts/${workShiftId}`);
-    // Handle both response structures
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as WorkShift;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<WorkShift>(response);
   },
 
   // Create new work shift
   create: async (data: CreateWorkShiftRequest): Promise<WorkShift> => {
     const response = await api.post<WorkShiftResponse>('/work-shifts', data);
-    // Handle both response structures
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as WorkShift;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<WorkShift>(response);
   },
 
   // Update work shift
   update: async (workShiftId: string, data: UpdateWorkShiftRequest): Promise<WorkShift> => {
     const response = await api.patch<WorkShiftResponse>(`/work-shifts/${workShiftId}`, data);
-    // Handle both response structures
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as WorkShift;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<WorkShift>(response);
   },
 
   // Delete work shift (soft delete)
@@ -96,10 +89,7 @@ export const workShiftService = {
   // Reactivate work shift
   reactivate: async (workShiftId: string): Promise<WorkShift> => {
     const response = await api.put<WorkShiftResponse>(`/work-shifts/${workShiftId}/reactivate`);
-    // Handle both response structures
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as unknown as WorkShift;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<WorkShift>(response);
   },
 };

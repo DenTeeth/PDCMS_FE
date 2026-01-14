@@ -72,7 +72,8 @@ class PaymentService {
       
       console.log('✅ Create payment success:', response.data);
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<PaymentResponse>(response);
     } catch (error: any) {
       console.error('❌ Create payment error:', {
         status: error.response?.status,
@@ -101,7 +102,8 @@ class PaymentService {
       
       console.log('✅ Get payments by invoice success:', response.data);
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<PaymentResponse[]>(response);
     } catch (error: any) {
       console.error('❌ Get payments by invoice error:', {
         status: error.response?.status,
@@ -130,7 +132,8 @@ class PaymentService {
       
       console.log('✅ Get payment by code success:', response.data);
       
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<PaymentResponse>(response);
     } catch (error: any) {
       console.error('❌ Get payment by code error:', {
         status: error.response?.status,

@@ -47,7 +47,8 @@ export class OvertimeService {
       if (process.env.NODE_ENV === 'development') {
         console.log(' OvertimeService.createOvertimeRequest success:', response.data);
       }
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
         console.error(' OvertimeService.createOvertimeRequest error:', {
@@ -95,7 +96,8 @@ export class OvertimeService {
 
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<OvertimeRequestListResponse>(url);
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<OvertimeRequestListResponse>(response);
   }
 
   /**
@@ -112,7 +114,8 @@ export class OvertimeService {
     const response = await axios.get<OvertimeRequestDetail>(
       `${this.BASE_URL}/${requestId}`
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<OvertimeRequestDetail>(response);
   }
 
   /**
@@ -133,7 +136,8 @@ export class OvertimeService {
       `${this.BASE_URL}/${requestId}`,
       data
     );
-    return response.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<OvertimeRequest>(response);
   }
 
   /**

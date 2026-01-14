@@ -107,11 +107,29 @@ export default function AdminAppointmentsPage() {
 
         const response = await appointmentService.getAppointmentsPage(criteria);
 
+        // Debug: Log response to check data structure
+        console.log('Appointments response:', {
+          content: response.content,
+          contentType: typeof response.content,
+          isArray: Array.isArray(response.content),
+          contentLength: Array.isArray(response.content) ? response.content.length : 'N/A',
+          totalElements: response.totalElements,
+          totalPages: response.totalPages,
+        });
+
         // Only update if request wasn't cancelled and component is still mounted
         if (!abortController.signal.aborted && isMounted) {
-          setAppointments(response.content);
-          setTotalElements(response.totalElements);
-          setTotalPages(response.totalPages);
+          // Ensure content is always an array
+          const safeContent = Array.isArray(response.content) ? response.content : [];
+          setAppointments(safeContent);
+          setTotalElements(response.totalElements ?? 0);
+          setTotalPages(response.totalPages ?? 0);
+          
+          // Debug: Log what we're setting
+          console.log('Setting appointments:', {
+            count: safeContent.length,
+            firstItem: safeContent[0],
+          });
         }
       } catch (error: any) {
         // Don't show error if request was cancelled or component unmounted

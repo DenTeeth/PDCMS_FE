@@ -103,7 +103,8 @@ class PatientImageService {
         this.BASE_URL,
         requestData
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error uploading patient image:", error);
       throw new Error(
@@ -148,7 +149,8 @@ class PatientImageService {
         `${this.BASE_URL}/patient/${options.patientId}`,
         { params }
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error fetching patient images:", error);
       throw new Error(
@@ -167,7 +169,8 @@ class PatientImageService {
       const response = await api.get<PatientImageResponse>(
         `${this.BASE_URL}/${imageId}`
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error fetching image details:", error);
       throw new Error(
@@ -190,7 +193,8 @@ class PatientImageService {
         `${this.BASE_URL}/${imageId}`,
         updates
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error updating image metadata:", error);
       throw new Error(
@@ -229,7 +233,8 @@ class PatientImageService {
       const response = await api.get<PatientImageResponse[]>(
         `${this.BASE_URL}/clinical-record/${clinicalRecordId}`
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error fetching images by clinical record:", error);
       throw new Error(
@@ -251,7 +256,8 @@ class PatientImageService {
       const response = await api.get<PatientImageResponse[]>(
         `${this.BASE_URL}/appointment/${appointmentId}`
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       // Handle 404 - appointment chưa có clinical record
       if (error.response?.status === 404) {
@@ -280,7 +286,8 @@ class PatientImageService {
       const response = await api.get<PatientImageComment[]>(
         `${this.BASE_URL}/${imageId}/comments`
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error fetching image comments:", error);
       throw new Error(
@@ -304,7 +311,8 @@ class PatientImageService {
         `${this.BASE_URL}/${imageId}/comments`,
         request
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error creating comment:", error);
       throw new Error(
@@ -328,7 +336,8 @@ class PatientImageService {
         `${this.BASE_URL}/comments/${commentId}`,
         request
       );
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<any>(response);
     } catch (error: any) {
       console.error("Error updating comment:", error);
       throw new Error(

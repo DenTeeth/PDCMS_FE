@@ -21,11 +21,10 @@ class PermissionService {
     const axiosInstance = apiClient.getAxiosInstance();
     const response = await axiosInstance.get('/permissions');
     
-    // BE có thể trả về wrapped hoặc trực tiếp
-    if (response.data?.data) {
-      return response.data.data;
-    }
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<Permission[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 }
 

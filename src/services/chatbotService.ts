@@ -45,7 +45,8 @@ class ChatbotService {
         request
       );
 
-      return response.data;
+      const { extractApiResponse } = await import('@/utils/apiResponse');
+      return extractApiResponse<ChatResponse>(response);
     } catch (error: any) {
       // Handle error response
       if (error.response?.data?.message) {

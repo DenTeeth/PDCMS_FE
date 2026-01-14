@@ -124,17 +124,21 @@ export class EmployeeShiftService {
       try {
         const response = await axios.get<PaginatedResponse<EmployeeShiftApiResponse>>(pageUrl);
 
+        // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+        const { extractApiResponse } = await import('@/utils/apiResponse');
+        const pageData = extractApiResponse<PaginatedResponse<EmployeeShiftApiResponse>>(response);
+
         console.log(`📅 EmployeeShiftService.getShifts - Page ${currentPage} response:`, {
           status: response.status,
-          totalElements: response.data.totalElements,
-          totalPages: response.data.totalPages,
-          currentPage: response.data.number,
-          contentLength: response.data.content?.length || 0,
-          hasMore: !response.data.last,
+          totalElements: pageData.totalElements,
+          totalPages: pageData.totalPages,
+          currentPage: pageData.number,
+          contentLength: pageData.content?.length || 0,
+          hasMore: !pageData.last,
         });
 
         // Convert API response to frontend format
-        const convertedShifts = (response.data.content || []).map(apiShift =>
+        const convertedShifts = (pageData.content || []).map(apiShift =>
           this.convertApiResponse(apiShift)
         );
 
@@ -144,11 +148,11 @@ export class EmployeeShiftService {
     });
 
         allShifts.push(...convertedShifts);
-        totalPages = response.data.totalPages;
-        hasMore = !response.data.last;
+        totalPages = pageData.totalPages;
+        hasMore = !pageData.last;
         currentPage++;
 
-        console.log(`✅ Loaded page ${currentPage - 1}: ${convertedShifts.length} shifts (Total: ${allShifts.length}/${response.data.totalElements})`);
+        console.log(`✅ Loaded page ${currentPage - 1}: ${convertedShifts.length} shifts (Total: ${allShifts.length}/${pageData.totalElements})`);
       } catch (error: any) {
         console.error(`❌ Failed to load page ${currentPage}:`, error);
         if (currentPage === (params?.page ?? 0)) throw error;
@@ -171,7 +175,8 @@ export class EmployeeShiftService {
   static async getShiftById(shiftId: string): Promise<EmployeeShiftDetail> {
     const axios = apiClient.getAxiosInstance();
     const response = await axios.get<ApiResponse<EmployeeShiftDetail>>(`${this.BASE_URL}/${shiftId}`);
-    return response.data.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<EmployeeShiftDetail>(response);
   }
 
   /**
@@ -203,17 +208,10 @@ export class EmployeeShiftService {
 
     console.log('Summary API Response:', response.data);
 
-    // Handle both wrapped and direct response formats
-    if (response.data && Array.isArray(response.data)) {
-      // Direct array response
-      return response.data;
-    } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-      // Wrapped response
-      return response.data.data;
-    } else {
-      console.error('Unexpected response format:', response.data);
-      return [];
-    }
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<any>(response);
+    return Array.isArray(data) ? data : [];
   }
 
 
@@ -255,7 +253,8 @@ export class EmployeeShiftService {
 
     console.log(' EmployeeShiftService.createShift - Response:', { status: response.status, data: response.data });
 
-    return response.data.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<EmployeeShiftDetail>(response);
   }
 
   /**
@@ -275,7 +274,8 @@ export class EmployeeShiftService {
 
     console.log(' EmployeeShiftService.updateShift - Response:', { status: response.status, data: response.data });
 
-    return response.data.data;
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    return extractApiResponse<EmployeeShiftDetail>(response);
   }
 
   /**

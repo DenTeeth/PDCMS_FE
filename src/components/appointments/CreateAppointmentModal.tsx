@@ -497,7 +497,8 @@ export default function CreateAppointmentModal({
         page: 0,
         size: 100,
       });
-      setServices(servicesResponse.content);
+      // Ensure servicesResponse.content is an array
+      setServices(Array.isArray(servicesResponse.content) ? servicesResponse.content : []);
 
       // Load specializations
       const specializationsData = await specializationService.getAll();
@@ -505,7 +506,9 @@ export default function CreateAppointmentModal({
 
       // Load categories
       const categoriesData = await ServiceCategoryService.getCategories();
-      setCategories(categoriesData.filter(cat => cat.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
+      // Ensure categoriesData is an array before filtering
+      const safeCategoriesData = Array.isArray(categoriesData) ? categoriesData : [];
+      setCategories(safeCategoriesData.filter(cat => cat.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
 
       // Load employees (all active employees - will filter by ROLE_DENTIST in Step 4)
       const employeeService = new EmployeeService();
@@ -946,11 +949,19 @@ export default function CreateAppointmentModal({
       const response = await appointmentService.findAvailableTimes(request);
       console.log(' Available-times API response:', response);
 
-      setAvailableSlots(response.availableSlots || []);
+      // Ensure availableSlots is always an array
+      const slots = Array.isArray(response?.availableSlots) ? response.availableSlots : [];
+      setAvailableSlots(slots);
 
-      // Capture error message from API response
-      if (response.message) {
+      // Capture error message from API response (if any)
+      if (response?.message) {
         setLoadSlotsError(response.message);
+      } else if (slots.length === 0) {
+        // Set a default message if no slots and no specific error message
+        setLoadSlotsError('Không có lịch trống cho bác sĩ này vào ngày đã chọn.');
+      } else {
+        // Clear error if slots are found
+        setLoadSlotsError('');
       }
 
       // IMPORTANT: Reset roomCode when reloading slots to prevent incompatibility
@@ -958,11 +969,11 @@ export default function CreateAppointmentModal({
       setAppointmentStartTime('');
 
       // Auto-select first available slot if slots are found
-      if (response.availableSlots.length > 0) {
-        const firstSlot = response.availableSlots[0];
+      if (slots.length > 0) {
+        const firstSlot = slots[0];
         console.log(' Auto-selecting first slot:', firstSlot);
         setAppointmentStartTime(firstSlot.startTime);
-        if (firstSlot.availableCompatibleRoomCodes.length > 0) {
+        if (Array.isArray(firstSlot.availableCompatibleRoomCodes) && firstSlot.availableCompatibleRoomCodes.length > 0) {
           setRoomCode(firstSlot.availableCompatibleRoomCodes[0]);
         }
       } else {
@@ -975,11 +986,32 @@ export default function CreateAppointmentModal({
         response: error.response?.data,
         status: error.response?.status,
       });
-      const errorMsg = error.response?.data?.message || error.message;
+      
+      // Extract error message from response
+      let errorMsg = 'Không thể tải thông tin lịch trống. Vui lòng thử lại sau.';
+      
+      // Try to extract message from wrapped response
+      if (error.response?.data) {
+        const responseData = error.response.data;
+        // Handle FormatRestResponse structure: { statusCode, message, data }
+        if (responseData.message) {
+          errorMsg = responseData.message;
+        } else if (responseData.data?.message) {
+          errorMsg = responseData.data.message;
+        } else if (typeof responseData === 'string') {
+          errorMsg = responseData;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
       setLoadSlotsError(errorMsg);
-      // User-friendly toast message
-      toast.error('Không thể tải thông tin lịch trống. Vui lòng thử lại sau.');
       setAvailableSlots([]);
+      
+      // Only show toast for actual errors, not for "no slots available" cases
+      if (error.response?.status !== 404 && error.response?.status !== 200) {
+        toast.error('Không thể tải thông tin lịch trống. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoadingAvailableSlots(false);
     }
@@ -1063,8 +1095,11 @@ export default function CreateAppointmentModal({
   const getServicesGroupedBySpecialization = useMemo(() => {
     const grouped = new Map<string | number, { specialization?: Specialization; services: Service[] }>();
 
+    // Ensure services is an array before iterating
+    const safeServices = Array.isArray(services) ? services : [];
+    
     // Group by specialization
-    services.forEach((service) => {
+    safeServices.forEach((service) => {
       const specId = service.specializationId || 'none';
       if (!grouped.has(specId)) {
         //  Fix: Compare both string and number versions of specializationId
@@ -1084,7 +1119,9 @@ export default function CreateAppointmentModal({
 
   // Step 3: Get filtered services based on selected specialization filter, doctor's specialization, search term, and group filter
   const getFilteredServices = (): Service[] => {
-    let filtered = services;
+    // Ensure services is an array
+    const safeServices = Array.isArray(services) ? services : [];
+    let filtered = safeServices;
 
     // Filter by doctor's specialization if doctor is selected (employeeCode from step 3)
     if (employeeCode && employeeCode !== '') {
@@ -1420,54 +1457,136 @@ export default function CreateAppointmentModal({
       }
 
       const appointmentResponse = await appointmentService.createAppointment(request);
+      
+      console.log('✅ Appointment created successfully:', {
+        appointmentCode: appointmentResponse?.appointmentCode,
+        status: appointmentResponse?.status,
+        fullResponse: appointmentResponse,
+      });
+      
+      // Validate appointment response
+      if (!appointmentResponse?.appointmentCode) {
+        console.error('❌ Invalid appointment response: missing appointmentCode', appointmentResponse);
+        toast.error('Tạo lịch hẹn thành công nhưng không thể lấy mã lịch hẹn. Vui lòng kiểm tra lại.');
+        onSuccess();
+        onClose();
+        return;
+      }
 
       toast.success('Đặt lịch hẹn thành công!');
 
       // Auto-create invoice after appointment is created (only if user has permission)
       if (canCreateInvoice) {
         try {
-        // Get appointment detail to get appointmentId
-        const appointmentDetail = await appointmentService.getAppointmentDetail(appointmentResponse.appointmentCode);
-        
-        if (!appointmentDetail.appointmentId || !selectedPatientData?.patientId) {
-          console.warn('⚠️ Cannot auto-create invoice: Missing appointmentId or patientId');
-          onSuccess();
-          onClose();
-          return;
-        }
+          console.log('💰 Starting auto-invoice creation...');
+          
+          // Get appointment detail to get appointmentId
+          // Add a small delay to ensure backend has processed the appointment
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Retry logic: Try up to 3 times with increasing delay
+          let appointmentDetail: any = null;
+          let retries = 0;
+          const maxRetries = 3;
+          
+          while (retries < maxRetries && !appointmentDetail) {
+            try {
+              console.log(`📋 Fetching appointment detail (attempt ${retries + 1}/${maxRetries})...`);
+              appointmentDetail = await appointmentService.getAppointmentDetail(appointmentResponse.appointmentCode);
+              console.log('✅ Got appointment detail:', {
+                appointmentId: appointmentDetail?.appointmentId,
+                appointmentCode: appointmentDetail?.appointmentCode,
+              });
+              break;
+            } catch (error: any) {
+              retries++;
+              if (retries < maxRetries) {
+                // Wait longer on each retry: 500ms, 1000ms, 1500ms
+                await new Promise(resolve => setTimeout(resolve, 500 * retries));
+                console.log(`⏳ Retrying getAppointmentDetail (attempt ${retries + 1}/${maxRetries})...`);
+              } else {
+                console.error('❌ Failed to get appointment detail after retries:', error);
+                throw error;
+              }
+            }
+          }
+          
+          if (!appointmentDetail?.appointmentId || !selectedPatientData?.patientId) {
+            console.warn('⚠️ Cannot auto-create invoice: Missing appointmentId or patientId', {
+              appointmentId: appointmentDetail?.appointmentId,
+              patientId: selectedPatientData?.patientId,
+              appointmentDetail: appointmentDetail,
+            });
+            onSuccess();
+            onClose();
+            return;
+          }
 
-        // Get service details with prices
-        const selectedServicesWithPrices = services.filter(s => serviceCodes.includes(s.serviceCode));
-        
-        if (selectedServicesWithPrices.length === 0) {
-          console.warn('⚠️ Cannot auto-create invoice: No services found');
-          onSuccess();
-          onClose();
-          return;
-        }
+          // Get service details with prices
+          const selectedServicesWithPrices = services.filter(s => serviceCodes.includes(s.serviceCode));
+          
+          console.log('🔍 Services for invoice:', {
+            serviceCodes,
+            selectedServicesCount: selectedServicesWithPrices.length,
+            services: selectedServicesWithPrices.map(s => ({
+              serviceCode: s.serviceCode,
+              serviceName: s.serviceName,
+              price: s.price,
+            })),
+          });
+          
+          if (selectedServicesWithPrices.length === 0) {
+            console.warn('⚠️ Cannot auto-create invoice: No services found', {
+              serviceCodes,
+              servicesAvailable: services.length,
+            });
+            onSuccess();
+            onClose();
+            return;
+          }
 
-        // Create invoice items from selected services
-        const invoiceItems = selectedServicesWithPrices.map(service => ({
-          serviceId: service.serviceId,
-          serviceCode: service.serviceCode,
-          serviceName: service.serviceName,
-          quantity: 1,
-          unitPrice: Number(service.price),
-          notes: `Dịch vụ từ lịch hẹn ${appointmentResponse.appointmentCode}`,
-        }));
+          // Create invoice items from selected services
+          const invoiceItems = selectedServicesWithPrices.map(service => ({
+            serviceId: service.serviceId,
+            serviceCode: service.serviceCode,
+            serviceName: service.serviceName,
+            quantity: 1,
+            unitPrice: Number(service.price) || 0,
+            notes: `Dịch vụ từ lịch hẹn ${appointmentResponse.appointmentCode}`,
+          }));
 
-        const invoiceRequest: CreateInvoiceRequest = {
-          invoiceType: 'APPOINTMENT',
-          patientId: Number(selectedPatientData.patientId),
-          appointmentId: appointmentDetail.appointmentId,
-          items: invoiceItems,
-          notes: `Hóa đơn tự động tạo cho lịch hẹn ${appointmentResponse.appointmentCode}`,
-        };
+          const invoiceRequest: CreateInvoiceRequest = {
+            invoiceType: 'APPOINTMENT',
+            patientId: Number(selectedPatientData.patientId),
+            appointmentId: appointmentDetail.appointmentId,
+            items: invoiceItems,
+            notes: `Hóa đơn tự động tạo cho lịch hẹn ${appointmentResponse.appointmentCode}`,
+          };
 
-          await invoiceService.createInvoice(invoiceRequest);
+          console.log('📝 Creating invoice with request:', {
+            invoiceType: invoiceRequest.invoiceType,
+            patientId: invoiceRequest.patientId,
+            appointmentId: invoiceRequest.appointmentId,
+            itemsCount: invoiceRequest.items.length,
+          });
+
+          const createdInvoice = await invoiceService.createInvoice(invoiceRequest);
+          
+          console.log('✅ Auto-invoice created successfully:', {
+            invoiceCode: createdInvoice.invoiceCode,
+            invoiceId: createdInvoice.invoiceId,
+            totalAmount: createdInvoice.totalAmount,
+          });
+          
           toast.success('Đã tự động tạo hóa đơn cho lịch hẹn!');
         } catch (invoiceError: any) {
-          console.error('Failed to auto-create invoice:', invoiceError);
+          console.error('❌ Failed to auto-create invoice:', {
+            error: invoiceError,
+            message: invoiceError.message,
+            response: invoiceError.response?.data,
+            status: invoiceError.response?.status,
+            appointmentCode: appointmentResponse.appointmentCode,
+          });
           // Don't fail the appointment creation if invoice creation fails
           toast.warning('Lịch hẹn đã được tạo, nhưng không thể tự động tạo hóa đơn. Vui lòng tạo hóa đơn thủ công.');
         }
