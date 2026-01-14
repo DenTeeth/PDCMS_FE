@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from '@/lib/api';
+import { extractApiResponse } from '@/utils/apiResponse';
 import {
   TimeOffType,
   TimeOffTypeListResponse,
@@ -49,7 +50,6 @@ export class TimeOffTypeService {
       this.BASE_URL,
       { params }
     );
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     const data = extractApiResponse<TimeOffType[]>(response);
     return Array.isArray(data) ? data : [];
   }
@@ -103,7 +103,6 @@ export class TimeOffTypeService {
       this.ADMIN_BASE_URL,
       { params }
     );
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     const data = extractApiResponse<TimeOffType[]>(response);
     return Array.isArray(data) ? data : [];
   }
@@ -125,9 +124,7 @@ export class TimeOffTypeService {
       this.ADMIN_BASE_URL,
       data
     );
-    const { extractApiResponse } = await import('@/utils/apiResponse');
-    const data = extractApiResponse<TimeOffType[]>(response);
-    return Array.isArray(data) ? data : [];
+    return extractApiResponse<TimeOffType>(response);
   }
 
   /**
@@ -151,9 +148,7 @@ export class TimeOffTypeService {
       `${this.ADMIN_BASE_URL}/${typeId}`,
       data
     );
-    const { extractApiResponse } = await import('@/utils/apiResponse');
-    const data = extractApiResponse<TimeOffType[]>(response);
-    return Array.isArray(data) ? data : [];
+    return extractApiResponse<TimeOffType>(response);
   }
 
   /**
@@ -176,9 +171,7 @@ export class TimeOffTypeService {
     const response = await axios.delete<TimeOffType>(
       `${this.ADMIN_BASE_URL}/${typeId}`
     );
-    const { extractApiResponse } = await import('@/utils/apiResponse');
-    const data = extractApiResponse<TimeOffType[]>(response);
-    return Array.isArray(data) ? data : [];
+    return extractApiResponse<TimeOffType>(response);
   }
 }
 
