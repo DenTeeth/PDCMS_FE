@@ -770,10 +770,10 @@ export default function EmployeeTimeOffRequestsPage() {
                   <CustomSelect
                     value={createForm.timeOffTypeId}
                     onChange={(value) => setCreateForm(prev => ({ ...prev, timeOffTypeId: value }))}
-                    options={timeOffTypes?.map(type => ({
+                    options={(timeOffTypes || []).map(type => ({
                       value: type.typeId,
                       label: `${type.typeName}${type.isPaid ? ' (Có lương)' : ' (Không lương)'}`
-                    })) || []}
+                    }))}
                   />
                   {createForm.timeOffTypeId && (
                     <div className="mt-2 text-sm text-gray-600">

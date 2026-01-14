@@ -159,7 +159,6 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faCalendarDays,
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
         employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
-        requiredRoles: ['ROLE_EMPLOYEE'], // Only show for employees
       },
       {
         name: 'Lịch làm việc nhân viên',
@@ -185,23 +184,24 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Yêu cầu làm thêm giờ',
         href: '/{baseRole}/overtime-requests',
         icon: faClockFour,
-        requiredPermissions: ['VIEW_OVERTIME_OWN', 'VIEW_OVERTIME_ALL', 'APPROVE_OVERTIME'],
+        requiredPermissions: ['VIEW_OVERTIME_OWN', 'VIEW_OVERTIME_ALL', 'APPROVE_OVERTIME', 'CREATE_OVERTIME'],
         requireAll: false,
-        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'],
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX'],
       },
       {
         name: 'Yêu cầu nghỉ phép',
         href: '/{baseRole}/time-off-requests',
         icon: faUmbrellaBeach,
-        requiredPermissions: ['VIEW_TIME_OFF_OWN', 'VIEW_TIME_OFF_ALL'],
+        requiredPermissions: ['VIEW_TIME_OFF_OWN', 'VIEW_TIME_OFF_ALL', 'CREATE_TIME_OFF'],
         requireAll: false,
-        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'],
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX'],
       },
       {
         name: 'Yêu cầu đăng ký ca',
         href: '/{baseRole}/registration-requests',
         icon: faUserCheck,
-        requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'],
+        requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_AVAILABLE_SLOTS'],
+        requireAll: false, // Chỉ cần 1 trong các quyền
       },
     ],
   },
@@ -254,31 +254,31 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Tổng quan kho',
         href: '/{baseRole}/warehouse',
         icon: faTachometerAlt,
-        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+        requiredPermissions: ['MANAGE_WAREHOUSE'],
       },
       {
         name: 'Quản lý vật tư',
         href: '/{baseRole}/warehouse/inventory',
         icon: faBoxes,
-        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+        requiredPermissions: ['MANAGE_WAREHOUSE'],
       },
       {
         name: 'Nhập/Xuất kho',
         href: '/{baseRole}/warehouse/storage',
         icon: faClipboard,
-        requiredPermissions: [ 'MANAGE_WAREHOUSE' ],
+        requiredPermissions: ['MANAGE_WAREHOUSE'],
       },
       {
         name: 'Nhà cung cấp',
         href: '/{baseRole}/warehouse/suppliers',
         icon: faUsers,
-        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+        requiredPermissions: ['MANAGE_WAREHOUSE'],
       },
       {
         name: 'Báo cáo & thống kê',
         href: '/{baseRole}/warehouse/reports',
         icon: faChartLine,
-        requiredPermissions: ['MANAGE_WAREHOUSE' ],
+        requiredPermissions: ['MANAGE_WAREHOUSE'],
       },
     ],
   },
@@ -297,17 +297,17 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
 const replaceBaseRolePlaceholder = (items: NavigationItem[], baseRole: string): NavigationItem[] => {
   return items.map(item => {
     const newItem = { ...item };
-    
+
     // Replace href placeholder
     if (newItem.href) {
       newItem.href = newItem.href.replace('{baseRole}', baseRole);
     }
-    
+
     // Recursively replace in submenu
     if (newItem.submenu) {
       newItem.submenu = replaceBaseRolePlaceholder(newItem.submenu, baseRole);
     }
-    
+
     return newItem;
   });
 };
@@ -355,6 +355,12 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faListCheck,
       requiredPermissions: ['VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_ALL'],
       requireAll: false,
+    },
+    {
+      name: 'Lịch sử thanh toán',
+      href: '/patient/payment-history',
+      icon: faMoneyBillWave,
+      requiredPermissions: ['VIEW_INVOICE_OWN'],
     },
     // Booking Management - Show if user has any booking-related permissions
     // {
@@ -505,7 +511,7 @@ export const hasPermissions = (
   requireAll: boolean = false
 ): boolean => {
   if (!userPermissions || userPermissions.length === 0) return false;
-  
+
   if (requireAll) {
     return requiredPermissions.every(permission => checkPermission(userPermissions, permission));
   } else {

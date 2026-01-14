@@ -313,7 +313,7 @@ export default function EmployeeOvertimeRequestsPage() {
 
 
 
-  const filteredRequests = overtimeRequests.filter((request) => {
+  const filteredRequests = (overtimeRequests || []).filter((request) => {
     const matchesSearch =
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());

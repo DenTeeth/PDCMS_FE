@@ -111,9 +111,9 @@ export function TransactionsTab({ startDate, endDate }: TransactionsTabProps) {
   ].filter((item) => item.value > 0);
 
   const invoiceByTypeData = [
-    { name: 'Appointment', value: data.invoices.byType.appointment.count },
-    { name: 'Treatment Plan', value: data.invoices.byType.treatmentPlan.count },
-    { name: 'Supplemental', value: data.invoices.byType.supplemental.count },
+    { name: 'Lịch hẹn', value: data.invoices.byType.appointment.count },
+    { name: 'Kế hoạch điều trị', value: data.invoices.byType.treatmentPlan.count },
+    { name: 'Bổ sung', value: data.invoices.byType.supplemental.count },
   ].filter((item) => item.value > 0);
 
   const paymentByMethodData = [

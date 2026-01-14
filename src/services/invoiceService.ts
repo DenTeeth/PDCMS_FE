@@ -332,6 +332,52 @@ class InvoiceService {
       throw error;
     }
   }
+
+  /**
+   * Get Patient Payment History
+   * NEW API - Endpoint: GET /api/v1/invoices/patient-history/{patientCode}
+   * BE Requirements:
+   * - Permission: VIEW_INVOICE_ALL or VIEW_INVOICE_OWN
+   * - Pagination: page is 0-based in request, currentPage is 1-based in response
+   * 
+   * @param filters Payment history filters
+   * @returns Patient payment history with invoices, pagination, and summary
+   */
+  async getPatientPaymentHistory(filters: import('@/types/patientPaymentHistory').PaymentHistoryFilters): Promise<import('@/types/patientPaymentHistory').PatientPaymentHistoryResponse> {
+    const axiosInstance = apiClient.getAxiosInstance();
+    
+    try {
+      const { patientCode, ...queryParams } = filters;
+      
+      // Build query string
+      const params = new URLSearchParams();
+      
+      if (queryParams.status) params.append('status', queryParams.status);
+      if (queryParams.fromDate) params.append('fromDate', queryParams.fromDate);
+      if (queryParams.toDate) params.append('toDate', queryParams.toDate);
+      if (queryParams.page !== undefined) params.append('page', queryParams.page.toString());
+      if (queryParams.size) params.append('size', queryParams.size.toString());
+      if (queryParams.sort) params.append('sort', queryParams.sort);
+      
+      const url = `${this.endpoint}/patient-history/${patientCode}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await axiosInstance.get<any>(url);
+      
+      // Handle wrapped response: { statusCode, message, data: {...} }
+      const paymentHistory = response.data.data || response.data;
+      
+      console.log('📦 Payment history response structure:', {
+        hasDirectData: !!response.data.invoices,
+        hasWrappedData: !!response.data.data,
+        usingWrapped: !!response.data.data
+      });
+      
+      return paymentHistory;
+    } catch (error: any) {
+      console.error('❌ Get patient payment history error:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

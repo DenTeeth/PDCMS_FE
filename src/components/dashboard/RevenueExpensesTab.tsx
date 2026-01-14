@@ -98,9 +98,9 @@ export function RevenueExpensesTab({
   }
 
   const revenueByTypeData = [
-    { name: 'Appointment', value: data.revenue.byType.appointment },
-    { name: 'Treatment Plan', value: data.revenue.byType.treatmentPlan },
-    { name: 'Supplemental', value: data.revenue.byType.supplemental },
+    { name: 'Lịch hẹn', value: data.revenue.byType.appointment },
+    { name: 'Kế hoạch điều trị', value: data.revenue.byType.treatmentPlan },
+    { name: 'Bổ sung', value: data.revenue.byType.supplemental },
   ].filter((item) => item.value > 0);
 
   const expenseByTypeData = [

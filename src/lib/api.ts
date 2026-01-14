@@ -179,21 +179,34 @@ class ApiClient {
   // Authentication endpoints
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await this.axiosInstance.post<LoginResponse>(
+      const response = await this.axiosInstance.post<any>(
         '/auth/login',
         credentials
       );
 
+      // Handle both wrapped and unwrapped responses
+      // Backend may return: { token, username, ... } OR { data: { token, username, ... } }
+      const loginData = response.data.data || response.data;
+      
+      console.log('📦 Login response structure:', {
+        hasToken: !!response.data.token,
+        hasDataToken: !!response.data.data?.token,
+        usingWrapped: !!response.data.data
+      });
+
       // Store access token in localStorage
-      if (response.data.token) {
-        setToken(response.data.token);
+      if (loginData.token) {
+        setToken(loginData.token);
         console.log(' Access token stored in localStorage');
+      } else {
+        console.error('❌ No token found in response:', response.data);
+        throw new Error('Không nhận được token từ server');
       }
 
       // Note: refreshToken is automatically stored in HTTP-Only Cookie by backend
-      console.log('� Refresh token stored in HTTP-Only Cookie by backend');
+      console.log('🍪 Refresh token stored in HTTP-Only Cookie by backend');
 
-      return response.data;
+      return loginData as LoginResponse;
     } catch (error: any) {
       const message = error.response?.data?.message || 'Đăng nhập thất bại';
       throw new Error(message);
