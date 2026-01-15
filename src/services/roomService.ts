@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api';
+import { extractApiResponse } from '@/utils/apiResponse';
 import { 
   Room, 
   CreateRoomRequest, 
@@ -27,7 +28,6 @@ export class RoomService {
     console.log('Response status:', response.status);
     
     // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: [...] }
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     const data = extractApiResponse<Room[]>(response);
     return Array.isArray(data) ? data : [];
   }
@@ -71,7 +71,6 @@ export class RoomService {
     console.log('Response status:', response.status);
     
     // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     return extractApiResponse<RoomListResponse>(response);
   }
 
@@ -98,7 +97,6 @@ export class RoomService {
     console.log('Test Response status:', response.status);
     
     // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     return extractApiResponse<RoomListResponse>(response);
   }
 
@@ -111,7 +109,6 @@ export class RoomService {
     const response = await axios.get<Room>(`${this.BASE_URL}/${roomId}`);
     
     // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     return extractApiResponse<Room>(response);
   }
 
@@ -122,9 +119,9 @@ export class RoomService {
    */
   static async getRoomByCode(roomCode: string): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<Room>(`${this.BASE_URL}/code/${roomCode}`);
+    const response = await axios.get<any>(`${this.BASE_URL}/code/${roomCode}`);
     
-    return response.data;
+    return extractApiResponse<Room>(response);
   }
 
   /**
@@ -132,12 +129,11 @@ export class RoomService {
    */
   static async createRoom(roomData: CreateRoomRequest): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<Room>(this.BASE_URL, roomData);
+    const response = await axios.post<any>(this.BASE_URL, roomData);
     
     console.log('Create Room Response:', response.data);
     
-    // Return the room data directly
-    return response.data;
+    return extractApiResponse<Room>(response);
   }
 
   /**
@@ -145,12 +141,11 @@ export class RoomService {
    */
   static async updateRoom(roomId: string, roomData: UpdateRoomRequest): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.put<Room>(`${this.BASE_URL}/${roomId}`, roomData);
+    const response = await axios.put<any>(`${this.BASE_URL}/${roomId}`, roomData);
     
     console.log('Update Room Response:', response.data);
     
-    // Return the room data directly
-    return response.data;
+    return extractApiResponse<Room>(response);
   }
 
   /**
@@ -159,12 +154,11 @@ export class RoomService {
    */
   static async toggleRoomStatus(roomId: string): Promise<Room> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.delete<Room>(`${this.BASE_URL}/${roomId}`);
+    const response = await axios.delete<any>(`${this.BASE_URL}/${roomId}`);
     
     console.log('Toggle Room Status Response:', response.data);
     
-    // Return the room data directly
-    return response.data;
+    return extractApiResponse<Room>(response);
   }
 
   /**
@@ -174,11 +168,11 @@ export class RoomService {
    */
   static async getRoomServices(roomCode: string): Promise<RoomServicesResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<RoomServicesResponse>(
+    const response = await axios.get<any>(
       `${this.BASE_URL}/${roomCode}/services`
     );
     
-    return response.data;
+    return extractApiResponse<RoomServicesResponse>(response);
   }
 
   /**
@@ -192,12 +186,12 @@ export class RoomService {
     request: UpdateRoomServicesRequest
   ): Promise<RoomServicesResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.put<RoomServicesResponse>(
+    const response = await axios.put<any>(
       `${this.BASE_URL}/${roomCode}/services`,
       request
     );
     
-    return response.data;
+    return extractApiResponse<RoomServicesResponse>(response);
   }
 
   /**
@@ -236,7 +230,6 @@ export class RoomService {
     const response = await axios.get<any>(url);
     
     // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: [...] }
-    const { extractApiResponse } = await import('@/utils/apiResponse');
     const data = extractApiResponse<Room[]>(response);
     return Array.isArray(data) ? data : [];
   }
