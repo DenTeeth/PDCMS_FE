@@ -176,7 +176,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         requiredPermissions: ['MANAGE_HOLIDAY', 'VIEW_HOLIDAY'],
       },
       {
-        name: 'Quản lí loại nghỉ phép',
+        name: 'Quản lý loại nghỉ phép',
         href: '/{baseRole}/time-off-types',
         icon: faUserTie,
         requiredPermissions: ['VIEW_LEAVE_TYPE'],
