@@ -25,6 +25,7 @@ export interface OvertimeRequest {
   requestedBy: number;
   requestedByName: string;
   createdAt: string;
+  updatedAt?: string;
   approvedBy?: number;
   approvedByName?: string;
   approvedAt?: string;

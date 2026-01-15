@@ -1,23 +1,5 @@
 'use client';
 
-/**
- * Employee Appointment Detail Page
- * 
- * Displays detailed appointment information including:
- * - Patient information
- * - Appointment details (code, status, time, duration, services)
- * - Doctor information
- * - Room information
- * - Participants (if any)
- * - Notes
- * - Placeholder tabs/links for medical history and treatment plans
- * - Actions (if permitted): Update status, Delay, Reschedule
- * 
- * RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
- * - VIEW_APPOINTMENT_OWN: Can only view appointments where user is primary doctor OR participant
- * - VIEW_APPOINTMENT_ALL: Can view all appointments (same as admin)
- */
-
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -83,8 +65,7 @@ import ClinicalRecordView from '@/components/clinical-records/ClinicalRecordView
 import ClinicalRecordForm from '@/components/clinical-records/ClinicalRecordForm';
 import PatientImageFolderView from '@/components/clinical-records/PatientImageFolderView';
 import PaymentTab from '@/components/appointments/PaymentTab';
-// Employees do not have reschedule functionality
-// import RescheduleAppointmentModal from '@/components/appointments/RescheduleAppointmentModal';
+
 import {
   ArrowLeft,
   Calendar,
@@ -805,37 +786,39 @@ export default function EmployeeAppointmentDetailPage() {
         setTimeout(async () => {
           try {
             // Reload clinical record to get updated procedures
-            const record = await clinicalRecordService.getByAppointmentId(updated.appointmentId);
-            if (record && record.procedures && record.procedures.length > 0) {
-              // Check if any procedure has materials that should be deducted
-              let allDeducted = true;
-              let hasProcedures = false;
-              
-              for (const procedure of record.procedures) {
-                hasProcedures = true;
-                try {
-                  const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
-                  if (!materials.materialsDeducted) {
-                    allDeducted = false;
-                    break;
+            if (updated.appointmentId) {
+              const record = await clinicalRecordService.getByAppointmentId(updated.appointmentId);
+              if (record && record.procedures && record.procedures.length > 0) {
+                // Check if any procedure has materials that should be deducted
+                let allDeducted = true;
+                let hasProcedures = false;
+                
+                for (const procedure of record.procedures) {
+                  hasProcedures = true;
+                  try {
+                    const materials = await clinicalRecordService.getProcedureMaterials(procedure.procedureId);
+                    if (!materials.materialsDeducted) {
+                      allDeducted = false;
+                      break;
+                    }
+                  } catch (error) {
+                    // If can't load materials, skip this procedure
+                    console.warn('Could not check materials for procedure:', procedure.procedureId);
                   }
-                } catch (error) {
-                  // If can't load materials, skip this procedure
-                  console.warn('Could not check materials for procedure:', procedure.procedureId);
                 }
-              }
-              
-              if (hasProcedures) {
-                if (allDeducted) {
-                  toast.success('Vật tư đã được trừ khỏi kho', {
-                    description: 'Tất cả vật tư đã được tự động trừ khỏi kho theo BOM của dịch vụ',
-                    duration: 5000,
-                  });
-                } else {
-                  toast.warning('Một số vật tư chưa được trừ khỏi kho', {
-                    description: 'Có thể do thiếu hàng trong kho. Vui lòng kiểm tra và xử lý thủ công nếu cần.',
-                    duration: 7000,
-                  });
+                
+                if (hasProcedures) {
+                  if (allDeducted) {
+                    toast.success('Vật tư đã được trừ khỏi kho', {
+                      description: 'Tất cả vật tư đã được tự động trừ khỏi kho theo BOM của dịch vụ',
+                      duration: 5000,
+                    });
+                  } else {
+                    toast.warning('Một số vật tư chưa được trừ khỏi kho', {
+                      description: 'Có thể do thiếu hàng trong kho. Vui lòng kiểm tra và xử lý thủ công nếu cần.',
+                      duration: 7000,
+                    });
+                  }
                 }
               }
             }

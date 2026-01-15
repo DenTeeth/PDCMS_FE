@@ -596,7 +596,7 @@ interface InvoicesListContentProps {
   invoices: InvoiceResponse[];
   loading: boolean;
   router: any;
-  getStatusBadge: (status: InvoicePaymentStatus) => JSX.Element;
+  getStatusBadge: (status: InvoicePaymentStatus) => React.ReactElement;
   getTypeLabel: (type: InvoiceType) => string;
   formatCurrency: (amount: number) => string;
   format: (date: Date, format: string) => string;

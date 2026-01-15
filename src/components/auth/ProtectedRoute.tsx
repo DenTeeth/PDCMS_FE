@@ -7,10 +7,10 @@ import { Role } from '@/types/permission';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRoles?: (string | Role)[];      // Support both string and Role enum
-  requiredBaseRole?: string;              //  NEW: Check theo baseRole (admin, employee, patient)
-  requiredPermissions?: string[];         //  NEW: Check theo permissions (RBAC)
-  requireAll?: boolean;                   //  NEW: true = cần ALL permissions, false = cần ANY permission
+  requiredRoles?: (string | Role)[];      
+  requiredBaseRole?: string;              
+  requiredPermissions?: string[];        
+  requireAll?: boolean;
   fallbackPath?: string;
 }
 

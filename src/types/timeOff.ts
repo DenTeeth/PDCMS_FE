@@ -106,6 +106,7 @@ export interface TimeOffRequest {
   reason: string | null; //  From API
   status: TimeOffStatus; //  From API
   requestedAt: string; //  From API
+  createdAt?: string; //  Alias for requestedAt or separate field from API
   approvedBy?: EmployeeInfo | null; //  From API (nested object)
   approvedAt?: string | null; //  From API
   rejectedReason?: string | null; //  From API

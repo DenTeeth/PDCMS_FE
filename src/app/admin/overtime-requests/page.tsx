@@ -99,7 +99,7 @@ export default function AdminOvertimeRequestsPage() {
     try {
       const response = await employeeService.getEmployees({
         page: 0,
-        size: 100, // ⚡ Tăng lại lên 100 để đảm bảo load đủ nhân viên
+        size: 100, // Tăng lại lên 100 để đảm bảo load đủ nhân viên
         isActive: true,
       });
       setEmployees(response.content);
@@ -227,7 +227,6 @@ export default function AdminOvertimeRequestsPage() {
     setShowStatusModal(true);
   };
 
-  // ⚡ Memoize filtered requests - Sort by createdAt DESC (newest first)
   const filteredRequests = useMemo(() => {
     const filtered = (Array.isArray(overtimeRequests) ? overtimeRequests : []).filter((request) => {
       const matchesSearch =
@@ -254,7 +253,7 @@ export default function AdminOvertimeRequestsPage() {
     });
   }, [overtimeRequests, searchTerm, statusFilter, employeeFilter, dateFrom, dateTo]);
 
-  // ⚡ Memoize permission checks - Using new BE consolidated permissions
+  // Memoize permission checks - Using new BE consolidated permissions
   // BE uses APPROVE_OVERTIME for both approve and reject
   const canApprove = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]);
   const canReject = useMemo(() => user?.permissions?.includes('APPROVE_OVERTIME'), [user?.permissions]); // Same as approve
@@ -262,7 +261,7 @@ export default function AdminOvertimeRequestsPage() {
   const canCancelOwn = useMemo(() => user?.permissions?.includes('CREATE_OVERTIME'), [user?.permissions]); // User can cancel own
   const canCreate = useMemo(() => user?.permissions?.includes('CREATE_OVERTIME'), [user?.permissions]);
 
-  // ⚡ useCallback helper function
+  // useCallback helper function
   const canCancelRequest = useCallback((request: OvertimeRequest) => {
     if (canCancelPending) return true;
     if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;

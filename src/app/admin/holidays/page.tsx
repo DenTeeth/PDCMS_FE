@@ -1,29 +1,5 @@
 'use client';
 
-/**
- * ADMIN HOLIDAY MANAGEMENT PAGE
- * 
- * Features:
- * - View all holiday definitions (NATIONAL/COMPANY)
- * - Create/Edit/Delete holiday definitions
- * - Manage holiday dates for each definition
- * - Filter by type
- * - RBAC permissions
- * 
- * RBAC Permissions:
- * - VIEW_HOLIDAY: Required to access page
- * - MANAGE_HOLIDAY: Required for Create/Update/Delete operations (BE consolidated permission)
- * 
- * API Endpoints:
- * - GET /api/v1/holiday-definitions
- * - POST /api/v1/holiday-definitions
- * - PATCH /api/v1/holiday-definitions/{id}
- * - DELETE /api/v1/holiday-definitions/{id}
- * - GET /api/v1/holiday-dates/by-definition/{id}
- * - POST /api/v1/holiday-dates
- * - PATCH /api/v1/holiday-dates/{date}/definition/{id}
- * - DELETE /api/v1/holiday-dates/{date}/definition/{id}
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -481,7 +457,10 @@ export default function AdminHolidaysPage() {
   if (!canView) {
     return (
       <ProtectedRoute requiredBaseRole="admin">
-        <UnauthorizedMessage requiredPermission="VIEW_HOLIDAY" />
+        <UnauthorizedMessage 
+          title="Không có quyền xem ngày nghỉ lễ"
+          message="Bạn cần quyền VIEW_HOLIDAY để truy cập tính năng này."
+        />
       </ProtectedRoute>
     );
   }

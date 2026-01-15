@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * LEAVE BALANCES TAB COMPONENT
- * Tái sử dụng từ admin/leave-balances với tối ưu hóa
- */
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Wallet,
@@ -86,7 +81,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
     changeAmount: null,
     notes: ''
   });
-  const [adjustFormErrors, setAdjustFormErrors] = useState<Partial<Record<keyof AdjustmentFormData, string>>>({});
+  const [adjustFormErrors, setAdjustFormErrors] = useState<Partial<Record<keyof AdjustmentFormData | 'employeeId', string>>>({});
   const [submittingAdjust, setSubmittingAdjust] = useState(false);
   const [modalSelectedEmployeeId, setModalSelectedEmployeeId] = useState<string | null>(null);
 
@@ -170,10 +165,10 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
       const loadPromises = employees.slice(0, 50).map(async (emp) => {
         try {
           const data = await LeaveBalanceService.getEmployeeBalances(
-            emp.employeeId,
+            parseInt(emp.employeeId),
             selectedYear
           );
-          balancesMap.set(emp.employeeId, data);
+          balancesMap.set(parseInt(emp.employeeId), data);
         } catch (error: any) {
           // Skip employees without balance data (404)
           if (error?.response?.status !== 404) {
@@ -666,13 +661,13 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredEmployees
                     .filter(emp => {
-                      const balances = allBalancesData.get(emp.employeeId);
+                      const balances = allBalancesData.get(parseInt(emp.employeeId));
                       if (!balances) return false;
                       if (selectedTimeOffTypeFilter === 'ALL') return true;
                       return balances.balances.some(b => b.time_off_type.type_id === selectedTimeOffTypeFilter);
                     })
                     .map((emp) => {
-                      const balances = allBalancesData.get(emp.employeeId);
+                      const balances = allBalancesData.get(parseInt(emp.employeeId));
                       if (!balances || balances.balances.length === 0) return null;
 
                       const filteredBalances = balances.balances.filter(b =>

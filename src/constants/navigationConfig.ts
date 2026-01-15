@@ -339,11 +339,6 @@ export const EMPLOYEE_NAVIGATION_CONFIG: NavigationConfig = {
   items: replaceBaseRolePlaceholder(SHARED_NAVIGATION_ITEMS, 'employee'),
 };
 
-/**
- * PATIENT NAVIGATION CONFIG
- * Includes menu items based on permissions (RBAC)
- * Patient role can have admin/employee permissions, so we show menu items based on actual permissions
- */
 export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
   title: 'DENTEETH',
   items: [

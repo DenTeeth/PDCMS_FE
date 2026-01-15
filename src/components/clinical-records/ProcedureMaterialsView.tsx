@@ -1,18 +1,5 @@
 'use client';
 
-/**
- * Procedure Materials View Component
- * 
- * Displays materials used in a procedure with planned vs actual quantities,
- * variance tracking, stock status, and cost data (if user has permission)
- * 
- * Features:
- * - Shows planned, actual, and variance quantities
- * - Highlights variances (positive = over-consumption, negative = under-consumption)
- * - Displays stock status indicators (OK/LOW/OUT_OF_STOCK)
- * - Conditional rendering: Hides cost data if user doesn't have VIEW_WAREHOUSE_COST
- * - Button to edit quantities (only if user has WRITE_CLINICAL_RECORD)
- */
 
 import React, { useState, useEffect } from 'react';
 import { ProcedureMaterialsResponse, ProcedureMaterialItem } from '@/types/clinicalRecord';
@@ -375,16 +362,16 @@ export default function ProcedureMaterialsView({
                     {formatCurrency(materials.totalActualCost)}
                   </div>
                 </div>
-                {materials.costVariance !== null && materials.costVariance !== 0 && (
+                {materials.costVariance !== null && materials.costVariance !== undefined && materials.costVariance !== 0 && (
                   <div className="space-y-1 text-right">
                     <div className="text-sm text-muted-foreground">Chênh lệch</div>
                     <div
                       className={`text-lg font-semibold ${
-                        materials.costVariance > 0 ? 'text-orange-600' : 'text-blue-600'
+                        (materials.costVariance ?? 0) > 0 ? 'text-orange-600' : 'text-blue-600'
                       }`}
                     >
-                      {materials.costVariance > 0 ? '+' : ''}
-                      {formatCurrency(materials.costVariance)}
+                      {(materials.costVariance ?? 0) > 0 ? '+' : ''}
+                      {formatCurrency(materials.costVariance ?? 0)}
                     </div>
                   </div>
                 )}

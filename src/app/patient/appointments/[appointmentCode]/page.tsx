@@ -1,22 +1,5 @@
 'use client';
 
-/**
- * Patient Appointment Detail Page
- * 
- * Displays detailed appointment information (read-only):
- * - Patient information (read-only)
- * - Appointment details (code, status, time, duration, services)
- * - Doctor information
- * - Room information
- * - Participants (if any)
- * - Notes
- * - Placeholder tabs/links for medical history and treatment plans
- * 
- * NO Actions: Patients cannot update status, delay, reschedule, or cancel appointments
- * 
- * RBAC: Backend automatically filters by patientId from JWT token for VIEW_APPOINTMENT_OWN
- * - VIEW_APPOINTMENT_OWN: Can only view their own appointments
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -155,7 +138,15 @@ export default function PatientAppointmentDetailPage() {
       try {
         setLoadingFeedback(true);
         const feedbackData = await getFeedbackByAppointmentCode(appointmentCode);
-        setFeedback(feedbackData);
+        if (feedbackData) {
+          const feedbackResponse: FeedbackResponse = {
+            ...feedbackData,
+            employeeName: feedbackData.patientName || '', // Fallback if employeeName not available
+          };
+          setFeedback(feedbackResponse);
+        } else {
+          setFeedback(null);
+        }
       } catch (error: any) {
         // Feedback not found is OK (404) - patient hasn't submitted feedback yet
         if (error?.response?.status === 404) {
@@ -1008,7 +999,17 @@ export default function PatientAppointmentDetailPage() {
             onSuccess={() => {
               // Reload feedback after successful submission
               getFeedbackByAppointmentCode(appointmentCode)
-                .then(setFeedback)
+                .then((feedbackData) => {
+                  if (feedbackData) {
+                    const feedbackResponse: FeedbackResponse = {
+                      ...feedbackData,
+                      employeeName: feedbackData.patientName || '', // Fallback if employeeName not available
+                    };
+                    setFeedback(feedbackResponse);
+                  } else {
+                    setFeedback(null);
+                  }
+                })
                 .catch(() => setFeedback(null));
             }}
           />
