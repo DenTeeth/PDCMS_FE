@@ -611,9 +611,9 @@ export default function ExportTransactionForm({
                   <SelectValue placeholder="Chọn loại xuất kho" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USAGE"> Xuất Dùng (USAGE)</SelectItem>
-                  <SelectItem value="DISPOSAL"> Xuất Hủy (DISPOSAL)</SelectItem>
-                  <SelectItem value="RETURN">↩ Trả nhà cung cấp (RETURN)</SelectItem>
+                  <SelectItem value="USAGE"> Xuất dùng</SelectItem>
+                  <SelectItem value="DISPOSAL"> Xuất hủy </SelectItem>
+                  <SelectItem value="RETURN">Trả nhà cung cấp </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -845,7 +845,6 @@ export default function ExportTransactionForm({
             <div className="flex-1 text-sm text-blue-800">
               <div className="font-medium mb-1">Lưu ý!</div>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Hệ thống tự động áp dụng FEFO (xuất hàng gần hết hạn trước)</li>
                 <li>Tự động xé lẻ từ đơn vị lớn khi thiếu hàng lẻ</li>
                 <li>Phân bổ từ nhiều lô nếu cần thiết</li>
                 {exportType === 'USAGE' && (

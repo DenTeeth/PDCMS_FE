@@ -44,6 +44,8 @@ export default function TreatmentPlanPaymentTab({
 }: TreatmentPlanPaymentTabProps) {
   const { hasPermission } = useAuth();
   const canViewInvoice = hasPermission('VIEW_INVOICE_ALL') || hasPermission('VIEW_INVOICE_OWN');
+  // Payment permissions: VIEW_PAYMENT_ALL or VIEW_INVOICE_ALL (as per BE requirements)
+  const canViewPayments = hasPermission('VIEW_PAYMENT_ALL') || hasPermission('VIEW_INVOICE_ALL');
 
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,12 @@ export default function TreatmentPlanPaymentTab({
 
   // Fetch payments for each invoice
   useEffect(() => {
+    // Only fetch payments if user has permission
+    if (!canViewPayments) {
+      console.warn('⚠️ TreatmentPlanPaymentTab: No permission to view payments. Required: VIEW_PAYMENT_ALL or VIEW_INVOICE_ALL');
+      return;
+    }
+
     if (invoices.length > 0) {
       invoices.forEach((invoice) => {
         if (invoice.invoiceId && !paymentsMap[invoice.invoiceId]) {
@@ -96,7 +104,7 @@ export default function TreatmentPlanPaymentTab({
         }
       });
     }
-  }, [invoices]);
+  }, [invoices, canViewPayments]);
 
   const fetchInvoices = async () => {
     if (!actualPatientId) return;
@@ -140,15 +148,49 @@ export default function TreatmentPlanPaymentTab({
   };
 
   const fetchPayments = async (invoiceId: number) => {
+    // Check permission before making API call
+    if (!canViewPayments) {
+      console.warn('⚠️ TreatmentPlanPaymentTab: Cannot fetch payments - missing permission. Required: VIEW_PAYMENT_ALL or VIEW_INVOICE_ALL');
+      setPaymentsMap((prev) => ({ ...prev, [invoiceId]: [] }));
+      return;
+    }
+
     try {
       const data = await paymentService.getPaymentsByInvoice(invoiceId);
       setPaymentsMap((prev) => ({ ...prev, [invoiceId]: data }));
     } catch (error: any) {
-      console.error('Error fetching payments:', error);
+      const status = error.status || error.response?.status;
+      const message = error.message || error.response?.data?.message;
       
-      // Handle 403 gracefully - patient might not have VIEW_INVOICE permission
-      if (error.response?.status === 403) {
-        console.warn('Patient does not have permission to view invoice payments (403)');
+      console.error('❌ Error fetching payments:', {
+        invoiceId,
+        status,
+        message,
+        hasViewPaymentAll: hasPermission('VIEW_PAYMENT_ALL'),
+        hasViewInvoiceAll: hasPermission('VIEW_INVOICE_ALL'),
+        hasViewInvoiceOwn: hasPermission('VIEW_INVOICE_OWN'),
+        error,
+      });
+      
+      // Handle 403 (Forbidden) - permission issue
+      if (status === 403) {
+        console.warn('⚠️ Permission denied (403): Cannot view payments for invoice', invoiceId, {
+          requiredPermissions: ['VIEW_PAYMENT_ALL', 'VIEW_INVOICE_ALL'],
+          currentPermissions: {
+            VIEW_PAYMENT_ALL: hasPermission('VIEW_PAYMENT_ALL'),
+            VIEW_INVOICE_ALL: hasPermission('VIEW_INVOICE_ALL'),
+            VIEW_INVOICE_OWN: hasPermission('VIEW_INVOICE_OWN'),
+          },
+        });
+        setPaymentsMap((prev) => ({ ...prev, [invoiceId]: [] }));
+      }
+      // Handle 404 (Not Found) - invoice might not exist or user doesn't have access
+      else if (status === 404) {
+        console.warn('⚠️ Invoice not found (404) or access denied:', invoiceId);
+        setPaymentsMap((prev) => ({ ...prev, [invoiceId]: [] }));
+      }
+      // For other errors, also set empty array to avoid breaking UI
+      else {
         setPaymentsMap((prev) => ({ ...prev, [invoiceId]: [] }));
       }
     }

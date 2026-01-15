@@ -7,6 +7,7 @@
  */
 
 import { apiClient } from '@/lib/api';
+import { extractApiResponse } from '@/utils/apiResponse';
 
 /**
  * Payment Method Enum
@@ -68,17 +69,19 @@ class PaymentService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.post<PaymentResponse>(this.endpoint, request);
+      const response = await axiosInstance.post<any>(this.endpoint, request);
       
       console.log('✅ Create payment success:', response.data);
       
-      const { extractApiResponse } = await import('@/utils/apiResponse');
       return extractApiResponse<PaymentResponse>(response);
     } catch (error: any) {
       console.error('❌ Create payment error:', {
         status: error.response?.status,
+        statusText: error.response?.statusText,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
+        endpoint: this.endpoint,
+        request,
       });
       throw error;
     }
@@ -98,19 +101,29 @@ class PaymentService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.get<PaymentResponse[]>(`${this.endpoint}/invoice/${invoiceId}`);
+      const response = await axiosInstance.get<any>(`${this.endpoint}/invoice/${invoiceId}`);
       
       console.log('✅ Get payments by invoice success:', response.data);
       
-      const { extractApiResponse } = await import('@/utils/apiResponse');
-      return extractApiResponse<PaymentResponse[]>(response);
+      const data = extractApiResponse<PaymentResponse[]>(response);
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
-      console.error('❌ Get payments by invoice error:', {
+      const errorDetails = {
         status: error.response?.status,
+        statusText: error.response?.statusText,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
-      });
-      throw error;
+        endpoint: `${this.endpoint}/invoice/${invoiceId}`,
+        invoiceId,
+      };
+      
+      console.error('❌ Get payments by invoice error:', errorDetails);
+      
+      // Re-throw with enhanced error information
+      const enhancedError = new Error(error.response?.data?.message || error.message || 'Failed to get payments by invoice');
+      (enhancedError as any).status = error.response?.status;
+      (enhancedError as any).response = error.response;
+      throw enhancedError;
     }
   }
 
@@ -128,17 +141,19 @@ class PaymentService {
     const axiosInstance = apiClient.getAxiosInstance();
     
     try {
-      const response = await axiosInstance.get<PaymentResponse>(`${this.endpoint}/${paymentCode}`);
+      const response = await axiosInstance.get<any>(`${this.endpoint}/${paymentCode}`);
       
       console.log('✅ Get payment by code success:', response.data);
       
-      const { extractApiResponse } = await import('@/utils/apiResponse');
       return extractApiResponse<PaymentResponse>(response);
     } catch (error: any) {
       console.error('❌ Get payment by code error:', {
         status: error.response?.status,
+        statusText: error.response?.statusText,
         message: error.response?.data?.message || error.message,
         data: error.response?.data,
+        endpoint: `${this.endpoint}/${paymentCode}`,
+        paymentCode,
       });
       throw error;
     }

@@ -291,9 +291,9 @@ export default function CreateExportModal({
                     <SelectValue placeholder="Chọn loại xuất" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USAGE">Xuất dùng (USAGE)</SelectItem>
-                    <SelectItem value="DISPOSAL">Xuất hủy (DISPOSAL)</SelectItem>
-                    <SelectItem value="RETURN">Trả nhà cung cấp (RETURN)</SelectItem>
+                    <SelectItem value="USAGE">Xuất dùng </SelectItem>
+                    <SelectItem value="DISPOSAL">Xuất hủy </SelectItem>
+                    <SelectItem value="RETURN">Trả nhà cung cấp </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

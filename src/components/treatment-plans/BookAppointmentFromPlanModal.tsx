@@ -353,17 +353,17 @@ export default function BookAppointmentFromPlanModal({
       if (serviceCodes.length > 0) {
         try {
           const filteredRooms = await RoomService.getRoomsByServices(serviceCodes);
-          setRooms(filteredRooms);
+          setRooms(Array.isArray(filteredRooms) ? filteredRooms : []);
         } catch (error: any) {
           console.warn('Failed to load filtered rooms, falling back to all active rooms:', error);
           // Fallback to all active rooms if filtering fails
           const roomsData = await RoomService.getActiveRooms();
-          setRooms(roomsData);
+          setRooms(Array.isArray(roomsData) ? roomsData : []);
         }
       } else {
         // No services selected, show all active rooms
         const roomsData = await RoomService.getActiveRooms();
-        setRooms(roomsData);
+        setRooms(Array.isArray(roomsData) ? roomsData : []);
       }
 
       // Note: No need to load services for participant filtering
@@ -803,7 +803,7 @@ export default function BookAppointmentFromPlanModal({
   };
 
   const selectedEmployee = employees.find((e) => e.employeeCode === plan?.doctor.employeeCode);
-  const selectedRoom = rooms.find((r) => r.roomCode === roomCode);
+  const selectedRoom = Array.isArray(rooms) ? rooms.find((r) => r.roomCode === roomCode) : undefined;
   const selectedSlot = availableSlots.find((slot) => slot.startTime === appointmentStartTime);
 
   // Get eligible participants (similar to CreateAppointmentModal):

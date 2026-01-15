@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { toast } from 'sonner';
@@ -286,7 +286,6 @@ export default function EmployeeRegistrationsPage() {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
   const [slotDetailsMap, setSlotDetailsMap] = useState<Record<number, SlotDetailsResponse>>({});
-  const [expandedSlotId, setExpandedSlotId] = useState<number | null>(null);
   const [slotSortBy, setSlotSortBy] = useState<'date' | 'availability'>('date');
   const [slotMonthFilter, setSlotMonthFilter] = useState<string>('ALL'); // 'ALL' or 'YYYY-MM'
   const [slotDayFilter, setSlotDayFilter] = useState<DayOfWeek[]>([]); // Multi-select days
@@ -1189,32 +1188,34 @@ export default function EmployeeRegistrationsPage() {
                                 let availableWeeks = 14;
                                 // Tạm thời hardcode để test UI, loại trừ lỗi backend
 
-
-                                // Debug log để kiểm tra dữ liệu slot
-                                console.log('[DEBUG] Slot:', slot.slotId, {
-                                  totalDatesEmpty: slot.totalDatesEmpty,
-                                  availableWeeks,
-                                  totalWeeks,
-                                  dayOfWeek: slot.dayOfWeek,
-                                  effectiveFrom: slot.effectiveFrom,
-                                  effectiveTo: slot.effectiveTo
-                                });
-
-                                const availablePercent = totalWeeks > 0 ? (availableWeeks / totalWeeks) * 100 : 0;
-
-                                const getColorClass = () => {
-                                  if (availablePercent >= 50) return 'bg-green-500';
-                                  if (availablePercent >= 20) return 'bg-yellow-500';
-                                  return 'bg-red-500';
-                                };
-
-                                const getStatusBadge = () => {
-                                  if (availablePercent >= 50) return 'bg-green-100 text-green-800';
-                                  if (availablePercent >= 20) return 'bg-yellow-100 text-yellow-800';
-                                  return 'bg-red-100 text-red-800';
-                                };
-
-                                const isExpanded = expandedSlotId === slot.slotId;
+                                // Calculate: số lượng còn lại / số lượng cần người đăng ký
+                                let soLuongCan = 0; // Tổng số lượng cần người đăng ký
+                                let soLuongConLai = 0; // Số lượng còn lại (remaining)
+                                
+                                if (slotDetails?.availabilityByMonth && slotDetails.quota) {
+                                  // Tính tổng số lượng cần: sum(month.totalWorkingDays * quota) cho tất cả các tháng
+                                  soLuongCan = slotDetails.availabilityByMonth.reduce((sum, month) => {
+                                    return sum + (month.totalWorkingDays * slotDetails.quota);
+                                  }, 0);
+                                  
+                                  // Tính số lượng còn lại từ overallRemaining hoặc availabilityByMonth
+                                  if (slotDetails.overallRemaining !== undefined && slotDetails.overallRemaining >= 0) {
+                                    // overallRemaining là số lượt còn lại (chính xác nhất)
+                                    soLuongConLai = slotDetails.overallRemaining;
+                                  } else {
+                                    // Fallback: tính từ availabilityByMonth
+                                    // - Available dates: còn lại đầy = quota
+                                    // - Partial dates: còn lại một phần (ước tính trung bình = quota/2)
+                                    // - Full dates: hết chỗ = 0
+                                    soLuongConLai = slotDetails.availabilityByMonth.reduce((sum, month) => {
+                                      // Available dates: còn lại đầy
+                                      const availableRemaining = month.totalDatesAvailable * slotDetails.quota;
+                                      // Partial dates: ước tính còn lại trung bình = quota/2
+                                      const partialRemaining = month.totalDatesPartial * Math.ceil(slotDetails.quota / 2);
+                                      return sum + availableRemaining + partialRemaining;
+                                    }, 0);
+                                  }
+                                }
 
                                 return (
                                   <React.Fragment key={slot.slotId}>
@@ -1234,31 +1235,8 @@ export default function EmployeeRegistrationsPage() {
                                         <div className="text-sm text-gray-600">{totalWeeks} tuần</div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <div className="space-y-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge()}`}>
-                                              {availableWeeks}/{totalWeeks} tuần
-                                            </span>
-                                            <span className="text-xs text-gray-500">({Math.round(availablePercent)}%)</span>
-                                          </div>
-                                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div
-                                              className={`h-1.5 rounded-full ${getColorClass()}`}
-                                              style={{ width: `${Math.max(0, availablePercent)}%` }}
-                                            />
-                                          </div>
-                                          {slotDetails?.availabilityByMonth && slotDetails.availabilityByMonth.length > 0 && (
-                                            <button
-                                              onClick={() => setExpandedSlotId(isExpanded ? null : slot.slotId)}
-                                              className="text-xs text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1"
-                                            >
-                                              {isExpanded ? (
-                                                <>Chi tiết <ChevronUp className="w-3 h-3" /></>
-                                              ) : (
-                                                <>Chi tiết <ChevronDown className="w-3 h-3" /></>
-                                              )}
-                                            </button>
-                                          )}
+                                        <div className="text-sm font-semibold text-gray-900">
+                                          {slotDetails ? `${soLuongConLai}/${soLuongCan}` : '-'}
                                         </div>
                                       </td>
                                       <td className="px-4 py-3 text-center">
@@ -1284,97 +1262,6 @@ export default function EmployeeRegistrationsPage() {
                                         </Button>
                                       </td>
                                     </tr>
-                                    {isExpanded && slotDetails?.availabilityByMonth && (
-                                      <tr>
-                                        <td colSpan={6} className="px-4 py-4 bg-gradient-to-br from-purple-50 to-blue-50">
-                                          <div className="space-y-3">
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-sm font-bold text-purple-900">Lượt đăng ký khả dụng theo tháng</span>
-                                              <span className="text-xs text-gray-600">(Quota: {slotDetails.quota} lượt/tuần)</span>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                              {slotDetails.availabilityByMonth.map((month, idx) => {
-                                                // totalWorkingDays = số ngày làm việc trong tháng (ví dụ: 4 ngày)
-                                                // quota = số lượt đăng ký trên mỗi ngày (ví dụ: 2 lượt/ngày)
-                                                // totalQuotaMonth = tổng số lượt có thể đăng ký trong tháng
-                                                const totalQuotaMonth = month.totalWorkingDays * slotDetails.quota;
-
-                                                // Calculate remaining quota based on available and partial dates
-                                                const availableQuota = month.totalDatesAvailable * slotDetails.quota;
-                                                const partialQuota = month.totalDatesPartial * slotDetails.quota;
-                                                const remainingQuota = availableQuota + partialQuota;
-
-                                                // Registered = Total - Remaining
-                                                const registeredQuota = Math.max(0, totalQuotaMonth - remainingQuota);
-
-                                                // Only show if there are slots in this month
-                                                if (totalQuotaMonth === 0) return null;
-
-                                                // Determine status color based on availability
-                                                let bgColor = 'bg-green-50 border-green-300';
-                                                let textColor = 'text-green-800';
-                                                let badgeColor = 'bg-green-600 text-white';
-                                                let statusText = 'Còn nhiều';
-
-                                                const availabilityPercent = (remainingQuota / totalQuotaMonth) * 100;
-
-                                                if (remainingQuota === 0) {
-                                                  bgColor = 'bg-gray-50 border-gray-300';
-                                                  textColor = 'text-gray-800';
-                                                  badgeColor = 'bg-gray-600 text-white';
-                                                  statusText = 'Hết chỗ';
-                                                } else if (availabilityPercent < 30) {
-                                                  bgColor = 'bg-orange-50 border-orange-300';
-                                                  textColor = 'text-orange-800';
-                                                  badgeColor = 'bg-orange-600 text-white';
-                                                  statusText = 'Sắp hết';
-                                                } else if (availabilityPercent < 70) {
-                                                  bgColor = 'bg-yellow-50 border-yellow-300';
-                                                  textColor = 'text-yellow-800';
-                                                  badgeColor = 'bg-yellow-600 text-white';
-                                                  statusText = 'Còn ít';
-                                                }
-
-                                                return (
-                                                  <div
-                                                    key={idx}
-                                                    className={`rounded-xl border-2 p-4 transition-all hover:shadow-lg ${bgColor}`}
-                                                  >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                      <span className={`text-sm font-bold ${textColor}`}>
-                                                        {month.monthName}
-                                                      </span>
-                                                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeColor}`}>
-                                                        {statusText}
-                                                      </span>
-                                                    </div>
-                                                    <div className="text-center space-y-2">
-                                                      <div className={`text-4xl font-black ${textColor}`}>
-                                                        {remainingQuota}
-                                                      </div>
-                                                      <div className="text-xs font-medium text-gray-600">
-                                                        lượt còn khả dụng
-                                                      </div>
-                                                      <div className="text-[11px] text-gray-500 space-y-0.5 pt-2 border-t border-gray-200">
-                                                        <div>Tổng quota: <span className="font-semibold">{totalQuotaMonth}</span> lượt</div>
-                                                        <div>Đã đăng ký: <span className="font-semibold">{registeredQuota}</span> lượt</div>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                            {slotDetails.availabilityByMonth.every(m =>
-                                              m.totalWorkingDays === 0
-                                            ) && (
-                                                <div className="text-center py-6 text-gray-500">
-                                                  <p className="text-sm">Không có dữ liệu khả dụng</p>
-                                                </div>
-                                              )}
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    )}
                                   </React.Fragment>
                                 );
                               })}

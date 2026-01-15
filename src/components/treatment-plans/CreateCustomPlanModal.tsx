@@ -494,21 +494,38 @@ export default function CreateCustomPlanModal({
   const loadTemplates = async () => {
     setLoadingTemplates(true);
     try {
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Starting...');
       const response = await TreatmentPlanService.listTemplates({
         isActive: true,
         page: 0,
         size: 50, // Load all active templates
         sort: 'templateName,asc',
       });
-      setAvailableTemplates(
-        response.content.map((t: TemplateSummaryDTO) => ({
-          code: t.templateCode,
-          name: t.templateName,
-          description: t.description,
-        }))
-      );
+      
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Response received:', response);
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Response.content:', response?.content);
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Is array?', Array.isArray(response?.content));
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Content length:', response?.content?.length);
+      
+      const templates = Array.isArray(response?.content) 
+        ? response.content.map((t: TemplateSummaryDTO) => ({
+            code: t.templateCode,
+            name: t.templateName,
+            description: t.description,
+          }))
+        : [];
+      
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Mapped templates:', templates);
+      console.log('📋 CreateCustomPlanModal.loadTemplates - Templates count:', templates.length);
+      
+      setAvailableTemplates(templates);
     } catch (error: any) {
-      console.error('Error loading templates:', error);
+      console.error('❌ CreateCustomPlanModal.loadTemplates - Error loading templates:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       toast.error('Không thể tải danh sách gói mẫu', {
         description: error.response?.data?.message || error.message,
       });
@@ -525,22 +542,33 @@ export default function CreateCustomPlanModal({
       const detail = await TreatmentPlanService.getTemplateDetail(templateCode);
       setTemplateDetail(detail);
 
+      console.log('📋 CreateCustomPlanModal.loadTemplateDetail - Detail received:', detail);
+      console.log('📋 CreateCustomPlanModal.loadTemplateDetail - Detail.phases:', detail?.phases);
+      console.log('📋 CreateCustomPlanModal.loadTemplateDetail - Is phases array?', Array.isArray(detail?.phases));
+
       // Populate plan name from template
-      if (!planName) {
+      if (!planName && detail?.templateName) {
         setPlanName(detail.templateName);
       }
 
       // Populate phases and items from template
-      const populatedPhases: PhaseFormData[] = detail.phases.map((phase: TemplatePhaseDTO, index: number) => ({
-        phaseNumber: index + 1,
-        phaseName: phase.phaseName,
-        items: phase.itemsInPhase.map((item: TemplateServiceDTO, itemIndex: number) => ({
-          serviceCode: item.serviceCode,
-          price: item.price,
-          sequenceNumber: item.sequenceNumber,
-          quantity: item.quantity,
-        })),
-      }));
+      const populatedPhases: PhaseFormData[] = Array.isArray(detail?.phases)
+        ? detail.phases.map((phase: TemplatePhaseDTO, index: number) => ({
+            phaseNumber: index + 1,
+            phaseName: phase.phaseName,
+            items: Array.isArray(phase.itemsInPhase)
+              ? phase.itemsInPhase.map((item: TemplateServiceDTO, itemIndex: number) => ({
+                  serviceCode: item.serviceCode,
+                  price: item.price,
+                  sequenceNumber: item.sequenceNumber,
+                  quantity: item.quantity,
+                }))
+              : [],
+          }))
+        : [];
+      
+      console.log('📋 CreateCustomPlanModal.loadTemplateDetail - Populated phases:', populatedPhases);
+      console.log('📋 CreateCustomPlanModal.loadTemplateDetail - Phases count:', populatedPhases.length);
 
       setPhases(populatedPhases);
 
@@ -1104,7 +1132,7 @@ export default function CreateCustomPlanModal({
       return selectedPatientCode !== '';
     }
     if (currentStep === 1) {
-      const basicValid = planName.trim() !== '' && doctorEmployeeCode !== '';
+      const basicValid = planName?.trim() !== '' && doctorEmployeeCode !== '';
       // V21: If template mode, also need template selected and loaded
       if (creationMode === 'template') {
         return basicValid && selectedTemplateCode !== '' && templateDetail !== null;

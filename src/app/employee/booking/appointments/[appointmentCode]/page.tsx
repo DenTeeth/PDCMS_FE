@@ -749,9 +749,15 @@ export default function EmployeeAppointmentDetailPage() {
 
       // FIX: Verify response has updated status
       if (!updated || !updated.status) {
-        console.error('Invalid response from updateAppointmentStatus:', updated);
+        console.error('Invalid response from updateAppointmentStatus:', {
+          response: updated,
+          type: typeof updated,
+          keys: updated ? Object.keys(updated) : 'null/undefined',
+          appointmentCode: appointment.appointmentCode,
+          requestedStatus: selectedStatus,
+        });
         toast.error('Cập nhật trạng thái thất bại', {
-          description: 'Phản hồi từ máy chủ không hợp lệ',
+          description: 'Phản hồi từ máy chủ không hợp lệ. Vui lòng thử lại sau.',
         });
         return;
       }

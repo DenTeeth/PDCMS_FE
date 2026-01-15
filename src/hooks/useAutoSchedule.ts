@@ -63,13 +63,19 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
       setLastRequest({ planId, request, isPhase: false });
 
       try {
+        console.log('📅 useAutoSchedule.generateSchedule - Starting...', { planId, request });
         const response = await TreatmentPlanService.autoSchedule(planId, request);
 
-        setSuggestions(response.suggestions);
-        setSummary(response.summary);
-        setTotalItemsProcessed(response.totalItemsProcessed);
-        setSuccessfulSuggestions(response.successfulSuggestions);
-        setFailedItems(response.failedItems);
+        console.log('📅 useAutoSchedule.generateSchedule - Response received:', response);
+        console.log('📅 useAutoSchedule.generateSchedule - Response.suggestions:', response?.suggestions);
+        console.log('📅 useAutoSchedule.generateSchedule - Response.summary:', response?.summary);
+        console.log('📅 useAutoSchedule.generateSchedule - Is suggestions array?', Array.isArray(response?.suggestions));
+
+        setSuggestions(Array.isArray(response?.suggestions) ? response.suggestions : []);
+        setSummary(response?.summary || null);
+        setTotalItemsProcessed(response?.totalItemsProcessed || 0);
+        setSuccessfulSuggestions(response?.successfulSuggestions || 0);
+        setFailedItems(response?.failedItems || 0);
 
         // Show success message with summary
         if (response.successfulSuggestions > 0) {
@@ -82,7 +88,9 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
         }
 
         // Show warnings if any
-        const warningsCount = response.suggestions.filter((s) => s.warning).length;
+        const warningsCount = Array.isArray(response.suggestions) 
+          ? response.suggestions.filter((s) => s.warning).length 
+          : 0;
         if (warningsCount > 0) {
           toast.warning(
             `Có ${warningsCount} gợi ý cần chú ý`,
@@ -131,13 +139,19 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
       setLastRequest({ phaseId, request, isPhase: true });
 
       try {
+        console.log('📅 useAutoSchedule.generatePhaseSchedule - Starting...', { phaseId, request });
         const response = await TreatmentPlanService.autoSchedulePhase(phaseId, request);
 
-        setSuggestions(response.suggestions);
-        setSummary(response.summary);
-        setTotalItemsProcessed(response.totalItemsProcessed);
-        setSuccessfulSuggestions(response.successfulSuggestions);
-        setFailedItems(response.failedItems);
+        console.log('📅 useAutoSchedule.generatePhaseSchedule - Response received:', response);
+        console.log('📅 useAutoSchedule.generatePhaseSchedule - Response.suggestions:', response?.suggestions);
+        console.log('📅 useAutoSchedule.generatePhaseSchedule - Response.summary:', response?.summary);
+        console.log('📅 useAutoSchedule.generatePhaseSchedule - Is suggestions array?', Array.isArray(response?.suggestions));
+
+        setSuggestions(Array.isArray(response?.suggestions) ? response.suggestions : []);
+        setSummary(response?.summary || null);
+        setTotalItemsProcessed(response?.totalItemsProcessed || 0);
+        setSuccessfulSuggestions(response?.successfulSuggestions || 0);
+        setFailedItems(response?.failedItems || 0);
 
         // Show success message with summary
         if (response.successfulSuggestions > 0) {
@@ -150,7 +164,9 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
         }
 
         // Show warnings if any
-        const warningsCount = response.suggestions.filter((s) => s.warning).length;
+        const warningsCount = Array.isArray(response.suggestions) 
+          ? response.suggestions.filter((s) => s.warning).length 
+          : 0;
         if (warningsCount > 0) {
           toast.warning(
             `Có ${warningsCount} gợi ý cần chú ý`,
@@ -218,12 +234,12 @@ export const useAutoSchedule = (): UseAutoScheduleReturn => {
   /**
    * Check if any suggestions have warnings
    */
-  const hasWarnings = suggestions.some((s) => !!s.warning);
+  const hasWarnings = Array.isArray(suggestions) && suggestions.some((s) => !!s.warning);
 
   /**
    * Check if any suggestions require doctor reassignment
    */
-  const hasReassignRequired = suggestions.some((s) => s.requiresReassign === true);
+  const hasReassignRequired = Array.isArray(suggestions) && suggestions.some((s) => s.requiresReassign === true);
 
   return {
     suggestions,

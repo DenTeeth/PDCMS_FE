@@ -432,10 +432,28 @@ export class TreatmentPlanService {
     templateCode: string
   ): Promise<TemplateDetailResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get<TemplateDetailResponse>(
+    const response = await axios.get<any>(
       `/treatment-plan-templates/${templateCode}`
     );
-    return response.data;
+    
+    console.log('📋 TreatmentPlanService.getTemplateDetail - Raw response:', response.data);
+    console.log('📋 TreatmentPlanService.getTemplateDetail - Response status:', response.status);
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const unwrappedData = extractApiResponse<TemplateDetailResponse>(response);
+    
+    console.log('📋 TreatmentPlanService.getTemplateDetail - Unwrapped data:', unwrappedData);
+    console.log('📋 TreatmentPlanService.getTemplateDetail - Phases:', unwrappedData?.phases);
+    console.log('📋 TreatmentPlanService.getTemplateDetail - Phases length:', unwrappedData?.phases?.length);
+    
+    // Ensure phases is always an array
+    if (unwrappedData && !Array.isArray(unwrappedData.phases)) {
+      console.warn('⚠️ TreatmentPlanService.getTemplateDetail - Phases is not an array, setting to empty array');
+      unwrappedData.phases = [];
+    }
+    
+    return unwrappedData;
   }
 
   /**
@@ -609,10 +627,48 @@ export class TreatmentPlanService {
       queryParams.append('sort', params.sort);
     }
     
-    const response = await axios.get<PageResponse<TemplateSummaryDTO>>(
+    const response = await axios.get<any>(
       `/treatment-plan-templates${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     );
-    return response.data;
+    
+    console.log('📋 TreatmentPlanService.listTemplates - Raw response:', response.data);
+    console.log('📋 TreatmentPlanService.listTemplates - Response status:', response.status);
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: { content, ... } }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const unwrappedData = extractApiResponse<PageResponse<TemplateSummaryDTO>>(response);
+    
+    console.log('📋 TreatmentPlanService.listTemplates - Unwrapped data:', unwrappedData);
+    console.log('📋 TreatmentPlanService.listTemplates - Content:', unwrappedData?.content);
+    console.log('📋 TreatmentPlanService.listTemplates - Content length:', unwrappedData?.content?.length);
+    
+    // Ensure we always return a valid PageResponse structure
+    if (!unwrappedData || !unwrappedData.content) {
+      console.warn('⚠️ TreatmentPlanService.listTemplates - Invalid response structure:', unwrappedData);
+      // Return empty PageResponse if structure is invalid
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: 0,
+        number: 0,
+        first: true,
+        last: true,
+        empty: true,
+        pageable: {
+          pageNumber: 0,
+          pageSize: 0,
+          sort: {
+            sorted: false,
+            unsorted: true,
+            empty: true,
+          },
+        },
+        numberOfElements: 0,
+      };
+    }
+    
+    return unwrappedData;
   }
 
   // ============================================================================
@@ -800,11 +856,30 @@ export class TreatmentPlanService {
     request: AutoScheduleRequest
   ): Promise<AutoScheduleResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<AutoScheduleResponse>(
+    const response = await axios.post<any>(
       `/treatment-plans/${planId}/auto-schedule`,
       request
     );
-    return response.data;
+    
+    console.log('📅 TreatmentPlanService.autoSchedule - Raw response:', response.data);
+    console.log('📅 TreatmentPlanService.autoSchedule - Response status:', response.status);
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const unwrappedData = extractApiResponse<AutoScheduleResponse>(response);
+    
+    console.log('📅 TreatmentPlanService.autoSchedule - Unwrapped data:', unwrappedData);
+    console.log('📅 TreatmentPlanService.autoSchedule - Suggestions:', unwrappedData?.suggestions);
+    console.log('📅 TreatmentPlanService.autoSchedule - Suggestions length:', unwrappedData?.suggestions?.length);
+    console.log('📅 TreatmentPlanService.autoSchedule - Summary:', unwrappedData?.summary);
+    
+    // Ensure suggestions is always an array
+    if (unwrappedData && !Array.isArray(unwrappedData.suggestions)) {
+      console.warn('⚠️ TreatmentPlanService.autoSchedule - Suggestions is not an array, setting to empty array');
+      unwrappedData.suggestions = [];
+    }
+    
+    return unwrappedData;
   }
 
   /**
@@ -841,11 +916,30 @@ export class TreatmentPlanService {
     request: AutoScheduleRequest
   ): Promise<AutoScheduleResponse> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.post<AutoScheduleResponse>(
+    const response = await axios.post<any>(
       `/treatment-plan-phases/${phaseId}/auto-schedule`,
       request
     );
-    return response.data;
+    
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Raw response:', response.data);
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Response status:', response.status);
+    
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: T }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const unwrappedData = extractApiResponse<AutoScheduleResponse>(response);
+    
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Unwrapped data:', unwrappedData);
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Suggestions:', unwrappedData?.suggestions);
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Suggestions length:', unwrappedData?.suggestions?.length);
+    console.log('📅 TreatmentPlanService.autoSchedulePhase - Summary:', unwrappedData?.summary);
+    
+    // Ensure suggestions is always an array
+    if (unwrappedData && !Array.isArray(unwrappedData.suggestions)) {
+      console.warn('⚠️ TreatmentPlanService.autoSchedulePhase - Suggestions is not an array, setting to empty array');
+      unwrappedData.suggestions = [];
+    }
+    
+    return unwrappedData;
   }
 }
 

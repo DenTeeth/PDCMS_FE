@@ -233,8 +233,11 @@ export class RoomService {
     queryParams.append('serviceCodes', serviceCodes.join(','));
     
     const url = `${this.BASE_URL}/by-services?${queryParams.toString()}`;
-    const response = await axios.get<Room[]>(url);
+    const response = await axios.get<any>(url);
     
-    return response.data;
+    // Use helper to unwrap FormatRestResponse wrapper: { statusCode, message, data: [...] }
+    const { extractApiResponse } = await import('@/utils/apiResponse');
+    const data = extractApiResponse<Room[]>(response);
+    return Array.isArray(data) ? data : [];
   }
 }

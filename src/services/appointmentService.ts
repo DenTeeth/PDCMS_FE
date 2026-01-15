@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api';
+import { extractApiResponse } from '@/utils/apiResponse';
 
 const api = apiClient.getAxiosInstance();
 import {
@@ -265,11 +266,11 @@ export const appointmentService = {
         appointmentCode: string,
         request: UpdateAppointmentStatusRequest
     ): Promise<AppointmentDetailDTO> => {
-        const response = await api.patch<AppointmentDetailDTO>(
+        const response = await api.patch<any>(
             `${APPOINTMENT_BASE_URL}/${appointmentCode}/status`,
             request
         );
-        return response.data;
+        return extractApiResponse<AppointmentDetailDTO>(response);
     },
 
     // P3.6 - Delay Appointment
@@ -279,11 +280,11 @@ export const appointmentService = {
         appointmentCode: string,
         request: DelayAppointmentRequest
     ): Promise<AppointmentDetailDTO> => {
-        const response = await api.patch<AppointmentDetailDTO>(
+        const response = await api.patch<any>(
             `${APPOINTMENT_BASE_URL}/${appointmentCode}/delay`,
             request
         );
-        return response.data;
+        return extractApiResponse<AppointmentDetailDTO>(response);
     },
 
     // Legacy update appointment status (deprecated - use updateAppointmentStatus with appointmentCode)

@@ -158,7 +158,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         href: '/{baseRole}/my-schedule',
         icon: faCalendarDays,
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
-        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX'], // Only full-time and fixed part-time
         // Note: This page is for employees only (requires VIEW_SCHEDULE_OWN)
         // Admin/Managers typically have VIEW_SCHEDULE_ALL and use /shift-calendar instead
       },
@@ -370,120 +370,11 @@ export const PATIENT_NAVIGATION_CONFIG: NavigationConfig = {
       icon: faMoneyBillWave,
       requiredPermissions: ['VIEW_INVOICE_OWN'],
     },
-    // Booking Management - Show if user has any booking-related permissions
-    // {
-    //   name: 'Quản lý đặt lịch',
-    //   icon: faClipboardList,
-    //   hasSubmenu: true,
-    //   // Parent menu visibility is determined by submenu items
-    //   submenu: [
-    //     {
-    //       name: 'Phòng khám',
-    //       href: '/admin/booking/rooms',
-    //       icon: faHospitalUser,
-    //       requiredPermissions: ['VIEW_ROOM'],
-    //     },
-    //     {
-    //       name: 'Dịch vụ',
-    //       href: '/admin/booking/services',
-    //       icon: faTeeth,
-    //       requiredPermissions: ['VIEW_SERVICE'],
-    //     },
-    //     {
-    //       name: 'Lịch hẹn',
-    //       href: '/admin/booking/appointments',
-    //       icon: faCalendarAlt,
-    //       requiredPermissions: ['VIEW_APPOINTMENT', 'VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN'],
-    //       requireAll: false,
-    //     },
-    //     {
-    //       name: 'Kế hoạch điều trị',
-    //       href: '/admin/treatment-plans',
-    //       icon: faListCheck,
-    //       requiredPermissions: ['VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_OWN'],
-    //       requireAll: false,
-    //     },
-    //   ],
-    // },
-    // // System Configuration - Show if user has system config permissions
-    // {
-    //   name: 'Cấu hình hệ thống',
-    //   icon: faCog,
-    //   hasSubmenu: true,
-    //   // Parent menu visibility is determined by submenu items
-    //   submenu: [
-    //     {
-    //       name: 'Quản lý vai trò',
-    //       href: '/admin/roles',
-    //       icon: faShieldAlt,
-    //       requiredPermissions: ['VIEW_ROLE'],
-    //     },
-    //     {
-    //       name: 'Quản lý quyền',
-    //       href: '/admin/permissions',
-    //       icon: faKey,
-    //       requiredPermissions: ['VIEW_PERMISSION'],
-    //     },
-    //     {
-    //       name: 'Chuyên khoa',
-    //       href: '/admin/specializations',
-    //       icon: faStethoscope,
-    //       requiredPermissions: ['VIEW_SPECIALIZATION'],
-    //     },
-    //   ],
-    // },
-    // // Warehouse Management - Show if user has VIEW_WAREHOUSE permission
-    // {
-    //   name: 'Quản lý kho',
-    //   icon: faWarehouse,
-    //   hasSubmenu: true,
-    //   // Access Control: RBAC-based - Check VIEW_WAREHOUSE permission first
-    //   // Fallback: ROLE_ADMIN (has all permissions in seed data)
-    //   // This menu will show if user has VIEW_WAREHOUSE permission OR is ROLE_ADMIN
-    //   // Logic is handled in filterNavigationItems function using canAccessWarehouse()
-    //   submenu: [
-    //     {
-    //       name: 'Tổng quan kho',
-    //       href: '/admin/warehouse',
-    //       icon: faTachometerAlt,
-    //       requiredPermissions: ['VIEW_WAREHOUSE'],
-    //     },
-    //     {
-    //       name: 'Quản lý vật tư',
-    //       href: '/admin/warehouse/inventory',
-    //       icon: faBoxes,
-    //       requiredPermissions: ['VIEW_WAREHOUSE'],
-    //     },
-    //     {
-    //       name: 'Nhập/Xuất kho',
-    //       href: '/admin/warehouse/storage',
-    //       icon: faClipboard,
-    //       requiredPermissions: ['VIEW_WAREHOUSE'],
-    //     },
-    //     {
-    //       name: 'Nhà cung cấp',
-    //       href: '/admin/warehouse/suppliers',
-    //       icon: faUsers,
-    //       requiredPermissions: ['VIEW_WAREHOUSE'],
-    //     },
-    //     {
-    //       name: 'Báo cáo & thống kê',
-    //       href: '/admin/warehouse/reports',
-    //       icon: faChartLine,
-    //       requiredPermissions: ['VIEW_WAREHOUSE'],
-    //     },
-    //   ],
-    // },
     {
       name: 'Xem CBCT',
       href: '/patient/nii-viewer',
       icon: faImage,
       requiredPermissions: ['PATIENT_IMAGE_READ'],
-    },
-    {
-      name: 'Thanh toán',
-      href: '/patient/billing',
-      icon: faReceipt,
     },
     {
       name: 'Thông báo',

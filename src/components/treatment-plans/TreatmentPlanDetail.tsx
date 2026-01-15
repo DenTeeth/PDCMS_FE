@@ -326,11 +326,13 @@ export default function TreatmentPlanDetail({
   // Map suggestions by itemId for easy lookup
   const suggestionsMap = useMemo(() => {
     const map = new Map<number, AppointmentSuggestion>();
-    suggestions.forEach((suggestion) => {
-      if (suggestion.itemId) {
-        map.set(suggestion.itemId, suggestion);
-      }
-    });
+    if (Array.isArray(suggestions)) {
+      suggestions.forEach((suggestion) => {
+        if (suggestion.itemId) {
+          map.set(suggestion.itemId, suggestion);
+        }
+      });
+    }
     return map;
   }, [suggestions]);
 
@@ -1257,7 +1259,7 @@ export default function TreatmentPlanDetail({
         )}
 
       {/* Summary Card - Show only if there are suggestions */}
-      {suggestions.length > 0 && summary && (
+      {Array.isArray(suggestions) && suggestions.length > 0 && summary && (
         <Card className="border-blue-200 bg-blue-50/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
