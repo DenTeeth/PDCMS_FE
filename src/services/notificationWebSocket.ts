@@ -7,21 +7,6 @@ import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Notification } from '@/types/notification';
 
-/**
- * WebSocket URL
- * - BE docs (NOTIFICATION_SYSTEM_FE_INTEGRATION_GUIDE.md & FE_READY):
- *   Local: ws://localhost:8081/ws  (SockJS factory should use http://localhost:8081/ws)
- *   Production: Must use HTTPS/WSS (e.g., https://pdcms.duckdns.org/ws or wss://pdcms.duckdns.org/ws)
- * - FE uses env for flexibility; if env is missing, follow BE guide as default.
- *
- * Dev example:
- *   NEXT_PUBLIC_WS_URL=http://localhost:8080/ws
- * Production example:
- *   NEXT_PUBLIC_WS_URL=https://pdcms.duckdns.org/ws
- * 
- * Security: Browser blocks insecure WebSocket (HTTP/WS) from HTTPS pages.
- * In production, must use secure WebSocket (HTTPS/WSS).
- */
 const getWebSocketUrl = (): string | null => {
   // Check if WebSocket URL is explicitly set
   const envUrl = process.env.NEXT_PUBLIC_WS_URL;
@@ -34,7 +19,8 @@ const getWebSocketUrl = (): string | null => {
       return null;
     }
     // Development: use localhost
-    return 'http://localhost:8080/ws';
+    return 'https://pdcms.duckdns.org/ws';
+    // return 'http://localhost:8080/ws';
   }
   
   // If env URL is set, validate it matches current page protocol

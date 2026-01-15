@@ -1,8 +1,3 @@
-/**
- * Supplier API V1 Types
- * Backend: http://localhost:8080/api/v1/suppliers
- * Authentication: Bearer Token required
- */
 
 // ============================================
 // API RESPONSE WRAPPERS

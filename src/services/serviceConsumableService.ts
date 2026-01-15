@@ -1,8 +1,4 @@
-/**
- * Service Consumable Service - API 6.17
- * Backend: http://localhost:8080/api/v1/warehouse/consumables
- * Authentication: Bearer Token required
- */
+
 
 import { apiClient } from '@/lib/api';
 import { extractApiResponse, createApiError } from '@/utils/apiResponse';
@@ -13,14 +9,7 @@ import {
 const axios = apiClient.getAxiosInstance();
 
 export const serviceConsumableService = {
-  /**
-   * API 6.17 - GET /api/v1/warehouse/consumables/services/{serviceId}
-   * Get consumable items (Bill of Materials) required for a service
-   * with real-time stock availability and cost information
-   * 
-   * RBAC: Price fields (unitPrice, totalCost, totalConsumableCost) are
-   * conditionally returned based on VIEW_WAREHOUSE_COST permission
-   */
+
   getServiceConsumables: async (
     serviceId: number
   ): Promise<ServiceConsumablesResponse> => {

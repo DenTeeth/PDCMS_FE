@@ -181,40 +181,111 @@ export class DashboardService {
   /**
    * Export dashboard data to Excel
    * @param tab Tab name to export
-   * @param month Month in YYYY-MM format
+   * @param params - Can be either { month } or { startDate, endDate }
    * @returns Blob of Excel file
    */
-  async exportExcel(tab: DashboardTab, month: string): Promise<Blob> {
+  async exportExcel(
+    tab: DashboardTab, 
+    params: { month?: string; startDate?: string; endDate?: string }
+  ): Promise<Blob> {
     const axios = apiClient.getAxiosInstance();
-    const response = await axios.get(
-      `${this.baseEndpoint}/export/${tab}`,
-      {
-        params: { month },
-        responseType: 'blob', // Important for file download
+    
+    // Build query params - BE supports both month and date range
+    const queryParams: any = {};
+    if (params.month) {
+      queryParams.month = params.month;
+    }
+    if (params.startDate) {
+      queryParams.startDate = params.startDate;
+    }
+    if (params.endDate) {
+      queryParams.endDate = params.endDate;
+    }
+    
+    try {
+      const response = await axios.get(
+        `${this.baseEndpoint}/export/${tab}`,
+        {
+          params: queryParams,
+          responseType: 'blob', // Important for file download
+        }
+      );
+      
+      console.log(`✅ Export dashboard ${tab} - File downloaded`);
+      return response.data;
+    } catch (error: any) {
+      // Try to extract error message from blob response if it's a JSON error
+      let errorMessage = `Không thể xuất báo cáo ${tab}. Vui lòng thử lại sau.`;
+      
+      if (error.response?.data) {
+        // If response is blob, try to read it as text
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text();
+            const json = JSON.parse(text);
+            errorMessage = json.message || errorMessage;
+          } catch {
+            // If parsing fails, use default message
+          }
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
       }
-    );
-    return response.data;
+      
+      console.error(`❌ Export dashboard ${tab} error:`, {
+        message: errorMessage,
+        status: error.response?.status,
+        params: queryParams,
+        originalError: error,
+      });
+      
+      const finalError = new Error(errorMessage);
+      (finalError as any).status = error.response?.status;
+      (finalError as any).params = queryParams;
+      throw finalError;
+    }
   }
 
   /**
    * Download Excel file
    * Helper method to trigger browser download
    */
-  async downloadExcel(tab: DashboardTab, month: string): Promise<void> {
+  async downloadExcel(
+    tab: DashboardTab, 
+    params: { month?: string; startDate?: string; endDate?: string }
+  ): Promise<void> {
     try {
-      const blob = await this.exportExcel(tab, month);
+      const blob = await this.exportExcel(tab, params);
+      
+      // Generate filename based on params
+      let filename: string;
+      if (params.month) {
+        filename = `dashboard-${tab}-${params.month}.xlsx`;
+      } else if (params.startDate && params.endDate) {
+        filename = `dashboard-${tab}-${params.startDate}-to-${params.endDate}.xlsx`;
+      } else {
+        filename = `dashboard-${tab}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      }
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `dashboard-${tab}-${month}.xlsx`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading Excel:', error);
+      
+      console.log(`✅ Dashboard ${tab} Excel file downloaded: ${filename}`);
+    } catch (error: any) {
+      console.error('❌ Error downloading Excel:', {
+        tab,
+        params,
+        message: error.message,
+        status: error.status,
+        error,
+      });
       throw error;
     }
   }

@@ -151,12 +151,32 @@ export default function EmployeeOvertimeRequestsPage() {
       console.error('Error loading work shifts:', error);
       // Handle 403 error - user doesn't have permission to view work shifts
       if (error.response?.status === 403) {
-        console.warn('⚠️ User does not have permission to view work shifts (VIEW_SCHEDULE_ALL or MANAGE_WORK_SHIFTS required)');
+        const userPermissions = user?.permissions || [];
+        const hasViewScheduleOwn = userPermissions.includes('VIEW_SCHEDULE_OWN');
+        const hasViewScheduleAll = userPermissions.includes('VIEW_SCHEDULE_ALL');
+        const hasManageWorkShifts = userPermissions.includes('MANAGE_WORK_SHIFTS');
+        
+        console.warn('⚠️ User does not have permission to view work shifts', {
+          userPermissions,
+          hasViewScheduleOwn,
+          hasViewScheduleAll,
+          hasManageWorkShifts
+        });
+        
         // Set empty array to prevent UI errors, but user won't be able to select shifts
         setWorkShifts([]);
-        setWorkShiftsError('Bạn không có quyền xem danh sách ca làm việc. Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.');
+        
+        // Provide more specific error message based on user's role
+        let errorMsg = 'Bạn không có quyền xem danh sách ca làm việc. ';
+        if (hasViewScheduleOwn && !hasViewScheduleAll && !hasManageWorkShifts) {
+          errorMsg += 'Nhân viên cần quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS để xem danh sách ca làm việc. Vui lòng liên hệ quản trị viên.';
+        } else {
+          errorMsg += 'Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.';
+        }
+        
+        setWorkShiftsError(errorMsg);
         // Show warning toast
-        toast.error('Không có quyền xem danh sách ca làm việc. Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.');
+        toast.error(errorMsg);
       } else {
         // Other errors - set empty array
         setWorkShifts([]);

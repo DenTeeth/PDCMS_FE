@@ -549,30 +549,91 @@ export const storageService = {
    */
   exportTransactionHistory: async (filter?: StorageFilter): Promise<Blob> => {
     try {
-      const response = await api.get(`${TRANSACTION_BASE}/export`, {
-        params: buildTransactionParams(filter),
+      // Build params for export - don't include page/size, BE will get all data
+      const params: Record<string, any> = {
+        sortBy: filter?.sortBy ?? 'transactionDate',
+        sortDir: filter?.sortDirection ?? 'desc',
+      };
+
+      if (filter?.transactionType) params.type = filter.transactionType;
+      if (filter?.status) params.status = filter.status;
+      if (filter?.paymentStatus) params.paymentStatus = filter.paymentStatus;
+      if (filter?.search) params.search = filter.search;
+      if (filter?.fromDate) params.fromDate = filter.fromDate;
+      if (filter?.toDate) params.toDate = filter.toDate;
+      if (filter?.supplierId) params.supplierId = filter.supplierId;
+      if (filter?.appointmentId) params.appointmentId = filter.appointmentId;
+      if (filter?.createdBy) params.createdBy = filter.createdBy;
+
+      const endpoint = `${TRANSACTION_BASE}/export`;
+      console.log('📤 Export transaction history - Request:', {
+        endpoint,
+        params,
+        fullUrl: `${api.defaults.baseURL}${endpoint}`,
+      });
+
+      const response = await api.get(endpoint, {
+        params,
         responseType: 'blob', // Important for binary data
       });
 
-      console.log(' Export transaction history - File downloaded');
+      console.log('✅ Export transaction history - File downloaded', {
+        size: response.data?.size || 0,
+        type: response.data?.type || 'unknown',
+      });
       // Blob response doesn't need unwrapping
       return response.data;
     } catch (error: any) {
+      // Try to extract error message from blob response if it's a JSON error
+      let errorMessage: string = 'Không thể xuất lịch sử giao dịch. Vui lòng thử lại sau.';
+      
+      // First, try to get message from error object
+      if (error?.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      } else if (error.response?.data) {
+        // If response is blob, try to read it as text
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text();
+            const json = JSON.parse(text);
+            if (json?.message && typeof json.message === 'string') {
+              errorMessage = json.message;
+            }
+          } catch {
+            // If parsing fails, use default message
+          }
+        } else if (error.response.data?.message && typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      // Ensure errorMessage is always a string
+      if (!errorMessage || typeof errorMessage !== 'string') {
+        errorMessage = 'Không thể xuất lịch sử giao dịch. Vui lòng thử lại sau.';
+      }
+      
       const enhancedError = createApiError(error, {
         endpoint: `${TRANSACTION_BASE}/export`,
         method: 'GET',
-        params: buildTransactionParams(filter),
+        params: filter,
       });
       
-      console.error(' Export transaction history error:', {
-        message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
-        params: enhancedError.params,
+      console.error('❌ Export transaction history error:', {
+        message: errorMessage,
+        status: (enhancedError as any).status || error.response?.status,
+        statusText: error.response?.statusText,
+        endpoint: (enhancedError as any).endpoint,
+        fullUrl: error.config?.url || `${api.defaults.baseURL}${TRANSACTION_BASE}/export`,
+        params: (enhancedError as any).params,
+        responseData: error.response?.data ? (error.response.data instanceof Blob ? '[Blob]' : error.response.data) : undefined,
         originalError: error,
       });
       
-      throw enhancedError;
+      // Create new error with proper message
+      const finalError = new Error(errorMessage);
+      (finalError as any).status = (enhancedError as any).status || error.response?.status;
+      (finalError as any).endpoint = (enhancedError as any).endpoint;
+      throw finalError;
     }
   },
 };

@@ -1,8 +1,4 @@
-/**
- * API 6.17: Service Consumables Types
- * Backend: http://localhost:8080/api/v1/warehouse/consumables
- * Authentication: Bearer Token required
- */
+
 
 // ============================================
 // CONSUMABLE ITEM RESPONSE
@@ -12,12 +8,12 @@ export interface ConsumableItemResponse {
   itemMasterId: number;
   itemCode: string;
   itemName: string;
-  quantity: number; // Required quantity per service
+  quantity: number; 
   unitName: string;
-  currentStock: number; // Current stock in warehouse
+  currentStock: number; 
   stockStatus: 'OK' | 'LOW' | 'OUT_OF_STOCK';
-  unitPrice?: number; // RBAC: Only visible with VIEW_WAREHOUSE_COST permission
-  totalCost?: number; // RBAC: Only visible with VIEW_WAREHOUSE_COST permission (quantity × unitPrice)
+  unitPrice?: number; //RBAC: Only visible with VIEW_WAREHOUSE_COST permission
+  totalCost?: number; //RBAC: Only visible with VIEW_WAREHOUSE_COST permission
 }
 
 // ============================================

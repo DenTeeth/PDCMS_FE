@@ -200,8 +200,17 @@ export default function WarehouseReportsPage() {
       });
     } catch (error: any) {
       console.error('❌ Export error:', error);
+      
+      // Extract error message
+      let errorMessage = 'Vui lòng thử lại sau.';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast.error('Xuất file thất bại', {
-        description: error.message || 'Vui lòng thử lại sau.',
+        description: errorMessage,
       });
     } finally {
       setExportingReport(false);

@@ -159,6 +159,8 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faCalendarDays,
         requiredPermissions: ['VIEW_SCHEDULE_OWN'],
         employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED'], // Only full-time and fixed part-time
+        // Note: This page is for employees only (requires VIEW_SCHEDULE_OWN)
+        // Admin/Managers typically have VIEW_SCHEDULE_ALL and use /shift-calendar instead
       },
       {
         name: 'Lịch làm việc nhân viên',
@@ -172,6 +174,12 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         href: '/{baseRole}/holidays',
         icon: faFileAlt,
         requiredPermissions: ['MANAGE_HOLIDAY', 'VIEW_HOLIDAY'],
+      },
+      {
+        name: 'Quản lí loại nghỉ phép',
+        href: '/{baseRole}/time-off-types',
+        icon: faUserTie,
+        requiredPermissions: ['VIEW_LEAVE_TYPE'],
       }
     ],
   },

@@ -208,7 +208,8 @@ let dashboardWebSocketInstance: DashboardWebSocketService | null = null;
  */
 export function getDashboardWebSocket(): DashboardWebSocketService {
   if (!dashboardWebSocketInstance) {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'https://pdcms.duckdns.org/ws';
+    // const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws';
     dashboardWebSocketInstance = new DashboardWebSocketService({
       url: wsUrl,
       reconnectDelay: 5000,

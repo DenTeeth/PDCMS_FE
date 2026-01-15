@@ -871,25 +871,77 @@ export const inventoryService = {
    * Returns Excel file (.xlsx) with inventory summary
    */
   exportInventorySummary: async (filter?: InventoryFilter): Promise<Blob> => {
+    const params: Record<string, any> = {};
+
+    // Apply filters
+    if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+    if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
+    if (filter?.search) params.search = filter.search;
+    if (filter?.categoryId) params.categoryId = filter.categoryId;
+
+    const endpoint = '/warehouse/summary/export';
+    
     try {
-      const params: Record<string, any> = {};
+      console.log('📤 Export inventory summary - Request:', {
+        endpoint,
+        params,
+        fullUrl: `${api.defaults.baseURL}${endpoint}`,
+      });
 
-      // Apply filters
-      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
-      if (filter?.stockStatus) params.stockStatus = filter.stockStatus;
-      if (filter?.search) params.search = filter.search;
-      if (filter?.categoryId) params.categoryId = filter.categoryId;
-
-      const response = await api.get('/warehouse/summary/export', {
+      const response = await api.get(endpoint, {
         params,
         responseType: 'blob', // Important for binary data
       });
 
-      console.log(' Export inventory summary - File downloaded');
+      console.log('✅ Export inventory summary - File downloaded', {
+        size: response.data?.size || 0,
+        type: response.data?.type || 'unknown',
+      });
       return response.data;
     } catch (error: any) {
-      console.error(' Export inventory summary error:', error.response?.data || error.message);
-      throw error;
+      // Try to extract error message from blob response if it's a JSON error
+      let errorMessage: string = 'Không thể xuất báo cáo tồn kho. Vui lòng thử lại sau.';
+      
+      // First, try to get message from error object
+      if (error?.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      } else if (error.response?.data) {
+        // If response is blob, try to read it as text
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text();
+            const json = JSON.parse(text);
+            if (json?.message && typeof json.message === 'string') {
+              errorMessage = json.message;
+            }
+          } catch {
+            // If parsing fails, use default message
+          }
+        } else if (error.response.data?.message && typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      // Ensure errorMessage is always a string
+      if (!errorMessage || typeof errorMessage !== 'string') {
+        errorMessage = 'Không thể xuất báo cáo tồn kho. Vui lòng thử lại sau.';
+      }
+      
+      console.error('❌ Export inventory summary error:', {
+        message: errorMessage,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        endpoint: '/warehouse/summary/export',
+        fullUrl: error.config?.url || `${api.defaults.baseURL}/warehouse/summary/export`,
+        params,
+        responseData: error.response?.data ? (error.response.data instanceof Blob ? '[Blob]' : error.response.data) : undefined,
+        originalError: error,
+      });
+      
+      const finalError = new Error(errorMessage);
+      (finalError as any).status = error.response?.status;
+      (finalError as any).endpoint = '/warehouse/summary/export';
+      throw finalError;
     }
   },
 
@@ -898,25 +950,77 @@ export const inventoryService = {
    * Returns Excel file (.xlsx) with expiring alerts
    */
   exportExpiringAlerts: async (filter?: ExpiringAlertsFilter): Promise<Blob> => {
+    const params: Record<string, any> = {
+      days: filter?.days ?? 30, // Default 30 days
+    };
+
+    if (filter?.categoryId) params.categoryId = filter.categoryId;
+    if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
+    if (filter?.statusFilter) params.statusFilter = filter.statusFilter;
+
+    const endpoint = '/warehouse/alerts/expiring/export';
+    
     try {
-      const params: Record<string, any> = {
-        days: filter?.days ?? 30, // Default 30 days
-      };
+      console.log('📤 Export expiring alerts - Request:', {
+        endpoint,
+        params,
+        fullUrl: `${api.defaults.baseURL}${endpoint}`,
+      });
 
-      if (filter?.categoryId) params.categoryId = filter.categoryId;
-      if (filter?.warehouseType) params.warehouseType = filter.warehouseType;
-      if (filter?.statusFilter) params.statusFilter = filter.statusFilter;
-
-      const response = await api.get('/warehouse/alerts/expiring/export', {
+      const response = await api.get(endpoint, {
         params,
         responseType: 'blob', // Important for binary data
       });
 
-      console.log(' Export expiring alerts - File downloaded');
+      console.log('✅ Export expiring alerts - File downloaded', {
+        size: response.data?.size || 0,
+        type: response.data?.type || 'unknown',
+      });
       return response.data;
     } catch (error: any) {
-      console.error(' Export expiring alerts error:', error.response?.data || error.message);
-      throw error;
+      // Try to extract error message from blob response if it's a JSON error
+      let errorMessage: string = 'Không thể xuất cảnh báo hết hạn. Vui lòng thử lại sau.';
+      
+      // First, try to get message from error object
+      if (error?.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      } else if (error.response?.data) {
+        // If response is blob, try to read it as text
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text();
+            const json = JSON.parse(text);
+            if (json?.message && typeof json.message === 'string') {
+              errorMessage = json.message;
+            }
+          } catch {
+            // If parsing fails, use default message
+          }
+        } else if (error.response.data?.message && typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      // Ensure errorMessage is always a string
+      if (!errorMessage || typeof errorMessage !== 'string') {
+        errorMessage = 'Không thể xuất cảnh báo hết hạn. Vui lòng thử lại sau.';
+      }
+      
+      console.error('❌ Export expiring alerts error:', {
+        message: errorMessage,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        endpoint: '/warehouse/alerts/expiring/export',
+        fullUrl: error.config?.url || `${api.defaults.baseURL}/warehouse/alerts/expiring/export`,
+        params,
+        responseData: error.response?.data ? (error.response.data instanceof Blob ? '[Blob]' : error.response.data) : undefined,
+        originalError: error,
+      });
+      
+      const finalError = new Error(errorMessage);
+      (finalError as any).status = error.response?.status;
+      (finalError as any).endpoint = '/warehouse/alerts/expiring/export';
+      throw finalError;
     }
   },
 };

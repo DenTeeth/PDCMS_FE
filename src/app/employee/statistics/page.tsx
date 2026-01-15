@@ -112,16 +112,65 @@ export default function StatisticsPage() {
   const handleExport = async (tab: DashboardTab) => {
     try {
       setExporting(true);
-      // Export với date range thay vì month
-      const monthFormat = format(new Date(dateRange.from), 'yyyy-MM');
-      await dashboardService.downloadExcel(tab, monthFormat);
-      toast.success(`Đã xuất báo cáo ${format(new Date(dateRange.from), 'MM/yyyy')} thành công!`);
+      
+      // Determine if we should use month or date range
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+      
+      // Check if it's a full month (same month, from 1st to last day)
+      const isFullMonth = 
+        fromDate.getDate() === 1 &&
+        toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate() &&
+        fromDate.getMonth() === toDate.getMonth() &&
+        fromDate.getFullYear() === toDate.getFullYear();
+      
+      let exportParams: { month?: string; startDate?: string; endDate?: string };
+      
+      if (isFullMonth) {
+        // Use month format for full months
+        const monthFormat = format(fromDate, 'yyyy-MM');
+        exportParams = { month: monthFormat };
+      } else {
+        // Use date range for custom ranges
+        exportParams = {
+          startDate: format(fromDate, 'yyyy-MM-dd'),
+          endDate: format(toDate, 'yyyy-MM-dd'),
+        };
+      }
+      
+      await dashboardService.downloadExcel(tab, exportParams);
+      
+      const successMessage = isFullMonth
+        ? `Đã xuất báo cáo ${format(fromDate, 'MM/yyyy')} thành công!`
+        : `Đã xuất báo cáo từ ${format(fromDate, 'dd/MM/yyyy')} đến ${format(toDate, 'dd/MM/yyyy')} thành công!`;
+      
+      toast.success(successMessage);
     } catch (error: any) {
-      console.error('Export error:', error);
-      toast.error(
-        error.response?.data?.message ||
-          'Không thể xuất báo cáo. Vui lòng thử lại sau.'
-      );
+      console.error('❌ Export error:', error);
+      
+      // Extract error message - service already handles blob parsing
+      let errorMessage = 'Không thể xuất báo cáo. Vui lòng thử lại sau.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data) {
+        // If response is blob, try to read it as text
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text();
+            const json = JSON.parse(text);
+            errorMessage = json.message || errorMessage;
+          } catch {
+            // If parsing fails, use default message
+          }
+        }
+      }
+      
+      toast.error('Xuất báo cáo thất bại', {
+        description: errorMessage,
+      });
     } finally {
       setExporting(false);
     }

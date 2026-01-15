@@ -17,7 +17,8 @@
     "test:features": "tsx scripts/test-features.ts",
     "test:all-modules": "tsx scripts/test-all-modules.ts",
     "test:comprehensive": "tsx scripts/test-comprehensive.ts",
-    "test:warehouse": "tsx scripts/test-warehouse-apis.ts"
+    "test:warehouse": "tsx scripts/test-warehouse-apis.ts",
+    "test:excel-export": "tsx scripts/test-excel-export.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "7.0.1",

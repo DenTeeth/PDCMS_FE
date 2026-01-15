@@ -324,16 +324,31 @@ export default function ShiftCalendarPage() {
 
   // Convert shifts to calendar events
   const getCalendarEvents = () => {
+    console.log('getCalendarEvents called:', {
+      shiftsCount: shifts.length,
+      workShiftsCount: workShifts.length,
+      employeesCount: employees.length,
+      sampleShift: shifts[0],
+      sampleEmployee: employees[0]
+    });
+
     // Convert shifts to events
     const shiftEvents = shifts.map(shift => {
-      const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
-      const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
+      // Use workShift from shift object if available (from API response), otherwise lookup from workShifts array
+      const workShift = shift.workShift || workShifts.find(ws => ws.workShiftId === shift.workShiftId);
+      
+      // Use employee from shift object if available, otherwise lookup from employees array
+      // Handle both number and string types for employeeId comparison
+      const employee = shift.employee || employees.find(emp => {
+        const empId = typeof emp.employeeId === 'string' ? parseInt(emp.employeeId) : emp.employeeId;
+        return empId === shift.employeeId;
+      });
 
-      const employeeName = employee?.fullName || 'N/A';
-      const shiftName = workShift?.shiftName || shift.workShiftId;
+      const employeeName = employee?.fullName || shift.employee?.fullName || 'N/A';
+      const shiftName = workShift?.shiftName || shift.workShift?.shiftName || shift.workShiftId;
 
-      const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;
-      const end = `${shift.workDate}T${workShift?.endTime || '17:00:00'}`;
+      const start = `${shift.workDate}T${workShift?.startTime || shift.workShift?.startTime || '08:00:00'}`;
+      const end = `${shift.workDate}T${workShift?.endTime || shift.workShift?.endTime || '17:00:00'}`;
 
       return {
         id: shift.employeeShiftId,

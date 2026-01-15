@@ -1,8 +1,4 @@
-/**
- * Supplier Service - API V1
- * Backend: http://localhost:8080/api/v1/suppliers
- * Authentication: Bearer Token required
- */
+
 
 import { apiClient } from '@/lib/api';
 import { extractApiResponse, extractErrorMessage, createApiError } from '@/utils/apiResponse';
