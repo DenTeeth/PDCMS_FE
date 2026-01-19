@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Inventory Page - Warehouse API 6.x (Item Master Management) - Employee
- *  Using /api/v1/warehouse endpoints for summary + items
- */
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +50,7 @@ export default function EmployeeInventoryPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; itemId: number | null; itemName: string }>({ isOpen: false, itemId: null, itemName: '' });
 
-  // Dashboard Stats - API V1
+  // Dashboard Stats 
   const { data: stats, error: statsError } = useQuery({
     queryKey: ['inventoryStats'],
     queryFn: () => inventoryService.getStats(),
@@ -63,9 +58,6 @@ export default function EmployeeInventoryPage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Main Inventory Data - Warehouse API 6.1
-  // Note: BE /api/v1/warehouse/summary supports: search, stockStatus, warehouseType, categoryId, page, size
-  // Note: BE does NOT support isExpiringSoon filter or sort parameter
   const { data: inventoryPage, isLoading, error: inventoryError } = useQuery({
     queryKey: ['inventorySummary', tabState.activeFilter, page, sortField, sortDirection],
     queryFn: () => {
@@ -126,7 +118,7 @@ export default function EmployeeInventoryPage() {
   const totalPages = Math.ceil(totalElements / size);
   const inventory = filteredInventory.slice(page * size, (page + 1) * size);
 
-  // Delete mutation - API V1
+  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) => inventoryService.delete(id),
     onSuccess: () => {
@@ -150,7 +142,7 @@ export default function EmployeeInventoryPage() {
   };
 
   const handleEdit = (item: InventorySummary) => {
-    // Convert InventorySummary to ItemMasterV1 for editing
+    // Convert InventorySummary 
     const itemMaster: ItemMasterV1 = {
       id: item.itemMasterId,
       itemCode: item.itemCode,

@@ -670,7 +670,7 @@ export default function CreateItemMasterModal({
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              💡 Mã vật tư sẽ được tự động tạo theo định dạng: INV-YYYY-XXX
+              Mã vật tư sẽ được tự động tạo theo định dạng: INV-YYYY-XXX
             </p>
           </div>
 

@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Prescription List Component
- * 
- * Displays list of prescriptions (read-only for now)
- * Optimized UX: Simple list, minimal cards
- */
 
 import React from 'react';
 import { PrescriptionDTO } from '@/types/clinicalRecord';

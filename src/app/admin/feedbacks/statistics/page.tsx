@@ -1,20 +1,5 @@
 "use client";
 
-/**
- * Feedback Statistics Page
- * 
- * Hiển thị thống kê đánh giá:
- * - Tổng số đánh giá
- * - Điểm trung bình
- * - Phân bố theo số sao (1-5)
- * - Top tags phổ biến
- * 
- * Có thể filter theo:
- * - Bác sĩ cụ thể
- * - Khoảng thời gian
- * 
- * Permissions: Admin, Manager, hoặc Employee có VIEW_FEEDBACK permission
- */
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";

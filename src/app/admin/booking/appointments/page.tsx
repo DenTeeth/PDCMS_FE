@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * Admin Appointment Management Page
- * 
- * Features:
- * - List view with pagination (for statistics)
- * - Calendar view (for visual scheduling)
- * - Full filtering and search capabilities
- * - Create appointment functionality
- * - View appointment details
- */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,10 +42,9 @@ export default function AdminAppointmentsPage() {
     page: 0,
     size: 10,
     sortBy: 'appointmentStartTime',
-    sortDirection: 'DESC', // ✅ Newest appointments first
+    sortDirection: 'DESC', 
   });
 
-  // Search state - handled by AppointmentFilters component
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -100,10 +89,9 @@ export default function AdminAppointmentsPage() {
           page: currentPage,
           size: pageSize,
           sortBy: filters.sortBy || 'appointmentStartTime',
-          sortDirection: filters.sortDirection || 'DESC', // Default to DESC - newest first
+          sortDirection: filters.sortDirection || 'DESC', 
         };
 
-        // Search filters are already in filters object from AppointmentFilters component
 
         const response = await appointmentService.getAppointmentsPage(criteria);
 
@@ -117,7 +105,6 @@ export default function AdminAppointmentsPage() {
           totalPages: response.totalPages,
         });
 
-        // Only update if request wasn't cancelled and component is still mounted
         if (!abortController.signal.aborted && isMounted) {
           // Ensure content is always an array
           const safeContent = Array.isArray(response.content) ? response.content : [];
@@ -125,7 +112,6 @@ export default function AdminAppointmentsPage() {
           setTotalElements(response.totalElements ?? 0);
           setTotalPages(response.totalPages ?? 0);
           
-          // Debug: Log what we're setting
           console.log('Setting appointments:', {
             count: safeContent.length,
             firstItem: safeContent[0],
@@ -138,12 +124,10 @@ export default function AdminAppointmentsPage() {
         }
         console.error('Error loading appointments:', error);
         handleErrorRef.current(error);
-        // Only clear data if it's a real error (not cancellation)
         if (!abortController.signal.aborted && isMounted) {
           setAppointments([]);
         }
       } finally {
-        // Only update loading state if request wasn't cancelled and component is mounted
         if (!abortController.signal.aborted && isMounted) {
           setLoading(false);
         }
@@ -178,7 +162,7 @@ export default function AdminAppointmentsPage() {
       page: 0,
       size: 10,
       sortBy: 'appointmentStartTime',
-      sortDirection: 'DESC', // ✅ Newest appointments first
+      sortDirection: 'DESC', 
     });
     setCurrentPage(0);
   }, []);

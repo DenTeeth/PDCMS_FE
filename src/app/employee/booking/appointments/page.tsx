@@ -1,16 +1,5 @@
 'use client';
 
-/**
- * Employee Appointments Page
- * Requires: VIEW_APPOINTMENT_OWN or VIEW_APPOINTMENT_ALL permission
- * 
- * Features:
- * - Calendar view (Day/Week/Month) with color-coded appointments
- * - List view with pagination
- * - Search and filter functionality
- * - View appointment details
- * - RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
- */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -48,7 +37,7 @@ export default function EmployeeAppointmentsPage() {
     page: 0,
     size: 10,
     sortBy: 'appointmentStartTime',
-    sortDirection: 'DESC', // ✅ Newest appointments first
+    sortDirection: 'DESC', 
   });
 
   // Pagination states
@@ -99,8 +88,6 @@ export default function EmployeeAppointmentsPage() {
         };
 
         // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
-        // DO NOT send employeeCode filter - backend will handle RBAC filtering automatically
-        // Only send employeeCode if user has VIEW_APPOINTMENT_ALL (for searching other employees)
         if (canViewOwn && !canViewAll) {
           // Remove any entity filters that require VIEW_APPOINTMENT_ALL
           delete criteria.employeeCode;

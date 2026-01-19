@@ -1,19 +1,6 @@
 'use client';
 
-/**
- * Reschedule Appointment Modal Component
- * 
- * Allows rescheduling an appointment by:
- * - Selecting new doctor (required)
- * - Selecting new date and time (required)
- * - Selecting new room (required)
- * - Optionally changing services (if not provided, reuses old appointment's services)
- * - Optionally changing participants
- * - Selecting reason code (required)
- * - Optional cancellation notes
- * 
- * Issue #39: BE automatically re-links treatment plan items when rescheduling
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -398,7 +385,7 @@ export default function RescheduleAppointmentModal({
         page: 0,
         size: 100,
       });
-      setServices(servicesResponse.content);
+      setServices(Array.isArray(servicesResponse.content) ? servicesResponse.content : []);
 
       // Load employees (active doctors only)
       const employeeService = new EmployeeService();
@@ -408,8 +395,9 @@ export default function RescheduleAppointmentModal({
         isActive: true,
       });
       // Filter to only include doctors with at least one specialization
-      const doctorsWithSpecializations = employeesResponse.content.filter(
-        (employee) => employee.specializations && employee.specializations.length > 0
+      const employeesList = Array.isArray(employeesResponse.content) ? employeesResponse.content : [];
+      const doctorsWithSpecializations = employeesList.filter(
+        (employee) => employee.specializations && Array.isArray(employee.specializations) && employee.specializations.length > 0
       );
       setEmployees(doctorsWithSpecializations);
 
@@ -418,10 +406,11 @@ export default function RescheduleAppointmentModal({
       setRooms(roomsData);
 
       // Pre-fill service IDs from current appointment services
-      if (appointment && appointment.services.length > 0) {
+      if (appointment && Array.isArray(appointment.services) && appointment.services.length > 0) {
         // Map service codes to service IDs
         const serviceCodes = appointment.services.map((s) => s.serviceCode);
-        const matchedServices = servicesResponse.content.filter((s) =>
+        const servicesList = Array.isArray(servicesResponse.content) ? servicesResponse.content : [];
+        const matchedServices = servicesList.filter((s) =>
           serviceCodes.includes(s.serviceCode)
         );
         setNewServiceIds(matchedServices.map((s) => s.serviceId));
@@ -529,8 +518,8 @@ export default function RescheduleAppointmentModal({
     return null;
   }
 
-  const selectedEmployee = employees.find((e) => e.employeeCode === newEmployeeCode);
-  const selectedRoom = rooms.find((r) => r.roomCode === newRoomCode);
+  const selectedEmployee = Array.isArray(employees) ? employees.find((e) => e.employeeCode === newEmployeeCode) : undefined;
+  const selectedRoom = Array.isArray(rooms) ? rooms.find((r) => r.roomCode === newRoomCode) : undefined;
 
   // Get minimum date (today)
   const minDate = new Date().toISOString().split('T')[0];
@@ -609,11 +598,15 @@ export default function RescheduleAppointmentModal({
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Dịch vụ</Label>
                         <div className="flex flex-wrap gap-1">
-                          {appointment.services.map((s) => (
-                            <Badge key={s.serviceCode} variant="outline" className="text-xs">
-                              {s.serviceName}
-                            </Badge>
-                          ))}
+                          {Array.isArray(appointment.services) && appointment.services.length > 0 ? (
+                            appointment.services.map((s) => (
+                              <Badge key={s.serviceCode} variant="outline" className="text-xs">
+                                {s.serviceName}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Không có dịch vụ</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -688,14 +681,20 @@ export default function RescheduleAppointmentModal({
                           <SelectValue placeholder="Chọn phòng" />
                         </SelectTrigger>
                         <SelectContent>
-                          {rooms.map((room) => (
-                            <SelectItem key={room.roomCode} value={room.roomCode}>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-3 w-3" />
-                                <span>{room.roomName}</span>
-                              </div>
+                          {Array.isArray(rooms) && rooms.length > 0 ? (
+                            rooms.map((room) => (
+                              <SelectItem key={room.roomCode} value={room.roomCode}>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{room.roomName}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-rooms" disabled>
+                              Không có phòng khả dụng
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                     </CardContent>
@@ -808,7 +807,8 @@ export default function RescheduleAppointmentModal({
                     <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
                       {(() => {
                         // Filter services based on search query
-                        const filteredServices = services.filter((service) => {
+                        const servicesList = Array.isArray(services) ? services : [];
+                        const filteredServices = servicesList.filter((service) => {
                           if (!serviceSearchQuery.trim()) return true;
                           const query = serviceSearchQuery.toLowerCase();
                           return (

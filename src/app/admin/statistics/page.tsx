@@ -146,7 +146,7 @@ export default function StatisticsPage() {
       
       toast.success(successMessage);
     } catch (error: any) {
-      console.error('❌ Export error:', error);
+      console.error('Export error:', error);
       
       // Extract error message - service already handles blob parsing
       let errorMessage = 'Không thể xuất báo cáo. Vui lòng thử lại sau.';

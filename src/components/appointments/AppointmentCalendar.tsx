@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Reusable Appointment Calendar Component
- * Works with AppointmentSummaryDTO from BE
- * Can be used by Admin, Employee, and Patient
- */
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
@@ -74,9 +69,7 @@ export default function AppointmentCalendar({
                         size: 1000, // Get all appointments for date range
                     };
 
-                    // RBAC: Backend automatically filters by employeeId from JWT token for VIEW_APPOINTMENT_OWN
-                    // DO NOT send employeeCode filter - backend will handle RBAC filtering automatically
-                    // Only send employeeCode if user has VIEW_APPOINTMENT_ALL (for searching other employees)
+
                     if (!canViewAll) {
                         // Remove any entity filters that require VIEW_APPOINTMENT_ALL
                         delete criteria.employeeCode;

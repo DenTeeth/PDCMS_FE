@@ -142,11 +142,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#8b5fbf] focus:ring-[#8b5fbf]/30" />
-                    Ghi nhớ đăng nhập
-                  </label>
+                <div className="flex items-center justify-end">
                   <Link href="/forgot-password" className="text-sm text-[#8b5fbf] hover:text-[#7a4eae] font-medium">Quên mật khẩu?</Link>
                 </div>
 

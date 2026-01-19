@@ -100,7 +100,7 @@ export function WarehouseTab({ startDate, endDate }: WarehouseTabProps) {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Tổng giao ddịch"
+          title="Tổng giao dịch"
           value={data.transactions.total}
           icon={<Warehouse className="h-6 w-6" />}
           color="blue"

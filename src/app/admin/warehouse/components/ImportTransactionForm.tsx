@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * Import Transaction Form
- * Simplified and more reliable implementation
- * 
- * Features:
- * - Invoice number tracking (unique)
- * - Batch handling (auto create/update)
- * - Unit conversion support
- * - Purchase price tracking
- * - Expiry date validation
- * - Financial summary
- */
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

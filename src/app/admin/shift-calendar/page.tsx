@@ -54,15 +54,7 @@ export default function AdminShiftCalendarPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasViewedCalendar, setHasViewedCalendar] = useState(false); // Track if user has clicked "Xem lịch"
   const calendarRef = useRef<FullCalendar>(null);
-
-  // Calendar filter state (separate from currentDate to avoid auto-loading)
-  const [calendarFilter, setCalendarFilter] = useState({
-    selectedMonth: new Date().getMonth(),
-    selectedYear: new Date().getFullYear(),
-    selectedEmployeeForCalendar: null as number | null,
-  });
 
   // Summary state
   const [summaryData, setSummaryData] = useState<ShiftSummaryResponse | null>(null);
@@ -99,11 +91,6 @@ export default function AdminShiftCalendarPage() {
   const canViewAll = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
   const canViewSummary = user?.permissions?.includes('VIEW_SCHEDULE_ALL') || false;
 
-  // 🚨 Manual Shift Creation: For Manager/Admin ONLY
-  // Purpose: Tạo ca làm THỦ CÔNG cho nhân viên (trường hợp đặc biệt)
-  // This is NOT for employee self-registration (nhân viên dùng /registrations để tự đăng ký)
-  // BE requires MANAGE_FIXED_REGISTRATIONS permission (EmployeeShiftController line 196, 229, 252)
-  // ✅ BR-37 validation (48h/week limit) applies when creating manual shifts here
   const canCreate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
   const canUpdate = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
   const canDelete = user?.permissions?.includes('MANAGE_FIXED_REGISTRATIONS') || false;
@@ -140,51 +127,62 @@ export default function AdminShiftCalendarPage() {
     }
   }, []);
 
-  // Removed auto-load on filter change - only load when user clicks "Xem lịch"
-  // useEffect(() => {
-  //   if (currentDate) {
-  //     console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
-  //     loadShifts();
-  //   }
-  // }, [currentDate, selectedEmployee]);
+  // Auto-load shifts when currentDate or selectedEmployee changes (like employee page)
+  useEffect(() => {
+    if (currentDate) {
+      console.log('Current date changed, reloading data for:', format(currentDate, 'yyyy-MM-dd'));
+      loadShifts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDate, selectedEmployee]);
 
   // Handle FullCalendar view changes
   const handleDatesSet = async (dateInfo: any) => {
     console.log('Dates set:', dateInfo);
-    const newDate = new Date(dateInfo.start);
-    const start = new Date(dateInfo.start);
-    const end = new Date(dateInfo.end);
+
+    // Get the middle date of the view to determine the correct month/year
+    // This fixes the issue where start date might be from previous month
+    const startDate = new Date(dateInfo.start);
+    const endDate = new Date(dateInfo.end);
+    const middleDate = new Date((startDate.getTime() + endDate.getTime()) / 2);
 
     // Fetch holidays for the visible date range
     try {
-      const startDate = format(start, 'yyyy-MM-dd');
-      const endDate = format(end, 'yyyy-MM-dd');
-      const holidayDates = await holidayService.getHolidaysInRange(startDate, endDate);
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+      const holidayDates = await holidayService.getHolidaysInRange(startDateStr, endDateStr);
       setHolidays(holidayDates || []);
+      console.log(' Holidays loaded:', holidayDates?.length || 0);
     } catch (error: any) {
       console.error('Failed to fetch holidays:', error);
       // Don't show error - holidays are not critical
+      setHolidays([]);
     }
 
     // Update currentDate to keep title in sync with calendar
+    // Always update to ensure useEffect triggers and loads data for new month
     setCurrentDate(prevDate => {
       const prevMonth = prevDate.getMonth();
       const prevYear = prevDate.getFullYear();
-      const newMonth = newDate.getMonth();
-      const newYear = newDate.getFullYear();
+      const newMonth = middleDate.getMonth();
+      const newYear = middleDate.getFullYear();
 
       // Only update if month/year actually changed to avoid unnecessary re-renders
       if (prevMonth !== newMonth || prevYear !== newYear) {
         console.log('Month/Year changed from', prevMonth + 1, prevYear, 'to', newMonth + 1, newYear);
-        return newDate;
+        // Return new date to trigger useEffect and load shifts
+        // Create a new Date object to ensure reference changes and triggers useEffect
+        return new Date(middleDate);
       }
 
+      // Even if month/year didn't change, return prevDate to avoid unnecessary updates
       return prevDate;
     });
   };
 
   const loadData = async () => {
     try {
+      setLoading(true);
       // Load work shifts
       const workShiftsData = await workShiftService.getAll();
       setWorkShifts(workShiftsData);
@@ -201,40 +199,58 @@ export default function AdminShiftCalendarPage() {
         allIds: employeesList.map(e => ({ id: e.employeeId, type: typeof e.employeeId, name: e.fullName }))
       });
 
-      // Don't auto-load shifts - wait for user to click "Xem lịch"
+      // Don't call loadShifts here - useEffect will auto-load when currentDate is set
     } catch (error: any) {
-      handleError(error);
-    }
-  };
-
-  const loadShifts = async () => {
-    try {
-      setLoading(true);
-
-      // Use calendarFilter instead of currentDate/selectedEmployee
-      const filterDate = new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1);
-      const startDate = format(startOfMonth(filterDate), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(filterDate), 'yyyy-MM-dd');
-
-      // Load shifts and holidays in parallel
-      const [shiftsData, holidayDates] = await Promise.all([
-        EmployeeShiftService.getShifts({
-          start_date: startDate,
-          end_date: endDate,
-          employee_id: calendarFilter.selectedEmployeeForCalendar || undefined,
-        }),
-        holidayService.getHolidaysInRange(startDate, endDate).catch(() => []), // Don't fail if holidays fail
-      ]);
-
-      setShifts(shiftsData);
-      setHolidays(holidayDates || []);
-      setHasViewedCalendar(true); // Mark as viewed
-    } catch (error: any) {
-      console.error('Error loading shifts:', error);
       handleError(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadShifts = async (dateToLoad?: Date) => {
+    try {
+      // Don't set loading here to avoid re-render loop (like employee page)
+      // setLoading(true); // ⭐ REMOVED to prevent infinite loop
+
+      // Use provided date or currentDate (like employee page)
+      const dateToUse = dateToLoad || currentDate;
+      const startDate = format(startOfMonth(dateToUse), 'yyyy-MM-dd');
+      const endDate = format(endOfMonth(dateToUse), 'yyyy-MM-dd');
+
+      // Build params object
+      const params: any = {
+        start_date: startDate,
+        end_date: endDate,
+      };
+
+      // Filter by selectedEmployee if set
+      if (selectedEmployee) {
+        params.employee_id = selectedEmployee;
+        console.log(' Filtering by employee_id:', selectedEmployee);
+      }
+
+      console.log(' API params:', params);
+      console.log(' Fetching shifts from API...');
+
+      // Load shifts and holidays in parallel
+      const [shiftsData, holidayDates] = await Promise.all([
+        EmployeeShiftService.getShifts(params),
+        holidayService.getHolidaysInRange(startDate, endDate).catch(() => []), // Don't fail if holidays fail
+      ]);
+
+      console.log(' Shifts loaded:', shiftsData.length, 'shifts');
+      setShifts(shiftsData);
+      setHolidays(holidayDates || []);
+
+      if (shiftsData.length === 0) {
+        toast.info(`Không có ca làm việc nào trong tháng ${format(dateToUse, 'MM/yyyy')}`);
+      }
+    } catch (error: any) {
+      console.error(' Error loading shifts:', error);
+      toast.error('Không thể tải danh sách ca làm việc');
+      handleError(error);
+    }
+    // Don't set loading false here - let loadData handle it (like employee page)
   };
 
   // Load summary data
@@ -625,12 +641,10 @@ export default function AdminShiftCalendarPage() {
                 Tạo ca làm mới
               </Button>
             )}
-            {hasViewedCalendar && (
-              <Button onClick={loadShifts} variant="outline" disabled={loading}>
-                <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Đang tải...' : 'Làm mới'}
-              </Button>
-            )}
+            <Button onClick={loadShifts} variant="outline" disabled={loading}>
+              <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Đang tải...' : 'Tải lại'}
+            </Button>
           </div>
         </div>
 
@@ -796,84 +810,34 @@ export default function AdminShiftCalendarPage() {
           </div>
         )}
 
-        {/* Calendar Filter Section */}
+        {/* Employee Filter Section (simplified - no month/year filter, auto-loads on navigation) */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faCalendarAlt} />
             Lịch ca làm việc
           </h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              {/* Employee Filter */}
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
-                <select
-                  value={calendarFilter.selectedEmployeeForCalendar?.toString() || ''}
-                  onChange={(e) => setCalendarFilter(prev => ({
-                    ...prev,
-                    selectedEmployeeForCalendar: e.target.value ? parseInt(e.target.value) : null
-                  }))} className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[200px]"
-                >
-                  <option value="">Tất cả nhân viên</option>
-                  {employees.map(employee => (
-                    <option key={employee.employeeId} value={employee.employeeId}>
-                      {employee.fullName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Month Filter */}
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-gray-700 min-w-[60px]">Tháng:</Label>
-                <select
-                  value={calendarFilter.selectedMonth}
-                  onChange={(e) => setCalendarFilter(prev => ({
-                    ...prev,
-                    selectedMonth: parseInt(e.target.value)
-                  }))}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i} value={i}>
-                      {format(new Date(2024, i, 1), 'MMMM', { locale: vi })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Year Filter */}
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-gray-700 min-w-[50px]">Năm:</Label>
-                <select
-                  value={calendarFilter.selectedYear}
-                  onChange={(e) => setCalendarFilter(prev => ({
-                    ...prev,
-                    selectedYear: parseInt(e.target.value)
-                  }))}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                >
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - 2 + i;
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              {/* View Calendar Button */}
-              <Button
-                onClick={loadShifts}
-                disabled={loading}
-                className="ml-auto"
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Employee Filter */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium text-gray-700 min-w-[80px]">Nhân viên:</Label>
+              <select
+                value={selectedEmployee?.toString() || ''}
+                onChange={(e) => setSelectedEmployee(e.target.value ? parseInt(e.target.value) : null)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[200px]"
               >
-                <FontAwesomeIcon icon={faSyncAlt} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Đang tải...' : 'Xem lịch'}
-              </Button>
+                <option value="">Tất cả nhân viên</option>
+                {employees.map(employee => (
+                  <option key={employee.employeeId} value={employee.employeeId}>
+                    {employee.fullName}
+                  </option>
+                ))}
+              </select>
             </div>
+            {selectedEmployee && (
+              <div className="text-sm text-green-600 font-medium">
+                ✓ {employees.find(emp => emp.employeeId === String(selectedEmployee))?.fullName}
+              </div>
+            )}
           </div>
         </div>
 
@@ -883,7 +847,7 @@ export default function AdminShiftCalendarPage() {
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarAlt} />
-                {format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).charAt(0).toUpperCase() + format(new Date(calendarFilter.selectedYear, calendarFilter.selectedMonth, 1), 'MMMM yyyy', { locale: vi }).slice(1).toLowerCase()}
+                {format(currentDate, 'MMMM yyyy', { locale: vi }).charAt(0).toUpperCase() + format(currentDate, 'MMMM yyyy', { locale: vi }).slice(1).toLowerCase()}
               </CardTitle>
             </div>
           </CardHeader>
@@ -924,15 +888,7 @@ export default function AdminShiftCalendarPage() {
 
           <CardContent>
             <div className="h-[600px]">
-              {!hasViewedCalendar ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-6xl text-gray-300 mb-4" />
-                    <div className="text-gray-600 text-lg font-medium mb-2">Chưa có dữ liệu lịch</div>
-                    <div className="text-gray-500 text-sm">Vui lòng chọn bộ lọc và nhấn "Xem lịch" để hiển thị lịch làm việc</div>
-                  </div>
-                </div>
-              ) : loading ? (
+              {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>

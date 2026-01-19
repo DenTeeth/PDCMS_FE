@@ -29,8 +29,10 @@ import {
 import { Loader2, Plus, X, AlertTriangle } from 'lucide-react';
 import { TreatmentPlanService } from '@/services/treatmentPlanService';
 import { ServiceService } from '@/services/serviceService';
+import { employeeService } from '@/services/employeeService';
 import { AddItemToPhaseRequest, AddItemsToPhaseResponse, ApprovalStatus } from '@/types/treatmentPlan';
 import { Service } from '@/types/service';
+import { Employee } from '@/types/employee';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -40,6 +42,7 @@ interface AddItemsToPhaseModalProps {
   phaseId: number;
   phaseName: string;
   planApprovalStatus?: ApprovalStatus; // V21.4: To determine autoSubmit behavior
+  doctorEmployeeCode?: string; // Doctor assigned to the treatment plan
   onSuccess: () => void; // Callback to refresh phase/plan data
 }
 
@@ -56,6 +59,7 @@ export default function AddItemsToPhaseModal({
   phaseId,
   phaseName,
   planApprovalStatus = ApprovalStatus.DRAFT,
+  doctorEmployeeCode,
   onSuccess,
 }: AddItemsToPhaseModalProps) {
   const { user } = useAuth();
@@ -68,6 +72,8 @@ export default function AddItemsToPhaseModal({
   const [services, setServices] = useState<Service[]>([]);
   const [serviceSearch, setServiceSearch] = useState('');
   const debouncedSearch = useDebounce(serviceSearch, 300);
+  const [assignedDoctor, setAssignedDoctor] = useState<Employee | null>(null);
+  const [loadingDoctor, setLoadingDoctor] = useState(false);
 
   // Form state: Array of items to add
   const [items, setItems] = useState<ItemFormData[]>([
@@ -76,6 +82,15 @@ export default function AddItemsToPhaseModal({
 
   // Validation errors
   const [errors, setErrors] = useState<Record<number, Record<string, string>>>({});
+
+  // Load assigned doctor when modal opens and doctorEmployeeCode is provided
+  useEffect(() => {
+    if (open && doctorEmployeeCode) {
+      loadAssignedDoctor();
+    } else {
+      setAssignedDoctor(null);
+    }
+  }, [open, doctorEmployeeCode]);
 
   // Load services when modal opens
   useEffect(() => {
@@ -93,7 +108,7 @@ export default function AddItemsToPhaseModal({
       // Modal opened but user doesn't have MANAGE_TREATMENT_PLAN permission
       setServices([]);
     }
-  }, [open, canUpdate, canViewServices]);
+  }, [open, canUpdate, canViewServices, assignedDoctor]);
 
   // Filter services by search term (only if user has permission)
   useEffect(() => {
@@ -104,7 +119,28 @@ export default function AddItemsToPhaseModal({
         loadServices();
       }
     }
-  }, [debouncedSearch, open, canUpdate, canViewServices]);
+  }, [debouncedSearch, open, canUpdate, canViewServices, assignedDoctor]);
+
+  // Load assigned doctor details
+  const loadAssignedDoctor = async () => {
+    if (!doctorEmployeeCode) {
+      setAssignedDoctor(null);
+      return;
+    }
+
+    setLoadingDoctor(true);
+    try {
+      const doctor = await employeeService.getEmployeeByCode(doctorEmployeeCode);
+      setAssignedDoctor(doctor);
+      console.log('Loaded assigned doctor:', doctor.fullName, 'specializations:', doctor.specializations?.length || 0);
+    } catch (error: any) {
+      console.error('Error loading assigned doctor:', error);
+      // Don't show error toast - just log it, continue without doctor filter
+      setAssignedDoctor(null);
+    } finally {
+      setLoadingDoctor(false);
+    }
+  };
 
   const loadServices = async (keyword?: string) => {
     if (!canViewServices) {
@@ -114,19 +150,53 @@ export default function AddItemsToPhaseModal({
 
     setLoadingServices(true);
     try {
-      console.log('Loading services...', { keyword, isActive: 'true' });
-      
-      // V21.4: Use /my-specializations endpoint for doctors
-      // Check if user is a doctor: has ROLE_DENTIST role AND has employeeId (required for API)
-      const isDoctor = (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || false)
-        && !!user?.employeeId; // API requires employeeId to get specializations
-      
-      console.log('Loading services - isDoctor:', isDoctor, 'roles:', user?.roles, 'employeeId:', user?.employeeId);
+      console.log('Loading services...', { keyword, isActive: 'true', assignedDoctor: assignedDoctor?.fullName });
       
       let response;
-      if (isDoctor) {
+      let allServices: Service[] = [];
+
+      // Priority 1: If assigned doctor is provided, filter by their specializations
+      if (assignedDoctor && assignedDoctor.specializations && assignedDoctor.specializations.length > 0) {
+        const doctorSpecializationIds = assignedDoctor.specializations.map((spec: any) => {
+          const specId = typeof spec === 'string' ? parseInt(spec, 10) : (typeof spec === 'object' ? parseInt(String(spec.specializationId || spec.id || spec), 10) : spec);
+          return isNaN(specId) ? null : specId;
+        }).filter((id: number | null): id is number => id !== null);
+
+        console.log(`Filtering services for assigned doctor ${assignedDoctor.fullName} with specializations:`, doctorSpecializationIds);
+
+        // Load all services first, then filter client-side by specializations
+        response = await ServiceService.getServices({
+          isActive: 'true',
+          keyword,
+          page: 0,
+          size: 1000, // Load more to ensure we get all services
+          sortBy: 'serviceName',
+          sortDirection: 'ASC',
+        });
+        allServices = response.content || [];
+
+        // Filter services that match ANY of the assigned doctor's specializations
+        const filteredServices = allServices.filter(service => {
+          // Service matches if:
+          // 1. Service has no specializationId (general service, available to all doctors)
+          // 2. OR service has a specializationId that matches one of the doctor's specializations
+          return !service.specializationId || doctorSpecializationIds.includes(service.specializationId);
+        });
+
+        console.log(`Filtered services for assigned doctor ${assignedDoctor.fullName}: ${filteredServices.length}/${allServices.length} services match specializations`);
+        setServices(filteredServices);
+        return;
+      }
+
+      // Priority 2: If current user is a doctor, use /my-specializations endpoint
+      const isCurrentUserDoctor = (user?.roles?.some(r => r.toUpperCase().includes('DENTIST')) || false)
+        && !!user?.employeeId; // API requires employeeId to get specializations
+      
+      console.log('Loading services - isCurrentUserDoctor:', isCurrentUserDoctor, 'roles:', user?.roles, 'employeeId:', user?.employeeId);
+      
+      if (isCurrentUserDoctor) {
         try {
-          // Use new endpoint that automatically filters by doctor's specializations
+          // Use new endpoint that automatically filters by current doctor's specializations
           response = await ServiceService.getServicesForCurrentDoctor({
             isActive: 'true',
             keyword,
@@ -135,7 +205,9 @@ export default function AddItemsToPhaseModal({
             sortBy: 'serviceName',
             sortDirection: 'ASC',
           });
-          console.log(' Loaded services from /my-specializations:', response.content?.length || 0);
+          console.log(' Loaded services from /my-specializations (current user is doctor):', response.content?.length || 0);
+          setServices(response.content || []);
+          return;
         } catch (apiError: any) {
           // If new API fails (500, 404, etc.), fallback to regular endpoint
           console.warn(' /my-specializations API failed, falling back to /services:', apiError.response?.status, apiError.response?.data?.message);
@@ -155,7 +227,7 @@ export default function AddItemsToPhaseModal({
           }
         }
       } else {
-        // For non-doctors, use regular endpoint
+        // Priority 3: For non-doctors or when no assigned doctor, use regular endpoint
         response = await ServiceService.getServices({
           isActive: 'true',
           keyword,
@@ -164,7 +236,7 @@ export default function AddItemsToPhaseModal({
           sortBy: 'serviceName',
           sortDirection: 'ASC',
         });
-        console.log(' Loaded services from /services (non-doctor):', response.content?.length || 0);
+        console.log(' Loaded services from /services (non-doctor or no assigned doctor):', response.content?.length || 0);
       }
       
       console.log('Services loaded:', { count: response.content.length, services: response.content });

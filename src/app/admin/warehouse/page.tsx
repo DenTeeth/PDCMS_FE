@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Warehouse Dashboard - Tổng quan kho
- * Displays key metrics, alerts, and quick actions
- */
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';

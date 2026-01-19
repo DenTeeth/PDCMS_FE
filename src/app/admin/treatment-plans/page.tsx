@@ -1,16 +1,5 @@
 'use client';
 
-/**
- * Admin Treatment Plans Management Page
- * 
- * Features:
- * - List view with pagination
- * - Full filtering and search capabilities
- * - View treatment plan details
- * - Create treatment plan (if has permission)
- * - Auto-load all treatment plans when page loads (no patientCode required)
- */
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -104,8 +93,7 @@ export default function AdminTreatmentPlansPage() {
 
     try {
       setLoading(true);
-      //  Use API 5.5: Get all treatment plans with RBAC and filters
-      // This API automatically handles RBAC (Admin sees all, Doctor sees their own, etc.)
+      
       const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
         page: currentPage,
         size: pageSize,
@@ -116,9 +104,6 @@ export default function AdminTreatmentPlansPage() {
       });
 
       if (!abortController.signal.aborted && isMounted) {
-        // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
-        // Status is now always accurate from BE - no need for sessionStorage workaround
-        // Use plans directly from API response
         const plansWithCalculatedStatus = pageResponse.content;
 
         // Debug: Log status for each plan to verify BE response

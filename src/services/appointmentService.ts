@@ -212,11 +212,11 @@ export const appointmentService = {
         appointmentCode: string,
         request: RescheduleAppointmentRequest
     ): Promise<RescheduleAppointmentResponse> => {
-        const response = await api.post<RescheduleAppointmentResponse>(
+        const response = await api.post<any>(
             `${APPOINTMENT_BASE_URL}/${appointmentCode}/reschedule`,
             request
         );
-        return response.data;
+        return extractApiResponse<RescheduleAppointmentResponse>(response);
     },
 
     // Cancel appointment

@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * Admin Treatment Plan Detail Page
- * 
- * Displays detailed treatment plan information including:
- * - Plan metadata (code, name, status, dates, financial info)
- * - Doctor and patient information
- * - Progress summary
- * - Phases with items and linked appointments
- */
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';

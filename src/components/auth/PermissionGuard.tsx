@@ -11,34 +11,6 @@ interface PermissionGuardProps {
   fallback?: ReactNode;
 }
 
-/**
- * PermissionGuard Component
- * 
- * Conditionally render children based on user permissions
- * 
- * @example Single permission
- * <PermissionGuard permission="CREATE_EMPLOYEE">
- *   <Button>Add Employee</Button>
- * </PermissionGuard>
- * 
- * @example Multiple permissions (OR logic)
- * <PermissionGuard permissions={['CREATE_EMPLOYEE', 'UPDATE_EMPLOYEE']}>
- *   <Button>Manage Employee</Button>
- * </PermissionGuard>
- * 
- * @example Multiple permissions (AND logic)
- * <PermissionGuard permissions={['VIEW_EMPLOYEE', 'DELETE_EMPLOYEE']} requireAll>
- *   <Button>Advanced Actions</Button>
- * </PermissionGuard>
- * 
- * @example With fallback
- * <PermissionGuard 
- *   permission="CREATE_EMPLOYEE" 
- *   fallback={<p>You don't have permission to create employees</p>}
- * >
- *   <Button>Add Employee</Button>
- * </PermissionGuard>
- */
 export const PermissionGuard: React.FC<PermissionGuardProps> = ({
   children,
   permission,

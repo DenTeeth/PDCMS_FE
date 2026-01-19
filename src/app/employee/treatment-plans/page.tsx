@@ -1,18 +1,5 @@
 'use client';
 
-/**
- * Employee Treatment Plans Management Page
- * 
- * Features:
- * - List view with pagination
- * - Full filtering and search capabilities (can search by patientCode)
- * - View treatment plan details
- * - Similar to admin page but for employee role
- * 
- * RBAC: VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission
- * - Employee với VIEW_TREATMENT_PLAN_OWN: Chỉ thấy plans của mình
- * - Employee với VIEW_TREATMENT_PLAN_ALL: Vẫn chỉ thấy plans của mình (backend enforce)
- */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -58,12 +45,10 @@ export default function EmployeeTreatmentPlansPage() {
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
 
-  // Permissions - ✅ Updated to use new BE permissions
-  //  Backend fix (2025-11-15): Backend now checks role BEFORE permission
-  // Employee will always be filtered by createdBy, even if they have VIEW_TREATMENT_PLAN_ALL
+ 
   const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') ||
     user?.permissions?.includes('VIEW_TREATMENT_PLAN_OWN') || false;
-  const canCreate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
+  const canCreate = user?.permissions?.includes('MANAGE_TREATMENT_PLAN') || false; 
 
   // Request cancellation ref
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -103,12 +88,7 @@ export default function EmployeeTreatmentPlansPage() {
 
     try {
       setLoading(true);
-      //  Use API 5.5: Get all treatment plans with RBAC and filters
-      //  Backend fix (2025-11-15): Backend now checks role BEFORE permission
-      // - Employee: Always filtered by createdBy (regardless of permission)
-      // - Patient: Always filtered by patient
-      // - Admin: Can see all plans, can use doctorEmployeeCode/patientCode filters
-      // No workaround needed - backend enforces RBAC correctly
+      
       const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
         page: currentPage,
         size: pageSize,
@@ -121,9 +101,6 @@ export default function EmployeeTreatmentPlansPage() {
       // Check if request was cancelled or component unmounted
       if (abortController.signal.aborted || !isMounted) return;
 
-      // Issue #51 RESOLVED: BE auto-completes plan status when loading detail (API 5.2)
-      // Status is now always accurate from BE - no need for sessionStorage workaround
-      // Use plans directly from API response
       const plansWithCalculatedStatus = pageResponse.content;
 
       // Debug: Log status for each plan to verify BE response

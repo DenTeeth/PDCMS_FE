@@ -62,7 +62,7 @@ export default function InvoiceDetailPage() {
     } catch (error: any) {
       console.error('Error fetching invoice:', error);
       toast.error(error.response?.data?.message || 'Không thể tải chi tiết hóa đơn');
-      router.push('/admin/invoices');
+      router.push('/employee/invoices');
     } finally {
       setLoading(false);
     }
@@ -157,12 +157,12 @@ export default function InvoiceDetailPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermissions={['VIEW_INVOICE_ALL']}>
+    <ProtectedRoute requiredPermissions={['VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN']}>
       <div className="container mx-auto py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push('/admin/invoices')}>
+            <Button variant="ghost" size="sm" onClick={() => router.push('/employee/invoices')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
@@ -375,4 +375,7 @@ export default function InvoiceDetailPage() {
     </ProtectedRoute>
   );
 }
+
+
+
 

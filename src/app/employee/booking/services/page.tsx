@@ -140,17 +140,34 @@ export default function BookingServicesPage() {
 
   // Load all specializations from getAllSpecialization API
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
+  const canViewSpecializations = user?.permissions?.includes('VIEW_SPECIALIZATION') || false;
+  
   useEffect(() => {
     const loadSpecializations = async () => {
+      // Only load if user has permission
+      if (!canViewSpecializations) {
+        console.log('User does not have VIEW_SPECIALIZATION permission, skipping specialization load');
+        setSpecializations([]);
+        return;
+      }
+      
       try {
         const data = await specializationService.getAll();
         setSpecializations(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading specializations:', error);
+        // Handle 403 gracefully - user doesn't have permission
+        if (error.response?.status === 403) {
+          console.warn('403 Forbidden: User does not have permission to view specializations');
+          setSpecializations([]);
+        } else {
+          // For other errors, still set empty array to prevent UI issues
+          setSpecializations([]);
+        }
       }
     };
     loadSpecializations();
-  }, []);
+  }, [canViewSpecializations]);
 
   // Use specializations directly from API (getAllSpecialization)
   // Parse specializationId from string to number for backend compatibility

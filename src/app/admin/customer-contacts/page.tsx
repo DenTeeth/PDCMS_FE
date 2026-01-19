@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * ADMIN CUSTOMER CONTACTS MANAGEMENT PAGE
- * Kế thừa UI/UX từ Time Off Types page
- */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useContacts, useSoftDeleteContact } from '@/hooks/contactHooks';

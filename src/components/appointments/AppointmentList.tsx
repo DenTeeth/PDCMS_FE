@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Reusable Appointment List Component
- * Supports pagination, sorting, and filtering
- */
 
 import { useMemo } from 'react';
 import { OptimizedTable, OptimizedTableColumn } from '@/components/ui/optimized-table';

@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * Service BOM View Component
- * 
- * Displays Bill of Materials (BOM) for a dental service
- * Shows: item name, quantity required, unit, stock status, cost (if permission)
- * 
- * Used in: ProcedureForm (preview BOM before creating procedure)
- */
 
 import React, { useState, useEffect } from 'react';
 import { serviceConsumableService } from '@/services/serviceConsumableService';

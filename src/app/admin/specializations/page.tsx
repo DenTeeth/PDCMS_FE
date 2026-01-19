@@ -64,10 +64,6 @@ export default function SpecializationsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Chuyên khoa</h1>
                     <p className="text-gray-600 mt-1">Danh sách chuyên khoa y tế</p>
                 </div>
-                {/* <Button onClick={() => toast.info('Create feature coming soon')}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Specialization
-        </Button> */}
             </div>
 
             {/* Simple Table */}

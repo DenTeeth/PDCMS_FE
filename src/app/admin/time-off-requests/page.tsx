@@ -46,7 +46,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TimeOffErrorHandler } from '@/utils/timeOffErrorHandler';
 import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
-// ⚡ Lazy load Leave Balances component để tối ưu tốc độ
 const LeaveBalancesTab = lazy(() => import('@/components/admin/LeaveBalancesTab').then(mod => ({ default: mod.LeaveBalancesTab })));
 
 // Tab types
@@ -76,7 +75,7 @@ export default function AdminTimeOffRequestsPage() {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
 
-  // Permissions - ✅ BE uses VIEW_LEAVE_ALL/OWN (BE controller line 52, 87)
+  // Permissions - using VIEW_LEAVE_ALL/OWN (BE controller line 52, 87)
   const canViewAll = user?.permissions?.includes('VIEW_LEAVE_ALL');
   const canViewOwn = user?.permissions?.includes('VIEW_LEAVE_OWN');
   const canCreate = user?.permissions?.includes('CREATE_TIME_OFF');
@@ -367,7 +366,6 @@ export default function AdminTimeOffRequestsPage() {
     }
   };
 
-  // ⚡ useCallback để tránh re-create function mỗi lần render
   const handleApprove = useCallback(async () => {
     if (!selectedRequest) return;
 
@@ -852,7 +850,7 @@ export default function AdminTimeOffRequestsPage() {
               <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
                   <div className="flex-shrink-0 border-b px-6 py-4">
-                    <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
+                    <h2 className="text-xl font-bold">Tạo yêu cầu nghỉ phép</h2>
                   </div>
 
                   <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
@@ -1010,7 +1008,7 @@ export default function AdminTimeOffRequestsPage() {
                         disabled={processing}
                         className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
                       >
-                        {processing ? 'Đang tạo...' : 'Tạo Yêu Cầu'}
+                        {processing ? 'Đang tạo...' : 'Tạo yêu cầu'}
                       </Button>
                     </div>
                   </div>

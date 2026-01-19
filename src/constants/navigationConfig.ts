@@ -141,7 +141,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         requiredPermissions: ['MANAGE_WORK_SHIFTS'],
       },
       {
-        name: 'Khung giờ làm việc',
+        name: 'Suất ca làm việc',
         href: '/{baseRole}/work-slots',
         icon: faClock,
         requiredPermissions: ['MANAGE_WORK_SLOTS'],
@@ -167,7 +167,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         href: '/{baseRole}/shift-calendar',
         icon: faUsersCog,
         requiredPermissions: ['VIEW_SCHEDULE_ALL'],
-        requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'], // Only show for admin and managers
+        requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'],
       },
       {
         name: 'Ngày lễ',
@@ -176,10 +176,18 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         requiredPermissions: ['MANAGE_HOLIDAY', 'VIEW_HOLIDAY'],
       },
       {
-        name: 'Quản lý loại nghỉ phép',
+        name: 'Loại nghỉ phép',
         href: '/{baseRole}/time-off-types',
         icon: faUserTie,
         requiredPermissions: ['VIEW_LEAVE_TYPE'],
+      },
+      {
+        name: 'Quản lý nghỉ phép',
+        href: '/{baseRole}/leave-balances',
+        icon: faUserTie,
+        requiredPermissions: ['VIEW_LEAVE_ALL', 'APPROVE_TIME_OFF'],
+        requireAll: false,
+        employmentTypes: ['FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX'],
       }
     ],
   },
@@ -210,6 +218,8 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faUserCheck,
         requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_AVAILABLE_SLOTS'],
         requireAll: false, // Chỉ cần 1 trong các quyền
+        requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'],
+
       },
     ],
   },
@@ -250,6 +260,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         icon: faReceipt,
         requiredPermissions: ['VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN'],
         requireAll: false,
+        requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'],
       },
     ],
   },

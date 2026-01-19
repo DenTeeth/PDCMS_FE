@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Storage In/Out Page - API V1 (Transactions Management)
- * Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
- */
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

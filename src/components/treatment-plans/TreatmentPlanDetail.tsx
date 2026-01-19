@@ -1220,6 +1220,7 @@ export default function TreatmentPlanDetail({
                             canBookItems={canCreateAppointment}
                             suggestionsMap={suggestionsMap}
                             onSelectSlot={handleSelectSlot}
+                            doctorEmployeeCode={plan.doctor.employeeCode}
                             onPhaseUpdated={() => {
                               // Phase 3.5: Phase updated - refresh plan data
                               if (onPlanUpdated) {

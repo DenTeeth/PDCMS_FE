@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * Patient Treatment Plan Detail Page
- * 
- * Displays detailed treatment plan information for patient (read-only):
- * - Plan metadata (code, name, status, dates, financial info)
- * - Doctor and patient information
- * - Progress summary
- * - Phases with items and linked appointments
- * 
- * RBAC: VIEW_TREATMENT_PLAN_OWN permission
- * Backend automatically verifies patient owns the plan
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -107,7 +95,6 @@ export default function PatientTreatmentPlanDetailPage() {
       try {
         setLoading(true);
 
-        // Backend fix applied: planCode is now included in summary DTO
         // No more workaround needed
         const isNumeric = /^\d+$/.test(planCode);
 

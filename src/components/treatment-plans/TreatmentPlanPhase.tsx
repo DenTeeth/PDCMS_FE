@@ -42,6 +42,7 @@ interface TreatmentPlanPhaseProps {
   suggestionsMap?: Map<number, AppointmentSuggestion>; // Map itemId -> suggestion
   onSelectSlot?: (suggestion: AppointmentSuggestion, slot: TimeSlot) => void; // Handle slot selection
   onPhaseAutoSchedule?: (phaseId: number, config: AutoScheduleRequest) => Promise<void>; // Handle phase-level auto-schedule
+  doctorEmployeeCode?: string; // Doctor assigned to the treatment plan
 }
 
 export default function TreatmentPlanPhase({
@@ -59,6 +60,7 @@ export default function TreatmentPlanPhase({
   suggestionsMap,
   onSelectSlot,
   onPhaseAutoSchedule,
+  doctorEmployeeCode,
 }: TreatmentPlanPhaseProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -370,6 +372,7 @@ export default function TreatmentPlanPhase({
         phaseId={phase.phaseId}
         phaseName={phase.phaseName}
         planApprovalStatus={planApprovalStatus}
+        doctorEmployeeCode={doctorEmployeeCode}
         onSuccess={() => {
           // Refresh phase data
           if (onPhaseUpdated) {

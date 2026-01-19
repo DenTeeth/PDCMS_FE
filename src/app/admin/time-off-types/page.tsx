@@ -1,26 +1,5 @@
 'use client';
 
-/**
- * ADMIN TIME-OFF TYPES MANAGEMENT PAGE (P6.1)
- * 
- * Features:
- *  View all time-off types (including inactive)
- *  Create new time-off types
- *  Update existing types
- *  Toggle active status (soft delete)
- *  RBAC permissions
- *  Error handling (DUPLICATE_TYPE_CODE, TIMEOFF_TYPE_IN_USE)
- * 
- * RBAC Permissions:
- * - VIEW_LEAVE_TYPE: Required to access page (replaces VIEW_TIMEOFF_TYPE_ALL)
- * - MANAGE_LEAVE_TYPE: Covers create/update/delete operations (replaces separate CREATE/UPDATE/DELETE permissions)
- * 
- * API Endpoints:
- * - GET /api/v1/admin/time-off-types (get all including inactive)
- * - POST /api/v1/admin/time-off-types (create)
- * - PATCH /api/v1/admin/time-off-types/{id} (update)
- * - DELETE /api/v1/admin/time-off-types/{id} (toggle status)
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';

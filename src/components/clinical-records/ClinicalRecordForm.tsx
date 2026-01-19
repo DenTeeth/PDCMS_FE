@@ -1,11 +1,6 @@
 'use client';
 
-/**
- * Clinical Record Form Component
- * 
- * Form to create or update clinical records
- * Optimized UX: Single form with sections, minimal cards
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';

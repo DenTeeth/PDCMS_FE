@@ -327,9 +327,8 @@ export default function ShiftCalendarPage() {
     // Convert shifts to events
     const shiftEvents = shifts.map(shift => {
       const workShift = workShifts.find(ws => ws.workShiftId === shift.workShiftId);
-      const employee = employees.find(emp => emp.employeeId === String(shift.employeeId));
-
-      const employeeName = employee?.fullName || 'N/A';
+      // Use employee info from shift (already included in API response) instead of searching in employees array
+      const employeeName = shift.employee?.fullName || 'N/A';
       const shiftName = workShift?.shiftName || shift.workShiftId;
 
       const start = `${shift.workDate}T${workShift?.startTime || '08:00:00'}`;

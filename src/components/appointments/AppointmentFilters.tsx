@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Reusable Appointment Filters Component
- * Supports all filters from AppointmentFilterCriteria
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';

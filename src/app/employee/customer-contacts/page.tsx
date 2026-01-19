@@ -10,7 +10,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
 
 export default function ContactsPage() {
-  // backend expects 0-based page index, default to 0
   const [page, setPage] = useState(0);
   // pageSize: default to large value to show all contacts
   const [pageSize, setPageSize] = useState(1000);

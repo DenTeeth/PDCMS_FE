@@ -42,13 +42,16 @@ import { TimeOffType } from '@/types/timeOff';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 
 export default function AdminLeaveBalancesPage() {
   const { user } = useAuth();
   const { handleError: handleApiError } = useApiErrorHandler();
 
-
-  const canViewBalances = user?.permissions?.includes('VIEW_LEAVE_ALL') || false;
+  const canViewAllBalances = user?.permissions?.includes('VIEW_LEAVE_ALL') || false;
+  const canViewOwnBalances = user?.permissions?.includes('VIEW_LEAVE_OWN') || false;
+  const canViewBalances = canViewAllBalances || canViewOwnBalances;
   const canAdjustBalances = user?.permissions?.includes('APPROVE_TIME_OFF') || false;
 
   // ==================== STATE ====================
@@ -99,13 +102,17 @@ export default function AdminLeaveBalancesPage() {
       loadEmployees();
       loadTimeOffTypes();
     }
-  }, [canViewBalances]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canViewBalances, canViewAllBalances, canViewOwnBalances, user?.employeeId]);
 
   useEffect(() => {
-    if (selectedEmployeeId && selectedYear) {
+    if (canViewAllBalances && selectedEmployeeId && selectedYear) {
+      loadBalances();
+    } else if (canViewOwnBalances && selectedYear) {
       loadBalances();
     }
-  }, [selectedEmployeeId, selectedYear]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEmployeeId, selectedYear, canViewAllBalances, canViewOwnBalances]);
 
   // Filter employees based on search term
   useEffect(() => {
@@ -135,12 +142,39 @@ export default function AdminLeaveBalancesPage() {
 
   const loadEmployees = async () => {
     try {
-      const data = await employeeService.getEmployees();
-      const empList = data.content || [];
-      setEmployees(empList);
-      setFilteredEmployees(empList);
+      if (canViewAllBalances) {
+        // Admin: Load all employees
+        const data = await employeeService.getEmployees();
+        const empList = data.content || [];
+        setEmployees(empList);
+        setFilteredEmployees(empList);
+        if (empList.length > 0 && !selectedEmployeeId) {
+          setSelectedEmployeeId(Number(empList[0].employeeId));
+        }
+      } else if (canViewOwnBalances) {
+        // Employee: Try to load own employee data if employeeId is available
+        // If not available, we'll create a temporary employee object from balance response
+        if (user?.employeeId) {
+          const ownEmployeeId = Number(user.employeeId);
+          if (!isNaN(ownEmployeeId) && ownEmployeeId > 0) {
+            try {
+              const ownEmployee = await employeeService.getEmployeeById(ownEmployeeId);
+              setEmployees([ownEmployee]);
+              setFilteredEmployees([ownEmployee]);
+              setSelectedEmployeeId(ownEmployeeId);
+            } catch (error: any) {
+              // If getEmployeeById fails, we'll create employee from balance data later
+              console.warn('Could not load employee details, will use balance response data:', error);
+            }
+          }
+        }
+        // If employeeId is not available, we'll populate employee info from balance response
+      }
     } catch (error: any) {
-      handleApiError(error, 'Không thể tải danh sách nhân viên');
+      // Only show error for admin, not for employees (they can still view their balance)
+      if (canViewAllBalances) {
+        handleApiError(error, 'Không thể tải danh sách nhân viên');
+      }
     }
   };
 
@@ -154,14 +188,30 @@ export default function AdminLeaveBalancesPage() {
   };
 
   const loadBalances = async () => {
-    if (!selectedEmployeeId) return;
+    if (!selectedEmployeeId && canViewAllBalances) return;
 
     try {
       setLoadingBalances(true);
-      const data = await LeaveBalanceService.getEmployeeBalances(
-        selectedEmployeeId,
-        selectedYear
-      );
+      let data: EmployeeLeaveBalancesResponse;
+
+      if (canViewAllBalances) {
+        // Admin: Use admin endpoint with employeeId
+        data = await LeaveBalanceService.getEmployeeBalances(
+          selectedEmployeeId!,
+          selectedYear
+        );
+      } else if (canViewOwnBalances) {
+        // Employee: Use employee endpoint (auto-extracts employeeId from JWT)
+        data = await LeaveBalanceService.getOwnBalances(selectedYear);
+        
+        // If employee info is not loaded yet and we have employee_id from response, set it
+        if (data.employee_id && !selectedEmployeeId) {
+          setSelectedEmployeeId(data.employee_id);
+        }
+      } else {
+        throw new Error('Không có quyền xem số dư nghỉ phép');
+      }
+
       setBalanceData(data);
     } catch (error: any) {
       if (error?.response?.status === 404) {
@@ -354,7 +404,8 @@ export default function AdminLeaveBalancesPage() {
   // ==================== RENDER ====================
 
   return (
-    <div className="container mx-auto p-6">
+    <ProtectedRoute requiredPermissions={['VIEW_LEAVE_ALL', 'VIEW_LEAVE_OWN']} requireAll={false}>
+      <div className="container mx-auto p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -368,7 +419,7 @@ export default function AdminLeaveBalancesPage() {
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Cấp phép toàn bộ nhân viên
+            Công cụ admin
           </Button>
         )}
       </div>
@@ -384,38 +435,40 @@ export default function AdminLeaveBalancesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <Label>Chọn nhân viên</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Tìm theo tên, mã NV, hoặc ID..."
-                  value={employeeSearchTerm}
-                  onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className={`grid grid-cols-1 ${canViewAllBalances ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4`}>
+            {canViewAllBalances && (
+              <div className="md:col-span-2">
+                <Label>Chọn nhân viên</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm theo tên, mã NV, hoặc ID..."
+                    value={employeeSearchTerm}
+                    onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {employeeSearchTerm && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tìm thấy {filteredEmployees.length} nhân viên
+                  </p>
+                )}
+                <div className="mt-2">
+                  <CustomSelect
+                    label=""
+                    value={selectedEmployeeId?.toString() || ''}
+                    onChange={(value: string) => setSelectedEmployeeId(Number(value))}
+                    options={[
+                      { value: '', label: '-- Chọn nhân viên --' },
+                      ...filteredEmployees.map(emp => ({
+                        value: emp.employeeId.toString(),
+                        label: `${emp.fullName} (${emp.employeeCode || 'ID: ' + emp.employeeId})`
+                      }))
+                    ]}
+                  />
+                </div>
               </div>
-              {employeeSearchTerm && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Tìm thấy {filteredEmployees.length} nhân viên
-                </p>
-              )}
-              <div className="mt-2">
-                <CustomSelect
-                  label=""
-                  value={selectedEmployeeId?.toString() || ''}
-                  onChange={(value: string) => setSelectedEmployeeId(Number(value))}
-                  options={[
-                    { value: '', label: '-- Chọn nhân viên --' },
-                    ...filteredEmployees.map(emp => ({
-                      value: emp.employeeId.toString(),
-                      label: `${emp.fullName} (${emp.employeeCode || 'ID: ' + emp.employeeId})`
-                    }))
-                  ]}
-                />
-              </div>
-            </div>
+            )}
 
             <div className="relative" ref={yearPickerRef}>
               <Label htmlFor="year">Năm</Label>
@@ -842,6 +895,7 @@ export default function AdminLeaveBalancesPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

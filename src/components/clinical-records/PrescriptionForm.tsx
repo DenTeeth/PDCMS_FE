@@ -1,17 +1,6 @@
 'use client';
 
-/**
- * Prescription Form Component
- * 
- * Allows creating/editing prescription for a clinical record
- * Features:
- * - Add/remove prescription items
- * - Link items to warehouse inventory (optional)
- * - Prescription notes
- * - Save/Delete prescription
- * 
- * API 8.14, 8.15, 8.16
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';

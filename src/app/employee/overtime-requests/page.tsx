@@ -378,7 +378,7 @@ export default function EmployeeOvertimeRequestsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Làm Thêm Giờ</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Yêu cầu làm thêm giờ</h1>
           <p className="text-gray-600 mt-2">Xem và tạo yêu cầu làm thêm giờ của bạn</p>
         </div>
         {canCreate && (

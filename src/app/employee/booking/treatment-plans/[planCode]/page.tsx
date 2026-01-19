@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Redirect page for old employee treatment plan detail URL
- * Redirects to /employee/treatment-plans/[planCode]
- */
 
 import { useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';

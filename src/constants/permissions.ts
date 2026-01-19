@@ -1,14 +1,3 @@
-/**
- * ✅ BACKEND PERMISSIONS - SYNCED WITH BE SEED DATA (2025-12-23)
- * 
- * Backend đã giảm từ 200+ xuống 70 permissions theo chiến lược CONSOLIDATION:
- * - MANAGE_* pattern covers CREATE/UPDATE/DELETE operations
- * - VIEW_*_ALL / VIEW_*_OWN pattern for RBAC
- * - Removed 125 unused permissions
- * 
- * ⚠️ CRITICAL: Đây là SINGLE SOURCE OF TRUTH cho permissions
- * Frontend KHÔNG ĐƯỢC tự tạo permissions không có trong danh sách này
- */
 
 export const BE_PERMISSIONS = {
     // ==================== MODULE 1: ACCOUNT (2) ====================

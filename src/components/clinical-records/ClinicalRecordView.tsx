@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * Clinical Record View Component
- * 
- * Displays clinical record details in read-only mode
- * Shows: diagnosis, vital signs, chief complaint, examination findings,
- * treatment notes, procedures, prescriptions, and appointment info
- */
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { ClinicalRecordResponse, ToothStatusResponse, PrescriptionDTO } from '@/types/clinicalRecord';

@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * Admin Treatment Plans Management Page
- * 
- * Features:
- * - List view with pagination
- * - Full filtering and search capabilities
- * - View treatment plan details
- * - Create treatment plan (if has permission)
- * 
- * Similar structure to appointments page
- */
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

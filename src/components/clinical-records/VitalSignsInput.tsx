@@ -1,9 +1,6 @@
 'use client';
 
-/**
- * Vital Signs Input Component
- * Enhanced with reference ranges and real-time assessment
- */
+
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { UseFormRegister, FieldErrors } from 'react-hook-form';

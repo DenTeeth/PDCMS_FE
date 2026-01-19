@@ -480,9 +480,7 @@ export default function PatientDetailPage() {
       <Card>
         <CardContent className="p-6">
           <div className="space-y-6">
-            {/* Row 1: Basic Information (Left) + Contact Information (Right) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Basic Information - Left */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <User className="h-5 w-5 text-blue-600" />
@@ -566,7 +564,6 @@ export default function PatientDetailPage() {
                 </div>
               </div>
 
-              {/* Contact Information - Right */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Phone className="h-5 w-5 text-blue-600" />
@@ -601,9 +598,7 @@ export default function PatientDetailPage() {
             {/* Divider */}
             <div className="border-t border-gray-200"></div>
 
-            {/* Row 2: Medical Information (Left) + Emergency Contact (Right) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Medical Information - Left */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Heart className="h-5 w-5 text-red-600" />
@@ -631,7 +626,6 @@ export default function PatientDetailPage() {
                 </div>
               </div>
 
-              {/* Emergency Contact - Right */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <AlertCircle className="h-5 w-5 text-orange-600" />
@@ -663,7 +657,6 @@ export default function PatientDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Patient Images - Lazy loaded để tối ưu performance */}
       {patient.patientId && (() => {
         const patientIdNum = typeof patient.patientId === 'string' ? parseInt(patient.patientId, 10) : Number(patient.patientId);
         if (isNaN(patientIdNum)) return null;
@@ -696,7 +689,6 @@ export default function PatientDetailPage() {
         );
       })()}
 
-      {/* Unban Patient Modal */}
       {showUnbanModal && patient && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl">
@@ -771,7 +763,6 @@ export default function PatientDetailPage() {
         </div>
       )}
 
-      {/* Unban History Modal */}
       {showUnbanHistory && patient && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-4xl max-h-[85vh] flex flex-col">
@@ -840,7 +831,6 @@ export default function PatientDetailPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">

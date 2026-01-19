@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * Patient Appointment List Page
- * Requires: VIEW_APPOINTMENT_OWN permission
- * 
- * Features:
- * - Calendar view (Day/Week/Month) with color-coded appointments
- * - List view with pagination
- * - Search and filter functionality (read-only)
- * - View appointment details (read-only)
- * - RBAC: Backend automatically filters by patientId from JWT token
- * - NO create/edit/reschedule/cancel actions (read-only view)
- */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';

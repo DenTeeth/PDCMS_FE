@@ -534,6 +534,7 @@ export default function InvoicesPage() {
               getTypeLabel={getTypeLabel}
               formatCurrency={formatCurrency}
               format={format}
+              canView={canView}
             />
           </TabsContent>
 
@@ -547,6 +548,7 @@ export default function InvoicesPage() {
               getTypeLabel={getTypeLabel}
               formatCurrency={formatCurrency}
               format={format}
+              canView={canView}
             />
           </TabsContent>
 
@@ -560,6 +562,7 @@ export default function InvoicesPage() {
               getTypeLabel={getTypeLabel}
               formatCurrency={formatCurrency}
               format={format}
+              canView={canView}
             />
           </TabsContent>
 
@@ -573,6 +576,7 @@ export default function InvoicesPage() {
               getTypeLabel={getTypeLabel}
               formatCurrency={formatCurrency}
               format={format}
+              canView={canView}
             />
           </TabsContent>
         </Tabs>
@@ -600,6 +604,7 @@ interface InvoicesListContentProps {
   getTypeLabel: (type: InvoiceType) => string;
   formatCurrency: (amount: number) => string;
   format: (date: Date, format: string) => string;
+  canView: boolean;
 }
 
 function InvoicesListContent({
@@ -610,6 +615,7 @@ function InvoicesListContent({
   getTypeLabel,
   formatCurrency,
   format,
+  canView,
 }: InvoicesListContentProps) {
   return (
     <Card>
@@ -716,17 +722,19 @@ function InvoicesListContent({
                           </div>
                         </div>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/admin/invoices/${invoice.invoiceCode}`);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Xem chi tiết
-                        </Button>
+                        {canView && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/admin/invoices/${invoice.invoiceCode}`);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Xem chi tiết
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

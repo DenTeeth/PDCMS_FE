@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Warehouse Reports Page - Báo cáo & Thống kê kho
- * Includes: Inventory reports, transaction reports, expiring alerts
- */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';

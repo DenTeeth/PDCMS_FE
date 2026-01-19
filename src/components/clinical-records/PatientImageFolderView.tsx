@@ -1,8 +1,3 @@
-/**
- * Patient Image Folder View Component
- * Hiển thị folder structure giống Cloudinary cho hình ảnh bệnh nhân
- * Format: patients/patient_{patientId}/{imageType}/
- */
 
 "use client";
 

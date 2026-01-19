@@ -1,18 +1,5 @@
 'use client';
 
-/**
- * Edit Material Quantity Dialog
- * 
- * Dialog to edit quantity field for a single material BEFORE warehouse deduction
- * Uses API 8.9: PATCH /api/v1/clinical-records/procedures/{procedureId}/materials/{usageId}/quantity
- * 
- * Features:
- * - Edit quantity field (before deduction only)
- * - Shows plannedQuantity (BOM reference) for comparison
- * - Validation: quantity must be > 0
- * - Shows stock status and warnings
- * - Auto-syncs actualQuantity after update
- */
 
 import React, { useState } from 'react';
 import { ProcedureMaterialItem } from '@/types/clinicalRecord';

@@ -77,6 +77,20 @@ const getDayName = (day: DayOfWeek): string => {
   return dayMap[day] || day;
 };
 
+// Helper: Get week number from date
+const getWeekNumber = (date: Date): number => {
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date.getTime() - startOfYear.getTime()) / 86400000;
+  return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+};
+
+// Helper: Format week for display (Tuần instead of Week)
+const formatWeekDisplay = (date: Date | null): string => {
+  if (!date) return '';
+  const weekNum = getWeekNumber(date);
+  return `Tuần ${weekNum}, ${date.getFullYear()}`;
+};
+
 // Get next date for a specific day of week from today
 const getNextDateForDayOfWeek = (dayOfWeek: DayOfWeek): string => {
   const dayMap: Record<DayOfWeek, number> = {
@@ -1000,7 +1014,7 @@ export default function EmployeeRegistrationsPage() {
                       <div className="flex items-center gap-2 mb-4">
                         <Clock className="w-5 h-5 text-purple-600" />
                         <CardTitle className="text-lg">
-                          Các Suất Làm Việc Có Sẵn
+                          Các suất làm việc có sẵn
                         </CardTitle>
                       </div>
 
@@ -1163,9 +1177,6 @@ export default function EmployeeRegistrationsPage() {
                                   Thứ
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                  Giờ/tuần
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                   Giới hạn tuần
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -1179,18 +1190,22 @@ export default function EmployeeRegistrationsPage() {
                             <tbody className="bg-white divide-y divide-gray-200">
                               {sortedAvailableSlots.map((slot) => {
                                 const slotDetails = slotDetailsMap[slot.slotId];
-                                const shiftHours = calculateShiftHours(slot.shiftName);
 
-                                // Calculate weeks from date range
-                                // BE returns totalDatesAvailable and totalDatesEmpty (dates, not weeks)
-                                // We need to calculate weeks from effectiveFrom to effectiveTo
-                                let totalWeeks = 14;
-                                let availableWeeks = 14;
-                                // Tạm thời hardcode để test UI, loại trừ lỗi backend
+                                // Calculate weeks from date range (effectiveFrom to effectiveTo)
+                                let totalWeeks = 0;
+                                try {
+                                  const from = parseISO(slot.effectiveFrom);
+                                  const to = slot.effectiveTo ? parseISO(slot.effectiveTo) : new Date();
+                                  totalWeeks = Math.ceil(differenceInWeeks(to, from, { roundingMethod: 'ceil' }));
+                                  if (totalWeeks <= 0) totalWeeks = 1; // Minimum 1 week
+                                } catch {
+                                  totalWeeks = 0;
+                                }
 
-                                // Calculate: số lượng còn lại / số lượng cần người đăng ký
+                                // Calculate: số lượng đã đăng ký
                                 let soLuongCan = 0; // Tổng số lượng cần người đăng ký
                                 let soLuongConLai = 0; // Số lượng còn lại (remaining)
+                                let soLuongDaDangKy = 0; // Số lượng đã đăng ký
                                 
                                 if (slotDetails?.availabilityByMonth && slotDetails.quota) {
                                   // Tính tổng số lượng cần: sum(month.totalWorkingDays * quota) cho tất cả các tháng
@@ -1215,6 +1230,9 @@ export default function EmployeeRegistrationsPage() {
                                       return sum + availableRemaining + partialRemaining;
                                     }, 0);
                                   }
+                                  
+                                  // Số lượng đã đăng ký = Tổng cần - Còn lại
+                                  soLuongDaDangKy = soLuongCan - soLuongConLai;
                                 }
 
                                 return (
@@ -1224,19 +1242,24 @@ export default function EmployeeRegistrationsPage() {
                                         <div className="font-medium text-gray-900">{slot.shiftName}</div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
-                                          {getDayOfWeekLabel(slot.dayOfWeek as DayOfWeek)}
-                                        </Badge>
+                                        <div className="flex flex-wrap gap-1">
+                                          {slot.dayOfWeek.split(',').map((day, idx) => (
+                                            <Badge key={idx} variant="outline" className="text-xs">
+                                              {getDayOfWeekLabel(day.trim() as DayOfWeek)}
+                                            </Badge>
+                                          ))}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <div className="text-sm font-semibold text-gray-900">{shiftHours}h</div>
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-600">{totalWeeks} tuần</div>
+                                        <div className="text-sm text-gray-600">
+                                          {totalWeeks > 0 ? `${totalWeeks} tuần` : '-'}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-3">
                                         <div className="text-sm font-semibold text-gray-900">
-                                          {slotDetails ? `${soLuongConLai}/${soLuongCan}` : '-'}
+                                          {slotDetails && soLuongCan > 0 
+                                            ? soLuongDaDangKy 
+                                            : '-'}
                                         </div>
                                       </td>
                                       <td className="px-4 py-3 text-center">
@@ -1280,7 +1303,7 @@ export default function EmployeeRegistrationsPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar className="w-5 h-5 text-purple-600" />
                     <CardTitle className="text-lg">
-                      Đăng Ký Của Tôi
+                      Đăng ký của tôi
                     </CardTitle>
                   </div>
 
@@ -1541,7 +1564,7 @@ export default function EmployeeRegistrationsPage() {
                   <>
                     {/* PART_TIME_FLEX: Use available slots */}
                     <div>
-                      <Label htmlFor="createSlot">Chọn Suất Làm Việc *</Label>
+                      <Label htmlFor="createSlot">Chọn suất làm việc <span className="text-red-500">*</span></Label>
                       {loadingAvailableSlots ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -1578,7 +1601,7 @@ export default function EmployeeRegistrationsPage() {
                           <option value="">Chọn suất làm việc</option>
                           {availableSlots.map(slot => (
                             <option key={slot.slotId} value={slot.slotId}>
-                              {slot.shiftName} - {slot.dayOfWeek} - {slot.availabilitySummary || `${slot.totalDatesEmpty}/${slot.totalDatesAvailable} ngày còn trống`}
+                              {slot.shiftName}
                             </option>
                           ))}
                         </select>
@@ -1607,74 +1630,83 @@ export default function EmployeeRegistrationsPage() {
                       <Label htmlFor="weekStart">
                         Tuần bắt đầu <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="weekStart"
-                        type="week"
-                        min={format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-'W'ww")}
-                        value={selectedWeekStart ? format(selectedWeekStart, "yyyy-'W'ww") : ''}
-                        onChange={(e) => {
-                          if (e.target.value && partTimeCreateFormData.partTimeSlotId) {
-                            // Get selected slot to know which day it starts
-                            const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
-                            if (!selectedSlot) return;
+                      <div className="relative">
+                        <Input
+                          id="weekStart"
+                          type="week"
+                          min={format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-'W'ww")}
+                          value={selectedWeekStart ? format(selectedWeekStart, "yyyy-'W'ww") : ''}
+                          placeholder="Chọn tuần"
+                          onChange={(e) => {
+                            if (e.target.value && partTimeCreateFormData.partTimeSlotId) {
+                              // Get selected slot to know which day it starts
+                              const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
+                              if (!selectedSlot) return;
 
-                            // Get first day of the slot (e.g., "MONDAY" or "WEDNESDAY")
-                            const firstDayOfSlot = selectedSlot.dayOfWeek.split(',')[0].trim() as DayOfWeek;
+                              // Get first day of the slot (e.g., "MONDAY" or "WEDNESDAY")
+                              const firstDayOfSlot = selectedSlot.dayOfWeek.split(',')[0].trim() as DayOfWeek;
 
-                            // Day of week mapping: MONDAY=1, TUESDAY=2, ..., SUNDAY=0
-                            const dayMapping: Record<DayOfWeek, number> = {
-                              'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4,
-                              'FRIDAY': 5, 'SATURDAY': 6, 'SUNDAY': 0
-                            };
-                            const slotDayNumber = dayMapping[firstDayOfSlot];
+                              // Day of week mapping: MONDAY=1, TUESDAY=2, ..., SUNDAY=0
+                              const dayMapping: Record<DayOfWeek, number> = {
+                                'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4,
+                                'FRIDAY': 5, 'SATURDAY': 6, 'SUNDAY': 0
+                              };
+                              const slotDayNumber = dayMapping[firstDayOfSlot];
 
-                            // Parse selected week (get Monday of that week)
-                            const [year, week] = e.target.value.split('-W');
-                            const firstDayOfYear = new Date(parseInt(year), 0, 1);
-                            const daysOffset = (parseInt(week) - 1) * 7;
-                            const weekStart = addDays(firstDayOfYear, daysOffset);
-                            const monday = startOfWeek(weekStart, { weekStartsOn: 1 });
+                              // Parse selected week (get Monday of that week)
+                              const [year, week] = e.target.value.split('-W');
+                              const firstDayOfYear = new Date(parseInt(year), 0, 1);
+                              const daysOffset = (parseInt(week) - 1) * 7;
+                              const weekStart = addDays(firstDayOfYear, daysOffset);
+                              const monday = startOfWeek(weekStart, { weekStartsOn: 1 });
 
-                            // Calculate the actual start date (slot's first day of that week)
-                            let actualStartDate = monday;
-                            const mondayDay = 1;
-                            const daysToAdd = slotDayNumber === 0 ? 6 : slotDayNumber - mondayDay; // Sunday is 6 days after Monday
-                            actualStartDate = addDays(monday, daysToAdd);
+                              // Calculate the actual start date (slot's first day of that week)
+                              let actualStartDate = monday;
+                              const mondayDay = 1;
+                              const daysToAdd = slotDayNumber === 0 ? 6 : slotDayNumber - mondayDay; // Sunday is 6 days after Monday
+                              actualStartDate = addDays(monday, daysToAdd);
 
-                            // Validate: Not in the past
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            if (actualStartDate < today) {
-                              toast.error(`Không thể chọn tuần trong quá khứ. Tuần này bắt đầu từ ${getDayName(firstDayOfSlot)} ${format(actualStartDate, 'dd/MM/yyyy')}`);
-                              return;
+                              // Validate: Not in the past
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              if (actualStartDate < today) {
+                                toast.error(`Không thể chọn tuần trong quá khứ. Tuần này bắt đầu từ ${getDayName(firstDayOfSlot)} ${format(actualStartDate, 'dd/MM/yyyy')}`);
+                                return;
+                              }
+
+                              // Validate: Not before slot's effective date
+                              const slotStartDate = parseISO(selectedSlot.effectiveFrom);
+                              if (actualStartDate < slotStartDate) {
+                                toast.error(`Ca làm việc này chỉ có hiệu lực từ ${format(slotStartDate, 'dd/MM/yyyy')}. Vui lòng chọn tuần sau đó.`);
+                                return;
+                              }
+
+                              setSelectedWeekStart(actualStartDate);
+
+                              // Auto-calculate effectiveFrom
+                              const from = format(actualStartDate, 'yyyy-MM-dd');
+                              setPartTimeCreateFormData(prev => ({
+                                ...prev,
+                                effectiveFrom: from,
+                                effectiveTo: undefined // Reset end date when changing start
+                              }));
+
+                              // Reset number of weeks
+                              setNumberOfWeeks(1);
+                            } else if (!partTimeCreateFormData.partTimeSlotId) {
+                              toast.error('Vui lòng chọn suất làm việc trước');
                             }
-
-                            // Validate: Not before slot's effective date
-                            const slotStartDate = parseISO(selectedSlot.effectiveFrom);
-                            if (actualStartDate < slotStartDate) {
-                              toast.error(`Ca làm việc này chỉ có hiệu lực từ ${format(slotStartDate, 'dd/MM/yyyy')}. Vui lòng chọn tuần sau đó.`);
-                              return;
-                            }
-
-                            setSelectedWeekStart(actualStartDate);
-
-                            // Auto-calculate effectiveFrom
-                            const from = format(actualStartDate, 'yyyy-MM-dd');
-                            setPartTimeCreateFormData(prev => ({
-                              ...prev,
-                              effectiveFrom: from,
-                              effectiveTo: undefined // Reset end date when changing start
-                            }));
-
-                            // Reset number of weeks
-                            setNumberOfWeeks(1);
-                          } else if (!partTimeCreateFormData.partTimeSlotId) {
-                            toast.error('Vui lòng chọn suất làm việc trước');
-                          }
-                        }}
-                        required
-                        disabled={!partTimeCreateFormData.partTimeSlotId}
-                      />
+                          }}
+                          required
+                          disabled={!partTimeCreateFormData.partTimeSlotId}
+                          className="[&::-webkit-datetime-edit-week-field]:hidden [&::-webkit-datetime-edit-text]:hidden"
+                        />
+                        {selectedWeekStart && (
+                          <div className="absolute right-12 top-1/2 -translate-y-1/2 pointer-events-none text-sm text-gray-600">
+                            Tuần {getWeekNumber(selectedWeekStart)}, {selectedWeekStart.getFullYear()}
+                          </div>
+                        )}
+                      </div>
                       {selectedWeekStart && partTimeCreateFormData.partTimeSlotId && (() => {
                         const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
                         const firstDay = selectedSlot?.dayOfWeek.split(',')[0].trim() as DayOfWeek;

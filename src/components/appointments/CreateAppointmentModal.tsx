@@ -1,16 +1,5 @@
 'use client';
 
-/**
- * Create Appointment Modal Component
- * 
- * Multi-step form for creating appointments (NEW ORDER):
- * 1. Select Patient
- * 2. Select Date (with suggestions if no doctors or few slots)
- * 3. Select Services (grouped by specialization)
- * 4. Select Doctor (ROLE_DENTIST + specialization match) + Time Slots (grouped by morning/afternoon/evening) + Participants (with role display)
- * 5. Review & Confirm
- */
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

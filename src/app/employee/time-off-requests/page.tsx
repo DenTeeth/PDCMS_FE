@@ -44,6 +44,7 @@ import UnauthorizedMessage from '@/components/auth/UnauthorizedMessage';
 import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { EmployeeLeaveBalancesResponse } from '@/types/leaveBalance';
 import { toast } from 'sonner';
+import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
 export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
@@ -91,12 +92,14 @@ export default function EmployeeTimeOffRequestsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      // Load timeOffTypes and workShifts first (needed for enriching requests)
       await Promise.all([
-        loadTimeOffRequests(),
         loadTimeOffTypes(),
         loadWorkShifts(),
         loadLeaveBalances()
       ]);
+      // Then load and enrich requests
+      await loadTimeOffRequests();
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error loading data:', error);
@@ -168,7 +171,15 @@ export default function EmployeeTimeOffRequestsPage() {
         size: 50,
         status: statusFilter === 'ALL' ? undefined : statusFilter
       });
-      setTimeOffRequests(response.content || []);
+      
+      // Enrich requests with timeOffTypeName, workShiftName, and totalDays
+      const enrichedRequests = TimeOffDataEnricher.enrichRequests(
+        response.content || [],
+        timeOffTypes,
+        workShifts
+      );
+      
+      setTimeOffRequests(enrichedRequests);
     } catch (error: any) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error loading time off requests:', error);
@@ -350,10 +361,11 @@ export default function EmployeeTimeOffRequestsPage() {
           // No balance record - needs HR to initialize
           errorMsg = errorData.detail || errorData.message ||
             'Chưa có thông tin số dư ngày nghỉ. Vui lòng liên hệ phòng nhân sự để khởi tạo.';
-        } else if (errorCode === 'INSUFFICIENT_BALANCE') {
-          // Not enough balance
+        } else if (errorCode === 'INSUFFICIENT_LEAVE_BALANCE' || errorMsg?.includes('INSUFFICIENT') || errorMsg?.includes('không đủ')) {
+          // Not enough balance - hết số dư phép
+          // BE returns error code: "INSUFFICIENT_LEAVE_BALANCE" (from GlobalExceptionHandler)
           errorMsg = errorData.detail || errorData.message ||
-            'Số dư ngày nghỉ không đủ cho yêu cầu này.';
+            'Không đủ số ngày phép!\n\nBạn không còn số dư nghỉ phép cho loại nghỉ này. Vui lòng liên hệ phòng nhân sự để kiểm tra số dư nghỉ phép hoặc chọn loại nghỉ phép khác.';
         } else {
           // Other validation errors - prioritize 'detail' from BE
           if (errorData.detail) {
@@ -593,7 +605,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className={`grid grid-cols-1 md:grid-cols-${canViewAll ? '3' : '2'} gap-4`}>
+        <div className={`grid grid-cols-1 ${canViewAll ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
           <div>
             <Label htmlFor="search">Tìm kiếm</Label>
             <div className="relative">
@@ -671,11 +683,19 @@ export default function EmployeeTimeOffRequestsPage() {
 
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                        <span>{request.timeOffTypeName || 'N/A'}</span>
+                        <span>{request.timeOffTypeName || request.timeOffTypeId || 'N/A'}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{request.totalDays || 0} ngày</span>
+                        {request.totalDays !== undefined && request.totalDays !== null ? (
+                          <span className="font-semibold">
+                            {request.totalDays % 1 === 0 
+                              ? `${request.totalDays} ngày` 
+                              : `${request.totalDays} ngày`}
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-gray-400">Đang tính...</span>
+                        )}
                         {request.workShiftName && (
                           <Badge variant="outline">{request.workShiftName}</Badge>
                         )}
@@ -760,7 +780,7 @@ export default function EmployeeTimeOffRequestsPage() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex-shrink-0 border-b px-6 py-4">
-              <h2 className="text-xl font-bold">Tạo Yêu Cầu Nghỉ Phép</h2>
+              <h2 className="text-xl font-bold">Tạo yêu cầu nghỉ phép</h2>
             </div>
 
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">

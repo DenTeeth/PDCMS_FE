@@ -1,8 +1,3 @@
-/**
- * Patient Image Upload Component
- * Component để upload hình ảnh cho bệnh nhân
- * Hỗ trợ: drag & drop, preview, validation, và metadata
- */
 
 "use client";
 

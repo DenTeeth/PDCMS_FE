@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Warehouse Reports Page - Báo cáo & Thống kê kho
- * Includes: Inventory reports, transaction reports, expiring alerts
- */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -55,7 +51,6 @@ export default function WarehouseReportsPage() {
     retryDelay: 1000,
   });
 
-  // Fetch expiring items (API 6.3)
   const { data: expiringAlertsData, isLoading: expiringLoading, error: expiringError } = useQuery({
     queryKey: ['expiringAlertsReport'],
     queryFn: async () => {
@@ -96,7 +91,7 @@ export default function WarehouseReportsPage() {
         fromDate: startDate.toISOString().split('T')[0],
         toDate: now.toISOString().split('T')[0],
         page: 0,
-        size: 100, // BE limit: max 100 (see TransactionHistoryService.validateRequest)
+        size: 100,
         sortBy: 'transactionDate',
         sortDirection: 'desc',
       });
@@ -242,11 +237,6 @@ export default function WarehouseReportsPage() {
                 <SelectItem value="custom">Tùy chỉnh</SelectItem>
               </SelectContent>
             </Select>
-            {/* Nút Xuất Excel đã được ẩn theo yêu cầu */}
-            {/* <Button variant="outline">
-              <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
-              Xuất Excel
-            </Button> */}
           </div>
         </div>
 

@@ -34,9 +34,7 @@ export default function WorkSlotsManagementPage() {
   // State management
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
-  // Note: API returns array directly (NOT paginated), so no pagination needed
 
-  // Filters temporarily removed
 
   // Create modal states
   const [showCreateModal, setShowCreateModal] = useState(false);

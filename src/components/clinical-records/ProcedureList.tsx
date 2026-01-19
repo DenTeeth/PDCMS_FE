@@ -1,11 +1,6 @@
 'use client';
 
-/**
- * Procedure List Component
- * 
- * Displays list of procedures with edit/delete actions
- * Optimized UX: Simple list, minimal cards
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { ProcedureDTO } from '@/types/clinicalRecord';

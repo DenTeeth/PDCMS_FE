@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Payment Tab Component for Appointment Detail Page
- * 
- * Displays:
- * - List of invoices for the appointment
- * - Payment status for each invoice
- * - QR code for unpaid invoices
- * - Payment history
- */
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,7 +61,6 @@ export default function PaymentTab({
 
   // Fetch invoices for this appointment
   useEffect(() => {
-    // ✅ Allow fetch if user can view OR create invoices
     // This is needed to check if appointment already has APPOINTMENT invoice (to determine SUPPLEMENTAL type)
     if (!canViewInvoice && !canCreateInvoice) {
       console.warn('⚠️ PaymentTab: No permission to view or create invoices');
@@ -121,7 +111,6 @@ export default function PaymentTab({
   }, [showCreateForm, appointmentServices, availableServices]);
 
   const fetchInvoices = async () => {
-    // ✅ Allow fetch if user can view OR create invoices
     // This is needed to check if appointment already has APPOINTMENT invoice (to determine SUPPLEMENTAL type)
     if (!canViewInvoice && !canCreateInvoice) {
       console.warn('⚠️ PaymentTab: No permission to view or create invoices');
@@ -152,9 +141,6 @@ export default function PaymentTab({
       
       let data: InvoiceResponse[];
       
-      // ✅ Patient với VIEW_INVOICE_OWN: Dùng endpoint /patient/{patientId}
-      // ✅ Dentist/Employee với VIEW_INVOICE_OWN: Dùng endpoint /patient/{patientId} (nếu có patientId)
-      // ✅ Admin/Receptionist/Accountant với VIEW_INVOICE_ALL: Dùng endpoint /appointment/{appointmentId}
       const hasViewInvoiceAll = hasPermission('VIEW_INVOICE_ALL');
       const hasViewInvoiceOwn = hasPermission('VIEW_INVOICE_OWN');
       
@@ -182,7 +168,6 @@ export default function PaymentTab({
         console.log('📋 PaymentTab: Using appointment endpoint (VIEW_INVOICE_ALL)');
         data = await invoiceService.getInvoicesByAppointment(appointmentId);
       } else if (canCreateInvoice) {
-        // ✅ Dentist với CREATE_INVOICE nhưng không có VIEW_INVOICE: Try appointment endpoint
         // This might fail with 403, but we need to try to check if appointment has invoice
         console.log('📋 PaymentTab: Using appointment endpoint (CREATE_INVOICE only, no VIEW_INVOICE)');
         try {
@@ -216,7 +201,6 @@ export default function PaymentTab({
       
      
       const filteredInvoices = invoiceArray.filter((invoice) => {
-        // ✅ Show APPOINTMENT and SUPPLEMENTAL invoices for this appointment
         // SUPPLEMENTAL invoices are additional invoices created after the main APPOINTMENT invoice
         if (invoice.invoiceType !== 'APPOINTMENT' && invoice.invoiceType !== 'SUPPLEMENTAL') {
           console.warn(`⚠️ Filtering out ${invoice.invoiceType} invoice: ${invoice.invoiceCode} (expected APPOINTMENT or SUPPLEMENTAL)`);

@@ -1,18 +1,6 @@
 'use client';
 
-/**
- * Odontogram Component
- * 
- * Displays a dental chart (sơ đồ răng) with 32 teeth using FDI notation.
- * Shows tooth status with color coding and allows interaction.
- * 
- * Features:
- * - Visual representation of 32 teeth (FDI notation)
- * - Color coding based on tooth condition
- * - Click to view/edit tooth status
- * - Tooltip showing tooth number and status
- * - Responsive design
- */
+
 
 import React, { useMemo, useState } from 'react';
 import { ToothStatusResponse, ToothCondition } from '@/types/clinicalRecord';
@@ -52,16 +40,11 @@ import { cn } from '@/lib/utils';
  * - Lower Left (31-38): Hiển thị từ trái sang phải (31 gần center → 38 ngoài cùng trái)
  * - Lower Right (41-48): Hiển thị từ phải sang trái (48 ngoài cùng phải → 41 gần center)
  */
-// Thứ tự hiển thị từ trái sang phải trên màn hình (từ góc nhìn bệnh nhân)
-// Cung trên - phải: [18,17,16,15,14,13,12,11] (18 ngoài cùng phải → 11 gần center)
+
 const UPPER_RIGHT = ['18', '17', '16', '15', '14', '13', '12', '11'];
-// Cung trên - trái: [28,27,26,25,24,23,22,21] (28 ngoài cùng trái → 21 gần center)
-// Array được giữ nguyên để hiển thị đúng thứ tự
+
 const UPPER_LEFT = ['28', '27', '26', '25', '24', '23', '22', '21'];
-// Cung dưới - trái: [38,37,36,35,34,33,32,31] (38 ngoài cùng trái → 31 gần center)
-// Array được giữ nguyên để hiển thị đúng thứ tự
 const LOWER_LEFT = ['38', '37', '36', '35', '34', '33', '32', '31'];
-// Cung dưới - phải: [48,47,46,45,44,43,42,41] (48 ngoài cùng phải → 41 gần center)
 const LOWER_RIGHT = ['48', '47', '46', '45', '44', '43', '42', '41'];
 
 const ALL_TEETH = [
@@ -164,20 +147,6 @@ const VERTICAL_GAP = 30;  // Khoảng cách giữa hàm trên & hàm dưới
 const TOP_MARGIN = 55;    // Lề trên cho label + hàng răng trên
 const BOTTOM_MARGIN = 30; // Lề dưới
 
-// SVG dimensions - Better spacing
-// const svgWidth = 800;
-//  const svgHeight = 400; // Increased height for better spacing
-// const toothWidth = 36;
-// const toothHeight = 52;
-//  const spacing = 5;
-// const centerGap = 50; // Gap between left and right quadrants
-// const verticalGap = 30; // Increased gap between upper and lower jaw
-// const topMargin = 55; // Top margin for labels
-// const bottomMargin = 30; // Bottom margin for better spacing
-// ============================================================================
-// Component
-// ============================================================================
-
 export default function Odontogram({
   patientId,
   toothStatuses = [],
@@ -227,11 +196,7 @@ export default function Odontogram({
       });
     });
 
-    // Cung trên - trái (Upper Left Quadrant 2): [28,27,26,25,24,23,22,21]
-    // Array: ['28', '27', '26', '25', '24', '23', '22', '21']
-    // Hiển thị từ trái sang phải: 28 ngoài cùng trái → 21 gần center
-    // index 0 (28) → x = leftQuadrantStart (ngoài cùng trái)
-    // index 7 (21) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
+    
     UPPER_LEFT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
       const x = leftQuadrantStart + index * (TOOTH_WIDTH + TOOTH_SPACING);
@@ -247,14 +212,10 @@ export default function Odontogram({
     // Lower jaw Y position - phía dưới hàm trên, với khoảng cách rõ ràng (VERTICAL_GAP)
     const lowerY = upperY + TOOTH_HEIGHT + VERTICAL_GAP;
 
-    // Cung dưới - phải (Lower Right Quadrant 4): [48,47,46,45,44,43,42,41]
-    // Hiển thị từ phải sang trái: 48 ngoài cùng phải → 41 gần center
-    // Nằm dưới cung trên - phải (cùng x positions)
+  
     LOWER_RIGHT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
-      // Array đã được sắp xếp [48,47,46,45,44,43,42,41]
-      // 48 (index 0) is at rightQuadrantStart + 7*(toothWidth+spacing)
-      // 41 (index 7) is at rightQuadrantStart
+     
       const x = rightQuadrantStart + (7 - index) * (TOOTH_WIDTH + TOOTH_SPACING);
       teeth.push({
         number: toothNum,
@@ -265,11 +226,7 @@ export default function Odontogram({
       });
     });
 
-    // Cung dưới - trái (Lower Left Quadrant 3): [38,37,36,35,34,33,32,31]
-    // Array: ['38', '37', '36', '35', '34', '33', '32', '31']
-    // Hiển thị từ trái sang phải: 38 ngoài cùng trái → 31 gần center
-    // index 0 (38) → x = leftQuadrantStart (ngoài cùng trái)
-    // index 7 (31) → x = leftQuadrantStart + 7*(toothWidth+spacing) (gần center)
+   
     LOWER_LEFT.forEach((toothNum, index) => {
       const status = statusMap.get(toothNum);
       const x = leftQuadrantStart + index * (TOOTH_WIDTH + TOOTH_SPACING);

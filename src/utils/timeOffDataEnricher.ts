@@ -84,24 +84,48 @@ export class TimeOffDataEnricher {
 
     /**
      * Calculate total days between start and end date
+     * @param startDate - Start date in YYYY-MM-DD format
+     * @param endDate - End date in YYYY-MM-DD format
+     * @param hasWorkShiftId - Whether the request has a workShiftId (half-day shift)
      */
     private static calculateTotalDays(
         startDate: string,
         endDate: string,
-        isHalfDay: boolean
+        hasWorkShiftId: boolean
     ): number {
         try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            const start = new Date(startDate + 'T00:00:00');
+            const end = new Date(endDate + 'T00:00:00');
+
+            // Check if dates are valid
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('Invalid date format:', { startDate, endDate });
+                }
+                return 0;
+            }
 
             // Full days difference + 1 (inclusive)
             const days = differenceInDays(end, start) + 1;
 
-            // If it's a half-day shift, divide by 2
-            return isHalfDay ? 0.5 : days;
+            // If it's a half-day shift AND startDate === endDate, it's 0.5 days
+            // If it's a half-day shift but dates are different, calculate normally
+            // (each day is 0.5, so total = days * 0.5)
+            if (hasWorkShiftId) {
+                if (days === 1) {
+                    // Single day half-day request
+                    return 0.5;
+                } else {
+                    // Multiple days half-day request (each day is 0.5)
+                    return days * 0.5;
+                }
+            }
+
+            // Full-day request
+            return days;
         } catch (error) {
             if (process.env.NODE_ENV === 'development') {
-                console.error('Error calculating total days:', error);
+                console.error('Error calculating total days:', error, { startDate, endDate, hasWorkShiftId });
             }
             return 0;
         }

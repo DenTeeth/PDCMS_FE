@@ -198,10 +198,10 @@ export default function RegistrationRequestsPage() {
         toast.error(errorMsg, { duration: 6000 });
       } else if (errorMsg.includes('tự phê duyệt')) {
         // Self-approval not allowed (BR-41)
-        toast.error('❌ ' + errorMsg, { duration: 5000 });
+        toast.error(errorMsg, { duration: 5000 });
       } else if (errorMsg.includes('quota') || errorMsg.includes('Slot đã đầy')) {
         // Quota exceeded
-        toast.error('⚠️ ' + errorMsg);
+        toast.error(errorMsg);
       } else {
         // Generic error
         toast.error(errorMsg);
@@ -252,7 +252,7 @@ export default function RegistrationRequestsPage() {
       
       if (errorMsg.includes('tự phê duyệt')) {
         // Self-approval related error
-        toast.error('❌ ' + errorMsg, { duration: 5000 });
+        toast.error(errorMsg, { duration: 5000 });
       } else {
         toast.error(errorMsg);
       }

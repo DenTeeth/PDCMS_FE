@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * Employee My Calendar Page
- * Combines Shift Calendar (ca làm việc) and Appointment Calendar (lịch hẹn)
- * 
- * Features:
- * - Display shifts as background (opacity ~0.3, dashed border)
- * - Display appointments as overlay (opacity 1.0, solid border)
- * - Click shift → shift detail modal
- * - Click appointment → appointment detail page
- */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';

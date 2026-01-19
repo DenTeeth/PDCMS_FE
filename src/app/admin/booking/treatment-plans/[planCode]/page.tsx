@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Admin Treatment Plan Detail Page
- * 
- * Displays detailed treatment plan information including:
- * - Plan metadata (code, name, status, dates, financial info)
- * - Doctor and patient information
- * - Progress summary
- * - Phases with items and linked appointments
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -76,10 +67,6 @@ export default function AdminTreatmentPlanDetailPage() {
       try {
         setLoading(true);
 
-        // Backend fix applied: planCode is now included in summary DTO
-        // No more workaround needed - planCode should always be available
-        // If numeric, it's likely a legacy patientPlanId from old navigation
-        // In that case, we should redirect to list page or show error
 
         const isNumeric = /^\d+$/.test(planCode);
 
@@ -287,7 +274,6 @@ export default function AdminTreatmentPlanDetailPage() {
           onBookPlanItems={handleBookSelectedPlanItems}
         />
 
-        {/* Phase 5: Appointment Booking Modal */}
         <CreateAppointmentModal
           open={showAppointmentModal}
           onClose={() => {
@@ -297,8 +283,6 @@ export default function AdminTreatmentPlanDetailPage() {
           onSuccess={() => {
             setShowAppointmentModal(false);
             setPrefilledAppointmentData({});
-            // Refresh plan data to show updated item status (READY_FOR_BOOKING → SCHEDULED)
-            // Note: This page doesn't have handlePlanUpdated, so we'll reload the page
             window.location.reload();
             toast.success('Đặt lịch thành công', {
               description: 'Lịch hẹn đã được tạo và liên kết với hạng mục. Trạng thái hạng mục đã được cập nhật.',

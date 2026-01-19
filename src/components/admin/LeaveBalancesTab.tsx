@@ -355,7 +355,7 @@ export function LeaveBalancesTab({ employees: propEmployees, timeOffTypes: propT
               className="bg-orange-600 hover:bg-orange-700 text-white"
             >
               <Settings className="h-4 w-4 mr-2" />
-              Công cụ admin
+              Cấp phép toàn bộ nhân viên
             </Button>
           </>
         )}

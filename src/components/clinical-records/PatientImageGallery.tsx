@@ -1,12 +1,4 @@
-/**
- * Patient Image Gallery Component
- * Hiển thị gallery hình ảnh của bệnh nhân với các tính năng:
- * - Grid view với pagination
- * - Filter theo loại hình ảnh, ngày tháng
- * - Xem full size (lightbox)
- * - Xóa hình ảnh
- * - Cập nhật metadata
- */
+
 
 "use client";
 

@@ -1,17 +1,6 @@
 "use client";
 
-/**
- * Admin Feedback List Page
- * 
- * Hiển thị danh sách tất cả feedback với filters:
- * - Filter theo rating (1-5 stars)
- * - Filter theo bác sĩ
- * - Filter theo bệnh nhân
- * - Filter theo ngày tạo
- * - Search và pagination
- * 
- * Permissions: Admin, Manager, hoặc Employee có VIEW_FEEDBACK permission
- */
+
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";

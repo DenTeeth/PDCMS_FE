@@ -1,18 +1,6 @@
 'use client';
 
-/**
- * Admin Appointment Detail Page
- * 
- * Displays detailed appointment information including:
- * - Patient information
- * - Appointment details (code, status, time, duration, services)
- * - Doctor information
- * - Room information
- * - Participants (if any)
- * - Notes
- * - Placeholder tabs/links for medical history and treatment plans
- * - Actions (if permitted): Update status, Reschedule, Cancel
- */
+
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -406,7 +394,6 @@ export default function AdminAppointmentDetailPage() {
     const loadAppointment = async () => {
       try {
         setLoading(true);
-        // Use P3.4 endpoint to get appointment detail
         const detail = await appointmentService.getAppointmentDetail(appointmentCode);
 
         // Check if request was cancelled or component unmounted
@@ -475,15 +462,13 @@ export default function AdminAppointmentDetailPage() {
     setHasTriedLoadingClinicalRecord(true);
 
     try {
-      // BE now returns HTTP 200 with null instead of 404 when no record exists (Issue #37 fix)
       const record = await clinicalRecordService.getByAppointmentId(appointment.appointmentId);
-      setClinicalRecord(record); // record can be null if no clinical record exists
+      setClinicalRecord(record); 
       setIsEditingClinicalRecord(false);
       if (!record) {
         console.log('[CLINICAL RECORD] No record found for appointment, showing create form');
       }
     } catch (error: any) {
-      // Only real errors (appointment not found, access denied, etc.)
       console.error('Error loading clinical record:', error);
       setClinicalRecordError(error.message || 'Không thể tải bệnh án');
       handleError(error);
@@ -516,9 +501,26 @@ export default function AdminAppointmentDetailPage() {
 
     try {
       const feedbackData = await getFeedbackByAppointmentCode(appointment.appointmentCode);
-      setFeedback(feedbackData);
+      // Convert AppointmentFeedback to FeedbackResponse if needed
+      if (feedbackData) {
+        // Map AppointmentFeedback to FeedbackResponse format
+        // AppointmentFeedback has: feedbackId, appointmentId, appointmentCode, patientId, patientName, rating, comment, tags, createdAt, updatedAt
+        // FeedbackResponse needs: feedbackId, appointmentCode, patientName, employeeName, rating, comment, tags, createdAt
+        const feedbackResponse: FeedbackResponse = {
+          feedbackId: feedbackData.feedbackId,
+          appointmentCode: feedbackData.appointmentCode,
+          patientName: feedbackData.patientName,
+          employeeName: '', // AppointmentFeedback doesn't have employeeName, set empty string
+          rating: feedbackData.rating,
+          comment: feedbackData.comment,
+          tags: feedbackData.tags,
+          createdAt: feedbackData.createdAt,
+        };
+        setFeedback(feedbackResponse);
+      } else {
+        setFeedback(null);
+      }
     } catch (error: any) {
-      // 404 is expected if no feedback exists yet
       if (error.response?.status === 404) {
         console.log('[FEEDBACK] No feedback found for appointment');
         setFeedback(null);
@@ -531,7 +533,6 @@ export default function AdminAppointmentDetailPage() {
     }
   };
 
-  // Load feedback when Feedback tab is activated
   useEffect(() => {
     if (
       activeTab === 'feedback' &&
@@ -805,7 +806,9 @@ export default function AdminAppointmentDetailPage() {
         setTimeout(async () => {
           try {
             // Reload clinical record to get updated procedures
-            const record = await clinicalRecordService.getByAppointmentId(updated.appointmentId);
+            const appointmentId = updated.appointmentId;
+            if (!appointmentId) return; // Type guard
+            const record = await clinicalRecordService.getByAppointmentId(appointmentId);
             if (record && record.procedures && record.procedures.length > 0) {
               // Check if any procedure has materials that should be deducted
               let allDeducted = true;
@@ -848,11 +851,10 @@ export default function AdminAppointmentDetailPage() {
             console.error('Error checking materials deduction:', error);
             // Don't show error to user, just log it
           }
-        }, 2000); // Wait 2 seconds for BE to process
+        }, 2000); 
       } else {
         // If currently on clinical record tab, reload it
         if (activeTab === 'clinical-record' && updated.appointmentId) {
-          // Small delay to ensure state is updated
           setTimeout(() => {
             loadClinicalRecord();
           }, 100);
@@ -886,7 +888,6 @@ export default function AdminAppointmentDetailPage() {
     const [hours, minutes] = delayTime.split(':');
     const delayNewStartTime = `${delayDate}T${hours}:${minutes}:00`;
 
-    // Validate: Only SCHEDULED or CHECKED_IN can be delayed
     if (appointment.status !== 'SCHEDULED' && appointment.status !== 'CHECKED_IN') {
       toast.error('Không thể dời lịch hẹn', {
         description: 'Chỉ có thể dời các lịch hẹn đã lên lịch hoặc đã check-in',
@@ -894,7 +895,6 @@ export default function AdminAppointmentDetailPage() {
       return;
     }
 
-    // Validate: New start time must be after original
     const originalStart = new Date(appointment.appointmentStartTime);
     const newStart = new Date(delayNewStartTime);
 
@@ -918,7 +918,7 @@ export default function AdminAppointmentDetailPage() {
 
       const request: DelayAppointmentRequest = {
         newStartTime: delayNewStartTime, // ISO 8601 format
-        reasonCode: delayReason as AppointmentReasonCode, // Required (BE requires NOT NULL)
+        reasonCode: delayReason as AppointmentReasonCode, 
         notes: delayNotes || null,
       };
 
@@ -931,7 +931,6 @@ export default function AdminAppointmentDetailPage() {
       // Update appointment with new data
       setAppointment(updated);
 
-      // FIX: Reset clinical record loading state when appointment changes
       setHasTriedLoadingClinicalRecord(false);
       setClinicalRecord(null);
       setClinicalRecordError(null);
@@ -1601,7 +1600,7 @@ export default function AdminAppointmentDetailPage() {
                   <AppointmentFeedbackDisplay feedback={feedback} showAppointmentInfo={true} />
                   <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground text-center italic">
-                      Đánh giá này giúp chúng tôi cải thiện chất lượng dịch vụ 💙
+                      Đánh giá này giúp chúng tôi cải thiện chất lượng dịch vụ
                     </p>
                   </div>
                 </div>
@@ -1860,24 +1859,24 @@ export default function AdminAppointmentDetailPage() {
           appointment={appointment}
           onClose={() => setShowRescheduleModal(false)}
           onSuccess={(cancelledAppointment, newAppointment) => {
+            // Validate response data
+            if (!newAppointment || !newAppointment.appointmentCode) {
+              console.error('Invalid reschedule response:', { cancelledAppointment, newAppointment });
+              toast.error('Đổi lịch hẹn thành công nhưng không thể tải thông tin lịch hẹn mới', {
+                description: 'Vui lòng làm mới trang để xem lịch hẹn mới',
+              });
+              setShowRescheduleModal(false);
+              return;
+            }
+
             // Show success message
             toast.success('Đã dời lịch hẹn thành công', {
               description: `Lịch hẹn cũ đã được hủy. Mã lịch hẹn mới: ${newAppointment.appointmentCode}`,
             });
 
-            // Update appointment with new appointment details
-            setAppointment(newAppointment);
-
-            // Close modal
-            setShowRescheduleModal(false);
-
-            // Optionally reload appointment to get latest data
-            // This will be handled by the useEffect that watches appointmentCode
-            // But since the code changed, we need to navigate to the new appointment
-            // Actually, let's just reload the current appointment
-            // The backend returns the new appointment, so we can use that
-            // Or we can reload the appointment detail
-            // For now, we'll just update with the new appointment
+            // Redirect to new appointment detail page
+            // This ensures we load the fresh appointment data from backend
+            router.push(`/admin/booking/appointments/${newAppointment.appointmentCode}`);
           }}
         />
       </div>

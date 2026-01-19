@@ -1,7 +1,3 @@
-/**
- * Patient Image Manager Component
- * Component tích hợp Upload + Gallery để quản lý hình ảnh bệnh nhân
- */
 
 "use client";
 

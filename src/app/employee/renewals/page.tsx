@@ -1,24 +1,5 @@
 'use client';
 
-/**
- * Employee Renewal Page
- * 
- * Trang này cho phép nhân viên:
- * 1. Xem danh sách renewal requests đang chờ phản hồi
- * 2. Phản hồi renewal (Đồng ý hoặc Từ chối)
- * 
- * Workflow:
- * - Cron Job P9 (00:05 AM mỗi đêm) tự động phát hiện lịch Fixed sắp hết hạn
- * - Tạo renewal request với status = PENDING_ACTION
- * - Nhân viên mở trang này → Xem danh sách renewal requests
- * - Nhân viên chọn "Đồng ý" hoặc "Từ chối"
- * - Nếu "Đồng ý" → Chờ Admin finalize (chọn ngày hết hạn mới)
- * - Nếu "Từ chối" → Lịch sẽ kết thúc theo ngày hết hạn hiện tại
- * 
- * Dựa trên: CRON_JOB_AND_RENEWAL_API_GUIDE.md
- * Last updated: 2025-01-XX
- */
-
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Permission } from '@/types/permission';

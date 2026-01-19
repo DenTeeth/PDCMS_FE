@@ -1,26 +1,5 @@
 'use client';
 
-/**
- * Admin Renewal Management Page
- * 
- * Trang này cho phép Admin/Manager:
- * 1. Xem danh sách TẤT CẢ renewal requests (tất cả status)
- * 2. Filter theo status, employee
- * 3. Finalize renewal đã được nhân viên CONFIRMED
- * 
- * Workflow:
- * - Employee phản hồi renewal → Status = CONFIRMED hoặc DECLINED
- * - Admin xem danh sách renewals đã CONFIRMED
- * - Admin chọn ngày hết hạn mới và click "Finalize"
- * - Backend tự động:
- *   1. Vô hiệu hóa lịch cũ (is_active = false)
- *   2. Tạo lịch mới với effective_from = old_effective_to + 1 day
- *   3. Copy days of week từ lịch cũ
- *   4. Update renewal status = FINALIZED
- * 
- * Dựa trên: CRON_JOB_AND_RENEWAL_API_GUIDE.md
- * Last updated: 2025-01-XX
- */
 
 import { useState, useEffect, useMemo } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -183,17 +162,6 @@ export default function AdminRenewalsPage() {
     };
   }, [allRenewals]);
 
-  // ==================== FETCH DATA ====================
-
-  /**
-   * Fetch danh sách TẤT CẢ renewals từ API
-   * 
-   * API: GET /api/v1/admin/registrations/renewals
-   * 
-   * Query Parameters:
-   * - status: Filter theo status (optional)
-   * - employeeId: Filter theo employee (optional)
-   */
   const fetchRenewals = async () => {
     try {
       setLoading(true);
@@ -292,23 +260,12 @@ export default function AdminRenewalsPage() {
     setNewEffectiveTo('');
   };
 
-  /**
-   * Finalize renewal
-   * 
-   * API: POST /api/v1/admin/registrations/renewals/finalize
-   * 
-   * Business Logic:
-   * - Vô hiệu hóa lịch cũ
-   * - Tạo lịch mới với effective_from = old_effective_to + 1 day
-   * - newEffectiveTo phải > old effective_to
-   */
   const handleFinalizeRenewal = async () => {
     if (!selectedRenewal || !newEffectiveTo) {
       toast.error('Vui lòng chọn ngày hết hạn mới');
       return;
     }
 
-    // Validate: newEffectiveTo phải > old effective_to
     try {
       const oldDate = parseISO(selectedRenewal.effectiveTo);
       const newDate = parseISO(newEffectiveTo);

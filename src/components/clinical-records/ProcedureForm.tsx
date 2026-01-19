@@ -1,11 +1,6 @@
 'use client';
 
-/**
- * Procedure Form Component
- * 
- * Form to add or edit a procedure
- * Optimized UX: Dialog form, minimal fields
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';

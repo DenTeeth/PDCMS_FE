@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * Patient Treatment Plan Tracking Page
- * 
- * Displays a comprehensive tracking view of all treatment plans
- * with timeline, progress, and quick actions
- */
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -67,7 +60,6 @@ export default function PatientTreatmentPlanTrackingPage() {
     try {
       setLoadingDetail(true);
       // Get patientCode from plan or extract from planCode
-      // For patient context, we can use getAllTreatmentPlansWithRBAC which filters by user
       // But for detail, we need patientCode - try to get from selected plan or use a workaround
       const patientCode = selectedPlan?.patient?.patientCode;
       if (!patientCode) {

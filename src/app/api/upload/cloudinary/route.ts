@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import cloudinary, { uploadImage } from '@/config/cloudinary';
 
-// Export để Next.js nhận diện đây là API route
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-/**
- * API Route để upload ảnh lên Cloudinary từ client-side
- * POST /api/upload/cloudinary
- */
+
 export async function POST(request: NextRequest) {
   try {
     // Kiểm tra API keys với logging chi tiết
@@ -118,10 +114,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * DELETE /api/upload/cloudinary
- * Xóa ảnh từ Cloudinary
- */
+
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

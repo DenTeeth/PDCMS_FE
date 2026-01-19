@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Storage In/Out Page - API V1 (Transactions Management)
- * Using /api/v1/warehouse/transactions endpoints with full CRUD, pagination, search, sort
- */
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -787,21 +783,6 @@ export default function StorageInOutPage() {
                                     >
                                       <Edit className="h-4 w-4" />
                                     </Button>
-                                    {/* 
-                                DELETE DISABLED: BE chưa implement DELETE endpoint trong API 6.6/6.7
-                                TransactionHistoryController chỉ có GET endpoints.
-                                Nếu cần xóa, có thể set status = CANCELLED thay vì delete.
-                              */}
-                                    {/* <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDelete(txn)}
-                                title="Xóa (chưa khả dụng - BE chưa implement)"
-                                className="h-8 w-8 p-0"
-                                disabled
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button> */}
                                   </div>
                                 </td>
                               </tr>

@@ -1,18 +1,5 @@
 'use client';
 
-/**
- * Employee Treatment Plan Detail Page
- * 
- * Displays detailed treatment plan information including:
- * - Plan metadata (code, name, status, dates, financial info)
- * - Doctor and patient information
- * - Progress summary
- * - Phases with items and linked appointments
- * 
- * RBAC: VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission
- * - Employee với VIEW_TREATMENT_PLAN_OWN: Chỉ thấy plans của mình
- * - Employee với VIEW_TREATMENT_PLAN_ALL: Vẫn chỉ thấy plans của mình (backend enforce)
- */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';

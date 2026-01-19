@@ -31,18 +31,17 @@ export default function ResetPasswordPage() {
   }, [searchParams]);
 
   const validatePassword = (password: string): string | null => {
-    // BE Requirements: 6-50 characters, must contain at least 1 letter AND 1 number
-    if (password.length < 6) {
-      return "Mật khẩu phải có ít nhất 6 ký tự";
+    // Updated to match backend requirements: 8+ chars, uppercase, lowercase, number, special char
+    if (password.length < 8) {
+      return "Mật khẩu phải có ít nhất 8 ký tự";
     }
     if (password.length > 50) {
       return "Mật khẩu không được vượt quá 50 ký tự";
     }
-    if (!/(?=.*[a-zA-Z])/.test(password)) {
-      return "Mật khẩu phải có ít nhất 1 chữ cái";
-    }
-    if (!/(?=.*[0-9])/.test(password)) {
-      return "Mật khẩu phải có ít nhất 1 số";
+    // Pattern: at least one lowercase, one uppercase, one number, one special character
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
+    if (!passwordPattern.test(password)) {
+      return "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt";
     }
     return null;
   };
@@ -88,6 +87,18 @@ export default function ResetPasswordPage() {
       // Handle different error types from BE
       let errorMessage = "Không thể đặt lại mật khẩu. Vui lòng thử lại hoặc yêu cầu link mới.";
       
+      // Handle rate limit (429)
+      if (err.response?.status === 429) {
+        const beError = err.response.data;
+        const retryAfter = beError?.data?.retryAfterSeconds || 600;
+        const minutes = Math.ceil(retryAfter / 60);
+        errorMessage = beError?.message || `Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.`;
+        setError(errorMessage);
+        toast.error(errorMessage);
+        setLoading(false);
+        return;
+      }
+      
       if (err.response?.data) {
         const beError = err.response.data;
         
@@ -100,16 +111,16 @@ export default function ResetPasswordPage() {
           errorMessage = beError;
         }
         
-        // Handle common BE error cases
-        if (beError.message?.includes('expired') || beError.message?.includes('hết hạn')) {
-          errorMessage = "Token đã hết hạn. Vui lòng yêu cầu link mới.";
-        } else if (beError.message?.includes('invalid') || beError.message?.includes('không hợp lệ')) {
-          errorMessage = "Token không hợp lệ. Vui lòng kiểm tra lại link trong email.";
-        } else if (beError.message?.includes('used') || beError.message?.includes('đã sử dụng')) {
-          errorMessage = "Link này đã được sử dụng. Vui lòng yêu cầu link mới nếu cần đặt lại mật khẩu.";
-        } else if (beError.message?.includes('match') || beError.message?.includes('không khớp')) {
-          errorMessage = "Mật khẩu xác nhận không khớp. Vui lòng thử lại.";
-        } else if (beError.message?.includes('password') || beError.message?.includes('mật khẩu')) {
+        // Handle common BE error cases (using exact messages from BE)
+        if (beError.error === 'error.token.expired' || beError.message?.includes('hết hạn')) {
+          errorMessage = beError.message || "Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.";
+        } else if (beError.error === 'error.token.invalid' || beError.message?.includes('không hợp lệ')) {
+          errorMessage = beError.message || "Token đặt lại mật khẩu không hợp lệ";
+        } else if (beError.message?.includes('đã được sử dụng')) {
+          errorMessage = beError.message || "Token này đã được sử dụng";
+        } else if (beError.message?.includes('không khớp')) {
+          errorMessage = beError.message || "Mật khẩu xác nhận không khớp";
+        } else if (beError.message?.includes('mật khẩu') || beError.message?.includes('password')) {
           errorMessage = beError.message;
         }
       } else if (err.message) {
@@ -118,6 +129,7 @@ export default function ResetPasswordPage() {
       
       console.error(' Reset password error:', {
         error: err,
+        status: err.response?.status,
         response: err.response?.data,
         message: errorMessage,
       });

@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Employee Settings Page
- * Available to all employees
- */
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

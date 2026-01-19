@@ -93,8 +93,8 @@ export default function PatientsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState<CreatePatientWithAccountRequest>({
-    username: '', // Optional - BE auto-generates from email if not provided
-    email: '', // Required - BE uses this to create account and send password setup email
+    username: '', // BE auto-generates from email if not provided
+    email: '', 
     firstName: '',
     lastName: '',
     phone: '',
@@ -167,27 +167,20 @@ export default function PatientsPage() {
     try {
       setLoading(true);
 
-      // Build query params - BE only supports page, size, sortBy, sortDirection
       // Note: Search, status, gender filters will be applied on FE
       const params: any = {
         page,
         size: 10, // Items per page
-        sortBy: 'createdAt' as const, // ✅ Sort by creation date instead of code
-        sortDirection: 'DESC' as const, // ✅ Newest patients first
+        sortBy: 'createdAt' as const, //  Sort by creation date instead of code
+        sortDirection: 'DESC' as const, // Newest patients first
       };
 
-      // Note: If your BE supports these filters, uncomment:
-      // if (debouncedSearchTerm) params.search = debouncedSearchTerm;
-      // if (filterStatus !== 'all') params.isActive = filterStatus === 'active';
-      // if (filterGender !== 'all') params.gender = filterGender;
 
-      // Strategy: Try stats API first (efficient), fallback to fetch all pages if API unavailable
       let statsCalculated = false;
       
-      // Step 1: Try to use dedicated stats API endpoint (preferred - single API call)
       try {
         const stats = await patientService.getPatientStats();
-        console.log('✅ Patient stats from API:', stats);
+        console.log('Patient stats from API:', stats);
         
         // Update stats states from API response
         setTotalPatients(stats.totalPatients);
@@ -198,7 +191,7 @@ export default function PatientsPage() {
         const status = statsError.response?.status;
         const errorData = statsError.response?.data;
         
-        console.warn('⚠️ Stats API unavailable, falling back to fetch all pages method:', {
+        console.warn('Stats API unavailable, falling back to fetch all pages method:', {
           status,
           statusText: statsError.response?.statusText,
           error: errorData,
@@ -207,7 +200,7 @@ export default function PatientsPage() {
         
         // Step 2: Fallback - Fetch all pages and calculate stats manually (less efficient but reliable)
         try {
-          console.log('📊 Fetching all patients to calculate stats manually...');
+          console.log('Fetching all patients to calculate stats manually...');
           let allPatients: Patient[] = [];
           let currentPage = 0;
           let hasMorePages = true;
@@ -230,12 +223,12 @@ export default function PatientsPage() {
             
             // Safety limit to prevent infinite loop
             if (currentPage > 100) {
-              console.warn('⚠️ Reached safety limit while fetching all patients');
+              console.warn('Reached safety limit while fetching all patients');
               break;
             }
           }
           
-          console.log('📊 Fetched all patients for stats (fallback):', {
+          console.log('Fetched all patients for stats (fallback):', {
             totalPages: currentPage,
             totalPatients: allPatients.length,
           });
@@ -249,7 +242,7 @@ export default function PatientsPage() {
           
           // Validation: total should equal active + inactive
           if (totalCount !== activeCount + inactiveCount) {
-            console.warn('⚠️ Stats calculation mismatch:', {
+            console.warn('Stats calculation mismatch:', {
               total: totalCount,
               active: activeCount,
               inactive: inactiveCount,
@@ -263,13 +256,13 @@ export default function PatientsPage() {
           setTotalInactive(inactiveCount);
           statsCalculated = true;
           
-          console.log('✅ Stats calculated from all patients (fallback method):', {
+          console.log('Stats calculated from all patients (fallback method):', {
             total: totalCount,
             active: activeCount,
             inactive: inactiveCount,
           });
         } catch (fallbackError: any) {
-          console.error('❌ Fallback method also failed:', fallbackError);
+          console.error('Fallback method also failed:', fallbackError);
           // Last resort: Set default values
           setTotalPatients(0);
           setTotalActive(0);
@@ -281,13 +274,13 @@ export default function PatientsPage() {
       // Now fetch filtered patients for display (with current filters applied)
       console.log('Fetching patients with params:', params);
       const response = await patientService.getPatients(params);
-      console.log('✅ Received filtered patients:', {
+      console.log('Received filtered patients:', {
         total: response.content.length,
         active: response.content.filter(p => p.isActive === true).length,
         inactive: response.content.filter(p => p.isActive !== true).length,
         items: response.content.map(p => ({ code: p.patientCode, name: p.fullName, isActive: p.isActive }))
       });
-      console.log('🔍 First patient block status:', response.content[0] && {
+      console.log('First patient block status:', response.content[0] && {
         patientCode: response.content[0].patientCode,
         isBookingBlocked: response.content[0].isBookingBlocked,
         bookingBlockReason: response.content[0].bookingBlockReason,
@@ -361,8 +354,6 @@ export default function PatientsPage() {
 
       const result = await patientService.createPatient(payload);
 
-      //  Note: BE may fail to send email but patient still created (graceful degradation)
-      // Account status will be PENDING_VERIFICATION until password is set via email
       console.log(' Patient created:', result);
       console.log(' Account Info Check:', {
         hasAccount: result.hasAccount,

@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Tooth Status Dialog Component
- * 
- * Dialog for editing tooth status when clicking on a tooth in the Odontogram
- */
 
 import React, { useState, useEffect } from 'react';
 import {

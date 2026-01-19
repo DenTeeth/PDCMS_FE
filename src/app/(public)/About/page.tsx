@@ -196,17 +196,7 @@ export default function AboutPage() {
             >
               <Card className="h-full">
                 <CardContent className="flex items-center gap-4 p-5">
-                  {/* <div className="relative h-14 w-14 overflow-hidden rounded-full ring-2 ring-white shadow">
-                    <Image
-                      src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
-                        name
-                      )}`}
-                      alt={name}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
-                  </div> */}
+                  {}
                   <div>
                     <p className="font-semibold text-slate-800">{name}</p>
                     <p className="text-sm text-slate-500">Nha sĩ</p>

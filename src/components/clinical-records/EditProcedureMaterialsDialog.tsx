@@ -1,21 +1,6 @@
 'use client';
 
-/**
- * Edit Procedure Materials Dialog
- * 
- * Dialog/modal to edit actual material quantities used during procedure
- * 
- * Features:
- * - Shows planned quantity (read-only)
- * - Input field for actual quantity
- * - Textarea for variance reason (required if actual ≠ planned)
- * - Textarea for notes (optional)
- * - Shows current stock status with warnings
- * - Validation:
- *   - Actual quantity must be positive
- *   - If actual ≠ planned, variance reason is required
- *   - Warn if actual quantity exceeds available stock
- */
+
 
 import React, { useState, useEffect } from 'react';
 import {

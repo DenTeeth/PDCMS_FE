@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Inventory Page - Warehouse API 6.x (Item Master Management)
- *  Using /api/v1/warehouse endpoints for summary + items
- */
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

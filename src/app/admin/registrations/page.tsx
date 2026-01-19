@@ -484,36 +484,6 @@ export default function RegistrationsPage() {
           {/* PART-TIME REGISTRATIONS TAB */}
           {canViewPartTime && (
             <TabsContent value="part-time" className="space-y-6">
-              {/* Info Card - 303v2-p1 */}
-              {/* <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-3">
-                    <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-blue-800">Part-Time Flex Registration (303v2-p1)</h3>
-                        <Badge variant="outline" className="text-xs">Flexible Schedule</Badge>
-                      </div>
-                      <p className="text-sm text-blue-700 mb-3">
-                        Hệ thống quản lý đăng ký ca linh hoạt cho nhân viên <strong>PART_TIME_FLEX</strong>. 
-                        Nhân viên tự đăng ký (claim) các suất làm việc có sẵn.
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-blue-600">
-                        <Link 
-                          href="/admin/work-slots" 
-                          className="flex items-center gap-1 hover:text-blue-800 hover:underline"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Quản lý Work Slots
-                        </Link>
-                        <span className="text-blue-300">|</span>
-                        <span>Endpoint: <code className="bg-blue-100 px-1 rounded">/api/v1/work-slots</code> & <code className="bg-blue-100 px-1 rounded">/api/v1/registrations</code></span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card> */}
-
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -602,28 +572,6 @@ export default function RegistrationsPage() {
           {/* FIXED REGISTRATIONS TAB */}
           {canViewFixed && (
             <TabsContent value="fixed" className="space-y-6">
-              {/* Info Card - 303v2-p2 */}
-              {/* <Card className="border-green-200 bg-green-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-3">
-                    <Info className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-green-800">Fixed Shift Registration (303v2-p2)</h3>
-                        <Badge variant="outline" className="text-xs bg-green-100">Fixed Schedule</Badge>
-                      </div>
-                      <p className="text-sm text-green-700 mb-3">
-                        Hệ thống quản lý lịch cố định cho nhân viên <strong>FULL_TIME</strong> và <strong>PART_TIME_FIXED</strong>. 
-                        Admin/Manager gán lịch làm việc cố định cho nhân viên (VD: Ca Sáng T2-T6).
-                      </p>
-                      <div className="text-xs text-green-600">
-                        <span>Endpoint: <code className="bg-green-100 px-1 rounded">/api/v1/fixed-registrations</code></span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card> */}
-
               {/* Header with Create Button */}
               <div className="flex justify-end">
                 {canManageFixed && (
