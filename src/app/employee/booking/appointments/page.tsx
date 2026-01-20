@@ -36,7 +36,7 @@ export default function EmployeeAppointmentsPage() {
   const [filters, setFilters] = useState<Partial<AppointmentFilterCriteria>>({
     page: 0,
     size: 10,
-    sortBy: 'appointmentStartTime',
+    sortBy: 'appointmentId', // Sort by appointment ID (newest first)
     sortDirection: 'DESC', 
   });
 
@@ -83,7 +83,7 @@ export default function EmployeeAppointmentsPage() {
           ...filters,
           page: currentPage,
           size: pageSize,
-          sortBy: filters.sortBy || 'appointmentStartTime',
+          sortBy: filters.sortBy || 'appointmentId', // Sort by appointment ID (newest first)
           sortDirection: filters.sortDirection || 'DESC', // Default to DESC - newest first
         };
 
@@ -150,7 +150,7 @@ export default function EmployeeAppointmentsPage() {
     setFilters({
       page: 0,
       size: 10,
-      sortBy: 'appointmentStartTime',
+      sortBy: 'appointmentId', // Sort by appointment ID (newest first)
       sortDirection: 'DESC', // ✅ Newest appointments first
     });
     setCurrentPage(0);

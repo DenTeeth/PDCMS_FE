@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, CalendarDays, Clock, Calendar, Users, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Plus, Edit, Trash2, Eye, CalendarDays, Clock, Calendar, Users, AlertCircle } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { toast } from 'sonner';
@@ -33,10 +33,16 @@ import { getEmployeeIdFromToken, formatTimeToHHMM } from '@/lib/utils';
 // Import types and services for Fixed Registration
 import {
   FixedShiftRegistration,
-  FixedRegistrationQueryParams
+  CreateFixedRegistrationRequest,
+  UpdateFixedRegistrationRequest,
+  FixedRegistrationQueryParams,
+  FixedRegistrationErrorCode
 } from '@/types/fixedRegistration';
+import { Employee, EmploymentType } from '@/types/employee';
 import { fixedRegistrationService } from '@/services/fixedRegistrationService';
+import { EmployeeService } from '@/services/employeeService';
 import { useAuth } from '@/contexts/AuthContext';
+import { canUseFixedRegistration } from '@/lib/utils';
 
 // Day labels mapping for Fixed Registration (numbers 1-7)
 const DAY_LABELS: { [key: number]: string } = {
@@ -193,6 +199,7 @@ export default function EmployeeRegistrationsPage() {
 
   // Determine which tabs to show based on permissions and employee type
   const hasManagePermission = hasPermission(Permission.MANAGE_WORK_SLOTS);
+  const hasManageFixedPermission = hasPermission(Permission.MANAGE_FIXED_REGISTRATIONS);
   const isPartTimeFlex = user?.employmentType === 'PART_TIME_FLEX';
 
   // Determine available tabs and default tab using useMemo
@@ -204,18 +211,22 @@ export default function EmployeeRegistrationsPage() {
       // Condition 1: Has MANAGE_WORK_SLOTS → Show both tabs
       tabs = ['part-time', 'fixed'];
       defaultTabValue = 'part-time';
+    } else if (hasManageFixedPermission) {
+      // Condition 2: Has MANAGE_FIXED_REGISTRATIONS (Manager) → Show both tabs, default to fixed
+      tabs = ['part-time', 'fixed'];
+      defaultTabValue = 'fixed';
     } else if (isPartTimeFlex) {
-      // Condition 2: No MANAGE_WORK_SLOTS AND is PART_TIME_FLEX → Only Part-time tab
+      // Condition 3: No permissions AND is PART_TIME_FLEX → Only Part-time tab
       tabs = ['part-time'];
       defaultTabValue = 'part-time';
     } else {
-      // Condition 3: No MANAGE_WORK_SLOTS AND NOT PART_TIME_FLEX → Only Fixed tab
+      // Condition 4: No permissions AND NOT PART_TIME_FLEX → Only Fixed tab
       tabs = ['fixed'];
       defaultTabValue = 'fixed';
     }
 
     return { availableTabs: tabs, defaultTab: defaultTabValue };
-  }, [hasManagePermission, isPartTimeFlex]);
+  }, [hasManagePermission, hasManageFixedPermission, isPartTimeFlex]);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<'part-time' | 'fixed'>(defaultTab);
@@ -310,10 +321,33 @@ export default function EmployeeRegistrationsPage() {
   // ==================== FIXED REGISTRATION STATE ====================
   const [fixedRegistrations, setFixedRegistrations] = useState<FixedShiftRegistration[]>([]);
   const [fixedLoading, setFixedLoading] = useState(true);
+  const [filterEmployeeId, setFilterEmployeeId] = useState<number | null>(null);
 
   // Fixed modals
+  const [showFixedCreateModal, setShowFixedCreateModal] = useState(false);
+  const [fixedCreating, setFixedCreating] = useState(false);
+  const [fixedCreateFormData, setFixedCreateFormData] = useState<CreateFixedRegistrationRequest>({
+    employeeId: 0,
+    workShiftId: '',
+    daysOfWeek: [],
+    effectiveFrom: '',
+    effectiveTo: null
+  });
+
+  const [showFixedEditModal, setShowFixedEditModal] = useState(false);
+  const [fixedEditingRegistration, setFixedEditingRegistration] = useState<FixedShiftRegistration | null>(null);
+  const [fixedUpdating, setFixedUpdating] = useState(false);
+  const [fixedEditFormData, setFixedEditFormData] = useState<UpdateFixedRegistrationRequest>({});
+
   const [showFixedDetailsModal, setShowFixedDetailsModal] = useState(false);
   const [fixedDetailsRegistration, setFixedDetailsRegistration] = useState<FixedShiftRegistration | null>(null);
+
+  const [fixedDeleting, setFixedDeleting] = useState(false);
+
+  // Dropdown data (for managers with MANAGE_FIXED_REGISTRATIONS)
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(false);
+  const [hasViewEmployeePermission, setHasViewEmployeePermission] = useState<boolean | null>(null); // null = unknown, true/false = checked
 
   // Get current user's employee ID
   // Try multiple sources: user.employeeId, decode from token
@@ -396,8 +430,21 @@ export default function EmployeeRegistrationsPage() {
       // Fetch fixed registrations
       // Backend will get employeeId from token if not provided in params
       fetchFixedRegistrations();
+      
+      // If user has MANAGE_FIXED_REGISTRATIONS, also load dropdown data
+      if (hasManageFixedPermission) {
+        fetchDropdownData();
+      }
     }
-  }, [activeTab, partTimeCurrentPage, currentEmployeeId, availableTabs, isPartTimeFlex, hasPermission, slotMonthFilter]);
+  }, [activeTab, partTimeCurrentPage, currentEmployeeId, availableTabs, isPartTimeFlex, hasPermission, slotMonthFilter, filterEmployeeId, hasManageFixedPermission]);
+
+  // Fetch dropdown data when modal opens (if not already loaded)
+  useEffect(() => {
+    if (showFixedCreateModal && hasManageFixedPermission && employees.length === 0 && !loadingDropdowns) {
+      console.log('📋 [useEffect] Opening create modal, fetching dropdown data...');
+      fetchDropdownData();
+    }
+  }, [showFixedCreateModal, hasManageFixedPermission]);
 
   // Part-Time Registration Fetch
   const fetchPartTimeRegistrations = async () => {
@@ -621,16 +668,18 @@ export default function EmployeeRegistrationsPage() {
     try {
       setFixedLoading(true);
 
-      // Build params - only include employeeId if we have it
-      // If not provided, backend will get employeeId from token
+      // Build params
       const params: FixedRegistrationQueryParams = {};
-      if (currentEmployeeId !== null && currentEmployeeId !== undefined) {
-        // Only add employeeId if it's a valid number
-        // If it's a string (like username), backend should get from token
-        if (typeof currentEmployeeId === 'number') {
+      
+      // If user has MANAGE_FIXED_REGISTRATIONS, can filter by employeeId
+      if (hasManageFixedPermission && filterEmployeeId) {
+        params.employeeId = filterEmployeeId;
+      } else if (!hasManageFixedPermission) {
+        // If no permission, only show own registrations
+        // Backend will get employeeId from token if not provided
+        if (currentEmployeeId !== null && currentEmployeeId !== undefined && typeof currentEmployeeId === 'number') {
           params.employeeId = currentEmployeeId;
         }
-        // If it's a string, don't send it - backend will get from token
       }
 
       const response = await fixedRegistrationService.getRegistrations(params);
@@ -650,6 +699,57 @@ export default function EmployeeRegistrationsPage() {
       }
     } finally {
       setFixedLoading(false);
+    }
+  };
+
+  const fetchDropdownData = async () => {
+    try {
+      console.log(' [fetchDropdownData] Starting to fetch dropdown data...');
+      setLoadingDropdowns(true);
+
+      // Fetch active work shifts (reuse existing workShifts state)
+      const shiftsResponse = await workShiftService.getAll(true);
+      setWorkShifts(shiftsResponse || []);
+      console.log(' [fetchDropdownData] Work shifts loaded:', shiftsResponse?.length || 0);
+
+      // Fetch employees (only FULL_TIME and PART_TIME_FIXED)
+      // Backend will handle permission check (VIEW_EMPLOYEE required)
+      const employeeService = new EmployeeService();
+      console.log(' [fetchDropdownData] Fetching employees...');
+      const employeesResponse = await employeeService.getEmployees({
+        page: 0,
+        size: 1000,
+        isActive: true
+      });
+      console.log(' [fetchDropdownData] Employees loaded:', employeesResponse.content?.length || 0);
+
+      // Filter to only employees who can use fixed registration
+      const eligibleEmployees = (employeesResponse.content || []).filter(emp =>
+        canUseFixedRegistration(emp.employeeType as EmploymentType)
+      );
+      console.log(' [fetchDropdownData] Eligible employees (after filter):', eligibleEmployees.length);
+      setEmployees(eligibleEmployees);
+      setHasViewEmployeePermission(true); // Success means user has permission
+    } catch (error: any) {
+      console.error(' [fetchDropdownData] Failed to fetch dropdown data:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      if (error.response?.status === 403) {
+        toast.error('Bạn không có quyền xem danh sách nhân viên (VIEW_EMPLOYEE)');
+        setEmployees([]);
+        setHasViewEmployeePermission(false); // 403 means no permission
+      } else {
+        toast.error('Failed to load dropdown data');
+        setEmployees([]);
+        setHasViewEmployeePermission(null); // Unknown - could be network error
+      }
+    } finally {
+      setLoadingDropdowns(false);
+      console.log(' [fetchDropdownData] Finished fetching dropdown data');
     }
   };
 
@@ -741,6 +841,7 @@ export default function EmployeeRegistrationsPage() {
       setFormErrors({});
       // Refresh data
       await fetchPartTimeRegistrations();
+      await fetchWorkSlotsData(); // Refresh work slots to update registered count
       if (isPartTimeFlex) {
         await fetchAvailableSlots();
       }
@@ -803,6 +904,7 @@ export default function EmployeeRegistrationsPage() {
       setPartTimeDeletingRegistration(null);
       // Refresh both registrations and available slots to update quota
       await fetchPartTimeRegistrations();
+      await fetchWorkSlotsData(); // Refresh work slots to update registered count
       if (isPartTimeFlex) {
         await fetchAvailableSlots();
       }
@@ -822,6 +924,205 @@ export default function EmployeeRegistrationsPage() {
       }
     } finally {
       setPartTimeDeleting(false);
+    }
+  };
+
+  // ==================== FIXED REGISTRATION HANDLERS ====================
+  const handleFixedCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!hasManageFixedPermission) {
+      toast.error('Bạn không có quyền tạo đăng ký ca cố định');
+      return;
+    }
+
+    if (!fixedCreateFormData.employeeId || fixedCreateFormData.employeeId === 0) {
+      toast.error('Vui lòng chọn nhân viên');
+      return;
+    }
+
+    if (!fixedCreateFormData.workShiftId) {
+      toast.error('Vui lòng chọn ca làm việc');
+      return;
+    }
+
+    if (fixedCreateFormData.daysOfWeek.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
+      return;
+    }
+
+    if (!fixedCreateFormData.effectiveFrom) {
+      toast.error('Vui lòng chọn ngày hiệu lực từ');
+      return;
+    }
+
+    if (fixedCreateFormData.effectiveTo) {
+      const fromDate = new Date(fixedCreateFormData.effectiveFrom);
+      const toDate = new Date(fixedCreateFormData.effectiveTo);
+      if (toDate <= fromDate) {
+        toast.error('Ngày hiệu lực đến phải sau ngày hiệu lực từ');
+        return;
+      }
+    }
+
+    const invalidDays = fixedCreateFormData.daysOfWeek.filter(day => day < 1 || day > 7);
+    if (invalidDays.length > 0) {
+      toast.error(`Ngày không hợp lệ: ${invalidDays.join(', ')}. Ngày phải từ 1 (Thứ 2) đến 7 (Chủ nhật).`);
+      return;
+    }
+
+    try {
+      setFixedCreating(true);
+
+      const payload: CreateFixedRegistrationRequest = {
+        employeeId: fixedCreateFormData.employeeId,
+        workShiftId: fixedCreateFormData.workShiftId,
+        daysOfWeek: fixedCreateFormData.daysOfWeek.sort((a, b) => a - b),
+        effectiveFrom: fixedCreateFormData.effectiveFrom,
+        ...(fixedCreateFormData.effectiveTo && { effectiveTo: fixedCreateFormData.effectiveTo })
+      };
+
+      await fixedRegistrationService.createRegistration(payload);
+      toast.success('Đã tạo đăng ký ca cố định thành công');
+      setShowFixedCreateModal(false);
+      resetFixedCreateForm();
+      await fetchFixedRegistrations();
+    } catch (error: any) {
+      console.error('Failed to create fixed registration:', error);
+
+      let errorMessage = 'Không thể tạo đăng ký ca cố định';
+
+      if (error.errorCode === FixedRegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
+        errorMessage = 'Loại nhân viên PART_TIME_FLEX không thể sử dụng đăng ký ca cố định. Vui lòng sử dụng đăng ký part-time.';
+      } else if (error.errorCode === FixedRegistrationErrorCode.DUPLICATE_FIXED_SHIFT_REGISTRATION) {
+        errorMessage = 'Nhân viên đã có đăng ký ca cố định đang hoạt động cho khoảng thời gian này';
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setFixedCreating(false);
+    }
+  };
+
+  const resetFixedCreateForm = () => {
+    setFixedCreateFormData({
+      employeeId: 0,
+      workShiftId: '',
+      daysOfWeek: [],
+      effectiveFrom: '',
+      effectiveTo: null
+    });
+  };
+
+  const handleFixedEdit = (registration: FixedShiftRegistration) => {
+    setFixedEditingRegistration(registration);
+    setFixedEditFormData({
+      workShiftId: registration.workShiftId,
+      daysOfWeek: [...registration.daysOfWeek],
+      effectiveFrom: registration.effectiveFrom,
+      effectiveTo: registration.effectiveTo || null
+    });
+    setShowFixedEditModal(true);
+  };
+
+  const handleFixedUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!fixedEditingRegistration) return;
+
+    if (!hasManageFixedPermission) {
+      toast.error('Bạn không có quyền cập nhật đăng ký ca cố định');
+      return;
+    }
+
+    if (fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0) {
+      const invalidDays = fixedEditFormData.daysOfWeek.filter(day => day < 1 || day > 7);
+      if (invalidDays.length > 0) {
+        toast.error(`Ngày không hợp lệ: ${invalidDays.join(', ')}. Ngày phải từ 1 (Thứ 2) đến 7 (Chủ nhật).`);
+        return;
+      }
+    }
+
+    if (fixedEditFormData.effectiveFrom && fixedEditFormData.effectiveTo) {
+      const fromDate = new Date(fixedEditFormData.effectiveFrom);
+      const toDate = new Date(fixedEditFormData.effectiveTo);
+      if (toDate <= fromDate) {
+        toast.error('Ngày hiệu lực đến phải sau ngày hiệu lực từ');
+        return;
+      }
+    }
+
+    try {
+      setFixedUpdating(true);
+
+      const payload: UpdateFixedRegistrationRequest = {
+        ...(fixedEditFormData.workShiftId && { workShiftId: fixedEditFormData.workShiftId }),
+        ...(fixedEditFormData.daysOfWeek && fixedEditFormData.daysOfWeek.length > 0 && {
+          daysOfWeek: fixedEditFormData.daysOfWeek.sort((a, b) => a - b)
+        }),
+        ...(fixedEditFormData.effectiveFrom && { effectiveFrom: fixedEditFormData.effectiveFrom }),
+        effectiveTo: fixedEditFormData.effectiveTo !== undefined ? fixedEditFormData.effectiveTo : undefined
+      };
+
+      await fixedRegistrationService.updateRegistration(fixedEditingRegistration.registrationId, payload);
+      toast.success('Đã cập nhật đăng ký ca cố định thành công');
+      setShowFixedEditModal(false);
+      setFixedEditingRegistration(null);
+      await fetchFixedRegistrations();
+    } catch (error: any) {
+      console.error('Failed to update fixed registration:', error);
+
+      let errorMessage = 'Không thể cập nhật đăng ký ca cố định';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setFixedUpdating(false);
+    }
+  };
+
+  const handleFixedDelete = async (registration: FixedShiftRegistration) => {
+    if (!hasManageFixedPermission) {
+      toast.error('Bạn không có quyền xóa đăng ký ca cố định');
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn xóa đăng ký ca cố định cho ${registration.employeeName}?`)) {
+      return;
+    }
+
+    try {
+      setFixedDeleting(true);
+      await fixedRegistrationService.deleteRegistration(registration.registrationId);
+      toast.success('Đã xóa đăng ký ca cố định thành công');
+      await fetchFixedRegistrations();
+    } catch (error: any) {
+      console.error('Failed to delete fixed registration:', error);
+
+      let errorMessage = 'Không thể xóa đăng ký ca cố định';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setFixedDeleting(false);
     }
   };
 
@@ -1245,13 +1546,20 @@ export default function EmployeeRegistrationsPage() {
                                       <td className="px-4 py-3">
                                         <div className="text-sm font-semibold text-gray-900">
                                           {(() => {
+                                            // Priority 1: Use workSlotsMap if available (for users with MANAGE_WORK_SLOTS permission)
                                             const workSlot = workSlotsMap[slot.slotId];
                                             if (workSlot?.quota !== undefined && workSlot.quota !== null) {
                                               const registeredCount = workSlot.registered ?? 0;
                                               return `${registeredCount}/${workSlot.quota}`;
                                             }
                                             
+                                            // Priority 2: Use slotDetails if available (for users with VIEW_AVAILABLE_SLOTS permission)
+                                            // Calculate from overallRemaining: currentRegistered = quota - overallRemaining
                                             if (slotDetails?.quota !== undefined && slotDetails.quota !== null) {
+                                              if (slotDetails.overallRemaining !== undefined && slotDetails.overallRemaining !== null) {
+                                                const currentRegistered = Math.max(0, slotDetails.quota - slotDetails.overallRemaining);
+                                                return `${currentRegistered}/${slotDetails.quota}`;
+                                              }
                                               return `0/${slotDetails.quota}`;
                                             }
                                             
@@ -1486,13 +1794,60 @@ export default function EmployeeRegistrationsPage() {
           {/* FIXED REGISTRATIONS TAB */}
           {availableTabs.includes('fixed') && (
             <TabsContent value="fixed" className="space-y-6">
+              {/* Header with Create Button (only for managers) */}
+              {hasManageFixedPermission && (
+                <div className="flex justify-end">
+                  <Button onClick={() => {
+                    setShowFixedCreateModal(true);
+                    // Fetch dropdown data when opening modal (if not already loaded)
+                    if (employees.length === 0 && !loadingDropdowns) {
+                      fetchDropdownData();
+                    }
+                  }} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Tạo mới
+                  </Button>
+                </div>
+              )}
 
-              {/* Fixed Registrations Section */}
+              {/* Filters (only for managers) */}
+              {hasManageFixedPermission && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Bộ lọc</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4 items-end">
+                      <div className="flex-1">
+                        <Label htmlFor="filterEmployee">Nhân viên</Label>
+                        <select
+                          id="filterEmployee"
+                          value={filterEmployeeId?.toString() || ''}
+                          onChange={(e) => setFilterEmployeeId(e.target.value ? parseInt(e.target.value) : null)}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Tất cả nhân viên</option>
+                          {employees.map(emp => (
+                            <option key={emp.employeeId} value={emp.employeeId}>
+                              {emp.fullName} ({emp.employeeCode})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <Button variant="outline" onClick={() => setFilterEmployeeId(null)}>
+                        Xóa
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Fixed Registrations Display */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5" />
-                    Lịch làm việc của tôi ({fixedRegistrations.length})
+                    {hasManageFixedPermission ? `Đăng ký ca làm cố định (${fixedRegistrations.length})` : `Lịch làm việc của tôi (${fixedRegistrations.length})`}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1504,10 +1859,100 @@ export default function EmployeeRegistrationsPage() {
                   ) : fixedRegistrations.length === 0 ? (
                     <div className="text-center py-12">
                       <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p className="text-gray-700 font-medium mb-1">Chưa có lịch làm việc cố định</p>
-                      <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
+                      <p className="text-gray-700 font-medium mb-1">
+                        {hasManageFixedPermission ? 'Không tìm thấy đăng ký ca cố định' : 'Chưa có lịch làm việc cố định'}
+                      </p>
+                      {!hasManageFixedPermission && (
+                        <p className="text-sm text-gray-500">Liên hệ Admin/Manager để được gán lịch</p>
+                      )}
+                    </div>
+                  ) : hasManageFixedPermission ? (
+                    // Manager view: Table layout (like admin)
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-3 font-medium">Nhân viên</th>
+                            <th className="text-left p-3 font-medium">Ca làm việc</th>
+                            <th className="text-left p-3 font-medium">Ngày</th>
+                            <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
+                            <th className="text-left p-3 font-medium">Trạng thái</th>
+                            <th className="text-left p-3 font-medium">Hành động</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fixedRegistrations.map((registration) => (
+                            <tr key={registration.registrationId} className="border-b hover:bg-gray-50">
+                              <td className="p-3 whitespace-nowrap">
+                                <div className="font-medium">{registration.employeeName}</div>
+                              </td>
+                              <td className="p-3 whitespace-nowrap">
+                                <div className="font-medium">{registration.workShiftName}</div>
+                              </td>
+                              <td className="p-3">
+                                <Badge variant="outline">
+                                  {formatFixedDaysOfWeek(registration.daysOfWeek)}
+                                </Badge>
+                              </td>
+                              <td className="p-3 text-sm">
+                                <div>From: {formatDate(registration.effectiveFrom)}</div>
+                                <div>To: {formatDate(registration.effectiveTo)}</div>
+                              </td>
+                              <td className="p-3">
+                                <Badge className={registration.isActive ? "bg-green-50 text-green-800" : "bg-gray-100 text-gray-800"}>
+                                  {registration.isActive ? (
+                                    <>
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Hoạt động
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XCircle className="h-3 w-3 mr-1" />
+                                      Không hoạt động
+                                    </>
+                                  )}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setFixedDetailsRegistration(registration);
+                                      setShowFixedDetailsModal(true);
+                                    }}
+                                    title="Xem chi tiết"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {hasManageFixedPermission && (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleFixedEdit(registration)}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleFixedDelete(registration)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   ) : (
+                    // Employee view: Card layout (read-only)
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {fixedRegistrations.map((registration) => (
                         <Card key={registration.registrationId}>
@@ -1882,6 +2327,280 @@ export default function EmployeeRegistrationsPage() {
 
         {/* ❌ REMOVED EDIT MODAL - Registrations are immutable per backend design */}
         {/* Edit feature removed - employees should delete and create new registration instead */}
+
+        {/* FIXED CREATE MODAL */}
+        {showFixedCreateModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Tạo đăng ký ca cố định</h2>
+              <form onSubmit={handleFixedCreate} className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="createEmployee">Nhân viên <span className="text-red-500">*</span></Label>
+                  {hasViewEmployeePermission === false ? (
+                    <div className="w-full px-3 py-2 border border-red-300 rounded-md bg-red-50">
+                      <p className="text-sm text-red-600">
+                        Bạn không có quyền <strong>VIEW_EMPLOYEE</strong> để xem danh sách nhân viên. 
+                        Vui lòng liên hệ quản trị viên để được cấp quyền.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      id="createEmployee"
+                      value={fixedCreateFormData.employeeId}
+                      onChange={(e) => {
+                        const selectedEmp = employees.find(emp => emp.employeeId === e.target.value);
+                        if (selectedEmp && !canUseFixedRegistration(selectedEmp.employeeType as EmploymentType)) {
+                          toast.error('Nhân viên được chọn không thể sử dụng đăng ký ca cố định. Vui lòng sử dụng đăng ký part-time.');
+                          return;
+                        }
+                        setFixedCreateFormData(prev => ({
+                          ...prev,
+                          employeeId: e.target.value ? parseInt(e.target.value) : 0
+                        }));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      disabled={loadingDropdowns}
+                    >
+                      <option value="0">Chọn nhân viên</option>
+                      {employees.map(emp => (
+                        <option key={emp.employeeId} value={emp.employeeId}>
+                          {emp.fullName} ({emp.employeeCode}) - {emp.employeeType}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="createWorkShift">Ca làm việc <span className="text-red-500">*</span></Label>
+                  <select
+                    id="createWorkShift"
+                    value={fixedCreateFormData.workShiftId}
+                    onChange={(e) => setFixedCreateFormData(prev => ({
+                      ...prev,
+                      workShiftId: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    disabled={loadingDropdowns}
+                  >
+                    <option value="">Ca làm việc</option>
+                    {workShifts.map(shift => (
+                      <option key={shift.workShiftId} value={shift.workShiftId}>
+                        {shift.shiftName} ({shift.startTime} - {shift.endTime})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label>Ngày trong tuần <span className="text-red-500">*</span></Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {[1, 2, 3, 4, 5, 6].map(day => (
+                      <label key={day} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={fixedCreateFormData.daysOfWeek.includes(day)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFixedCreateFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: [...prev.daysOfWeek, day]
+                              }));
+                            } else {
+                              setFixedCreateFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: prev.daysOfWeek.filter(d => d !== day)
+                              }));
+                            }
+                          }}
+                        />
+                        <span>{DAY_LABELS[day]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="createEffectiveFrom"> Hiệu lực từ <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="createEffectiveFrom"
+                      type="date"
+                      value={fixedCreateFormData.effectiveFrom}
+                      onChange={(e) => setFixedCreateFormData(prev => ({
+                        ...prev,
+                        effectiveFrom: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="createEffectiveTo">Hiệu lực đến (Tùy chọn)</Label>
+                    <Input
+                      id="createEffectiveTo"
+                      type="date"
+                      value={fixedCreateFormData.effectiveTo || ''}
+                      onChange={(e) => setFixedCreateFormData(prev => ({
+                        ...prev,
+                        effectiveTo: e.target.value || null
+                      }))}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">Để trống nếu không giới hạn</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowFixedCreateModal(false);
+                      resetFixedCreateForm();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" disabled={fixedCreating || loadingDropdowns}>
+                    {fixedCreating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      'Tạo đăng ký'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* FIXED EDIT MODAL */}
+        {showFixedEditModal && fixedEditingRegistration && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4">Chỉnh sửa đăng ký ca cố định</h2>
+              <form onSubmit={handleFixedUpdate} className="space-y-4">
+                <div className="space-y-1">
+                  <Label>ID</Label>
+                  <Input value={fixedEditingRegistration.registrationId} disabled />
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Nhân viên</Label>
+                  <Input value={fixedEditingRegistration.employeeName} disabled />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="editWorkShift">Ca làm</Label>
+                  <select
+                    id="editWorkShift"
+                    value={fixedEditFormData.workShiftId || fixedEditingRegistration.workShiftId}
+                    onChange={(e) => setFixedEditFormData(prev => ({
+                      ...prev,
+                      workShiftId: e.target.value
+                    }))}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={loadingDropdowns}
+                  >
+                    <option value="">Giữ nguyên: {fixedEditingRegistration.workShiftName}</option>
+                    {workShifts.map(shift => (
+                      <option key={shift.workShiftId} value={shift.workShiftId}>
+                        {shift.shiftName} ({shift.startTime} - {shift.endTime})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label>Ngày trong tuần</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {[1, 2, 3, 4, 5, 6, 7].map(day => {
+                      const currentDays = fixedEditFormData.daysOfWeek || fixedEditingRegistration.daysOfWeek;
+                      return (
+                        <label key={day} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={currentDays.includes(day)}
+                            onChange={(e) => {
+                              const currentDaysArray = fixedEditFormData.daysOfWeek || fixedEditingRegistration.daysOfWeek;
+                              if (e.target.checked) {
+                                setFixedEditFormData(prev => ({
+                                  ...prev,
+                                  daysOfWeek: [...currentDaysArray, day]
+                                }));
+                              } else {
+                                setFixedEditFormData(prev => ({
+                                  ...prev,
+                                  daysOfWeek: currentDaysArray.filter(d => d !== day)
+                                }));
+                              }
+                            }}
+                          />
+                          <span>{DAY_LABELS[day]}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="editEffectiveFrom">Hiệu lực từ</Label>
+                    <Input
+                      id="editEffectiveFrom"
+                      type="date"
+                      value={fixedEditFormData.effectiveFrom || fixedEditingRegistration.effectiveFrom}
+                      onChange={(e) => setFixedEditFormData(prev => ({
+                        ...prev,
+                        effectiveFrom: e.target.value
+                      }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="editEffectiveTo">Hiệu lực đến</Label>
+                    <Input
+                      id="editEffectiveTo"
+                      type="date"
+                      value={fixedEditFormData.effectiveTo !== undefined ? (fixedEditFormData.effectiveTo || '') : (fixedEditingRegistration.effectiveTo || '')}
+                      onChange={(e) => setFixedEditFormData(prev => ({
+                        ...prev,
+                        effectiveTo: e.target.value || null
+                      }))}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">Để trống nếu không giới hạn</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowFixedEditModal(false);
+                      setFixedEditingRegistration(null);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" disabled={fixedUpdating || loadingDropdowns}>
+                    {fixedUpdating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang cập nhật...
+                      </>
+                    ) : (
+                      'Cập nhật đăng ký'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* PART-TIME DELETE MODAL */}
         {showPartTimeDeleteModal && partTimeDeletingRegistration && (

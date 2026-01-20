@@ -41,7 +41,7 @@ export default function AdminAppointmentsPage() {
   const [filters, setFilters] = useState<Partial<AppointmentFilterCriteria>>({
     page: 0,
     size: 10,
-    sortBy: 'appointmentStartTime',
+    sortBy: 'appointmentId', // Sort by appointment ID (newest first)
     sortDirection: 'DESC', 
   });
 
@@ -88,7 +88,7 @@ export default function AdminAppointmentsPage() {
           ...filters,
           page: currentPage,
           size: pageSize,
-          sortBy: filters.sortBy || 'appointmentStartTime',
+          sortBy: filters.sortBy || 'appointmentId', // Sort by appointment ID (newest first)
           sortDirection: filters.sortDirection || 'DESC', 
         };
 
@@ -161,7 +161,7 @@ export default function AdminAppointmentsPage() {
     setFilters({
       page: 0,
       size: 10,
-      sortBy: 'appointmentStartTime',
+      sortBy: 'appointmentId', // Sort by appointment ID (newest first)
       sortDirection: 'DESC', 
     });
     setCurrentPage(0);

@@ -126,9 +126,9 @@ export default function AppointmentFilters({
     const labels: Record<string, string> = {
       appointmentStartTime: 'Thời gian',
       appointmentCode: 'Mã lịch hẹn',
-      patientCode: 'Mã bệnh nhân',
+      appointmentId: 'ID lịch hẹn',
     };
-    return labels[filters.sortBy || 'appointmentStartTime'] || 'Sắp xếp';
+    return labels[filters.sortBy || 'appointmentId'] || 'Sắp xếp';
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -200,9 +200,9 @@ export default function AppointmentFilters({
               <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
                 <div className="p-2">
                   {[
+                    { value: 'appointmentId', label: 'ID lịch hẹn' },
                     { value: 'appointmentStartTime', label: 'Thời gian' },
                     { value: 'appointmentCode', label: 'Mã lịch hẹn' },
-                    { value: 'patientCode', label: 'Mã bệnh nhân' }
                   ].map((option) => (
                     <button
                       key={option.value}
@@ -210,7 +210,7 @@ export default function AppointmentFilters({
                         onFiltersChange({ ...filters, sortBy: option.value });
                         setIsSortDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${(filters.sortBy || 'appointmentStartTime') === option.value
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${(filters.sortBy || 'appointmentId') === option.value
                         ? 'bg-[#8b5fbf] text-white'
                         : 'text-gray-700 hover:bg-[#f3f0ff]'
                         }`}

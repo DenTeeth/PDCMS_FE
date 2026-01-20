@@ -584,7 +584,7 @@ export default function RegistrationsPage() {
                 {canManageFixed && (
                   <Button onClick={() => setShowFixedCreateModal(true)} className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    Tạo đăng ký cố định
+                    Tạo mới
                   </Button>
                 )}
               </div>
@@ -860,7 +860,7 @@ export default function RegistrationsPage() {
                     onChange={(e) => {
                       const selectedEmp = employees.find(emp => emp.employeeId === e.target.value);
                       if (selectedEmp && !canUseFixedRegistration(selectedEmp.employeeType as EmploymentType)) {
-                        toast.error('Selected employee cannot use fixed shift registration. Use part-time registration instead.');
+                        toast.error('Nhân viên được chọn không thể sử dụng đăng ký ca cố định. Vui lòng sử dụng đăng ký part-time.');
                         return;
                       }
                       setFixedCreateFormData(prev => ({
@@ -902,7 +902,7 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div>
-                  <Label>Days of Week <span className="text-red-500">*</span></Label>
+                  <Label>Ngày trong tuần<span className="text-red-500">*</span></Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {[1, 2, 3, 4, 5, 6].map(day => (
                       <label key={day} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
