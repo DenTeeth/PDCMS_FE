@@ -114,32 +114,26 @@
       {
         "name": "BS. Lê Anh Khoa",
         "specialty": "Nha khoa tổng quát",
-        "experience": "Toàn thời gian - Sáng & Chiều",
-        "description": "Bác sĩ làm việc toàn thời gian cả buổi sáng (08:00-12:00) và chiều (13:00-17:00), chuyên về chăm sóc răng miệng toàn diện."
+        "experience": "Toàn thời gian",
+        "description": "Bác sĩ chuyên về chăm sóc răng miệng toàn diện với kinh nghiệm phong phú trong điều trị các vấn đề nha khoa."
       },
       {
         "name": "BS. Trịnh Công Thái",
         "specialty": "Nha khoa tổng quát",
-        "experience": "Toàn thời gian - Sáng & Chiều",
-        "description": "Bác sĩ làm việc toàn thời gian cả buổi sáng (08:00-12:00) và chiều (13:00-17:00), tận tâm với sức khỏe răng miệng của bệnh nhân."
+        "experience": "Toàn thời gian",
+        "description": "Bác sĩ tận tâm với sức khỏe răng miệng của bệnh nhân, chuyên về các liệu trình điều trị toàn diện."
       },
       {
         "name": "BS. Jimmy Donaldson",
         "specialty": "Nha khoa chuyên khoa",
-        "experience": "Bán thời gian linh hoạt - Buổi sáng",
-        "description": "Bác sĩ làm việc bán thời gian vào buổi sáng (08:00-12:00), chuyên về các thủ thuật nha khoa chuyên sâu."
+        "experience": "Bán thời gian",
+        "description": "Bác sĩ chuyên về các thủ thuật nha khoa chuyên sâu và phức tạp với kỹ thuật hiện đại."
       },
       {
         "name": "BS. Junya Ota",
         "specialty": "Nha khoa thẩm mỹ",
-        "experience": "Bán thời gian cố định - Buổi chiều",
-        "description": "Bác sĩ làm việc bán thời gian vào buổi chiều (13:00-17:00), chuyên gia về thẩm mỹ nụ cười và các thủ thuật làm đẹp răng."
-      },
-      {
-        "name": "BS. Nguyễn Văn Nam",
-        "specialty": "Nha khoa trẻ em",
-        "experience": "Toàn thời gian - Chuyên khoa nhi",
-        "description": "Bác sĩ chuyên về nha khoa trẻ em với phong cách nhẹ nhàng, thân thiện, tạo cảm giác thoải mái cho các bệnh nhân nhỏ tuổi."
+        "experience": "Bán thời gian",
+        "description": "Chuyên gia về thẩm mỹ nụ cười và các thủ thuật làm đẹp răng, mang lại sự tự tin cho bệnh nhân."
       }
     ]
   },

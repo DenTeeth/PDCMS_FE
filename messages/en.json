@@ -114,32 +114,26 @@
       {
         "name": "Dr. Le Anh Khoa",
         "specialty": "General Dentistry",
-        "experience": "Full-time - Morning & Afternoon",
-        "description": "Full-time dentist working both morning (08:00-12:00) and afternoon (13:00-17:00) shifts, specializing in comprehensive oral care."
+        "experience": "Full-time",
+        "description": "Specialist in comprehensive oral care with extensive experience in treating various dental issues."
       },
       {
         "name": "Dr. Trinh Cong Thai",
         "specialty": "General Dentistry",
-        "experience": "Full-time - Morning & Afternoon",
-        "description": "Full-time dentist working both morning (08:00-12:00) and afternoon (13:00-17:00) shifts, dedicated to patient oral health."
+        "experience": "Full-time",
+        "description": "Dedicated to patient oral health, specializing in comprehensive treatment plans."
       },
       {
         "name": "Dr. Jimmy Donaldson",
         "specialty": "Specialized Dentistry",
-        "experience": "Part-time Flexible - Morning Shift",
-        "description": "Part-time dentist working morning shifts (08:00-12:00), specialized in advanced dental procedures."
+        "experience": "Part-time",
+        "description": "Specialist in advanced and complex dental procedures using modern techniques."
       },
       {
         "name": "Dr. Junya Ota",
         "specialty": "Cosmetic Dentistry",
-        "experience": "Part-time Fixed - Afternoon Shift",
-        "description": "Part-time dentist working afternoon shifts (13:00-17:00), expert in smile makeovers and cosmetic procedures."
-      },
-      {
-        "name": "Dr. Nguyen Van Nam",
-        "specialty": "Pediatric Dentistry",
-        "experience": "Full-time - Pediatric Specialist",
-        "description": "Specialist in pediatric dentistry with a gentle, friendly approach that creates a comfortable experience for young patients."
+        "experience": "Part-time",
+        "description": "Expert in smile makeovers and cosmetic procedures, bringing confidence to patients."
       }
     ]
   },
