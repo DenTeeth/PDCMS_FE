@@ -23,13 +23,13 @@ export default function DoctorsSection() {
 
   const t = useTranslations('Doctors');
 
-  const doctors: Doctor[] = [0, 1, 2, 3].map(i => ({
+  const doctors: Doctor[] = [0, 1, 2, 3, 4].map(i => ({
     id: i + 1,
     name: t(`homeDoctors.${i}.name`),
     specialty: t(`homeDoctors.${i}.specialty`),
     experience: t(`homeDoctors.${i}.experience`),
     description: t(`homeDoctors.${i}.description`),
-    avatar: `/images/dentist${i + 1}.webp`,
+    avatar: `/images/doctors/dentist${i + 1}.webp`,
   }));
 
   return (

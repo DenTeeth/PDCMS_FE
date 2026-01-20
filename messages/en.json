@@ -112,28 +112,34 @@
     "viewProfile": "View Profile",
     "homeDoctors": [
       {
-        "name": "Dr. Sarah Bennett",
+        "name": "Dr. Le Anh Khoa",
         "specialty": "General Dentistry",
-        "experience": "15+ years of experience",
-        "description": "Leading specialist in general dentistry with extensive experience in comprehensive oral care."
+        "experience": "Full-time - Morning & Afternoon",
+        "description": "Full-time dentist working both morning (08:00-12:00) and afternoon (13:00-17:00) shifts, specializing in comprehensive oral care."
       },
       {
-        "name": "Dr. Maya Lin",
+        "name": "Dr. Trinh Cong Thai",
+        "specialty": "General Dentistry",
+        "experience": "Full-time - Morning & Afternoon",
+        "description": "Full-time dentist working both morning (08:00-12:00) and afternoon (13:00-17:00) shifts, dedicated to patient oral health."
+      },
+      {
+        "name": "Dr. Jimmy Donaldson",
+        "specialty": "Specialized Dentistry",
+        "experience": "Part-time Flexible - Morning Shift",
+        "description": "Part-time dentist working morning shifts (08:00-12:00), specialized in advanced dental procedures."
+      },
+      {
+        "name": "Dr. Junya Ota",
         "specialty": "Cosmetic Dentistry",
-        "experience": "12+ years of experience",
-        "description": "Expert in smile makeovers, veneers, and advanced cosmetic procedures."
+        "experience": "Part-time Fixed - Afternoon Shift",
+        "description": "Part-time dentist working afternoon shifts (13:00-17:00), expert in smile makeovers and cosmetic procedures."
       },
       {
-        "name": "Dr. Michael Reyes",
-        "specialty": "Orthodontics",
-        "experience": "18+ years of experience",
-        "description": "Specialist in braces and aligners with cutting-edge orthodontic techniques."
-      },
-      {
-        "name": "Dr. James Carter",
+        "name": "Dr. Nguyen Van Nam",
         "specialty": "Pediatric Dentistry",
-        "experience": "10+ years of experience",
-        "description": "Gentle care specialist for children with a fun, compassionate approach."
+        "experience": "Full-time - Pediatric Specialist",
+        "description": "Specialist in pediatric dentistry with a gentle, friendly approach that creates a comfortable experience for young patients."
       }
     ]
   },
@@ -252,7 +258,7 @@
       "callSubtitle": "Call us for online consultation or to book an appointment at the clinic as soon as possible.",
       "address": {
         "label": "Address",
-        "value": "123 ABC Street, District 1, Ho Chi Minh City"
+        "value": "Lot E2a-7, D1 Street, High-Tech Park, Long Thanh My Ward, Thu Duc City, HCMC"
       },
       "hours": {
         "label": "Working Hours",

@@ -20,8 +20,8 @@ export default function Footer() {
               <span className="text-xl font-bold">DenTeeth</span>
             </Link>
             <p className="text-gray-400 mb-4">
-              Quận 9, TP.HCM<br />
-              
+              Lô E2a-7, Đường D1, Khu Công nghệ cao,<br />
+              Phường Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM
             </p>
             <p className="text-gray-400 mb-4">hellodenteeth@gmail.com</p>
             <p className="text-gray-400">0909 726 700</p>
@@ -66,7 +66,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-          <p>&copy; 2025 DenTeeth. All rights reserved.</p>
+          <p>&copy; 2026 DenTeeth. All rights reserved.</p>
         </div>
       </div>
     </footer>

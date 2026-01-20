@@ -112,28 +112,34 @@
     "viewProfile": "Xem hồ sơ",
     "homeDoctors": [
       {
-        "name": "Dr. Sarah Bennett",
+        "name": "BS. Lê Anh Khoa",
         "specialty": "Nha khoa tổng quát",
-        "experience": "Hơn 15 năm kinh nghiệm",
-        "description": "Chuyên gia hàng đầu về nha khoa tổng quát với kinh nghiệm phong phú trong chăm sóc răng miệng toàn diện."
+        "experience": "Toàn thời gian - Sáng & Chiều",
+        "description": "Bác sĩ làm việc toàn thời gian cả buổi sáng (08:00-12:00) và chiều (13:00-17:00), chuyên về chăm sóc răng miệng toàn diện."
       },
       {
-        "name": "Dr. Maya Lin",
+        "name": "BS. Trịnh Công Thái",
+        "specialty": "Nha khoa tổng quát",
+        "experience": "Toàn thời gian - Sáng & Chiều",
+        "description": "Bác sĩ làm việc toàn thời gian cả buổi sáng (08:00-12:00) và chiều (13:00-17:00), tận tâm với sức khỏe răng miệng của bệnh nhân."
+      },
+      {
+        "name": "BS. Jimmy Donaldson",
+        "specialty": "Nha khoa chuyên khoa",
+        "experience": "Bán thời gian linh hoạt - Buổi sáng",
+        "description": "Bác sĩ làm việc bán thời gian vào buổi sáng (08:00-12:00), chuyên về các thủ thuật nha khoa chuyên sâu."
+      },
+      {
+        "name": "BS. Junya Ota",
         "specialty": "Nha khoa thẩm mỹ",
-        "experience": "Hơn 12 năm kinh nghiệm",
-        "description": "Chuyên gia về thẩm mỹ nụ cười, veneer và các thủ thuật thẩm mỹ tiên tiến."
+        "experience": "Bán thời gian cố định - Buổi chiều",
+        "description": "Bác sĩ làm việc bán thời gian vào buổi chiều (13:00-17:00), chuyên gia về thẩm mỹ nụ cười và các thủ thuật làm đẹp răng."
       },
       {
-        "name": "Dr. Michael Reyes",
-        "specialty": "Chỉnh nha",
-        "experience": "Hơn 18 năm kinh nghiệm",
-        "description": "Chuyên gia về niềng răng và khay chỉnh nha với kỹ thuật chỉnh nha tiên tiến."
-      },
-      {
-        "name": "Dr. James Carter",
+        "name": "BS. Nguyễn Văn Nam",
         "specialty": "Nha khoa trẻ em",
-        "experience": "Hơn 10 năm kinh nghiệm",
-        "description": "Chuyên gia chăm sóc nhẹ nhàng cho trẻ em với cách tiếp cận vui vẻ và đầy tình thương."
+        "experience": "Toàn thời gian - Chuyên khoa nhi",
+        "description": "Bác sĩ chuyên về nha khoa trẻ em với phong cách nhẹ nhàng, thân thiện, tạo cảm giác thoải mái cho các bệnh nhân nhỏ tuổi."
       }
     ]
   },
@@ -252,7 +258,7 @@
       "callSubtitle": "Gọi cho chúng tôi để tư vấn trực tuyến hoặc đặt lịch hẹn tại phòng khám ngay lập tức.",
       "address": {
         "label": "Địa chỉ",
-        "value": "123 ABC Street, Quận 1, Thành phố Hồ Chí Minh"
+        "value": "Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM"
       },
       "hours": {
         "label": "Giờ làm việc",

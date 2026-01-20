@@ -64,7 +64,7 @@ export default function AboutSection() {
                 className="relative h-64 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
-                  src="/images/dentist1.webp"
+                  src="/images/doctors/dentist1.webp"
                   alt={t('images.professional')}
                   fill
                   className="object-cover"
@@ -76,7 +76,7 @@ export default function AboutSection() {
                 className="relative h-64 rounded-2xl overflow-hidden shadow-lg mt-8"
               >
                 <Image
-                  src="/images/dentist2.webp"
+                  src="/images/doctors/dentist2.webp"
                   alt={t('images.expert')}
                   fill
                   className="object-cover"
@@ -90,7 +90,7 @@ export default function AboutSection() {
                 className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
-                  src="/images/dentist3.webp"
+                  src="/images/doctors/dentist3.webp"
                   alt={t('images.specialist')}
                   fill
                   className="object-cover"
@@ -102,7 +102,7 @@ export default function AboutSection() {
                 className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
-                  src="/images/dentist4.webp"
+                  src="/images/doctors/dentist4.webp"
                   alt={t('images.dentist')}
                   fill
                   className="object-cover"

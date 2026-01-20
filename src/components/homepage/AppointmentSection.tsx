@@ -116,7 +116,7 @@ export default function AppointmentSection() {
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold mb-6">{t('contact.callTitle')}</h3>
             <div className="text-center mb-8">
-              <div className="text-4xl font-bold text-primary mb-2">(+84) 123 567 890</div>
+              <div className="text-4xl font-bold text-primary mb-2">0764009726</div>
               <p className="text-gray-600">
                 {t('contact.callSubtitle')}
               </p>
