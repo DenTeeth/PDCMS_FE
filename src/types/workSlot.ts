@@ -197,5 +197,6 @@ export interface SlotDetailsResponse {
   effectiveFrom: string; // ISO date string (YYYY-MM-DD)
   effectiveTo: string;   // ISO date string (YYYY-MM-DD)
   overallRemaining: number;
+  registered: number; // ✨ NEW: Total number of registered employees (calculated as totalRequired - overallRemaining)
   availabilityByMonth: MonthlyAvailability[];
 }

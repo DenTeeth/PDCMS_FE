@@ -394,6 +394,7 @@ export default function WorkSlotsManagementPage() {
                       <th className="text-left p-3 font-medium">Thứ</th>
                       <th className="text-left p-3 font-medium">Số lượng cần</th>
                       <th className="text-left p-3 font-medium">Đã đăng ký</th>
+                      <th className="text-left p-3 font-medium">Thời gian hiệu lực</th>
                       <th className="text-left p-3 font-medium">Trạng thái</th>
                       <th className="text-left p-3 font-medium">Hành động</th>
                     </tr>
@@ -409,6 +410,17 @@ export default function WorkSlotsManagementPage() {
                         </td>
                         <td className="p-3 font-semibold">{slot.quota}</td>
                         <td className="p-3 font-medium">{slot.registered}</td>
+                        <td className="p-3 text-sm text-gray-600">
+                          {slot.effectiveFrom && slot.effectiveTo ? (
+                            <div>
+                              <div>{format(parseISO(slot.effectiveFrom), 'dd/MM/yyyy')}</div>
+                              <div className="text-gray-400">→</div>
+                              <div>{format(parseISO(slot.effectiveTo), 'dd/MM/yyyy')}</div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
                         <td className="p-3">
                           <Badge variant={slot.isActive ? "active" : "inactive"}>
                             {slot.isActive ? (

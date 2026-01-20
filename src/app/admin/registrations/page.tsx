@@ -523,7 +523,14 @@ export default function RegistrationsPage() {
                                 <div className="text-sm text-gray-500">ID: {slot.workShiftId}</div>
                               </td>
                               <td className="p-3">
-                                <Badge variant="outline">{getDayOfWeekLabel(slot.dayOfWeek as DayOfWeek)}</Badge>
+                                <Badge variant="outline">
+                                  {slot.dayOfWeek.split(',').map((day, idx) => (
+                                    <span key={idx}>
+                                      {idx > 0 && ', '}
+                                      {getDayOfWeekLabel(day.trim() as DayOfWeek)}
+                                    </span>
+                                  ))}
+                                </Badge>
                               </td>
                               <td className="p-3">
                                 <span className="font-medium">{slot.quota}</span>

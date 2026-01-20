@@ -32,12 +32,47 @@ export default function PaymentQRCode({ invoiceCode, onPaymentSuccess, onClose }
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const qrRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
   // Load invoice on mount
   useEffect(() => {
     loadInvoice();
   }, [invoiceCode]);
+
+  // Auto-refresh QR code every 7 minutes
+  useEffect(() => {
+    // Only auto-refresh if invoice is not paid and has QR code
+    if (invoice && invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'PARTIAL_PAID' && invoice.paymentStatus !== 'CANCELLED' && invoice.qrCodeUrl) {
+      // Clear existing interval if any
+      if (qrRefreshIntervalRef.current) {
+        clearInterval(qrRefreshIntervalRef.current);
+      }
+
+      // Set interval to refresh QR code every 7 minutes
+      qrRefreshIntervalRef.current = setInterval(() => {
+        console.log('🔄 Auto-refreshing QR code after 7 minutes...');
+        loadInvoice(true); // Silent refresh - don't show loading spinner
+      }, 7 * 60 * 1000); // 7 minutes
+
+      console.log('✅ Auto-refresh QR code timer started (7 minutes interval)');
+
+      return () => {
+        if (qrRefreshIntervalRef.current) {
+          clearInterval(qrRefreshIntervalRef.current);
+          qrRefreshIntervalRef.current = null;
+          console.log('🛑 Auto-refresh QR code timer stopped');
+        }
+      };
+    } else {
+      // Stop auto-refresh if invoice is paid or no QR code
+      if (qrRefreshIntervalRef.current) {
+        clearInterval(qrRefreshIntervalRef.current);
+        qrRefreshIntervalRef.current = null;
+        console.log('🛑 Auto-refresh QR code timer stopped (invoice paid or no QR code)');
+      }
+    }
+  }, [invoice?.paymentStatus, invoice?.qrCodeUrl, invoiceCode]); // Re-run when invoice payment status or QR code changes
 
   // Cleanup on unmount
   useEffect(() => {
@@ -48,29 +83,50 @@ export default function PaymentQRCode({ invoiceCode, onPaymentSuccess, onClose }
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (qrRefreshIntervalRef.current) {
+        clearInterval(qrRefreshIntervalRef.current);
+      }
     };
   }, []);
 
-  const loadInvoice = async () => {
+  const loadInvoice = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
       const data = await invoiceService.getInvoiceByCode(invoiceCode);
       setInvoice(data);
       
+      // Log QR code refresh (only if silent refresh, not initial load)
+      if (silent && data.qrCodeUrl) {
+        console.log('✅ QR code refreshed successfully');
+      }
+      
       // Start polling if invoice is not paid
       if (data.paymentStatus !== 'PAID' && data.paymentStatus !== 'CANCELLED') {
         startPolling();
-      } else if (data.paymentStatus === 'PAID') {
-        // Already paid
+      } else if (data.paymentStatus === 'PAID' || data.paymentStatus === 'PARTIAL_PAID') {
+        // Already paid - stop auto-refresh
+        if (qrRefreshIntervalRef.current) {
+          clearInterval(qrRefreshIntervalRef.current);
+          qrRefreshIntervalRef.current = null;
+        }
         onPaymentSuccess?.();
       }
     } catch (err: any) {
       console.error('Load invoice error:', err);
-      setError(err.response?.data?.message || 'Không thể tải thông tin hóa đơn');
-      toast.error('Không thể tải thông tin hóa đơn');
+      if (!silent) {
+        setError(err.response?.data?.message || 'Không thể tải thông tin hóa đơn');
+        toast.error('Không thể tải thông tin hóa đơn');
+      } else {
+        // Silent refresh failed - log but don't show error to user
+        console.warn('⚠️ Silent QR code refresh failed:', err.response?.data?.message || err.message);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 

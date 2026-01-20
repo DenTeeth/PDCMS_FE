@@ -216,7 +216,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Yêu cầu đăng ký ca',
         href: '/{baseRole}/registration-requests',
         icon: faUserCheck,
-        requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_AVAILABLE_SLOTS'],
+        requiredPermissions: ['MANAGE_PART_TIME_REGISTRATIONS'],
         requireAll: false, // Chỉ cần 1 trong các quyền
         requiredRoles: ['ROLE_ADMIN', 'ROLE_MANAGER'],
 

@@ -300,6 +300,7 @@ export default function EmployeeRegistrationsPage() {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [loadingAvailableSlots, setLoadingAvailableSlots] = useState(false);
   const [slotDetailsMap, setSlotDetailsMap] = useState<Record<number, SlotDetailsResponse>>({});
+  const [workSlotsMap, setWorkSlotsMap] = useState<Record<number, PartTimeSlot>>({});
   const [slotSortBy, setSlotSortBy] = useState<'date' | 'availability'>('date');
   const [slotMonthFilter, setSlotMonthFilter] = useState<string>('ALL'); // 'ALL' or 'YYYY-MM'
   const [slotDayFilter, setSlotDayFilter] = useState<DayOfWeek[]>([]); // Multi-select days
@@ -486,16 +487,23 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkSlots(true);
       const slotsResponse = await workSlotService.getWorkSlots();
       setWorkSlots(slotsResponse || []);
+      
+      const slotsMap: Record<number, PartTimeSlot> = {};
+      (slotsResponse || []).forEach(slot => {
+        slotsMap[slot.slotId] = slot;
+      });
+      setWorkSlotsMap(slotsMap);
+      
       console.log('📋 [fetchWorkSlotsData] Loaded work slots:', {
         count: slotsResponse?.length || 0,
         slots: slotsResponse
       });
     } catch (error: any) {
-      console.error('❌ [fetchWorkSlotsData] Failed to fetch work slots:', error);
+      console.error('[fetchWorkSlotsData] Failed to fetch work slots:', error);
 
       // Nếu lỗi 403 → User không có permission (expected cho employee)
       if (error.response?.status === 403) {
-        console.log('ℹ️ [fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
+        console.log('[fetchWorkSlotsData] 403 Forbidden - User does not have permission to view all work slots');
         // Don't show error toast - this is expected for employees
       } else {
         // Các lỗi khác (500, network, etc.) - có thể log nhưng không hiển thị toast
@@ -511,15 +519,15 @@ export default function EmployeeRegistrationsPage() {
   // Fetch available slots for PART_TIME_FLEX employees
   const fetchAvailableSlots = async () => {
     try {
-      console.log('🚀 [fetchAvailableSlots] Starting fetch...');
+      console.log('[fetchAvailableSlots] Starting fetch...');
       setLoadingAvailableSlots(true);
 
       // Pass month filter to API if selected
       const monthParam = slotMonthFilter !== 'ALL' ? slotMonthFilter : undefined;
-      console.log(`📡 [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots(${monthParam || 'no filter'})...`);
+      console.log(` [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots(${monthParam || 'no filter'})...`);
       const slots = await shiftRegistrationService.getAvailableSlots(monthParam);
 
-      console.log('✅ [fetchAvailableSlots] API Response received:', {
+      console.log(' [fetchAvailableSlots] API Response received:', {
         rawData: slots,
         isArray: Array.isArray(slots),
         length: Array.isArray(slots) ? slots.length : 'not an array',
@@ -527,46 +535,58 @@ export default function EmployeeRegistrationsPage() {
       });
 
       const slotsArray = slots || [];
-      console.log('📋 [fetchAvailableSlots] Setting availableSlots:', {
+      console.log(' [fetchAvailableSlots] Setting availableSlots:', {
         count: slotsArray.length,
         slots: slotsArray
       });
 
       setAvailableSlots(slotsArray);
 
-      // Fetch slot details for each slot
+      // Fetch slot details for each slot (only if user has VIEW_AVAILABLE_SLOTS permission)
       const detailsMap: Record<number, SlotDetailsResponse> = {};
-      await Promise.all(
-        slotsArray.map(async (slot) => {
-          try {
-            const details = await shiftRegistrationService.getSlotDetails(slot.slotId);
-            detailsMap[slot.slotId] = details;
-            console.log(`📊 Slot ${slot.slotId} details:`, {
-              quota: details.quota,
-              overallRemaining: details.overallRemaining,
-              monthlyData: details.availabilityByMonth?.map(m => ({
-                month: m.monthName,
-                available: m.totalDatesAvailable,
-                partial: m.totalDatesPartial,
-                full: m.totalDatesFull,
-                total: m.totalWorkingDays
-              }))
-            });
-          } catch (error) {
-            console.error(`Failed to fetch details for slot ${slot.slotId}:`, error);
-          }
-        })
-      );
+      const canViewSlotDetails = isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS);
+      
+      if (canViewSlotDetails) {
+        await Promise.all(
+          slotsArray.map(async (slot) => {
+            try {
+              const details = await shiftRegistrationService.getSlotDetails(slot.slotId);
+              detailsMap[slot.slotId] = details;
+              console.log(`Slot ${slot.slotId} details:`, {
+                quota: details.quota,
+                overallRemaining: details.overallRemaining,
+                registered: details.registered,
+                monthlyData: details.availabilityByMonth?.map(m => ({
+                  month: m.monthName,
+                  available: m.totalDatesAvailable,
+                  partial: m.totalDatesPartial,
+                  full: m.totalDatesFull,
+                  total: m.totalWorkingDays
+                }))
+              });
+            } catch (error: any) {
+              // Handle 403 Forbidden gracefully (user doesn't have VIEW_AVAILABLE_SLOTS permission)
+              if (error.response?.status === 403) {
+                console.warn(`No permission to view details for slot ${slot.slotId}. User needs VIEW_AVAILABLE_SLOTS permission.`);
+              } else {
+                console.error(`Failed to fetch details for slot ${slot.slotId}:`, error);
+              }
+            }
+          })
+        );
+      } else {
+        console.warn('User does not have permission VIEW_AVAILABLE_SLOTS permission. Skipping slot details fetch.');
+      }
       setSlotDetailsMap(detailsMap);
 
       if (!slots || slotsArray.length === 0) {
-        console.warn('⚠️ [fetchAvailableSlots] No available slots found');
+        console.warn(' [fetchAvailableSlots] No available slots found');
         toast.info('Hiện tại không có suất nào còn trống. Vui lòng thử lại sau.');
       } else {
-        console.log('✅ [fetchAvailableSlots] Successfully loaded', slotsArray.length, 'available slots');
+        console.log(' [fetchAvailableSlots] Successfully loaded', slotsArray.length, 'available slots');
       }
     } catch (error: any) {
-      console.error('❌ [fetchAvailableSlots] Error fetching available slots:', {
+      console.error(' [fetchAvailableSlots] Error fetching available slots:', {
         error,
         message: error.message,
         response: error.response,
@@ -578,7 +598,7 @@ export default function EmployeeRegistrationsPage() {
       // Extract detailed error message from 500 response
       let errorMessage = 'Failed to load available slots';
       if (error.response?.status === 500) {
-        console.error('🔥 [Backend 500 Error] Server error details:', {
+        console.error(' [Backend 500 Error] Server error details:', {
           fullResponse: error.response,
           data: error.response.data,
           message: error.response.data?.message,
@@ -591,7 +611,7 @@ export default function EmployeeRegistrationsPage() {
 
       toast.error(error.response?.data?.message || error.message || errorMessage);
     } finally {
-      console.log('🏁 [fetchAvailableSlots] Finished (set loading to false)');
+      console.log(' [fetchAvailableSlots] Finished (set loading to false)');
       setLoadingAvailableSlots(false);
     }
   };
@@ -771,9 +791,6 @@ export default function EmployeeRegistrationsPage() {
     }
   };
 
-  // ❌ REMOVED handlePartTimeEdit and handlePartTimeUpdate functions
-  // Registrations are immutable per backend design
-  // Employees should delete and create new registration to modify
 
   const handlePartTimeDelete = async () => {
     if (!partTimeDeletingRegistration) return;
@@ -1202,38 +1219,8 @@ export default function EmployeeRegistrationsPage() {
                                   totalWeeks = 0;
                                 }
 
-                                // Calculate: số lượng đã đăng ký
-                                let soLuongCan = 0; // Tổng số lượng cần người đăng ký
-                                let soLuongConLai = 0; // Số lượng còn lại (remaining)
-                                let soLuongDaDangKy = 0; // Số lượng đã đăng ký
-                                
-                                if (slotDetails?.availabilityByMonth && slotDetails.quota) {
-                                  // Tính tổng số lượng cần: sum(month.totalWorkingDays * quota) cho tất cả các tháng
-                                  soLuongCan = slotDetails.availabilityByMonth.reduce((sum, month) => {
-                                    return sum + (month.totalWorkingDays * slotDetails.quota);
-                                  }, 0);
-                                  
-                                  // Tính số lượng còn lại từ overallRemaining hoặc availabilityByMonth
-                                  if (slotDetails.overallRemaining !== undefined && slotDetails.overallRemaining >= 0) {
-                                    // overallRemaining là số lượt còn lại (chính xác nhất)
-                                    soLuongConLai = slotDetails.overallRemaining;
-                                  } else {
-                                    // Fallback: tính từ availabilityByMonth
-                                    // - Available dates: còn lại đầy = quota
-                                    // - Partial dates: còn lại một phần (ước tính trung bình = quota/2)
-                                    // - Full dates: hết chỗ = 0
-                                    soLuongConLai = slotDetails.availabilityByMonth.reduce((sum, month) => {
-                                      // Available dates: còn lại đầy
-                                      const availableRemaining = month.totalDatesAvailable * slotDetails.quota;
-                                      // Partial dates: ước tính còn lại trung bình = quota/2
-                                      const partialRemaining = month.totalDatesPartial * Math.ceil(slotDetails.quota / 2);
-                                      return sum + availableRemaining + partialRemaining;
-                                    }, 0);
-                                  }
-                                  
-                                  // Số lượng đã đăng ký = Tổng cần - Còn lại
-                                  soLuongDaDangKy = soLuongCan - soLuongConLai;
-                                }
+                                // Get số lượng đã đăng ký directly from API (BE now provides registered field)
+                                // No need for manual calculation anymore - BE provides slotDetails.registered
 
                                 return (
                                   <React.Fragment key={slot.slotId}>
@@ -1257,9 +1244,19 @@ export default function EmployeeRegistrationsPage() {
                                       </td>
                                       <td className="px-4 py-3">
                                         <div className="text-sm font-semibold text-gray-900">
-                                          {slotDetails && soLuongCan > 0 
-                                            ? soLuongDaDangKy 
-                                            : '-'}
+                                          {(() => {
+                                            const workSlot = workSlotsMap[slot.slotId];
+                                            if (workSlot?.quota !== undefined && workSlot.quota !== null) {
+                                              const registeredCount = workSlot.registered ?? 0;
+                                              return `${registeredCount}/${workSlot.quota}`;
+                                            }
+                                            
+                                            if (slotDetails?.quota !== undefined && slotDetails.quota !== null) {
+                                              return `0/${slotDetails.quota}`;
+                                            }
+                                            
+                                            return '-';
+                                          })()}
                                         </div>
                                       </td>
                                       <td className="px-4 py-3 text-center">
@@ -1735,9 +1732,20 @@ export default function EmployeeRegistrationsPage() {
                           const weeks = parseInt(e.target.value);
                           setNumberOfWeeks(weeks);
                           // Auto-calculate effectiveTo
-                          if (selectedWeekStart) {
-                            const endDate = addDays(addWeeks(selectedWeekStart, weeks), -1);
-                            const to = format(endDate, 'yyyy-MM-dd');
+                          if (selectedWeekStart && partTimeCreateFormData.partTimeSlotId) {
+                            const selectedSlot = availableSlots.find(s => s.slotId === partTimeCreateFormData.partTimeSlotId);
+                            if (!selectedSlot) return;
+
+                            // Calculate end date based on weeks
+                            const calculatedEndDate = addDays(addWeeks(selectedWeekStart, weeks), -1);
+                            
+                            // Get slot's effective end date
+                            const slotEndDate = parseISO(selectedSlot.effectiveTo);
+                            
+                            // Use the earlier date: calculated end date or slot's end date
+                            const actualEndDate = calculatedEndDate > slotEndDate ? slotEndDate : calculatedEndDate;
+                            
+                            const to = format(actualEndDate, 'yyyy-MM-dd');
                             setPartTimeCreateFormData(prev => ({
                               ...prev,
                               effectiveTo: to

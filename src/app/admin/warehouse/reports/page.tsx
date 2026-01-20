@@ -350,14 +350,6 @@ export default function WarehouseReportsPage() {
           {/* Transactions Report */}
           <TabsContent value="transactions" className="space-y-4">
             <div className="flex justify-end mb-4">
-              <Button 
-                onClick={handleExportExcel} 
-                variant="outline"
-                disabled={exportingReport || transactionsLoading}
-              >
-                <FontAwesomeIcon icon={faDownload} className="h-4 w-4 mr-2" />
-                {exportingReport ? 'Đang xuất...' : 'Xuất Excel'}
-              </Button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Import Transactions */}
