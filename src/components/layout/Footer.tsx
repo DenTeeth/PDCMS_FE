@@ -9,25 +9,6 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-6">
-              <Image
-                src="/denteeth-logo.png"
-                alt="DenTeeth Logo"
-                width={40}
-                height={40}
-                className="h-10 w-10 object-contain"
-              />
-              <span className="text-xl font-bold">DenTeeth</span>
-            </Link>
-            <p className="text-gray-400 mb-4">
-              Lô E2a-7, Đường D1, Khu Công nghệ cao,<br />
-              Phường Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM
-            </p>
-            <p className="text-gray-400 mb-4">hellodenteeth@gmail.com</p>
-            <p className="text-gray-400">0909 726 700</p>
-          </div>
-
-          <div>
             <h3 className="text-lg font-semibold mb-6">Hỗ trợ</h3>
             <ul className="space-y-3 text-gray-400">
               <li><Link href="/about" className="hover:text-white transition-colors">Về chúng tôi</Link></li>
@@ -62,6 +43,25 @@ export default function Footer() {
                 <FontAwesomeIcon icon={faYoutube} className="h-6 w-6" />
               </Link>
             </div>
+          </div>
+
+          <div>
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <Image
+                src="/denteeth-logo.png"
+                alt="DenTeeth Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
+              <span className="text-xl font-bold">DenTeeth</span>
+            </Link>
+            <p className="text-gray-400 mb-4">
+              Lô E2a-7, Đường D1, Khu Công nghệ cao,<br />
+              Phường Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM
+            </p>
+            <p className="text-gray-400 mb-4">hellodenteeth@gmail.com</p>
+            <p className="text-gray-400">0909 726 700</p>
           </div>
         </div>
 

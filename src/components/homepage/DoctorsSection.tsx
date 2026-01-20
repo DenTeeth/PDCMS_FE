@@ -91,12 +91,12 @@ export default function DoctorsSection() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
 
                   <div className="relative flex flex-col flex-grow">
-                    <div className="relative w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
+                    <div className="relative w-full h-64 bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
                       <Image
                         src={doctor.avatar}
                         alt={doctor.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         quality={85}
                       />

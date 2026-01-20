@@ -44,11 +44,12 @@ const HeroSection = memo(function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-foreground mb-6 leading-tight tracking-tight"
+              style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
             >
               {t('title')}
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary font-black">
                 {t('subtitle')}
               </span>
             </motion.h1>
