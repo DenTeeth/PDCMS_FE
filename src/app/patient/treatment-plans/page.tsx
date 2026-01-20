@@ -118,7 +118,7 @@ export default function PatientTreatmentPlansPage() {
         targetPatientCode,
         currentPage,
         pageSize,
-        'patientPlanId,desc' // Sort by plan ID (newest first)
+        'createdAt,desc'
       );
 
       // Check if request was cancelled or component unmounted

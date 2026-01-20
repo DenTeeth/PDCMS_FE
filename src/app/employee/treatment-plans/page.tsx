@@ -92,7 +92,7 @@ export default function EmployeeTreatmentPlansPage() {
       const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
         page: currentPage,
         size: pageSize,
-        sort: 'patientPlanId,desc', // Sort by plan ID (newest first)
+        sort: 'createdAt,desc',
         status: filters.status,
         patientCode: filters.patientCode || undefined, // Optional filter by patientCode (Admin only)
         searchTerm: filters.searchTerm,

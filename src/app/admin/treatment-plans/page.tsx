@@ -97,7 +97,7 @@ export default function AdminTreatmentPlansPage() {
       const pageResponse = await TreatmentPlanService.getAllTreatmentPlansWithRBAC({
         page: currentPage,
         size: pageSize,
-        sort: 'patientPlanId,desc', // Sort by plan ID (newest first)
+        sort: 'createdAt,desc',
         status: filters.status,
         patientCode: targetPatientCode || undefined, // Admin can filter by patientCode
         searchTerm: filters.searchTerm,
