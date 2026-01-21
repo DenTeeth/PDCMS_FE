@@ -67,19 +67,19 @@ export default function AboutSection() {
                   src="/images/doctors/dentist1.webp"
                   alt={t('images.professional')}
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="relative h-64 rounded-2xl overflow-hidden shadow-lg mt-8"
+                className="relative h-64 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
                   src="/images/doctors/dentist2.webp"
                   alt={t('images.expert')}
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </motion.div>
@@ -87,25 +87,25 @@ export default function AboutSection() {
             <div className="grid grid-cols-2 gap-4 mt-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
+                className="relative h-64 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
                   src="/images/doctors/dentist3.webp"
                   alt={t('images.specialist')}
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="relative h-48 rounded-2xl overflow-hidden shadow-lg"
+                className="relative h-64 rounded-2xl overflow-hidden shadow-lg"
               >
                 <Image
                   src="/images/doctors/dentist4.webp"
                   alt={t('images.dentist')}
                   fill
-                  className="object-cover"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </motion.div>
