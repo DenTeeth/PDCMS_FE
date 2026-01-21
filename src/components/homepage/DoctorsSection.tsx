@@ -131,26 +131,26 @@ export default function DoctorsSection() {
                       <div className="flex flex-wrap gap-2 justify-center pt-2">
                         {doctor.id === 1 && (
                           <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Checkups</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Cleanings</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.checkups')}</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.cleanings')}</span>
                           </>
                         )}
                         {doctor.id === 2 && (
                           <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Whitening</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Veneers</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.whitening')}</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.veneers')}</span>
                           </>
                         )}
                         {doctor.id === 3 && (
                           <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Braces</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Invisalign</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.braces')}</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.invisalign')}</span>
                           </>
                         )}
                         {doctor.id === 4 && (
                           <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Kids Care</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">Prevention</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.kidsCare')}</span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.prevention')}</span>
                           </>
                         )}
                       </div>
@@ -177,7 +177,7 @@ export default function DoctorsSection() {
               href="/Doctors"
               className="inline-flex items-center bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
             >
-              Xem toàn bộ bác sĩ
+              {t('viewAllDoctors', { defaultValue: 'Xem toàn bộ bác sĩ' })}
               <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

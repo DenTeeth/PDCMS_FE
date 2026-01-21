@@ -135,7 +135,18 @@
         "experience": "Part-time",
         "description": "Expert in smile makeovers and cosmetic procedures, bringing confidence to patients."
       }
-    ]
+    ],
+    "specializations": {
+      "checkups": "Checkups",
+      "cleanings": "Cleanings",
+      "whitening": "Whitening",
+      "veneers": "Veneers",
+      "braces": "Braces",
+      "invisalign": "Invisalign",
+      "kidsCare": "Kids Care",
+      "prevention": "Prevention"
+    },
+    "viewAllDoctors": "View All Doctors"
   },
   "Features": {
     "title": "Exceptional Service With a Personal Touch",

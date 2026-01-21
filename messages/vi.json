@@ -135,7 +135,18 @@
         "experience": "Bán thời gian",
         "description": "Chuyên gia về thẩm mỹ nụ cười và các thủ thuật làm đẹp răng, mang lại sự tự tin cho bệnh nhân."
       }
-    ]
+    ],
+    "specializations": {
+      "checkups": "Khám tổng quát",
+      "cleanings": "Làm sạch răng",
+      "whitening": "Tẩy trắng",
+      "veneers": "Dán sứ",
+      "braces": "Niềng răng",
+      "invisalign": "Chỉnh nha trong suốt",
+      "kidsCare": "Chăm sóc trẻ em",
+      "prevention": "Phòng ngừa"
+    },
+    "viewAllDoctors": "Xem toàn bộ bác sĩ"
   },
   "Features": {
     "title": "Dịch vụ xuất sắc với chạm cá nhân",
