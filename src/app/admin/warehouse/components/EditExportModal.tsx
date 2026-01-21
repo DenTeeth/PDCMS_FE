@@ -94,7 +94,13 @@ export default function EditExportModal({
     try {
       // TODO: Call API to update full export transaction
       // Currently backend only supports updateNotes
-      await storageService.updateNotes(transactionId, notes);
+      const notesToUpdate = notes || ''; // Ensure notes is never undefined
+      console.log('[EditExportModal] Updating notes:', {
+        transactionId,
+        notesLength: notesToUpdate.length,
+        notesPreview: notesToUpdate.substring(0, 50),
+      });
+      await storageService.updateNotes(transactionId, notesToUpdate);
 
       toast.success('Cập nhật phiếu xuất thành công!');
       toast.warning('Lưu ý: Hiện tại chỉ cập nhật được ghi chú. Vui lòng liên hệ IT để cập nhật items.');

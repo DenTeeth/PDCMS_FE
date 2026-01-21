@@ -124,11 +124,14 @@ export default function AppointmentFilters({
   // Helper function to get sort label
   const getSortLabel = () => {
     const labels: Record<string, string> = {
-      appointmentStartTime: 'Thời gian',
-      appointmentCode: 'Mã lịch hẹn',
+      appointmentStartTime: 'Thời gian bắt đầu',
       appointmentId: 'ID lịch hẹn',
+      appointmentCode: 'Mã lịch hẹn',
+      appointmentEndTime: 'Thời gian kết thúc',
+      status: 'Trạng thái',
+      createdAt: 'Ngày tạo',
     };
-    return labels[filters.sortBy || 'appointmentId'] || 'Sắp xếp';
+    return labels[filters.sortBy || 'appointmentStartTime'] || 'Sắp xếp';
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -197,23 +200,31 @@ export default function AppointmentFilters({
             </button>
 
             {isSortDropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-[#e2e8f0] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden">
                 <div className="p-2">
                   {[
+                    { value: 'appointmentStartTime', label: 'Thời gian bắt đầu' },
                     { value: 'appointmentId', label: 'ID lịch hẹn' },
-                    { value: 'appointmentStartTime', label: 'Thời gian' },
                     { value: 'appointmentCode', label: 'Mã lịch hẹn' },
+                    { value: 'appointmentEndTime', label: 'Thời gian kết thúc' },
+                    { value: 'status', label: 'Trạng thái' },
+                    { value: 'createdAt', label: 'Ngày tạo' },
                   ].map((option) => (
                     <button
                       key={option.value}
                       onClick={() => {
-                        onFiltersChange({ ...filters, sortBy: option.value });
+                        onFiltersChange({ 
+                          ...filters, 
+                          sortBy: option.value,
+                          sortDirection: filters.sortDirection || 'ASC', // Keep current direction or default to ASC
+                        });
                         setIsSortDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${(filters.sortBy || 'appointmentId') === option.value
-                        ? 'bg-[#8b5fbf] text-white'
-                        : 'text-gray-700 hover:bg-[#f3f0ff]'
-                        }`}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                        (filters.sortBy || 'appointmentStartTime') === option.value
+                          ? 'bg-[#8b5fbf] text-white'
+                          : 'text-gray-700 hover:bg-[#f3f0ff]'
+                      }`}
                     >
                       {option.label}
                     </button>
@@ -227,25 +238,35 @@ export default function AppointmentFilters({
           <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
             <button
               onClick={() => {
-                onFiltersChange({ ...filters, sortDirection: 'ASC' });
+                onFiltersChange({ 
+                  ...filters, 
+                  sortBy: filters.sortBy || 'appointmentStartTime', // Ensure sortBy is set
+                  sortDirection: 'ASC' 
+                });
               }}
-              className={`p-1.5 rounded transition-all ${filters.sortDirection === 'ASC'
-                ? 'bg-[#8b5fbf] text-white shadow-sm'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                }`}
-              title="Tăng dần"
+              className={`p-1.5 rounded transition-all ${
+                (filters.sortDirection || 'ASC') === 'ASC'
+                  ? 'bg-[#8b5fbf] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`}
+              title="Tăng dần (ASC)"
             >
               <ArrowUp className="h-4 w-4" />
             </button>
             <button
               onClick={() => {
-                onFiltersChange({ ...filters, sortDirection: 'DESC' });
+                onFiltersChange({ 
+                  ...filters, 
+                  sortBy: filters.sortBy || 'appointmentStartTime', // Ensure sortBy is set
+                  sortDirection: 'DESC' 
+                });
               }}
-              className={`p-1.5 rounded transition-all ${(filters.sortDirection || 'DESC') === 'DESC'
-                ? 'bg-[#8b5fbf] text-white shadow-sm'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                }`}
-              title="Giảm dần"
+              className={`p-1.5 rounded transition-all ${
+                filters.sortDirection === 'DESC'
+                  ? 'bg-[#8b5fbf] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`}
+              title="Giảm dần (DESC)"
             >
               <ArrowDown className="h-4 w-4" />
             </button>

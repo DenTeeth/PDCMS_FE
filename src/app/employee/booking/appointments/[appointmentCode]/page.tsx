@@ -810,7 +810,7 @@ export default function EmployeeAppointmentDetailPage() {
                 if (hasProcedures) {
                   if (allDeducted) {
                     toast.success('Vật tư đã được trừ khỏi kho', {
-                      description: 'Tất cả vật tư đã được tự động trừ khỏi kho theo BOM của dịch vụ',
+                      description: 'Tất cả vật tư đã được tự động trừ khỏi kho theo định mức của dịch vụ',
                       duration: 5000,
                     });
                   } else {

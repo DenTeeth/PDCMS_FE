@@ -361,6 +361,21 @@ export default function ClinicalRecordForm({
               <p className="text-sm text-destructive">{errors.examinationFindings.message}</p>
             )}
           </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Vital Signs - Enhanced with reference ranges */}
+          <VitalSignsInput
+            register={register}
+            errors={errors}
+            patientDateOfBirth={existingRecord?.patient.dateOfBirth}
+            disabled={!canEdit}
+            bloodPressure={watch('bloodPressure')}
+            heartRate={watch('heartRate')}
+            temperature={watch('temperature')}
+            oxygenSaturation={watch('oxygenSaturation')}
+          />
 
           {/* Treatment Notes */}
           <div className="space-y-2">
@@ -381,21 +396,6 @@ export default function ClinicalRecordForm({
               <p className="text-sm text-destructive">{errors.treatmentNotes.message}</p>
             )}
           </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Vital Signs - Enhanced with reference ranges */}
-          <VitalSignsInput
-            register={register}
-            errors={errors}
-            patientDateOfBirth={existingRecord?.patient.dateOfBirth}
-            disabled={!canEdit}
-            bloodPressure={watch('bloodPressure')}
-            heartRate={watch('heartRate')}
-            temperature={watch('temperature')}
-            oxygenSaturation={watch('oxygenSaturation')}
-          />
 
           {/* Temporarily hidden - BE will handle follow-up date automatically */}
           {/* <div className="space-y-2">

@@ -14,7 +14,9 @@ import PrescriptionForm from './PrescriptionForm';
 import Odontogram from './Odontogram';
 import ToothStatusDialog from './ToothStatusDialog';
 import { toothStatusService } from '@/services/toothStatusService';
-import { ToothCondition } from '@/types/clinicalRecord';
+import { vitalSignsReferenceService } from '@/services/vitalSignsReferenceService';
+import { ToothCondition, VitalSignsReferenceResponse } from '@/types/clinicalRecord';
+import { assessVitalSign, parseBloodPressure, calculateAge, VITAL_TYPE_MAP } from '@/utils/vitalSignsAssessment';
 import {
   User,
   UserCog,
@@ -54,6 +56,7 @@ export default function ClinicalRecordView({
   const [loadingToothStatuses, setLoadingToothStatuses] = useState(false);
   const [prescription, setPrescription] = useState<PrescriptionDTO | null>(null);
   const [loadingPrescription, setLoadingPrescription] = useState(false);
+  const [vitalSignsReferences, setVitalSignsReferences] = useState<VitalSignsReferenceResponse[]>([]);
   // Prescription edit state
   const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
   const [editingPrescription, setEditingPrescription] = useState<PrescriptionDTO | null>(null);
@@ -120,6 +123,24 @@ export default function ClinicalRecordView({
 
     loadPrescription();
   }, [record.clinicalRecordId, record.prescriptions]);
+
+  // Load vital signs reference ranges for client-side assessment
+  useEffect(() => {
+    const loadReferences = async () => {
+      if (!record?.patient?.dateOfBirth) return;
+      
+      try {
+        const age = calculateAge(record.patient.dateOfBirth);
+        const refs = await vitalSignsReferenceService.getReferencesByAge(age);
+        setVitalSignsReferences(refs);
+      } catch (error: any) {
+        console.error('Error loading vital signs references:', error);
+        // Silently fail - assessment will fallback to UNKNOWN
+      }
+    };
+
+    loadReferences();
+  }, [record?.patient?.dateOfBirth]);
 
   // Handle prescription edit/create
   const handleEditPrescription = (prescription: PrescriptionDTO) => {
@@ -305,109 +326,191 @@ export default function ClinicalRecordView({
                   <Label className="text-base font-semibold">Chỉ số sức khỏe</Label>
                 </div>
                 <div className="pl-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Use assessment if available, otherwise fallback to vitalSigns */}
-                    {record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0 ? (
-                      record.vitalSignsAssessment.map((assessment) => {
-                        const labelMap: Record<string, string> = {
-                          BLOOD_PRESSURE_SYSTOLIC: 'Huyết áp tâm thu',
-                          BLOOD_PRESSURE_DIASTOLIC: 'Huyết áp tâm trương',
-                          HEART_RATE: 'Nhịp tim',
-                          TEMPERATURE: 'Nhiệt độ',
-                          OXYGEN_SATURATION: 'SpO2',
-                          RESPIRATORY_RATE: 'Nhịp thở',
-                          BLOOD_GLUCOSE: 'Đường huyết',
-                          WEIGHT: 'Cân nặng',
-                          HEIGHT: 'Chiều cao',
-                          BMI: 'BMI',
-                        };
-                        const label = labelMap[assessment.vitalType] || assessment.vitalType;
-                        
-                        const statusConfig = {
-                          NORMAL: { 
-                            color: 'bg-green-50 text-green-800 border-green-300', 
-                            badgeColor: 'bg-green-100 text-green-800 border-green-200',
-                            borderColor: '#10b981',
-                            icon: CheckCircle2,
-                            label: 'Bình thường'
-                          },
-                          BELOW_NORMAL: { 
-                            color: 'bg-yellow-50 text-yellow-800 border-yellow-300', 
-                            badgeColor: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                            borderColor: '#f59e0b',
-                            icon: AlertTriangle,
-                            label: 'Thấp'
-                          },
-                          ABOVE_NORMAL: { 
-                            color: 'bg-red-50 text-red-800 border-red-300', 
-                            badgeColor: 'bg-red-100 text-red-800 border-red-200',
-                            borderColor: '#ef4444',
-                            icon: AlertCircle,
-                            label: 'Cao'
-                          },
-                          UNKNOWN: { 
-                            color: 'bg-gray-50 text-gray-800 border-gray-300', 
-                            badgeColor: 'bg-gray-100 text-gray-800 border-gray-200',
-                            borderColor: '#6b7280',
-                            icon: AlertCircle,
-                            label: 'Không xác định'
-                          },
-                        };
-                        const config = statusConfig[assessment.status] || statusConfig.UNKNOWN;
-                        const StatusIcon = config.icon;
-                        
-                        return (
-                          <div 
-                            key={assessment.vitalType} 
-                            className={`p-4 rounded-lg border-l-4 shadow-sm transition-all hover:shadow-md ${config.color}`}
-                            style={{
-                              borderLeftColor: config.borderColor
-                            }}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="text-sm font-medium text-gray-700">{label}</div>
-                              <Badge variant="outline" className={`text-xs flex items-center gap-1 ${config.badgeColor}`}>
-                                <StatusIcon className="h-3 w-3" />
-                                {config.label}
-                              </Badge>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Combine assessments and vitalSigns to ensure all 4 vital signs are displayed */}
+                    {(() => {
+                      // Create a map of assessments by vital type for quick lookup
+                      const assessmentMap = new Map();
+                      if (record.vitalSignsAssessment && record.vitalSignsAssessment.length > 0) {
+                        record.vitalSignsAssessment.forEach((assessment) => {
+                          // Map both systolic and diastolic to blood pressure
+                          if (assessment.vitalType === 'BLOOD_PRESSURE_SYSTOLIC' || assessment.vitalType === 'BLOOD_PRESSURE_DIASTOLIC') {
+                            assessmentMap.set('bloodPressure', assessment);
+                          } else {
+                            const keyMap: Record<string, string> = {
+                              HEART_RATE: 'heartRate',
+                              TEMPERATURE: 'temperature',
+                              OXYGEN_SATURATION: 'oxygenSaturation',
+                            };
+                            const key = keyMap[assessment.vitalType];
+                            if (key) {
+                              assessmentMap.set(key, assessment);
+                            }
+                          }
+                        });
+                      }
+
+                      // Define the 4 main vital signs we want to display
+                      const vitalSignsToDisplay = [
+                        { key: 'bloodPressure', label: 'Huyết áp', unit: 'mmHg' },
+                        { key: 'heartRate', label: 'Nhịp tim', unit: 'bpm' },
+                        { key: 'temperature', label: 'Nhiệt độ', unit: '°C' },
+                        { key: 'oxygenSaturation', label: 'SpO2', unit: '%' },
+                      ];
+
+                      return vitalSignsToDisplay.map((vital) => {
+                        const assessment = assessmentMap.get(vital.key);
+                        const vitalValue = record.vitalSigns?.[vital.key] || 
+                                         record.vitalSigns?.[vital.key.replace(/([A-Z])/g, '_$1').toLowerCase()];
+
+                        // Skip if no value and no assessment
+                        if (!vitalValue && !assessment) return null;
+
+                        // Use assessment if available, otherwise use raw value
+                        if (assessment) {
+                          const labelMap: Record<string, string> = {
+                            BLOOD_PRESSURE_SYSTOLIC: 'Huyết áp',
+                            BLOOD_PRESSURE_DIASTOLIC: 'Huyết áp',
+                            HEART_RATE: 'Nhịp tim',
+                            TEMPERATURE: 'Nhiệt độ',
+                            OXYGEN_SATURATION: 'SpO2',
+                          };
+                          const label = labelMap[assessment.vitalType] || vital.label;
+                          
+                          const statusConfig = {
+                            NORMAL: { 
+                              color: 'bg-green-50 text-green-800 border-green-300', 
+                              badgeColor: 'bg-green-100 text-green-800 border-green-200',
+                              borderColor: '#10b981',
+                              icon: CheckCircle2,
+                              label: 'Bình thường'
+                            },
+                            BELOW_NORMAL: { 
+                              color: 'bg-yellow-50 text-yellow-800 border-yellow-300', 
+                              badgeColor: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                              borderColor: '#f59e0b',
+                              icon: AlertTriangle,
+                              label: 'Thấp'
+                            },
+                            ABOVE_NORMAL: { 
+                              color: 'bg-red-50 text-red-800 border-red-300', 
+                              badgeColor: 'bg-red-100 text-red-800 border-red-200',
+                              borderColor: '#ef4444',
+                              icon: AlertCircle,
+                              label: 'Cao'
+                            },
+                            UNKNOWN: { 
+                              color: 'bg-gray-50 text-gray-800 border-gray-300', 
+                              badgeColor: 'bg-gray-100 text-gray-800 border-gray-200',
+                              borderColor: '#6b7280',
+                              icon: AlertCircle,
+                              label: 'Không xác định'
+                            },
+                          };
+                          const config = statusConfig[assessment.status as keyof typeof statusConfig] || statusConfig.UNKNOWN;
+                          const StatusIcon = config.icon;
+                          
+                          return (
+                            <div 
+                              key={vital.key} 
+                              className={`p-4 rounded-lg border-l-4 shadow-sm transition-all hover:shadow-md ${config.color}`}
+                              style={{
+                                borderLeftColor: config.borderColor
+                              }}
+                            >
+                              <div className="text-sm font-medium text-gray-700 mb-2">{label}</div>
+                              <div className="text-xl font-bold text-gray-900">
+                                {assessment.value} <span className="text-sm font-normal text-gray-600">{assessment.unit}</span>
+                              </div>
                             </div>
-                            <div className="text-xl font-bold text-gray-900 mb-1">
-                              {assessment.value} <span className="text-sm font-normal text-gray-600">{assessment.unit}</span>
+                          );
+                        } else if (vitalValue) {
+                          // Fallback: Client-side assessment if no BE assessment
+                          let clientAssessment = null;
+                          
+                          // Try to assess client-side
+                          if (vitalSignsReferences.length > 0) {
+                            if (vital.key === 'bloodPressure') {
+                              // Parse blood pressure "120/80"
+                              const bp = parseBloodPressure(String(vitalValue));
+                              if (bp) {
+                                clientAssessment = assessVitalSign('BLOOD_PRESSURE_SYSTOLIC', bp.systolic, vitalSignsReferences);
+                              }
+                            } else {
+                              const vitalType = VITAL_TYPE_MAP[vital.key];
+                              if (vitalType) {
+                                const numValue = parseFloat(String(vitalValue));
+                                if (!isNaN(numValue) && numValue !== 0) {
+                                  clientAssessment = assessVitalSign(vitalType, numValue, vitalSignsReferences);
+                                }
+                              }
+                            }
+                          }
+                          
+                          // Use client assessment if available, otherwise UNKNOWN
+                          const status = clientAssessment?.status || 'UNKNOWN';
+                          
+                          const statusConfig = {
+                            NORMAL: { 
+                              color: 'bg-green-50 text-green-800 border-green-300', 
+                              borderColor: '#10b981',
+                            },
+                            BELOW_NORMAL: { 
+                              color: 'bg-yellow-50 text-yellow-800 border-yellow-300', 
+                              borderColor: '#f59e0b',
+                            },
+                            ABOVE_NORMAL: { 
+                              color: 'bg-red-50 text-red-800 border-red-300', 
+                              borderColor: '#ef4444',
+                            },
+                            UNKNOWN: { 
+                              color: 'bg-gray-50 text-gray-800 border-gray-300', 
+                              borderColor: '#6b7280',
+                            },
+                          };
+                          const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.UNKNOWN;
+                          
+                          return (
+                            <div 
+                              key={vital.key} 
+                              className={`p-4 rounded-lg border-l-4 shadow-sm transition-all hover:shadow-md ${config.color}`}
+                              style={{
+                                borderLeftColor: config.borderColor
+                              }}
+                            >
+                              <div className="text-sm font-medium text-gray-700 mb-2">{vital.label}</div>
+                              <div className="text-xl font-bold text-gray-900">
+                                {String(vitalValue)} <span className="text-sm font-normal text-gray-600">{vital.unit}</span>
+                              </div>
                             </div>
-                            {assessment.message && (
-                              <div className="text-xs text-gray-600 mt-2 italic">{assessment.message}</div>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      // Fallback to old display if no assessment
-                      Object.entries(record.vitalSigns || {}).map(([key, value]) => {
-                        const labelMap: Record<string, string> = {
-                          blood_pressure: 'Huyết áp',
-                          bloodPressure: 'Huyết áp',
-                          heart_rate: 'Nhịp tim',
-                          heartRate: 'Nhịp tim',
-                          temperature: 'Nhiệt độ',
-                          oxygen_saturation: 'SpO2',
-                          oxygenSaturation: 'SpO2',
-                          respiratory_rate: 'Nhịp thở',
-                          respiratoryRate: 'Nhịp thở',
-                          blood_glucose: 'Đường huyết',
-                          bloodGlucose: 'Đường huyết',
-                          weight: 'Cân nặng',
-                          height: 'Chiều cao',
-                          bmi: 'BMI',
-                        };
-                        const label = labelMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
-                        return (
-                          <div key={key} className="p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="text-sm font-medium text-gray-700 mb-1">{label}</div>
-                            <div className="text-lg font-bold text-gray-900">{String(value)}</div>
-                          </div>
-                        );
-                      })
-                    )}
+                          );
+                        }
+                        return null;
+                      }).filter(Boolean);
+                    })()}
+                  </div>
+                  
+                  {/* Legends */}
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">Chú thích:</div>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border-l-4 bg-green-50 border-green-300" style={{ borderLeftColor: '#10b981' }}></div>
+                        <span className="text-xs text-gray-600">Bình thường</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border-l-4 bg-yellow-50 border-yellow-300" style={{ borderLeftColor: '#f59e0b' }}></div>
+                        <span className="text-xs text-gray-600">Thấp</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border-l-4 bg-red-50 border-red-300" style={{ borderLeftColor: '#ef4444' }}></div>
+                        <span className="text-xs text-gray-600">Cao</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border-l-4 bg-gray-50 border-gray-300" style={{ borderLeftColor: '#6b7280' }}></div>
+                        <span className="text-xs text-gray-600">Không xác định</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -420,7 +523,7 @@ export default function ClinicalRecordView({
           <div className="pl-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Hình ảnh bệnh nhân
+              Hình ảnh của bệnh nhân
             </h3>
             <Suspense
               fallback={

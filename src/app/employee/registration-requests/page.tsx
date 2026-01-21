@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import types and services
 import {
@@ -47,6 +48,8 @@ const getDayOfWeekLabel = (day: string): string => {
 
 // ==================== MAIN COMPONENT ====================
 export default function RegistrationRequestsPage() {
+  const { hasPermission } = useAuth();
+  
   // State management
   const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
   const [slotDetailsMap, setSlotDetailsMap] = useState<Record<number, any>>({});
@@ -121,6 +124,15 @@ export default function RegistrationRequestsPage() {
 
   // Fetch slot details for quota information
   const fetchSlotDetails = async (slotIds: number[]) => {
+    // Check permission before fetching slot details
+    const canViewSlotDetails = hasPermission(Permission.VIEW_AVAILABLE_SLOTS) || 
+                               hasPermission(Permission.MANAGE_WORK_SLOTS);
+    
+    if (!canViewSlotDetails) {
+      console.log('[fetchSlotDetails] User does not have VIEW_AVAILABLE_SLOTS or MANAGE_WORK_SLOTS permission. Skipping slot details fetch.');
+      return;
+    }
+
     try {
       const detailsMap: Record<number, any> = {};
 
@@ -130,15 +142,20 @@ export default function RegistrationRequestsPage() {
           try {
             const details = await shiftRegistrationService.getSlotDetails(slotId);
             detailsMap[slotId] = details;
-          } catch (error) {
-            console.error(`Failed to fetch details for slot ${slotId}:`, error);
+          } catch (error: any) {
+            // Handle 403 Forbidden gracefully (user doesn't have permission)
+            if (error.response?.status === 403) {
+              console.warn(`[fetchSlotDetails] No permission to view details for slot ${slotId}. User needs VIEW_AVAILABLE_SLOTS or MANAGE_WORK_SLOTS permission.`);
+            } else {
+              console.error(`[fetchSlotDetails] Failed to fetch details for slot ${slotId}:`, error);
+            }
           }
         })
       );
 
       setSlotDetailsMap(detailsMap);
     } catch (error) {
-      console.error('Failed to fetch slot details:', error);
+      console.error('[fetchSlotDetails] Failed to fetch slot details:', error);
     }
   };
 
@@ -613,7 +630,7 @@ export default function RegistrationRequestsPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Nhân viên:</span>
-                    <span className="font-medium">ID {selectedRegistration.employeeId}</span>
+                    <span className="font-medium">{selectedRegistration.employeeName || `Nhân viên #${selectedRegistration.employeeId}`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Ca làm việc:</span>
@@ -686,7 +703,7 @@ export default function RegistrationRequestsPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Nhân viên:</span>
-                    <span className="font-medium">ID {selectedRegistration.employeeId}</span>
+                    <span className="font-medium">{selectedRegistration.employeeName || `Nhân viên #${selectedRegistration.employeeId}`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Ca làm việc:</span>

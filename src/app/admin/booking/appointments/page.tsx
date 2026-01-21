@@ -37,12 +37,12 @@ export default function AdminAppointmentsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Filter & Search states
+  // Filter & Search states - Use BE defaults (appointmentStartTime ASC)
   const [filters, setFilters] = useState<Partial<AppointmentFilterCriteria>>({
     page: 0,
     size: 10,
-    sortBy: 'appointmentId', // Sort by appointment ID (newest first)
-    sortDirection: 'DESC', 
+    sortBy: 'appointmentStartTime', // BE default
+    sortDirection: 'ASC', // BE default
   });
 
 
@@ -88,10 +88,13 @@ export default function AdminAppointmentsPage() {
           ...filters,
           page: currentPage,
           size: pageSize,
-          sortBy: filters.sortBy || 'appointmentId', // Sort by appointment ID (newest first)
-          sortDirection: filters.sortDirection || 'DESC', 
+          sortBy: filters.sortBy || 'appointmentStartTime', // BE default
+          sortDirection: filters.sortDirection || 'ASC', // BE default
         };
 
+        console.log('📡 [API Call] Criteria:', criteria);
+        console.log('📡 [API Call] Sort params:', { sortBy: criteria.sortBy, sortDirection: criteria.sortDirection });
+        console.log('📡 [API Call] Search params:', { searchCode: criteria.searchCode });
 
         const response = await appointmentService.getAppointmentsPage(criteria);
 
@@ -108,13 +111,32 @@ export default function AdminAppointmentsPage() {
         if (!abortController.signal.aborted && isMounted) {
           // Ensure content is always an array
           const safeContent = Array.isArray(response.content) ? response.content : [];
+          
+          // Log to verify data is different (for debugging sort issue)
+          console.log('📥 [API Response] Received appointments:', {
+            count: safeContent.length,
+            firstItem: safeContent[0] ? {
+              appointmentCode: safeContent[0].appointmentCode,
+              appointmentStartTime: safeContent[0].appointmentStartTime,
+              status: safeContent[0].status,
+            } : null,
+            lastItem: safeContent[safeContent.length - 1] ? {
+              appointmentCode: safeContent[safeContent.length - 1].appointmentCode,
+              appointmentStartTime: safeContent[safeContent.length - 1].appointmentStartTime,
+              status: safeContent[safeContent.length - 1].status,
+            } : null,
+            sortBy: criteria.sortBy,
+            sortDirection: criteria.sortDirection,
+            searchCode: criteria.searchCode,
+          });
+          
           setAppointments(safeContent);
           setTotalElements(response.totalElements ?? 0);
           setTotalPages(response.totalPages ?? 0);
           
-          console.log('Setting appointments:', {
+          console.log('✅ [State Update] Appointments state updated:', {
             count: safeContent.length,
-            firstItem: safeContent[0],
+            totalElements: response.totalElements ?? 0,
           });
         }
       } catch (error: any) {
@@ -152,17 +174,28 @@ export default function AdminAppointmentsPage() {
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: Partial<AppointmentFilterCriteria>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    console.log('🔍 [handleFiltersChange] New filters:', newFilters);
+    setFilters((prev) => {
+      const merged = { ...prev, ...newFilters };
+      // Remove undefined values to ensure clean state
+      Object.keys(merged).forEach(key => {
+        if (merged[key as keyof AppointmentFilterCriteria] === undefined) {
+          delete merged[key as keyof AppointmentFilterCriteria];
+        }
+      });
+      console.log('🔍 [handleFiltersChange] Merged filters:', merged);
+      return merged;
+    });
     setCurrentPage(0); // Reset to first page when filters change
   }, []);
 
-  // Handle clear filters
+  // Handle clear filters - reset to BE defaults
   const handleClearFilters = useCallback(() => {
     setFilters({
       page: 0,
       size: 10,
-      sortBy: 'appointmentId', // Sort by appointment ID (newest first)
-      sortDirection: 'DESC', 
+      sortBy: 'appointmentStartTime', // BE default
+      sortDirection: 'ASC', // BE default
     });
     setCurrentPage(0);
   }, []);

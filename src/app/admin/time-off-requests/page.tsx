@@ -1055,7 +1055,7 @@ export default function AdminTimeOffRequestsPage() {
                     <div className="border-t pt-3">
                       <div className="flex justify-between mb-2">
                         <span className="text-gray-600">Người tạo đơn:</span>
-                        <span className="font-semibold text-purple-600">
+                        <span className="font-semibold">
                           {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
                         </span>
                       </div>
@@ -1113,7 +1113,7 @@ export default function AdminTimeOffRequestsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Người tạo:</span>
-                      <span className="font-semibold text-purple-600">
+                      <span className="font-semibold">
                         {selectedRequest.requestedBy?.fullName || `User ID: ${selectedRequest.requestedBy?.employeeId || 'N/A'}`}
                       </span>
                     </div>
@@ -1191,7 +1191,7 @@ export default function AdminTimeOffRequestsPage() {
               <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col">
                   <div className="flex justify-between items-center border-b px-6 py-4 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-900">Chi tiết Yêu cầu Nghỉ phép</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Chi tiết yêu cầu nghỉ phép</h2>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1231,8 +1231,8 @@ export default function AdminTimeOffRequestsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="bg-gray-50 rounded-lg p-4">
                             <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                              <FontAwesomeIcon icon={faUser} className="h-5 w-5 mr-2 text-purple-600" />
-                              Thông tin Nhân viên
+                              <FontAwesomeIcon icon={faUser} className="h-5 w-5 mr-2" />
+                              Thông tin nhân viên
                             </h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
@@ -1250,13 +1250,13 @@ export default function AdminTimeOffRequestsPage() {
 
                           <div className="bg-gray-50 rounded-lg p-4">
                             <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                              <FontAwesomeIcon icon={faClock} className="h-5 w-5 mr-2 text-purple-600" />
-                              Thông tin Yêu cầu
+                              <FontAwesomeIcon icon={faClock} className="h-5 w-5 mr-2" />
+                              Thông tin yêu cầu
                             </h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
                                 <span className="text-gray-600">Người tạo:</span>
-                                <span className="font-semibold text-purple-600">
+                                <span className="font-semibold">
                                   {viewDetails.requestedBy?.fullName || `User ID: ${viewDetails.requestedBy?.employeeId || 'N/A'}`}
                                 </span>
                               </div>
@@ -1273,8 +1273,8 @@ export default function AdminTimeOffRequestsPage() {
                         {/* Time Off Details */}
                         <div className="bg-gray-50 rounded-lg p-4">
                           <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2 text-purple-600" />
-                            Chi tiết Nghỉ phép
+                            <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2" />
+                            Chi tiết nghỉ phép
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
@@ -1285,7 +1285,7 @@ export default function AdminTimeOffRequestsPage() {
                             </div>
                             <div>
                               <span className="text-gray-600 block mb-1">Tổng số ngày:</span>
-                              <span className="font-semibold text-lg text-green-600">
+                              <span className="font-semibold text-lg">
                                 {viewDetails.totalDays || 0} ngày
                               </span>
                             </div>
@@ -1333,17 +1333,17 @@ export default function AdminTimeOffRequestsPage() {
                           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                             <h4 className="font-semibold text-green-800 mb-2 flex items-center">
                               <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
-                              Thông tin Phê duyệt
+                              Thông tin phê duyệt
                             </h4>
                             <div className="space-y-1 text-sm">
                               <div className="flex justify-between">
-                                <span className="text-green-700">Người duyệt:</span>
-                                <span className="font-semibold text-green-900">{viewDetails.approvedBy.fullName}</span>
+                                <span className="text-gray-600">Người duyệt:</span>
+                                <span className="font-semibold">{viewDetails.approvedBy.fullName}</span>
                               </div>
                               {viewDetails.approvedAt && (
                                 <div className="flex justify-between">
-                                  <span className="text-green-700">Thời gian duyệt:</span>
-                                  <span className="font-semibold text-green-900">
+                                  <span className="text-gray-600">Thời gian duyệt:</span>
+                                  <span className="font-semibold ">
                                     {format(new Date(viewDetails.approvedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                                   </span>
                                 </div>
@@ -1356,7 +1356,7 @@ export default function AdminTimeOffRequestsPage() {
                           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <h4 className="font-semibold text-red-800 mb-2 flex items-center">
                               <FontAwesomeIcon icon={faTimes} className="h-5 w-5 mr-2" />
-                              Thông tin Từ chối
+                              Thông tin từ chối
                             </h4>
                             <p className="text-red-900 italic">"{viewDetails.rejectedReason}"</p>
                           </div>
@@ -1366,7 +1366,7 @@ export default function AdminTimeOffRequestsPage() {
                           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                             <h4 className="font-semibold text-orange-800 mb-2 flex items-center">
                               <FontAwesomeIcon icon={faBan} className="h-5 w-5 mr-2" />
-                              Lý do Hủy
+                              Lý do hủy
                             </h4>
                             <p className="text-orange-900 italic">"{viewDetails.cancellationReason}"</p>
                           </div>

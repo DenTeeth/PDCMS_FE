@@ -344,11 +344,12 @@ export const storageService = {
         params: buildTransactionParams(filter),
       });
       
+      const errorAny = enhancedError as any;
       console.error(' Get all transactions error:', {
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
-        params: enhancedError.params,
+        status: errorAny.status || error.response?.status,
+        endpoint: errorAny.endpoint,
+        params: errorAny.params,
         filter,
         originalError: error,
       });
@@ -387,11 +388,12 @@ export const storageService = {
         method: 'GET',
       });
       
+      const errorAny = enhancedError as any;
       console.error(' Get transaction detail error:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
+        status: errorAny.status || error.response?.status,
+        endpoint: errorAny.endpoint,
         originalError: error,
       });
       
@@ -400,33 +402,109 @@ export const storageService = {
   },
 
   /**
-   * PUT /api/v1/warehouse/transactions/{id}?notes=... - Cập nhật ghi chú phiếu
+   * PUT /api/v1/warehouse/transactions/{id} - Cập nhật ghi chú phiếu
    * (Legacy behavior reimplemented via API 6.6 controller)
+   * 
+   * Note: BE may accept notes in query params OR body. Try body first, fallback to params if needed.
    */
   updateNotes: async (id: number, notes: string): Promise<StorageTransactionV3> => {
+    // Validate notes parameter
+    const notesValue = notes || ''; // Ensure notes is never undefined
+    
+    console.log('[updateNotes] Starting update:', {
+      id,
+      notesLength: notesValue.length,
+      notesPreview: notesValue.substring(0, 50),
+    });
+
     try {
-      const response = await api.put(`${TRANSACTION_BASE}/${id}`, null, {
-        params: { notes },
+      // Try sending notes in body first (more RESTful)
+      console.log('[updateNotes] Attempt 1: Sending notes in request body');
+      const response = await api.put(`${TRANSACTION_BASE}/${id}`, { notes: notesValue }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       const payload = extractPayload(response);
       const mapped = mapTransactionDetail(payload.data ?? payload);
-      console.log(' Update transaction notes:', mapped.transactionCode);
+      console.log('[updateNotes] Success (body method):', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      const enhancedError = createApiError(error, {
-        endpoint: `${TRANSACTION_BASE}/${id}`,
-        method: 'PUT',
-        params: { notes },
+      console.error('[updateNotes] Body method failed:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.response?.data?.message || error.message,
+        url: error.config?.url,
       });
-      
-      console.error(' Update transaction notes error:', {
-        id,
-        message: enhancedError.message,
-        status: enhancedError.status,
-        originalError: error,
-      });
-      
-      throw enhancedError;
+
+      // If body approach fails, try query params as fallback
+      if (error.response?.status === 400 || error.response?.status === 500) {
+        try {
+          console.log('[updateNotes] Attempt 2: Retrying with query params...', {
+            id,
+            notesLength: notesValue.length,
+          });
+          
+          // Ensure notes is properly encoded in query params
+          const response = await api.put(`${TRANSACTION_BASE}/${id}`, null, {
+            params: { 
+              notes: notesValue || '' // Explicitly ensure string
+            },
+            paramsSerializer: (params) => {
+              // Custom serializer to ensure proper encoding
+              const searchParams = new URLSearchParams();
+              if (params.notes !== undefined && params.notes !== null) {
+                searchParams.append('notes', String(params.notes));
+              }
+              return searchParams.toString();
+            },
+          });
+          const payload = extractPayload(response);
+          const mapped = mapTransactionDetail(payload.data ?? payload);
+          console.log('[updateNotes] Success (query params method):', mapped.transactionCode);
+          return mapped;
+        } catch (retryError: any) {
+          console.error('[updateNotes] Query params method also failed:', {
+            status: retryError.response?.status,
+            statusText: retryError.response?.statusText,
+            message: retryError.response?.data?.message || retryError.message,
+            url: retryError.config?.url,
+            notesInUrl: retryError.config?.url?.includes('notes='),
+          });
+
+          const enhancedError = createApiError(retryError, {
+            endpoint: `${TRANSACTION_BASE}/${id}`,
+            method: 'PUT',
+            params: { notes: notesValue },
+          }) as any;
+          
+          console.error('[updateNotes] Both methods failed:', {
+            id,
+            notesLength: notesValue.length,
+            message: enhancedError.message,
+            status: retryError.response?.status || enhancedError.status,
+            originalError: retryError,
+          });
+          
+          throw enhancedError;
+        }
+      } else {
+        const enhancedError = createApiError(error, {
+          endpoint: `${TRANSACTION_BASE}/${id}`,
+          method: 'PUT',
+          params: { notes: notesValue },
+        }) as any;
+        
+        console.error('[updateNotes] Error (non-retryable):', {
+          id,
+          notesLength: notesValue.length,
+          message: enhancedError.message,
+          status: error.response?.status || enhancedError.status,
+          originalError: error,
+        });
+        
+        throw enhancedError;
+      }
     }
   },
 
@@ -446,10 +524,11 @@ export const storageService = {
         method: 'POST',
       });
       
+      const errorAny = enhancedError as any;
       console.error(' Approve transaction error:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: errorAny.status || error.response?.status,
         originalError: error,
       });
       
@@ -473,10 +552,11 @@ export const storageService = {
         method: 'POST',
       });
       
+      const errorAny = enhancedError as any;
       console.error(' Reject transaction error:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
+        status: errorAny.status || error.response?.status,
         originalError: error,
       });
       
@@ -515,11 +595,12 @@ export const storageService = {
         params: { cancellationReason },
       });
       
+      const errorAny = enhancedError as any;
       console.error(' Cancel transaction error:', {
         id,
         message: enhancedError.message,
-        status: enhancedError.status,
-        endpoint: enhancedError.endpoint,
+        status: errorAny.status || error.response?.status,
+        endpoint: errorAny.endpoint,
         originalError: error,
       });
       

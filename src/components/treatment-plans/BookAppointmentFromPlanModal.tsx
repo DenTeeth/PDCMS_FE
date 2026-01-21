@@ -1549,7 +1549,7 @@ export default function BookAppointmentFromPlanModal({
                       <span className="text-muted-foreground">Số hạng mục:</span>
                       <span className="ml-2 font-medium">{planItems.length}</span>
                     </div>
-                    <div>
+                    <div className="flex items-center">
                       <span className="text-muted-foreground">Thời gian dự kiến:</span>
                       <span className="ml-2 font-medium flex items-center gap-1">
                         <Clock className="h-4 w-4" />

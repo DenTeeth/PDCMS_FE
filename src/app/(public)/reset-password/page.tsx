@@ -434,7 +434,7 @@ export default function ResetPasswordPage() {
             </form>
 
             <div className="mt-10 text-center text-xs text-slate-400">
-              © {new Date().getFullYear()} DenTeeth. Privacy & HIPAA/GDPR compliant.
+              © {new Date().getFullYear()} DenTeeth.
             </div>
           </div>
         </section>

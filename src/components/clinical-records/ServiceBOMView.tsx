@@ -133,21 +133,7 @@ export default function ServiceBOMView({
           </div>
         ) : bom && bom.consumables && bom.consumables.length > 0 ? (
           <div className="space-y-4">
-            {/* Stock Status Badge */}
-            <div className="flex items-center justify-end">
-              {bom.hasInsufficientStock && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="h-4 w-4" />
-                  Có vật tư thiếu
-                </Badge>
-              )}
-              {!bom.hasInsufficientStock && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Đủ vật tư
-                </Badge>
-              )}
-            </div>
+
 
             {/* Materials List */}
             <div className="space-y-2">

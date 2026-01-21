@@ -1180,17 +1180,6 @@ export default function PatientsPage() {
                           disabled={creating}
                           max={new Date().toISOString().split('T')[0]}
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Bệnh nhân phải từ 6 tháng tuổi trở lên
-                        </p>
-                        {formData.dateOfBirth && (() => {
-                          const age = calculateAge(formData.dateOfBirth);
-                          return (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Tuổi hiện tại: {age} tuổi
-                            </p>
-                          );
-                        })()}
                       </div>
                       <div>
                         <Label htmlFor="gender" className="text-sm mb-2 block">Giới tính</Label>

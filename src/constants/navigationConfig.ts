@@ -144,7 +144,8 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Suất ca làm việc',
         href: '/{baseRole}/work-slots',
         icon: faClock,
-        requiredPermissions: ['MANAGE_WORK_SLOTS'],
+        requiredPermissions: ['VIEW_WORK_SLOTS', 'MANAGE_WORK_SLOTS'],
+        requireAll: false, // Show menu if user has ANY of these permissions
       },
       {
         name: 'Đăng ký ca làm',

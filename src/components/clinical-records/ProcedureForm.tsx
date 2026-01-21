@@ -141,12 +141,33 @@ export default function ProcedureForm({
       try {
         setLoadingBOM(true);
         setBomError(null);
-        console.log('[ProcedureForm] Loading BOM for serviceId:', serviceIdNum);
+        console.log('[ProcedureForm] Loading định mức for serviceId:', serviceIdNum);
         const data = await serviceConsumableService.getServiceConsumables(serviceIdNum);
-        console.log('[ProcedureForm] BOM loaded:', data);
-        setBom(data);
+        console.log('[ProcedureForm] định mức loaded:', data);
+        console.log('[ProcedureForm] BOM structure:', {
+          hasBom: !!data,
+          hasConsumables: !!data?.consumables,
+          consumablesLength: data?.consumables?.length || 0,
+          consumables: data?.consumables,
+        });
+        
+        // Check if BOM has consumables
+        if (data && data.consumables && Array.isArray(data.consumables) && data.consumables.length > 0) {
+          setBom(data);
+          setBomError(null);
+        } else if (data && data.consumables && Array.isArray(data.consumables) && data.consumables.length === 0) {
+          // BOM exists but has no consumables
+          console.log('[ProcedureForm] BOM exists but has no consumables (empty array)');
+          setBom(null);
+          setBomError('NO_BOM');
+        } else {
+          // BOM structure is unexpected
+          console.warn('[ProcedureForm] Unexpected BOM structure:', data);
+          setBom(null);
+          setBomError('NO_BOM');
+        }
       } catch (error: any) {
-        console.error('[ProcedureForm] Error loading service BOM:', {
+        console.error('[ProcedureForm] Error loading service định mức:', {
           error,
           status: error.status || error.response?.status,
           message: error.message,
@@ -322,7 +343,7 @@ export default function ProcedureForm({
           {/* Service Selection */}
           <div className="space-y-2">
             <Label htmlFor="serviceId" className="text-sm font-semibold">
-              Dịch Vụ <span className="text-destructive">*</span>
+              Dịch vụ <span className="text-destructive">*</span>
             </Label>
             {loadingServices ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -400,24 +421,20 @@ export default function ProcedureForm({
                       <span>{bomError}</span>
                     </div>
                   </div>
-                ) : bom && bom.consumables && bom.consumables.length > 0 ? (
+                ) : bom ? (
+                  // BOM exists - check if it has consumables
+                  bom.consumables && Array.isArray(bom.consumables) && bom.consumables.length > 0 ? (
                   <div className="border rounded-lg p-3 bg-blue-50/50 border-blue-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-blue-600" />
                         <span className="text-sm font-semibold text-blue-900">
-                          Vật tư dự kiến từ BOM ({bom.consumables.length} loại)
+                          Vật tư dự kiến ({bom.consumables.length} loại)
                         </span>
-                        <span title="Đây là vật tư từ BOM của service. Để chỉnh sửa số lượng, vui lòng xem phần 'Vật tư đã ghi nhận' bên dưới.">
+                        <span title="Đây là vật tư từ dịch vụ. Để chỉnh sửa số lượng, vui lòng xem phần 'Vật tư đã ghi nhận' bên dưới.">
                           <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                         </span>
                       </div>
-                      {bom.hasInsufficientStock && (
-                        <span className="text-xs text-orange-600 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          Có vật tư thiếu
-                        </span>
-                      )}
                     </div>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
                       {bom.consumables.map((item, index) => (
@@ -529,6 +546,15 @@ export default function ProcedureForm({
                       ) : null
                     )}
                   </div>
+                  ) : (
+                    // BOM exists but has no consumables (empty array or undefined)
+                    <div className="border rounded-lg p-3 bg-muted/50">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Package className="h-4 w-4 opacity-50" />
+                        <span>Thủ thuật này không tiêu hao vật tư</span>
+                      </div>
+                    </div>
+                  )
                 ) : null}
               </div>
             )}
@@ -538,7 +564,7 @@ export default function ProcedureForm({
           {/* Procedure Description */}
           <div className="space-y-2">
             <Label htmlFor="procedureDescription" className="text-sm font-semibold">
-              Mô Tả Thủ Thuật <span className="text-destructive">*</span>
+              Mô tả thủ thuật <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="procedureDescription"
@@ -559,7 +585,7 @@ export default function ProcedureForm({
           {/* Tooth Number */}
           <div className="space-y-2">
             <Label htmlFor="toothNumber" className="text-sm font-semibold">
-              Số Răng (FDI)
+              Số răng (FDI)
             </Label>
             <Input
               id="toothNumber"
@@ -585,7 +611,7 @@ export default function ProcedureForm({
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-sm font-semibold">
-              Ghi Chú
+              Ghi chú
             </Label>
             <Textarea
               id="notes"

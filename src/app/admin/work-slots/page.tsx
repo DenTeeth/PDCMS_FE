@@ -31,6 +31,10 @@ import { formatTimeToHHMM } from '@/lib/utils';
 export default function WorkSlotsManagementPage() {
   const { user, hasPermission } = useAuth();
 
+  // Permission checks
+  const canViewSlots = hasPermission(Permission.VIEW_WORK_SLOTS) || hasPermission(Permission.MANAGE_WORK_SLOTS);
+  const canManageSlots = hasPermission(Permission.MANAGE_WORK_SLOTS);
+
   // State management
   const [workSlots, setWorkSlots] = useState<PartTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +122,7 @@ export default function WorkSlotsManagementPage() {
     e.preventDefault();
 
     // Check permission first
-    if (!hasPermission(Permission.MANAGE_WORK_SLOTS)) {
+    if (!canManageSlots) {
       toast.error('You do not have permission to create work slots');
       return;
     }
@@ -218,7 +222,7 @@ export default function WorkSlotsManagementPage() {
     if (!editingSlot) return;
 
     // Check permission first
-    if (!hasPermission(Permission.MANAGE_WORK_SLOTS)) {
+    if (!canManageSlots) {
       toast.error('You do not have permission to update work slots');
       return;
     }
@@ -271,7 +275,7 @@ export default function WorkSlotsManagementPage() {
   // ==================== DELETE WORK SLOT ====================
   const handleDeleteWorkSlot = async (slot: PartTimeSlot) => {
     // Check permission first
-    if (!hasPermission(Permission.MANAGE_WORK_SLOTS)) {
+    if (!canManageSlots) {
       toast.error('You do not have permission to delete work slots');
       return;
     }
@@ -344,8 +348,22 @@ export default function WorkSlotsManagementPage() {
 
   // ==================== RENDER ====================
 
+  // Check if user can view slots
+  if (!canViewSlots) {
+    return (
+      <ProtectedRoute requiredBaseRole="admin">
+        <div className="container mx-auto p-6">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Không có quyền truy cập</h2>
+            <p className="text-gray-600">Bạn cần quyền VIEW_WORK_SLOTS hoặc MANAGE_WORK_SLOTS để xem trang này.</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
-    <ProtectedRoute requiredBaseRole="admin" requiredPermissions={['VIEW_SCHEDULE_ALL']}>
+    <ProtectedRoute requiredBaseRole="admin">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -356,8 +374,8 @@ export default function WorkSlotsManagementPage() {
           <Button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2"
-            disabled={!hasPermission(Permission.MANAGE_WORK_SLOTS)}
-            title={!hasPermission(Permission.MANAGE_WORK_SLOTS) ? 'Bạn không có quyền tạo suất' : ''}
+            disabled={!canManageSlots}
+            title={!canManageSlots ? 'Bạn không có quyền tạo suất' : ''}
           >
             <Plus className="h-4 w-4" />
             Tạo suất mới
@@ -442,11 +460,22 @@ export default function WorkSlotsManagementPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEditWorkSlot(slot)}
-                              title={!hasPermission(Permission.MANAGE_WORK_SLOTS) ? 'Bạn không có quyền chỉnh sửa suất' : 'Chỉnh sửa'}
-                              disabled={!hasPermission(Permission.MANAGE_WORK_SLOTS)}
+                              title={!canManageSlots ? 'Bạn không có quyền chỉnh sửa suất' : 'Chỉnh sửa'}
+                              disabled={!canManageSlots}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            {canManageSlots && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteWorkSlot(slot)}
+                                title="Xóa suất"
+                                disabled={deleting}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

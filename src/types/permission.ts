@@ -109,6 +109,7 @@ export enum Permission {
   VIEW_SCHEDULE_ALL = 'VIEW_SCHEDULE_ALL', // BE: View all schedules
   VIEW_SCHEDULE_OWN = 'VIEW_SCHEDULE_OWN', // BE: View own schedule
   MANAGE_WORK_SHIFTS = 'MANAGE_WORK_SHIFTS', // BE: Manage work shifts
+  VIEW_WORK_SLOTS = 'VIEW_WORK_SLOTS', // BE: View work slots (read-only)
   MANAGE_WORK_SLOTS = 'MANAGE_WORK_SLOTS', // BE: Manage work slots
   MANAGE_PART_TIME_REGISTRATIONS = 'MANAGE_PART_TIME_REGISTRATIONS', // BE: Manage part-time registrations
   MANAGE_FIXED_REGISTRATIONS = 'MANAGE_FIXED_REGISTRATIONS', // BE: Manage fixed registrations
@@ -293,3 +294,4 @@ export interface NavigationConfig {
   title: string;
   menuItems: MenuItem[];
 }
+

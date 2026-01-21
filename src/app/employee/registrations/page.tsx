@@ -198,6 +198,7 @@ export default function EmployeeRegistrationsPage() {
   const { user, hasPermission } = useAuth();
 
   // Determine which tabs to show based on permissions and employee type
+  const canViewSlots = hasPermission(Permission.VIEW_WORK_SLOTS) || hasPermission(Permission.MANAGE_WORK_SLOTS);
   const hasManagePermission = hasPermission(Permission.MANAGE_WORK_SLOTS);
   const hasManageFixedPermission = hasPermission(Permission.MANAGE_FIXED_REGISTRATIONS);
   const isPartTimeFlex = user?.employmentType === 'PART_TIME_FLEX';
@@ -515,17 +516,13 @@ export default function EmployeeRegistrationsPage() {
   /**
    * Fetch work slots (PartTimeSlot[]) for mapping shift names
    * 
-   * ⚠️ LƯU Ý QUAN TRỌNG:
-   * - API này yêu cầu permission MANAGE_WORK_SLOTS (chỉ dành cho Admin/Manager)
-   * - Employee KHÔNG có quyền này → Sẽ gây lỗi 403
-   * - Chỉ gọi API này nếu user có permission MANAGE_WORK_SLOTS
-   * - Employee chỉ cần xem registrations của chính họ, không cần xem tất cả work slots
+   * - VIEW_WORK_SLOTS: Chỉ xem (dành cho bác sĩ, y tá)
+   * - MANAGE_WORK_SLOTS: Xem và quản lý (dành cho Admin/Manager)
    */
   const fetchWorkSlotsData = async () => {
-    // Chỉ fetch nếu user có permission MANAGE_WORK_SLOTS
-    // (Thường là Admin/Manager mới có permission này)
-    if (!hasManagePermission) {
-      console.log('ℹ️ [fetchWorkSlotsData] Skipping - User does not have MANAGE_WORK_SLOTS permission');
+    // Chỉ fetch nếu user có permission VIEW_WORK_SLOTS hoặc MANAGE_WORK_SLOTS
+    if (!canViewSlots) {
+      console.log('ℹ️ [fetchWorkSlotsData] Skipping - User does not have VIEW_WORK_SLOTS or MANAGE_WORK_SLOTS permission');
       setWorkSlots([]); // Set empty array
       return;
     }
@@ -1546,7 +1543,7 @@ export default function EmployeeRegistrationsPage() {
                                       <td className="px-4 py-3">
                                         <div className="text-sm font-semibold text-gray-900">
                                           {(() => {
-                                            // Priority 1: Use workSlotsMap if available (for users with MANAGE_WORK_SLOTS permission)
+                                            // Priority 1: Use workSlotsMap if available (for users with VIEW_WORK_SLOTS or MANAGE_WORK_SLOTS permission)
                                             const workSlot = workSlotsMap[slot.slotId];
                                             if (workSlot?.quota !== undefined && workSlot.quota !== null) {
                                               const registeredCount = workSlot.registered ?? 0;

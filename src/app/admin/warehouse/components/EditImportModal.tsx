@@ -165,7 +165,13 @@ export default function EditImportModal({
       // TODO: Call API to update full import transaction
       // Currently backend only supports updateNotes
       // For now, just update notes as workaround
-      await storageService.updateNotes(transactionId, data.notes);
+      const notesToUpdate = data.notes || ''; // Ensure notes is never undefined
+      console.log('[EditImportModal] Updating notes:', {
+        transactionId,
+        notesLength: notesToUpdate.length,
+        notesPreview: notesToUpdate.substring(0, 50),
+      });
+      await storageService.updateNotes(transactionId, notesToUpdate);
 
       toast.success('Cập nhật phiếu nhập thành công!');
       toast.warning('Lưu ý: Hiện tại chỉ cập nhật được ghi chú. Vui lòng liên hệ IT để cập nhật items.');
@@ -231,7 +237,7 @@ export default function EditImportModal({
                 <select
                   id="supplierId"
                   {...register('supplierId', { required: true, valueAsNumber: true })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md h-9"
                 >
                   <option value={0}>-- Chọn nhà cung cấp --</option>
                   {suppliers.map((sup) => (

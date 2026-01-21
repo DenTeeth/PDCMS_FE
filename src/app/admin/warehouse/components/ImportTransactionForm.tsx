@@ -588,7 +588,7 @@ export default function ImportTransactionForm({
                   onValueChange={(value) => setSupplierId(Number(value))}
                   required
                 >
-                  <SelectTrigger id="supplierId">
+                  <SelectTrigger id="supplierId" className="w-full">
                     <SelectValue placeholder="Chọn nhà cung cấp" />
                   </SelectTrigger>
                   <SelectContent>

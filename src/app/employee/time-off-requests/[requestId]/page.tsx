@@ -274,7 +274,7 @@ export default function EmployeeTimeOffRequestDetailPage() {
           <div>
             <Label className="text-gray-600">Người yêu cầu</Label>
             <div className="flex items-center gap-2 mt-1">
-              <FontAwesomeIcon icon={faUser} className="text-purple-600" />
+              <FontAwesomeIcon icon={faUser} />
               <div>
                 <p className="font-medium">{request.requestedBy.fullName}</p>
                 <p className="text-xs text-gray-500">
@@ -288,7 +288,7 @@ export default function EmployeeTimeOffRequestDetailPage() {
             <div>
               <Label className="text-gray-600">Người duyệt</Label>
               <div className="flex items-center gap-2 mt-1">
-                <FontAwesomeIcon icon={faCheck} className="text-green-600" />
+                <FontAwesomeIcon icon={faCheck} />
                 <div>
                   <p className="font-medium">{request.approvedBy?.fullName || 'N/A'}</p>
                   <p className="text-xs text-gray-500">

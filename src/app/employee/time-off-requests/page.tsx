@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -12,6 +12,8 @@ import {
   faPlus,
   faCheck,
   faTimes,
+  faWallet,
+  faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Eye } from 'lucide-react';
@@ -45,6 +47,9 @@ import { LeaveBalanceService } from '@/services/leaveBalanceService';
 import { EmployeeLeaveBalancesResponse } from '@/types/leaveBalance';
 import { toast } from 'sonner';
 import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
+import { lazy, Suspense } from 'react';
+
+const LeaveBalancesTab = lazy(() => import('@/components/admin/LeaveBalancesTab').then(mod => ({ default: mod.LeaveBalancesTab })));
 
 export default function EmployeeTimeOffRequestsPage() {
   const router = useRouter();
@@ -60,6 +65,10 @@ export default function EmployeeTimeOffRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TimeOffStatus | 'ALL'>('ALL');
   const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
+  const [timeOffTypeFilter, setTimeOffTypeFilter] = useState<string>('ALL');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'requests' | 'balances'>('requests');
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,8 +92,9 @@ export default function EmployeeTimeOffRequestsPage() {
 
   useEffect(() => {
     loadData();
-    // Load employees if user has VIEW_LEAVE_ALL permission
-    if (user?.permissions?.includes('VIEW_LEAVE_ALL')) {
+    // Load employees if user has VIEW_LEAVE_ALL or APPROVE_TIME_OFF permission
+    // (needed for LeaveBalancesTab management features)
+    if (user?.permissions?.includes('VIEW_LEAVE_ALL') || user?.permissions?.includes('APPROVE_TIME_OFF')) {
       loadEmployees();
     }
   }, [user?.permissions]);
@@ -216,7 +226,6 @@ export default function EmployeeTimeOffRequestsPage() {
       const response = await employeeService.getEmployees({
         page: 0,
         size: 100,
-        sort: 'createdAt,desc', // ✅ Newest employees first for better UX
       });
       setEmployees(response.content);
     } catch (error) {
@@ -486,18 +495,44 @@ export default function EmployeeTimeOffRequestsPage() {
     }
   };
 
-  const filteredRequests = timeOffRequests.filter((request) => {
-    const matchesSearch =
-      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.employeeName?.toLowerCase().includes(searchTerm.toLowerCase());
+  // ⚡ Memoize filtered requests - Sort by createdAt DESC (newest first)
+  const filteredRequests = useMemo(() => {
+    const filtered = timeOffRequests.filter((request) => {
+      const matchesSearch =
+        request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.employee?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.timeOffTypeName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
+      const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
 
-    const matchesEmployee = employeeFilter === 'ALL' ||
-      request.employeeId?.toString() === employeeFilter;
+      const matchesEmployee = employeeFilter === 'ALL' ||
+        request.employee?.employeeId?.toString() === employeeFilter;
 
-    return matchesSearch && matchesStatus && matchesEmployee;
-  });
+      const matchesTimeOffType = timeOffTypeFilter === 'ALL' || request.timeOffTypeId === timeOffTypeFilter;
+
+      const matchesDateFrom = !dateFrom || request.startDate >= dateFrom;
+      const matchesDateTo = !dateTo || request.endDate <= dateTo;
+
+      return matchesSearch && matchesStatus && matchesEmployee && matchesTimeOffType && matchesDateFrom && matchesDateTo;
+    });
+
+    // Sort by createdAt DESC (newest first) - client-side to ensure correct order
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.startDate).getTime();
+      const dateB = new Date(b.createdAt || b.startDate).getTime();
+      return dateB - dateA; // DESC: newest first
+    });
+  }, [timeOffRequests, searchTerm, statusFilter, employeeFilter, timeOffTypeFilter, dateFrom, dateTo]);
+
+  // ⚡ Memoize stats calculation
+  const stats = useMemo(() => ({
+    total: filteredRequests.length,
+    pending: filteredRequests.filter(r => r.status === TimeOffStatus.PENDING).length,
+    approved: filteredRequests.filter(r => r.status === TimeOffStatus.APPROVED).length,
+    rejectedCancelled: filteredRequests.filter(r =>
+      r.status === TimeOffStatus.REJECTED || r.status === TimeOffStatus.CANCELLED
+    ).length,
+  }), [filteredRequests]);
 
   // Permission checks
   const canCreate = user?.permissions?.includes('CREATE_TIME_OFF') || false;
@@ -509,7 +544,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
   const canCancelRequest = (request: TimeOffRequest) => {
     if (canCancelPending) return true;
-    if (canCancelOwn && request.employeeId === Number(user?.employeeId)) return true;
+    if (canCancelOwn && request.employee?.employeeId === Number(user?.employeeId)) return true;
     return false;
   };
 
@@ -539,13 +574,19 @@ export default function EmployeeTimeOffRequestsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Yêu cầu nghỉ phép của tôi</h1>
-          <p className="text-gray-600 mt-2">Quản lý yêu cầu nghỉ phép</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {canViewAll ? 'Quản lý yêu cầu nghỉ phép' : 'Yêu cầu nghỉ phép của tôi'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {canViewAll ? 'Duyệt và quản lý yêu cầu nghỉ phép của nhân viên' : 'Quản lý yêu cầu nghỉ phép'}
+          </p>
         </div>
-        {canCreate && (
+        {activeTab === 'requests' && canCreate && (
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-[#8b5fbf] hover:bg-[#7a4fb0]"
+            className="bg-[#8b5fbf] hover:bg-[#7a4fa8]"
+            disabled={!canCreate}
+            title={!canCreate ? 'Bạn không có quyền tạo yêu cầu nghỉ phép' : ''}
           >
             <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
             Tạo yêu cầu
@@ -553,106 +594,193 @@ export default function EmployeeTimeOffRequestsPage() {
         )}
       </div>
 
-      {/* Leave Balances Card */}
-      {leaveBalances && leaveBalances.balances.length > 0 && (
-        <Card className="mb-6 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-blue-900">
-              <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2" />
-              Số dư ngày nghỉ năm {leaveBalances.cycle_year}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {leaveBalances.balances.map((balance) => (
-                <div
-                  key={balance.balance_id}
-                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">
-                      {balance.time_off_type.type_name}
-                    </h3>
-                    <Badge variant={balance.time_off_type.is_paid ? 'default' : 'secondary'}>
-                      {balance.time_off_type.is_paid ? 'Có lương' : 'Không lương'}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tổng số ngày:</span>
-                      <span className="font-semibold text-gray-900">{balance.total_days_allowed} ngày</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Đã sử dụng:</span>
-                      <span className="font-semibold text-orange-600">{balance.days_taken} ngày</span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200">
-                      <span className="text-gray-600 font-medium">Còn lại:</span>
-                      <span className={`font-bold text-lg ${balance.days_remaining > 5 ? 'text-green-600' :
-                        balance.days_remaining > 0 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                        {balance.days_remaining} ngày
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className={`grid grid-cols-1 ${canViewAll ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-          <div>
-            <Label htmlFor="search">Tìm kiếm</Label>
-            <div className="relative">
-              <FontAwesomeIcon
-                icon={faSearch}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
-              />
-              <Input
-                id="search"
-                placeholder="Tìm theo mã yêu cầu..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <CustomSelect
-            label="Trạng thái"
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value as TimeOffStatus | 'ALL')}
-            options={[
-              { value: 'ALL', label: 'Tất cả' },
-              { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
-              { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
-              { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
-              { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
-            ]}
-          />
-          {canViewAll && (
-            <CustomSelect
-              label="Nhân viên"
-              value={employeeFilter}
-              onChange={(value) => setEmployeeFilter(value)}
-              placeholder="Tất cả nhân viên"
-              options={[
-                { value: 'ALL', label: 'Tất cả nhân viên' },
-                ...employees.map(emp => ({
-                  value: emp.employeeId.toString(),
-                  label: emp.fullName || `${emp.firstName} ${emp.lastName}`,
-                })),
-              ]}
-            />
-          )}
+      {/* ⚡ TABS */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-6">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'requests'
+              ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <FontAwesomeIcon icon={faCalendarAlt} className="h-4 w-4" />
+            Yêu cầu nghỉ phép
+          </button>
+          <button
+            onClick={() => setActiveTab('balances')}
+            className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors ${activeTab === 'balances'
+              ? 'text-[#8b5fbf] border-b-2 border-[#8b5fbf]'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <FontAwesomeIcon icon={faWallet} className="h-4 w-4" />
+            Số dư nghỉ phép
+          </button>
         </div>
       </div>
 
-      {/* Time Off Requests List - Card Layout giống Admin */}
+      {/* ⚡ TAB CONTENT */}
+      {activeTab === 'requests' ? (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Tổng số */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-600 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+            </div>
+
+            {/* Chờ duyệt */}
+            <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-yellow-800 mb-2">Chờ duyệt</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faClock} className="text-yellow-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-yellow-800">{stats.pending}</p>
+              </div>
+            </div>
+
+            {/* Đã duyệt */}
+            <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-green-800 mb-2">Đã duyệt</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faCheck} className="text-green-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-green-800">{stats.approved}</p>
+              </div>
+            </div>
+
+            {/* Từ chối/Hủy */}
+            <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-red-800 mb-2">Từ chối/hủy</p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={faTimes} className="text-red-700 text-xl" />
+                </div>
+                <p className="text-3xl font-bold text-red-800">{stats.rejectedCancelled}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="search">Tìm kiếm</Label>
+                <div className="relative">
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
+                  />
+                  <Input
+                    id="search"
+                    placeholder="Mã yêu cầu, nhân viên..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {canViewAll && (
+                <div className="space-y-2">
+                  <CustomSelect
+                    label="Nhân viên"
+                    value={employeeFilter}
+                    onChange={(value: string) => setEmployeeFilter(value)}
+                    options={[
+                      { value: 'ALL', label: 'Tất cả nhân viên' },
+                      ...employees.map(emp => ({
+                        value: emp.employeeId.toString(),
+                        label: emp.fullName || `${emp.firstName} ${emp.lastName}`
+                      }))
+                    ]}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <CustomSelect
+                  label="Loại ngày nghỉ"
+                  value={timeOffTypeFilter}
+                  onChange={(value: string) => setTimeOffTypeFilter(value)}
+                  options={[
+                    { value: 'ALL', label: 'Tất cả loại' },
+                    ...timeOffTypes
+                      .filter(type => type.isActive)
+                      .map(type => ({
+                        value: type.typeId,
+                        label: type.typeName || type.typeId
+                      }))
+                  ]}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <CustomSelect
+                  label="Trạng thái"
+                  value={statusFilter}
+                  onChange={(value: string) => setStatusFilter(value as TimeOffStatus | 'ALL')}
+                  options={[
+                    { value: 'ALL', label: 'Tất cả' },
+                    { value: TimeOffStatus.PENDING, label: 'Chờ duyệt' },
+                    { value: TimeOffStatus.APPROVED, label: 'Đã duyệt' },
+                    { value: TimeOffStatus.REJECTED, label: 'Từ chối' },
+                    { value: TimeOffStatus.CANCELLED, label: 'Đã hủy' },
+                  ]}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateFrom">Từ ngày</Label>
+                <Input
+                  id="dateFrom"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateTo">Đến ngày</Label>
+                <Input
+                  id="dateTo"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+
+              {/* Nút xóa bộ lọc */}
+              <div className="space-y-2 flex flex-col justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('ALL');
+                    setEmployeeFilter('ALL');
+                    setTimeOffTypeFilter('ALL');
+                    setDateFrom('');
+                    setDateTo('');
+                  }}
+                  className="w-full"
+                >
+                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-2" />
+                  Xóa bộ lọc
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Time Off Requests List - Card Layout giống Admin */}
       <div className="grid gap-4">
         {filteredRequests.map((request) => {
           const statusConfig = TIME_OFF_STATUS_CONFIG[request.status];
@@ -767,12 +895,96 @@ export default function EmployeeTimeOffRequestsPage() {
         })}
       </div>
 
-      {filteredRequests.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-gray-500">Bạn chưa có yêu cầu nghỉ phép nào.</p>
-          </CardContent>
-        </Card>
+          {filteredRequests.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-500">
+                  {canViewAll ? 'Không có yêu cầu nghỉ phép nào.' : 'Bạn chưa có yêu cầu nghỉ phép nào.'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+        ) : (
+        /* ⚡ TAB: Leave Balances */
+        <div>
+          {/* If user has APPROVE_TIME_OFF and VIEW_LEAVE_ALL, show full management tab */}
+          {canApprove && canViewAll ? (
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải Leave Balances...</p>
+                  </div>
+                </div>
+              }
+            >
+              <LeaveBalancesTab
+                employees={employees}
+                timeOffTypes={timeOffTypes}
+              />
+            </Suspense>
+          ) : (
+            /* Show own balances only */
+            <>
+              {leaveBalances && leaveBalances.balances.length > 0 ? (
+                <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-blue-900">
+                      <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 mr-2" />
+                      Số dư ngày nghỉ năm {leaveBalances.cycle_year}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {leaveBalances.balances.map((balance) => (
+                        <div
+                          key={balance.balance_id}
+                          className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {balance.time_off_type.type_name}
+                            </h3>
+                            <Badge variant={balance.time_off_type.is_paid ? 'default' : 'secondary'}>
+                              {balance.time_off_type.is_paid ? 'Có lương' : 'Không lương'}
+                            </Badge>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Tổng số ngày:</span>
+                              <span className="font-semibold text-gray-900">{balance.total_days_allowed} ngày</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Đã sử dụng:</span>
+                              <span className="font-semibold text-orange-600">{balance.days_taken} ngày</span>
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-gray-200">
+                              <span className="text-gray-600 font-medium">Còn lại:</span>
+                              <span className={`font-bold text-lg ${balance.days_remaining > 5 ? 'text-green-600' :
+                                balance.days_remaining > 0 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                {balance.days_remaining} ngày
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-gray-500">Chưa có thông tin số dư nghỉ phép.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {/* Create Modal */}

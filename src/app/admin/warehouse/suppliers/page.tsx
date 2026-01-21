@@ -311,9 +311,9 @@ export default function SuppliersPage() {
       requiredBaseRole="admin"
       requiredPermissions={['VIEW_WAREHOUSE']}
     >
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-4">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold whitespace-nowrap">Quản lý nhà cung cấp</h1>
             <p className="text-slate-600 mt-1">Quản lý danh sách nhà cung cấp vật tư</p>
@@ -328,7 +328,7 @@ export default function SuppliersPage() {
         </div>
 
         {/* Stats Card */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4 mb-4">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <p className="text-sm font-semibold text-gray-700 mb-2">Tổng số nhà cung cấp</p>
             <div className="flex items-center gap-3">

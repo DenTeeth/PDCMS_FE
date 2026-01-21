@@ -174,7 +174,7 @@ export default function PatientImageFolderView({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5" />
-          Hình Ảnh Bệnh Nhân
+          Hình ảnh của bệnh nhân
         </CardTitle>
       </CardHeader>
       <CardContent>

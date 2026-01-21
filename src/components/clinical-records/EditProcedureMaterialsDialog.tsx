@@ -303,8 +303,8 @@ export default function EditProcedureMaterialsDialog({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="flex items-center gap-1">
-                        Định mức BOM (chỉ đọc)
-                        <span title="BOM (Bill of Materials) là danh sách vật tư chuẩn được định nghĩa cho dịch vụ này">
+                        Định mức 
+                        <span title="Định mức là danh sách vật tư chuẩn được định nghĩa cho dịch vụ này">
                           <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                         </span>
                       </Label>
@@ -319,7 +319,7 @@ export default function EditProcedureMaterialsDialog({
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Số lượng chuẩn từ BOM của dịch vụ
+                        Số lượng chuẩn từ dịch vụ
                       </p>
                       {material.quantity !== material.plannedQuantity && (
                         <p className="text-xs text-blue-600 mt-1">

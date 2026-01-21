@@ -246,7 +246,7 @@ export default function ApproveRejectSection({
   }
 
   return (
-    <Card className="border-2 border-amber-300 bg-amber-50 shadow-sm">
+    <Card className="border-2 border-amber-300 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2.5 text-lg text-amber-900">
@@ -379,7 +379,7 @@ export default function ApproveRejectSection({
                   Duyệt
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   onClick={() => {
                     setShowRejectForm(true);
                     setShowApproveForm(false);
@@ -387,7 +387,7 @@ export default function ApproveRejectSection({
                     setNotesError('');
                   }}
                   disabled={isProcessing}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg shadow-sm"
+                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 font-medium py-2.5 rounded-lg shadow-sm"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Từ chối
@@ -508,10 +508,10 @@ export default function ApproveRejectSection({
                         Hủy
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         onClick={handleReject}
                         disabled={isProcessing || !notes.trim() || !!notesError}
-                        className="flex-1"
+                        className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
                       >
                         {isProcessing ? (
                           <>
