@@ -235,7 +235,7 @@ export default function WorkShiftsPage() {
         baseRole: user?.baseRole
       });
 
-      const data = await workShiftService.getAll();
+      const data = await workShiftService.getAll(); // Lấy tất cả ca làm việc (cả active và inactive) để phân loại theo tab
       console.log('✅ Work shifts fetched successfully:', data.length, 'items');
       setWorkShifts(data);
       if (data.length === 0) {

@@ -184,7 +184,7 @@ export default function AdminShiftCalendarPage() {
     try {
       setLoading(true);
       // Load work shifts
-      const workShiftsData = await workShiftService.getAll();
+      const workShiftsData = await workShiftService.getAll(true); // Chỉ lấy ca làm việc đang hoạt động
       setWorkShifts(workShiftsData);
 
       // Load employees (Admin luôn có quyền xem tất cả)

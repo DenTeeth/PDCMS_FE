@@ -185,7 +185,7 @@ export default function ShiftCalendarPage() {
       console.log(' Loading shift calendar data...');
 
       // Load work shifts
-      const workShiftsData = await workShiftService.getAll();
+      const workShiftsData = await workShiftService.getAll(true); // Chỉ lấy ca làm việc đang hoạt động
       setWorkShifts(workShiftsData);
       console.log(' Work shifts loaded:', workShiftsData.length);
 

@@ -110,7 +110,7 @@ export default function AdminOvertimeRequestsPage() {
 
   const loadWorkShifts = async () => {
     try {
-      const response = await workShiftService.getAll();
+      const response = await workShiftService.getAll(true); // Chỉ lấy ca làm việc đang hoạt động
       setWorkShifts(response);
     } catch (error) {
       console.error('Error loading work shifts:', error);

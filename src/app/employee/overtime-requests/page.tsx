@@ -142,7 +142,7 @@ export default function EmployeeOvertimeRequestsPage() {
   const loadWorkShifts = async () => {
     try {
       setWorkShiftsError(null);
-      const response = await workShiftService.getAll();
+      const response = await workShiftService.getAll(true); // Chỉ lấy ca làm việc đang hoạt động
       setWorkShifts(response);
       if (response.length === 0) {
         setWorkShiftsError('Không có ca làm việc nào trong hệ thống.');
