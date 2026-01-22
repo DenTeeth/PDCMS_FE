@@ -174,7 +174,7 @@ export default function EmployeesPage() {
       setSpecializations(activeSpecializations);
     } catch (error: any) {
       console.error('Failed to fetch specializations:', error);
-      toast.error('Failed to load specializations');
+      toast.error('Không thể tải danh sách chuyên khoa');
     } finally {
       setLoadingSpecializations(false);
     }

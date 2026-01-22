@@ -128,7 +128,7 @@ export default function RegistrationsPage() {
       setPartTimeSlots(slots || []);
     } catch (error: any) {
       console.error('Failed to fetch part-time slots:', error);
-      toast.error(error.response?.data?.detail || 'Failed to fetch part-time slots');
+      toast.error(error.response?.data?.detail || 'Không thể tải danh sách ca bán thời gian');
     } finally {
       setPartTimeLoading(false);
     }
@@ -142,7 +142,7 @@ export default function RegistrationsPage() {
       setSlotDetail(detail);
     } catch (error: any) {
       console.error('Failed to fetch slot detail:', error);
-      toast.error(error.response?.data?.detail || error.message || 'Failed to fetch slot detail');
+      toast.error(error.response?.data?.detail || error.message || 'Không thể tải chi tiết ca làm việc');
     } finally {
       setLoadingSlotDetail(false);
     }
@@ -167,7 +167,7 @@ export default function RegistrationsPage() {
       setFixedRegistrations(response);
     } catch (error: any) {
       console.error('Failed to fetch fixed registrations:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to fetch fixed shift registrations';
+      const errorMessage = error.response?.data?.detail || error.message || 'Không thể tải danh sách đăng ký ca cố định';
       toast.error(errorMessage);
     } finally {
       setFixedLoading(false);
@@ -197,7 +197,7 @@ export default function RegistrationsPage() {
       setEmployees(eligibleEmployees);
     } catch (error: any) {
       console.error('Failed to fetch dropdown data:', error);
-      toast.error('Failed to load dropdown data');
+      toast.error('Không thể tải dữ liệu');
     } finally {
       setLoadingDropdowns(false);
     }
@@ -216,22 +216,22 @@ export default function RegistrationsPage() {
     }
 
     if (!fixedCreateFormData.employeeId || fixedCreateFormData.employeeId === 0) {
-      toast.error('Please select an employee');
+      toast.error('Vui lòng chọn nhân viên');
       return;
     }
 
     if (!fixedCreateFormData.workShiftId) {
-      toast.error('Please select a work shift');
+      toast.error('Vui lòng chọn ca làm việc');
       return;
     }
 
     if (fixedCreateFormData.daysOfWeek.length === 0) {
-      toast.error('Please select at least one day of week');
+      toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
       return;
     }
 
     if (!fixedCreateFormData.effectiveFrom) {
-      toast.error('Please select effective from date');
+      toast.error('Vui lòng chọn ngày bắt đầu hiệu lực');
       return;
     }
 
@@ -269,7 +269,7 @@ export default function RegistrationsPage() {
     } catch (error: any) {
       console.error('Failed to create fixed registration:', error);
 
-      let errorMessage = 'Failed to create fixed shift registration';
+      let errorMessage = 'Không thể tạo đăng ký ca cố định';
 
       if (error.errorCode === FixedRegistrationErrorCode.INVALID_EMPLOYEE_TYPE) {
         errorMessage = 'Employee type PART_TIME_FLEX cannot use fixed shift registration. Use part-time registration instead.';
@@ -357,7 +357,7 @@ export default function RegistrationsPage() {
     } catch (error: any) {
       console.error('Failed to update fixed registration:', error);
 
-      let errorMessage = 'Failed to update fixed shift registration';
+      let errorMessage = 'Không thể cập nhật đăng ký ca cố định';
       if (error.message) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {
@@ -390,7 +390,7 @@ export default function RegistrationsPage() {
     } catch (error: any) {
       console.error('Failed to delete fixed registration:', error);
 
-      let errorMessage = 'Failed to delete fixed shift registration';
+      let errorMessage = 'Không thể xóa đăng ký ca cố định';
       if (error.message) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {

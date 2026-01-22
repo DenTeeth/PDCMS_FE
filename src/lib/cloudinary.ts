@@ -48,7 +48,7 @@ export const uploadImageFromClient = async (
 
     if (!response.ok) {
       // Trả về thông báo lỗi chi tiết từ server
-      const errorMessage = responseData.message || responseData.error || 'Failed to upload image';
+      const errorMessage = responseData.message || responseData.error || 'Không thể tải lên hình ảnh';
       throw new Error(errorMessage);
     }
 
@@ -59,7 +59,7 @@ export const uploadImageFromClient = async (
     if (error.message) {
       throw error;
     }
-    throw new Error(`Failed to upload image: ${error.message || 'Unknown error'}`);
+    throw new Error(`Không thể tải lên hình ảnh: ${error.message || 'Lỗi không xác định'}`);
   }
 };
 

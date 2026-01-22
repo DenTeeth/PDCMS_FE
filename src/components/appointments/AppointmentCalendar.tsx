@@ -98,12 +98,12 @@ export default function AppointmentCalendar({
             setAppointments([]);
 
             if (error.response?.status === 500) {
-                toast.info('No appointments available', {
-                    description: 'Backend service is not ready yet',
+                toast.info('Không có lịch hẹn nào', {
+                    description: 'Dịch vụ chưa sẵn sàng',
                 });
             } else {
-                toast.error('Failed to load appointments', {
-                    description: error.message || 'Please try again later',
+                toast.error('Không thể tải danh sách lịch hẹn', {
+                    description: error.message || 'Vui lòng thử lại sau',
                 });
             }
         } finally {

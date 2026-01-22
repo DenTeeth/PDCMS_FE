@@ -228,7 +228,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
             );
             setAvailableSlots(data);
         } catch (error: any) {
-            toast.error('Failed to load available slots');
+            toast.error('Không thể tải danh sách ca khả dụng');
         } finally {
             setLoading(false);
         }
@@ -237,7 +237,7 @@ export function RescheduleModal({ open, onClose, appointment, onSuccess }: Resch
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!appointment || !newDate || !selectedSlot || !reason.trim()) {
-            toast.error('Please fill in all fields');
+            toast.error('Vui lòng điền đầy đủ tất cả các trường');
             return;
         }
 

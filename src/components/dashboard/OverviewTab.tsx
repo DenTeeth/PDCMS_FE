@@ -215,10 +215,9 @@ export function OverviewTab({ startDate, endDate, compareWithPrevious, compariso
           color="blue"
         />
         <StatCard
-          title="Bệnh nhân mới"
+          title="Bệnh nhân mới tháng này"
           value={data.summary.newPatientsThisMonth}
           icon={<UserPlus className="h-6 w-6" />}
-          subtitle="Tháng này"
           color="green"
         />
       </div>

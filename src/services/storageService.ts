@@ -402,109 +402,39 @@ export const storageService = {
   },
 
   /**
-   * PUT /api/v1/warehouse/transactions/{id} - Cập nhật ghi chú phiếu
-   * (Legacy behavior reimplemented via API 6.6 controller)
+   * PATCH /api/v1/warehouse/transactions/{id}/notes - Cập nhật ghi chú phiếu (API 6.6.5)
    * 
-   * Note: BE may accept notes in query params OR body. Try body first, fallback to params if needed.
+   * Endpoint mới được BE team implement để update notes cho warehouse transactions.
+   * Request body đơn giản: chỉ cần { notes: string }
    */
   updateNotes: async (id: number, notes: string): Promise<StorageTransactionV3> => {
-    // Validate notes parameter
-    const notesValue = notes || ''; // Ensure notes is never undefined
-    
-    console.log('[updateNotes] Starting update:', {
-      id,
-      notesLength: notesValue.length,
-      notesPreview: notesValue.substring(0, 50),
-    });
-
     try {
-      // Try sending notes in body first (more RESTful)
-      console.log('[updateNotes] Attempt 1: Sending notes in request body');
-      const response = await api.put(`${TRANSACTION_BASE}/${id}`, { notes: notesValue }, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.patch(
+        `${TRANSACTION_BASE}/${id}/notes`,
+        { notes: notes || '' },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      
       const payload = extractPayload(response);
       const mapped = mapTransactionDetail(payload.data ?? payload);
-      console.log('[updateNotes] Success (body method):', mapped.transactionCode);
+      console.log('[updateNotes] Notes updated successfully:', mapped.transactionCode);
       return mapped;
     } catch (error: any) {
-      console.error('[updateNotes] Body method failed:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        message: error.response?.data?.message || error.message,
-        url: error.config?.url,
+      const enhancedError = createApiError(error, {
+        endpoint: `${TRANSACTION_BASE}/${id}/notes`,
+        method: 'PATCH',
+        params: { notes: notes || '' },
+      }) as any;
+      
+      console.error('[updateNotes] Failed to update notes:', {
+        id,
+        message: enhancedError.message,
+        status: error.response?.status || enhancedError.status,
+        endpoint: enhancedError.endpoint,
+        originalError: error,
       });
-
-      // If body approach fails, try query params as fallback
-      if (error.response?.status === 400 || error.response?.status === 500) {
-        try {
-          console.log('[updateNotes] Attempt 2: Retrying with query params...', {
-            id,
-            notesLength: notesValue.length,
-          });
-          
-          // Ensure notes is properly encoded in query params
-          const response = await api.put(`${TRANSACTION_BASE}/${id}`, null, {
-            params: { 
-              notes: notesValue || '' // Explicitly ensure string
-            },
-            paramsSerializer: (params) => {
-              // Custom serializer to ensure proper encoding
-              const searchParams = new URLSearchParams();
-              if (params.notes !== undefined && params.notes !== null) {
-                searchParams.append('notes', String(params.notes));
-              }
-              return searchParams.toString();
-            },
-          });
-          const payload = extractPayload(response);
-          const mapped = mapTransactionDetail(payload.data ?? payload);
-          console.log('[updateNotes] Success (query params method):', mapped.transactionCode);
-          return mapped;
-        } catch (retryError: any) {
-          console.error('[updateNotes] Query params method also failed:', {
-            status: retryError.response?.status,
-            statusText: retryError.response?.statusText,
-            message: retryError.response?.data?.message || retryError.message,
-            url: retryError.config?.url,
-            notesInUrl: retryError.config?.url?.includes('notes='),
-          });
-
-          const enhancedError = createApiError(retryError, {
-            endpoint: `${TRANSACTION_BASE}/${id}`,
-            method: 'PUT',
-            params: { notes: notesValue },
-          }) as any;
-          
-          console.error('[updateNotes] Both methods failed:', {
-            id,
-            notesLength: notesValue.length,
-            message: enhancedError.message,
-            status: retryError.response?.status || enhancedError.status,
-            originalError: retryError,
-          });
-          
-          throw enhancedError;
-        }
-      } else {
-        const enhancedError = createApiError(error, {
-          endpoint: `${TRANSACTION_BASE}/${id}`,
-          method: 'PUT',
-          params: { notes: notesValue },
-        }) as any;
-        
-        console.error('[updateNotes] Error (non-retryable):', {
-          id,
-          notesLength: notesValue.length,
-          message: enhancedError.message,
-          status: error.response?.status || enhancedError.status,
-          originalError: error,
-        });
-        
-        throw enhancedError;
-      }
+      
+      throw enhancedError;
     }
   },
 

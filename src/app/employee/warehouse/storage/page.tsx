@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Eye, Edit, Trash2 } from 'lucide-react';
+import { AlertTriangle, Eye } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
@@ -773,15 +773,6 @@ export default function StorageInOutPage() {
                                       className="h-8 w-8 p-0"
                                     >
                                       <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleEdit(txn)}
-                                      title="Sửa ghi chú"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <Edit className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 </td>

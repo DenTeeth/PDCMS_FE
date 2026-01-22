@@ -97,7 +97,7 @@ export default function CloudinaryImageUpload({
       console.error('Upload error:', err);
       
       // Hiển thị thông báo lỗi chi tiết hơn
-      let errorMessage = 'Failed to upload image';
+      let errorMessage = 'Không thể tải lên hình ảnh';
       
       if (err.message) {
         errorMessage = err.message;

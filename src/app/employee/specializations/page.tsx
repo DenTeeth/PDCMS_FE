@@ -37,7 +37,7 @@ export default function SpecializationsPage() {
             if (error.response?.status === 401) {
                 toast.error('Vui lòng đăng nhập để xem chuyên khoa');
             } else {
-                toast.error(error.response?.data?.message || 'Failed to fetch specializations');
+                toast.error(error.response?.data?.message || 'Không thể tải danh sách chuyên khoa');
             }
             setSpecializations([]);
         } finally {

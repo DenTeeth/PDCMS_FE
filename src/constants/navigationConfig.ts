@@ -98,7 +98,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Tài khoản nhân viên',
         href: '/{baseRole}/accounts/employees',
         icon: faUserTie,
-        requiredPermissions: ['VIEW_EMPLOYEE'],
+        requiredPermissions: ['MANAGE_EMPLOYEE'],
       },
     ],
   },
@@ -174,7 +174,7 @@ const SHARED_NAVIGATION_ITEMS: NavigationItem[] = [
         name: 'Ngày lễ',
         href: '/{baseRole}/holidays',
         icon: faFileAlt,
-        requiredPermissions: ['MANAGE_HOLIDAY', 'VIEW_HOLIDAY'],
+        requiredPermissions: ['MANAGE_HOLIDAY'],
       },
       {
         name: 'Loại nghỉ phép',

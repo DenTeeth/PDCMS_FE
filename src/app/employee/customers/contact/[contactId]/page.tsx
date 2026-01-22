@@ -64,7 +64,7 @@ export default function ViewContactPage() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                            Failed to load contact: {(error as any)?.message || 'Unknown error'}
+                            Không thể tải liên hệ: {(error as any)?.message || 'Lỗi không xác định'}
                         </div>
                     </CardContent>
                 </Card>
@@ -118,7 +118,7 @@ export default function ViewContactPage() {
             router.push('/employee/customers');
         } catch (err: any) {
             console.error('Delete failed', err);
-            toast.error(err?.message || 'Failed to delete contact');
+            toast.error(err?.message || 'Không thể xóa liên hệ');
         }
     };
 

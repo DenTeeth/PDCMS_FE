@@ -813,7 +813,7 @@ export default function AdminTimeOffRequestsPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div>
-                                <div className="text-gray-900 font-medium">{request.timeOffTypeName || request.timeOffTypeId}</div>
+                                <div className="text-gray-900 font-medium">{request.timeOffTypeName || 'N/A'}</div>
                                 {request.workShiftName && (
                                   <div className="text-xs text-gray-500">{request.workShiftName}</div>
                                 )}

@@ -41,7 +41,7 @@ export default function EditContactPage() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                            Failed to load contact: {(error as any)?.message || 'Unknown error'}
+                            Không thể tải liên hệ: {(error as any)?.message || 'Lỗi không xác định'}
                         </div>
                     </CardContent>
                 </Card>
@@ -93,19 +93,19 @@ export default function EditContactPage() {
             router.push('/employee/customers');
         } catch (err: any) {
             console.error('Update failed', err);
-            toast.error(err?.message || 'Failed to update contact');
+            toast.error(err?.message || 'Không thể cập nhật liên hệ');
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm('Confirm delete this contact?')) return;
+        if (!confirm('Xác nhận xóa liên hệ này?')) return;
         try {
             await del.mutateAsync(contact.id);
-            toast.success('Contact deleted successfully');
+            toast.success('Xóa liên hệ thành công');
             router.push('/employee/customers');
         } catch (err: any) {
             console.error('Delete failed', err);
-            toast.error(err?.message || 'Failed to delete contact');
+            toast.error(err?.message || 'Không thể xóa liên hệ');
         }
     };
 

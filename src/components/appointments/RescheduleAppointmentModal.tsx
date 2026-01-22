@@ -417,7 +417,7 @@ export default function RescheduleAppointmentModal({
       }
     } catch (error: any) {
       console.error('Failed to load initial data:', error);
-      toast.error('Failed to load data: ' + (error.response?.data?.message || error.message));
+      toast.error('Không thể tải dữ liệu: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingData(false);
     }

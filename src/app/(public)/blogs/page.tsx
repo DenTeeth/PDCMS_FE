@@ -1,6 +1,7 @@
 import { hygraph, GET_POSTS_QUERY, type Post } from '@/lib/hygraph';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
+import DynamicBreadcrumb from '@/components/ui/DynamicBreadcrumb';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, ArrowRight } from 'lucide-react';
@@ -19,25 +20,21 @@ export default async function BlogsPage() {
   const posts = await getPosts();
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#8b5fbf]/10 to-[#1e3a5f]/10 py-16">
+      <section className="bg-gradient-to-r from-accent to-secondary py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Blog & Tin Tức
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Cập nhật những thông tin mới nhất về nha khoa, sức khỏe răng miệng và các dịch vụ của chúng tôi
-            </p>
-          </div>
+          <DynamicBreadcrumb />
+
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Blog & Tin Tức</h1>
+          <p className="text-gray-600 mt-2 max-w-2xl">Cập nhật những thông tin mới nhất về nha khoa, sức khỏe răng miệng và các dịch vụ của chúng tôi</p>
         </div>
       </section>
 
       {/* Blog Posts Grid */}
-      <section className="py-16">
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {posts.length === 0 ? (
             <div className="text-center py-20">
@@ -136,7 +133,7 @@ export default async function BlogsPage() {
       </section>
 
       <Footer />
-    </div>
+    </main>
   );
 }
 

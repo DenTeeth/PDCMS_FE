@@ -106,7 +106,7 @@ export default function SlotRegistrationPage() {
       setSlotDetails(detailsMap);
     } catch (error: any) {
       console.error('Failed to fetch available slots:', error);
-      toast.error(error.response?.data?.detail || 'Failed to fetch available slots');
+      toast.error(error.response?.data?.detail || 'Không thể tải danh sách ca khả dụng');
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ export default function SlotRegistrationPage() {
       }
     } catch (error: any) {
       console.error('Failed to fetch my registrations:', error);
-      toast.error(error.response?.data?.detail || 'Failed to fetch my registrations');
+      toast.error(error.response?.data?.detail || 'Không thể tải danh sách đăng ký của tôi');
     } finally {
       setLoadingRegistrations(false);
     }
@@ -157,13 +157,13 @@ export default function SlotRegistrationPage() {
 
     // Validate required fields
     if (!registerFormData.effectiveFrom) {
-      toast.error('Please select effective from date');
+      toast.error('Vui lòng chọn ngày bắt đầu hiệu lực');
       return;
     }
 
     // Validate dayOfWeek is selected
     if (!registerFormData.dayOfWeek || registerFormData.dayOfWeek.length === 0) {
-      toast.error('Please select at least one day of the week');
+      toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
       return;
     }
 
@@ -190,7 +190,7 @@ export default function SlotRegistrationPage() {
       console.log('📤 Registering for slot:', payload);
 
       await shiftRegistrationService.createRegistration(payload);
-      toast.success('Successfully registered for the slot!');
+      toast.success('Đăng ký ca làm việc thành công!');
       setShowRegisterModal(false);
       setSelectedSlot(null);
 
@@ -202,7 +202,7 @@ export default function SlotRegistrationPage() {
     } catch (error: any) {
       console.error('❌ Failed to register for slot:', error);
 
-      let errorMessage = 'Failed to register for slot';
+      let errorMessage = 'Không thể đăng ký ca làm việc';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.detail) {
@@ -219,7 +219,7 @@ export default function SlotRegistrationPage() {
 
   // ==================== CANCEL REGISTRATION ====================
   const handleCancelRegistration = async (registration: ShiftRegistration) => {
-    if (!confirm(`Are you sure you want to cancel your registration for ${registration.shiftName} on ${registration.dayOfWeek}?`)) {
+    if (!confirm(`Bạn có chắc chắn muốn hủy đăng ký ca ${registration.shiftName} vào ${registration.dayOfWeek}?`)) {
       return;
     }
 
@@ -228,7 +228,7 @@ export default function SlotRegistrationPage() {
       console.log('🗑️ Cancelling registration:', registration.registrationId);
 
       await shiftRegistrationService.deleteRegistration(registration.registrationId.toString());
-      toast.success('Registration cancelled successfully');
+      toast.success('Hủy đăng ký thành công');
 
       // Refresh both lists
       await Promise.all([
@@ -238,7 +238,7 @@ export default function SlotRegistrationPage() {
     } catch (error: any) {
       console.error('❌ Failed to cancel registration:', error);
 
-      let errorMessage = 'Failed to cancel registration';
+      let errorMessage = 'Không thể hủy đăng ký';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.detail) {

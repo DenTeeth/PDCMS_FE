@@ -232,7 +232,7 @@ export default function EmployeeAppointmentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
           <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lịch Hẹn</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Lịch hẹn</h1>
           <p className="text-gray-600 mt-1">Quản lý lịch hẹn của bạn</p>
           </div>
         {canCreate && (

@@ -96,7 +96,7 @@ export default function EmployeeDetailPage() {
       setRoles(data);
     } catch (error: any) {
       console.error('Failed to fetch roles:', error);
-      toast.error('Failed to load roles');
+      toast.error('Không thể tải danh sách vai trò');
     }
   };
 
@@ -109,7 +109,7 @@ export default function EmployeeDetailPage() {
       setSpecializations(activeSpecializations);
     } catch (error: any) {
       console.error('Failed to fetch specializations:', error);
-      toast.error('Failed to load specializations');
+      toast.error('Không thể tải danh sách chuyên khoa');
     } finally {
       setLoadingSpecializations(false);
     }

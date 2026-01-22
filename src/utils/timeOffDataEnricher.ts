@@ -51,24 +51,44 @@ export class TimeOffDataEnricher {
         typeId: string,
         timeOffTypes: TimeOffType[]
     ): string {
-        if (!typeId || !timeOffTypes || timeOffTypes.length === 0) {
-            return typeId || 'N/A';
+        if (!typeId) {
+            return 'N/A';
         }
 
-        // Try exact match first
-        const type = timeOffTypes.find(t => t.typeId === typeId);
-        if (type?.typeName) {
-            return type.typeName;
+        // Try to find in timeOffTypes array first
+        if (timeOffTypes && timeOffTypes.length > 0) {
+            // Try exact match by typeId first
+            const type = timeOffTypes.find(t => t.typeId === typeId);
+            if (type?.typeName) {
+                return type.typeName;
+            }
+
+            // Try matching by typeCode as fallback (in case backend uses typeCode instead of typeId)
+            const typeByCode = timeOffTypes.find(t => t.typeCode === typeId);
+            if (typeByCode?.typeName) {
+                return typeByCode.typeName;
+            }
         }
 
-        // Try matching by typeCode as fallback (in case backend uses typeCode instead of typeId)
-        const typeByCode = timeOffTypes.find(t => t.typeCode === typeId);
-        if (typeByCode?.typeName) {
-            return typeByCode.typeName;
-        }
+        // Fallback: Map common type codes to Vietnamese names
+        return this.formatTypeCodeToName(typeId);
+    }
 
-        // Return the ID if no match found
-        return typeId;
+    /**
+     * Format type code to readable name (fallback when type not found in list)
+     * This is a last resort - ideally all types should be in the timeOffTypes array
+     */
+    private static formatTypeCodeToName(typeCode: string): string {
+        // If not found in timeOffTypes array, format the code to a readable name
+        // Convert UNPAID_PERSONAL -> Unpaid Personal
+        // This is just a fallback - the real data should come from timeOffTypes array
+        return typeCode
+            .split('_')
+            .map(word => {
+                // Capitalize first letter of each word
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            })
+            .join(' ');
     }
 
     /**

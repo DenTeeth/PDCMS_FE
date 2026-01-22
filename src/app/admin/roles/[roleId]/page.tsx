@@ -70,7 +70,7 @@ export default function RoleDetailPage() {
       setRole(data);
     } catch (error: any) {
       console.error('Failed to fetch role details:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch role details');
+      toast.error(error.response?.data?.message || 'Không thể tải chi tiết vai trò');
       router.push('/admin/roles');
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function RoleDetailPage() {
       setPermissions(data || []);
     } catch (error: any) {
       console.error('Failed to fetch role permissions:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch permissions');
+      toast.error(error.response?.data?.message || 'Không thể tải danh sách quyền');
       setPermissions([]);
     } finally {
       setLoadingPermissions(false);
@@ -105,19 +105,19 @@ export default function RoleDetailPage() {
     e.preventDefault();
 
     if (!role || !editFormData.roleName || !editFormData.description) {
-      toast.error('Please fill in all fields');
+      toast.error('Vui lòng điền đầy đủ tất cả các trường');
       return;
     }
 
     try {
       setUpdating(true);
       await roleService.updateRole(role.roleId, editFormData);
-      toast.success('Role updated successfully');
+      toast.success('Cập nhật vai trò thành công');
       setShowEditModal(false);
       fetchRoleDetails(); // Refresh role data
     } catch (error: any) {
       console.error('Failed to update role:', error);
-      toast.error(error.response?.data?.message || 'Failed to update role');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật vai trò');
     } finally {
       setUpdating(false);
     }
@@ -130,11 +130,11 @@ export default function RoleDetailPage() {
     try {
       setDeleting(true);
       await roleService.deleteRole(role.roleId);
-      toast.success(`Role "${role.roleName}" deactivated successfully`);
+      toast.success(`Vai trò "${role.roleName}" đã được vô hiệu hóa thành công`);
       router.push('/admin/roles'); // Navigate back to list
     } catch (error: any) {
       console.error('Failed to delete role:', error);
-      toast.error(error.response?.data?.message || 'Failed to deactivate role');
+      toast.error(error.response?.data?.message || 'Không thể vô hiệu hóa vai trò');
     } finally {
       setDeleting(false);
     }

@@ -38,7 +38,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
     } catch (err: any) {
       console.error('Error fetching doctor statistics:', err);
       setError(err.response?.data?.message || 'Không thể tải dữ liệu thống kê');
-      toast.error('Không thể tải thống kê góp ý bác sĩ');
+      toast.error('Không thể tải thống kê đánh giá bác sĩ');
       setDoctors([]);
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
       <div className="flex items-center justify-center py-20">
         <div className="text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-          <p className="text-sm text-gray-600">Đang tải thống kê góp ý...</p>
+          <p className="text-sm text-gray-600">Đang tải thống kê đánh giá...</p>
         </div>
       </div>
     );
@@ -182,7 +182,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
               {/* Recent Comment */}
               {doctor.statistics.recentComments && doctor.statistics.recentComments.length > 0 && (
                 <div className="space-y-2 pt-2 border-t">
-                  <p className="text-sm font-semibold">Góp ý gần đây:</p>
+                  <p className="text-sm font-semibold">Đánh giá gần đây:</p>
                   <div className="bg-muted/50 p-3 rounded-lg space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-medium">{doctor.statistics.recentComments[0].patientName}</p>
@@ -208,7 +208,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Tổng quan góp ý
+            Tổng quan đánh giá
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -217,7 +217,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
               <p className="text-3xl font-bold text-green-600">
                 {stats.totalFeedbacks}
               </p>
-              <p className="text-sm text-muted-foreground">Tổng góp ý</p>
+              <p className="text-sm text-muted-foreground">Tổng đánh giá</p>
             </div>
             <div className="text-center p-4 bg-yellow-50 rounded-lg">
               <p className="text-3xl font-bold text-yellow-600">
@@ -227,7 +227,7 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-3xl font-bold text-blue-600">{stats.totalDoctors}</p>
-              <p className="text-sm text-muted-foreground">Bác sĩ có góp ý</p>
+              <p className="text-sm text-muted-foreground">Bác sĩ được đánh giá</p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <p className="text-3xl font-bold text-purple-600">{stats.topRatedCount}</p>

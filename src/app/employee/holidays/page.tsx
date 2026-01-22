@@ -565,9 +565,6 @@ export default function AdminHolidaysPage() {
                             {definition.totalDates || 0} ngày
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          <span className="font-medium">ID:</span> {definition.definitionId}
-                        </p>
                         {definition.description && (
                           <p className="text-sm text-gray-600 mb-3">{definition.description}</p>
                         )}

@@ -314,7 +314,7 @@ export default function EmployeeRegistrationsPage() {
   const [slotDetailsMap, setSlotDetailsMap] = useState<Record<number, SlotDetailsResponse>>({});
   const [workSlotsMap, setWorkSlotsMap] = useState<Record<number, PartTimeSlot>>({});
   const [slotSortBy, setSlotSortBy] = useState<'date' | 'availability'>('date');
-  const [slotMonthFilter, setSlotMonthFilter] = useState<string>('ALL'); // 'ALL' or 'YYYY-MM'
+  const [slotMonthFilter, setSlotMonthFilter] = useState<string>('ALL'); // 'ALL' or 'MM-YYYY'
   const [slotDayFilter, setSlotDayFilter] = useState<DayOfWeek[]>([]); // Multi-select days
   const [registrationSortBy, setRegistrationSortBy] = useState<'status' | 'date'>('status');
   const [registrationStatusFilter, setRegistrationStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
@@ -462,22 +462,30 @@ export default function EmployeeRegistrationsPage() {
         sortDirection: 'DESC'
       }, 'part-time-flex');
 
-      // Backend now ALWAYS returns paginated response (Spring Data Page object)
-      console.log('✅ Part-time registrations (paginated):', {
-        totalElements: response.totalElements,
-        totalPages: response.totalPages,
-        currentPage: response.pageable?.pageNumber ?? partTimeCurrentPage,
-        items: response.content?.length ?? 0
-      });
+      // Check if response is paginated (has totalElements) or array
+      if (Array.isArray(response)) {
+        // Handle array response (should not happen for part-time-flex, but handle gracefully)
+        setPartTimeRegistrations(response);
+        setPartTimeTotalPages(1);
+        setPartTimeTotalElements(response.length);
+      } else {
+        // Backend now ALWAYS returns paginated response (Spring Data Page object)
+        console.log('✅ Part-time registrations (paginated):', {
+          totalElements: response.totalElements,
+          totalPages: response.totalPages,
+          currentPage: response.pageable?.pageNumber ?? partTimeCurrentPage,
+          items: response.content?.length ?? 0
+        });
 
-      setPartTimeRegistrations(response.content || []);
-      setPartTimeTotalPages(response.totalPages || 0);
-      setPartTimeTotalElements(response.totalElements || 0);
+        setPartTimeRegistrations(response.content || []);
+        setPartTimeTotalPages(response.totalPages || 0);
+        setPartTimeTotalElements(response.totalElements || 0);
+      }
     } catch (error: any) {
       console.error('❌ Failed to fetch part-time registrations:', error);
 
       // Extract detailed error message from 500 response
-      let errorMessage = 'Failed to fetch your shift registrations';
+      let errorMessage = 'Không thể tải danh sách đăng ký ca làm việc của bạn';
       if (error.response?.status === 500) {
         console.error('🔥 [Backend 500 Error] Server error details:', {
           fullResponse: error.response,
@@ -487,7 +495,7 @@ export default function EmployeeRegistrationsPage() {
           error: error.response.data?.error,
           trace: error.response.data?.trace
         });
-        errorMessage = `Server error: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Internal server error - check backend logs'}`;
+        errorMessage = `Lỗi máy chủ: ${error.response.data?.message || error.response.data?.detail || error.response.data?.error || 'Lỗi máy chủ nội bộ - vui lòng kiểm tra log backend'}`;
       }
 
       toast.error(error.response?.data?.detail || error.response?.data?.message || error.message || errorMessage);
@@ -507,7 +515,7 @@ export default function EmployeeRegistrationsPage() {
       }
     } catch (error: any) {
       console.error('Failed to fetch work shifts:', error);
-      toast.error('Failed to load work shifts: ' + (error.response?.data?.message || error.message));
+      toast.error('Không thể tải danh sách ca làm việc: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoadingWorkShifts(false);
     }
@@ -567,7 +575,12 @@ export default function EmployeeRegistrationsPage() {
       setLoadingAvailableSlots(true);
 
       // Pass month filter to API if selected
-      const monthParam = slotMonthFilter !== 'ALL' ? slotMonthFilter : undefined;
+      // Convert from "MM-YYYY" (UI format) to "YYYY-MM" (API format)
+      let monthParam: string | undefined = undefined;
+      if (slotMonthFilter !== 'ALL') {
+        const [month, year] = slotMonthFilter.split('-');
+        monthParam = `${year}-${month}`; // Convert to YYYY-MM for API
+      }
       console.log(` [fetchAvailableSlots] Calling shiftRegistrationService.getAvailableSlots(${monthParam || 'no filter'})...`);
       const slots = await shiftRegistrationService.getAvailableSlots(monthParam);
 
@@ -640,7 +653,7 @@ export default function EmployeeRegistrationsPage() {
       });
 
       // Extract detailed error message from 500 response
-      let errorMessage = 'Failed to load available slots';
+      let errorMessage = 'Không thể tải danh sách ca khả dụng';
       if (error.response?.status === 500) {
         console.error(' [Backend 500 Error] Server error details:', {
           fullResponse: error.response,
@@ -740,7 +753,7 @@ export default function EmployeeRegistrationsPage() {
         setEmployees([]);
         setHasViewEmployeePermission(false); // 403 means no permission
       } else {
-        toast.error('Failed to load dropdown data');
+        toast.error('Không thể tải dữ liệu dropdown');
         setEmployees([]);
         setHasViewEmployeePermission(null); // Unknown - could be network error
       }
@@ -882,7 +895,7 @@ export default function EmployeeRegistrationsPage() {
       } else if (error.errorCode === 'REGISTRATION_CONFLICT' || error.response?.data?.errorCode === 'REGISTRATION_CONFLICT') {
         toast.error('Bạn đã đăng ký suất này rồi hoặc có ca làm việc trùng giờ.');
       } else {
-        toast.error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to create shift registration');
+        toast.error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Không thể tạo đăng ký ca làm việc');
       }
     } finally {
       setPartTimeCreating(false);
@@ -1178,7 +1191,7 @@ export default function EmployeeRegistrationsPage() {
     let slots = [...availableSlots];
 
     // NO NEED to filter by month - BE already filtered via API parameter
-    // Month filter is handled by passing ?month=YYYY-MM to API
+    // Month filter is handled by passing ?month=YYYY-MM to API (converted from MM-YYYY UI format)
 
     // Filter by day of week (multi-select)
     if (slotDayFilter.length > 0) {
@@ -1245,10 +1258,18 @@ export default function EmployeeRegistrationsPage() {
       if (details?.availabilityByMonth) {
         details.availabilityByMonth.forEach(month => {
           if (month.totalDatesAvailable > 0) {
-            // Parse "November 2025" to "2025-11"
-            const [monthName, year] = month.monthName.split(' ');
-            const monthNumber = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
-            const monthStr = `${year}-${monthNumber.toString().padStart(2, '0')}`;
+            // Use monthName if available, otherwise use month field (convert from "YYYY-MM" to "MM-YYYY")
+            let monthStr: string;
+            if (month.monthName) {
+              // Parse "November 2025" to "11-2025"
+              const [monthName, year] = month.monthName.split(' ');
+              const monthNumber = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
+              monthStr = `${monthNumber.toString().padStart(2, '0')}-${year}`;
+            } else {
+              // Fallback to month field (convert from "YYYY-MM" to "MM-YYYY")
+              const [year, monthNum] = month.month.split('-');
+              monthStr = `${monthNum}-${year}`;
+            }
             months.add(monthStr);
           }
         });
@@ -1258,7 +1279,7 @@ export default function EmployeeRegistrationsPage() {
     // Fallback: If no slot details loaded yet, get from effectiveFrom
     if (months.size === 0) {
       availableSlots.forEach(slot => {
-        const month = format(parseISO(slot.effectiveFrom), 'yyyy-MM');
+        const month = format(parseISO(slot.effectiveFrom), 'MM-yyyy');
         months.add(month);
       });
     }
@@ -1268,7 +1289,7 @@ export default function EmployeeRegistrationsPage() {
 
   // Get month display name
   const getMonthDisplayName = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
+    const [month, year] = monthStr.split('-');
     return `Tháng ${parseInt(month)}/${year}`;
   };
 
@@ -1605,7 +1626,7 @@ export default function EmployeeRegistrationsPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar className="w-5 h-5 text-purple-600" />
                     <CardTitle className="text-lg">
-                      Đăng ký của tôi
+                      Tất cả phiếu đăng ký
                     </CardTitle>
                   </div>
 
@@ -1683,8 +1704,9 @@ export default function EmployeeRegistrationsPage() {
                         const statusConfig = {
                           PENDING: { color: 'bg-yellow-50 border-yellow-200', icon: <AlertCircle className="w-4 h-4" />, text: 'Chờ duyệt', textColor: 'text-yellow-700' },
                           APPROVED: { color: 'bg-green-50 border-green-200', icon: <CheckCircle className="w-4 h-4" />, text: 'Đã duyệt', textColor: 'text-green-700' },
-                          REJECTED: { color: 'bg-red-50 border-red-200', icon: <XCircle className="w-4 h-4" />, text: 'Từ chối', textColor: 'text-red-700' }
-                        }[registration.status];
+                          REJECTED: { color: 'bg-red-50 border-red-200', icon: <XCircle className="w-4 h-4" />, text: 'Từ chối', textColor: 'text-red-700' },
+                          CANCELLED: { color: 'bg-gray-50 border-gray-200', icon: <XCircle className="w-4 h-4" />, text: 'Đã hủy', textColor: 'text-gray-700' }
+                        }[registration.status] || { color: 'bg-gray-50 border-gray-200', icon: <AlertCircle className="w-4 h-4" />, text: registration.status, textColor: 'text-gray-700' };
 
                         return (
                           <Card key={registration.registrationId} className="hover:shadow-lg transition-shadow">

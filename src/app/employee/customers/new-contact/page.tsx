@@ -19,7 +19,7 @@ export default function NewCustomerContactPage() {
             toast.success('Customer contact created successfully');
             router.push('/employee/customer-contacts');
         } catch (err: any) {
-            toast.error(err.message || 'Failed to create contact');
+            toast.error(err.message || 'Không thể tạo liên hệ');
         }
     };
 

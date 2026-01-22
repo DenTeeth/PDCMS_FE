@@ -31,7 +31,7 @@ export default function PermissionsPage() {
       setPermissions(data);
     } catch (error: any) {
       console.error('Error fetching permissions:', error);
-      toast.error('Failed to load permissions');
+      toast.error('Không thể tải danh sách quyền');
     } finally {
       setLoading(false);
     }

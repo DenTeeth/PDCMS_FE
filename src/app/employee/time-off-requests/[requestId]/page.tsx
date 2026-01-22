@@ -24,13 +24,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 import { TimeOffRequestService } from '@/services/timeOffRequestService';
+import { TimeOffTypeService } from '@/services/timeOffTypeService';
+import { workShiftService } from '@/services/workShiftService';
 import {
   TimeOffRequestDetail,
   TimeOffStatus,
   TIME_OFF_STATUS_CONFIG,
+  TimeOffType,
 } from '@/types/timeOff';
+import { WorkShift } from '@/types/workShift';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { TimeOffDataEnricher } from '@/utils/timeOffDataEnricher';
 
 export default function EmployeeTimeOffRequestDetailPage() {
   const router = useRouter();
@@ -40,6 +45,8 @@ export default function EmployeeTimeOffRequestDetailPage() {
 
   const [request, setRequest] = useState<TimeOffRequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeOffTypes, setTimeOffTypes] = useState<TimeOffType[]>([]);
+  const [workShifts, setWorkShifts] = useState<WorkShift[]>([]);
 
   // Modal states
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -58,15 +65,56 @@ export default function EmployeeTimeOffRequestDetailPage() {
 
   useEffect(() => {
     if (requestId) {
-      loadRequestDetail();
+      loadData();
     }
   }, [requestId]);
+
+  const loadData = async () => {
+    try {
+      // Load timeOffTypes and workShifts first (needed for enriching request)
+      await Promise.all([
+        loadTimeOffTypes(),
+        loadWorkShifts(),
+      ]);
+      // Then load and enrich request
+      await loadRequestDetail();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
+
+  const loadTimeOffTypes = async () => {
+    try {
+      const types = await TimeOffTypeService.getActiveTimeOffTypes();
+      setTimeOffTypes(types);
+    } catch (error) {
+      console.error('Error loading time off types:', error);
+    }
+  };
+
+  const loadWorkShifts = async () => {
+    try {
+      const shifts = await workShiftService.getAll(true);
+      setWorkShifts(shifts);
+    } catch (error) {
+      console.error('Error loading work shifts:', error);
+      setWorkShifts([]);
+    }
+  };
 
   const loadRequestDetail = async () => {
     try {
       setLoading(true);
       const data = await TimeOffRequestService.getTimeOffRequestById(requestId);
-      setRequest(data);
+      
+      // Enrich request with timeOffTypeName, workShiftName, and totalDays
+      const enrichedRequest = TimeOffDataEnricher.enrichRequest(
+        data,
+        timeOffTypes,
+        workShifts
+      );
+      
+      setRequest(enrichedRequest);
     } catch (error: any) {
       console.error('Error loading time-off request:', error);
       toast.error('Không thể tải thông tin yêu cầu');
@@ -226,7 +274,7 @@ export default function EmployeeTimeOffRequestDetailPage() {
               <Label className="text-gray-600">Loại phép</Label>
               <div className="flex items-center gap-2 mt-1">
                 <FontAwesomeIcon icon={faCircleInfo} className="text-gray-400" />
-                <p className="font-medium">{request.timeOffTypeName || request.timeOffTypeId}</p>
+                <p className="font-medium">{request.timeOffTypeName || 'N/A'}</p>
               </div>
             </div>
 
@@ -251,7 +299,11 @@ export default function EmployeeTimeOffRequestDetailPage() {
               <Label className="text-gray-600">Tổng số ngày</Label>
               <div className="flex items-center gap-2 mt-1">
                 <FontAwesomeIcon icon={faClock} className="text-gray-400" />
-                <p className="font-medium">{request.totalDays || 'N/A'} ngày</p>
+                <p className="font-medium">
+                  {request.totalDays !== undefined && request.totalDays !== null 
+                    ? `${request.totalDays} ngày` 
+                    : 'N/A ngày'}
+                </p>
               </div>
             </div>
           </div>
@@ -271,33 +323,35 @@ export default function EmployeeTimeOffRequestDetailPage() {
           <CardTitle>Lịch sử xử lý</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label className="text-gray-600">Người yêu cầu</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <FontAwesomeIcon icon={faUser} />
-              <div>
-                <p className="font-medium">{request.requestedBy.fullName}</p>
-                <p className="text-xs text-gray-500">
-                  {format(new Date(request.requestedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {request.approvedBy && request.approvedAt && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-gray-600">Người duyệt</Label>
+              <Label className="text-gray-600">Người yêu cầu</Label>
               <div className="flex items-center gap-2 mt-1">
-                <FontAwesomeIcon icon={faCheck} />
+                <FontAwesomeIcon icon={faUser} />
                 <div>
-                  <p className="font-medium">{request.approvedBy?.fullName || 'N/A'}</p>
+                  <p className="font-medium">{request.requestedBy.fullName}</p>
                   <p className="text-xs text-gray-500">
-                    {format(new Date(request.approvedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
+                    {format(new Date(request.requestedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                   </p>
                 </div>
               </div>
             </div>
-          )}
+
+            {request.approvedBy && request.approvedAt && (
+              <div>
+                <Label className="text-gray-600">Người duyệt</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <FontAwesomeIcon icon={faCheck} />
+                  <div>
+                    <p className="font-medium">{request.approvedBy?.fullName || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(request.approvedAt), 'HH:mm, dd/MM/yyyy', { locale: vi })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {request.rejectedReason && (
             <div>

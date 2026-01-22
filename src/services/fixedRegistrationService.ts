@@ -85,7 +85,7 @@ class FixedRegistrationService {
       // Re-throw with more specific error message
       if (error.response?.data?.errorCode) {
         const errorCode = error.response.data.errorCode;
-        const message = error.response.data.message || error.response.data.detail || 'Failed to create fixed shift registration';
+        const message = error.response.data.message || error.response.data.detail || 'Không thể tạo đăng ký ca cố định';
         const customError = new Error(message);
         (customError as any).errorCode = errorCode;
         (customError as any).status = error.response.status;
@@ -120,7 +120,7 @@ class FixedRegistrationService {
     } catch (error: any) {
       if (error.response?.data?.errorCode) {
         const errorCode = error.response.data.errorCode;
-        const message = error.response.data.message || error.response.data.detail || 'Failed to update fixed shift registration';
+        const message = error.response.data.message || error.response.data.detail || 'Không thể cập nhật đăng ký ca cố định';
         const customError = new Error(message);
         (customError as any).errorCode = errorCode;
         (customError as any).status = error.response.status;

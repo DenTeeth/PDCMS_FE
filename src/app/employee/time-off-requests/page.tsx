@@ -811,7 +811,7 @@ export default function EmployeeTimeOffRequestsPage() {
 
                       <div className="flex items-center space-x-2">
                         <FontAwesomeIcon icon={faClock} className="h-4 w-4" />
-                        <span>{request.timeOffTypeName || request.timeOffTypeId || 'N/A'}</span>
+                        <span>{request.timeOffTypeName || 'N/A'}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">

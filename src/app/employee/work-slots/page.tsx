@@ -98,7 +98,7 @@ export default function WorkSlotsManagementPage() {
       setWorkSlots(slots || []);
     } catch (error: any) {
       console.error('Failed to fetch work slots:', error);
-      toast.error(error.response?.data?.detail || error.message || 'Failed to fetch work slots');
+      toast.error(error.response?.data?.detail || error.message || 'Không thể tải danh sách ca làm việc');
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function WorkSlotsManagementPage() {
       setWorkShifts(shiftsResponse || []);
     } catch (error: any) {
       console.error(' Failed to fetch dropdown data:', error);
-      toast.error('Failed to load work shifts');
+      toast.error('Không thể tải danh sách ca làm việc');
     } finally {
       setLoadingDropdowns(false);
     }
@@ -125,13 +125,13 @@ export default function WorkSlotsManagementPage() {
 
     // Check permission first
     if (!canManageSlots) {
-      toast.error('You do not have permission to create work slots');
+      toast.error('Bạn không có quyền tạo ca làm việc');
       return;
     }
 
     // Validate required fields
     if (!createFormData.workShiftId) {
-      toast.error('Please select a work shift');
+      toast.error('Vui lòng chọn ca làm việc');
       return;
     }
 
@@ -141,7 +141,7 @@ export default function WorkSlotsManagementPage() {
     }
 
     if (createFormData.quota < 1) {
-      toast.error('Quota must be at least 1');
+      toast.error('Số lượng phải ít nhất là 1');
       return;
     }
 
@@ -173,7 +173,7 @@ export default function WorkSlotsManagementPage() {
       console.log('� Creating work slot:', payload);
 
       await workSlotService.createWorkSlot(payload);
-      toast.success('Work slot created successfully');
+      toast.success('Tạo ca làm việc thành công');
       setShowCreateModal(false);
       resetCreateForm();
 
@@ -182,7 +182,7 @@ export default function WorkSlotsManagementPage() {
     } catch (error: any) {
       console.error(' Failed to create work slot:', error);
 
-      let errorMessage = 'Failed to create work slot';
+      let errorMessage = 'Không thể tạo ca làm việc';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.detail) {
@@ -225,13 +225,13 @@ export default function WorkSlotsManagementPage() {
 
     // Check permission first
     if (!canManageSlots) {
-      toast.error('You do not have permission to update work slots');
+      toast.error('Bạn không có quyền cập nhật ca làm việc');
       return;
     }
 
     // Validate quota if provided
     if (editFormData.quota !== undefined && editFormData.quota < 1) {
-      toast.error('Quota must be at least 1');
+      toast.error('Số lượng phải ít nhất là 1');
       return;
     }
 
@@ -247,7 +247,7 @@ export default function WorkSlotsManagementPage() {
       console.log('� Updating work slot:', editingSlot.slotId, editFormData);
 
       await workSlotService.updateWorkSlot(editingSlot.slotId, editFormData);
-      toast.success('Work slot updated successfully');
+      toast.success('Cập nhật ca làm việc thành công');
       setShowEditModal(false);
       setEditingSlot(null);
       await fetchWorkSlots();
@@ -259,7 +259,7 @@ export default function WorkSlotsManagementPage() {
         const message = error.message || error.response?.data?.message || `Không thể giảm số lượng. Đã có ${editingSlot.registered} nhân viên đăng ký suất này.`;
         toast.error(message);
       } else {
-        let errorMessage = 'Failed to update work slot';
+        let errorMessage = 'Không thể cập nhật ca làm việc';
         if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         } else if (error.response?.data?.detail) {
@@ -278,11 +278,11 @@ export default function WorkSlotsManagementPage() {
   const handleDeleteWorkSlot = async (slot: PartTimeSlot) => {
     // Check permission first
     if (!canManageSlots) {
-      toast.error('You do not have permission to delete work slots');
+      toast.error('Bạn không có quyền xóa ca làm việc');
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete this work slot for ${slot.workShiftName} on ${slot.dayOfWeek}?`)) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa ca làm việc ${slot.workShiftName} vào ${slot.dayOfWeek}?`)) {
       return;
     }
 
@@ -291,12 +291,12 @@ export default function WorkSlotsManagementPage() {
       console.log(' Deleting work slot:', slot.slotId);
 
       await workSlotService.deleteWorkSlot(slot.slotId);
-      toast.success('Work slot deleted successfully');
+      toast.success('Xóa ca làm việc thành công');
       await fetchWorkSlots();
     } catch (error: any) {
       console.error(' Failed to delete work slot:', error);
 
-      let errorMessage = 'Failed to delete work slot';
+      let errorMessage = 'Không thể xóa ca làm việc';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.detail) {

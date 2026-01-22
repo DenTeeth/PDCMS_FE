@@ -92,7 +92,7 @@ class WorkSlotService {
         throw customError;
       } else if (error.response?.data?.errorCode) {
         const errorCode = error.response.data.errorCode;
-        const message = error.response.data.message || error.response.data.detail || 'Failed to create work slot';
+        const message = error.response.data.message || error.response.data.detail || 'Không thể tạo ca làm việc';
         const customError = new Error(message);
         (customError as any).errorCode = errorCode;
         (customError as any).status = error.response.status;
@@ -136,7 +136,7 @@ class WorkSlotService {
         throw customError;
       } else if (error.response?.data?.errorCode) {
         const errorCode = error.response.data.errorCode;
-        const message = error.response.data.message || error.response.data.detail || 'Failed to update work slot';
+        const message = error.response.data.message || error.response.data.detail || 'Không thể cập nhật ca làm việc';
         const customError = new Error(message);
         (customError as any).errorCode = errorCode;
         (customError as any).status = error.response.status;

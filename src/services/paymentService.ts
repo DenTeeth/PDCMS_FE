@@ -120,7 +120,7 @@ class PaymentService {
       console.error('❌ Get payments by invoice error:', errorDetails);
       
       // Re-throw with enhanced error information
-      const enhancedError = new Error(error.response?.data?.message || error.message || 'Failed to get payments by invoice');
+      const enhancedError = new Error(error.response?.data?.message || error.message || 'Không thể lấy danh sách thanh toán theo hóa đơn');
       (enhancedError as any).status = error.response?.status;
       (enhancedError as any).response = error.response;
       throw enhancedError;

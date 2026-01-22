@@ -116,7 +116,7 @@ export default function RegistrationRequestsPage() {
       }
     } catch (error: any) {
       console.error('Failed to fetch registrations:', error);
-      toast.error(error.response?.data?.detail || 'Failed to fetch registrations');
+      toast.error(error.response?.data?.detail || 'Không thể tải danh sách đăng ký');
     } finally {
       setLoading(false);
     }
@@ -204,7 +204,7 @@ export default function RegistrationRequestsPage() {
       await fetchRegistrations();
     } catch (error: any) {
       console.error('Failed to approve registration:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to approve registration';
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Không thể duyệt đăng ký';
       
       // Check for specific error types
       if (errorMsg.includes('đã có ca làm việc')) {
@@ -232,7 +232,7 @@ export default function RegistrationRequestsPage() {
     if (!selectedRegistration) return;
     if (processing) return;
     if (!rejectReason.trim()) {
-      toast.error('Please provide a reason for rejection');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
     try {
@@ -242,7 +242,7 @@ export default function RegistrationRequestsPage() {
         'REJECTED',
         rejectReason.trim()
       );
-      toast.success('Registration rejected successfully!');
+      toast.success('Đã từ chối đăng ký');
       setShowRejectModal(false);
 
       //  Refresh slot details to update quota immediately (in case rejection frees up slots)
@@ -265,7 +265,7 @@ export default function RegistrationRequestsPage() {
       await fetchRegistrations();
     } catch (error: any) {
       console.error('Failed to reject registration:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to reject registration';
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || error.message || 'Không thể từ chối đăng ký';
       
       if (errorMsg.includes('tự phê duyệt')) {
         // Self-approval related error

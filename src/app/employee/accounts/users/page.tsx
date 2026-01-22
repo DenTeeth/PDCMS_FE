@@ -298,7 +298,7 @@ export default function PatientsPage() {
       setTotalElements(response.totalElements); // Total from filtered query (for pagination)
     } catch (error) {
       console.error('Error fetching patients:', error);
-      toast.error('Failed to fetch patients');
+      toast.error('Không thể tải danh sách bệnh nhân');
     } finally {
       setLoading(false);
     }
@@ -408,7 +408,7 @@ export default function PatientsPage() {
       console.error('� Failed to create patient:', error);
 
       // Enhanced error handling
-      let errorMessage = 'Failed to create patient';
+      let errorMessage = 'Không thể tạo bệnh nhân';
       let errorDescription = '';
 
       if (error.response) {
@@ -422,30 +422,30 @@ export default function PatientsPage() {
         });
 
         if (status === 500) {
-          errorMessage = 'Server Error (500)';
-          errorDescription = data?.message || 'Internal server error occurred. This might be due to:\n' +
-            '• Email service configuration issue\n' +
-            '• Database connection problem\n' +
-            '• Account verification token creation failure\n\n' +
-            'Please check BE logs for details.';
+          errorMessage = 'Lỗi máy chủ (500)';
+          errorDescription = data?.message || 'Đã xảy ra lỗi máy chủ nội bộ. Có thể do:\n' +
+            '• Vấn đề cấu hình dịch vụ email\n' +
+            '• Vấn đề kết nối cơ sở dữ liệu\n' +
+            '• Lỗi tạo token xác minh tài khoản\n\n' +
+            'Vui lòng kiểm tra log BE để biết chi tiết.';
         } else if (status === 400) {
           errorMessage = 'Validation Error';
-          errorDescription = data?.message || 'Please check your input:\n' +
-            '• Username might already exist\n' +
-            '• Email might already exist\n' +
-            '• Invalid field format';
+          errorDescription = data?.message || 'Vui lòng kiểm tra thông tin nhập vào:\n' +
+            '• Tên người dùng có thể đã tồn tại\n' +
+            '• Email có thể đã tồn tại\n' +
+            '• Định dạng trường không hợp lệ';
         } else if (status === 403) {
-          errorMessage = 'Permission Denied';
-          errorDescription = 'You do not have permission to create patients';
+          errorMessage = 'Không có quyền';
+          errorDescription = 'Bạn không có quyền tạo bệnh nhân';
         } else {
           errorMessage = `Error ${status}`;
           errorDescription = data?.message || error.message;
         }
       } else if (error.request) {
-        errorMessage = 'Network Error';
-        errorDescription = 'Cannot reach the server. Please check your connection.';
+        errorMessage = 'Lỗi kết nối';
+        errorDescription = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối của bạn.';
       } else {
-        errorMessage = 'Request Error';
+        errorMessage = 'Lỗi yêu cầu';
         errorDescription = error.message;
       }
 
@@ -453,7 +453,7 @@ export default function PatientsPage() {
         description: errorDescription,
         duration: 7000,
       });
-      toast.error(error.response?.data?.message || 'Failed to create patient');
+      toast.error(error.response?.data?.message || 'Không thể tạo bệnh nhân');
     } finally {
       setCreating(false);
     }
@@ -480,8 +480,8 @@ export default function PatientsPage() {
       });
     } catch (error: any) {
       console.error('Failed to resend password setup email:', error);
-      toast.error('Failed to resend password setup email', {
-        description: error.response?.data?.message || error.message || 'Please try again later.',
+      toast.error('Không thể gửi lại email thiết lập mật khẩu', {
+        description: error.response?.data?.message || error.message || 'Vui lòng thử lại sau.',
         duration: 5000,
       });
     } finally {
@@ -608,7 +608,7 @@ export default function PatientsPage() {
       fetchPatients(); // Refresh list
     } catch (error: any) {
       console.error('Failed to update patient:', error);
-      toast.error(error.response?.data?.message || 'Failed to update patient');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật bệnh nhân');
     } finally {
       setUpdating(false);
     }

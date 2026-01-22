@@ -126,7 +126,7 @@ export default function RolesPage() {
       setRoles(response || []);
     } catch (error: any) {
       console.error('Failed to fetch roles:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch roles');
+      toast.error(error.response?.data?.message || 'Không thể tải danh sách vai trò');
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ export default function RolesPage() {
     e.preventDefault();
 
     if (!formData.roleId || !formData.roleName || !formData.description || !formData.baseRoleId) {
-      toast.error('Please fill in all required fields');
+      toast.error('Vui lòng điền đầy đủ các trường bắt buộc');
       return;
     }
 
@@ -150,7 +150,7 @@ export default function RolesPage() {
 
     const baseRoleId = baseRoleIdMap[formData.baseRoleId];
     if (!baseRoleId) {
-      toast.error('Invalid base role selected');
+      toast.error('Vai trò cơ bản không hợp lệ');
       return;
     }
 
@@ -169,7 +169,7 @@ export default function RolesPage() {
       fetchRoles(); // Refresh list
     } catch (error: any) {
       console.error('Failed to create role:', error);
-      toast.error(error.response?.data?.message || 'Failed to create role');
+      toast.error(error.response?.data?.message || 'Không thể tạo vai trò');
     } finally {
       setCreating(false);
     }
@@ -189,7 +189,7 @@ export default function RolesPage() {
     e.preventDefault();
 
     if (!editingRole || !editFormData.roleName || !editFormData.description) {
-      toast.error('Please fill in all fields');
+      toast.error('Vui lòng điền đầy đủ tất cả các trường');
       return;
     }
 
@@ -202,7 +202,7 @@ export default function RolesPage() {
       fetchRoles(); // Refresh list
     } catch (error: any) {
       console.error('Failed to update role:', error);
-      toast.error(error.response?.data?.message || 'Failed to update role');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật vai trò');
     } finally {
       setUpdating(false);
     }
@@ -225,7 +225,7 @@ export default function RolesPage() {
       setSelectedPermissions(currentPermissionIds);
     } catch (error: any) {
       console.error('Failed to load permissions:', error);
-      toast.error('Failed to load permissions');
+      toast.error('Không thể tải danh sách quyền');
     } finally {
       setLoadingPermissions(false);
     }
@@ -245,13 +245,13 @@ export default function RolesPage() {
     try {
       setAssigning(true);
       await roleService.assignPermissionsToRole(assigningRole.roleId, selectedPermissions);
-      toast.success('Permissions assigned successfully');
+      toast.success('Gán quyền thành công');
       setShowAssignModal(false);
       setAssigningRole(null);
       setSelectedPermissions([]);
     } catch (error: any) {
       console.error('Failed to assign permissions:', error);
-      toast.error(error.response?.data?.message || 'Failed to assign permissions');
+      toast.error(error.response?.data?.message || 'Không thể gán quyền');
     } finally {
       setAssigning(false);
     }
@@ -275,7 +275,7 @@ export default function RolesPage() {
       fetchRoles(); // Refresh list
     } catch (error: any) {
       console.error('Failed to delete role:', error);
-      toast.error(error.response?.data?.message || 'Failed to deactivate role');
+      toast.error(error.response?.data?.message || 'Không thể vô hiệu hóa vai trò');
     } finally {
       setDeleting(false);
     }

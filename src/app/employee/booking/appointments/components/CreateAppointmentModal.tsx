@@ -127,7 +127,7 @@ export default function CreateAppointmentModal({
             const results = await appointmentService.searchPatients(patientSearch);
             setSearchResults(results);
         } catch (error: any) {
-            toast.error('Failed to search patients');
+            toast.error('Không thể tìm kiếm bệnh nhân');
         }
     };
 
@@ -136,7 +136,7 @@ export default function CreateAppointmentModal({
             const data = await appointmentService.getServices();
             setServices(data);
         } catch (error: any) {
-            toast.error('Failed to load services');
+            toast.error('Không thể tải danh sách dịch vụ');
         }
     };
 
@@ -145,7 +145,7 @@ export default function CreateAppointmentModal({
             const data = await appointmentService.getDentists();
             setDentists(data);
         } catch (error: any) {
-            toast.error('Failed to load dentists');
+            toast.error('Không thể tải danh sách nha sĩ');
         }
     };
 
@@ -155,7 +155,7 @@ export default function CreateAppointmentModal({
             const data = await appointmentService.getAllAvailableDentists(selectedDate, selectedServiceId);
             setAvailableSlots(data);
         } catch (error: any) {
-            toast.error('Failed to load available slots');
+            toast.error('Không thể tải danh sách ca khả dụng');
         } finally {
             setLoading(false);
         }

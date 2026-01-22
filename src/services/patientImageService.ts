@@ -110,7 +110,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to upload image"
+          "Không thể tải lên hình ảnh"
       );
     }
   }
@@ -156,7 +156,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to fetch images"
+          "Không thể tải danh sách hình ảnh"
       );
     }
   }
@@ -176,7 +176,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to fetch image details"
+          "Không thể tải chi tiết hình ảnh"
       );
     }
   }
@@ -200,7 +200,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to update image"
+          "Không thể cập nhật hình ảnh"
       );
     }
   }
@@ -217,7 +217,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to delete image"
+          "Không thể xóa hình ảnh"
       );
     }
   }
@@ -240,7 +240,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to fetch images"
+          "Không thể tải danh sách hình ảnh"
       );
     }
   }
@@ -268,7 +268,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to fetch images"
+          "Không thể tải danh sách hình ảnh"
       );
     }
   }
@@ -293,7 +293,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to fetch comments"
+          "Không thể tải danh sách bình luận"
       );
     }
   }
@@ -318,7 +318,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to create comment"
+          "Không thể tạo bình luận"
       );
     }
   }
@@ -343,7 +343,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to update comment"
+          "Không thể cập nhật bình luận"
       );
     }
   }
@@ -360,7 +360,7 @@ class PatientImageService {
       throw new Error(
         error.response?.data?.message ||
           error.message ||
-          "Failed to delete comment"
+          "Không thể xóa bình luận"
       );
     }
   }

@@ -243,7 +243,7 @@ export default function CustomersPage() {
       }
     } catch (error: any) {
       console.error('Failed to load feedback data:', error);
-      toast.error('Failed to load feedback data');
+      toast.error('Không thể tải dữ liệu phản hồi');
     } finally {
       setLoading(false);
     }

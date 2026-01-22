@@ -388,8 +388,8 @@ export default function EmployeeAppointmentDetailPage() {
 
         // Check if 404 - appointment not found or not authorized
         if (error.response?.status === 404) {
-          toast.error('Appointment not found', {
-            description: `Could not find appointment with code: ${appointmentCode}. You may not have permission to view this appointment.`,
+          toast.error('Không tìm thấy lịch hẹn', {
+            description: `Không thể tìm thấy lịch hẹn với mã: ${appointmentCode}. Bạn có thể không có quyền xem lịch hẹn này.`,
           });
           setTimeout(() => {
             if (isMounted && !abortController.signal.aborted) {
@@ -397,8 +397,8 @@ export default function EmployeeAppointmentDetailPage() {
             }
           }, 2000);
         } else if (error.response?.status === 403) {
-          toast.error('Access denied', {
-            description: 'You do not have permission to view this appointment.',
+          toast.error('Truy cập bị từ chối', {
+            description: 'Bạn không có quyền xem lịch hẹn này.',
           });
           setTimeout(() => {
             if (isMounted && !abortController.signal.aborted) {
