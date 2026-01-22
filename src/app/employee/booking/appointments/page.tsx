@@ -166,7 +166,7 @@ export default function EmployeeAppointmentsPage() {
         abortControllerRef.current = null;
       }
     };
-  }, [canView, filters, currentPage, pageSize, canViewOwn, canViewAll]);
+  }, [canView, filters, currentPage, pageSize]); // Direct dependencies - trigger when these change
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: Partial<AppointmentFilterCriteria>) => {

@@ -1515,7 +1515,6 @@ export default function CreateCustomPlanModal({
                   <SelectContent>
                     <SelectItem value={PaymentType.FULL}>Trả một lần</SelectItem>
                     <SelectItem value={PaymentType.PHASED}>Trả theo giai đoạn</SelectItem>
-                    <SelectItem value={PaymentType.INSTALLMENT}>Trả góp</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

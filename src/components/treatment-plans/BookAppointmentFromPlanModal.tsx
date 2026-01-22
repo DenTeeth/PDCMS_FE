@@ -1558,9 +1558,9 @@ export default function BookAppointmentFromPlanModal({
                     </div>
                   </div>
                   {participantCodes.length > 0 && (
-                    <div>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-muted-foreground">Bác sĩ hỗ trợ:</span>
-                      <div className="mt-1 flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {participantCodes.map((code) => {
                           const participant = employees.find((e) => e.employeeCode === code);
                           return (

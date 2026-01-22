@@ -114,7 +114,7 @@ export default function ToothStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Cập Nhật Trạng Thái Răng {toothNumber}</DialogTitle>
+          <DialogTitle>Cập nhật trạng thái răng {toothNumber}</DialogTitle>
           <DialogDescription>
             Chọn trạng thái và thêm ghi chú (nếu cần) cho răng {toothNumber}
           </DialogDescription>
@@ -123,7 +123,7 @@ export default function ToothStatusDialog({
         <div className="space-y-4 py-4">
           {/* Status Selection */}
           <div className="space-y-2">
-            <Label htmlFor="status">Trạng Thái <span className="text-destructive">*</span></Label>
+            <Label htmlFor="status">Trạng thái <span className="text-destructive">*</span></Label>
             <Select
               value={status}
               onValueChange={(value) => setStatus(value as ToothCondition)}
@@ -143,7 +143,7 @@ export default function ToothStatusDialog({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Ghi Chú</Label>
+            <Label htmlFor="notes">Ghi chú</Label>
             <Textarea
               id="notes"
               value={notes}

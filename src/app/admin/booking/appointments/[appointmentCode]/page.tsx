@@ -686,7 +686,7 @@ export default function AdminAppointmentDetailPage() {
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return format(date, 'dd MMM yyyy, HH:mm');
+      return format(date, 'dd-MM-yyyy, HH:mm');
     } catch {
       return dateTimeStr;
     }
@@ -1244,16 +1244,14 @@ export default function AdminAppointmentDetailPage() {
                     {/* Participants */}
                     {appointment.participants && appointment.participants.length > 0 && (
                       <div className="pt-4 border-t">
-                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Người tham gia</label>
+                        <label className="text-sm font-medium text-muted-foreground mb-3 block">Phụ tá</label>
                         <div className="space-y-1.5">
                           {appointment.participants.map((participant, index) => (
                             <div key={index} className="flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-sm truncate">{participant.fullName}</p>
-                                  <p className="text-xs text-muted-foreground">{participant.employeeCode}</p>
                                 </div>
-                                <Badge variant="secondary" className="text-xs shrink-0">{getRoleDisplayName(participant.role)}</Badge>
                               </div>
                             </div>
                           ))}

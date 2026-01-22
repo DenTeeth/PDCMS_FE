@@ -135,32 +135,30 @@ export function FeedbacksTab({ startDate, endDate }: FeedbacksTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {doctors.map((doctor, index) => (
           <Card key={doctor.employeeId} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={doctor.avatar || undefined} alt={doctor.employeeName} />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                      {getInitials(doctor.employeeName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">{doctor.employeeName}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{doctor.specialization}</p>
-                  </div>
+            <CardHeader className="relative">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarImage src={doctor.avatar || undefined} alt={doctor.employeeName} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                    {getInitials(doctor.employeeName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 pr-20">
+                  <CardTitle className="text-lg">{doctor.employeeName}</CardTitle>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{doctor.specialization}</p>
                 </div>
-                {index === 0 && (
-                  <Badge className="bg-yellow-500 hover:bg-yellow-600">
-                    <Award className="h-3 w-3 mr-1" />
-                    Top 1
-                  </Badge>
-                )}
               </div>
+              {index === 0 && (
+                <Badge className="absolute top-4 right-4 bg-yellow-500 hover:bg-yellow-600 whitespace-nowrap">
+                  <Award className="h-3 w-3 mr-1" />
+                  Top 1
+                </Badge>
+              )}
             </CardHeader>
 
             <CardContent className="space-y-4">
               {/* Rating */}
-              <div className="space-y-2">
+              <div className="flex justify-between gap-3">
                 {renderStars(doctor.statistics.averageRating)}
                 <p className="text-sm text-muted-foreground">
                   {doctor.statistics.totalFeedbacks} đánh giá
