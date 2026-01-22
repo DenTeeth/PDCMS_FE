@@ -1,32 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-
-interface AppointmentForm {
-  fullName: string;
-  phone: string;
-  service: string;
-  time: string;
-}
 
 export default function AppointmentSection() {
   const t = useTranslations('Appointment');
-
-  const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
-    fullName: "",
-    phone: "",
-    service: "",
-    time: ""
-  });
-
-  const handleAppointmentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle appointment booking
-    console.log("Appointment booked:", appointmentForm);
-    alert(t('form.successMessage'));
-    setAppointmentForm({ fullName: "", phone: "", service: "", time: "" });
-  };
 
   return (
     <section id="appointment" className="py-20 bg-accent">
@@ -34,95 +12,33 @@ export default function AppointmentSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-              {t('title')}
+              Liên hệ với chúng tôi
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              {t('subtitle')}
+              Tạo tài khoản để đặt lịch hẹn trực tuyến hoặc gọi ngay cho chúng tôi để được tư vấn.
             </p>
 
-            <form onSubmit={handleAppointmentSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('form.fullName.label')}
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  required
-                  value={appointmentForm.fullName}
-                  onChange={(e) => setAppointmentForm(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
-                  placeholder={t('form.fullName.placeholder')}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('form.phone.label')}
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  required
-                  value={appointmentForm.phone}
-                  onChange={(e) => setAppointmentForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
-                  placeholder={t('form.phone.placeholder')}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('form.service.label')}
-                </label>
-                <select
-                  id="service"
-                  required
-                  value={appointmentForm.service}
-                  onChange={(e) => setAppointmentForm(prev => ({ ...prev, service: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
-                >
-                  <option value="">{t('form.service.placeholder')}</option>
-                  <option value="pediatric">{t('form.service.options.pediatric')}</option>
-                  <option value="implants">{t('form.service.options.implants')}</option>
-                  <option value="cosmetic">{t('form.service.options.cosmetic')}</option>
-                  <option value="general">{t('form.service.options.general')}</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('form.time.label')}
-                </label>
-                <input
-                  type="datetime-local"
-                  id="time"
-                  required
-                  value={appointmentForm.time}
-                  onChange={(e) => setAppointmentForm(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary bg-white"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+            <div className="space-y-4">
+              <Link
+                href="/login"
+                className="w-full inline-block text-center bg-primary text-white px-8 py-4 rounded-lg hover:bg-primary/90 transition-colors font-semibold text-lg shadow-lg"
               >
-                {t('form.submit')}
-              </button>
-            </form>
+                Tạo tài khoản ngay
+              </Link>
+
+              <a
+                href="tel:0764009726"
+                className="w-full inline-block text-center bg-secondary text-white px-8 py-4 rounded-lg hover:bg-secondary/90 transition-colors font-semibold text-lg shadow-lg"
+              >
+                Gọi ngay: 0764009726
+              </a>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-8">
-            <h3 className="text-2xl font-semibold mb-6">{t('contact.callTitle')}</h3>
-            <div className="text-center mb-8">
-              <div className="text-4xl font-bold text-primary mb-2">0764009726</div>
-              <p className="text-gray-600">
-                {t('contact.callSubtitle')}
-              </p>
-            </div>
+            <h3 className="text-2xl font-semibold mb-6">Thông tin liên hệ</h3>
 
-            <div className="space-y-4 mb-6">
+            <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 text-primary flex-shrink-0 mt-1">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -72,92 +72,84 @@ export default function DoctorsSection() {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="relative group"
             >
-              <Link
-                href={`/Doctors/${doctor.id}`}
-                className="block"
+              <motion.div
+                whileHover={{
+                  y: -8,
+                  transition: {
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 10
+                  }
+                }}
+                className="bg-card rounded-2xl shadow-lg hover:shadow-2xl transition-all border border-border overflow-hidden relative h-full flex flex-col"
               >
-                <motion.div
-                  whileHover={{
-                    y: -8,
-                    transition: {
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 10
-                    }
-                  }}
-                  className="bg-card rounded-2xl shadow-lg hover:shadow-2xl transition-all border border-border overflow-hidden cursor-pointer relative h-full flex flex-col"
-                >
-                  {/* Shine effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
 
-                  <div className="relative flex flex-col flex-grow">
-                    <div className="relative w-full h-64 bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
+                <div className="relative flex flex-col flex-grow">
+                  <div className="relative w-full h-64 bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
+                    <Image
+                      src={doctor.avatar}
+                      alt={doctor.name}
+                      fill
+                      className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      quality={85}
+                    />
+                    {/* Medical cross badge */}
+                    <div className="absolute top-4 right-4 w-16 h-16 flex items-center justify-center">
                       <Image
-                        src={doctor.avatar}
-                        alt={doctor.name}
-                        fill
-                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        quality={85}
+                        src="/denteeth-logo.png"
+                        alt="DenTeeth Logo"
+                        width={64}
+                        height={64}
+                        className="object-contain"
                       />
-                      {/* Medical cross badge */}
-                      <div className="absolute top-4 right-4 w-16 h-16 flex items-center justify-center">
-                        <Image
-                          src="/denteeth-logo.png"
-                          alt="DenTeeth Logo"
-                          width={64}
-                          height={64}
-                          className="object-contain"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="p-6 text-center space-y-3 relative flex flex-col">
-                      {/* Decorative line */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-r from-primary to-secondary rounded-full" />
-
-                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors pt-2">{doctor.name}</h3>
-                      <p className="text-primary font-semibold text-sm bg-primary/10 rounded-full px-3 py-1 inline-block">
-                        {doctor.specialty}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-medium">
-                        {doctor.experience}
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed h-16 overflow-hidden">
-                        {doctor.description}
-                      </p>
-
-                      {/* Specialization tags */}
-                      <div className="flex flex-wrap gap-2 justify-center pt-2">
-                        {doctor.id === 1 && (
-                          <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.checkups')}</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.cleanings')}</span>
-                          </>
-                        )}
-                        {doctor.id === 2 && (
-                          <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.whitening')}</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.veneers')}</span>
-                          </>
-                        )}
-                        {doctor.id === 3 && (
-                          <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.braces')}</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.invisalign')}</span>
-                          </>
-                        )}
-                        {doctor.id === 4 && (
-                          <>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.kidsCare')}</span>
-                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.prevention')}</span>
-                          </>
-                        )}
-                      </div>
                     </div>
                   </div>
-                </motion.div>
-              </Link>
+
+                  <div className="p-6 text-center space-y-3 relative flex flex-col">
+                    {/* Decorative line */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-r from-primary to-secondary rounded-full" />
+
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors pt-2">{doctor.name}</h3>
+                    <p className="text-primary font-semibold text-sm bg-primary/10 rounded-full px-3 py-1 inline-block">
+                      {doctor.specialty}
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed h-16 overflow-hidden">
+                      {doctor.description}
+                    </p>
+
+                    {/* Specialization tags */}
+                    <div className="flex flex-wrap gap-2 justify-center pt-2">
+                      {doctor.id === 1 && (
+                        <>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.checkups')}</span>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.cleanings')}</span>
+                        </>
+                      )}
+                      {doctor.id === 2 && (
+                        <>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.whitening')}</span>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.veneers')}</span>
+                        </>
+                      )}
+                      {doctor.id === 3 && (
+                        <>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.braces')}</span>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.invisalign')}</span>
+                        </>
+                      )}
+                      {doctor.id === 4 && (
+                        <>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.kidsCare')}</span>
+                          <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">{t('specializations.prevention')}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           ))}
         </div>
@@ -177,7 +169,7 @@ export default function DoctorsSection() {
               href="/Doctors"
               className="inline-flex items-center bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
             >
-              {t('viewAllDoctors', { defaultValue: 'Xem toàn bộ bác sĩ' })}
+              {t('viewAllDoctors', { defaultValue: 'Xem toàn bộ nha sĩ' })}
               <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

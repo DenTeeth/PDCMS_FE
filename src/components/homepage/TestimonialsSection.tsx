@@ -193,8 +193,8 @@ export default function TestimonialsSection() {
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
                 className={`rounded-full transition-all duration-300 ${index === currentIndex
-                    ? "bg-[#8b5fbf] w-12 h-4 shadow-lg"
-                    : "bg-gray-300 hover:bg-gray-400 w-4 h-4"
+                  ? "bg-[#8b5fbf] w-12 h-4 shadow-lg"
+                  : "bg-gray-300 hover:bg-gray-400 w-4 h-4"
                   }`}
               />
             ))}

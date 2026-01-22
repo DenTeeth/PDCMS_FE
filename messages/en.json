@@ -10,7 +10,7 @@
   "Hero": {
     "title": "Elevating Smiles with",
     "subtitle": "Expert Care and a Gentle Touch",
-    "cta": "Book Appointment",
+    "cta": "Create Account",
     "secondaryCta": "Our Services"
   },
   "Stats": {
@@ -33,7 +33,7 @@
       "scheduling": "Flexible Appointment Scheduling",
       "schedulingDesc": "Convenient booking options to fit your busy lifestyle"
     },
-    "cta": "Book Appointment",
+    "cta": "Create Account",
     "images": {
       "professional": "Dental Professional",
       "expert": "Expert Dentist",
@@ -69,32 +69,38 @@
       {
         "title": "Cosmetic Dentistry",
         "description": "Improve the appearance of your teeth, including whitening & veneers.",
-        "link": "/services/cosmetic"
+        "link": "/services/cosmetic",
+        "price": "$150+"
       },
       {
         "title": "Pediatric Dentistry",
         "description": "Tailored dental care for infants, children, and teens.",
-        "link": "/services/pediatric"
+        "link": "/services/pediatric",
+        "price": "$80+"
       },
       {
         "title": "Dental Implants",
         "description": "Replace missing teeth with artificial roots implanted in the jaw.",
-        "link": "/services/implants"
+        "link": "/services/implants",
+        "price": "$2000+"
       },
       {
         "title": "Orthodontics",
         "description": "Correct misaligned teeth and jaws with braces or aligners.",
-        "link": "/services/orthodontics"
+        "link": "/services/orthodontics",
+        "price": "$3000+"
       },
       {
         "title": "General Checkup",
         "description": "Regular checkups and cleanings to maintain oral health.",
-        "link": "/services/general"
+        "link": "/services/general",
+        "price": "$50+"
       },
       {
         "title": "Root Canal",
         "description": "Repair and save badly decayed or infected teeth.",
-        "link": "/services/root-canal"
+        "link": "/services/root-canal",
+        "price": "$300+"
       }
     ]
   },
@@ -106,7 +112,7 @@
     "description": "Description:",
     "schedule": "Schedule:",
     "languages": "Languages:",
-    "bookAppointment": "Book Appointment",
+    "bookAppointment": "Create Account",
     "sectionTitle": "Meet Our Dental Team",
     "sectionSubtitle": "Committed to Your Smile - Experienced professionals dedicated to your oral health",
     "viewProfile": "View Profile",
@@ -114,25 +120,25 @@
       {
         "name": "Dr. Le Anh Khoa",
         "specialty": "General Dentistry",
-        "experience": "Full-time",
+        "experience": "15+ years experience",
         "description": "Specialist in comprehensive oral care with extensive experience in treating various dental issues."
       },
       {
         "name": "Dr. Trinh Cong Thai",
         "specialty": "General Dentistry",
-        "experience": "Full-time",
+        "experience": "12+ years experience",
         "description": "Dedicated to patient oral health, specializing in comprehensive treatment plans."
       },
       {
         "name": "Dr. Jimmy Donaldson",
         "specialty": "Specialized Dentistry",
-        "experience": "Part-time",
+        "experience": "10+ years experience",
         "description": "Specialist in advanced and complex dental procedures using modern techniques."
       },
       {
         "name": "Dr. Junya Ota",
         "specialty": "Cosmetic Dentistry",
-        "experience": "Part-time",
+        "experience": "8+ years experience",
         "description": "Expert in smile makeovers and cosmetic procedures, bringing confidence to patients."
       }
     ],
@@ -146,7 +152,7 @@
       "kidsCare": "Kids Care",
       "prevention": "Prevention"
     },
-    "viewAllDoctors": "View All Doctors"
+    "viewAllDoctors": "View All Dentists"
   },
   "Features": {
     "title": "Exceptional Service With a Personal Touch",
@@ -271,7 +277,7 @@
       },
       "email": {
         "label": "Email",
-        "value": "contact@denteeth.com"
+        "value": "hellodenteeth@gmail.com"
       }
     }
   }

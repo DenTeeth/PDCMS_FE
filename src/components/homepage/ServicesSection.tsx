@@ -107,15 +107,6 @@ export default function ServicesSection() {
                 <p className="text-muted-foreground mb-6 flex-grow">
                   {t(`cards.${service.key}.description`)}
                 </p>
-
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setExpandedIndex(expandedIndex === idx ? null : idx)}
-                  className="w-10 h-10 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-white flex items-center justify-center transition-all font-bold text-xl shadow-lg mx-auto mt-auto"
-                >
-                  +
-                </motion.button>
               </div>
             </motion.div>
           ))}

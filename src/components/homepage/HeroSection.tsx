@@ -69,7 +69,7 @@ const HeroSection = memo(function HeroSection() {
               className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
             >
               <Link
-                href="#appointment"
+                href="/login"
                 className="inline-block bg-primary text-primary-foreground px-10 py-4 rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl font-semibold text-base transform hover:scale-105"
               >
                 {t('cta')}

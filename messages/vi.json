@@ -10,7 +10,7 @@
   "Hero": {
     "title": "Trao nụ cười rạng rỡ từ",
     "subtitle": "Đôi tay chuyên nghiệp và trái tim ân cần",
-    "cta": "Đặt lịch hẹn",
+    "cta": "Tạo tài khoản",
     "secondaryCta": "Dịch vụ của chúng tôi"
   },
   "Stats": {
@@ -33,7 +33,7 @@
       "scheduling": "Lịch hẹn linh hoạt",
       "schedulingDesc": "Tùy chọn đặt lịch tiện lợi phù hợp với lối sống bận rộn của bạn"
     },
-    "cta": "Đặt lịch hẹn",
+    "cta": "Tạo tài khoản",
     "images": {
       "professional": "Chuyên gia nha khoa",
       "expert": "Nha sĩ chuyên môn cao",
@@ -69,32 +69,44 @@
       {
         "title": "Nha khoa thẩm mỹ",
         "description": "Cải thiện vẻ ngoài của răng, bao gồm làm trắng và veneer.",
-        "link": "/services/cosmetic"
+        "details": "Nha khoa thẩm mỹ giúp bạn có được nụ cười tự tin và rạng rỡ. Dịch vụ bao gồm tẩy trắng răng chuyên nghiệp, dán sứ Veneer siêu mỏng, bọc răng sứ thẩm mỹ cao cấp. Chúng tôi sử dụng công nghệ hiện đại và vật liệu cao cấp từ Mỹ, Đức để mang đến kết quả tự nhiên, bền đẹp lâu dài.",
+        "link": "/services/cosmetic",
+        "price": "3.000.000₫+"
       },
       {
         "title": "Nha khoa trẻ em",
         "description": "Chăm sóc nha khoa phù hợp cho trẻ sơ sinh, trẻ em và thanh thiếu niên.",
-        "link": "/services/pediatric"
+        "details": "Nha khoa trẻ em chuyên biệt với môi trường thân thiện, giúp bé không sợ nha sĩ. Dịch vụ bao gồm: khám định kỳ cho bé, bôi Fluor phòng ngừa sâu răng, trám răng sữa, nhổ răng sữa đúng thời điểm, hướng dẫn vệ sinh răng miệng cho trẻ. Bác sĩ có kinh nghiệm giao tiếp với trẻ nhỏ.",
+        "link": "/services/pediatric",
+        "price": "500.000₫+"
       },
       {
         "title": "Cấy ghép răng",
         "description": "Thay thế răng bị mất bằng chân răng nhân tạo cấy vào xương hàm.",
-        "link": "/services/implants"
+        "details": "Cấy ghép Implant là giải pháp phục hồi răng mất hiện đại nhất. Trụ Implant Titanium sinh học được cấy vào xương hàm, sau đó gắn răng sứ thẩm mỹ. Ưu điểm vượt trội: không cần mài răng thật, bền vững trên 20 năm, giữ nguyên xương hàm, khả năng nhai tốt như răng thật. Tỷ lệ thành công trên 98%.",
+        "link": "/services/implants",
+        "price": "15.000.000₫+"
       },
       {
         "title": "Chỉnh nha",
         "description": "Điều chỉnh răng và hàm lệch lạc bằng niềng răng hoặc khay chỉnh nha.",
-        "link": "/services/orthodontics"
+        "details": "Chỉnh nha giúp răng đều đẹp, cải thiện khớp cắn và thẩm mỹ khuôn mặt. Chúng tôi cung cấp đa dạng phương pháp: niềng mắc cài kim loại truyền thống, niềng mắc cài sứ thẩm mỹ, niềng mắc cài tự động, và niềng trong suốt Invisalign. Bác sĩ chỉnh nha sẽ lập kế hoạch điều trị cá nhân hóa cho từng trường hợp.",
+        "link": "/services/orthodontics",
+        "price": "25.000.000₫+"
       },
       {
         "title": "Khám tổng quát",
         "description": "Kiểm tra và vệ sinh định kỳ để duy trì sức khỏe răng miệng.",
-        "link": "/services/general"
+        "details": "Khám tổng quát là bước cần thiết để duy trì sức khỏe răng miệng. Dịch vụ bao gồm: kiểm tra tổng thể tình trạng răng và nướu, chụp X-quang panorama (nếu cần), làm sạch cao răng và mảng bám, đánh bóng răng, kiểm tra ung thư miệng, tư vấn vệ sinh răng miệng đúng cách. Nên khám định kỳ 6 tháng/lần.",
+        "link": "/services/general",
+        "price": "300.000₫+"
       },
       {
         "title": "Điều trị tủy răng",
         "description": "Sửa chữa và cứu răng bị sâu hoặc nhiễm trùng nặng.",
-        "link": "/services/root-canal"
+        "details": "Điều trị tủy răng (Root Canal Treatment) giúp cứu răng bị viêm tủy hoặc nhiễm trùng. Quy trình hiện đại: gây tê cục bộ, loại bỏ tủy bị nhiễm, làm sạch và khử trùng ống tủy, trám bít kín ống tủy. Sau điều trị có thể bọc răng sứ để bảo vệ. Tỷ lệ thành công cao, giúp giữ lại răng thật.",
+        "link": "/services/root-canal",
+        "price": "2.000.000₫+"
       }
     ]
   },
@@ -106,7 +118,7 @@
     "description": "Mô tả:",
     "schedule": "Lịch làm việc:",
     "languages": "Ngôn ngữ:",
-    "bookAppointment": "Đặt lịch hẹn",
+    "bookAppointment": "Tạo tài khoản",
     "sectionTitle": "Gặp gỡ đội ngũ nha khoa",
     "sectionSubtitle": "Cam kết với nụ cười của bạn - Các chuyên gia giàu kinh nghiệm tận tâm với sức khỏe răng miệng của bạn",
     "viewProfile": "Xem hồ sơ",
@@ -114,25 +126,25 @@
       {
         "name": "BS. Lê Anh Khoa",
         "specialty": "Nha khoa tổng quát",
-        "experience": "Toàn thời gian",
+        "experience": "Hơn 15 năm kinh nghiệm",
         "description": "Bác sĩ chuyên về chăm sóc răng miệng toàn diện với kinh nghiệm phong phú trong điều trị các vấn đề nha khoa."
       },
       {
         "name": "BS. Trịnh Công Thái",
         "specialty": "Nha khoa tổng quát",
-        "experience": "Toàn thời gian",
+        "experience": "Hơn 12 năm kinh nghiệm",
         "description": "Bác sĩ tận tâm với sức khỏe răng miệng của bệnh nhân, chuyên về các liệu trình điều trị toàn diện."
       },
       {
         "name": "BS. Jimmy Donaldson",
         "specialty": "Nha khoa chuyên khoa",
-        "experience": "Bán thời gian",
+        "experience": "Hơn 10 năm kinh nghiệm",
         "description": "Bác sĩ chuyên về các thủ thuật nha khoa chuyên sâu và phức tạp với kỹ thuật hiện đại."
       },
       {
         "name": "BS. Junya Ota",
         "specialty": "Nha khoa thẩm mỹ",
-        "experience": "Bán thời gian",
+        "experience": "Hơn 8 năm kinh nghiệm",
         "description": "Chuyên gia về thẩm mỹ nụ cười và các thủ thuật làm đẹp răng, mang lại sự tự tin cho bệnh nhân."
       }
     ],
@@ -146,7 +158,7 @@
       "kidsCare": "Chăm sóc trẻ em",
       "prevention": "Phòng ngừa"
     },
-    "viewAllDoctors": "Xem toàn bộ bác sĩ"
+    "viewAllDoctors": "Xem toàn bộ nha sĩ"
   },
   "Features": {
     "title": "Dịch vụ xuất sắc với chạm cá nhân",
@@ -267,11 +279,11 @@
       },
       "hours": {
         "label": "Giờ làm việc",
-        "value": "Thứ Hai - Chủ Nhật: 8:00 SA - 8:00 CH"
+        "value": "Thứ Hai - Thứ Bảy: 8:00 SA - 8:00 CH"
       },
       "email": {
         "label": "Email",
-        "value": "contact@denteeth.com"
+        "value": "hellodenteeth@gmail.com"
       }
     }
   }

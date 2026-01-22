@@ -62,9 +62,9 @@ export default function AboutPage() {
               Chúng tôi kết hợp các nha sĩ giàu kinh nghiệm, thiết bị tiên tiến và tư duy đặt bệnh nhân lên hàng đầu để mang đến cho bạn trải nghiệm yên tâm và tự tin.
             </p>
             <div className="mt-8 inline-flex gap-4">
-              <Link href="/" className="inline-flex items-center">
+              <Link href="/login" className="inline-flex items-center">
                 <Button className="bg-primary hover:bg-primary/90">
-                  Đặt lịch hẹn
+                  Tạo tài khoản
                   <FontAwesomeIcon icon={faArrowRight} className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -178,29 +178,40 @@ export default function AboutPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Gặp gỡ các bác sĩ của chúng tôi</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">Gặp gỡ các nớa sĩ của chúng tôi</h2>
             <p className="text-slate-600">Một đội ngũ thân thiện tận tâm với nụ cười của bạn.</p>
           </div>
-          <Link href="/services" className="hidden sm:inline-flex">
+          <Link href="/Doctors" className="hidden sm:inline-flex">
             <Button variant="outline">Xem toàn bộ đội ngũ</Button>
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {["BS. Nguyễn", "BS. Trần", "BS. Lê"].map((name, i) => (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { name: "BS. Lê Anh Khoa", specialty: "Nha khoa tổng quát", image: "/images/doctors/dentist1.webp" },
+            { name: "BS. Trịnh Công Thái", specialty: "Nha khoa tổng quát", image: "/images/doctors/dentist2.webp" },
+            { name: "BS. Jimmy Donaldson", specialty: "Nha khoa chuyên khoa", image: "/images/doctors/dentist3.webp" },
+            { name: "BS. Junya Ota", specialty: "Nha khoa thẩm mỹ", image: "/images/doctors/dentist4.webp" },
+          ].map((doctor, i) => (
             <motion.div
-              key={name}
+              key={doctor.name}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.06 }}
             >
-              <Card className="h-full">
-                <CardContent className="flex items-center gap-4 p-5">
-                  {}
-                  <div>
-                    <p className="font-semibold text-slate-800">{name}</p>
-                    <p className="text-sm text-slate-500">Nha sĩ</p>
-                  </div>
+              <Card className="h-full overflow-hidden">
+                <div className="relative w-full h-48">
+                  <Image
+                    src={doctor.image}
+                    alt={doctor.name}
+                    fill
+                    className="object-cover object-top"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <CardContent className="p-5">
+                  <p className="font-semibold text-slate-800">{doctor.name}</p>
+                  <p className="text-sm text-slate-500">{doctor.specialty}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -217,12 +228,12 @@ export default function AboutPage() {
               <div>
                 <h3 className="text-xl font-semibold">Sẵn sàng cho một nụ cười rạng rỡ hơn?</h3>
                 <p className="text-primary-foreground/80">
-                  Đặt lịch hẹn hôm nay và trải nghiệm dịch vụ nha khoa tốt nhất.
+                  Tạo tài khoản hôm nay và trải nghiệm dịch vụ nha khoa tốt nhất.
                 </p>
               </div>
-              <Link href="/">
+              <Link href="/login">
                 <Button variant="secondary" className="text-primary">
-                  Đặt lịch ngay
+                  Tạo tài khoản ngay
                 </Button>
               </Link>
             </div>
