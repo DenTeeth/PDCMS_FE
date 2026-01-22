@@ -326,7 +326,8 @@ export default function Odontogram({
 
             {/* Render teeth */}
             {teethData.map((tooth) => {
-              const fillColor = tooth.status
+              // If status is HEALTHY or no status, use default color (no special color)
+              const fillColor = tooth.status && tooth.status !== 'HEALTHY'
                 ? TOOTH_STATUS_COLORS[tooth.status]
                 : DEFAULT_COLOR;
               const isHovered = hoveredTooth === tooth.number;

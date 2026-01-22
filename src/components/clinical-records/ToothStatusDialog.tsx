@@ -25,7 +25,7 @@ import { toothStatusService } from '@/services/toothStatusService';
 import { toast } from 'sonner';
 import { Loader2, Save, X } from 'lucide-react';
 
-// Status labels in Vietnamese (matching legend - excluding HEALTHY and MISSING)
+// Status labels in Vietnamese (all statuses including HEALTHY)
 const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   HEALTHY: 'Khỏe mạnh',
   CARIES_MILD: 'Sâu răng nhẹ',
@@ -40,8 +40,9 @@ const TOOTH_STATUS_LABELS: Record<ToothCondition, string> = {
   IMPACTED: 'Mọc ngầm',
 };
 
-// Status options for dropdown (only show in legend)
+// Status options for dropdown (including HEALTHY for resetting tooth status)
 const DROPDOWN_STATUS_OPTIONS: ToothCondition[] = [
+  'HEALTHY',
   'CARIES_MILD',
   'CARIES_MODERATE',
   'CARIES_SEVERE',

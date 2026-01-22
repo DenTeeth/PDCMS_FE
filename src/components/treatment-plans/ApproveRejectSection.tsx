@@ -246,7 +246,7 @@ export default function ApproveRejectSection({
   }
 
   return (
-    <Card className="border-2 border-amber-300 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2.5 text-lg text-amber-900">
