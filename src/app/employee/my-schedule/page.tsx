@@ -336,7 +336,7 @@ export default function ShiftCalendarPage() {
     const shiftEvents = shifts.map(shift => {
       // Use workShift from shift object if available (from API response), otherwise lookup from workShifts array
       const workShift = shift.workShift || workShifts.find(ws => ws.workShiftId === shift.workShiftId);
-      
+
       // Use employee from shift object if available, otherwise lookup from employees array
       // Handle both number and string types for employeeId comparison
       const employee = shift.employee || employees.find(emp => {
@@ -503,10 +503,10 @@ export default function ShiftCalendarPage() {
     const errorProperties = error.response?.data?.properties;
 
     // BR-37: Handle Weekly Working Hours Limit (48 hours/week)
-    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' || 
-        errorMessage?.includes('48 giờ/tuần') ||
-        errorMessage?.includes('giới hạn giờ làm việc tuần')) {
-      
+    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' ||
+      errorMessage?.includes('48 giờ/tuần') ||
+      errorMessage?.includes('giới hạn giờ làm việc tuần')) {
+
       if (errorProperties) {
         const { existingHours, newShiftHours, weekStart, weekEnd, maxWeeklyHours } = errorProperties;
         toast.error(

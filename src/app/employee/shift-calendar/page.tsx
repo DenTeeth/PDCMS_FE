@@ -487,10 +487,10 @@ export default function ShiftCalendarPage() {
     const errorProperties = error.response?.data?.properties;
 
     // BR-37: Handle Weekly Working Hours Limit (48 hours/week)
-    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' || 
-        errorMessage?.includes('48 giờ/tuần') ||
-        errorMessage?.includes('giới hạn giờ làm việc tuần')) {
-      
+    if (errorTitle === 'Vượt Giới Hạn 48 Giờ/Tuần' ||
+      errorMessage?.includes('48 giờ/tuần') ||
+      errorMessage?.includes('giới hạn giờ làm việc tuần')) {
+
       if (errorProperties) {
         const { existingHours, newShiftHours, weekStart, weekEnd, maxWeeklyHours } = errorProperties;
         toast.error(

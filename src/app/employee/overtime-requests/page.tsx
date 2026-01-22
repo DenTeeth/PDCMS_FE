@@ -155,17 +155,17 @@ export default function EmployeeOvertimeRequestsPage() {
         const hasViewScheduleOwn = userPermissions.includes('VIEW_SCHEDULE_OWN');
         const hasViewScheduleAll = userPermissions.includes('VIEW_SCHEDULE_ALL');
         const hasManageWorkShifts = userPermissions.includes('MANAGE_WORK_SHIFTS');
-        
+
         console.warn('⚠️ User does not have permission to view work shifts', {
           userPermissions,
           hasViewScheduleOwn,
           hasViewScheduleAll,
           hasManageWorkShifts
         });
-        
+
         // Set empty array to prevent UI errors, but user won't be able to select shifts
         setWorkShifts([]);
-        
+
         // Provide more specific error message based on user's role
         let errorMsg = 'Bạn không có quyền xem danh sách ca làm việc. ';
         if (hasViewScheduleOwn && !hasViewScheduleAll && !hasManageWorkShifts) {
@@ -173,7 +173,7 @@ export default function EmployeeOvertimeRequestsPage() {
         } else {
           errorMsg += 'Vui lòng liên hệ quản trị viên để được cấp quyền VIEW_SCHEDULE_ALL hoặc MANAGE_WORK_SHIFTS.';
         }
-        
+
         setWorkShiftsError(errorMsg);
         // Show warning toast
         toast.error(errorMsg);
