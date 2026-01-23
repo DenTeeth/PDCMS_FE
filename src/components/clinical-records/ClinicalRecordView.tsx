@@ -362,6 +362,14 @@ export default function ClinicalRecordView({
                         { key: 'oxygenSaturation', label: 'SpO2', unit: '%' },
                       ];
 
+                      // Helper function to format unit with superscript for temperature
+                      const formatUnit = (unit: string, vitalKey: string) => {
+                        if (vitalKey === 'temperature' && (unit === '°C' || unit === 'C' || unit === 'c')) {
+                          return <><sup>o</sup>C</>;
+                        }
+                        return unit;
+                      };
+
                       return vitalSignsToDisplay.map((vital) => {
                         const assessment = assessmentMap.get(vital.key);
                         const vitalValue = record.vitalSigns?.[vital.key] || 
@@ -424,7 +432,7 @@ export default function ClinicalRecordView({
                             >
                               <div className="text-sm font-medium text-gray-700 mb-2">{label}</div>
                               <div className="text-xl font-bold text-gray-900">
-                                {assessment.value} <span className="text-sm font-normal text-gray-600">{assessment.unit}</span>
+                                {assessment.value} <span className="text-sm font-normal text-gray-600">{formatUnit(assessment.unit, vital.key)}</span>
                               </div>
                             </div>
                           );
@@ -484,7 +492,7 @@ export default function ClinicalRecordView({
                             >
                               <div className="text-sm font-medium text-gray-700 mb-2">{vital.label}</div>
                               <div className="text-xl font-bold text-gray-900">
-                                {String(vitalValue)} <span className="text-sm font-normal text-gray-600">{vital.unit}</span>
+                                {String(vitalValue)} <span className="text-sm font-normal text-gray-600">{formatUnit(vital.unit, vital.key)}</span>
                               </div>
                             </div>
                           );
