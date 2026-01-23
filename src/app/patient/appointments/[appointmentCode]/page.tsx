@@ -798,6 +798,7 @@ export default function PatientAppointmentDetailPage() {
                 record={clinicalRecord}
                 canEdit={false}
                 appointmentStatus={appointment?.status}
+                patientDateOfBirth={appointment?.patient?.dateOfBirth}
               />
             ) : (
               <section className="bg-card rounded-lg border p-6">

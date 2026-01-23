@@ -44,6 +44,7 @@ interface ClinicalRecordViewProps {
   onEdit?: () => void;
   canEdit?: boolean;
   appointmentStatus?: string; // Appointment status to determine if materials can be viewed
+  patientDateOfBirth?: string; // Optional: Patient date of birth (fallback if record.patient.dateOfBirth is not available)
 }
 
 export default function ClinicalRecordView({
@@ -51,6 +52,7 @@ export default function ClinicalRecordView({
   onEdit,
   canEdit = false,
   appointmentStatus,
+  patientDateOfBirth,
 }: ClinicalRecordViewProps) {
   const [toothStatuses, setToothStatuses] = useState<ToothStatusResponse[]>([]);
   const [loadingToothStatuses, setLoadingToothStatuses] = useState(false);
@@ -127,10 +129,12 @@ export default function ClinicalRecordView({
   // Load vital signs reference ranges for client-side assessment
   useEffect(() => {
     const loadReferences = async () => {
-      if (!record?.patient?.dateOfBirth) return;
+      // Use record.patient.dateOfBirth first, fallback to patientDateOfBirth prop
+      const dob = record?.patient?.dateOfBirth || patientDateOfBirth;
+      if (!dob) return;
       
       try {
-        const age = calculateAge(record.patient.dateOfBirth);
+        const age = calculateAge(dob);
         const refs = await vitalSignsReferenceService.getReferencesByAge(age);
         setVitalSignsReferences(refs);
       } catch (error: any) {
@@ -140,7 +144,7 @@ export default function ClinicalRecordView({
     };
 
     loadReferences();
-  }, [record?.patient?.dateOfBirth]);
+  }, [record?.patient?.dateOfBirth, patientDateOfBirth]);
 
   // Handle prescription edit/create
   const handleEditPrescription = (prescription: PrescriptionDTO) => {
