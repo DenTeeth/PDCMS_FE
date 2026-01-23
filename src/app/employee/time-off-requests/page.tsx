@@ -1242,10 +1242,11 @@ export default function EmployeeTimeOffRequestsPage() {
                   <Button
                     onClick={handleStatusUpdate}
                     disabled={statusAction !== 'approve' && !statusReason.trim()}
+                    variant={statusAction === 'approve' ? 'default' : 'outline'}
                     className={
                       statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                      statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                      'bg-gray-600 hover:bg-gray-700'
+                      statusAction === 'reject' ? 'text-red-600 hover:text-red-700 border-red-200 hover:border-red-300' :
+                      'text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300'
                     }
                   >
                     {statusAction === 'approve' && 'Duyệt'}

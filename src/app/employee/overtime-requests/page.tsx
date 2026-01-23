@@ -776,10 +776,11 @@ export default function EmployeeOvertimeRequestsPage() {
                   <Button
                     onClick={handleStatusUpdate}
                     disabled={statusAction !== 'approve' && !statusReason.trim()}
+                    variant={statusAction === 'approve' ? 'default' : 'outline'}
                     className={
                       statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                        statusAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                          'bg-gray-600 hover:bg-gray-700'
+                      statusAction === 'reject' ? 'text-red-600 hover:text-red-700 border-red-200 hover:border-red-300' :
+                      'text-gray-600 hover:text-gray-700 border-gray-300 hover:border-gray-400'
                     }
                   >
                     {statusAction === 'approve' && 'Duyệt'}

@@ -1146,7 +1146,8 @@ export default function AdminTimeOffRequestsPage() {
                     <Button
                       onClick={handleReject}
                       disabled={processing || !rejectReason.trim()}
-                      className="bg-red-600 hover:bg-red-700"
+                      variant="outline"
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                     >
                       {processing ? 'Đang xử lý...' : 'Từ chối'}
                     </Button>
@@ -1179,7 +1180,8 @@ export default function AdminTimeOffRequestsPage() {
                     <Button
                       onClick={handleCancel}
                       disabled={processing || !cancelReason.trim()}
-                      className="bg-orange-600 hover:bg-orange-700"
+                      variant="outline"
+                      className="text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
                     >
                       {processing ? 'Đang xử lý...' : 'Hủy yêu cầu'}
                     </Button>
@@ -1393,7 +1395,8 @@ export default function AdminTimeOffRequestsPage() {
                                   setShowViewModal(false);
                                   openRejectModal(viewDetails);
                                 }}
-                                className="flex-1 bg-red-600 hover:bg-red-700"
+                                variant="outline"
+                                className="flex-1 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                               >
                                 <FontAwesomeIcon icon={faTimes} className="mr-2" />
                                 Từ chối
@@ -1405,7 +1408,8 @@ export default function AdminTimeOffRequestsPage() {
                                   setShowViewModal(false);
                                   openCancelModal(viewDetails);
                                 }}
-                                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                                variant="outline"
+                                className="flex-1 text-gray-600 hover:text-gray-700 border-gray-200 hover:border-gray-300"
                               >
                                 <FontAwesomeIcon icon={faBan} className="mr-2" />
                                 Hủy

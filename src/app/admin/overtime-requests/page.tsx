@@ -588,7 +588,7 @@ export default function AdminOvertimeRequestsPage() {
           <Card className="w-full max-w-2xl mx-4">
             <CardHeader className="border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex text-2xl font-bold items-center gap-2">
                   Chi tiết yêu cầu làm thêm giờ
                 </CardTitle>
                 <Button
@@ -684,7 +684,7 @@ export default function AdminOvertimeRequestsPage() {
                         }}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                        <FontAwesomeIcon icon={faCheck} className="mr-2 h-4 w-4" />
                         Duyệt
                       </Button>
                     )}
@@ -697,9 +697,9 @@ export default function AdminOvertimeRequestsPage() {
                           setShowStatusModal(true);
                         }}
                         variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                       >
-                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        <FontAwesomeIcon icon={faTimes} className="mr-2 h-4 w-4" />
                         Từ chối
                       </Button>
                     )}
@@ -712,9 +712,9 @@ export default function AdminOvertimeRequestsPage() {
                           setShowStatusModal(true);
                         }}
                         variant="outline"
-                        className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                        className="text-gray-600 hover:text-gray-700 border-gray-300 hover:border-gray-400"
                       >
-                        <FontAwesomeIcon icon={faBan} className="mr-2" />
+                        <FontAwesomeIcon icon={faBan} className="mr-2 h-4 w-4" />
                         Hủy
                       </Button>
                     )}
@@ -769,6 +769,12 @@ export default function AdminOvertimeRequestsPage() {
                   <Button
                     onClick={handleStatusUpdate}
                     disabled={statusAction !== 'approve' && !statusReason.trim()}
+                    variant={statusAction === 'approve' ? 'default' : 'outline'}
+                    className={
+                      statusAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
+                      statusAction === 'reject' ? 'text-red-600 hover:text-red-700 border-red-200 hover:border-red-300' :
+                      'text-gray-600 hover:text-gray-700 border-gray-300 hover:border-gray-400'
+                    }
                   >
                     {statusAction === 'approve' && 'Duyệt'}
                     {statusAction === 'reject' && 'Từ chối'}

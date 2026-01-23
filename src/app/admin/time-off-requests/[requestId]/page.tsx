@@ -405,7 +405,7 @@ export default function AdminTimeOffDetailPage() {
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowRejectModal(true)}
-                                    className="text-red-800 hover:bg-red-50 border-red-200"
+                                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                                 >
                                     <FontAwesomeIcon icon={faTimes} className="mr-2 h-4 w-4" />
                                     Từ chối
@@ -416,7 +416,7 @@ export default function AdminTimeOffDetailPage() {
                                 <Button
                                     onClick={() => setShowCancelModal(true)}
                                     variant="outline"
-                                    className="text-orange-800 hover:bg-orange-50 border-orange-200"
+                                    className="text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
                                 >
                                     <FontAwesomeIcon icon={faBan} className="mr-2 h-4 w-4" />
                                     Hủy yêu cầu
