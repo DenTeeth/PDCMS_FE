@@ -51,23 +51,57 @@ export default function ItemDetailModal({
 
   // Fetch transaction history for this item
   const { data: transactions = [], isLoading: loadingHistory } = useQuery({
-    queryKey: ['itemHistory', itemId],
+    queryKey: ['itemHistory', itemId, itemDetail?.itemCode],
     queryFn: async () => {
-      if (!itemId) return [];
-      const result = await storageService.getAll(
-        { page: 0, size: 30, sortBy: 'transactionDate', sortDirection: 'desc' },
-        { includeItems: true, detailLimit: 30 }
-      );
-      return result.content
-        .filter((tx: StorageTransaction) =>
-          tx.items?.some((item: StorageTransactionItem) =>
-            item.itemMasterId === itemId ||
-            (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode)
-          )
-        )
-        .sort((a: StorageTransaction, b: StorageTransaction) =>
-          new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+      if (!itemId || !itemDetail) return [];
+      
+      try {
+        const result = await storageService.getAll(
+          { page: 0, size: 100, sortBy: 'transactionDate', sortDirection: 'desc' },
+          { includeItems: true, detailLimit: 100 }
         );
+        
+        // Helper function to check if item matches
+        const itemMatches = (item: StorageTransactionItem): boolean => {
+          // Check by itemMasterId (preferred)
+          if (item.itemMasterId === itemId) return true;
+          // Fallback: check by itemCode
+          if (item.itemCode && itemDetail.itemCode && item.itemCode === itemDetail.itemCode) return true;
+          return false;
+        };
+        
+        const filtered = result.content
+          .filter((tx: StorageTransaction) => {
+            if (!tx.items || tx.items.length === 0) return false;
+            return tx.items.some(itemMatches);
+          })
+          .sort((a: StorageTransaction, b: StorageTransaction) =>
+            new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+          );
+        
+        // Debug logging
+        console.log('[ItemDetailModal] Transaction history:', {
+          itemId,
+          itemCode: itemDetail.itemCode,
+          totalTransactions: result.content.length,
+          filteredCount: filtered.length,
+          sampleTransaction: filtered[0] ? {
+            transactionId: filtered[0].transactionId,
+            transactionCode: filtered[0].transactionCode,
+            itemsCount: filtered[0].items?.length || 0,
+            items: filtered[0].items?.map((item: StorageTransactionItem) => ({
+              itemMasterId: item.itemMasterId,
+              itemCode: item.itemCode,
+              itemName: item.itemName,
+            })) || [],
+          } : null,
+        });
+        
+        return filtered;
+      } catch (error) {
+        console.error('[ItemDetailModal] Error loading transaction history:', error);
+        return [];
+      }
     },
     enabled: !!itemId && !!itemDetail,
   });
@@ -376,51 +410,81 @@ export default function ItemDetailModal({
                         </tr>
                       </thead>
                       <tbody>
-                        {transactions.map((tx: StorageTransaction) => {
-                          // Find items in this transaction that match our itemId
-                          const relevantItems = tx.items?.filter((item: StorageTransactionItem) => item.itemMasterId === itemId) || [];
-                          
-                          return relevantItems.map((item, idx) => (
-                            <tr 
-                              key={`${tx.transactionId}-${idx}`}
-                              className="hover:bg-gray-50 border"
-                            >
-                              <td className="p-3 border">
-                                <span className="text-sm">{formatDate(tx.transactionDate)}</span>
-                              </td>
-                              <td className="p-3 border">
-                                {tx.transactionType === 'IMPORT' ? (
-                                  <Badge className="bg-green-100 text-green-800 flex items-center gap-1 w-fit">
-                                    <FontAwesomeIcon icon={faArrowDown} className="w-3 h-3" />
-                                    Nhập kho
-                                  </Badge>
-                                ) : (
-                                  <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1 w-fit">
-                                    <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3" />
-                                    Xuất kho
-                                  </Badge>
-                                )}
-                              </td>
-                              <td className="p-3 border">
-                                <span className="font-mono text-sm">{tx.transactionCode || '-'}</span>
-                              </td>
-                              <td className="p-3 border text-right">
-                                <span className={`font-semibold ${tx.transactionType === 'IMPORT' ? 'text-green-600' : 'text-orange-600'}`}>
-                                  {tx.transactionType === 'IMPORT' ? '+' : '-'}{item.quantityChange} {itemDetail?.unitOfMeasure}
-                                </span>
-                              </td>
-                              <td className="p-3 border">
-                                <span className="font-mono text-sm">{item.lotNumber || '-'}</span>
-                              </td>
-                              <td className="p-3 border">
-                                <span className="text-sm">{tx.createdByName || '-'}</span>
-                              </td>
-                              <td className="p-3 border">
-                                <span className="text-sm text-gray-600">{tx.notes || '-'}</span>
-                              </td>
-                            </tr>
-                          ));
-                        })}
+                        {transactions.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="p-8 text-center text-gray-500">
+                              Không có dữ liệu giao dịch
+                            </td>
+                          </tr>
+                        ) : (
+                          transactions.map((tx: StorageTransaction) => {
+                            // Find items in this transaction that match our itemId or itemCode
+                            // Use same logic as in query function
+                            const relevantItems = tx.items?.filter((item: StorageTransactionItem) => {
+                              // Check by itemMasterId (preferred)
+                              if (item.itemMasterId === itemId) return true;
+                              // Fallback: check by itemCode
+                              if (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode) return true;
+                              return false;
+                            }) || [];
+                            
+                            // If no relevant items found, skip this transaction
+                            if (relevantItems.length === 0) {
+                              console.warn('[ItemDetailModal] Transaction has no matching items:', {
+                                transactionId: tx.transactionId,
+                                transactionCode: tx.transactionCode,
+                                itemId,
+                                itemCode: itemDetail?.itemCode,
+                                items: tx.items?.map((item: StorageTransactionItem) => ({
+                                  itemMasterId: item.itemMasterId,
+                                  itemCode: item.itemCode,
+                                })) || [],
+                              });
+                              return null;
+                            }
+                            
+                            return relevantItems.map((item, idx) => (
+                              <tr 
+                                key={`${tx.transactionId}-${item.transactionItemId || idx}`}
+                                className="hover:bg-gray-50 border"
+                              >
+                                <td className="p-3 border">
+                                  <span className="text-sm">{formatDate(tx.transactionDate)}</span>
+                                </td>
+                                <td className="p-3 border">
+                                  {tx.transactionType === 'IMPORT' ? (
+                                    <Badge className="bg-green-100 text-green-800 flex items-center gap-1 w-fit">
+                                      <FontAwesomeIcon icon={faArrowDown} className="w-3 h-3" />
+                                      Nhập kho
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1 w-fit">
+                                      <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3" />
+                                      Xuất kho
+                                    </Badge>
+                                  )}
+                                </td>
+                                <td className="p-3 border">
+                                  <span className="font-mono text-sm">{tx.transactionCode || '-'}</span>
+                                </td>
+                                <td className="p-3 border text-right">
+                                  <span className={`font-semibold ${tx.transactionType === 'IMPORT' ? 'text-green-600' : 'text-orange-600'}`}>
+                                    {tx.transactionType === 'IMPORT' ? '+' : '-'}{Math.abs(item.quantityChange || 0)} {item.unitName || itemDetail?.unitOfMeasure || ''}
+                                  </span>
+                                </td>
+                                <td className="p-3 border">
+                                  <span className="font-mono text-sm">{item.lotNumber || '-'}</span>
+                                </td>
+                                <td className="p-3 border">
+                                  <span className="text-sm">{tx.createdByName || '-'}</span>
+                                </td>
+                                <td className="p-3 border">
+                                  <span className="text-sm text-gray-600">{tx.notes || '-'}</span>
+                                </td>
+                              </tr>
+                            ));
+                          }).filter(Boolean) // Remove null entries
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -430,22 +494,37 @@ export default function ItemDetailModal({
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
                         <p className="text-sm text-gray-600">Tổng giao dịch</p>
-                        <p className="text-2xl font-bold text-blue-600">{transactions.length}</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {transactions.reduce((sum, tx) => {
+                            const matchingItems = tx.items?.filter((item: StorageTransactionItem) => {
+                              if (item.itemMasterId === itemId) return true;
+                              if (item.itemCode && itemDetail?.itemCode && item.itemCode === itemDetail.itemCode) return true;
+                              return false;
+                            }) || [];
+                            return sum + matchingItems.length;
+                          }, 0)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Lần nhập gần nhất</p>
                         <p className="text-sm font-medium">
-                          {transactions.find((tx: StorageTransaction) => tx.transactionType === 'IMPORT')
-                            ? formatDate(transactions.find((tx: StorageTransaction) => tx.transactionType === 'IMPORT')?.transactionDate)
-                            : 'Chưa có'}
+                          {(() => {
+                            const lastImport = transactions
+                              .filter((tx: StorageTransaction) => tx.transactionType === 'IMPORT')
+                              .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())[0];
+                            return lastImport ? formatDate(lastImport.transactionDate) : 'Chưa có';
+                          })()}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Lần xuất gần nhất</p>
                         <p className="text-sm font-medium">
-                          {transactions.find((tx: StorageTransaction) => tx.transactionType === 'EXPORT')
-                            ? formatDate(transactions.find((tx: StorageTransaction) => tx.transactionType === 'EXPORT')?.transactionDate)
-                            : 'Chưa có'}
+                          {(() => {
+                            const lastExport = transactions
+                              .filter((tx: StorageTransaction) => tx.transactionType === 'EXPORT')
+                              .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())[0];
+                            return lastExport ? formatDate(lastExport.transactionDate) : 'Chưa có';
+                          })()}
                         </p>
                       </div>
                     </div>
