@@ -431,7 +431,7 @@ export default function EmployeeRegistrationsPage() {
       // Fetch fixed registrations
       // Backend will get employeeId from token if not provided in params
       fetchFixedRegistrations();
-      
+
       // If user has MANAGE_FIXED_REGISTRATIONS, also load dropdown data
       if (hasManageFixedPermission) {
         fetchDropdownData();
@@ -539,13 +539,13 @@ export default function EmployeeRegistrationsPage() {
       setLoadingWorkSlots(true);
       const slotsResponse = await workSlotService.getWorkSlots();
       setWorkSlots(slotsResponse || []);
-      
+
       const slotsMap: Record<number, PartTimeSlot> = {};
       (slotsResponse || []).forEach(slot => {
         slotsMap[slot.slotId] = slot;
       });
       setWorkSlotsMap(slotsMap);
-      
+
       console.log('📋 [fetchWorkSlotsData] Loaded work slots:', {
         count: slotsResponse?.length || 0,
         slots: slotsResponse
@@ -602,7 +602,7 @@ export default function EmployeeRegistrationsPage() {
       // Fetch slot details for each slot (only if user has VIEW_AVAILABLE_SLOTS permission)
       const detailsMap: Record<number, SlotDetailsResponse> = {};
       const canViewSlotDetails = isPartTimeFlex || hasPermission(Permission.VIEW_AVAILABLE_SLOTS);
-      
+
       if (canViewSlotDetails) {
         await Promise.all(
           slotsArray.map(async (slot) => {
@@ -680,7 +680,7 @@ export default function EmployeeRegistrationsPage() {
 
       // Build params
       const params: FixedRegistrationQueryParams = {};
-      
+
       // If user has MANAGE_FIXED_REGISTRATIONS, can filter by employeeId
       if (hasManageFixedPermission && filterEmployeeId) {
         params.employeeId = filterEmployeeId;
@@ -1553,7 +1553,7 @@ export default function EmployeeRegistrationsPage() {
                                               const registeredCount = workSlot.registered ?? 0;
                                               return `${registeredCount}/${workSlot.quota}`;
                                             }
-                                            
+
                                             // Priority 2: Use slotDetails if available (for users with VIEW_AVAILABLE_SLOTS permission)
                                             // Calculate from overallRemaining: currentRegistered = quota - overallRemaining
                                             if (slotDetails?.quota !== undefined && slotDetails.quota !== null) {
@@ -1563,7 +1563,7 @@ export default function EmployeeRegistrationsPage() {
                                               }
                                               return `0/${slotDetails.quota}`;
                                             }
-                                            
+
                                             return '-';
                                           })()}
                                         </div>
@@ -2185,13 +2185,13 @@ export default function EmployeeRegistrationsPage() {
 
                             // Calculate end date based on weeks
                             const calculatedEndDate = addDays(addWeeks(selectedWeekStart, weeks), -1);
-                            
+
                             // Get slot's effective end date
                             const slotEndDate = parseISO(selectedSlot.effectiveTo);
-                            
+
                             // Use the earlier date: calculated end date or slot's end date
                             const actualEndDate = calculatedEndDate > slotEndDate ? slotEndDate : calculatedEndDate;
-                            
+
                             const to = format(actualEndDate, 'yyyy-MM-dd');
                             setPartTimeCreateFormData(prev => ({
                               ...prev,
@@ -2341,7 +2341,7 @@ export default function EmployeeRegistrationsPage() {
                   {hasViewEmployeePermission === false ? (
                     <div className="w-full px-3 py-2 border border-red-300 rounded-md bg-red-50">
                       <p className="text-sm text-red-600">
-                        Bạn không có quyền <strong>VIEW_EMPLOYEE</strong> để xem danh sách nhân viên. 
+                        Bạn không có quyền <strong>VIEW_EMPLOYEE</strong> để xem danh sách nhân viên.
                         Vui lòng liên hệ quản trị viên để được cấp quyền.
                       </p>
                     </div>
