@@ -1445,23 +1445,6 @@ export default function EmployeeRegistrationsPage() {
                             </select>
                           </div>
                         </div>
-
-                        {/* Legend */}
-                        <div className="flex items-center gap-4 text-xs pt-2 border-t border-gray-100">
-                          <span className="text-gray-600 font-medium">Độ khả dụng:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                            <span className="text-gray-600">Còn nhiều (&gt;50%)</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                            <span className="text-gray-600">Sắp đầy (20-50%)</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                            <span className="text-gray-600">Đầy (0-20%)</span>
-                          </div>
-                        </div>
                       </div>
                     </CardHeader>
                   </Card>
