@@ -919,7 +919,7 @@ export default function AdminShiftCalendarPage() {
                   slotMaxTime="23:00:00"
                   slotDuration="00:30:00"
                   slotLabelInterval="01:00:00"
-                  allDaySlot={true}
+                  allDaySlot={false}
                   eventClick={handleEventClick}
                   nowIndicator={true}
                   scrollTime="08:00:00"
@@ -1082,14 +1082,6 @@ export default function AdminShiftCalendarPage() {
                     }
                   >
                     Cập nhật
-                  </Button>
-                )}
-                {canDelete && selectedShift && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteModal(true)}
-                  >
-                    Hủy ca
                   </Button>
                 )}
               </div>
