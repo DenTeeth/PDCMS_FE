@@ -48,6 +48,9 @@ export default function AdminTreatmentPlansPage() {
   // Permissions
   const canView = user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') || false;
   const canCreate = user?.permissions?.includes('CREATE_TREATMENT_PLAN') || false;
+  
+  // Only show create button for admin and employee (not patient)
+  const canShowCreateButton = canCreate && user?.baseRole !== 'patient';
 
   // Request cancellation để tránh race condition
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -290,7 +293,7 @@ export default function AdminTreatmentPlansPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {canCreate && (
+            {canShowCreateButton && (
               <Button onClick={handleCreatePlan}>
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo lộ trình mới

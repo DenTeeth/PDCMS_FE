@@ -406,7 +406,12 @@ export default function TreatmentPlanDetail({
     console.log('Reassign doctor for suggestion:', suggestion);
   };
 
-  const hasApprovePermission = Boolean(user?.permissions?.includes('MANAGE_TREATMENT_PLAN')); // ✅ BE: MANAGE_TREATMENT_PLAN covers approve/reject
+  // ✅ Require both VIEW_TREATMENT_PLAN_ALL and MANAGE_TREATMENT_PLAN for approve/reject
+  // This ensures only Manager can approve (Receptionist/Accountant have VIEW_TREATMENT_PLAN_ALL but not MANAGE_TREATMENT_PLAN)
+  const hasApprovePermission = Boolean(
+    user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') &&
+    user?.permissions?.includes('MANAGE_TREATMENT_PLAN')
+  );
   const hasManagePricingPermission = Boolean(user?.permissions?.includes('MANAGE_PLAN_PRICING'));
   const hasEditPermission = Boolean(
     user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
@@ -570,9 +575,9 @@ export default function TreatmentPlanDetail({
       userPermissionsCount: user?.permissions?.length || 0,
       hasCreatePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
       hasUpdatePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
-      hasApprovePermission: user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ BE: MANAGE_TREATMENT_PLAN
-      // Check if MANAGE_TREATMENT_PLAN exists in permissions array
-      approvePermissionCheck: user?.permissions?.find(p => p.includes('MANAGE_TREATMENT_PLAN')),
+      hasApprovePermission: user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') && user?.permissions?.includes('MANAGE_TREATMENT_PLAN'), // ✅ Require both permissions
+      // Check if both permissions exist in permissions array
+      approvePermissionCheck: user?.permissions?.find(p => p.includes('VIEW_TREATMENT_PLAN_ALL')) && user?.permissions?.find(p => p.includes('MANAGE_TREATMENT_PLAN')),
       phasesCount: plan.phases.length,
       hasItems: plan.phases.some(p => p.items.length > 0),
       canSubmitForReview: user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && // ✅ BE: MANAGE_TREATMENT_PLAN
@@ -593,8 +598,10 @@ export default function TreatmentPlanDetail({
 
   // Check if can submit for review
   // Điều kiện: approvalStatus === DRAFT (hoặc null/undefined - mặc định là DRAFT)
+  // Only show for admin and employee (not patient)
   const canSubmitForReview =
     user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && // ✅ BE: MANAGE_TREATMENT_PLAN covers create/update/delete
+    user?.baseRole !== 'patient' && // Only for admin and employee
     normalizedApprovalStatus === ApprovalStatus.DRAFT &&
     plan.phases.length > 0 &&
     plan.phases.some(p => p.items.length > 0);
@@ -1246,8 +1253,11 @@ export default function TreatmentPlanDetail({
 
       {/* V21: Bước 3 - Approve/Reject Section */}
       {/* Chỉ check permission, không check role (theo yêu cầu dự án) */}
+      {/* ✅ Require both VIEW_TREATMENT_PLAN_ALL and MANAGE_TREATMENT_PLAN for approve/reject */}
+      {/* This ensures only Manager can approve (Receptionist/Accountant have VIEW_TREATMENT_PLAN_ALL but not MANAGE_TREATMENT_PLAN) */}
       {normalizedApprovalStatus === ApprovalStatus.PENDING_REVIEW &&
-        user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && ( // ✅ BE: MANAGE_TREATMENT_PLAN covers approve/reject
+        user?.permissions?.includes('VIEW_TREATMENT_PLAN_ALL') &&
+        user?.permissions?.includes('MANAGE_TREATMENT_PLAN') && (
           <ApproveRejectSection
             plan={plan}
             onPlanUpdated={(updatedPlan) => {
